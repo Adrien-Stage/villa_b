@@ -51,14 +51,22 @@ class ShopProductController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $nextSku = $this->generateSku($tenant->id);
+
         return view('shop.products.create', [
             'categories' => $categories,
+            'nextSku' => $nextSku,
         ]);
     }
 
     public function store(Request $request)
     {
         $tenant = auth()->user()->tenant;
+
+        // Auto-générer le SKU si vide
+        if (!$request->filled('sku')) {
+            $request->merge(['sku' => $this->generateSku($tenant->id)]);
+        }
 
         $validated = $request->validate([
             'shop_category_id' => 'required|exists:shop_categories,id',
@@ -68,7 +76,6 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-            'is_active' => 'boolean',
         ]);
 
         // Vérifier que la catégorie appartient au tenant
@@ -116,7 +123,6 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-            'is_active' => 'boolean',
         ]);
 
         // Vérifier que la catégorie appartient au tenant
@@ -140,5 +146,24 @@ class ShopProductController extends Controller
 
         return redirect()->route('shop.products.index')
             ->with('success', 'Article supprimé avec succès');
+    }
+
+    /**
+     * Génère un SKU automatique au format ART-XXXXXX
+     */
+    private function generateSku(int $tenantId): string
+    {
+        $lastProduct = ShopProduct::where('tenant_id', $tenantId)
+            ->where('sku', 'like', 'ART-%')
+            ->orderByRaw("CAST(SUBSTRING(sku FROM 5) AS INTEGER) DESC")
+            ->first();
+
+        if ($lastProduct && preg_match('/^ART-(\d+)$/', $lastProduct->sku, $matches)) {
+            $nextNumber = (int) $matches[1] + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        return 'ART-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 }

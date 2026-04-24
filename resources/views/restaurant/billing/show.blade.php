@@ -96,6 +96,7 @@
         </div>
 
         <div class="px-4 py-4 border-t border-secondary/15 bg-accent/10 space-y-3">
+            @role('restaurant_chief','cashier')
             @if($order->payment_status !== 'paid')
                 <form method="POST" action="{{ route('restaurant.billing.paid', $order) }}" class="space-y-2">
                     @csrf
@@ -130,6 +131,9 @@
                     </button>
                 </form>
             @endif
+            @else
+                <p class="text-xs text-primary/40 italic text-center py-2">Consultation uniquement — actions réservées au personnel de caisse.</p>
+            @endrole
         </div>
     </aside>
 </div>

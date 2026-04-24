@@ -17,6 +17,7 @@
             <p class="text-secondary mt-1">Historique des ventes</p>
         </div>
         <div class="flex items-center gap-3">
+            @role('shop_manager','shop_cashier')
             @if(!$hasActiveSession)
                 <a href="{{ route('shop.cash_register.open') }}"
                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
@@ -32,6 +33,7 @@
                     <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i> Nouvelle commande
                 </a>
             @endif
+            @endrole
         </div>
     </div>
 

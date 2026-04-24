@@ -136,20 +136,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- RESTAURANT (menus) ---
+    // Lecture (manager peut consulter), Écriture réservée au staff restaurant
     Route::prefix('restaurant')->name('restaurant.')->middleware('role:manager,restaurant_chief,restaurant_staff')->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
-
-        // Commandes (staff)
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
-        Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
-        Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
-
-        // Garde-manger (inventaire restaurant)
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
+    });
+
+    // Écriture RESTAURANT — manager exclu
+    Route::prefix('restaurant')->name('restaurant.')->middleware('role:restaurant_chief,restaurant_staff')->group(function () {
+        Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
+        Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
         Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->name('pantry.movements.store');
 
-        Route::middleware('role:manager,restaurant_chief')->group(function () {
+        Route::middleware('role:restaurant_chief')->group(function () {
             Route::post('/menus/categories', [RestaurantMenuController::class, 'storeCategory'])->name('menus.categories.store');
             Route::put('/menus/categories/{category}', [RestaurantMenuController::class, 'updateCategory'])->name('menus.categories.update');
             Route::delete('/menus/categories/{category}', [RestaurantMenuController::class, 'destroyCategory'])->name('menus.categories.destroy');
@@ -169,10 +170,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- RESTAURANT (facturation interne) ---
+    // Lecture (manager peut consulter)
     Route::prefix('restaurant')->name('restaurant.')->middleware('role:manager,restaurant_chief,cashier')->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
         Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
+    });
+
+    // Écriture facturation — manager exclu
+    Route::prefix('restaurant')->name('restaurant.')->middleware('role:restaurant_chief,cashier')->group(function () {
         Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
         Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
     });
@@ -190,43 +196,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- COMPTABILITÉ (futur module) ---
-    // Routes préparées pour le développement futur du module comptable
     Route::prefix('accounting')->name('accounting.')->middleware('role:accountant,manager,admin')->group(function () {
         // Ces routes seront implémentées quand le module comptable sera développé
-        // Route::get('/dashboard', [AccountingController::class, 'dashboard'])->name('dashboard');
-        // Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
-        // Route::get('/budgets', [BudgetsController::class, 'index'])->name('budgets');
-        // etc.
     });
 
     // --- SHOP ---
+    // Lecture seule pour le manager (GET uniquement)
+    Route::prefix('shop')->name('shop.')->middleware('role:shop_manager,shop_cashier,manager')->group(function () {
+        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('role:shop_manager,manager')->name('cash_register.index');
+        Route::get('/products', [ShopProductController::class, 'index'])->middleware('role:shop_manager,manager')->name('products.index');
+        Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->whereNumber('order')->name('orders.receipt');
+        Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+    });
+
+    // Écriture SHOP — manager totalement exclu
     Route::prefix('shop')->name('shop.')->middleware('role:shop_manager,shop_cashier')->group(function () {
-        // Gestion de la Caisse
-        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('role:shop_manager')->name('cash_register.index');
+        // Caisse
         Route::get('/cash-register/open', [CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
         Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
         Route::post('/cash-register/disbursements', [CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
 
-        // Gestion des articles (shop_manager uniquement)
-        Route::middleware('role:shop_manager')->group(function () {
-            Route::get('/products', [ShopProductController::class, 'index'])->name('products.index');
-            Route::get('/products/create', [ShopProductController::class, 'create'])->name('products.create');
-            Route::post('/products', [ShopProductController::class, 'store'])->name('products.store');
-            Route::get('/products/{product}/edit', [ShopProductController::class, 'edit'])->name('products.edit');
-            Route::patch('/products/{product}', [ShopProductController::class, 'update'])->name('products.update');
-            Route::delete('/products/{product}', [ShopProductController::class, 'destroy'])->name('products.destroy');
-        });
-
-        // Gestion des commandes (shop_manager et shop_cashier)
-        Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
+        // Commandes
         Route::get('/orders/create', [ShopOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [ShopOrderController::class, 'store'])->name('orders.store');
-        Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->name('orders.receipt');
-        Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->name('orders.show');
-        Route::patch('/orders/{order}/paid', [ShopOrderController::class, 'markAsPaid'])->name('orders.paid');
-        Route::patch('/orders/{order}/refund', [ShopOrderController::class, 'refund'])->middleware('role:shop_manager,shop_cashier')->name('orders.refund');
+        Route::patch('/orders/{order}/paid', [ShopOrderController::class, 'markAsPaid'])->whereNumber('order')->name('orders.paid');
+        Route::patch('/orders/{order}/refund', [ShopOrderController::class, 'refund'])->whereNumber('order')->name('orders.refund');
+
+        // Articles — shop_manager uniquement
+        Route::middleware('role:shop_manager')->group(function () {
+            Route::get('/products/create', [ShopProductController::class, 'create'])->name('products.create');
+            Route::post('/products', [ShopProductController::class, 'store'])->name('products.store');
+            Route::get('/products/{product}/edit', [ShopProductController::class, 'edit'])->whereNumber('product')->name('products.edit');
+            Route::patch('/products/{product}', [ShopProductController::class, 'update'])->whereNumber('product')->name('products.update');
+            Route::delete('/products/{product}', [ShopProductController::class, 'destroy'])->whereNumber('product')->name('products.destroy');
+        });
     });
 });
 

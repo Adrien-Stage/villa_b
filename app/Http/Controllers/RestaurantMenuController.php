@@ -52,7 +52,7 @@ class RestaurantMenuController extends Controller
 
         $items = $itemsQuery->paginate(15)->withQueryString();
 
-        $canManage = $user->hasAnyRole(['admin', 'manager', 'restaurant_chief']);
+        $canManage = $user->hasAnyRole(['restaurant_chief']);
 
         return view('restaurant.menus.index', [
             'categories' => $categories,

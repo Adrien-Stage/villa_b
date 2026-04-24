@@ -10,6 +10,18 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-6">
+        @if ($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                <i data-lucide="alert-circle" class="w-5 h-5 inline mr-2"></i>
+                <strong>Des erreurs sont survenues :</strong>
+                <ul class="mt-2 list-disc list-inside text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('shop.products.store') }}" method="POST" class="space-y-6">
             @csrf
 
@@ -34,8 +46,9 @@
                 <!-- SKU -->
                 <div>
                     <label class="block text-sm font-medium text-primary mb-2">SKU (Code) *</label>
-                    <input type="text" name="sku" required value="{{ old('sku') }}"
-                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('sku') border-red-500 @enderror">
+                    <input type="text" name="sku" required value="{{ old('sku', $nextSku) }}" readonly
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-primary focus:border-transparent @error('sku') border-red-500 @enderror">
+                    <p class="text-xs text-secondary mt-1">Généré automatiquement</p>
                     @error('sku')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -96,7 +109,7 @@
 
             <!-- Actif -->
             <div class="flex items-center">
-                <input type="checkbox" name="is_active" id="is_active" checked
+                <input type="checkbox" name="is_active" id="is_active" value="1" checked
                        class="w-4 h-4 text-primary rounded border-gray-200 focus:ring-2 focus:ring-primary">
                 <label for="is_active" class="ml-3 text-sm font-medium text-primary">Actif</label>
             </div>

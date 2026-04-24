@@ -56,7 +56,7 @@ class RestaurantPantryController extends Controller
             ->take(20)
             ->get();
 
-        $canManage = Auth::user()->hasAnyRole(['manager', 'restaurant_chief']);
+        $canManage = Auth::user()->hasAnyRole(['restaurant_chief']);
 
         $stats = [
             'total_items' => RestaurantPantryItem::query()->count(),

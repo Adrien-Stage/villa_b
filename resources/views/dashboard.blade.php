@@ -208,6 +208,7 @@
             <div class="flex items-center justify-between">
                 <h2 class="font-heading font-semibold text-primary text-sm uppercase tracking-widest opacity-60">Actions Rapides Boutique</h2>
                 <div class="flex gap-2">
+                    @role('shop_manager','shop_cashier')
                     @if(!($panels['shop_active_session'] ?? false))
                         <a href="{{ route('shop.cash_register.open') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm inline-flex items-center">
                             <i data-lucide="lock-open" class="w-4 h-4 mr-2"></i> Ouvrir ma caisse
@@ -220,6 +221,9 @@
                             <i data-lucide="lock" class="w-4 h-4"></i>
                         </a>
                     @endif
+                    @else
+                        <span class="text-xs text-primary/40 italic">Consultation uniquement</span>
+                    @endrole
                 </div>
             </div>
         </div>

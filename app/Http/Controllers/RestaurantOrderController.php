@@ -47,7 +47,7 @@ class RestaurantOrderController extends Controller
             ->orderBy('name')
             ->get();
 
-        $canManage = Auth::user()->hasAnyRole(['manager', 'restaurant_chief']);
+        $canManage = Auth::user()->hasAnyRole(['restaurant_chief', 'restaurant_staff']);
 
         return view('restaurant.orders.index', [
             'orders' => $orders,
@@ -65,7 +65,7 @@ class RestaurantOrderController extends Controller
         return view('restaurant.orders.show', [
             'order' => $order,
             'statuses' => self::STATUSES,
-            'canManage' => Auth::user()->hasAnyRole(['manager', 'restaurant_chief']),
+            'canManage' => Auth::user()->hasAnyRole(['restaurant_chief', 'restaurant_staff']),
         ]);
     }
 

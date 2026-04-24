@@ -96,7 +96,7 @@
 
             <!-- Actif -->
             <div class="flex items-center">
-                <input type="checkbox" name="is_active" id="is_active" {{ $product->is_active ? 'checked' : '' }}
+                <input type="checkbox" name="is_active" id="is_active" value="1" {{ $product->is_active ? 'checked' : '' }}
                        class="w-4 h-4 text-primary rounded border-gray-200 focus:ring-2 focus:ring-primary">
                 <label for="is_active" class="ml-3 text-sm font-medium text-primary">Actif</label>
             </div>
