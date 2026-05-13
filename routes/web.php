@@ -248,5 +248,12 @@ Route::middleware(['auth'])->group(function () {
     })->middleware('role:admin')->name('test-popup');
 });
 
+// ==========================================
+// ANALYTICS (Manager uniquement)
+// ==========================================
+Route::middleware(['auth', 'role:manager'])->prefix('analytics')->name('analytics.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
+    Route::get('/print', [\App\Http\Controllers\AnalyticsController::class, 'print'])->name('print');
+});
 // Routes Breeze (login, register, etc.) — déjà générées, ne pas toucher
 //require __DIR__.'/auth.php';

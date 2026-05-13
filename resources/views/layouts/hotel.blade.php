@@ -41,6 +41,15 @@
                     </ul>
                 </div>
 
+                @role('manager')
+                    <div>
+                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="analytics.index" icon="bar-chart-2">Tour de contrôle</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endrole
+
                 @role('manager','reception','housekeeping_leader','housekeeping_staff','housekeeping')
                     <div>
                         <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
