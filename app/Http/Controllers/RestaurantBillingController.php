@@ -47,7 +47,7 @@ class RestaurantBillingController extends Controller
 
     public function show(RestaurantCustomerOrder $order): View
     {
-        $order->load('items');
+        $order->load(['items', 'booking.room', 'booking.customer', 'booking.guests']);
 
         $checkedInBookings = Booking::query()
             ->where('status', BookingStatus::CHECKED_IN)
@@ -157,7 +157,7 @@ class RestaurantBillingController extends Controller
 
     public function receipt(RestaurantCustomerOrder $order): View
     {
-        $order->load('items');
+        $order->load(['items', 'booking.room', 'booking.customer', 'booking.guests']);
 
         return view('restaurant.billing.receipt', [
             'order' => $order,

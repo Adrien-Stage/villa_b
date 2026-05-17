@@ -61,11 +61,19 @@
                     <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Informations</p>
                     <p class="text-sm font-medium text-primary">Table {{ $order->table_number }}</p>
                     @if ($order->booking)
+                        @php
+                            $residentName = $order->booking->customer?->full_name
+                                ?? $order->booking->guests?->firstWhere('is_primary_guest', true)?->full_name
+                                ?? $order->booking->guests?->first()?->full_name
+                                ?? $order->customer_name
+                                ?? 'Client';
+                        @endphp
                         <p class="text-xs text-primary/70">
-                            Client en séjour — Chambre {{ $order->booking->rooms->first()?->number }}
+                            {{ $residentName }}@if($order->booking->room?->number) - chambre {{ $order->booking->room->number }}@endif
                         </p>
+                    @else
                         <p class="text-xs text-primary/70">
-                            {{ $order->booking->customer->name ?? 'Folio' }}
+                            {{ $order->customer_name ?? 'Client' }}
                         </p>
                     @endif
                 </div>
@@ -141,4 +149,3 @@
     </script>
 </body>
 </html>
-
