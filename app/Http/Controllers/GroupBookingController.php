@@ -143,9 +143,37 @@ class GroupBookingController extends Controller
 
     public function addRoom(Request $request, GroupBooking $groupBooking)
     {
+        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        
+        if ($request->filled('new_customer')) {
+            $customerRules = [
+                'first_name' => ['required', 'string', 'max:100'],
+                'last_name' => ['required', 'string', 'max:100'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'nationality' => ['nullable', 'string', 'max:5'],
+                'id_document_type' => ['nullable', 'string'],
+            ];
+            $request->validate($customerRules);
+            
+            $customer = Customer::create([
+                'tenant_id' => $tenantId,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'nationality' => $request->nationality,
+                'id_document_type' => $request->id_document_type,
+            ]);
+            
+            $customerId = $customer->id;
+        } else {
+            $request->validate(['customer_id' => ['required', 'exists:customers,id']]);
+            $customerId = $request->customer_id;
+        }
+
         $validated = $request->validate([
             'room_id' => ['required', 'exists:rooms,id'],
-            'customer_id' => ['required', 'exists:customers,id'],
             'adults_count' => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'notes' => ['nullable', 'string'],
@@ -181,6 +209,7 @@ class GroupBookingController extends Controller
             $groupBooking,
             $room,
             $validated,
+            $customerId,
             $tenantId,
             $checkIn,
             $checkOut,
@@ -194,7 +223,7 @@ class GroupBookingController extends Controller
                 'tenant_id' => $tenantId,
                 'group_booking_id' => $groupBooking->id,
                 'room_id' => $room->id,
-                'customer_id' => $validated['customer_id'],
+                'customer_id' => $customerId,
                 'status' => BookingStatus::CONFIRMED,
                 'check_in' => $checkIn,
                 'check_out' => $checkOut,

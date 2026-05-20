@@ -253,137 +253,111 @@
 @endif
 
 {{-- Modal create --}}
-<div id="create-user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/40" onclick="closeCreateModal()"></div>
-    <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-xl p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-heading text-lg text-primary">Nouveau membre du staff</h2>
-            <button type="button" onclick="closeCreateModal()" class="text-primary/50 hover:text-primary">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+<x-modal id="create-user-modal" title="Nouveau membre du staff" max-width="max-w-2xl" formAction="{{ route('users.store') }}" closeAction="closeCreateModal()">
+    <input type="hidden" name="form_type" value="create">
+    <input type="hidden" name="view" value="{{ $viewMode }}">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs text-primary/60">Nom complet</label>
+            <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
         </div>
-
-        <form method="POST" action="{{ route('users.store') }}" class="space-y-4">
-            @csrf
-            <input type="hidden" name="form_type" value="create">
-            <input type="hidden" name="view" value="{{ $viewMode }}">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-primary/60">Nom complet</label>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-primary/60">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-primary/60">Telephone</label>
-                    <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-primary/60">Role</label>
-                    <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                        @foreach($roles as $role)
-                            <option value="{{ $role->slug }}" @selected(old('role') === $role->slug)>{{ $role->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-primary/60">Mot de passe</label>
-                    <input type="password" name="password" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-primary/60">Confirmation mot de passe</label>
-                    <input type="password" name="password_confirmation" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                </div>
-            </div>
-
-            <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
-                Compte actif
-            </label>
-
-            <div class="flex justify-end gap-2 pt-1">
-                <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
-            </div>
-        </form>
+        <div>
+            <label class="text-xs text-primary/60">Email</label>
+            <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
     </div>
-</div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs text-primary/60">Telephone</label>
+            <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+        <div>
+            <label class="text-xs text-primary/60">Role</label>
+            <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                @foreach($roles as $role)
+                    <option value="{{ $role->slug }}" @selected(old('role') === $role->slug)>{{ $role->name }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs text-primary/60">Mot de passe</label>
+            <input type="password" name="password" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+        <div>
+            <label class="text-xs text-primary/60">Confirmation mot de passe</label>
+            <input type="password" name="password_confirmation" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+    </div>
+
+    <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
+        Compte actif
+    </label>
+
+    <x-slot:footer>
+        <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+    </x-slot:footer>
+</x-modal>
 
 {{-- Edit modals --}}
 @foreach($staffUsers as $staff)
-    <div id="edit-user-modal-{{ $staff->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40" onclick="closeEditModal('{{ $staff->id }}')"></div>
-        <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-heading text-lg text-primary">Modifier {{ $staff->name }}</h2>
-                <button type="button" onclick="closeEditModal('{{ $staff->id }}')" class="text-primary/50 hover:text-primary">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
+    <x-modal id="edit-user-modal-{{ $staff->id }}" title="Modifier {{ $staff->name }}" max-width="max-w-2xl" formAction="{{ route('users.update', $staff) }}" closeAction="closeEditModal('{{ $staff->id }}')">
+        @method('PUT')
+        <input type="hidden" name="form_type" value="edit_{{ $staff->id }}">
+        <input type="hidden" name="view" value="{{ $viewMode }}">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Nom complet</label>
+                <input type="text" name="name" value="{{ old('name', $staff->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
             </div>
-
-            <form method="POST" action="{{ route('users.update', $staff) }}" class="space-y-4">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="form_type" value="edit_{{ $staff->id }}">
-                <input type="hidden" name="view" value="{{ $viewMode }}">
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Nom complet</label>
-                        <input type="text" name="name" value="{{ old('name', $staff->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Email</label>
-                        <input type="email" name="email" value="{{ old('email', $staff->email) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Telephone</label>
-                        <input type="text" name="phone" value="{{ old('phone', $staff->phone) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Role</label>
-                        <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                            @foreach($roles as $role)
-                                <option value="{{ $role->slug }}" @selected(old('role', $staff->role) === $role->slug)>{{ $role->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Nouveau mot de passe (optionnel)</label>
-                        <input type="password" name="password" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Confirmation nouveau mot de passe</label>
-                        <input type="password" name="password_confirmation" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                </div>
-
-                <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $staff->is_active))>
-                    Compte actif
-                </label>
-
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeEditModal('{{ $staff->id }}')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
-                </div>
-            </form>
+            <div>
+                <label class="text-xs text-primary/60">Email</label>
+                <input type="email" name="email" value="{{ old('email', $staff->email) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
         </div>
-    </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Telephone</label>
+                <input type="text" name="phone" value="{{ old('phone', $staff->phone) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-primary/60">Role</label>
+                <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    @foreach($roles as $role)
+                        <option value="{{ $role->slug }}" @selected(old('role', $staff->role) === $role->slug)>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Nouveau mot de passe (optionnel)</label>
+                <input type="password" name="password" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-primary/60">Confirmation nouveau mot de passe</label>
+                <input type="password" name="password_confirmation" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+        </div>
+
+        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+            <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $staff->is_active))>
+            Compte actif
+        </label>
+
+        <x-slot:footer>
+            <button type="button" onclick="closeEditModal('{{ $staff->id }}')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+        </x-slot:footer>
+    </x-modal>
 @endforeach
 
 <script>

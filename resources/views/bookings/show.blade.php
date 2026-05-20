@@ -420,16 +420,17 @@
 {{-- Modal : Ajouter prestation au folio --}}
 <div id="modal-folio" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Ajouter une prestation</h3>
             <button onclick="document.getElementById('modal-folio').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.folio.add', $booking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('bookings.folio.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
                 <select name="type" required
@@ -473,7 +474,8 @@
                 <input type="text" name="notes"
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-folio').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
@@ -488,17 +490,17 @@
 {{-- Modal : Paiement --}}
 <div id="modal-payment" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Encaisser un paiement</h3>
             <button onclick="document.getElementById('modal-payment').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
-
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @php $consumedBalance = $booking->getConsumedBalance(); @endphp
             {{-- Solde affiché --}}
             <div class="bg-accent/30 rounded-lg px-4 py-3 flex justify-between items-center">
@@ -540,7 +542,8 @@
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-payment').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
