@@ -220,5 +220,8 @@
                 </x-slot:selectedActions>
             </x-customer-search>
         </div>
+    @endif
+
+</div>
 
 @endsection

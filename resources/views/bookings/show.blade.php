@@ -112,6 +112,36 @@
 </div>
 @endif
 
+    {{-- Minuteur Intelligent (Si Checked In) --}}
+    @if($booking->status->value === 'checked_in' && $booking->actual_check_in)
+    <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg p-5 text-white flex items-center justify-between" 
+         x-data="bookingTimer('{{ $booking->actual_check_in->toIso8601String() }}', '{{ $booking->check_out->copy()->setTime(12, 0, 0)->toIso8601String() }}')">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="clock" class="w-6 h-6 text-blue-100"></i>
+            </div>
+            <div>
+                <h3 class="font-heading font-semibold text-blue-50 text-sm mb-1">Minuteur de séjour en cours</h3>
+                <p class="text-xs text-blue-200">
+                    Client présent depuis : <strong x-text="timeSpent">Calcul...</strong>
+                </p>
+            </div>
+        </div>
+        <div class="text-right">
+            <p class="text-xs text-blue-200 uppercase tracking-wider font-semibold mb-1" x-text="isOverstay ? 'Temps de dépassement' : 'Temps restant estimé'"></p>
+            <div class="flex items-baseline justify-end gap-2">
+                <span x-show="isOverstay" class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <p class="text-2xl font-bold font-mono" :class="isOverstay ? 'text-red-300' : 'text-white'" x-text="timeLeft"></p>
+            </div>
+            <p class="text-[10px] text-blue-300 mt-1" x-show="isOverstay">Départ initialement prévu à 12h00</p>
+            <p class="text-[10px] text-blue-300 mt-1" x-show="!isOverstay">Fin prévue le {{ $booking->check_out->format('d/m/Y') }} à 12h00</p>
+        </div>
+    </div>
+    @endif
+
 <div class="grid grid-cols-3 gap-5">
 
     {{-- Colonne gauche : Infos + Client --}}
@@ -523,5 +553,62 @@
         </form>
     </div>
 </div>
+@push('scripts')
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('bookingTimer', (checkInStr, checkOutStr) => ({
+            timeSpent: 'Calcul...',
+            timeLeft: 'Calcul...',
+            isOverstay: false,
+            interval: null,
+
+            init() {
+                this.updateTimer();
+                this.interval = setInterval(() => this.updateTimer(), 1000);
+            },
+
+            destroy() {
+                if (this.interval) clearInterval(this.interval);
+            },
+
+            updateTimer() {
+                const now = new Date();
+                const checkInDate = new Date(checkInStr);
+                const checkOutDate = new Date(checkOutStr);
+
+                // --- 1. Calcul du temps passé ---
+                let diffSpent = now - checkInDate;
+                if (diffSpent < 0) diffSpent = 0; // Au cas où
+                this.timeSpent = this.formatDuration(diffSpent);
+
+                // --- 2. Calcul du temps restant ou dépassé ---
+                let diffLeft = checkOutDate - now;
+                if (diffLeft < 0) {
+                    this.isOverstay = true;
+                    this.timeLeft = "+ " + this.formatDuration(Math.abs(diffLeft));
+                } else {
+                    this.isOverstay = false;
+                    this.timeLeft = this.formatDuration(diffLeft);
+                }
+            },
+
+            formatDuration(ms) {
+                const seconds = Math.floor((ms / 1000) % 60);
+                const minutes = Math.floor((ms / 1000 / 60) % 60);
+                const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+                const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+                let parts = [];
+                if (days > 0) parts.push(`${days}j`);
+                if (hours > 0 || days > 0) parts.push(`${hours}h`);
+                parts.push(`${minutes}m`);
+                parts.push(`${seconds}s`);
+
+                return parts.join(' ');
+            }
+        }));
+    });
+</script>
+@endpush
 
 @endsection

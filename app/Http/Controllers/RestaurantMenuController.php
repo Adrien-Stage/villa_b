@@ -8,6 +8,7 @@ use App\Models\RestaurantOrderItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -148,9 +149,10 @@ class RestaurantMenuController extends Controller
             'type' => ['required', Rule::in(self::ITEM_TYPES)],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
 
-        RestaurantMenuItem::create([
+        $item = RestaurantMenuItem::create([
             'tenant_id' => Auth::user()->tenant_id,
             'restaurant_menu_category_id' => $validated['restaurant_menu_category_id'] ?? null,
             'name' => trim($validated['name']),
@@ -160,6 +162,11 @@ class RestaurantMenuController extends Controller
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('restaurant_menu', 'public');
+            $item->update(['image_path' => $path]);
+        }
 
         return redirect()
             ->route('restaurant.menus.index')
@@ -188,6 +195,7 @@ class RestaurantMenuController extends Controller
             'type' => ['required', Rule::in(self::ITEM_TYPES)],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
 
         $item->update([
@@ -199,6 +207,19 @@ class RestaurantMenuController extends Controller
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($item->image_path) {
+                Storage::disk('public')->delete($item->image_path);
+            }
+            $path = $request->file('image')->store('restaurant_menu', 'public');
+            $item->update(['image_path' => $path]);
+        } elseif ($request->input('remove_image') == '1') {
+            if ($item->image_path) {
+                Storage::disk('public')->delete($item->image_path);
+            }
+            $item->update(['image_path' => null]);
+        }
 
         return redirect()
             ->route('restaurant.menus.index')
@@ -217,6 +238,10 @@ class RestaurantMenuController extends Controller
             return redirect()
                 ->route('restaurant.menus.index')
                 ->withErrors(['item' => 'Cet article est deja utilise dans des commandes. Desactive-le au lieu de le supprimer.']);
+        }
+
+        if ($item->image_path) {
+            Storage::disk('public')->delete($item->image_path);
         }
 
         $item->delete();

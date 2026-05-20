@@ -8,6 +8,18 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Facturation #{{ $order->id }}</h1>
         <p class="text-sm text-primary/50 mt-0.5">
             Table {{ $order->table_number }}
+            ·
+            @if($order->booking?->room?->number)
+                @php
+                    $residentName = $order->booking->customer?->full_name
+                        ?? $order->booking->guests?->firstWhere('is_primary_guest', true)?->full_name
+                        ?? $order->booking->guests?->first()?->full_name
+                        ?? 'Client';
+                @endphp
+                {{ $residentName . ' - chambre ' . $order->booking->room->number }}
+            @else
+                {{ $order->booking ? ($order->booking->customer?->full_name ?? 'Client') : ($order->customer_name ?? 'Client') }}
+            @endif
             · {{ strtoupper($order->payment_status ?? 'unpaid') }}
         </p>
     </div>
@@ -114,7 +126,7 @@
                             <option value="">Selectionner un sejour en cours...</option>
                             @foreach($checkedInBookings as $booking)
                                 <option value="{{ $booking->id }}">
-                                    Chambre {{ $booking->room?->number ?? '?' }} · {{ $booking->customer?->name ?? 'Client' }} · {{ $booking->booking_number }}
+                                    Chambre {{ $booking->room?->number ?? '?' }} · {{ $booking->customer?->full_name ?? 'Client' }} · {{ $booking->booking_number }}
                                 </option>
                             @endforeach
                         </select>

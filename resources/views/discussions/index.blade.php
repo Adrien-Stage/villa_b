@@ -103,9 +103,39 @@
                         <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
                             {{ strtoupper(substr($title, 0, 2)) }}
                         </div>
-                        <div>
-                            <h2 class="text-sm font-semibold text-primary">{{ $title }}</h2>
-                            <p class="text-xs text-primary/40">{{ $selectedConversation->participants->count() }} participant{{ $selectedConversation->participants->count() > 1 ? 's' : '' }}</p>
+                        <div class="flex-1 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-sm font-semibold text-primary">{{ $title }}</h2>
+                                @if($selectedConversation->is_group)
+                                    <p class="text-xs text-primary/50 mt-0.5">
+                                        {{ $selectedConversation->participants->count() }} membres
+                                        @if($selectedConversation->participants->where('id', auth()->id())->first()?->pivot?->is_admin)
+                                            <span class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">Admin</span>
+                                        @endif
+                                    </p>
+                                @elseif($other)
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <span class="relative flex h-2.5 w-2.5">
+                                          @if($other->isOnline())
+                                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                          @else
+                                              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-300"></span>
+                                          @endif
+                                        </span>
+                                        <p class="text-[11px] font-medium text-primary/50">
+                                            {{ $other->isOnline() ? 'En ligne' : 'Hors ligne' }}
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            @if($selectedConversation->is_group && $selectedConversation->participants->where('id', auth()->id())->first()?->pivot?->is_admin)
+                                <button type="button" class="text-xs px-3 py-1.5 bg-secondary/20 hover:bg-secondary/40 text-primary rounded-lg transition-colors font-medium flex items-center gap-1">
+                                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                                    Gérer le groupe
+                                </button>
+                            @endif
                         </div>
                     </header>
 
@@ -160,9 +190,9 @@
             </section>
         </div>
 
-        <div id="new-discussion-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/40" onclick="closeNewDiscussionModal()"></div>
-            <div class="relative w-full max-w-md rounded-xl bg-white shadow-xl p-5">
+        <div id="new-discussion-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNewDiscussionModal()"></div>
+            <div class="relative w-full max-w-md rounded-xl bg-white shadow-xl p-5" x-data="{ isGroup: false }">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-heading text-lg text-primary">Nouvelle discussion</h3>
                     <button type="button" onclick="closeNewDiscussionModal()" class="text-primary/50 hover:text-primary">
@@ -170,19 +200,48 @@
                     </button>
                 </div>
 
-                <form method="POST" action="{{ route('discussions.conversations.store') }}" class="space-y-3">
+                <form method="POST" action="{{ route('discussions.conversations.store') }}" class="space-y-4">
                     @csrf
-                    <div>
-                        <label class="block text-xs text-primary/60 mb-1">Demarrer avec</label>
-                        <select name="participant_id" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <input type="hidden" name="is_group" :value="isGroup ? '1' : '0'">
+
+                    <div class="flex items-center gap-2 bg-accent/10 p-2.5 rounded-lg border border-secondary/20 cursor-pointer" @click="isGroup = !isGroup">
+                        <input type="checkbox" id="is_group_toggle" x-model="isGroup" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4 pointer-events-none">
+                        <label for="is_group_toggle" class="text-sm font-medium text-primary pointer-events-none">Créer un groupe de discussion</label>
+                    </div>
+
+                    <div x-show="isGroup" x-transition class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Nom du groupe *</label>
+                            <input type="text" name="title" :required="isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary" placeholder="Ex: Équipe Réception">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Membres du groupe *</label>
+                            <div class="max-h-48 overflow-y-auto border border-secondary/30 rounded-lg p-2 space-y-1 bg-white">
+                                @foreach($availableUsers as $participant)
+                                    <label class="flex items-center gap-3 p-2 hover:bg-accent/10 rounded-md cursor-pointer border border-transparent hover:border-secondary/20 transition-colors">
+                                        <input type="checkbox" name="participant_ids[]" value="{{ $participant->id }}" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4">
+                                        <div>
+                                            <span class="text-sm font-medium text-primary block">{{ $participant->name }}</span>
+                                            <span class="text-[10px] text-primary/50 uppercase">{{ str_replace('_', ' ', $participant->role ?? 'staff') }}</span>
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="!isGroup" x-transition>
+                        <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Démarrer avec *</label>
+                        <select name="participant_id" :required="!isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                             <option value="">Choisir un collaborateur</option>
                             @foreach($availableUsers as $participant)
                                 <option value="{{ $participant->id }}">{{ $participant->name }} - {{ str_replace('_', ' ', $participant->role ?? 'staff') }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button type="submit" class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark transition-colors">
-                        Demarrer la discussion
+
+                    <button type="submit" class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark transition-colors mt-4">
+                        Démarrer la discussion
                     </button>
                 </form>
             </div>
@@ -579,6 +638,7 @@ if (chatContainer) {
                     lastMessageId = Math.max(lastMessageId, Number(message.id));
                 });
                 scrollToBottom();
+                if (window.playNotificationSound) window.playNotificationSound();
             }
 
             updateUnreadUI(payload.unread_counts || {}, payload.total_unread || 0);

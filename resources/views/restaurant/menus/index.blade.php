@@ -301,7 +301,7 @@
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            <form method="POST" action="{{ route('restaurant.menus.items.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('restaurant.menus.items.store') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 <input type="hidden" name="form_type" value="create_item">
 
@@ -345,6 +345,22 @@
                     <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">{{ old('description') }}</textarea>
                 </div>
 
+                <div x-data="singleImagePreview()">
+                    <label class="text-xs text-primary/60">Image (optionnel)</label>
+                    <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'" class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all bg-white" x-show="!preview">
+                        <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
+                        <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 2 Mo</p>
+                    </div>
+                    <input type="file" name="image" x-ref="fileInput" @change="handleFile($event)" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden">
+                    
+                    <div x-show="preview" style="display: none;" class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm group">
+                        <img :src="preview" class="w-full h-full object-cover">
+                        <button type="button" @click="removeImage()" class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <label class="inline-flex items-center gap-2 text-xs text-primary/70">
                     <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
                     Actif
@@ -369,7 +385,7 @@
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('restaurant.menus.items.update', $item) }}" class="space-y-4">
+                <form method="POST" action="{{ route('restaurant.menus.items.update', $item) }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
@@ -412,6 +428,23 @@
                     <div>
                         <label class="text-xs text-primary/60">Description (optionnel)</label>
                         <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">{{ old('description', $item->description) }}</textarea>
+                    </div>
+
+                    <div x-data="singleImagePreview('{{ $item->image_path ? Storage::url($item->image_path) : '' }}')" :id="$id('image-preview')">
+                        <label class="text-xs text-primary/60">Image (optionnel)</label>
+                        <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'" class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all bg-white" x-show="!preview">
+                            <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
+                            <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 2 Mo</p>
+                        </div>
+                        <input type="file" name="image" x-ref="fileInput" @change="handleFile($event)" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden">
+                        <input type="hidden" name="remove_image" :id="'remove-image-flag-' + $id('image-preview')" value="0">
+                        
+                        <div x-show="preview" style="display: none;" class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm group">
+                            <img :src="preview" class="w-full h-full object-cover">
+                            <button type="button" @click="removeImage()" class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <label class="inline-flex items-center gap-2 text-xs text-primary/70">
@@ -507,5 +540,44 @@ window.closeEditItemModal = function(itemId) {
         openEditItemModal('{{ str_replace('edit_item_', '', old('form_type')) }}');
     @endif
 @endif
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('singleImagePreview', (initialPreview = null) => ({
+        preview: initialPreview,
+        isDragging: false,
+
+        handleFile(event) {
+            const file = event.target.files[0];
+            if (file) this.processFile(file);
+        },
+
+        handleDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.processFile(file);
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                this.$refs.fileInput.files = dt.files;
+            }
+        },
+
+        processFile(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image trop volumineuse (max 2 Mo)');
+                return;
+            }
+            this.preview = URL.createObjectURL(file);
+            this.$nextTick(() => { if (window.refreshLucideIcons) window.refreshLucideIcons(); });
+        },
+
+        removeImage() {
+            this.preview = null;
+            this.$refs.fileInput.value = '';
+            const removeInput = document.getElementById('remove-image-flag-' + this.$id('image-preview'));
+            if(removeInput) removeInput.value = '1';
+        }
+    }));
+});
 </script>
 @endsection

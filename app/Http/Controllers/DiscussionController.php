@@ -129,12 +129,53 @@ class DiscussionController extends Controller
 
         $user = Auth::user();
         $validated = $request->validate([
+            'is_group' => ['nullable', 'boolean'],
+            'title' => ['required_if:is_group,true', 'nullable', 'string', 'max:160'],
+            'participant_ids' => ['required_if:is_group,true', 'array'],
+            'participant_ids.*' => [
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('tenant_id', $user->tenant_id)->where('is_active', true)),
+            ],
             'participant_id' => [
-                'required',
+                'required_without:is_group',
+                'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where(fn ($q) => $q->where('tenant_id', $user->tenant_id)->where('is_active', true)),
             ],
         ]);
+
+        $isGroup = $request->boolean('is_group');
+
+        if ($isGroup) {
+            $participantIds = collect($validated['participant_ids'] ?? [])
+                ->reject(fn ($id) => (int) $id === $user->id)
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (empty($participantIds)) {
+                return redirect()->route('discussions.index')->withErrors([
+                    'conversation' => 'Un groupe doit contenir au moins un autre membre.',
+                ]);
+            }
+
+            $conversation = DiscussionConversation::create([
+                'tenant_id' => $user->tenant_id,
+                'title' => trim($validated['title']),
+                'is_group' => true,
+                'created_by' => $user->id,
+            ]);
+
+            $syncData = [
+                $user->id => ['last_read_at' => now(), 'is_admin' => true, 'archived_at' => null, 'deleted_at' => null],
+            ];
+            foreach ($participantIds as $pId) {
+                $syncData[$pId] = ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null, 'deleted_at' => null];
+            }
+            $conversation->participants()->sync($syncData);
+
+            return redirect()->route('discussions.index', ['conversation' => $conversation->id]);
+        }
 
         $participantId = (int) $validated['participant_id'];
         if ($participantId === $user->id) {
@@ -145,6 +186,7 @@ class DiscussionController extends Controller
 
         $candidate = $user->discussionConversations()
             ->with('participants:id')
+            ->where('is_group', false)
             ->get()
             ->first(function ($conversation) use ($user, $participantId) {
                 $ids = $conversation->participants->pluck('id')->push($user->id)->unique()->values();
@@ -165,12 +207,13 @@ class DiscussionController extends Controller
         $conversation = DiscussionConversation::create([
             'tenant_id' => $user->tenant_id,
             'title' => null,
+            'is_group' => false,
             'created_by' => $user->id,
         ]);
 
         $conversation->participants()->sync([
-            $user->id => ['last_read_at' => now(), 'archived_at' => null, 'deleted_at' => null],
-            $participant->id => ['last_read_at' => null, 'archived_at' => null, 'deleted_at' => null],
+            $user->id => ['last_read_at' => now(), 'is_admin' => true, 'archived_at' => null, 'deleted_at' => null],
+            $participant->id => ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null, 'deleted_at' => null],
         ]);
 
         return redirect()->route('discussions.index', ['conversation' => $conversation->id]);

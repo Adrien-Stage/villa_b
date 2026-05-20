@@ -43,6 +43,39 @@ class CheckOutService
 
         // Tout dans une transaction DB atomique
         return DB::transaction(function () use ($booking) {
+            
+            // --- MINUTEUR INTELLIGENT : Recalcul de la durée réelle au check-out ---
+            if ($booking->actual_check_in) {
+                $checkInDate = $booking->actual_check_in->copy()->startOfDay();
+                $checkOutDate = now();
+                
+                // Différence en jours complets
+                $actualNights = $checkInDate->diffInDays($checkOutDate->copy()->startOfDay());
+                
+                // Si l'heure de départ dépasse 14h00, on compte une nuit supplémentaire
+                if ($checkOutDate->format('H:i') >= '14:00' && $actualNights > 0) {
+                    $actualNights++;
+                }
+                
+                // Minimum 1 nuit s'il part le même jour
+                $actualNights = max(1, $actualNights);
+                
+                if ($booking->total_nights !== $actualNights) {
+                    $booking->total_nights = $actualNights;
+                    $booking->total_room_amount = $actualNights * $booking->price_per_night;
+                    // On peut aussi ajuster la date prévue pour refléter la réalité
+                    $booking->check_out = $checkOutDate->copy()->startOfDay();
+                    $booking->save();
+                    
+                    // Mettre à jour la ligne folio de l'hébergement
+                    $booking->folioItems()->where('type', FolioItem::TYPE_ROOM)->update([
+                        'quantity'    => $actualNights,
+                        'total_price' => $booking->total_room_amount,
+                        'description' => "Hébergement {$actualNights} nuit(s) — Chambre {$booking->room->number}",
+                    ]);
+                }
+            }
+            // ------------------------------------------------------------------------
 
             // 1. Finalise les montants
             $this->finalizeAmounts($booking);

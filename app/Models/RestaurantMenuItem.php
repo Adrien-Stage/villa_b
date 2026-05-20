@@ -16,6 +16,7 @@ class RestaurantMenuItem extends Model
         'restaurant_menu_category_id',
         'name',
         'description',
+        'image_path',
         'price',
         'type',
         'sort_order',

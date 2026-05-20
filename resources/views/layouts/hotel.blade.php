@@ -228,7 +228,69 @@
 
     <x-access-denied-popup />
 
+    <!-- Notification Container -->
+    <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
     <script>
+    window.playNotificationSound = function() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch (e) {}
+    };
+
+    window.showSystemToast = function(title, message, onClickUrl = null) {
+        const container = document.getElementById('system-toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'bg-white border border-secondary/20 shadow-lg rounded-xl p-4 w-72 transform transition-all duration-300 translate-y-full opacity-0 pointer-events-auto cursor-pointer';
+        
+        toast.innerHTML = `
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-primary">${title}</h4>
+                    <p class="text-xs text-primary/60 mt-0.5 line-clamp-2">${message}</p>
+                </div>
+            </div>
+        `;
+
+        if (onClickUrl) {
+            toast.addEventListener('click', () => window.location.href = onClickUrl);
+        } else {
+            toast.addEventListener('click', () => toast.remove());
+        }
+
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-full', 'opacity-0');
+        });
+
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'translate-y-2');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    };
+
     window.openMobileSidebar = function() {
         document.getElementById('mobile-sidebar').classList.remove('hidden');
         document.getElementById('mobile-sidebar-backdrop').classList.remove('hidden');
@@ -246,6 +308,7 @@
         if (!dot) return;
 
         const endpoint = '{{ route('discussions.unreadSummary') }}';
+        let previousTotalUnread = null;
 
         const refreshUnreadDot = async () => {
             try {
@@ -261,6 +324,24 @@
                 if (!payload || !payload.ok) return;
 
                 dot.classList.toggle('hidden', !payload.has_unread);
+
+                const currentTotal = parseInt(payload.total_unread) || 0;
+                
+                if (previousTotalUnread !== null && currentTotal > previousTotalUnread) {
+                    if (window.playNotificationSound) window.playNotificationSound();
+                    
+                    if (!window.location.pathname.includes('/discussions')) {
+                        if (window.showSystemToast) {
+                            window.showSystemToast(
+                                'Nouveau message', 
+                                'Vous avez reçu un nouveau message dans vos discussions.',
+                                '{{ route('discussions.index') }}'
+                            );
+                        }
+                    }
+                }
+                
+                previousTotalUnread = currentTotal;
             } catch (error) {
                 console.error('Unread summary polling failed', error);
             }

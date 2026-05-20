@@ -74,17 +74,11 @@ class BookingController extends Controller
             $customer = Customer::find($request->customer_id);
         }
 
-        // Recherche de clients existants
-        $customers = collect();
-        if ($request->filled('search')) {
-            $customers = Customer::where(function ($q) use ($request) {
-                $search = $request->search;
-                $q->where('first_name', 'ilike', "%{$search}%")
-                    ->orWhere('last_name',  'ilike', "%{$search}%")
-                    ->orWhere('email',      'ilike', "%{$search}%")
-                    ->orWhere('phone',      'ilike', "%{$search}%");
-            })->limit(10)->get();
-        }
+        // Charger les clients pour la recherche locale (AlpineJS)
+        $customers = Customer::query()
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
 
         return view('bookings.create', compact('customer', 'customers'));
     }

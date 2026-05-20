@@ -15,7 +15,12 @@ class DiscussionConversation extends Model
     protected $fillable = [
         'tenant_id',
         'title',
+        'is_group',
         'created_by',
+    ];
+
+    protected $casts = [
+        'is_group' => 'boolean',
     ];
 
     public function tenant(): BelongsTo
@@ -31,7 +36,7 @@ class DiscussionConversation extends Model
     public function participants(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'discussion_conversation_user')
-            ->withPivot('last_read_at', 'archived_at', 'deleted_at')
+            ->withPivot('last_read_at', 'archived_at', 'deleted_at', 'is_admin')
             ->withTimestamps();
     }
 
