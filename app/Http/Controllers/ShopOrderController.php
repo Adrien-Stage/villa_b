@@ -207,8 +207,8 @@ class ShopOrderController extends Controller
                 $product->decrement('stock_quantity', $item['quantity']);
             }
 
-            // Calculer les taxes (TVA 19.25%)
-            $taxAmount = ceil($subtotal * 0.1925);
+            // Calculer les taxes (TVA 19.25%) et arrondir au FCFA entier (100 centimes)
+            $taxAmount = round(($subtotal * 0.1925) / 100) * 100;
             $totalAmount = $subtotal + $taxAmount;
 
             // Mettre à jour la commande

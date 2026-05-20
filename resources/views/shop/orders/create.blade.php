@@ -37,8 +37,8 @@
             <!-- Formulaire de commande -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Informations client / Chambre -->
-                <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-visible">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-400 rounded-l-xl"></div>
                     <div class="flex items-center pb-3 border-b border-secondary/10 mb-4">
                         <i data-lucide="user" class="w-5 h-5 text-primary mr-2"></i>
                         <h2 class="text-lg font-heading font-semibold text-primary">Client ou Chambre</h2>
@@ -144,8 +144,8 @@
                 </div>
 
                 <!-- Articles -->
-                <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-green-400"></div>
+                <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-visible">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-green-400 rounded-l-xl"></div>
                     <div class="flex items-center pb-3 border-b border-secondary/10 mb-5">
                         <i data-lucide="shopping-bag" class="w-5 h-5 text-primary mr-2"></i>
                         <h2 class="text-lg font-heading font-semibold text-primary">Contenu de la commande</h2>
@@ -205,8 +205,8 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Méthode de paiement -->
-                    <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1 h-full bg-purple-400"></div>
+                    <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-visible">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-purple-400 rounded-l-xl"></div>
                         <div class="flex items-center pb-3 border-b border-secondary/10 mb-5">
                             <i data-lucide="credit-card" class="w-5 h-5 text-primary mr-2"></i>
                             <h2 class="text-lg font-heading font-semibold text-primary">Paiement</h2>
@@ -235,8 +235,8 @@
                     </div>
 
                     <!-- Notes -->
-                    <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
+                    <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 relative overflow-visible">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-orange-400 rounded-l-xl"></div>
                         <div class="flex items-center pb-3 border-b border-secondary/10 mb-5">
                             <i data-lucide="file-text" class="w-5 h-5 text-primary mr-2"></i>
                             <h2 class="text-lg font-heading font-semibold text-primary">Notes additionnelles</h2>

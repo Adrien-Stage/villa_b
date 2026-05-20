@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{
-    theoretical: {{ $theoretical_amount / 100 }},
+    theoretical: Math.round({{ $theoretical_amount / 100 }}),
     actual: 0,
     get gap() {
         return this.actual - this.theoretical;
