@@ -212,213 +212,168 @@
 </div>
 
 {{-- Movement modal --}}
-<div id="movement-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/40" onclick="closeMovementModal()"></div>
-    <div class="relative w-full max-w-xl bg-white rounded-xl shadow-xl p-6 border border-secondary/15">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-heading text-lg text-primary" id="movement-title">Mouvement</h2>
-            <button type="button" onclick="closeMovementModal()" class="text-primary/50 hover:text-primary">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+<x-modal id="movement-modal" title="Mouvement" title-id="movement-title" max-width="max-w-xl" formAction="#" closeAction="closeMovementModal()">
+    <x-slot:form-attributes>
+        id="movement-form"
+    </x-slot:form-attributes>
+    
+    <input type="hidden" name="type" id="movement-type">
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs text-primary/60">Quantité</label>
+            <input type="number" name="quantity" step="0.001" min="0.001" required
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+        <div>
+            <label class="text-xs text-primary/60">Raison</label>
+            <select name="reason" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                @foreach($moveReasons as $reason)
+                    <option value="{{ $reason }}">{{ strtoupper($reason) }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label class="text-xs text-primary/60">Notes (optionnel)</label>
+        <textarea name="notes" rows="2" maxlength="2000"
+            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none"></textarea>
+    </div>
+
+    <x-slot:footer>
+        <button type="button" onclick="closeMovementModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+    </x-slot:footer>
+</x-modal>
+
+@if($canManage)
+    {{-- Create category modal --}}
+    <x-modal id="create-category-modal" title="Nouvelle categorie" formAction="{{ route('restaurant.pantry.categories.store') }}" closeAction="closeCreateCategoryModal()">
+        <input type="hidden" name="form_type" value="create_category">
+
+        <div>
+            <label class="text-xs text-primary/60">Nom</label>
+            <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Ordre</label>
+                <input type="number" name="sort_order" min="0" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs text-primary/70 mt-6">
+                <input type="checkbox" name="is_active" value="1" checked>
+                Active
+            </label>
         </div>
 
-        <form id="movement-form" method="POST" action="#" class="space-y-4">
-            @csrf
-            <input type="hidden" name="type" id="movement-type">
+        <x-slot:footer>
+            <button type="button" onclick="closeCreateCategoryModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+        </x-slot:footer>
+    </x-modal>
+
+    {{-- Create item modal --}}
+    <x-modal id="create-item-modal" title="Nouvel article" max-width="max-w-2xl" formAction="{{ route('restaurant.pantry.items.store') }}" closeAction="closeCreateItemModal()">
+        <input type="hidden" name="form_type" value="create_item">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Nom</label>
+                <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-primary/60">Categorie</label>
+                <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    <option value="">Aucune</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <label class="text-xs text-primary/60">Unité</label>
+                <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    @foreach($units as $unit)
+                        <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-primary/60">Stock min</label>
+                <input type="number" step="0.001" min="0" name="min_stock" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
+                <input type="number" min="0" name="cost_price" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            </div>
+        </div>
+
+        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+            <input type="checkbox" name="is_active" value="1" checked>
+            Actif
+        </label>
+
+        <x-slot:footer>
+            <button type="button" onclick="closeCreateItemModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+        </x-slot:footer>
+    </x-modal>
+
+    {{-- Edit item modals --}}
+    @foreach($items as $item)
+        <x-modal id="edit-item-modal-{{ $item->id }}" title="Modifier {{ $item->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.pantry.items.update', $item) }}" closeAction="closeEditItemModal({{ $item->id }})">
+            @method('PUT')
+            <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-xs text-primary/60">Quantité</label>
-                    <input type="number" name="quantity" step="0.001" min="0.001" required
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <label class="text-xs text-primary/60">Nom</label>
+                    <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
                 </div>
                 <div>
-                    <label class="text-xs text-primary/60">Raison</label>
-                    <select name="reason" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                        @foreach($moveReasons as $reason)
-                            <option value="{{ $reason }}">{{ strtoupper($reason) }}</option>
+                    <label class="text-xs text-primary/60">Categorie</label>
+                    <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                        <option value="">Aucune</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" @selected((string) $item->restaurant_pantry_category_id === (string) $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
 
-            <div>
-                <label class="text-xs text-primary/60">Notes (optionnel)</label>
-                <textarea name="notes" rows="2" maxlength="2000"
-                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none"></textarea>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-1">
-                <button type="button" onclick="closeMovementModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-@if($canManage)
-    {{-- Create category modal --}}
-    <div id="create-category-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40" onclick="closeCreateCategoryModal()"></div>
-        <div class="relative w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-heading text-lg text-primary">Nouvelle categorie</h2>
-                <button type="button" onclick="closeCreateCategoryModal()" class="text-primary/50 hover:text-primary">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-            <form method="POST" action="{{ route('restaurant.pantry.categories.store') }}" class="space-y-4">
-                @csrf
-                <input type="hidden" name="form_type" value="create_category">
-
+            <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="text-xs text-primary/60">Nom</label>
-                    <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <label class="text-xs text-primary/60">Unité</label>
+                    <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                        @foreach($units as $unit)
+                            <option value="{{ $unit }}" @selected($item->unit === $unit)>{{ strtoupper($unit) }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Ordre</label>
-                        <input type="number" name="sort_order" min="0" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <label class="inline-flex items-center gap-2 text-xs text-primary/70 mt-6">
-                        <input type="checkbox" name="is_active" value="1" checked>
-                        Active
-                    </label>
+                <div>
+                    <label class="text-xs text-primary/60">Stock min</label>
+                    <input type="number" step="0.001" min="0" name="min_stock" value="{{ (float) $item->min_stock }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
                 </div>
-
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeCreateCategoryModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+                <div>
+                    <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
+                    <input type="number" min="0" name="cost_price" value="{{ $item->cost_price ? (int) ($item->cost_price / 100) : '' }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
                 </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Create item modal --}}
-    <div id="create-item-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40" onclick="closeCreateItemModal()"></div>
-        <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-heading text-lg text-primary">Nouvel article</h2>
-                <button type="button" onclick="closeCreateItemModal()" class="text-primary/50 hover:text-primary">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
             </div>
-            <form method="POST" action="{{ route('restaurant.pantry.items.store') }}" class="space-y-4">
-                @csrf
-                <input type="hidden" name="form_type" value="create_item">
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Nom</label>
-                        <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Categorie</label>
-                        <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                            <option value="">Aucune</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+            <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                <input type="checkbox" name="is_active" value="1" @checked($item->is_active)>
+                Actif
+            </label>
 
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="text-xs text-primary/60">Unité</label>
-                        <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                            @foreach($units as $unit)
-                                <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Stock min</label>
-                        <input type="number" step="0.001" min="0" name="min_stock" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
-                        <input type="number" min="0" name="cost_price" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                    </div>
-                </div>
-
-                <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                    <input type="checkbox" name="is_active" value="1" checked>
-                    Actif
-                </label>
-
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeCreateItemModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Edit item modals --}}
-    @foreach($items as $item)
-        <div id="edit-item-modal-{{ $item->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/40" onclick="closeEditItemModal({{ $item->id }})"></div>
-            <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-heading text-lg text-primary">Modifier {{ $item->name }}</h2>
-                    <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="text-primary/50 hover:text-primary">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <form method="POST" action="{{ route('restaurant.pantry.items.update', $item) }}" class="space-y-4">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-xs text-primary/60">Nom</label>
-                            <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                        </div>
-                        <div>
-                            <label class="text-xs text-primary/60">Categorie</label>
-                            <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                                <option value="">Aucune</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" @selected((string) $item->restaurant_pantry_category_id === (string) $category->id)>{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-xs text-primary/60">Unité</label>
-                            <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                                @foreach($units as $unit)
-                                    <option value="{{ $unit }}" @selected($item->unit === $unit)>{{ strtoupper($unit) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs text-primary/60">Stock min</label>
-                            <input type="number" step="0.001" min="0" name="min_stock" value="{{ (float) $item->min_stock }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                        </div>
-                        <div>
-                            <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
-                            <input type="number" min="0" name="cost_price" value="{{ $item->cost_price ? (int) ($item->cost_price / 100) : '' }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-                        </div>
-                    </div>
-
-                    <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                        <input type="checkbox" name="is_active" value="1" @checked($item->is_active)>
-                        Actif
-                    </label>
-
-                    <div class="flex justify-end gap-2 pt-1">
-                        <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+            <x-slot:footer>
+                <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+            </x-slot:footer>
+        </x-modal>
     @endforeach
 @endif
 

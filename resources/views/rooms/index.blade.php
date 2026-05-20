@@ -433,16 +433,17 @@
 
 {{-- Modal : Créer chambre --}}
 <div id="modal-create-room" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouvelle chambre</h3>
             <button onclick="document.getElementById('modal-create-room').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('rooms.store') }}" enctype="multipart/form-data" class="px-6 py-5 space-y-4 expect-popup">
+        <form method="POST" action="{{ route('rooms.store') }}" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="modal-label">Type de chambre *</label>
                 <select name="room_type_id" required class="modal-input">
@@ -493,7 +494,8 @@
                     </template>
                 </div>
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-create-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
@@ -507,16 +509,18 @@
 
 {{-- Modal : Éditer chambre --}}
 <div id="modal-edit-room" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Modifier la chambre</h3>
             <button onclick="document.getElementById('modal-edit-room').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form id="form-edit-room" method="POST" action="" enctype="multipart/form-data" class="px-6 py-5 space-y-4 expect-popup">
-            @csrf @method('PUT')
+        <form id="form-edit-room" method="POST" action="" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+            @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+            @method('PUT')
             <div>
                 <label class="modal-label">Type de chambre *</label>
                 <select id="edit-room-type" name="room_type_id" required class="modal-input">
@@ -562,7 +566,8 @@
                     </template>
                 </div>
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-edit-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
@@ -576,16 +581,17 @@
 
 {{-- Modal : Créer type --}}
 <div id="modal-create-type" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouveau type de chambre</h3>
             <button onclick="document.getElementById('modal-create-type').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('rooms.types.store') }}" class="px-6 py-5 space-y-4 expect-popup">
+        <form method="POST" action="{{ route('rooms.types.store') }}" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
@@ -620,7 +626,8 @@
                     <input type="number" name="size_sqm" placeholder="25" min="0" class="modal-input">
                 </div>
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-create-type').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
@@ -634,16 +641,18 @@
 
 {{-- Modal : Éditer type --}}
 <div id="modal-edit-type" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Modifier le type</h3>
             <button onclick="document.getElementById('modal-edit-type').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form id="form-edit-type" method="POST" action="" class="px-6 py-5 space-y-4 expect-popup">
-            @csrf @method('PUT')
+        <form id="form-edit-type" method="POST" action="" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+            @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+            @method('PUT')
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
@@ -678,7 +687,8 @@
                     <input type="number" id="edit-type-sqm" name="size_sqm" min="0" class="modal-input">
                 </div>
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-edit-type').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"

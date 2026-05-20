@@ -133,70 +133,60 @@
 
 @role('restaurant_chief', 'restaurant_staff')
 {{-- Create order modal --}}
-<div id="create-order-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/40" onclick="closeCreateOrderModal()"></div>
-    <div class="relative w-full max-w-4xl bg-white rounded-xl shadow-xl overflow-hidden border border-secondary/15">
-        <div class="px-5 py-4 border-b border-secondary/15 flex items-center justify-between">
-            <div>
-                <h2 class="font-heading text-lg text-primary">Nouvelle commande</h2>
-                <p class="text-xs text-primary/45 mt-0.5">Saisie manuelle (client sans QR)</p>
+<x-modal id="create-order-modal" title="Nouvelle commande" subtitle="Saisie manuelle (client sans QR)" max-width="max-w-4xl" closeAction="closeCreateOrderModal()">
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] h-full">
+        <div class="p-5 border-b lg:border-b-0 lg:border-r border-secondary/15 flex flex-col h-[50vh] lg:h-full">
+            <div class="flex items-center justify-between gap-3 mb-4 shrink-0">
+                <div class="relative flex-1">
+                    <input id="menu-search" type="text" placeholder="Rechercher un article..."
+                        class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-secondary/25 bg-white text-sm outline-none focus:border-secondary">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+                </div>
+                <select id="cat-filter" class="px-3 py-2.5 text-sm border border-secondary/25 rounded-xl bg-white text-primary outline-none focus:border-secondary">
+                    <option value="all">Toutes</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                    <option value="none">Autres</option>
+                </select>
             </div>
-            <button type="button" onclick="closeCreateOrderModal()" class="text-primary/50 hover:text-primary">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+
+            <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 overflow-y-auto pr-1">
+                @foreach($menuItems as $item)
+                    <button type="button"
+                        data-item
+                        data-id="{{ $item->id }}"
+                        data-name="{{ $item->name }}"
+                        data-price="{{ $item->price }}"
+                        data-category="{{ $item->restaurant_menu_category_id ?? 'none' }}"
+                        onclick="addToCart({{ $item->id }})"
+                        class="text-left rounded-2xl border border-secondary/15 bg-white p-4 hover:bg-accent/10 transition-colors">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="font-heading text-sm font-semibold text-primary truncate">{{ $item->name }}</p>
+                                @if($item->description)
+                                    <p class="text-xs text-primary/45 mt-1 truncate">{{ $item->description }}</p>
+                                @endif
+                                <div class="mt-2 text-xs text-primary/45">
+                                    {{ $item->category?->name ?? '—' }} · {{ strtoupper($item->type) }}
+                                </div>
+                            </div>
+                            <p class="text-sm font-semibold text-primary flex-shrink-0">
+                                {{ number_format($item->price / 100, 0, ',', ' ') }} FCFA
+                            </p>
+                        </div>
+                    </button>
+                @endforeach
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px]">
-            <div class="p-5 border-b lg:border-b-0 lg:border-r border-secondary/15">
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <div class="relative flex-1">
-                        <input id="menu-search" type="text" placeholder="Rechercher un article..."
-                            class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-secondary/25 bg-white text-sm outline-none focus:border-secondary">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
-                    </div>
-                    <select id="cat-filter" class="px-3 py-2.5 text-sm border border-secondary/25 rounded-xl bg-white text-primary outline-none focus:border-secondary">
-                        <option value="all">Toutes</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                        <option value="none">Autres</option>
-                    </select>
-                </div>
+        <div class="p-5 bg-accent/10 flex flex-col h-[50vh] lg:h-full">
+            <form id="order-form" method="POST" action="{{ route('restaurant.orders.store') }}" class="flex flex-col flex-1 min-h-0">
+                @csrf
+                <input type="hidden" name="items_json" id="items-json">
 
-                <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
-                    @foreach($menuItems as $item)
-                        <button type="button"
-                            data-item
-                            data-id="{{ $item->id }}"
-                            data-name="{{ $item->name }}"
-                            data-price="{{ $item->price }}"
-                            data-category="{{ $item->restaurant_menu_category_id ?? 'none' }}"
-                            onclick="addToCart({{ $item->id }})"
-                            class="text-left rounded-2xl border border-secondary/15 bg-white p-4 hover:bg-accent/10 transition-colors">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <p class="font-heading text-sm font-semibold text-primary truncate">{{ $item->name }}</p>
-                                    @if($item->description)
-                                        <p class="text-xs text-primary/45 mt-1 truncate">{{ $item->description }}</p>
-                                    @endif
-                                    <div class="mt-2 text-xs text-primary/45">
-                                        {{ $item->category?->name ?? '—' }} · {{ strtoupper($item->type) }}
-                                    </div>
-                                </div>
-                                <p class="text-sm font-semibold text-primary flex-shrink-0">
-                                    {{ number_format($item->price / 100, 0, ',', ' ') }} FCFA
-                                </p>
-                            </div>
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="p-5 bg-accent/10">
-                <form id="order-form" method="POST" action="{{ route('restaurant.orders.store') }}" class="space-y-4">
-                    @csrf
-                    <input type="hidden" name="items_json" id="items-json">
-
+                <div class="space-y-4 flex-1 overflow-y-auto pr-1">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Table</label>
@@ -225,16 +215,16 @@
                         <p class="text-xs font-semibold uppercase tracking-widest text-primary/45">Panier</p>
                         <div id="cart-lines" class="mt-2 space-y-2"></div>
                     </div>
+                </div>
 
-                    <div class="flex justify-end gap-2 pt-1">
-                        <button type="button" onclick="closeCreateOrderModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                        <button id="submit-order" type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Valider</button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex justify-end gap-2 pt-4 mt-2 border-t border-secondary/15 shrink-0">
+                    <button type="button" onclick="closeCreateOrderModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+                    <button id="submit-order" type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Valider</button>
+                </div>
+            </form>
         </div>
     </div>
-</div>
+</x-modal>
 @endrole
 
 <script>

@@ -113,7 +113,7 @@
 @endif
 
     {{-- Minuteur Intelligent (Si Checked In) --}}
-    @if($booking->status->value === 'checked_in' && $booking->actual_check_in)
+    @if($booking->status->value === 'checked_in' && $booking->actual_check_in && !$booking->actual_check_out)
     <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg p-5 text-white flex items-center justify-between" 
          x-data="bookingTimer('{{ $booking->actual_check_in->toIso8601String() }}', '{{ $booking->check_out->copy()->setTime(12, 0, 0)->toIso8601String() }}')">
         <div class="flex items-center gap-4">
@@ -259,7 +259,7 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Folio du séjour</h2>
                 @if($booking->status->value === 'checked_in')
                 <button onclick="document.getElementById('modal-folio').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter prestation
                 </button>
@@ -386,7 +386,7 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Paiements</h2>
                 @if(in_array($booking->status->value, ['confirmed', 'checked_in']) && $booking->balance_due > 0)
                 <button onclick="document.getElementById('modal-payment').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Encaisser
                 </button>
@@ -420,16 +420,17 @@
 {{-- Modal : Ajouter prestation au folio --}}
 <div id="modal-folio" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Ajouter une prestation</h3>
             <button onclick="document.getElementById('modal-folio').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.folio.add', $booking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('bookings.folio.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
                 <select name="type" required
@@ -473,7 +474,8 @@
                 <input type="text" name="notes"
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-folio').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
@@ -488,22 +490,23 @@
 {{-- Modal : Paiement --}}
 <div id="modal-payment" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Encaisser un paiement</h3>
             <button onclick="document.getElementById('modal-payment').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
-
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+            @php $consumedBalance = $booking->getConsumedBalance(); @endphp
             {{-- Solde affiché --}}
             <div class="bg-accent/30 rounded-lg px-4 py-3 flex justify-between items-center">
-                <span class="text-xs text-primary/60">Solde dû</span>
+                <span class="text-xs text-primary/60">Solde consommé (réel)</span>
                 <span class="text-lg font-heading font-semibold text-primary">
-                    {{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA
+                    {{ number_format($consumedBalance / 100, 0, ',', ' ') }} FCFA
                 </span>
             </div>
 
@@ -513,7 +516,7 @@
                 </label>
                 <input type="number"
                     name="amount"
-                    value="{{ (int) ceil($booking->balance_due / 100) }}"
+                    value="{{ (int) ceil($consumedBalance / 100) }}"
                     min="1"
                     required
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
@@ -539,7 +542,8 @@
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-payment').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">

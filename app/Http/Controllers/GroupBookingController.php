@@ -143,9 +143,37 @@ class GroupBookingController extends Controller
 
     public function addRoom(Request $request, GroupBooking $groupBooking)
     {
+        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        
+        if ($request->filled('new_customer')) {
+            $customerRules = [
+                'first_name' => ['required', 'string', 'max:100'],
+                'last_name' => ['required', 'string', 'max:100'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'nationality' => ['nullable', 'string', 'max:5'],
+                'id_document_type' => ['nullable', 'string'],
+            ];
+            $request->validate($customerRules);
+            
+            $customer = Customer::create([
+                'tenant_id' => $tenantId,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'nationality' => $request->nationality,
+                'id_document_type' => $request->id_document_type,
+            ]);
+            
+            $customerId = $customer->id;
+        } else {
+            $request->validate(['customer_id' => ['required', 'exists:customers,id']]);
+            $customerId = $request->customer_id;
+        }
+
         $validated = $request->validate([
             'room_id' => ['required', 'exists:rooms,id'],
-            'customer_id' => ['required', 'exists:customers,id'],
             'adults_count' => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'notes' => ['nullable', 'string'],
@@ -181,6 +209,7 @@ class GroupBookingController extends Controller
             $groupBooking,
             $room,
             $validated,
+            $customerId,
             $tenantId,
             $checkIn,
             $checkOut,
@@ -194,7 +223,7 @@ class GroupBookingController extends Controller
                 'tenant_id' => $tenantId,
                 'group_booking_id' => $groupBooking->id,
                 'room_id' => $room->id,
-                'customer_id' => $validated['customer_id'],
+                'customer_id' => $customerId,
                 'status' => BookingStatus::CONFIRMED,
                 'check_in' => $checkIn,
                 'check_out' => $checkOut,
@@ -458,10 +487,13 @@ class GroupBookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
-        $totalCentimes = $validated['amount'] * 100;
-        $totalBalanceDue = $bookings->sum('balance_due');
+        $totalTargetBalance = 0;
+        foreach ($bookings as $booking) {
+            $booking->target_balance = max($booking->balance_due, $booking->getConsumedBalance());
+            $totalTargetBalance += $booking->target_balance;
+        }
 
-        if ($totalCentimes > $totalBalanceDue + 100) {
+        if ($totalCentimes > $totalTargetBalance + 100) {
             return back()->withErrors(['payment' => 'Le montant dépasse le solde total dû du groupe.']);
         }
 
@@ -469,7 +501,7 @@ class GroupBookingController extends Controller
             $bookings,
             $validated,
             $totalCentimes,
-            $totalBalanceDue,
+            $totalTargetBalance,
             $tenantId,
             $groupBooking
         ) {
@@ -483,7 +515,7 @@ class GroupBookingController extends Controller
                 // Calcul de la part de ce booking
                 $share = match ($validated['distribution']) {
                     // Proportionnel : chaque chambre paie selon son solde relatif
-                    'proportional' => (int) round($totalCentimes * ($booking->balance_due / $totalBalanceDue)),
+                    'proportional' => (int) round($totalCentimes * ($booking->target_balance / $totalTargetBalance)),
 
                     // Égal : montant divisé équitablement
                     'equal' => (int) round($totalCentimes / $bookings->count()),
@@ -494,7 +526,7 @@ class GroupBookingController extends Controller
                     $share = $remaining;
                 }
 
-                $share = min($share, $booking->balance_due, $remaining);
+                $share = min($share, $booking->target_balance, $remaining);
                 if ($share <= 0) {
                     continue;
                 }
@@ -530,6 +562,19 @@ class GroupBookingController extends Controller
                 ]);
 
                 $remaining -= $share;
+            }
+
+            // Après avoir réparti le paiement, on vérifie si certaines chambres ont réglé leur solde consommé
+            foreach ($bookings as $booking) {
+                if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
+                    // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur
+                    if (!$booking->actual_check_out) {
+                        $booking->update(['actual_check_out' => now()]);
+                    }
+                    
+                    // Actualise le folio et les coûts pour correspondre exactement à la durée réelle passée
+                    $this->checkOutService->syncDurationToNow($booking);
+                }
             }
         });
 

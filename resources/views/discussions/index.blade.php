@@ -190,88 +190,67 @@
             </section>
         </div>
 
-        <div id="new-discussion-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNewDiscussionModal()"></div>
-            <div class="relative w-full max-w-md rounded-xl bg-white shadow-xl p-5" x-data="{ isGroup: false }">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-heading text-lg text-primary">Nouvelle discussion</h3>
-                    <button type="button" onclick="closeNewDiscussionModal()" class="text-primary/50 hover:text-primary">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
+        <x-modal id="new-discussion-modal" title="Nouvelle discussion" formAction="{{ route('discussions.conversations.store') }}" closeAction="closeNewDiscussionModal()">
+            <input type="hidden" name="is_group" :value="isGroup ? '1' : '0'">
+
+            <div x-data="{ isGroup: false }">
+                <div class="flex items-center gap-2 bg-accent/10 p-2.5 rounded-lg border border-secondary/20 cursor-pointer mb-4" @click="isGroup = !isGroup">
+                    <input type="checkbox" id="is_group_toggle" x-model="isGroup" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4 pointer-events-none">
+                    <label for="is_group_toggle" class="text-sm font-medium text-primary pointer-events-none">Créer un groupe de discussion</label>
                 </div>
 
-                <form method="POST" action="{{ route('discussions.conversations.store') }}" class="space-y-4">
-                    @csrf
-                    <input type="hidden" name="is_group" :value="isGroup ? '1' : '0'">
-
-                    <div class="flex items-center gap-2 bg-accent/10 p-2.5 rounded-lg border border-secondary/20 cursor-pointer" @click="isGroup = !isGroup">
-                        <input type="checkbox" id="is_group_toggle" x-model="isGroup" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4 pointer-events-none">
-                        <label for="is_group_toggle" class="text-sm font-medium text-primary pointer-events-none">Créer un groupe de discussion</label>
-                    </div>
-
-                    <div x-show="isGroup" x-transition class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Nom du groupe *</label>
-                            <input type="text" name="title" :required="isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary" placeholder="Ex: Équipe Réception">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Membres du groupe *</label>
-                            <div class="max-h-48 overflow-y-auto border border-secondary/30 rounded-lg p-2 space-y-1 bg-white">
-                                @foreach($availableUsers as $participant)
-                                    <label class="flex items-center gap-3 p-2 hover:bg-accent/10 rounded-md cursor-pointer border border-transparent hover:border-secondary/20 transition-colors">
-                                        <input type="checkbox" name="participant_ids[]" value="{{ $participant->id }}" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4">
-                                        <div>
-                                            <span class="text-sm font-medium text-primary block">{{ $participant->name }}</span>
-                                            <span class="text-[10px] text-primary/50 uppercase">{{ str_replace('_', ' ', $participant->role ?? 'staff') }}</span>
-                                        </div>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-
-                    <div x-show="!isGroup" x-transition>
-                        <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Démarrer avec *</label>
-                        <select name="participant_id" :required="!isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <option value="">Choisir un collaborateur</option>
-                            @foreach($availableUsers as $participant)
-                                <option value="{{ $participant->id }}">{{ $participant->name }} - {{ str_replace('_', ' ', $participant->role ?? 'staff') }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <button type="submit" class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark transition-colors mt-4">
-                        Démarrer la discussion
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div id="delete-discussion-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/40" data-close-delete-modal></div>
-            <div class="relative w-full max-w-md rounded-xl bg-white shadow-xl p-5">
-                <div class="flex items-start justify-between gap-4 mb-4">
+                <div x-show="isGroup" x-transition class="space-y-3">
                     <div>
-                        <h3 class="font-heading text-lg text-primary">Supprimer la conversation</h3>
-                        <p class="text-xs text-primary/55 mt-1" id="delete-discussion-title"></p>
+                        <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Nom du groupe *</label>
+                        <input type="text" name="title" :required="isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary" placeholder="Ex: Équipe Réception">
                     </div>
-                    <button type="button" data-close-delete-modal class="text-primary/50 hover:text-primary">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
+                    <div>
+                        <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Membres du groupe *</label>
+                        <div class="max-h-48 overflow-y-auto border border-secondary/30 rounded-lg p-2 space-y-1 bg-white">
+                            @foreach($availableUsers as $participant)
+                                <label class="flex items-center gap-3 p-2 hover:bg-accent/10 rounded-md cursor-pointer border border-transparent hover:border-secondary/20 transition-colors">
+                                    <input type="checkbox" name="participant_ids[]" value="{{ $participant->id }}" class="rounded border-secondary/30 text-primary focus:ring-primary w-4 h-4">
+                                    <div>
+                                        <span class="text-sm font-medium text-primary block">{{ $participant->name }}</span>
+                                        <span class="text-[10px] text-primary/50 uppercase">{{ str_replace('_', ' ', $participant->role ?? 'staff') }}</span>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm text-primary/70 mb-4">
-                    Choisis le mode de suppression.
-                </p>
-                <div class="grid grid-cols-1 gap-2">
-                    <button type="button" id="delete-for-me-btn" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary hover:bg-accent/20">
-                        Juste pour moi
-                    </button>
-                    <button type="button" id="delete-for-all-btn" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">
-                        Supprimer pour tous
-                    </button>
+
+                <div x-show="!isGroup" x-transition>
+                    <label class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Démarrer avec *</label>
+                    <select name="participant_id" :required="!isGroup" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <option value="">Choisir un collaborateur</option>
+                        @foreach($availableUsers as $participant)
+                            <option value="{{ $participant->id }}">{{ $participant->name }} - {{ str_replace('_', ' ', $participant->role ?? 'staff') }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-        </div>
+
+            <x-slot:footer>
+                <button type="submit" class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark transition-colors">
+                    Démarrer la discussion
+                </button>
+            </x-slot:footer>
+        </x-modal>
+
+        <x-modal id="delete-discussion-modal" title="Supprimer la conversation" title-id="delete-discussion-title" formAction="#" closeAction="document.querySelector('[data-close-delete-modal]').click()">
+            <p class="text-sm text-primary/70 mb-4">
+                Choisis le mode de suppression.
+            </p>
+            <div class="grid grid-cols-1 gap-2">
+                <button type="button" id="delete-for-me-btn" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary hover:bg-accent/20">
+                    Juste pour moi
+                </button>
+                <button type="button" id="delete-for-all-btn" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">
+                    Supprimer pour tous
+                </button>
+            </div>
+        </x-modal>
     @endif
 </div>
 

@@ -401,9 +401,10 @@ class BookingController extends Controller
         // Montant saisi en FCFA → on stocke en centimes
         $amountCentimes = $validated['amount'] * 100;
 
-        // Ajoute cette vérification après le calcul de $amountCentimes
-        if ($amountCentimes > $booking->balance_due + 100) {
-            return back()->withErrors(['payment' => 'Le montant dépasse le solde dû.']);
+        // Autorise le paiement du solde initialement prévu ou du solde consommé réel (en cas de dépassement)
+        $maxAllowed = max($booking->balance_due, $booking->getConsumedBalance());
+        if ($amountCentimes > $maxAllowed + 100) {
+            return back()->withErrors(['payment' => 'Le montant dépasse le solde dû ou consommé.']);
         }
 
         // Génère le numéro de paiement
@@ -429,6 +430,17 @@ class BookingController extends Controller
         ]);
 
         $this->checkOutService->recalculateTotals($booking);
+        $booking->refresh();
+
+        if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
+            // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur
+            if (!$booking->actual_check_out) {
+                $booking->update(['actual_check_out' => now()]);
+            }
+            
+            // Actualise le folio et les coûts pour correspondre exactement à la durée réelle passée
+            $this->checkOutService->syncDurationToNow($booking);
+        }
 
         return redirect()->route('bookings.show', $booking)
             ->with('success', 'Paiement enregistré. Solde restant : ' .

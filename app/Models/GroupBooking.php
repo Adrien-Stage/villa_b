@@ -105,4 +105,14 @@ class GroupBooking extends Model
         
         return $list;
     }
+
+    /**
+     * Calcule le solde consommé réel pour tout le groupe
+     */
+    public function getConsumedBalance(): int
+    {
+        return $this->bookings->sum(function ($booking) {
+            return $booking->getConsumedBalance();
+        });
+    }
 }

@@ -193,6 +193,37 @@ class Booking extends Model
         $this->save();
     }
 
+    public function getConsumedBalance(): int
+    {
+        if ($this->status !== BookingStatus::CHECKED_IN || !$this->actual_check_in) {
+            return $this->balance_due;
+        }
+
+        $checkInDate = $this->actual_check_in->copy()->startOfDay();
+        $nowDate = $this->actual_check_out ?? now();
+        
+        $actualNights = $checkInDate->diffInDays($nowDate->copy()->startOfDay());
+        if ($nowDate->format('H:i') >= '14:00' && $actualNights > 0) {
+            $actualNights++;
+        }
+        $actualNights = max(1, $actualNights);
+
+        $consumedRoomAmount = $actualNights * $this->price_per_night;
+        
+        $extrasAmount = $this->folioItems()
+            ->whereNotIn('type', ['room', 'payment', 'discount'])
+            ->where('is_complimentary', false)
+            ->sum('total_price');
+            
+        $discountAmount = $this->folioItems()->where('type', 'discount')->sum('total_price');
+        
+        $subtotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
+        $taxAmount = (int) round($subtotal * 0.1925);
+        $consumedTotal = $subtotal + $taxAmount;
+        
+        return max(0, $consumedTotal - $this->paid_amount);
+    }
+
     /**
      * Vérifie si la réservation peut être modifiée
      */

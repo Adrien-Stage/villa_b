@@ -157,7 +157,7 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Résumé financier</h2>
                 @if(in_array($groupBooking->status, ['confirmed', 'in_house']) && $totals['balance_due'] > 0)
                 <button onclick="document.getElementById('modal-group-payment').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
                     Encaisser
                 </button>
@@ -212,7 +212,7 @@
                 </h2>
                 @if(in_array($groupBooking->status, ['pending', 'confirmed']) && $roomTypes->isNotEmpty())
                 <button onclick="document.getElementById('modal-add-room').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter une chambre
                 </button>
@@ -305,7 +305,7 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Prestations du groupe</h2>
                 @if($groupBooking->status === 'in_house')
                 <button onclick="document.getElementById('modal-group-folio').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter
                 </button>
@@ -390,17 +390,18 @@
 {{-- Modal : Ajouter chambre au groupe --}}
 <div id="modal-add-room" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh] flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Ajouter une chambre</h3>
             <button onclick="document.getElementById('modal-add-room').classList.add('hidden')"
                 class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('groups.addRoom', $groupBooking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('groups.addRoom', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
 
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             {{-- Info période --}}
             <div class="bg-accent/20 rounded-lg px-4 py-3 flex items-center justify-between text-xs text-primary/60">
                 <span class="flex items-center gap-1.5">
@@ -446,7 +447,62 @@
                     name="customer_id" 
                     :value="$groupBooking->contact_customer_id ?? ''" 
                     placeholder="Chercher le client pour cette chambre..." 
-                />
+                    :allow-creation="true"
+                >
+                    <input type="hidden" name="new_customer" x-bind:disabled="!isCreatingNew" value="1">
+                    
+                    <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4 mt-2">
+                        <div class="flex items-center">
+                            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                            <span class="font-medium text-sm">Nouveau client</span>
+                        </div>
+                        <button type="button" @click="cancelCreatingNew()" class="text-xs font-medium hover:underline">Annuler</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prénom *</label>
+                            <input type="text" name="first_name" x-model="customerFirstName" x-bind:required="isCreatingNew" x-bind:disabled="!isCreatingNew"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nom *</label>
+                            <input type="text" name="last_name" x-model="customerName" x-bind:required="isCreatingNew" x-bind:disabled="!isCreatingNew"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Email</label>
+                            <input type="email" name="email" x-bind:disabled="!isCreatingNew"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Téléphone</label>
+                            <input type="text" name="phone" x-model="customerPhone" x-bind:disabled="!isCreatingNew"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-2">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nationalité</label>
+                            <input type="text" name="nationality" placeholder="CM" maxlength="5" x-bind:disabled="!isCreatingNew"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type document</label>
+                            <select name="id_document_type" x-bind:disabled="!isCreatingNew"
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                <option value="">Sélectionner...</option>
+                                <option value="passport">Passeport</option>
+                                <option value="id_card">Carte d'identité</option>
+                                <option value="driver_license">Permis de conduire</option>
+                            </select>
+                        </div>
+                    </div>
+                </x-customer-search>
             </div>
 
             {{-- Personnes --}}
@@ -470,7 +526,9 @@
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-add-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
@@ -489,8 +547,8 @@
 {{-- Modal : Prestation de groupe --}}
 <div id="modal-group-folio" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <div>
                 <h3 class="font-heading font-semibold text-primary">Prestation de groupe</h3>
                 <p class="text-xs text-primary/50 mt-0.5">
@@ -503,9 +561,9 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ route('groups.folio.add', $groupBooking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('groups.folio.add', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
-
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
                 <select name="type" required
@@ -592,7 +650,8 @@
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-group-folio').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
@@ -610,8 +669,8 @@
 {{-- Modal : Paiement groupe --}}
 <div id="modal-group-payment" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <div>
                 <h3 class="font-heading font-semibold text-primary">Paiement groupe</h3>
                 <p class="text-xs text-primary/50 mt-0.5">Réparti sur toutes les chambres</p>
@@ -621,14 +680,15 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('groups.payment.add', $groupBooking) }}" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('groups.payment.add', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
-
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+            @php $consumedBalance = $groupBooking->getConsumedBalance(); @endphp
             {{-- Solde total --}}
             <div class="bg-accent/20 rounded-lg px-4 py-3 flex justify-between items-center">
-                <span class="text-xs text-primary/60">Solde total du groupe</span>
+                <span class="text-xs text-primary/60">Solde consommé (réel)</span>
                 <span class="text-lg font-heading font-semibold text-primary">
-                    {{ number_format($totals['balance_due'] / 100, 0, ',', ' ') }} FCFA
+                    {{ number_format($consumedBalance / 100, 0, ',', ' ') }} FCFA
                 </span>
             </div>
 
@@ -637,7 +697,7 @@
                     Montant (FCFA) *
                 </label>
                 <input type="number" name="amount"
-                    value="{{ (int) ceil($totals['balance_due'] / 100) }}"
+                    value="{{ (int) ceil($consumedBalance / 100) }}"
                     min="1" required
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
@@ -689,7 +749,8 @@
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-group-payment').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
