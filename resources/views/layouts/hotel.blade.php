@@ -157,6 +157,14 @@
                         </ul>
                     </div>
                 @endrole
+
+                @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
+                    <div class="mt-4 pt-4 border-t border-surface-dark">
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="settings.index" icon="settings">Paramètres</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endrole
             </nav>
 
             <div class="px-3 pb-3">

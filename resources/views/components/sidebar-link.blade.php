@@ -61,6 +61,8 @@
             <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-6 9 6v10a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1V10z"/>
             </svg>
+        @else
+            <i data-lucide="{{ $icon }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
         @endif
 
         {{ $slot }}
