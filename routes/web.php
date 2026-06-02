@@ -49,6 +49,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    // --- PARAMETRES ---
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])
+        ->name('settings.index')
+        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+
     // --- ASSISTANT IA (Kuété) ---
     Route::post('/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('ai.chat');
 
