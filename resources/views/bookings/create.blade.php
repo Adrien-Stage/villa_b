@@ -134,105 +134,144 @@
     {{-- Pas encore de client sélectionné --}}
     @else
 
-        {{-- Recherche et création client avec composant réutilisable --}}
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
-            <h2 class="font-heading font-semibold text-primary mb-4">Rechercher un client</h2>
+        {{-- Formulaire Étape 1 : Clients et Mandataire --}}
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-4" x-data="{ isBooker: '{{ old('is_booker', '') }}', showCustomer: {{ old('is_booker') ? 'true' : 'false' }} }">
+            <h2 class="font-heading font-semibold text-primary mb-4">Informations de Réservation</h2>
 
-            <x-customer-search 
-                :customers="$customers" 
-                name="customer_id_hidden" 
-                :value="old('customer_id')" 
-                :allow-creation="true"
-            >
-                <form method="POST" action="{{ route('bookings.store') }}">
-                    @csrf
-                    <input type="hidden" name="step" value="1">
-                    <input type="hidden" name="new_customer" value="1">
+            @if($errors->any())
+                <div class="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                    Veuillez vérifier les informations saisies.
+                </div>
+            @endif
 
-                    <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
-                        <div class="flex items-center">
-                            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
-                            <span class="font-medium">Nouveau client</span>
-                        </div>
-                        <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
-                    </div>
+            <form method="POST" action="{{ route('bookings.store') }}">
+                @csrf
+                <input type="hidden" name="step" value="1">
 
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prénom *</label>
-                            <input type="text" name="first_name" x-model="customerFirstName" required
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nom *</label>
-                            <input type="text" name="last_name" x-model="customerName" required
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
-                        </div>
-                    </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-primary mb-2">Qui effectue cette réservation ?</label>
+                    <select name="is_booker" x-model="isBooker" @change="showCustomer = (isBooker === 'self')" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary mb-4">
+                        <option value="">Sélectionner...</option>
+                        <option value="self">Le client final lui-même</option>
+                        <option value="other">Une tierce personne (Mandataire / Organisateur)</option>
+                    </select>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Email</label>
-                            <input type="email" name="email"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                <div x-show="isBooker === 'other'" style="display: none;" class="mb-6 p-4 bg-gray-50 border border-secondary/20 rounded-xl">
+                    <h3 class="text-sm font-semibold text-primary mb-3">Le mandataire (Celui qui réserve)</h3>
+                    <x-customer-search :customers="$customers" name="booker_id" :value="old('booker_id')" :allow-creation="true" creation-label="Créer un mandataire">
+                        {{-- Mode création Booker (Slot) --}}
+                        <input type="hidden" name="new_booker" value="1" x-bind:disabled="!isCreatingNew">
+                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
+                            <div class="flex items-center"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i><span class="font-medium">Nouveau mandataire</span></div>
+                            <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Téléphone</label>
-                            <input type="text" name="phone" x-model="customerPhone"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
+                                <input type="text" name="booker_first_name" value="{{ old('booker_first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('booker_first_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nom *</label>
+                                <input type="text" name="booker_last_name" value="{{ old('booker_last_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('booker_last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nationalité</label>
-                            <input type="text" name="nationality" placeholder="Ex: Camerounaise" maxlength="100"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Téléphone *</label>
+                                <input type="text" name="booker_phone" value="{{ old('booker_phone') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('booker_phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email</label>
+                                <input type="email" name="booker_email" value="{{ old('booker_email') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('booker_email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Code pays</label>
-                            <input type="text" name="country" placeholder="Ex: CM" maxlength="5"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type CNI/Pass</label>
+                                <select name="booker_id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                    <option value="CNI" {{ old('booker_id_document_type') == 'CNI' ? 'selected' : '' }}>CNI</option>
+                                    <option value="Passeport" {{ old('booker_id_document_type') == 'Passeport' ? 'selected' : '' }}>Passeport</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro CNI/Pass *</label>
+                                <input type="text" name="booker_id_document_number" value="{{ old('booker_id_document_number') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('booker_id_document_number')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-5">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type document</label>
-                            <select name="id_document_type"
-                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
-                                <option value="">Sélectionner...</option>
-                                <option value="CNI">CNI</option>
-                                <option value="Passeport">Passeport</option>
-                                <option value="Permis de conduire">Permis de conduire</option>
-                                <option value="Carte de résident">Carte de résident</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Numéro du document</label>
-                            <input type="text" name="id_document_number" placeholder="Ex: 20261430524..." maxlength="50"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
-                        Créer le client et continuer
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
-                </form>
-
-                <x-slot:selectedActions>
-                    <form method="POST" action="{{ route('bookings.store') }}">
-                        @csrf
-                        <input type="hidden" name="step" value="1">
-                        <input type="hidden" name="customer_id" :value="customerId">
-                        <button type="submit" class="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
-                            Continuer avec ce client
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </x-customer-search>
+                    
+                    <div class="mt-4 text-right" x-show="!showCustomer">
+                        <button type="button" @click="showCustomer = true" class="px-4 py-2 bg-secondary text-white text-sm font-medium rounded-lg hover:bg-secondary/90 transition-colors">
+                            Suivant : Client séjournant <i data-lucide="arrow-right" class="w-4 h-4 inline"></i>
                         </button>
-                    </form>
-                </x-slot:selectedActions>
-            </x-customer-search>
+                    </div>
+                </div>
+
+                <div x-show="showCustomer" style="display: none;" class="mb-6 pt-4 border-t border-secondary/20">
+                    <h3 class="text-sm font-semibold text-primary mb-3">Le client qui va séjourner</h3>
+                    <x-customer-search :customers="$customers" name="customer_id" :value="old('customer_id')" :allow-creation="true">
+                        {{-- Mode création (Slot) --}}
+                        <input type="hidden" name="new_customer" value="1" x-bind:disabled="!isCreatingNew">
+                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
+                            <div class="flex items-center">
+                                <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                                <span class="font-medium">Nouveau client final</span>
+                            </div>
+                            <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
+                                <input type="text" name="first_name" value="{{ old('first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('first_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nom *</label>
+                                <input type="text" name="last_name" value="{{ old('last_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email</label>
+                                <input type="email" name="email" value="{{ old('email') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Téléphone</label>
+                                <input type="text" name="phone" value="{{ old('phone') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type document</label>
+                                <select name="id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="CNI" {{ old('id_document_type') == 'CNI' ? 'selected' : '' }}>CNI</option>
+                                    <option value="Passeport" {{ old('id_document_type') == 'Passeport' ? 'selected' : '' }}>Passeport</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro document</label>
+                                <input type="text" name="id_document_number" value="{{ old('id_document_number') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('id_document_number')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    </x-customer-search>
+                </div>
+
+                <button type="submit" x-show="showCustomer" style="display: none;" class="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2 mt-4">
+                    Continuer la réservation
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
         </div>
     @endif
 

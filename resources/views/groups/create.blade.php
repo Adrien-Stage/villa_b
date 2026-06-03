@@ -44,6 +44,20 @@
                 @enderror
             </div>
 
+            <div class="mb-6 pt-4 border-t border-secondary/20" x-data="{ isBooker: 'self' }">
+                <label class="block text-sm font-semibold text-primary mb-2">Qui effectue cette réservation ?</label>
+                <select name="is_booker" x-model="isBooker" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary mb-4">
+                    <option value="self">Le contact du groupe lui-même</option>
+                    <option value="other">Une tierce personne (Mandataire)</option>
+                </select>
+
+                <div x-show="isBooker === 'other'" style="display: none;" class="p-4 bg-gray-50 border border-secondary/20 rounded-xl">
+                    <h3 class="text-sm font-semibold text-primary mb-3">Le mandataire (Celui qui réserve)</h3>
+                    <x-customer-search :customers="$customers" name="booker_id" :value="old('booker_id')" :allow-creation="false" placeholder="Rechercher le mandataire...">
+                    </x-customer-search>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
@@ -98,6 +112,37 @@
                     @error('end_date')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            <div class="mb-6 pt-4 border-t border-secondary/20">
+                <h3 class="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                    Acompte initial (Optionnel)
+                </h3>
+                <p class="text-xs text-primary/60 mb-3">Pour un dossier groupe, vous pouvez enregistrer une avance globale maintenant.</p>
+                <div class="grid grid-cols-3 gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg">
+                    <div>
+                        <label class="block text-xs font-semibold text-primary/70 mb-1">Montant versé</label>
+                        <div class="relative">
+                            <input type="number" name="deposit_amount" value="{{ old('deposit_amount') }}" min="0" class="w-full px-3 py-2 text-sm font-bold border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary pr-12">
+                            <span class="absolute right-3 top-2.5 text-xs text-primary/50 font-medium">FCFA</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-primary/70 mb-1">Moyen de paiement</label>
+                        <select name="payment_method" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                            <option value="">Sélectionner...</option>
+                            <option value="orange_money">Orange Money</option>
+                            <option value="mtn_momo">MTN Mobile Money</option>
+                            <option value="cash">Espèces</option>
+                            <option value="bank_transfer">Virement Bancaire</option>
+                            <option value="check">Chèque</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-primary/70 mb-1">Référence transaction</label>
+                        <input type="text" name="payment_reference" value="{{ old('payment_reference') }}" placeholder="N° transaction..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    </div>
                 </div>
             </div>
 

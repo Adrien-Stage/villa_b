@@ -34,6 +34,7 @@ class Booking extends Model
         'tenant_id',
         'room_id',
         'customer_id',
+        'booker_id',
         'group_booking_id',     // Null si individuel
         'booking_number',       // Numéro unique affiché (VB-2025-0001)
         'status',
@@ -130,6 +131,14 @@ class Booking extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Le client qui a effectué/payé la réservation (si différent du customer final).
+     */
+    public function booker(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'booker_id');
     }
 
     public function groupBooking(): BelongsTo

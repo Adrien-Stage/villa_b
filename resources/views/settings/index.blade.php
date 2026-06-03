@@ -8,6 +8,13 @@
     <p class="text-sm text-primary/60 mt-1">Configurez les règles et préférences de votre département.</p>
 </div>
 
+@if(session('success'))
+    <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        {{ session('success') }}
+    </div>
+@endif
+
 <div class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
     
     {{-- Onglets de navigation dynamique selon le rôle --}}
@@ -111,7 +118,8 @@
 
         {{-- ONGLET: HÉBERGEMENT (Réception & Manager) --}}
         @if($tab === 'reception' && $user->hasAnyRole(['manager', 'reception']))
-            <div class="max-w-3xl">
+            <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
+                @csrf
                 <h2 class="text-lg font-semibold text-primary mb-4">Paramètres Hébergement & Réception</h2>
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
@@ -122,18 +130,23 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Heure limite de sortie (Check-out)</label>
-                                <input type="time" value="12:00" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? '12:00' }}" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                         </div>
                     </div>
 
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <h3 class="text-sm font-semibold text-primary mb-2">Tarification & Réductions</h3>
-                        <p class="text-xs text-primary/60 mb-4">Définissez le pourcentage de réduction maximum autorisé pour les réservations.</p>
+                        <p class="text-xs text-primary/60 mb-4">Définissez le pourcentage de réduction maximum autorisé et l'acompte minimum pour confirmer une réservation.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Pourcentage de réduction (%)</label>
-                                <input type="number" min="0" max="100" value="10" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Pourcentage de réduction max (%)</label>
+                                <input type="number" name="settings[max_discount_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Acompte minimum requis (%)</label>
+                                <input type="number" name="settings[min_deposit_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <p class="text-[10px] text-primary/50 mt-1">Sera exigé lors de la confirmation de réservation.</p>
                             </div>
                         </div>
                     </div>
@@ -169,15 +182,15 @@
 
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <h3 class="text-sm font-semibold text-primary mb-2">Politique d'annulation</h3>
-                        <textarea rows="3" placeholder="Saisissez les règles d'annulation..." class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5"></textarea>
+                        <textarea name="settings[cancellation_policy]" rows="3" placeholder="Saisissez les règles d'annulation..." class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">{{ $tenantSettings['reception']['cancellation_policy'] ?? '' }}</textarea>
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end">
-                    <button type="button" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>
-            </div>
+            </form>
         @endif
 
         {{-- ONGLET: TAXES (Réception & Manager) --}}
