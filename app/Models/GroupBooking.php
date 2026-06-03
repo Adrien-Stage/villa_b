@@ -31,6 +31,7 @@ class GroupBooking extends Model
 
     protected $fillable = [
         'tenant_id',
+        'booker_id',            // Utilisateur (staff) ayant enregistré la réservation
         'group_code',           // Numéro de dossier groupe (ex: GRP-2025-0001)
         'contact_customer_id',  // Client principal qui paie/organise
         'group_name',           // Nom du groupe : "Famille Nkomo", "Séminaire UNESCO"
@@ -68,6 +69,14 @@ class GroupBooking extends Model
     public function contactCustomer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'contact_customer_id');
+    }
+
+    /**
+     * Le client qui a effectué/payé la réservation (si différent du contact).
+     */
+    public function booker(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'booker_id');
     }
 
     /**
