@@ -44,6 +44,8 @@ class Booking extends Model
         'check_out',
         'actual_check_in',      // Heure réelle d'arrivée
         'actual_check_out',     // Heure réelle de départ
+        'checkin_code',         // Code OTP pour la sécurité du check-in
+        'checkin_attempts',     // Nombre de tentatives échouées
 
         // Personnes
         'adults_count',
@@ -227,8 +229,8 @@ class Booking extends Model
         $discountAmount = $this->folioItems()->where('type', 'discount')->sum('total_price');
         
         $subtotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
-        $taxAmount = (int) round($subtotal * 0.1925);
-        $consumedTotal = $subtotal + $taxAmount;
+        $taxAmount = 0;
+        $consumedTotal = $subtotal;
         
         return max(0, $consumedTotal - $this->paid_amount);
     }

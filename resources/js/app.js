@@ -119,11 +119,11 @@ document.addEventListener('alpine:init', () => {
             },
             
             get tax() {
-                return Math.ceil(this.subtotal * 0.1925);
+                return 0;
             },
             
             get total() {
-                return this.subtotal + this.tax;
+                return this.subtotal;
             },
             
             formatPrice(cents) {

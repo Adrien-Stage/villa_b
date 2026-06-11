@@ -267,8 +267,8 @@ class GroupBookingController extends Controller
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $pricePerNight = $room->roomType->base_price;
         $totalRoomAmount = $nights * $pricePerNight;
-        $taxAmount = (int) round($totalRoomAmount * 0.1925);
-        $totalAmount = $totalRoomAmount + $taxAmount;
+        $taxAmount = 0;
+        $totalAmount = $totalRoomAmount;
 
         DB::transaction(function () use (
             $groupBooking,
@@ -515,7 +515,7 @@ class GroupBookingController extends Controller
                         ->where('is_complimentary', false)
                         ->sum('total_price');
 
-                    $taxAmount = (int) round(($booking->total_room_amount + $extrasAmount) * 0.1925);
+                    $taxAmount = 0;
                     $totalAmount = $booking->total_room_amount + $extrasAmount + $taxAmount;
 
                     $booking->update([

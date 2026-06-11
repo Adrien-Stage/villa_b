@@ -135,19 +135,16 @@
 
                                 <div>
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Moyen de paiement *</label>
-                                    <select name="payment_method" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                    <select name="payment_method" x-model="paymentMethod" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                                         <option value="orange_money">Orange Money</option>
                                         <option value="mtn_momo">MTN Mobile Money</option>
                                         <option value="cash">Espèces</option>
-                                        <option value="stripe">Carte Bancaire (Stripe)</option>
-                                        <option value="bank_transfer">Virement Bancaire</option>
-                                        <option value="check">Chèque</option>
                                     </select>
                                 </div>
 
-                                <div>
+                                <div x-show="paymentMethod !== 'cash'">
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Référence (Transaction) *</label>
-                                    <input type="text" name="payment_reference" required placeholder="N° transaction ou recu..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                    <input type="text" name="payment_reference" x-bind:required="paymentMethod !== 'cash'" placeholder="N° transaction ou recu..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                                 </div>
                             </div>
                         </div>
@@ -178,6 +175,7 @@
             minDeposit: 0,
             paymentAmount: 0,
             balanceDue: 0,
+            paymentMethod: 'orange_money',
             
             init() {
                 this.updateCalculations();

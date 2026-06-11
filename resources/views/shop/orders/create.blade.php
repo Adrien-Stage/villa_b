@@ -264,10 +264,7 @@
                             <span class="text-primary/70">Sous-total</span>
                             <span class="font-medium text-primary" x-text="formatPrice(subtotal)">0 FCFA</span>
                         </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-primary/70">TVA (19,25%)</span>
-                            <span class="font-medium text-primary" x-text="formatPrice(tax)">0 FCFA</span>
-                        </div>
+
                         
                         <div class="border-t-2 border-dashed border-secondary/20 pt-4 mt-2">
                             <div class="flex justify-between items-end">
@@ -362,11 +359,11 @@ document.addEventListener('alpine:init', () => {
             },
 
             get tax() {
-                return Math.ceil(this.subtotal * 0.1925);
+                return 0;
             },
 
             get total() {
-                return this.subtotal + this.tax;
+                return this.subtotal;
             },
 
             formatPrice(cents) {

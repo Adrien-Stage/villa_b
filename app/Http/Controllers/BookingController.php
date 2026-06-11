@@ -274,8 +274,8 @@ class BookingController extends Controller
             'notes'        => ['nullable', 'string'],
             'custom_price' => ['required', 'numeric', 'min:1'],
             'payment_amount' => ['required', 'numeric', 'min:1'],
-            'payment_method' => ['required', 'string'],
-            'payment_reference' => ['required', 'string'],
+            'payment_method' => ['required', 'string', 'in:orange_money,mtn_momo,cash'],
+            'payment_reference' => ['nullable', 'string'],
         ]);
 
         $room     = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -286,7 +286,13 @@ class BookingController extends Controller
         // On convertit les montants (FCFA) en centimes pour la base de données
         $customPrice = (int) $validated['custom_price'] * 100;
         $paymentAmount = (int) $validated['payment_amount'] * 100;
-        $balanceDue = max(0, $customPrice - $paymentAmount);
+
+        // Prix nets sans taxe
+        $pricePerNight = (int) round($customPrice / $nights);
+        $totalRoomAmount = $pricePerNight * $nights;
+        $taxAmount = 0;
+        $totalAmount = $totalRoomAmount;
+        $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
@@ -302,18 +308,19 @@ class BookingController extends Controller
             'adults_count'    => $validated['adults_count'],
             'children_count'  => $validated['children_count'] ?? 0,
             'total_nights'    => $nights,
-            'price_per_night' => $room->roomType->base_price,
-            'total_room_amount' => $customPrice, // On utilise le prix négocié (TTC)
+            'price_per_night' => $pricePerNight,
+            'total_room_amount' => $totalRoomAmount,
             'extras_amount'   => 0,
-            'tax_amount'      => 0, // Inclus ou calculé ailleurs si nécessaire
+            'tax_amount'      => $taxAmount,
             'discount_amount' => 0,
-            'total_amount'    => $customPrice,
+            'total_amount'    => $totalAmount,
             'deposit_amount'  => $paymentAmount,
             'paid_amount'     => $paymentAmount,
             'balance_due'     => $balanceDue,
             'source'          => $validated['source'] ?? 'direct',
             'notes'           => $validated['notes'] ?? null,
             'created_by'      => Auth::id(),
+            'checkin_code'    => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
         ]);
 
         // Enregistrer le paiement (Acompte)
@@ -326,7 +333,7 @@ class BookingController extends Controller
             'method' => $validated['payment_method'],
             'status' => 'completed',
             'reference' => 'PAY-' . now()->year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-            'external_reference' => $validated['payment_reference'],
+            'external_reference' => $validated['payment_reference'] ?? ($validated['payment_method'] === 'cash' ? 'Espèces' : null),
             'paid_at' => now(),
             'processed_by' => Auth::id(),
             'notes' => 'Acompte versé à la réservation',
@@ -340,8 +347,8 @@ class BookingController extends Controller
             'type'         => FolioItem::TYPE_ROOM,
             'description'  => "Hébergement {$nights} nuit(s) — Chambre {$room->number}",
             'quantity'     => $nights,
-            'unit_price'   => $room->roomType->base_price,
-            'total_price'  => $customPrice, // Montant négocié
+            'unit_price'   => $pricePerNight,
+            'total_price'  => $totalRoomAmount,
             'earns_points' => true,
             'occurred_at'  => now(),
             'recorded_by'  => Auth::id(),
@@ -365,7 +372,8 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('success', "Réservation {$booking->booking_number} créée et acompte enregistré.");
+            ->with('success', "Réservation {$booking->booking_number} créée et acompte enregistré.")
+            ->with('checkin_code', $booking->checkin_code);
     }
 
     // ===== DÉTAIL =====
@@ -374,6 +382,7 @@ class BookingController extends Controller
     {
         $booking->load([
             'customer',
+            'booker',
             'room.roomType',
             'guests',
             'payments',
@@ -387,8 +396,42 @@ class BookingController extends Controller
 
     public function checkIn(Request $request, Booking $booking)
     {
+        $isAjax = $request->expectsJson();
+
         if ($booking->status !== BookingStatus::CONFIRMED) {
-            return back()->withErrors(['status' => 'Cette réservation ne peut pas être mise en check-in.']);
+            $msg = 'Cette réservation ne peut pas être mise en check-in.';
+            return $isAjax
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->withErrors(['status' => $msg]);
+        }
+
+        // Vérification de sécurité (Code OTP généré à la réservation)
+        if ($booking->checkin_code) {
+            if ($booking->checkin_attempts >= 3) {
+                $msg = 'Nombre maximum de tentatives atteint. Veuillez contacter le manager pour débloquer.';
+                return $isAjax
+                    ? response()->json(['success' => false, 'message' => $msg, 'locked' => true, 'remaining' => 0], 422)
+                    : back()->withErrors(['checkin_code' => $msg]);
+            }
+
+            $request->validate(['checkin_code' => 'required|string']);
+
+            if ($request->checkin_code !== $booking->checkin_code) {
+                $booking->increment('checkin_attempts');
+                $remaining = 3 - $booking->checkin_attempts;
+
+                if ($remaining <= 0) {
+                    $msg = 'Nombre maximum de tentatives atteint. Veuillez contacter le manager pour débloquer.';
+                    return $isAjax
+                        ? response()->json(['success' => false, 'message' => $msg, 'locked' => true, 'remaining' => 0], 422)
+                        : back()->withErrors(['checkin_code' => $msg]);
+                }
+
+                $msg = "Code de sécurité invalide. Il vous reste {$remaining} tentative(s).";
+                return $isAjax
+                    ? response()->json(['success' => false, 'message' => $msg, 'locked' => false, 'remaining' => $remaining], 422)
+                    : back()->withErrors(['checkin_code' => $msg]);
+            }
         }
 
         DB::transaction(function () use ($booking) {
@@ -396,6 +439,7 @@ class BookingController extends Controller
                 'status'         => BookingStatus::CHECKED_IN,
                 'actual_check_in' => now(),
                 'checked_in_by'  => Auth::id(),
+                'checkin_attempts' => 0,
             ]);
 
             $booking->room->updateStatus(
@@ -405,7 +449,10 @@ class BookingController extends Controller
             );
         });
 
-        return back()->with('success', "Check-in effectué pour {$booking->customer->full_name}.");
+        $successMsg = "Check-in effectué pour {$booking->customer->full_name}.";
+        return $isAjax
+            ? response()->json(['success' => true, 'message' => $successMsg])
+            : back()->with('success', $successMsg);
     }
 
     // ===== CHECK-OUT =====
@@ -482,7 +529,7 @@ class BookingController extends Controller
                 ->where('is_complimentary', false)
                 ->sum('total_price');
 
-            $taxAmount    = (int) round(($booking->total_room_amount + $extrasAmount) * 0.1925);
+            $taxAmount    = 0;
             $totalAmount  = $booking->total_room_amount + $extrasAmount + $taxAmount - $booking->discount_amount;
             $balanceDue   = max(0, $totalAmount - $booking->paid_amount);
 
@@ -645,8 +692,8 @@ class BookingController extends Controller
 
         $pricePerNight    = $room->roomType->base_price;
         $totalRoomAmount  = $nights * $pricePerNight;
-        $taxAmount        = (int) round($totalRoomAmount * 0.1925);
-        $totalAmount      = $totalRoomAmount + $taxAmount;
+        $taxAmount        = 0;
+        $totalAmount      = $totalRoomAmount;
 
         $booking->update([
             'room_id'          => $room->id,

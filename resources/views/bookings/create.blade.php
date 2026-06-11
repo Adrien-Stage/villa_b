@@ -61,6 +61,9 @@
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
+                @if($booker)
+                    <input type="hidden" name="booker_id" value="{{ $booker->id }}">
+                @endif
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
