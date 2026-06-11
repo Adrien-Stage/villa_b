@@ -24,7 +24,25 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
+        $tab = $request->get('tab', 'active');
         $query = Booking::with(['customer', 'room.roomType']);
+
+        if ($tab === 'archive') {
+            $query->whereIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+            $statusFilters = [
+                'all'       => 'Toutes',
+                'completed' => 'Terminées',
+                'cancelled' => 'Annulées',
+            ];
+        } else {
+            $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+            $statusFilters = [
+                'all'        => 'Toutes',
+                'pending'    => 'En attente',
+                'confirmed'  => 'Confirmées',
+                'checked_in' => 'En séjour',
+            ];
+        }
 
         // Filtre statut
         if ($request->filled('status') && $request->status !== 'all') {
@@ -60,7 +78,7 @@ class BookingController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('bookings.index', compact('bookings', 'stats'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters'));
     }
 
     // ===== WIZARD ÉTAPE 1 : Sélection client =====

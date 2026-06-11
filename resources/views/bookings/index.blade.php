@@ -19,6 +19,18 @@
     @endrole
 </div>
 
+{{-- Onglets principales --}}
+<div class="flex items-center gap-2 border-b border-secondary/20 mb-5">
+    <a href="{{ route('bookings.index', array_merge(request()->except(['tab', 'page', 'status']), ['tab' => 'active'])) }}"
+       class="px-4 py-3 text-sm font-medium transition-colors {{ ($tab ?? 'active') === 'active' ? 'border-b-2 border-primary text-primary' : 'text-primary/60 hover:text-primary' }}">
+        Réservations
+    </a>
+    <a href="{{ route('bookings.index', array_merge(request()->except(['tab', 'page', 'status']), ['tab' => 'archive', 'status' => request('status', 'all')])) }}"
+       class="px-4 py-3 text-sm font-medium transition-colors {{ ($tab ?? 'active') === 'archive' ? 'border-b-2 border-primary text-primary' : 'text-primary/60 hover:text-primary' }}">
+        Archive
+    </a>
+</div>
+
 {{-- Badges stats --}}
 <div class="grid grid-cols-5 gap-3 mb-5">
     @php
@@ -47,18 +59,8 @@
 <div class="flex items-center justify-between gap-4 mb-5">
     {{-- Filtres statut --}}
     <div class="flex items-center gap-2 flex-wrap">
-        @php
-            $filters = [
-                'all'        => 'Toutes',
-                'pending'    => 'En attente',
-                'confirmed'  => 'Confirmées',
-                'checked_in' => 'En séjour',
-                'completed'  => 'Terminées',
-                'cancelled'  => 'Annulées',
-            ];
-        @endphp
-        @foreach($filters as $value => $label)
-            <a href="{{ route('bookings.index', array_merge(request()->except('status', 'page'), ['status' => $value])) }}"
+        @foreach($statusFilters as $value => $label)
+            <a href="{{ route('bookings.index', array_merge(request()->except(['status', 'page']), ['tab' => $tab ?? 'active', 'status' => $value])) }}"
                class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors
                       {{ request('status', 'all') === $value
                           ? 'bg-primary text-white'
@@ -70,6 +72,7 @@
 
     {{-- Recherche --}}
     <form method="GET" action="{{ route('bookings.index') }}" class="relative">
+        <input type="hidden" name="tab" value="{{ $tab ?? 'active' }}">
         <input type="hidden" name="status" value="{{ request('status', 'all') }}">
         <input type="text"
                id="search-input"
