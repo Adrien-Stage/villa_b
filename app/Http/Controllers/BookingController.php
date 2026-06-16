@@ -25,6 +25,9 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'active');
+        $viewMode = $request->get('view', 'list');
+        $status = $request->filled('status') ? $request->status : 'all';
+
         $query = Booking::with(['customer', 'room.roomType']);
 
         if ($tab === 'archive') {
@@ -35,18 +38,26 @@ class BookingController extends Controller
                 'cancelled' => 'Annulées',
             ];
         } else {
-            $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
-            $statusFilters = [
-                'all'        => 'Toutes',
-                'pending'    => 'En attente',
-                'confirmed'  => 'Confirmées',
-                'checked_in' => 'En séjour',
-            ];
+            if ($viewMode === 'calendar') {
+                $query->where('status', BookingStatus::CONFIRMED);
+                $statusFilters = [
+                    'confirmed' => 'Confirmées',
+                ];
+                $status = 'confirmed';
+            } else {
+                $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+                $statusFilters = [
+                    'all'        => 'Toutes',
+                    'pending'    => 'En attente',
+                    'confirmed'  => 'Confirmées',
+                    'checked_in' => 'En séjour',
+                ];
+            }
         }
 
         // Filtre statut
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+        if ($request->filled('status') && $status !== 'all') {
+            $query->where('status', $status);
         }
 
         // Recherche
@@ -61,6 +72,24 @@ class BookingController extends Controller
                             ->orWhere('last_name',  'ilike', "%{$search}%")
                     );
             });
+        }
+
+        $calendarBookings = null;
+        if ($tab === 'active' && $viewMode === 'calendar') {
+            $calendarBookings = (clone $query)
+                ->orderBy('check_in')
+                ->get()
+                ->map(fn($booking) => [
+                    'id' => $booking->id,
+                    'booking_number' => $booking->booking_number,
+                    'customer' => $booking->customer->full_name,
+                    'room_number' => $booking->room->number,
+                    'check_in' => $booking->check_in->format('Y-m-d'),
+                    'check_out' => $booking->check_out->format('Y-m-d'),
+                    'url' => route('bookings.show', $booking),
+                    'status' => $booking->status->value,
+                    'status_label' => $booking->status->label(),
+                ]);
         }
 
         // Stats pour les badges
@@ -78,7 +107,7 @@ class BookingController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'viewMode', 'status', 'calendarBookings'));
     }
 
     // ===== WIZARD ÉTAPE 1 : Sélection client =====

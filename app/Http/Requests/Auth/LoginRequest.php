@@ -54,6 +54,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if ($user && $user->isAdmin() && Hash::check($this->string('password')->toString(), $user->password)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Veuillez utiliser l interface admin via /admin.',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

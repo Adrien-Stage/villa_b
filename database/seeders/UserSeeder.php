@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@villaboutanga.cm'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('admin'),
                 'tenant_id' => null,
                 'role' => 'admin',
                 'is_active' => true,
