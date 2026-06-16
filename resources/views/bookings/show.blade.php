@@ -37,14 +37,22 @@
     <div class="flex items-center gap-2">
         @if($booking->status->value === 'confirmed')
         @role('reception', 'manager')
-        <form method="POST" action="{{ route('bookings.checkIn', $booking) }}" class="expect-popup">
-            @csrf
-            <button type="submit"
+        @if($booking->checkin_code)
+            <button type="button" onclick="document.getElementById('modal-checkin-otp').classList.remove('hidden')"
                 class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
                 <i data-lucide="log-in" class="w-4 h-4"></i>
                 Check-in
             </button>
-        </form>
+        @else
+            <form method="POST" action="{{ route('bookings.checkIn', $booking) }}" class="expect-popup">
+                @csrf
+                <button type="submit"
+                    class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    Check-in
+                </button>
+            </form>
+        @endif
         @endrole
         @endif
 
@@ -188,6 +196,14 @@
                     <dt class="text-xs text-primary/50">Source</dt>
                     <dd class="text-xs font-medium text-primary capitalize">{{ $booking->source }}</dd>
                 </div>
+                @if($booking->deposit_amount > 0)
+                <div class="flex justify-between">
+                    <dt class="text-xs text-primary/50">Acompte versé</dt>
+                    <dd class="text-xs font-semibold text-green-600">
+                        {{ number_format($booking->deposit_amount / 100, 0, ',', ' ') }} FCFA
+                    </dd>
+                </div>
+                @endif
                 @if($booking->actual_check_in)
                 <div class="flex justify-between">
                     <dt class="text-xs text-primary/50">Check-in réel</dt>
@@ -239,6 +255,52 @@
                 Voir la fiche client
                 <i data-lucide="arrow-right" class="w-3 h-3"></i>
             </a>
+        </div>
+
+        {{-- Mandataire --}}
+        <div class="bg-white rounded-xl shadow-sm p-5">
+            <h2 class="font-heading font-semibold text-primary text-sm mb-4">Mandataire (Payeur)</h2>
+            @if($booking->booker)
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
+                    <span class="text-white text-sm font-semibold">
+                        {{ strtoupper(substr($booking->booker->first_name, 0, 1) . substr($booking->booker->last_name, 0, 1)) }}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-primary">{{ $booking->booker->full_name }}</p>
+                    <p class="text-xs text-primary/50 capitalize">Mandataire tiers</p>
+                </div>
+            </div>
+            @if($booking->booker->email)
+            <p class="text-xs text-primary/60 flex items-center gap-1.5 mb-1">
+                <i data-lucide="mail" class="w-3 h-3"></i>
+                {{ $booking->booker->email }}
+            </p>
+            @endif
+            @if($booking->booker->phone)
+            <p class="text-xs text-primary/60 flex items-center gap-1.5 mb-1">
+                <i data-lucide="phone" class="w-3 h-3"></i>
+                {{ $booking->booker->phone }}
+            </p>
+            @endif
+            @if($booking->booker->id_document_number)
+            <p class="text-xs text-primary/60 flex items-center gap-1.5 mb-1">
+                <i data-lucide="file-digit" class="w-3 h-3"></i>
+                {{ $booking->booker->id_document_type ?? 'Document' }} : {{ $booking->booker->id_document_number }}
+            </p>
+            @endif
+            <a href="{{ route('customers.show', $booking->booker) }}"
+                class="inline-flex items-center gap-1 mt-3 text-xs text-secondary hover:text-primary transition-colors">
+                Voir la fiche mandataire
+                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </a>
+            @else
+            <p class="text-xs text-primary/60 italic flex items-center gap-1.5">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-primary/40"></i>
+                Le client final lui-même
+            </p>
+            @endif
         </div>
 
         {{-- Notes --}}
@@ -351,13 +413,15 @@
             {{-- Totaux --}}
             <div class="px-5 py-4 space-y-2 border-t border-secondary/20 bg-accent/10">
                 <div class="flex justify-between text-xs text-primary/60">
-                    <span>Sous-total HT</span>
+                    <span>{{ $booking->tax_amount > 0 ? 'Sous-total HT' : 'Sous-total' }}</span>
                     <span>{{ number_format(($booking->total_room_amount + $booking->extras_amount - $booking->discount_amount) / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @if($booking->tax_amount > 0)
                 <div class="flex justify-between text-xs text-primary/60">
                     <span>TVA (19,25%)</span>
                     <span>{{ number_format($booking->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @endif
                 @if($booking->discount_amount > 0)
                 <div class="flex justify-between text-xs text-green-600">
                     <span>Remises</span>
@@ -365,13 +429,26 @@
                 </div>
                 @endif
                 <div class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
-                    <span>Total TTC</span>
+                    <span>{{ $booking->tax_amount > 0 ? 'Total TTC' : 'Total' }}</span>
                     <span>{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @if($booking->deposit_amount > 0)
+                <div class="flex justify-between text-xs text-primary/60">
+                    <span>Acompte à la réservation</span>
+                    <span class="text-green-600">-{{ number_format($booking->deposit_amount / 100, 0, ',', ' ') }} FCFA</span>
+                </div>
+                @if($booking->paid_amount - $booking->deposit_amount > 0)
+                <div class="flex justify-between text-xs text-primary/60">
+                    <span>Paiements complémentaires</span>
+                    <span class="text-green-600">-{{ number_format(($booking->paid_amount - $booking->deposit_amount) / 100, 0, ',', ' ') }} FCFA</span>
+                </div>
+                @endif
+                @else
                 <div class="flex justify-between text-xs text-primary/60">
                     <span>Payé</span>
                     <span>{{ number_format($booking->paid_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @endif
                 <div class="flex justify-between text-sm font-semibold {{ $booking->balance_due > 0 ? 'text-red-600' : 'text-green-600' }} pt-1">
                     <span>Solde dû</span>
                     <span>{{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
@@ -557,6 +634,159 @@
         </form>
     </div>
 </div>
+
+{{-- Modal : Check-in OTP (Validation automatique) --}}
+@if($booking->checkin_code && $booking->status->value === 'confirmed')
+<div id="modal-checkin-otp"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center"
+     style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);"
+     x-data="otpCheckin('{{ route('bookings.checkIn', $booking) }}', '{{ csrf_token() }}', {{ $booking->checkin_attempts >= 3 ? 'true' : 'false' }})"
+     x-on:keydown.escape.window="closeModal()">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
+         :class="shake ? 'animate-shake' : ''">
+
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center"
+                     :class="locked ? 'bg-red-100' : 'bg-primary/10'">
+                    <i :data-lucide="locked ? 'lock' : 'shield-check'" class="w-4 h-4"
+                       :class="locked ? 'text-red-600' : 'text-primary'"></i>
+                </div>
+                <h3 class="font-heading font-semibold text-primary text-sm">Code de sécurité Check-in</h3>
+            </div>
+            <button @click="closeModal()"
+                class="text-primary/30 hover:text-primary transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        {{-- Body --}}
+        <div class="px-6 py-6">
+
+            {{-- Message Bloqué --}}
+            <template x-if="locked">
+                <div class="text-center py-4">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="lock" class="w-8 h-8 text-red-500"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-red-700 mb-2">Compte verrouillé</h4>
+                    <p class="text-sm text-red-600/80">Nombre maximum de tentatives atteint.<br>Veuillez contacter le manager pour débloquer.</p>
+                </div>
+            </template>
+
+            {{-- Saisie OTP --}}
+            <template x-if="!locked">
+                <div>
+                    <p class="text-sm text-primary/60 text-center mb-6">
+                        Saisissez le code à 6 chiffres communiqué lors de la réservation.
+                    </p>
+
+                    {{-- 6 inputs individuels --}}
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <template x-for="(digit, index) in digits" :key="index">
+                            <input type="text"
+                                   inputmode="numeric"
+                                   maxlength="1"
+                                   :id="'otp-' + index"
+                                   :value="digit"
+                                   @input="handleInput($event, index)"
+                                   @keydown="handleKeydown($event, index)"
+                                   @paste="handlePaste($event)"
+                                   @focus="$event.target.select()"
+                                   :disabled="verifying"
+                                   class="w-12 h-14 text-center text-2xl font-mono font-bold border-2 rounded-xl outline-none transition-all duration-200"
+                                   :class="errorState
+                                       ? 'border-red-400 bg-red-50 text-red-600'
+                                       : successState
+                                           ? 'border-green-400 bg-green-50 text-green-700'
+                                           : (digit !== ''
+                                               ? 'border-primary/40 bg-primary/5 text-primary'
+                                               : 'border-secondary/30 bg-white text-primary focus:border-primary focus:ring-2 focus:ring-primary/20')">
+                        </template>
+                    </div>
+
+                    {{-- Loader --}}
+                    <div x-show="verifying" class="flex items-center justify-center gap-2 text-primary/60 text-sm py-2">
+                        <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
+                            <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/>
+                        </svg>
+                        Vérification en cours...
+                    </div>
+
+                    {{-- Message d'erreur --}}
+                    <div x-show="errorMessage" x-transition class="text-center mt-2">
+                        <p class="text-xs font-semibold text-red-600" x-text="errorMessage"></p>
+                    </div>
+
+                    {{-- Message de succès --}}
+                    <div x-show="successState" x-transition class="text-center mt-2">
+                        <p class="text-xs font-semibold text-green-600">✓ Code validé ! Redirection...</p>
+                    </div>
+
+                    {{-- Indicateur de tentatives --}}
+                    <div x-show="remaining !== null && remaining < 3 && !successState" class="flex items-center justify-center gap-1.5 mt-4">
+                        <template x-for="i in 3">
+                            <div class="w-2 h-2 rounded-full transition-colors duration-300"
+                                 :class="i <= remaining ? 'bg-orange-400' : 'bg-red-300'"></div>
+                        </template>
+                        <span class="text-[10px] text-primary/50 ml-1" x-text="remaining + ' tentative(s) restante(s)'"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {{-- Footer --}}
+        <div class="px-6 py-3 border-t border-secondary/10 bg-gray-50/80 rounded-b-2xl">
+            <button @click="closeModal()"
+                class="w-full py-2 text-sm text-primary/50 hover:text-primary transition-colors font-medium">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+        20%, 40%, 60%, 80% { transform: translateX(4px); }
+    }
+    .animate-shake { animation: shake 0.5s ease-in-out; }
+</style>
+@endif
+
+{{-- Modal : Succès de Réservation (Affiche le code généré) --}}
+@if(session('checkin_code'))
+<div id="modal-success-code" class="fixed inset-0 z-[60] flex items-center justify-center"
+    style="background: rgba(15,2,1,0.7); backdrop-filter: blur(8px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-100 transition-all">
+        <div class="bg-green-600 p-6 text-center">
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i data-lucide="check" class="w-8 h-8 text-green-600"></i>
+            </div>
+            <h2 class="text-xl font-heading font-bold text-white">Réservation Confirmée !</h2>
+            <p class="text-green-100 text-sm mt-1">L'acompte a bien été enregistré.</p>
+        </div>
+        
+        <div class="p-8 text-center">
+            <h3 class="text-sm font-semibold text-primary/70 uppercase tracking-wider mb-2">Code de sécurité Check-in</h3>
+            <p class="text-xs text-primary/50 mb-6">Veuillez communiquer ce code unique au client ou au mandataire. Ce code sera exigé lors de la remise des clés.</p>
+            
+            <div class="bg-gray-100 rounded-xl p-4 mb-8 inline-block shadow-inner border border-gray-200">
+                <span class="text-5xl font-mono tracking-widest font-black text-primary">{{ session('checkin_code') }}</span>
+            </div>
+            
+            <button onclick="document.getElementById('modal-success-code').remove()" class="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-md">
+                J'ai copié le code, fermer
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
@@ -609,6 +839,154 @@
                 parts.push(`${seconds}s`);
 
                 return parts.join(' ');
+            }
+        }));
+
+        // ===== OTP Check-in (validation automatique) =====
+        Alpine.data('otpCheckin', (url, csrfToken, initiallyLocked) => ({
+            digits: ['', '', '', '', '', ''],
+            verifying: false,
+            errorState: false,
+            successState: false,
+            errorMessage: '',
+            shake: false,
+            locked: initiallyLocked,
+            remaining: null,
+
+            closeModal() {
+                document.getElementById('modal-checkin-otp').classList.add('hidden');
+                this.resetInputs();
+            },
+
+            resetInputs() {
+                this.digits = ['', '', '', '', '', ''];
+                this.errorState = false;
+                this.errorMessage = '';
+                this.successState = false;
+            },
+
+            handleInput(event, index) {
+                const value = event.target.value.replace(/\D/g, '');
+                this.digits[index] = value ? value.charAt(0) : '';
+                event.target.value = this.digits[index];
+
+                // Clear error state when user starts typing
+                if (this.errorState) {
+                    this.errorState = false;
+                    this.errorMessage = '';
+                }
+
+                // Auto-focus next
+                if (value && index < 5) {
+                    this.$nextTick(() => {
+                        const next = document.getElementById('otp-' + (index + 1));
+                        if (next) next.focus();
+                    });
+                }
+
+                // Check if all 6 digits are entered
+                const code = this.digits.join('');
+                if (code.length === 6) {
+                    this.$nextTick(() => this.submitCode(code));
+                }
+            },
+
+            handleKeydown(event, index) {
+                if (event.key === 'Backspace') {
+                    if (this.digits[index] === '' && index > 0) {
+                        event.preventDefault();
+                        this.digits[index - 1] = '';
+                        this.$nextTick(() => {
+                            const prev = document.getElementById('otp-' + (index - 1));
+                            if (prev) prev.focus();
+                        });
+                    } else {
+                        this.digits[index] = '';
+                    }
+                }
+                if (event.key === 'ArrowLeft' && index > 0) {
+                    event.preventDefault();
+                    document.getElementById('otp-' + (index - 1))?.focus();
+                }
+                if (event.key === 'ArrowRight' && index < 5) {
+                    event.preventDefault();
+                    document.getElementById('otp-' + (index + 1))?.focus();
+                }
+            },
+
+            handlePaste(event) {
+                event.preventDefault();
+                const pasted = (event.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                if (!pasted) return;
+
+                for (let i = 0; i < 6; i++) {
+                    this.digits[i] = pasted[i] || '';
+                }
+                // Focus last filled or the next empty
+                this.$nextTick(() => {
+                    const focusIndex = Math.min(pasted.length, 5);
+                    document.getElementById('otp-' + focusIndex)?.focus();
+
+                    if (pasted.length === 6) {
+                        this.submitCode(pasted);
+                    }
+                });
+            },
+
+            async submitCode(code) {
+                this.verifying = true;
+                this.errorMessage = '';
+                this.errorState = false;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ checkin_code: code }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        // Succès
+                        this.verifying = false;
+                        this.successState = true;
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        // Erreur
+                        this.verifying = false;
+                        this.errorState = true;
+                        this.errorMessage = data.message || 'Code invalide.';
+                        this.shake = true;
+
+                        if (data.remaining !== undefined) {
+                            this.remaining = data.remaining;
+                        }
+                        if (data.locked) {
+                            this.locked = true;
+                        }
+
+                        setTimeout(() => {
+                            this.shake = false;
+                            if (!this.locked) {
+                                this.$nextTick(() => document.getElementById('otp-0')?.focus());
+                            }
+                        }, 600);
+                    }
+                } catch (err) {
+                    this.verifying = false;
+                    this.errorState = true;
+                    this.errorMessage = 'Erreur de connexion. Réessayez.';
+                    this.shake = true;
+                    setTimeout(() => {
+                        this.shake = false;
+                        this.$nextTick(() => document.getElementById('otp-0')?.focus());
+                    }, 600);
+                }
             }
         }));
     });

@@ -92,10 +92,12 @@
                             <span>Sous-total :</span>
                             <span>{{ number_format($order->subtotal / 100, 0, ',', ' ') }} FCFA</span>
                         </div>
+                        @if($order->tax_amount > 0)
                         <div class="flex justify-between text-secondary">
                             <span>TVA :</span>
                             <span>{{ number_format($order->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
                         </div>
+                        @endif
                         <div class="border-t border-gray-200 pt-3 flex justify-between font-semibold">
                             <span class="text-primary">Total :</span>
                             <span class="text-lg text-primary">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</span>
@@ -218,7 +220,7 @@
         <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
             <div class="col-span-6 text-xs font-semibold uppercase tracking-widest text-primary/40">Article</div>
             <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">Qté</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">P.U. HT</div>
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $order->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total</div>
         </div>
 
@@ -245,15 +247,17 @@
     <div class="px-8 py-5 border-t border-secondary/20 bg-accent/10">
         <div class="ml-auto w-64 space-y-2">
             <div class="flex justify-between text-xs text-primary/60">
-                <span>Sous-total HT</span>
+                <span>{{ $order->tax_amount > 0 ? 'Sous-total HT' : 'Sous-total' }}</span>
                 <span>{{ number_format($order->subtotal / 100, 0, ',', ' ') }} FCFA</span>
             </div>
+            @if($order->tax_amount > 0)
             <div class="flex justify-between text-xs text-primary/60">
                 <span>TVA (19,25%)</span>
                 <span>{{ number_format($order->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
             </div>
+            @endif
             <div class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
-                <span>Total TTC</span>
+                <span>{{ $order->tax_amount > 0 ? 'Total TTC' : 'Total' }}</span>
                 <span>{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</span>
             </div>
             @if($order->payment_status === 'paid')
@@ -268,7 +272,7 @@
     {{-- Mentions légales --}}
     <div class="px-8 py-4 border-t border-secondary/10 bg-accent/5">
         <p class="text-xs text-primary/40 text-center">
-            TVA 19,25% incluse — Facture Boutique
+            {{ $order->tax_amount > 0 ? 'TVA 19,25% incluse — Facture Boutique' : 'Facture Boutique' }}
         </p>
         <p class="text-xs text-primary/30 text-center mt-1">
             Villa Boutanga · Bafoussam, Cameroun · Merci de votre visite

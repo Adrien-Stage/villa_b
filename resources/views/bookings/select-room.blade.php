@@ -8,7 +8,7 @@
 
     {{-- En-tête --}}
     <div class="mb-6">
-        <a href="{{ route('bookings.create', ['customer_id' => $customer->id]) }}"
+        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId]) }}"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour
@@ -68,7 +68,7 @@
         <div class="bg-white rounded-xl shadow-sm p-12 text-center">
             <i data-lucide="search-x" class="w-10 h-10 text-primary/20 mx-auto mb-3"></i>
             <p class="text-sm text-primary/50">Aucune chambre disponible pour cette période</p>
-            <a href="{{ route('bookings.create', ['customer_id' => $customer->id]) }}"
+            <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId]) }}"
                class="inline-flex items-center gap-1.5 mt-3 text-xs text-secondary hover:text-primary transition-colors">
                 <i data-lucide="arrow-left" class="w-3 h-3"></i>
                 Modifier les dates
@@ -118,7 +118,11 @@
                         @foreach($rooms as $room)
                             <form method="POST" action="{{ route('bookings.store') }}">
                                 @csrf
+                                <input type="hidden" name="step" value="3">
                                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
+                                @if($bookerId)
+                                    <input type="hidden" name="booker_id" value="{{ $bookerId }}">
+                                @endif
                                 <input type="hidden" name="room_id" value="{{ $room->id }}">
                                 <input type="hidden" name="check_in" value="{{ $checkIn }}">
                                 <input type="hidden" name="check_out" value="{{ $checkOut }}">

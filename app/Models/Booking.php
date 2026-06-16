@@ -34,6 +34,7 @@ class Booking extends Model
         'tenant_id',
         'room_id',
         'customer_id',
+        'booker_id',
         'group_booking_id',     // Null si individuel
         'booking_number',       // Numéro unique affiché (VB-2025-0001)
         'status',
@@ -43,6 +44,8 @@ class Booking extends Model
         'check_out',
         'actual_check_in',      // Heure réelle d'arrivée
         'actual_check_out',     // Heure réelle de départ
+        'checkin_code',         // Code OTP pour la sécurité du check-in
+        'checkin_attempts',     // Nombre de tentatives échouées
 
         // Personnes
         'adults_count',
@@ -132,6 +135,14 @@ class Booking extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /**
+     * Le client qui a effectué/payé la réservation (si différent du customer final).
+     */
+    public function booker(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'booker_id');
+    }
+
     public function groupBooking(): BelongsTo
     {
         return $this->belongsTo(GroupBooking::class);
@@ -218,8 +229,8 @@ class Booking extends Model
         $discountAmount = $this->folioItems()->where('type', 'discount')->sum('total_price');
         
         $subtotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
-        $taxAmount = (int) round($subtotal * 0.1925);
-        $consumedTotal = $subtotal + $taxAmount;
+        $taxAmount = 0;
+        $consumedTotal = $subtotal;
         
         return max(0, $consumedTotal - $this->paid_amount);
     }

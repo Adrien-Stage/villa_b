@@ -82,6 +82,32 @@ class GroupBookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
 
+        $bookerId = null;
+        if ($request->is_booker === 'other') {
+            if ($request->filled('new_booker')) {
+                $validatedBooker = $request->validate([
+                    'booker_first_name'         => ['required', 'string', 'max:100'],
+                    'booker_last_name'          => ['required', 'string', 'max:100'],
+                    'booker_email'              => ['nullable', 'email'],
+                    'booker_phone'              => ['required', 'string', 'max:30'],
+                    'booker_id_document_type'   => ['nullable', 'string'],
+                    'booker_id_document_number' => ['required', 'string', 'max:50'],
+                ]);
+                
+                $bookerData = [];
+                foreach($validatedBooker as $key => $value) {
+                    $bookerData[str_replace('booker_', '', $key)] = $value;
+                }
+                $bookerData['tenant_id'] = $tenantId;
+                
+                $booker = Customer::create($bookerData);
+                $bookerId = $booker->id;
+            } else {
+                $request->validate(['booker_id' => ['required', 'exists:customers,id']]);
+                $bookerId = $request->booker_id;
+            }
+        }
+
         // Génère le code groupe : GRP-2026-0001
         $lastGroup = GroupBooking::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
@@ -90,15 +116,54 @@ class GroupBookingController extends Controller
         $seq = $lastGroup ? (int) substr($lastGroup->group_code, -4) + 1 : 1;
         $groupCode = sprintf('GRP-%d-%04d', now()->year, $seq);
 
+        // Convertir en centimes pour la base de données
+        $depositAmount = $request->filled('deposit_amount') ? (int) $request->deposit_amount * 100 : 0;
+
         $group = GroupBooking::create(array_merge($validated, [
             'tenant_id' => $tenantId,
+            'booker_id' => $bookerId,
             'group_code' => $groupCode,
+            'total_deposit_paid' => $depositAmount,
             'status' => 'pending',
         ]));
 
+        if ($depositAmount > 0 && $request->filled('payment_method')) {
+            $payment = \App\Models\Payment::create([
+                'tenant_id' => $tenantId,
+                'booking_id' => null, // Ce n'est pas lié à une chambre spécifique
+                'customer_id' => $group->contact_customer_id,
+                'amount' => $depositAmount,
+                'currency' => 'XAF',
+                'method' => $request->payment_method,
+                'status' => 'completed',
+                'reference' => 'PAY-' . now()->year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'external_reference' => $request->payment_reference ?? '',
+                'paid_at' => now(),
+                'processed_by' => Auth::id(),
+                'notes' => 'Acompte global groupe ' . $groupCode,
+            ]);
+            
+            // On l'ajoute comme FolioItem pour qu'il soit sur la facture du groupe
+            \App\Models\FolioItem::create([
+                'tenant_id'    => $tenantId,
+                'booking_id'   => null,
+                'customer_id'  => $group->contact_customer_id,
+                'type'         => \App\Models\FolioItem::TYPE_PAYMENT,
+                'description'  => "Acompte global groupe ({$request->payment_method})",
+                'quantity'     => 1,
+                'unit_price'   => -$depositAmount,
+                'total_price'  => -$depositAmount,
+                'is_complimentary' => false,
+                'earns_points' => false,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => 'Dossier groupe: ' . $group->id
+            ]);
+        }
+
         return redirect()
             ->route('groups.show', $group)
-            ->with('success', "Dossier groupe {$groupCode} créé. Ajoutez maintenant les chambres.");
+            ->with('success', "Dossier groupe {$groupCode} créé." . ($depositAmount > 0 ? " Acompte enregistré." : ""));
     }
 
     // ===== DÉTAIL =====
@@ -202,8 +267,8 @@ class GroupBookingController extends Controller
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $pricePerNight = $room->roomType->base_price;
         $totalRoomAmount = $nights * $pricePerNight;
-        $taxAmount = (int) round($totalRoomAmount * 0.1925);
-        $totalAmount = $totalRoomAmount + $taxAmount;
+        $taxAmount = 0;
+        $totalAmount = $totalRoomAmount;
 
         DB::transaction(function () use (
             $groupBooking,
@@ -224,6 +289,7 @@ class GroupBookingController extends Controller
                 'group_booking_id' => $groupBooking->id,
                 'room_id' => $room->id,
                 'customer_id' => $customerId,
+                'booker_id' => $groupBooking->booker_id,
                 'status' => BookingStatus::CONFIRMED,
                 'check_in' => $checkIn,
                 'check_out' => $checkOut,
@@ -449,7 +515,7 @@ class GroupBookingController extends Controller
                         ->where('is_complimentary', false)
                         ->sum('total_price');
 
-                    $taxAmount = (int) round(($booking->total_room_amount + $extrasAmount) * 0.1925);
+                    $taxAmount = 0;
                     $totalAmount = $booking->total_room_amount + $extrasAmount + $taxAmount;
 
                     $booking->update([

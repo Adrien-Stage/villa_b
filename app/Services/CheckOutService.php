@@ -110,11 +110,11 @@ class CheckOutService
             ->where('type', FolioItem::TYPE_DISCOUNT)
             ->sum('total_price');
 
-        // Taxes (19.25% TVA Cameroun sur le total HT)
-        $taxRate    = 0.1925;
+        // Taxes (0% TVA)
+        $taxRate    = 0.0;
         $subtotal   = $booking->total_room_amount + $extrasAmount - $discountAmount;
-        $taxAmount  = (int) round($subtotal * $taxRate);
-        $totalAmount = $subtotal + $taxAmount;
+        $taxAmount  = 0;
+        $totalAmount = $subtotal;
 
         // Paiements déjà reçus
         $paidAmount = $booking->payments()
@@ -148,7 +148,7 @@ class CheckOutService
             'paid_amount'    => $booking->paid_amount,
             'balance_due'    => $booking->balance_due,
             'status'         => $booking->balance_due <= 0 ? 'paid' : 'sent',
-            'legal_notes'    => 'TVA 19.25% incluse — République du Cameroun',
+            'legal_notes'    => 'République du Cameroun',
         ]);
 
         // Ligne hébergement
@@ -160,8 +160,8 @@ class CheckOutService
             'quantity'    => $booking->total_nights,
             'unit_price'  => $booking->price_per_night,
             'total_price' => $booking->total_room_amount,
-            'tax_rate'    => 19.25,
-            'tax_amount'  => (int) round($booking->total_room_amount * 0.1925),
+            'tax_rate'    => 0.0,
+            'tax_amount'  => 0,
             'category'    => 'room',
             'source_type' => Booking::class,
             'source_id'   => $booking->id,
@@ -176,8 +176,8 @@ class CheckOutService
                 'quantity'    => $item->quantity,
                 'unit_price'  => $item->unit_price,
                 'total_price' => $item->total_price,
-                'tax_rate'    => 19.25,
-                'tax_amount'  => (int) round($item->total_price * 0.1925),
+                'tax_rate'    => 0.0,
+                'tax_amount'  => 0,
                 'category'    => $item->type,
                 'source_type' => FolioItem::class,
                 'source_id'   => $item->id,

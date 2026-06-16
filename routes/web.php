@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\BookingController;
@@ -20,9 +21,23 @@ use App\Http\Controllers\RestaurantPantryController;
 use App\Http\Controllers\ShopProductController;
 use App\Http\Controllers\ShopOrderController;
 use App\Http\Controllers\Shop\CashRegisterController;
+use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+// Admin login
+Route::get('/admin', [AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
+Route::post('/admin', [AdminAuthenticatedSessionController::class, 'store'])->name('admin.login.store');
+Route::get('/admin/dashboard', function () {
+    if (!Auth::check()) {
+        return redirect()->route('admin.login');
+    }
+
+    abort_unless(Auth::user()->isAdmin(), 403);
+
+    return view('admin.dashboard');
+})->name('admin.dashboard');
+
 // Login
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -52,6 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- PARAMETRES ---
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])
         ->name('settings.index')
+        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+    Route::post('/settings', [App\Http\Controllers\SettingsController::class, 'update'])
+        ->name('settings.update')
         ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
 
     // --- ASSISTANT IA (Kuété) ---

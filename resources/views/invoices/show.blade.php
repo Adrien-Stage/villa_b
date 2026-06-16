@@ -101,17 +101,19 @@
 
         {{-- En-tête tableau --}}
         <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
-            <div class="col-span-6 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
+            <div class="{{ $invoice->tax_amount > 0 ? 'col-span-6' : 'col-span-7' }} text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
             <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">Qté</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">P.U. HT</div>
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $invoice->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
+            @if($invoice->tax_amount > 0)
             <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">TVA</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total TTC</div>
+            @endif
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $invoice->tax_amount > 0 ? 'Total TTC' : 'Total' }}</div>
         </div>
 
         {{-- Lignes --}}
         @foreach($invoice->items as $item)
         <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center">
-            <div class="col-span-6">
+            <div class="{{ $invoice->tax_amount > 0 ? 'col-span-6' : 'col-span-7' }}">
                 <p class="text-sm text-primary">{{ $item->description }}</p>
                 <p class="text-xs text-primary/40 capitalize">{{ $item->category }}</p>
             </div>
@@ -121,9 +123,11 @@
             <div class="col-span-2 text-xs text-primary/70 text-right">
                 {{ number_format($item->unit_price / 100, 0, ',', ' ') }} F
             </div>
+            @if($invoice->tax_amount > 0)
             <div class="col-span-1 text-xs text-primary/70 text-center">
                 {{ $item->tax_rate }}%
             </div>
+            @endif
             <div class="col-span-2 text-sm font-medium text-primary text-right">
                 {{ number_format($item->total_price / 100, 0, ',', ' ') }} F
             </div>
@@ -135,15 +139,17 @@
     <div class="px-8 py-5 border-t border-secondary/20 bg-accent/10">
         <div class="ml-auto w-64 space-y-2">
             <div class="flex justify-between text-xs text-primary/60">
-                <span>Sous-total HT</span>
+                <span>{{ $invoice->tax_amount > 0 ? 'Sous-total HT' : 'Sous-total' }}</span>
                 <span>{{ number_format($invoice->subtotal / 100, 0, ',', ' ') }} FCFA</span>
             </div>
+            @if($invoice->tax_amount > 0)
             <div class="flex justify-between text-xs text-primary/60">
                 <span>TVA (19,25%)</span>
                 <span>{{ number_format($invoice->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
             </div>
+            @endif
             <div class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
-                <span>Total TTC</span>
+                <span>{{ $invoice->tax_amount > 0 ? 'Total TTC' : 'Total' }}</span>
                 <span>{{ number_format($invoice->total_amount / 100, 0, ',', ' ') }} FCFA</span>
             </div>
             <div class="flex justify-between text-xs text-primary/60">
