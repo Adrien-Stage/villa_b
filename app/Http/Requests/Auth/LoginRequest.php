@@ -58,7 +58,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Veuillez utiliser l interface admin via /admin.',
+                'email' => trans('auth.failed'),
             ]);
         }
 

@@ -40,6 +40,11 @@ class CashRegisterSession extends Model
         return $this->hasMany(ShopOrder::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'cash_register_session_id');
+    }
+
     public function disbursements()
     {
         return $this->hasMany(CashRegisterDisbursement::class);

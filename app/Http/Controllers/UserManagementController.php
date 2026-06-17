@@ -106,6 +106,14 @@ class UserManagementController extends Controller
 
         $this->syncUserRole($user, $validated['role']);
 
+        \App\Models\AuditLog::record(
+            $manager->id,
+            'user_management',
+            "Création de l'utilisateur : {$user->name} ({$user->email}) avec le rôle {$user->role}",
+            'users',
+            ['target_user_id' => $user->id, 'role' => $user->role]
+        );
+
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
             ->with('success', 'Membre du staff cree avec succes.');
@@ -139,6 +147,14 @@ class UserManagementController extends Controller
         $user->update($payload);
         $this->syncUserRole($user, $validated['role']);
 
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'user_management',
+            "Modification de l'utilisateur : {$user->name} ({$user->email})",
+            'users',
+            ['target_user_id' => $user->id]
+        );
+
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
             ->with('success', 'Profil staff mis a jour avec succes.');
@@ -151,6 +167,16 @@ class UserManagementController extends Controller
         $user->update([
             'is_active' => !$user->is_active,
         ]);
+
+        $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'user_management',
+            "Le compte de l'utilisateur {$user->name} ({$user->email}) a été {$statusStr}",
+            'users',
+            ['target_user_id' => $user->id, 'is_active' => $user->is_active]
+        );
 
         $message = $user->is_active
             ? 'Compte staff reactive avec succes.'

@@ -107,182 +107,179 @@
 {{-- Table --}}
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         @if($tab === 'active' && $viewMode === 'calendar')
-        <div x-data="bookingCalendar(@json($calendarBookings ?? []))" class="flex flex-col flex-1 bg-white">
+        <script>
+            window.calendarBookingsData = @json($calendarBookings ?? []);
+        </script>
+        <div x-data="bookingCalendar(window.calendarBookingsData)" class="flex flex-col flex-1 bg-white">
             <!-- Calendar Header -->
-            <div class="flex flex-col space-y-4 p-5 md:flex-row md:items-center md:justify-between md:space-y-0 border-b border-secondary/15 bg-accent/5">
-                <div class="flex items-center gap-4">
-                    <!-- Today Badge Sheet -->
-                    <div class="hidden w-16 flex-col items-center justify-center rounded-xl border border-secondary/20 bg-accent/15 p-1 md:flex">
-                        <h1 class="p-0.5 text-[10px] font-bold uppercase text-primary/60 tracking-wider">
-                            {{ now()->locale('fr')->isoFormat('MMM') }}
-                        </h1>
-                        <div class="flex w-full items-center justify-center rounded-lg border border-secondary/15 bg-white p-0.5 text-base font-extrabold text-primary shadow-xs">
-                            <span>{{ now()->locale('fr')->isoFormat('D') }}</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <h2 class="text-lg font-bold text-primary leading-tight" x-text="currentMonthLabel"></h2>
-                        <p class="text-xs text-primary/50 font-medium" x-text="currentMonthRange"></p>
-                    </div>
+            <div class="flex flex-col space-y-4 p-5 md:flex-row md:items-center md:justify-between md:space-y-0 border-b border-slate-100 bg-white">
+                
+                <!-- Left: Month Navigation -->
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="prevMonth()" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <h2 class="text-lg font-semibold text-slate-800 tracking-tight select-none w-44 text-center" x-text="currentMonthLabel"></h2>
+                    <button type="button" @click="nextMonth()" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
-                <div class="flex items-center gap-3 justify-between md:justify-end">
-                    <!-- Navigation Buttons -->
-                    <div class="inline-flex rounded-lg border border-secondary/25 shadow-xs bg-white p-0.5 overflow-hidden">
-                        <button type="button"
-                                @click="prevMonth()"
-                                class="inline-flex items-center justify-center h-8 w-8 text-primary/70 hover:text-primary hover:bg-accent/10 rounded-md transition-colors"
-                                aria-label="Mois précédent">
-                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                        </button>
-                        <button type="button"
-                                @click="goToToday()"
-                                class="px-3 h-8 text-xs font-semibold text-primary/70 hover:text-primary hover:bg-accent/10 rounded-md transition-colors border-x border-secondary/15">
-                            Aujourd'hui
-                        </button>
-                        <button type="button"
-                                @click="nextMonth()"
-                                class="inline-flex items-center justify-center h-8 w-8 text-primary/70 hover:text-primary hover:bg-accent/10 rounded-md transition-colors"
-                                aria-label="Mois suivant">
-                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+                <!-- Center: View Toggle Pill -->
+                <div class="inline-flex bg-slate-100 rounded-full p-0.5 border border-slate-200/50 shadow-inner select-none">
+                    <button type="button" class="px-3 py-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer">Jour</button>
+                    <button type="button" class="px-3 py-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer">Semaine</button>
+                    <button type="button" class="px-4.5 py-1 text-[11px] font-bold text-slate-900 bg-white rounded-full shadow-xs border border-slate-200/40">Mois</button>
+                </div>
 
-                    @role('reception', 'manager')
-                    <a href="{{ route('bookings.create') }}"
-                       class="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-xs">
-                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                        <span>Nouveau</span>
-                    </a>
-                    @endrole
+                <!-- Right: Search Bar & Actions -->
+                <div class="flex items-center gap-3">
+                    <div class="relative w-full max-w-[200px]">
+                        <input type="text" 
+                               x-model="searchQuery" 
+                               placeholder="Rechercher..." 
+                               class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 placeholder-slate-400 outline-none focus:border-slate-300 w-full transition-all">
+                        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    </div>
+                    <button type="button" @click="goToToday()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-lg transition-colors cursor-pointer">
+                        Aujourd'hui
+                    </button>
                 </div>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="flex flex-col gap-6 p-5">
-                <!-- Grille Principale -->
+            <!-- Calendar Grid Container -->
+            <div class="flex flex-col gap-6 p-5 bg-white">
                 <div class="w-full flex flex-col">
+                    
                     <!-- Week Days Header -->
-                    <div class="grid grid-cols-7 border-b border-secondary/15 pb-2 text-center text-xs font-bold uppercase tracking-wider text-primary/50 leading-6">
-                        <div class="py-1">Sun</div>
-                        <div class="py-1">Mon</div>
-                        <div class="py-1">Tue</div>
-                        <div class="py-1">Wed</div>
-                        <div class="py-1">Thu</div>
-                        <div class="py-1">Fri</div>
-                        <div class="py-1">Sat</div>
+                    <div class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
+                            <span class="hidden sm:inline">Lundi</span>
+                            <span class="sm:hidden">Lun</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
+                            <span class="hidden sm:inline">Mardi</span>
+                            <span class="sm:hidden">Mar</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
+                            <span class="hidden sm:inline">Mercredi</span>
+                            <span class="sm:hidden">Mer</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
+                            <span class="hidden sm:inline">Jeudi</span>
+                            <span class="sm:hidden">Jeu</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
+                            <span class="hidden sm:inline">Vendredi</span>
+                            <span class="sm:hidden">Ven</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                            <span class="hidden sm:inline">Samedi</span>
+                            <span class="sm:hidden">Sam</span>
+                        </div>
+                        <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                            <span class="hidden sm:inline">Dimanche</span>
+                            <span class="sm:hidden">Dim</span>
+                        </div>
                     </div>
 
-                    <!-- Desktop Grid (MD and up) -->
-                    <div class="hidden md:grid md:grid-cols-7 border-l border-t border-secondary/15 bg-white mt-2 shadow-xs">
+                    <!-- Single Responsive Grid -->
+                    <div class="grid grid-cols-7 border-l border-t border-slate-200 mt-3 shadow-xs rounded-xl overflow-hidden bg-white">
                         <template x-for="day in days" :key="day.key">
                             <div @click="selectDay(day.iso)"
                                  :class="[
-                                     day.isCurrentMonth ? 'bg-white' : 'bg-accent/5 text-primary/30',
-                                     selectedIso === day.iso ? 'ring-2 ring-primary ring-inset bg-accent/5' : 'hover:bg-accent/5'
+                                     day.isCurrentMonth ? 'bg-white' : 'bg-[#F1F5F9] text-slate-400',
+                                     selectedIso === day.iso ? 'bg-indigo-50/20' : 'hover:bg-[#F8F9FF]'
                                  ]"
-                                 class="relative flex flex-col min-h-[110px] border-r border-b border-secondary/15 p-2 cursor-pointer transition-colors group">
+                                 class="relative flex flex-col min-h-[90px] sm:min-h-[110px] border-r border-b border-slate-200 p-1.5 sm:p-2.5 cursor-pointer transition-colors group">
                                 
-                                <header class="flex items-center justify-between mb-1.5">
+                                <header class="flex items-center justify-between mb-1">
                                     <span :class="[
-                                              day.isToday ? 'bg-dark text-white font-extrabold flex items-center justify-center rounded-full w-7 h-7 text-xs' : 'text-xs font-semibold text-primary/75'
+                                              day.isToday ? 'bg-[#4F46E5] text-white font-semibold flex items-center justify-center rounded-full w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm shadow-sm' : 
+                                              ((!day.isCurrentMonth || day.isWeekend) ? 'text-slate-400 text-xs sm:text-sm font-medium' : 'text-slate-700 text-xs sm:text-sm font-medium')
                                           ]"
                                           x-text="day.number"></span>
-                                    <span class="text-[9px] font-bold text-primary/45 uppercase"
+                                    
+                                    <span class="hidden sm:inline-block text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200/50 rounded-full px-1.5 py-0.5"
                                           x-show="day.bookings.length"
-                                          x-text="day.bookings.length + (day.bookings.length > 1 ? ' rés.' : ' ré.')"></span>
+                                          x-text="day.bookings.length"></span>
                                 </header>
 
-                                <!-- Bookings List inside Day Cell -->
-                                <div class="space-y-1 overflow-y-auto max-h-[80px] pr-0.5">
+                                <!-- Bookings List inside Day Cell (Desktop) -->
+                                <div class="hidden sm:block space-y-1 overflow-y-auto max-h-[75px] pr-0.5 mt-1">
                                     <template x-for="booking in day.bookings.slice(0, 3)" :key="booking.id">
                                         <a :href="booking.url"
                                            @click.stop
                                            :class="[
-                                               booking.type === 'in' ? 'bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500 rounded-r-md' : '',
-                                               booking.type === 'out' ? 'bg-rose-50 text-rose-800 border-r-4 border-rose-500 rounded-l-md' : '',
-                                               booking.type === 'stay' ? 'bg-blue-50 text-blue-800 rounded-none' : '',
-                                               booking.type === 'single' ? 'bg-purple-50 text-purple-800 border-x-4 border-purple-500 rounded-md' : ''
+                                               booking.status === 'pending' ? 'bg-[#FFFBEB] text-[#D97706]' : '',
+                                               booking.status === 'confirmed' ? 'bg-[#EFF6FF] text-[#1D4ED8]' : '',
+                                               booking.status === 'checked_in' ? 'bg-[#F0FDF4] text-[#16A34A]' : '',
+                                               booking.status === 'checked_out' ? 'bg-[#F5F3FF] text-[#7C3AED]' : '',
+                                               booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show' ? 'bg-[#FEF2F2] text-[#DC2626]' : ''
                                            ]"
-                                           class="px-2 py-0.5 text-[10px] font-semibold leading-tight block truncate shadow-2xs hover:brightness-95 transition-all"
-                                           :title="'Ch. ' + booking.room_number + ' — ' + booking.customer + ' (' + booking.booking_number + ')'">
+                                           class="px-2 py-0.5 rounded text-[11px] font-medium leading-relaxed block truncate hover:brightness-95 transition-all"
+                                           :title="'Ch. ' + booking.room_number + ' — ' + booking.customer">
                                             <span x-text="'Ch. ' + booking.room_number + ' — ' + booking.customer"></span>
                                         </a>
                                     </template>
                                     <template x-if="day.bookings.length > 3">
-                                        <div class="text-[9px] font-bold text-primary/40 pl-1 mt-0.5">
+                                        <div class="text-[9px] font-semibold text-slate-400 pl-1 mt-0.5">
                                             +<span x-text="day.bookings.length - 3"></span> de plus
                                         </div>
+                                    </template>
+                                </div>
+
+                                <!-- Dots indicator on Mobile -->
+                                <div class="flex flex-wrap items-center justify-center gap-0.5 mt-1 h-3 sm:hidden">
+                                    <template x-for="b in day.bookings.slice(0, 3)" :key="b.id">
+                                        <span class="w-1.5 h-1.5 rounded-full"
+                                              :class="[
+                                                  b.status === 'pending' ? 'bg-amber-500' : '',
+                                                  b.status === 'confirmed' ? 'bg-blue-500' : '',
+                                                  b.status === 'checked_in' ? 'bg-emerald-500' : '',
+                                                  b.status === 'checked_out' ? 'bg-purple-500' : '',
+                                                  b.status === 'completed' || b.status === 'cancelled' || b.status === 'no_show' ? 'bg-rose-500' : ''
+                                              ]"></span>
+                                    </template>
+                                    <template x-if="day.bookings.length > 3">
+                                        <span class="text-[8px] text-slate-400 font-bold leading-none">+</span>
                                     </template>
                                 </div>
                             </div>
                         </template>
                     </div>
-
-                    <!-- Mobile Grid (Below MD) -->
-                    <div class="grid grid-cols-7 border-l border-t border-secondary/15 bg-white mt-2 shadow-xs md:hidden">
-                        <template x-for="day in days" :key="'mob-' + day.key">
-                            <button type="button"
-                                    @click="selectDay(day.iso)"
-                                    :class="[
-                                        day.isCurrentMonth ? 'bg-white' : 'bg-accent/5 text-primary/30',
-                                        selectedIso === day.iso ? 'ring-2 ring-primary ring-inset bg-accent/5' : 'hover:bg-accent/5'
-                                    ]"
-                                    class="flex flex-col items-center justify-between min-h-[60px] border-r border-b border-secondary/15 p-2 cursor-pointer transition-colors">
-                                <span :class="[
-                                          day.isToday ? 'bg-dark text-white font-extrabold flex items-center justify-center rounded-full w-7 h-7 text-xs' : 'text-xs font-semibold text-primary/75'
-                                      ]"
-                                      x-text="day.number"></span>
-                                
-                                <!-- Dots indicator on Mobile -->
-                                <div class="flex items-center justify-center gap-0.5 mt-1 h-2">
-                                    <template x-for="b in day.bookings.slice(0, 3)" :key="b.id">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                              :class="[
-                                                  b.type === 'in' ? 'bg-emerald-500' : '',
-                                                  b.type === 'out' ? 'bg-rose-500' : '',
-                                                  b.type === 'stay' ? 'bg-blue-500' : '',
-                                                  b.type === 'single' ? 'bg-purple-500' : ''
-                                              ]"></span>
-                                    </template>
-                                    <template x-if="day.bookings.length > 3">
-                                        <span class="text-[8px] text-primary/45 font-extrabold leading-none">+</span>
-                                    </template>
-                                </div>
-                            </button>
-                        </template>
-                    </div>
                 </div>
 
-                <!-- Details Panel (Placed below calendar) -->
-                <div class="rounded-2xl border border-secondary/15 bg-white p-5 shadow-xs">
-                    <h3 class="text-sm font-bold text-primary flex items-center gap-1.5">
-                        <i data-lucide="calendar" class="w-4 h-4 text-primary/60"></i>
-                        Détails du jour : <span class="capitalize font-semibold text-primary/75" x-text="selectedDayLabel"></span>
+                <!-- Details Panel -->
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+                        Détails du jour : <span class="capitalize font-semibold text-slate-800" x-text="selectedDayLabel"></span>
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                         <template x-for="booking in selectedEvents" :key="booking.id">
-                            <a :href="booking.url" class="block rounded-xl border border-secondary/15 hover:border-primary/30 p-3.5 transition-all bg-accent/5 hover:bg-accent/10 group">
+                            <a :href="booking.url" class="block rounded-xl border border-slate-200/60 hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs group">
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-mono font-bold text-primary/60" x-text="booking.booking_number"></span>
+                                    <span class="text-[10px] font-mono font-bold text-slate-400" x-text="booking.booking_number"></span>
                                     <span class="px-2 py-0.5 rounded-full text-[9px] font-bold"
                                           :class="[
-                                              booking.type === 'in' ? 'bg-emerald-100 text-emerald-800' : '',
-                                              booking.type === 'out' ? 'bg-rose-100 text-rose-800' : '',
-                                              booking.type === 'stay' ? 'bg-blue-100 text-blue-800' : '',
-                                              booking.type === 'single' ? 'bg-purple-100 text-purple-800' : ''
+                                              booking.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : '',
+                                              booking.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border border-blue-200' : '',
+                                              booking.status === 'checked_in' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : '',
+                                              booking.status === 'checked_out' ? 'bg-purple-50 text-purple-700 border border-purple-200' : '',
+                                              booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show' ? 'bg-pink-50 text-pink-700 border border-pink-200' : ''
                                           ]"
-                                          x-text="booking.type === 'in' ? 'Arrivée' : (booking.type === 'out' ? 'Départ' : (booking.type === 'stay' ? 'Séjour' : 'Séjour unique'))"></span>
+                                          x-text="booking.status === 'pending' ? 'En attente' : (booking.status === 'confirmed' ? 'Confirmé' : (booking.status === 'checked_in' ? 'En séjour' : (booking.status === 'checked_out' ? 'Checkout' : 'Terminé')))"></span>
                                 </div>
-                                <div class="text-xs font-extrabold text-primary group-hover:text-surface-dark transition-colors" x-text="booking.customer"></div>
+                                <div class="text-xs font-bold text-slate-800 group-hover:text-slate-900 transition-colors" x-text="booking.customer"></div>
                                 
-                                <div class="flex items-center gap-1.5 text-xs text-primary/60 mt-2">
+                                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
                                     <i data-lucide="door-closed" class="w-3.5 h-3.5"></i>
                                     <span class="font-medium" x-text="'Chambre ' + booking.room_number"></span>
                                 </div>
                                 
-                                <div class="text-[10px] text-primary/45 mt-2 pt-2 border-t border-secondary/10 flex items-center gap-1">
+                                <div class="text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1">
                                     <i data-lucide="clock" class="w-3 h-3"></i>
                                     <span x-text="'Du ' + formatShortDate(booking.check_in) + ' au ' + formatShortDate(booking.check_out)"></span>
                                 </div>
@@ -290,8 +287,8 @@
                         </template>
 
                         <template x-if="selectedEvents.length === 0">
-                            <div class="col-span-full text-center py-8 text-primary/35 text-xs">
-                                <i data-lucide="calendar" class="w-8 h-8 mx-auto mb-2 opacity-45"></i>
+                            <div class="col-span-full text-center py-8 text-slate-400 text-xs">
+                                <i data-lucide="calendar" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
                                 Aucune réservation ce jour
                             </div>
                         </template>
@@ -396,12 +393,16 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 @if($tab === 'active' && $viewMode === 'calendar')
 <script>
-    document.addEventListener('alpine:init', () => {
+    function initBookingCalendar() {
+        if (window.bookingCalendarInitialized) return;
+        window.bookingCalendarInitialized = true;
+        
         Alpine.data('bookingCalendar', (events) => ({
             year: new Date().getFullYear(),
             month: new Date().getMonth(),
             events: events || [],
             selectedIso: (new Date()).toISOString().slice(0,10),
+            searchQuery: '',
 
             init() {
                 this.$nextTick(() => {
@@ -417,23 +418,17 @@ document.getElementById('search-input').addEventListener('input', function() {
                         if (window.refreshLucideIcons) window.refreshLucideIcons();
                     });
                 });
+                this.$watch('searchQuery', () => {
+                    this.$nextTick(() => {
+                        if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    });
+                });
             },
 
             get currentMonthLabel() {
                 const date = new Date(this.year, this.month, 1);
                 const monthName = date.toLocaleString('fr-FR', { month: 'long' });
-                return monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' ' + this.year;
-            },
-
-            get currentMonthRange() {
-                const firstDay = new Date(this.year, this.month, 1);
-                const lastDay = new Date(this.year, this.month + 1, 0);
-                
-                const formatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
-                const startStr = firstDay.toLocaleDateString('fr-FR', formatOptions);
-                const endStr = lastDay.toLocaleDateString('fr-FR', formatOptions);
-                
-                return `${startStr} — ${endStr}`;
+                return monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' - ' + this.year;
             },
 
             get selectedDayLabel() {
@@ -467,23 +462,27 @@ document.getElementById('search-input').addEventListener('input', function() {
 
             getBookingsForDay(dayIso) {
                 return this.events.filter(booking => {
-                    return dayIso >= booking.check_in && dayIso <= booking.check_out;
-                }).map(booking => {
-                    let type = 'stay';
-                    if (dayIso === booking.check_in && dayIso === booking.check_out) {
-                        type = 'single';
-                    } else if (dayIso === booking.check_in) {
-                        type = 'in';
-                    } else if (dayIso === booking.check_out) {
-                        type = 'out';
+                    const dateMatch = dayIso >= booking.check_in && dayIso <= booking.check_out;
+                    if (!dateMatch) return false;
+                    
+                    if (this.searchQuery && this.searchQuery.trim() !== '') {
+                        const q = this.searchQuery.toLowerCase().trim();
+                        const customerMatch = booking.customer.toLowerCase().includes(q);
+                        const numMatch = booking.booking_number.toLowerCase().includes(q);
+                        const roomMatch = String(booking.room_number).includes(q);
+                        return customerMatch || numMatch || roomMatch;
                     }
-                    return { ...booking, type };
+                    return true;
                 });
             },
 
             get days() {
                 const firstOfMonth = new Date(this.year, this.month, 1);
-                const startOffset = firstOfMonth.getDay();
+                // Shift first day of week to Monday
+                let startOffset = firstOfMonth.getDay() - 1;
+                if (startOffset < 0) {
+                    startOffset = 6;
+                }
                 const daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
                 const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
                 const days = [];
@@ -495,6 +494,7 @@ document.getElementById('search-input').addEventListener('input', function() {
                     const monthStr = String(date.getMonth() + 1).padStart(2, '0');
                     const dateStr = String(date.getDate()).padStart(2, '0');
                     const iso = `${yearStr}-${monthStr}-${dateStr}`;
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
                     days.push({
                         key: iso + '-' + i,
@@ -504,6 +504,7 @@ document.getElementById('search-input').addEventListener('input', function() {
                         bookings: this.getBookingsForDay(iso),
                         isCurrentMonth: date.getMonth() === this.month,
                         isToday: this.isToday(date),
+                        isWeekend: isWeekend,
                     });
                 }
 
@@ -543,7 +544,13 @@ document.getElementById('search-input').addEventListener('input', function() {
                 this.selectedIso = this.isoFromDate(t);
             },
         }));
-    });
+    }
+
+    if (window.Alpine) {
+        initBookingCalendar();
+    } else {
+        document.addEventListener('alpine:init', initBookingCalendar);
+    }
 </script>
 @endif
 

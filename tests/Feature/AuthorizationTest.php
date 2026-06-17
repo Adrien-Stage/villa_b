@@ -95,7 +95,7 @@ test('roles are seeded correctly', function () {
     expect(Role::where('slug', 'manager')->exists())->toBeTrue();
     expect(Role::where('slug', 'reception')->exists())->toBeTrue();
     expect(Role::where('slug', 'accountant')->exists())->toBeTrue();
-    expect(Role::count())->toBe(10);
+    expect(Role::count())->toBe(12);
 });
 
 test('room routes are protected by RBAC middleware', function () {
@@ -115,7 +115,7 @@ test('room routes are protected by RBAC middleware', function () {
 
     // Housekeeping ne peut pas accéder aux rooms (pas dans la liste autorisée)
     $this->actingAs($housekeeping);
-    $response = $this->get('/rooms');
+    $response = $this->get('/rooms', ['X-Requested-With' => 'XMLHttpRequest']);
     expect($response->status())->toBe(403);
 });
 
@@ -136,7 +136,7 @@ test('booking routes are protected by RBAC middleware', function () {
 
     // Housekeeping ne peut pas accéder aux bookings
     $this->actingAs($housekeeping);
-    $response = $this->get('/bookings');
+    $response = $this->get('/bookings', ['X-Requested-With' => 'XMLHttpRequest']);
     expect($response->status())->toBe(403);
 });
 

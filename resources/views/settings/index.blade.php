@@ -82,7 +82,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'établissement</label>
-                        <input type="text" value="Villa Boutanga" class="w-full rounded-lg border-secondary/20 bg-gray-50 focus:ring-primary focus:border-primary text-sm p-2.5">
+                        <input type="text" value="{{ Auth::user()->tenant?->name ?? 'Villa Boutanga' }}" class="w-full rounded-lg border-secondary/20 bg-gray-50 focus:ring-primary focus:border-primary text-sm p-2.5">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>

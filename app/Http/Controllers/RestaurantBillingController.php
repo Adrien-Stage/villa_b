@@ -135,6 +135,14 @@ class RestaurantBillingController extends Controller
             ]);
         }
 
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Paiement de " . number_format($order->total_amount / 100, 0, ',', ' ') . " FCFA enregistré pour la commande restaurant #{$order->id} (Méthode: {$method})",
+            'restaurant',
+            ['order_id' => $order->id, 'amount' => $order->total_amount, 'method' => $method]
+        );
+
         return redirect()
             ->route('restaurant.billing.show', $order)
             ->with('success', 'Paiement enregistre.');

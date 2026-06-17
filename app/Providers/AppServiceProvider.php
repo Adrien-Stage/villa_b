@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\Failed;
+use App\Models\AuditLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +31,38 @@ class AppServiceProvider extends ServiceProvider
         // Directives Blade pour RBAC
         $this->registerBladeDirectives();
         $this->shareDiscussionUnreadState();
+
+        // Événements d'authentification pour audit
+        Event::listen(Login::class, function ($event) {
+            AuditLog::record(
+                $event->user->id,
+                'login',
+                'Connexion réussie de l\'utilisateur : ' . $event->user->name,
+                'auth'
+            );
+            $event->user->update(['last_login_at' => now()]);
+        });
+
+        Event::listen(Logout::class, function ($event) {
+            if ($event->user) {
+                AuditLog::record(
+                    $event->user->id,
+                    'logout',
+                    'Déconnexion de l\'utilisateur : ' . $event->user->name,
+                    'auth'
+                );
+            }
+        });
+
+        Event::listen(Failed::class, function ($event) {
+            AuditLog::record(
+                null,
+                'failed_login',
+                'Tentative de connexion échouée pour l\'identifiant : ' . ($event->credentials['email'] ?? ($event->credentials['login'] ?? 'inconnu')),
+                'auth',
+                ['credentials' => array_keys($event->credentials)]
+            );
+        });
     }
 
     /**

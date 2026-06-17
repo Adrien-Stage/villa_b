@@ -41,7 +41,7 @@
             <div>
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-12 h-12 rounded-full overflow-hidden border border-secondary/20 flex-shrink-0">
-                        <img src="{{ asset('images/logo.png') }}"
+                        <img src="{{ !empty($tenant->settings['logo']) ? asset('storage/' . $tenant->settings['logo']) : asset('images/logo.png') }}"
                             alt="{{ $tenant->name }}"
                             class="w-full h-full object-cover">
                     </div>
@@ -170,7 +170,7 @@
             {{ $invoice->legal_notes ?? 'TVA 19,25% incluse — République du Cameroun' }}
         </p>
         <p class="text-xs text-primary/30 text-center mt-1">
-            Villa Boutanga · Bafoussam, Cameroun · Merci de votre confiance
+            {{ $tenant->name }} · {{ $tenant->address }} · Merci de votre confiance
         </p>
     </div>
 </div>

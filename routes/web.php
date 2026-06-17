@@ -22,21 +22,23 @@ use App\Http\Controllers\ShopProductController;
 use App\Http\Controllers\ShopOrderController;
 use App\Http\Controllers\Shop\CashRegisterController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\AdminAuditController;
 
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // Admin login
 Route::get('/admin', [AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
 Route::post('/admin', [AdminAuthenticatedSessionController::class, 'store'])->name('admin.login.store');
-Route::get('/admin/dashboard', function () {
-    if (!Auth::check()) {
-        return redirect()->route('admin.login');
-    }
 
-    abort_unless(Auth::user()->isAdmin(), 403);
-
-    return view('admin.dashboard');
-})->name('admin.dashboard');
+// Admin Global Routes
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
+    Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
+    Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
+    Route::post('/admin/tenants/{tenant}', [AdminAuditController::class, 'updateTenant'])->name('admin.tenants.update');
+    Route::get('/admin/export/supervision', [AdminAuditController::class, 'exportSupervision'])->name('admin.export.supervision');
+    Route::get('/admin/export/backup', [AdminAuditController::class, 'exportBackup'])->name('admin.export.backup');
+});
 
 // Login
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -94,13 +96,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
 
     // --- CHAMBRES ---
-    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader,housekeeping')->group(function () {
+    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader')->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
         Route::post('/',               [RoomController::class, 'store'])->middleware('role:manager,reception')->name('store');
         Route::get('/{room}',          [RoomController::class, 'show'])->name('show');
         Route::put('/{room}',          [RoomController::class, 'update'])->middleware('role:manager,reception')->name('update');
         Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('role:manager,reception')->name('destroy');
-        Route::post('/{room}/status',  [RoomController::class, 'updateStatus'])->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')->name('updateStatus');
         Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('role:manager,reception')->name('images.destroy');
 
         // Types de chambres - seulement manager
@@ -108,12 +109,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('role:manager,reception')->name('types.update');
         Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('role:manager,reception')->name('types.destroy');
     });
+    Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
+        ->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')
+        ->name('rooms.updateStatus');
 
     // --- RÉSERVATIONS ---
     Route::prefix('bookings')->name('bookings.')->middleware('role:manager,reception')->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
         Route::get('/create',                  [BookingController::class, 'create'])->name('create');
         Route::post('/',                       [BookingController::class, 'store'])->name('store');
+        
+        // Caisse Réception
+        Route::get('/cash-register', [\App\Http\Controllers\Reception\CashRegisterController::class, 'index'])->name('cash_register.index');
+        Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
+        Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])->name('cash_register.open.store');
+        Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->middleware('role:manager')->name('cash_register.close');
+        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->middleware('role:manager')->name('cash_register.close.store');
+
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
         Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Shop;
+namespace App\Http\Controllers\Reception;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashRegisterSession;
@@ -13,27 +13,27 @@ class CashRegisterController extends Controller
     public function index()
     {
         $sessions = CashRegisterSession::where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->with('user')
             ->orderBy('opened_at', 'desc')
             ->paginate(15);
             
-        return view('shop.cash_register.index', compact('sessions'));
+        return view('bookings.cash_register.index', compact('sessions'));
     }
 
     public function showOpenForm()
     {
         $activeSession = CashRegisterSession::where('user_id', auth()->id())
             ->where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
 
         if ($activeSession) {
-            return redirect()->route('shop.orders.index')->with('info', 'Vous avez déjà une caisse ouverte.');
+            return redirect()->route('bookings.index')->with('info', 'Vous avez déjà une caisse de réception ouverte.');
         }
 
-        return view('shop.cash_register.open');
+        return view('bookings.cash_register.open');
     }
 
     public function open(Request $request)
@@ -44,53 +44,54 @@ class CashRegisterController extends Controller
 
         $activeSession = CashRegisterSession::where('user_id', auth()->id())
             ->where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
 
         if ($activeSession) {
-            return redirect()->route('shop.orders.index');
+            return redirect()->route('bookings.index');
         }
 
         CashRegisterSession::create([
             'tenant_id' => auth()->user()->tenant->id,
             'user_id' => auth()->id(),
-            'module' => 'shop',
+            'module' => 'reception',
             'opening_amount' => $request->opening_amount * 100, // store in cents
             'opened_at' => now(),
         ]);
 
-        return redirect()->route('shop.orders.index')->with('success', 'Caisse ouverte avec succès. Bon travail !');
+        return redirect()->route('bookings.index')->with('success', 'Caisse de réception ouverte avec succès. Bon travail !');
     }
 
     public function showCloseForm()
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
             ->where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->whereNull('closed_at')
             ->firstOrFail();
 
-        // Theoretical closing calculation
-        // 1. Initial Amount
+        // Calcul du solde théorique
+        // 1. Fond initial
         $theoretical = $session->opening_amount;
 
-        // 2. Add cash orders
-        $cashOrdersTotal = $session->shopOrders()
-            ->where('payment_method', 'cash')
-            ->where('payment_status', 'paid')
-            ->sum('total_amount');
+        // 2. Ajout des encaissements en espèces (cash) complétés
+        $cashPaymentsTotal = $session->payments()
+            ->where('method', 'cash')
+            ->where('status', 'completed')
+            // Optionnel : ne comptabiliser que les montants positifs d'encaissement et déduire les négatifs de remboursement
+            ->sum('amount');
             
-        $theoretical += $cashOrdersTotal;
+        $theoretical += $cashPaymentsTotal;
 
-        // 3. Subtract disbursements
+        // 3. Déduction des décaissements (sorties de caisse)
         $disbursementsTotal = $session->disbursements()->sum('amount');
         $theoretical -= $disbursementsTotal;
 
-        return view('shop.cash_register.close', [
+        return view('bookings.cash_register.close', [
             'session' => $session,
             'theoretical_amount' => $theoretical,
-            'cash_orders_total' => $cashOrdersTotal,
+            'cash_payments_total' => $cashPaymentsTotal,
             'disbursements_total' => $disbursementsTotal,
             'disbursements' => $session->disbursements
         ]);
@@ -100,7 +101,7 @@ class CashRegisterController extends Controller
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
             ->where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->whereNull('closed_at')
             ->firstOrFail();
 
@@ -122,14 +123,14 @@ class CashRegisterController extends Controller
             'closing_notes' => $request->closing_notes,
         ]);
 
-        return redirect()->route('shop.orders.index')->with('success', 'Caisse fermée avec succès.');
+        return redirect()->route('bookings.index')->with('success', 'Caisse de réception fermée avec succès.');
     }
 
     public function storeDisbursement(Request $request)
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
             ->where('tenant_id', auth()->user()->tenant->id)
-            ->where('module', 'shop')
+            ->where('module', 'reception')
             ->whereNull('closed_at')
             ->firstOrFail();
 
