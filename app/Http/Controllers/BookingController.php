@@ -114,6 +114,17 @@ class BookingController extends Controller
 
     public function create(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation.');
+        }
+
         $customer = null;
 
         // Si un client est déjà sélectionné (retour depuis étape 2)
@@ -309,6 +320,19 @@ class BookingController extends Controller
 
     private function storeBooking(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id
+            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
+        }
+
         $validated = $request->validate([
             'customer_id'  => ['required', 'exists:customers,id'],
             'booker_id'    => ['nullable', 'exists:customers,id'],
@@ -384,6 +408,7 @@ class BookingController extends Controller
             'paid_at' => now(),
             'processed_by' => Auth::id(),
             'notes' => 'Acompte versé à la réservation',
+            'cash_register_session_id' => $activeSession->id,
         ]);
 
         // Ligne folio hébergement
@@ -634,6 +659,16 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
+        }
+
         // Montant saisi en FCFA → on stocke en centimes
         $amountCentimes = $validated['amount'] * 100;
 
@@ -672,6 +707,7 @@ class BookingController extends Controller
             'paid_at'      => now(),
             'processed_by' => Auth::id(),
             'notes'        => $validated['notes'] ?? null,
+            'cash_register_session_id' => $activeSession->id,
         ]);
 
         $this->checkOutService->recalculateTotals($booking);

@@ -26,6 +26,15 @@ test('a user can create a booking with 0% VAT and correct net prices', function 
         'role' => 'manager',
     ]);
 
+    // Create active cash register session for reception
+    \App\Models\CashRegisterSession::create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
+    ]);
+
     // Setup customers
     $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
     $booker = Customer::factory()->create([
@@ -103,6 +112,15 @@ test('a booking details view fallback to client himself if no booker is present'
     $user = User::factory()->create([
         'tenant_id' => $tenant->id,
         'role' => 'manager',
+    ]);
+
+    // Create active cash register session for reception
+    \App\Models\CashRegisterSession::create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
     ]);
 
     $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);

@@ -63,6 +63,18 @@ class GroupBookingController extends Controller
 
     public function create(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')
+                ->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation de groupe.');
+        }
+
         $customers = Customer::orderBy('last_name')->orderBy('first_name')->get();
 
         return view('groups.create', compact('customers'));
@@ -70,6 +82,20 @@ class GroupBookingController extends Controller
 
     public function store(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id
+            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')
+                ->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation de groupe.');
+        }
+
         $validated = $request->validate([
             'contact_customer_id' => ['required', 'exists:customers,id'],
             'group_name' => ['required', 'string', 'max:255'],
@@ -78,9 +104,6 @@ class GroupBookingController extends Controller
             'end_date' => ['required', 'date', 'after:start_date'],
             'notes' => ['nullable', 'string'],
         ]);
-
-        $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
 
         $bookerId = null;
         if ($request->is_booker === 'other') {
@@ -141,6 +164,7 @@ class GroupBookingController extends Controller
                 'paid_at' => now(),
                 'processed_by' => Auth::id(),
                 'notes' => 'Acompte global groupe ' . $groupCode,
+                'cash_register_session_id' => $activeSession->id,
             ]);
             
             // On l'ajoute comme FolioItem pour qu'il soit sur la facture du groupe
@@ -535,6 +559,19 @@ class GroupBookingController extends Controller
 
     public function addGroupPayment(Request $request, GroupBooking $groupBooking)
     {
+        $tenantId = Auth::user()->tenant_id
+            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
+        }
+
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
             'method' => ['required', 'string', 'in:cash,stripe,orange_money,mtn_momo,bank_transfer'],
@@ -553,12 +590,12 @@ class GroupBookingController extends Controller
             return back()->withErrors(['payment' => 'Aucune chambre avec un solde impayé.']);
         }
 
-        $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $totalTargetBalance = 0;
+        $targetBalances = [];
         foreach ($bookings as $booking) {
-            $booking->target_balance = max($booking->balance_due, $booking->getConsumedBalance());
-            $totalTargetBalance += $booking->target_balance;
+            $targetBalance = max($booking->balance_due, $booking->getConsumedBalance());
+            $targetBalances[$booking->id] = $targetBalance;
+            $totalTargetBalance += $targetBalance;
         }
 
         if ($totalCentimes > $totalTargetBalance + 100) {
@@ -571,7 +608,9 @@ class GroupBookingController extends Controller
             $totalCentimes,
             $totalTargetBalance,
             $tenantId,
-            $groupBooking
+            $groupBooking,
+            $activeSession,
+            $targetBalances
         ) {
             $remaining = $totalCentimes;
 
@@ -580,10 +619,12 @@ class GroupBookingController extends Controller
                     break;
                 }
 
+                $bookingTargetBalance = $targetBalances[$booking->id];
+
                 // Calcul de la part de ce booking
                 $share = match ($validated['distribution']) {
                     // Proportionnel : chaque chambre paie selon son solde relatif
-                    'proportional' => (int) round($totalCentimes * ($booking->target_balance / $totalTargetBalance)),
+                    'proportional' => (int) round($totalCentimes * ($bookingTargetBalance / $totalTargetBalance)),
 
                     // Égal : montant divisé équitablement
                     'equal' => (int) round($totalCentimes / $bookings->count()),
@@ -594,7 +635,7 @@ class GroupBookingController extends Controller
                     $share = $remaining;
                 }
 
-                $share = min($share, $booking->target_balance, $remaining);
+                $share = min($share, $bookingTargetBalance, $remaining);
                 if ($share <= 0) {
                     continue;
                 }
@@ -628,6 +669,7 @@ class GroupBookingController extends Controller
                     'paid_at' => now(),
                     'processed_by' => Auth::id(),
                     'notes' => ($validated['notes'] ?? '')." — Paiement groupe {$groupBooking->group_code}",
+                    'cash_register_session_id' => $activeSession->id,
                 ]);
 
                 // Met à jour le solde du booking

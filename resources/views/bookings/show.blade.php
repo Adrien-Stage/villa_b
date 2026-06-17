@@ -114,9 +114,13 @@
     {{ session('success') }}
 </div>
 @endif
-@if($errors->has('checkout'))
+@if($errors->any())
 <div class="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-    {{ $errors->first('checkout') }}
+    <ul class="list-disc list-inside">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
 </div>
 @endif
 

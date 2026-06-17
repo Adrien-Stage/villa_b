@@ -116,6 +116,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
         Route::get('/create',                  [BookingController::class, 'create'])->name('create');
         Route::post('/',                       [BookingController::class, 'store'])->name('store');
+        
+        // Caisse Réception
+        Route::get('/cash-register', [\App\Http\Controllers\Reception\CashRegisterController::class, 'index'])->name('cash_register.index');
+        Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
+        Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])->name('cash_register.open.store');
+        Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->middleware('role:manager')->name('cash_register.close');
+        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->middleware('role:manager')->name('cash_register.close.store');
+
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
         Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');

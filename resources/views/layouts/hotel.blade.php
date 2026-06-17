@@ -99,7 +99,7 @@
                                         <li>
                                             <a href="{{ route('bookings.index') }}"
                                                 class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                {{ request()->routeIs('bookings.*')
+                                                {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*')
                                                     ? 'text-white'
                                                     : 'text-text-on-dark hover:text-white' }}">
                                                 <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
@@ -114,6 +114,16 @@
                                                     : 'text-text-on-dark hover:text-white' }}">
                                                 <i data-lucide="users" class="w-3 h-3 flex-shrink-0"></i>
                                                 Groupes
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('bookings.cash_register.index') }}"
+                                                class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                {{ request()->routeIs('bookings.cash_register.*')
+                                                    ? 'text-white'
+                                                    : 'text-text-on-dark hover:text-white' }}">
+                                                <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0"></i>
+                                                Compta Réception
                                             </a>
                                         </li>
                                     </ul>
