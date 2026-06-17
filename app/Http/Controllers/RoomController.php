@@ -143,7 +143,16 @@ class RoomController extends Controller
             Storage::disk('public')->delete($image->path);
         }
 
+        $roomNumber = $room->number;
         $room->delete();
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Suppression de la chambre {$roomNumber}",
+            'rooms',
+            ['room_id' => $room->id, 'room_number' => $roomNumber]
+        );
 
         return redirect()->route('rooms.index', ['tab' => 'rooms'])
             ->with('success', 'Chambre supprimée.');
@@ -256,7 +265,16 @@ class RoomController extends Controller
             return back()->withErrors(['delete' => 'Impossible de supprimer un type avec des chambres associées.']);
         }
 
+        $typeName = $roomType->name;
         $roomType->delete();
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Suppression du type de chambre : {$typeName}",
+            'rooms',
+            ['room_type_id' => $roomType->id, 'name' => $typeName]
+        );
 
         return redirect()->route('rooms.index', ['tab' => 'types'])
             ->with('success', 'Type supprimé.');

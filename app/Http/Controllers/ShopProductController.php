@@ -178,7 +178,16 @@ class ShopProductController extends Controller
             Storage::disk('public')->delete($product->image_path);
         }
 
+        $productName = $product->name;
         $product->delete();
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Suppression du produit boutique : {$productName}",
+            'shop',
+            ['product_id' => $product->id, 'name' => $productName]
+        );
 
         return redirect()->route('shop.products.index')
             ->with('success', 'Article supprimé avec succès');

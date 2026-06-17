@@ -28,11 +28,16 @@ class AdminOnly
 
         // Vérifier si l'utilisateur est admin
         if (!$user->isAdmin()) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Admin access required.'], 403);
-            }
+            // Log l'accès refusé pour audit dans la base de données
+            \App\Models\AuditLog::record(
+                $user->id,
+                'access_denied',
+                'Accès refusé à l\'administration (URL: ' . $request->getPathInfo() . ')',
+                'security',
+                ['url' => $request->fullUrl(), 'roles_required' => ['admin']]
+            );
 
-            // Log l'accès refusé pour audit
+            // Log l'accès refusé pour audit dans les fichiers logs
             \Log::warning('Admin Access Denied', [
                 'user_id' => $user->id,
                 'user_email' => $user->email,
@@ -40,6 +45,10 @@ class AdminOnly
                 'url' => $request->fullUrl(),
                 'ip' => $request->ip(),
             ]);
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Admin access required.'], 403);
+            }
 
             abort(403, 'Accès réservé aux administrateurs.');
         }

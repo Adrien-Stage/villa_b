@@ -527,6 +527,14 @@ class BookingController extends Controller
 
         $booking->update(['status' => BookingStatus::CANCELLED]);
 
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Annulation de la réservation #{$booking->booking_number} pour {$booking->customer->full_name}",
+            'bookings',
+            ['booking_id' => $booking->id, 'booking_number' => $booking->booking_number]
+        );
+
         return back()->with('success', 'Réservation annulée.');
     }
 
@@ -635,12 +643,21 @@ class BookingController extends Controller
             return back()->withErrors(['payment' => 'Le montant dépasse le solde dû ou consommé.']);
         }
 
-        // Génère le numéro de paiement
-        $lastPayment = \App\Models\Payment::withoutGlobalScopes()
+        // Génère le numéro de paiement de manière robuste pour éviter les collisions
+        $payments = \App\Models\Payment::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
-            ->whereYear('created_at', now()->year)
-            ->orderBy('id', 'desc')->first();
-        $seq = $lastPayment ? (int) substr($lastPayment->reference, -6) + 1 : 1;
+            ->where('reference', 'like', 'PAY-' . now()->year . '-%')
+            ->get(['reference']);
+
+        $maxSeq = 0;
+        foreach ($payments as $payment) {
+            $parts = explode('-', $payment->reference);
+            $lastPart = end($parts);
+            if (is_numeric($lastPart)) {
+                $maxSeq = max($maxSeq, (int) $lastPart);
+            }
+        }
+        $seq = $maxSeq + 1;
         $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
         \App\Models\Payment::create([
@@ -659,6 +676,14 @@ class BookingController extends Controller
 
         $this->checkOutService->recalculateTotals($booking);
         $booking->refresh();
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Paiement de " . number_format($amountCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour la réservation #{$booking->booking_number}",
+            'bookings',
+            ['booking_id' => $booking->id, 'amount' => $amountCentimes, 'reference' => $reference]
+        );
 
         if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
             // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur

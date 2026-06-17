@@ -22,21 +22,20 @@ use App\Http\Controllers\ShopProductController;
 use App\Http\Controllers\ShopOrderController;
 use App\Http\Controllers\Shop\CashRegisterController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\AdminAuditController;
 
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // Admin login
 Route::get('/admin', [AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
 Route::post('/admin', [AdminAuthenticatedSessionController::class, 'store'])->name('admin.login.store');
-Route::get('/admin/dashboard', function () {
-    if (!Auth::check()) {
-        return redirect()->route('admin.login');
-    }
 
-    abort_unless(Auth::user()->isAdmin(), 403);
-
-    return view('admin.dashboard');
-})->name('admin.dashboard');
+// Admin Global Routes
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
+    Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
+    Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
+});
 
 // Login
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

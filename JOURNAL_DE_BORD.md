@@ -17,6 +17,7 @@ Ce document sert de repère pour suivre l'évolution du projet, savoir sur quel 
 - [x] **Assistant IA (Kuété) :** Implémentation d'un Agent Autonome (Mistral) avec capacité de lire la BDD en temps réel (Function Calling) et mémoriser des consignes (JSON memory).
 - [x] **Système de Permissions :** Sécurisation de la sidebar et des accès selon le rôle de l'employé.
 - [x] **Housekeeping :** Logique d'assignation, compteurs de tâches et règles de disponibilité des équipes.
+- [x] **Audit et Sécurité (Admin Global) :** Journal d'audit interactif (recherche, filtres, détails JSON AlpineJS), statistiques de sécurité, suspension de compte et réinitialisation de mot de passe.
 - [ ] **Paramètres du Système :** Interfaces de configuration dynamique (en cours d'intégration avec la logique backend).
 - [ ] **Programme de Fidélisation :** Interface prête, logique de calcul des points à brancher.
 - [ ] **Boutique & Restaurant :** Gestion fine des stocks et impression de tickets cuisine.
@@ -24,6 +25,19 @@ Ce document sert de repère pour suivre l'évolution du projet, savoir sur quel 
 ---
 
 ## 📅 Journal de Développement (Logs)
+
+### [2026-06-17]
+- **Audit et Sécurité (Admin Global) :**
+  - Implémentation complète de l'onglet "Audit" conforme au cahier des charges de l'administration globale.
+  - Création de la table de base de données `audit_logs` et du modèle `AuditLog` pour la journalisation unifiée.
+  - Intégration de filtres avancés (tenant, utilisateur, type d'événement, module, dates) et volet de détails JSON interactif propulsé par AlpineJS.
+  - Capture automatique des accès refusés dans les middlewares `AdminOnly` et `EnsureRoleAccess`.
+  - Branchement d'écouteurs d'événements d'authentification (`Login`, `Logout`, `Failed`) pour mettre à jour `last_login_at` et enregistrer l'activité.
+  - Journalisation des actions sensibles (paiements, annulations, suppressions) dans les contrôleurs existants (chambres, réservations, restaurant, boutique, membres).
+  - Ajout des actions de sécurité : activation/désactivation de compte utilisateur et génération de mot de passe temporaire fort avec banner d'alerte.
+  - Écriture d'un ensemble complet de tests de régression (`AuditLogTest.php`) avec 100% de succès.
+- **Correctif Bogue (Génération de Références de Paiement) :**
+  - Résolution d'un bug de collision de clés uniques (`payments_reference_unique`) lors de la génération de références séquentielles (`PAY-YYYY-00XXXX`) en présence de références aléatoires (`PAY-YYYY-XXXX`). Le système calcule maintenant la séquence maximale réelle sur toutes les références de l'année.
 
 ### [2026-06-03]
 - **Réservations (Acompte & Prix Négocié) :**

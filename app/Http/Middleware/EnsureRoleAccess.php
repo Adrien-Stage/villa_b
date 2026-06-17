@@ -41,6 +41,15 @@ class EnsureRoleAccess
 
         // Vérifier si l'utilisateur a l'un des rôles autorisés
         if (!$user->hasAnyRole($authorizedRoles)) {
+            // Log l'accès refusé pour audit dans la base de données
+            \App\Models\AuditLog::record(
+                $user->id,
+                'access_denied',
+                'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles) . ' (URL: ' . $request->getPathInfo() . ')',
+                'security',
+                ['url' => $request->fullUrl(), 'required_roles' => $authorizedRoles]
+            );
+
             // Messages d'erreur personnalisés par contexte
             $customMessages = [
                 'admin' => 'Accès réservé à l\'administration.',

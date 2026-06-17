@@ -542,6 +542,8 @@ class GroupBookingController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $totalCentimes = (int) $validated['amount'] * 100;
+
         $bookings = $groupBooking->bookings()
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN])
             ->where('balance_due', '>', 0)
@@ -597,11 +599,21 @@ class GroupBookingController extends Controller
                     continue;
                 }
 
-                // Génère référence paiement
-                $lastPayment = Payment::withoutGlobalScopes()
+                // Génère référence paiement de manière robuste pour éviter les collisions
+                $payments = Payment::withoutGlobalScopes()
                     ->where('tenant_id', $tenantId)
-                    ->orderBy('id', 'desc')->first();
-                $seq = $lastPayment ? (int) substr($lastPayment->reference, -6) + 1 : 1;
+                    ->where('reference', 'like', 'PAY-' . now()->year . '-%')
+                    ->get(['reference']);
+
+                $maxSeq = 0;
+                foreach ($payments as $payment) {
+                    $parts = explode('-', $payment->reference);
+                    $lastPart = end($parts);
+                    if (is_numeric($lastPart)) {
+                        $maxSeq = max($maxSeq, (int) $lastPart);
+                    }
+                }
+                $seq = $maxSeq + 1;
                 $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
                 Payment::create([
@@ -647,6 +659,14 @@ class GroupBookingController extends Controller
         // Recharge pour avoir les totaux à jour
         $groupBooking->load('bookings');
         $newTotalBalance = $groupBooking->bookings->sum('balance_due');
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Paiement de " . number_format($totalCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour le groupe #{$groupBooking->group_code}",
+            'bookings',
+            ['group_booking_id' => $groupBooking->id, 'amount' => $totalCentimes, 'method' => $validated['method']]
+        );
 
         return redirect()
             ->route('groups.show', $groupBooking)
@@ -749,6 +769,14 @@ class GroupBookingController extends Controller
 
             $groupBooking->update(['status' => 'cancelled']);
         });
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Annulation de la réservation de groupe #{$groupBooking->group_code} ({$groupBooking->group_name})",
+            'bookings',
+            ['group_booking_id' => $groupBooking->id, 'group_code' => $groupBooking->group_code]
+        );
 
         return redirect()
             ->route('groups.index')
