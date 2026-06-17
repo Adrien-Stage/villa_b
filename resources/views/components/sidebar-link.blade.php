@@ -8,8 +8,8 @@
     <a href="{{ $route !== '#' ? route($route) : '#' }}"
        class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
               {{ $isActive
-                  ? 'bg-[#4a2a14] text-white'
-                  : 'text-[#c4a882] hover:bg-[#4a2a14] hover:text-white' }}">
+                  ? 'bg-surface-dark text-white'
+                  : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
 
         {{-- Icônes SVG selon le type --}}
         @if($icon === 'grid')

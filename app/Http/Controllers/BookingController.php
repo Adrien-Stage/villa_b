@@ -114,6 +114,17 @@ class BookingController extends Controller
 
     public function create(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation.');
+        }
+
         $customer = null;
 
         // Si un client est déjà sélectionné (retour depuis étape 2)
@@ -309,6 +320,19 @@ class BookingController extends Controller
 
     private function storeBooking(Request $request)
     {
+        $tenantId = Auth::user()->tenant_id
+            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return redirect()->route('bookings.cash_register.open')->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
+        }
+
         $validated = $request->validate([
             'customer_id'  => ['required', 'exists:customers,id'],
             'booker_id'    => ['nullable', 'exists:customers,id'],
@@ -384,6 +408,7 @@ class BookingController extends Controller
             'paid_at' => now(),
             'processed_by' => Auth::id(),
             'notes' => 'Acompte versé à la réservation',
+            'cash_register_session_id' => $activeSession->id,
         ]);
 
         // Ligne folio hébergement
@@ -527,6 +552,14 @@ class BookingController extends Controller
 
         $booking->update(['status' => BookingStatus::CANCELLED]);
 
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Annulation de la réservation #{$booking->booking_number} pour {$booking->customer->full_name}",
+            'bookings',
+            ['booking_id' => $booking->id, 'booking_number' => $booking->booking_number]
+        );
+
         return back()->with('success', 'Réservation annulée.');
     }
 
@@ -626,6 +659,16 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+
+        if (!$activeSession) {
+            return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
+        }
+
         // Montant saisi en FCFA → on stocke en centimes
         $amountCentimes = $validated['amount'] * 100;
 
@@ -635,12 +678,21 @@ class BookingController extends Controller
             return back()->withErrors(['payment' => 'Le montant dépasse le solde dû ou consommé.']);
         }
 
-        // Génère le numéro de paiement
-        $lastPayment = \App\Models\Payment::withoutGlobalScopes()
+        // Génère le numéro de paiement de manière robuste pour éviter les collisions
+        $payments = \App\Models\Payment::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
-            ->whereYear('created_at', now()->year)
-            ->orderBy('id', 'desc')->first();
-        $seq = $lastPayment ? (int) substr($lastPayment->reference, -6) + 1 : 1;
+            ->where('reference', 'like', 'PAY-' . now()->year . '-%')
+            ->get(['reference']);
+
+        $maxSeq = 0;
+        foreach ($payments as $payment) {
+            $parts = explode('-', $payment->reference);
+            $lastPart = end($parts);
+            if (is_numeric($lastPart)) {
+                $maxSeq = max($maxSeq, (int) $lastPart);
+            }
+        }
+        $seq = $maxSeq + 1;
         $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
         \App\Models\Payment::create([
@@ -655,10 +707,19 @@ class BookingController extends Controller
             'paid_at'      => now(),
             'processed_by' => Auth::id(),
             'notes'        => $validated['notes'] ?? null,
+            'cash_register_session_id' => $activeSession->id,
         ]);
 
         $this->checkOutService->recalculateTotals($booking);
         $booking->refresh();
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Paiement de " . number_format($amountCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour la réservation #{$booking->booking_number}",
+            'bookings',
+            ['booking_id' => $booking->id, 'amount' => $amountCentimes, 'reference' => $reference]
+        );
 
         if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
             // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur

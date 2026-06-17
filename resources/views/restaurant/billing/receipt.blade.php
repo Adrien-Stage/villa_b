@@ -34,17 +34,23 @@
         <div class="rounded-xl border border-secondary/15 bg-white shadow-sm overflow-hidden window-print" id="invoice-print">
             {{-- En-tête facture --}}
             <div class="px-8 py-6 border-b border-secondary/10">
+                @php
+                    $restTenant = $order->tenant ?? \App\Models\Tenant::first();
+                    $restTenantName = $restTenant?->name ?? 'Villa Boutanga';
+                    $restTenantLogo = !empty($restTenant->settings['logo']) ? asset('storage/' . $restTenant->settings['logo']) : asset('images/logo.png');
+                    $restTenantAddress = $restTenant?->address ?? 'Bafoussam, Cameroun';
+                @endphp
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-3">
                             <div class="w-12 h-12 rounded-full overflow-hidden border border-secondary/20 flex-shrink-0">
-                                <img src="{{ asset('images/logo.png') }}"
+                                <img src="{{ $restTenantLogo }}"
                                     alt="Logo"
                                     class="w-full h-full object-cover">
                             </div>
                             <div>
                                 <h2 class="font-heading text-xl font-bold text-primary">Restaurant</h2>
-                                <p class="text-xs text-primary/50">Villa Boutanga</p>
+                                <p class="text-xs text-primary/50">{{ $restTenantName }}</p>
                             </div>
                         </div>
                     </div>
@@ -138,7 +144,7 @@
                     TVA 19,25% incluse — Facture de Service
                 </p>
                 <p class="text-xs text-primary/30 text-center mt-1">
-                    Villa Boutanga · Bafoussam, Cameroun · Merci et à bientôt
+                    {{ $restTenantName }} · {{ $restTenantAddress }} · Merci et à bientôt
                 </p>
             </div>
         </div>

@@ -284,6 +284,14 @@ class ShopOrderController extends Controller
             'cash_register_session_id' => $activeSession->id,
         ]);
 
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Paiement de " . number_format($order->total_amount / 100, 0, ',', ' ') . " FCFA enregistré pour la commande boutique #{$order->order_number}",
+            'shop',
+            ['order_id' => $order->id, 'order_number' => $order->order_number, 'amount' => $order->total_amount]
+        );
+
         return back()->with('success', 'Paiement enregistré');
     }
 
@@ -302,6 +310,14 @@ class ShopOrderController extends Controller
         $order->update([
             'payment_status' => 'refunded',
         ]);
+
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Remboursement de la commande boutique #{$order->order_number} (Montant: " . number_format($order->total_amount / 100, 0, ',', ' ') . " FCFA)",
+            'shop',
+            ['order_id' => $order->id, 'order_number' => $order->order_number, 'amount' => $order->total_amount]
+        );
 
         return back()->with('success', 'Remboursement effectué et stock restauré');
     }

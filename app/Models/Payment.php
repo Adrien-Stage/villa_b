@@ -28,6 +28,7 @@ class Payment extends Model
         'tenant_id',
         'booking_id',
         'customer_id',          // Pour les paiements hors réservation (ex: client walk-in restaurant)
+        'cash_register_session_id',
         
         // Montant
         'amount',               // En centimes FCFA (positif = encaissement, négatif = remboursement)
@@ -70,6 +71,11 @@ class Payment extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function cashRegisterSession(): BelongsTo
+    {
+        return $this->belongsTo(CashRegisterSession::class);
     }
 
     /**
