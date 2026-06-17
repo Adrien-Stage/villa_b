@@ -55,8 +55,8 @@
             'items' => ['Plan actif', 'Modules inclus', 'Expiration', 'Historique abonnement'],
         ],
         'imports' => [
-            'label' => 'Import/Export Excel',
-            'title' => 'Import et export Excel',
+            'label' => 'Import/Export',
+            'title' => 'Import et export',
             'description' => 'Zone dediee aux imports et exports de donnees sous forme de fichiers Excel.',
             'items' => ['Import etablissements', 'Import utilisateurs', 'Export audit', 'Export supervision'],
         ],
@@ -557,6 +557,155 @@
                         </form>
                     </div>
                 </div>
+            </div>
+        @elseif($activeTab === 'imports')
+            <!-- ================= IMPORT & EXPORT LAYOUT ================= -->
+            
+            <!-- Breadcrumb Path -->
+            <p class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase">IMPORT / EXPORT</p>
+            
+            <!-- Page Title and Subtitle Row -->
+            <div class="mt-2 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 border-b border-slate-200 pb-4">
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-800 font-heading">Import & Export de Données</h1>
+                    <p class="text-xs text-slate-500 mt-1">Exportez les journaux et rapports d'activité de la plateforme ou planifiez des imports.</p>
+                </div>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block sm:text-right">
+                    Format recommandé : CSV Excel (UTF-8 BOM, délimiteur ;)
+                </span>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] mt-6">
+                <!-- Main Content Area -->
+                <div class="space-y-6">
+                    
+                    <!-- Section: Exports -->
+                    <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                            <div class="rounded-full bg-indigo-50 p-2 text-indigo-600">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-md font-bold text-slate-800 tracking-tight">Exportation des données métiers</h2>
+                                <p class="text-[11px] text-slate-500">Téléchargez des extractions de données consolidées au format CSV compatible Microsoft Excel.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 space-y-4">
+                            <!-- Card: Supervision Export -->
+                            <div class="rounded-lg border border-slate-100 bg-slate-50/50 p-5 hover:border-indigo-100 hover:bg-slate-50 transition duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-bold text-slate-800">Rapport de Supervision des Établissements</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-500 max-w-xl">
+                                        Génère un rapport consolidé de tous les établissements actifs ou inactifs (contacts, devise, pays, nombre d'utilisateurs et de réservations enregistrés).
+                                    </p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <a href="{{ route('admin.export.supervision') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Exporter la Supervision
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Card: Database Backup -->
+                            <div class="rounded-lg border border-slate-100 bg-slate-50/50 p-5 hover:border-indigo-100 hover:bg-slate-50 transition duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-bold text-slate-800">Sauvegarde de la Base de Données (Backup)</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-500 max-w-xl">
+                                        Génère une sauvegarde complète de la base de données PostgreSQL au format SQL compressé dans un fichier ZIP pour archivage.
+                                    </p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <a href="{{ route('admin.export.backup') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Télécharger le Backup (.zip)
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Imports -->
+                    <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm opacity-85">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                            <div class="rounded-full bg-slate-100 p-2 text-slate-500">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-md font-bold text-slate-700 tracking-tight">Importation de données</h2>
+                                <p class="text-[11px] text-slate-500">Préparez l'initialisation de nouveaux établissements ou utilisateurs par fichier structuré.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 mt-6 sm:grid-cols-2">
+                            <!-- Card: Import tenants -->
+                            <div class="rounded-lg border border-slate-100 bg-slate-50/40 p-4 relative overflow-hidden">
+                                <span class="absolute top-3 right-3 inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-[9px] font-bold text-slate-600 uppercase">Bientôt</span>
+                                <h3 class="text-xs font-bold text-slate-600">Import d'Établissements</h3>
+                                <p class="text-[11px] text-slate-400 mt-1">Création de masse de nouveaux établissements avec leurs configurations initiales.</p>
+                                <div class="mt-4 flex gap-2">
+                                    <button disabled class="rounded bg-slate-200 px-3 py-1.5 text-[10px] font-bold text-slate-400 cursor-not-allowed">
+                                        Sélectionner fichier
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Card: Import users -->
+                            <div class="rounded-lg border border-slate-100 bg-slate-50/40 p-4 relative overflow-hidden">
+                                <span class="absolute top-3 right-3 inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-[9px] font-bold text-slate-600 uppercase">Bientôt</span>
+                                <h3 class="text-xs font-bold text-slate-600">Import d'Utilisateurs</h3>
+                                <p class="text-[11px] text-slate-400 mt-1">Invitation groupée et affectation de managers ou réceptionnistes à des filiales.</p>
+                                <div class="mt-4 flex gap-2">
+                                    <button disabled class="rounded bg-slate-200 px-3 py-1.5 text-[10px] font-bold text-slate-400 cursor-not-allowed">
+                                        Sélectionner fichier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Guide -->
+                <aside class="space-y-4">
+                    <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Guide d'utilisation</h3>
+                        <div class="mt-4 space-y-4 text-xs text-slate-600 leading-relaxed">
+                            <div>
+                                <p class="font-bold text-slate-700">Encodage & Compatibilité</p>
+                                <p class="mt-1">Les exports incluent le marqueur d'ordre d'octets **BOM UTF-8** pour assurer le bon rendu des accents français sous Excel.</p>
+                            </div>
+                            <div class="border-t border-slate-100 pt-3">
+                                <p class="font-bold text-slate-700">Délimiteur</p>
+                                <p class="mt-1">Le délimiteur utilisé est le **point-virgule (;)**, standard de facto des versions françaises de tableurs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="rounded-lg border border-indigo-100 bg-indigo-50/50 p-5 shadow-sm">
+                        <h3 class="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Sécurité
+                        </h3>
+                        <p class="mt-2 text-xs text-indigo-950 leading-relaxed">
+                            Toutes les opérations d'export de données métiers sont historisées dans le **Journal d'Audit** sous le module `sécurité` / `paramètres`.
+                        </p>
+                    </div>
+                </aside>
             </div>
         @elseif($activeTab !== 'audit')
             <!-- Placeholder Layout for other tabs -->

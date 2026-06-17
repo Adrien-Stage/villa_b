@@ -198,6 +198,251 @@ class AdminAuditController extends Controller
 
         return back()->with('success', "Les informations de l'établissement {$tenant->name} ont été mises à jour avec succès.");
     }
+
+    public function exportSupervision()
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Export du rapport de supervision des établissements au format CSV",
+            'settings',
+            []
+        );
+
+        $headers = [
+            'Content-type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=rapport_supervision_' . now()->format('Y-m-d_H-i-s') . '.csv',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0'
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            
+            // UTF-8 BOM
+            fwrite($file, "\xEF\xBB\xBF");
+
+            // Headers
+            fputcsv($file, [
+                'ID Établissement',
+                'Nom',
+                'Slug',
+                'Pays',
+                'Adresse',
+                'Téléphone',
+                'Email',
+                'Devise',
+                'Statut',
+                'Utilisateurs Rattachés',
+                'Réservations Totales'
+            ], ';');
+
+            $tenants = Tenant::withCount(['users', 'bookings'])->orderBy('name')->get();
+
+            foreach ($tenants as $tenant) {
+                fputcsv($file, [
+                    $tenant->id,
+                    $tenant->name,
+                    $tenant->slug,
+                    $tenant->settings['country'] ?? 'Cameroun',
+                    $tenant->address ?? 'N/A',
+                    $tenant->phone ?? 'N/A',
+                    $tenant->email ?? 'N/A',
+                    $tenant->currency,
+                    $tenant->is_active ? 'Actif' : 'Inactif',
+                    $tenant->users_count,
+                    $tenant->bookings_count
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportBackup()
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Exportation d'une sauvegarde complète de la base de données au format ZIP",
+            'settings',
+            []
+        );
+
+        $connection = \Illuminate\Support\Facades\DB::connection();
+        $driver = $connection->getDriverName();
+        $pdo = $connection->getPdo();
+
+        $sql = "-- Villa Boutanga Database Backup\n";
+        $sql .= "-- Driver: " . $driver . "\n";
+        $sql .= "-- Generated: " . now()->toDateTimeString() . "\n\n";
+
+        if ($driver === 'sqlite') {
+            $sql .= "PRAGMA foreign_keys = OFF;\n\n";
+
+            $tables = $pdo->query("
+                SELECT name 
+                FROM sqlite_master 
+                WHERE type='table' 
+                  AND name NOT LIKE 'sqlite_%'
+                ORDER BY name
+            ")->fetchAll(\PDO::FETCH_COLUMN);
+
+            foreach ($tables as $table) {
+                $sql .= "-- -----------------------------------------------------\n";
+                $sql .= "-- Structure de la table \"{$table}\"\n";
+                $sql .= "-- -----------------------------------------------------\n";
+                $sql .= "DROP TABLE IF EXISTS \"{$table}\";\n";
+                
+                $sqlStmt = $pdo->prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name = :table");
+                $sqlStmt->execute(['table' => $table]);
+                $createSql = $sqlStmt->fetchColumn();
+                
+                $sql .= $createSql . ";\n\n";
+
+                // Dump data
+                $sql .= "-- Contenu de la table \"{$table}\"\n";
+                $dataStmt = $pdo->query("SELECT * FROM \"{$table}\"");
+                $rows = $dataStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if (!empty($rows)) {
+                    foreach ($rows as $row) {
+                        $cols = array_keys($row);
+                        $vals = [];
+                        foreach ($row as $val) {
+                            if ($val === null) {
+                                $vals[] = 'NULL';
+                            } elseif (is_bool($val)) {
+                                $vals[] = $val ? '1' : '0';
+                            } elseif (is_numeric($val)) {
+                                $vals[] = $val;
+                            } else {
+                                $vals[] = "'" . str_replace("'", "''", $val) . "'";
+                            }
+                        }
+                        $sql .= "INSERT INTO \"{$table}\" (\"" . implode('", "', $cols) . "\") VALUES (" . implode(', ', $vals) . ");\n";
+                    }
+                }
+                $sql .= "\n";
+            }
+
+            $sql .= "PRAGMA foreign_keys = ON;\n";
+        } else {
+            // PostgreSQL logic
+            $sql .= "SET session_replication_role = 'replica';\n\n";
+
+            $tables = $pdo->query("
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                  AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+            ")->fetchAll(\PDO::FETCH_COLUMN);
+
+            foreach ($tables as $table) {
+                $sql .= "-- -----------------------------------------------------\n";
+                $sql .= "-- Structure de la table \"{$table}\"\n";
+                $sql .= "-- -----------------------------------------------------\n";
+                $sql .= "DROP TABLE IF EXISTS \"{$table}\" CASCADE;\n";
+                $sql .= "CREATE TABLE \"{$table}\" (\n";
+
+                $colsStmt = $pdo->prepare("
+                    SELECT column_name, data_type, character_maximum_length, is_nullable, column_default 
+                    FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = :table
+                    ORDER BY ordinal_position
+                ");
+                $colsStmt->execute(['table' => $table]);
+                $columns = $colsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $colDefinitions = [];
+                foreach ($columns as $col) {
+                    $def = '  "' . $col['column_name'] . '" ' . $col['data_type'];
+                    if ($col['character_maximum_length']) {
+                        $def .= '(' . $col['character_maximum_length'] . ')';
+                    }
+                    if ($col['is_nullable'] === 'NO') {
+                        $def .= ' NOT NULL';
+                    }
+                    if ($col['column_default'] !== null) {
+                        $def .= ' DEFAULT ' . $col['column_default'];
+                    }
+                    $colDefinitions[] = $def;
+                }
+
+                $pkStmt = $pdo->prepare("
+                    SELECT kcu.column_name
+                    FROM information_schema.table_constraints tc
+                    JOIN information_schema.key_column_usage kcu
+                      ON tc.constraint_name = kcu.constraint_name
+                      AND tc.table_schema = kcu.table_schema
+                    WHERE tc.constraint_type = 'PRIMARY KEY'
+                      AND tc.table_name = :table
+                ");
+                $pkStmt->execute(['table' => $table]);
+                $pks = $pkStmt->fetchAll(\PDO::FETCH_COLUMN);
+                if (!empty($pks)) {
+                    $colDefinitions[] = '  PRIMARY KEY ("' . implode('", "', $pks) . '")';
+                }
+
+                $sql .= implode(",\n", $colDefinitions);
+                $sql .= "\n);\n\n";
+
+                $sql .= "-- Contenu de la table \"{$table}\"\n";
+                $dataStmt = $pdo->query("SELECT * FROM \"{$table}\"");
+                $rows = $dataStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if (!empty($rows)) {
+                    foreach ($rows as $row) {
+                        $cols = array_keys($row);
+                        $vals = [];
+                        foreach ($row as $val) {
+                            if ($val === null) {
+                                $vals[] = 'NULL';
+                            } elseif (is_bool($val)) {
+                                $vals[] = $val ? 'TRUE' : 'FALSE';
+                            } elseif (is_numeric($val)) {
+                                $vals[] = $val;
+                            } else {
+                                $vals[] = "'" . str_replace("'", "''", $val) . "'";
+                            }
+                        }
+                        $sql .= "INSERT INTO \"{$table}\" (\"" . implode('", "', $cols) . "\") VALUES (" . implode(', ', $vals) . ");\n";
+                    }
+                }
+                $sql .= "\n";
+            }
+
+            $sql .= "SET session_replication_role = 'origin';\n";
+        }
+
+        // Create temporary files
+        $tempSqlFile = tempnam(sys_get_temp_dir(), 'backup_');
+        file_put_contents($tempSqlFile, $sql);
+
+        $zipFile = tempnam(sys_get_temp_dir(), 'backup_zip_');
+        $zip = new \ZipArchive();
+        
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $sqlFilename = 'villa_boutanga_backup_' . $timestamp . '.sql';
+        $zipFilename = 'villa_boutanga_backup_' . $timestamp . '.zip';
+
+        if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $zip->addFile($tempSqlFile, $sqlFilename);
+            $zip->close();
+        }
+        
+        @unlink($tempSqlFile);
+
+        return response()->download($zipFile, $zipFilename)->deleteFileAfterSend(true);
+    }
 }
 
 
