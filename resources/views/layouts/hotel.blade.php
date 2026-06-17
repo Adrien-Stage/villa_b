@@ -1,13 +1,40 @@
+@php
+    $currentTenant = Auth::user()->tenant ?? \App\Models\Tenant::first();
+    $tenantName = $currentTenant?->name ?? 'Villa Boutanga';
+    $tenantLogo = !empty($currentTenant?->settings['logo']) ? asset('storage/' . $currentTenant->settings['logo']) : asset('images/logo.png');
+    
+    // Generate initials
+    $words = explode(' ', $tenantName);
+    $initials = '';
+    foreach ($words as $word) {
+        $initials .= strtoupper(substr($word, 0, 1));
+    }
+    $initials = substr($initials, 0, 2);
+    if (empty($initials)) {
+        $initials = 'VB';
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="fr">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Villa Boutanga PMS')</title>
+    <title>@yield('title', $tenantName . ' PMS')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: {{ $currentTenant->settings['theme']['primary'] ?? '#391F0E' }};
+            --color-secondary: {{ $currentTenant->settings['theme']['secondary'] ?? '#CCAB87' }};
+            --color-accent: {{ $currentTenant->settings['theme']['accent'] ?? '#EED4A3' }};
+            --color-dark: {{ $currentTenant->settings['theme']['dark'] ?? '#0F0201' }};
+            --color-surface-dark: {{ $currentTenant->settings['theme']['surface_dark'] ?? '#2C1810' }};
+            --color-text-on-light: {{ $currentTenant->settings['theme']['text_on_light'] ?? '#391F0E' }};
+            --color-text-on-dark: {{ $currentTenant->settings['theme']['text_on_dark'] ?? '#CCAB87' }};
+        }
+    </style>
 </head>
 
 <body class="min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
@@ -19,23 +46,23 @@
             <div class="px-4 py-5 border-b border-surface-dark">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
-                        <img src="{{ asset('images/logo.png') }}"
+                        <img src="{{ $tenantLogo }}"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                             class="bg-white w-full h-full object-cover">
                         <div class="w-full h-full bg-secondary rounded-full items-center justify-center hidden">
-                            <span class="text-primary font-heading font-bold text-sm">VB</span>
+                            <span class="text-text-on-light font-heading font-bold text-sm">{{ $initials }}</span>
                         </div>
                     </div>
                     <div>
-                        <p class="text-white font-heading font-semibold text-sm leading-tight">Villa Boutanga</p>
-                        <p class="text-secondary text-xs">PMS v1.0</p>
+                        <p class="text-white font-heading font-semibold text-sm leading-tight">{{ $tenantName }}</p>
+                        <p class="text-text-on-dark text-xs font-medium">PMS v1.0</p>
                     </div>
                 </div>
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
                 <div>
-                    <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
+                    <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
                         <x-sidebar-link route="dashboard" icon="grid">Tableau de bord</x-sidebar-link>
                     </ul>
@@ -43,7 +70,7 @@
 
                 @role('manager')
                     <div>
-                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="analytics.index" icon="bar-chart-2">Tour de contrôle</x-sidebar-link>
                         </ul>
@@ -52,7 +79,7 @@
 
                 @role('manager','reception','housekeeping_leader','housekeeping_staff','housekeeping')
                     <div>
-                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
 
@@ -61,20 +88,20 @@
                                     <a href="{{ route('bookings.index') }}"
                                         class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
                                         {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
-                                            ? 'bg-[#4a2a14] text-white'
-                                            : 'text-[#c4a882] hover:bg-[#4a2a14] hover:text-white' }}">
+                                            ? 'bg-surface-dark text-white'
+                                            : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
                                         <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
                                         Réservations
                                     </a>
 
                                     @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*'))
-                                    <ul class="mt-0.5 ml-4 space-y-0.5 border-l border-secondary/20 pl-3">
+                                    <ul class="mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
                                         <li>
                                             <a href="{{ route('bookings.index') }}"
                                                 class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                 {{ request()->routeIs('bookings.*')
                                                     ? 'text-white'
-                                                    : 'text-[#c4a882] hover:text-white' }}">
+                                                    : 'text-text-on-dark hover:text-white' }}">
                                                 <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
                                                 Individuelles
                                             </a>
@@ -84,7 +111,7 @@
                                                 class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                 {{ request()->routeIs('groups.*')
                                                     ? 'text-white'
-                                                    : 'text-[#c4a882] hover:text-white' }}">
+                                                    : 'text-text-on-dark hover:text-white' }}">
                                                 <i data-lucide="users" class="w-3 h-3 flex-shrink-0"></i>
                                                 Groupes
                                             </a>
@@ -103,7 +130,7 @@
 
                 @role('manager','restaurant_chief','restaurant_staff','cashier')
                     <div>
-                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @role('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
@@ -119,7 +146,7 @@
                                     <a href="{{ route('portal.restaurant.menu', ['tenant' => Auth::user()->tenant->slug]) }}"
                                        target="_blank"
                                        rel="noopener"
-                                       class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-[#c4a882] hover:bg-[#4a2a14] hover:text-white">
+                                       class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-text-on-dark hover:bg-surface-dark hover:text-white">
                                         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 6v-4h2v4h-2zm4 0v-2h2v2h-2zm-4-6v-2h2v2h-2zm4 2v-2h2v2h-2z"/>
                                         </svg>
@@ -133,7 +160,7 @@
 
                 @role('manager','reception','cashier')
                     <div>
-                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
                             @role('manager')
@@ -145,7 +172,7 @@
 
                 @role('shop_manager','shop_cashier','manager')
                     <div>
-                        <p class="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
                             @role('shop_manager','manager')
                                 <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
@@ -171,7 +198,7 @@
                 @php $isDiscussionActive = request()->routeIs('discussions.*'); @endphp
                 <a id="sidebar-discussions-link"
                    href="{{ route('discussions.index') }}"
-                   class="flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'bg-[#4a2a14] text-white' : 'text-[#c4a882] hover:bg-[#4a2a14] hover:text-white' }}">
+                   class="flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'bg-surface-dark text-white' : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
                     <span class="flex items-center gap-2.5 min-w-0">
                         <i data-lucide="message-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
                         <span class="truncate">Discussions</span>
@@ -183,20 +210,20 @@
 
             <div class="px-3 py-4 border-t border-surface-dark">
                 <div class="flex items-center justify-between gap-2">
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-[#4a2a14] transition-colors">
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
                         <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                            <span class="text-primary font-semibold text-xs">
+                            <span class="text-text-on-light font-semibold text-xs">
                                 {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
                             </span>
                         </div>
                         <div class="min-w-0">
                             <p class="text-white text-xs font-medium truncate">{{ \Illuminate\Support\Str::limit(Auth::user()->name, 13, '...') }}</p>
-                            <p class="text-secondary/60 text-[10px] capitalize truncate">{{ Auth::user()->role ?? 'Admin' }}</p>
+                            <p class="text-text-on-dark/60 text-[10px] capitalize truncate">{{ Auth::user()->role ?? 'Admin' }}</p>
                         </div>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center flex-shrink-0 text-secondary/40 hover:text-secondary transition-colors">
+                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center flex-shrink-0 text-text-on-dark/40 hover:text-text-on-dark transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

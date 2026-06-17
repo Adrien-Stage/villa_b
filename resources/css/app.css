@@ -13,6 +13,8 @@
     --color-accent: #EED4A3;
     --color-dark: #0F0201;
     --color-surface-dark: #2C1810;
+    --color-text-on-light: #391F0E;
+    --color-text-on-dark: #CCAB87;
     
     /* Typographie */
     --font-heading: 'Playfair Display', serif;

@@ -35,6 +35,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
     Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
     Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
+    Route::post('/admin/tenants/{tenant}', [AdminAuditController::class, 'updateTenant'])->name('admin.tenants.update');
 });
 
 // Login
@@ -93,13 +94,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
 
     // --- CHAMBRES ---
-    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader,housekeeping')->group(function () {
+    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader')->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
         Route::post('/',               [RoomController::class, 'store'])->middleware('role:manager,reception')->name('store');
         Route::get('/{room}',          [RoomController::class, 'show'])->name('show');
         Route::put('/{room}',          [RoomController::class, 'update'])->middleware('role:manager,reception')->name('update');
         Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('role:manager,reception')->name('destroy');
-        Route::post('/{room}/status',  [RoomController::class, 'updateStatus'])->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')->name('updateStatus');
         Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('role:manager,reception')->name('images.destroy');
 
         // Types de chambres - seulement manager
@@ -107,6 +107,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('role:manager,reception')->name('types.update');
         Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('role:manager,reception')->name('types.destroy');
     });
+    Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
+        ->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')
+        ->name('rooms.updateStatus');
 
     // --- RÉSERVATIONS ---
     Route::prefix('bookings')->name('bookings.')->middleware('role:manager,reception')->group(function () {

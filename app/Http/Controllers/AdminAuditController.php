@@ -140,4 +140,64 @@ class AdminAuditController extends Controller
             'password' => $tempPassword,
         ]);
     }
+
+    public function updateTenant(Request $request, Tenant $tenant)
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug,' . $tenant->id],
+            'country' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'currency' => ['required', 'string', 'size:3'],
+            'logo' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'theme' => ['nullable', 'array'],
+            'theme.primary' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.secondary' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.accent' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.surface_dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.text_on_light' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.text_on_dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+
+        $settings = $tenant->settings ?? [];
+        $settings['country'] = $validated['country'] ?? null;
+        
+        if ($request->has('theme')) {
+            $settings['theme'] = $validated['theme'];
+        }
+
+        if ($request->hasFile('logo')) {
+            if (!empty($settings['logo'])) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($settings['logo']);
+            }
+            $settings['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $tenant->update([
+            'name' => $validated['name'],
+            'slug' => $validated['slug'],
+            'address' => $validated['address'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'currency' => $validated['currency'],
+            'settings' => $settings,
+        ]);
+
+        AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Modification des informations générales de l'établissement {$tenant->name}",
+            'settings',
+            ['tenant_id' => $tenant->id, 'changes' => array_diff_key($validated, ['logo' => ''])]
+        );
+
+        return back()->with('success', "Les informations de l'établissement {$tenant->name} ont été mises à jour avec succès.");
+    }
 }
+
+

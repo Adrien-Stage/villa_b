@@ -39,18 +39,24 @@
 
             {{-- Infos établissement --}}
             <div>
+                @php
+                    $printTenant = Auth::user()->tenant ?? \App\Models\Tenant::first();
+                    $printTenantName = $printTenant?->name ?? 'Villa Boutanga';
+                    $printTenantLogo = !empty($printTenant->settings['logo']) ? asset('storage/' . $printTenant->settings['logo']) : asset('images/logo.png');
+                    $printTenantAddress = $printTenant?->address ?? 'Bafoussam, Cameroun';
+                @endphp
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-12 h-12 rounded-full overflow-hidden border border-secondary/20 flex-shrink-0">
-                        <img src="{{ asset('images/logo.png') }}"
-                            alt="Villa Boutanga"
+                        <img src="{{ $printTenantLogo }}"
+                            alt="{{ $printTenantName }}"
                             class="w-full h-full object-cover">
                     </div>
                     <div>
-                        <h2 class="font-heading text-xl font-bold text-primary">Villa Boutanga</h2>
+                        <h2 class="font-heading text-xl font-bold text-primary">{{ $printTenantName }}</h2>
                         <p class="text-xs text-primary/50">Établissement hôtelier</p>
                     </div>
                 </div>
-                <p class="text-xs text-primary/50">Bafoussam, Cameroun</p>
+                <p class="text-xs text-primary/50">{{ $printTenantAddress }}</p>
             </div>
 
             <div class="text-right">
@@ -144,7 +150,7 @@
     {{-- Pied de page du rapport --}}
     <div class="px-8 py-4 border-t border-secondary/10 bg-accent/5 mt-6">
         <p class="text-xs text-primary/40 text-center">
-            Document généré automatiquement par le système analytique Villa Boutanga. Usage interne uniquement.
+            Document généré automatiquement par le système analytique {{ $printTenantName }}. Usage interne uniquement.
         </p>
         <p class="text-[10px] text-primary/30 text-center mt-1">
             Généré le {{ now()->format('d/m/Y à H:i') }} par {{ auth()->user()->name }}
