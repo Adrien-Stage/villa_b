@@ -256,6 +256,38 @@
                 <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
             </div>
             <div class="flex items-center gap-4">
+                {{-- In-app Notifications Dropdown --}}
+                <div x-data="notificationCenter()" class="relative">
+                    <button @click="open = !open" class="relative p-1.5 rounded-full hover:bg-secondary/15 text-primary/70 hover:text-primary transition-colors focus:outline-none flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span x-show="totalUnread > 0" class="absolute top-0 right-0 min-w-4 h-4 px-1 flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold border border-white" style="display: none;" x-text="totalUnread"></span>
+                    </button>
+                    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-80 bg-white border border-secondary/20 rounded-xl shadow-xl z-50 py-2 pointer-events-auto" style="display: none;" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95">
+                        <div class="px-4 py-2 border-b border-secondary/10 flex justify-between items-center">
+                            <span class="text-xs font-semibold text-primary">Notifications</span>
+                            <button x-show="totalUnread > 0" @click="markAllAsRead()" class="text-[10px] text-secondary hover:underline font-medium">Tout marquer comme lu</button>
+                        </div>
+                        <div class="max-h-64 overflow-y-auto">
+                            <template x-if="notifications.length === 0">
+                                <div class="px-4 py-6 text-center text-xs text-primary/40">
+                                    <p>Aucune nouvelle notification</p>
+                                </div>
+                            </template>
+                            <template x-for="item in notifications" :key="item.id">
+                                <div @click="readNotification(item)" class="px-4 py-3 hover:bg-slate-50 border-b border-secondary/5 flex flex-col gap-1 cursor-pointer transition-colors">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <span class="text-xs font-bold text-primary" x-text="item.data.title || 'Notification'"></span>
+                                        <span class="text-[9px] text-primary/40 whitespace-nowrap" x-text="item.created_at"></span>
+                                    </div>
+                                    <p class="text-xs text-primary/70 line-clamp-2" x-text="item.data.message"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <span class="hidden sm:flex items-center gap-1.5 text-xs text-green-600 font-medium">
                     <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     En ligne
@@ -273,6 +305,120 @@
 
     <x-access-denied-popup />
 
+    {{-- Modal de déconnexion - Caisse ouverte --}}
+    @if(session('confirm_logout_caisse_open'))
+    <div id="caisse-logout-modal"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+         role="dialog"
+         aria-modal="true"
+         style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
+        <div class="absolute inset-0" onclick="document.getElementById('caisse-logout-modal').classList.add('hidden')"></div>
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all z-10">
+            {{-- Header --}}
+            <div class="flex items-center gap-3 bg-yellow-50 px-6 py-4 border-b border-yellow-100">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-heading font-semibold text-yellow-900">
+                        Caisse ouverte
+                    </h3>
+                    <p class="text-sm text-yellow-700">
+                        Action requise avant déconnexion
+                    </p>
+                </div>
+            </div>
+
+            {{-- Content --}}
+            <div class="px-6 py-4">
+                <p class="text-sm text-primary/80 leading-relaxed">
+                    Vous avez actuellement une session de caisse ouverte dans le module 
+                    <strong>{{ session('caisse_module') === 'reception' ? 'Hébergement' : 'Boutique' }}</strong>.
+                    Il est fortement recommandé de fermer votre caisse avant de quitter l'application.
+                </p>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t border-secondary/10">
+                <button type="button"
+                        onclick="document.getElementById('caisse-logout-modal').classList.add('hidden')"
+                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-primary/70 hover:text-primary transition-colors text-center">
+                    Annuler
+                </button>
+                <form method="POST" action="{{ route('logout') }}" class="w-full sm:w-auto">
+                    @csrf
+                    <input type="hidden" name="force" value="1">
+                    <button type="submit"
+                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
+                        Déconnexion (Pause)
+                    </button>
+                </form>
+                <a href="{{ session('caisse_module') === 'reception' ? route('bookings.cash_register.close') : route('shop.cash_register.close') }}"
+                   class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-center">
+                    Clôturer la caisse
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal de reconnexion - Caisse en pause --}}
+    @if(session('paused_caisse_session'))
+    <div id="caisse-resume-modal"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+         role="dialog"
+         aria-modal="true"
+         style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
+        {{-- Pas de clic extérieur pour fermer --}}
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all z-10">
+            {{-- Header --}}
+            <div class="flex items-center gap-3 bg-purple-50 px-6 py-4 border-b border-purple-100">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i data-lucide="calculator" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-heading font-semibold text-purple-900">
+                        Caisse en pause
+                    </h3>
+                    <p class="text-sm text-purple-700">
+                        Bon retour parmi nous
+                    </p>
+                </div>
+            </div>
+
+            {{-- Content --}}
+            <div class="px-6 py-4">
+                <p class="text-sm text-primary/80 leading-relaxed">
+                    Vous aviez une session de caisse en pause dans le module 
+                    <strong>{{ session('paused_caisse_session')['module'] === 'reception' ? 'Hébergement' : 'Boutique' }}</strong>.
+                    Que voulez-vous faire ?
+                </p>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t border-secondary/10">
+                <form method="POST" action="{{ route('cash_register.resume') }}" class="w-full sm:w-auto">
+                    @csrf
+                    <input type="hidden" name="session_id" value="{{ session('paused_caisse_session')['id'] }}">
+                    <input type="hidden" name="redirect_to_close" value="1">
+                    <button type="submit"
+                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
+                        Fermer la caisse
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('cash_register.resume') }}" class="w-full sm:w-auto">
+                    @csrf
+                    <input type="hidden" name="session_id" value="{{ session('paused_caisse_session')['id'] }}">
+                    <button type="submit"
+                            class="w-full px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-center">
+                        Continuer la session
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Assistant IA (Flottant) -->
     <x-ai-assistant />
 
@@ -280,26 +426,50 @@
     <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
+    // Resume audio context on user interaction to bypass autoplay policy restrictions
+    window.audioCtx = null;
+    document.addEventListener('click', () => {
+        if (window.audioCtx && window.audioCtx.state === 'suspended') {
+            window.audioCtx.resume();
+        }
+    }, { once: false });
+
     window.playNotificationSound = function() {
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            if (!window.audioCtx) {
+                window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
             
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
-            
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            
-            oscillator.start(audioCtx.currentTime);
-            oscillator.stop(audioCtx.currentTime + 0.5);
-        } catch (e) {}
+            if (window.audioCtx.state === 'suspended') {
+                window.audioCtx.resume();
+            }
+
+            const playNote = (frequency, startTime, duration) => {
+                const osc = window.audioCtx.createOscillator();
+                const gain = window.audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(window.audioCtx.destination);
+                
+                osc.type = 'triangle'; // softer than sine, mimics a professional physical chime/marimba
+                osc.frequency.setValueAtTime(frequency, startTime);
+                
+                // Attack & Decay Envelope
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.12, startTime + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+
+            const now = window.audioCtx.currentTime;
+            // Play a premium crystal double-tone chime (G5, then C6)
+            playNote(783.99, now, 0.25); // G5
+            playNote(1046.50, now + 0.08, 0.35); // C6
+        } catch (e) {
+            console.error('Play notification sound failed', e);
+        }
     };
 
     window.showSystemToast = function(title, message, onClickUrl = null) {
@@ -398,6 +568,95 @@
         refreshUnreadDot();
         setInterval(refreshUnreadDot, 3000);
     })();
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('notificationCenter', () => ({
+            open: false,
+            totalUnread: 0,
+            notifications: [],
+            isFirstPoll: true,
+
+            init() {
+                this.poll();
+                setInterval(() => this.poll(), 5000);
+            },
+
+            async poll() {
+                try {
+                    const response = await fetch('{{ route('notifications.unread') }}', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+                    if (!response.ok) return;
+                    const res = await response.json();
+                    if (res.ok) {
+                        const previousCount = this.totalUnread;
+                        this.notifications = res.notifications;
+                        this.totalUnread = res.total_unread;
+
+                        if (!this.isFirstPoll && res.total_unread > previousCount) {
+                            if (window.playNotificationSound) {
+                                window.playNotificationSound();
+                            }
+                            
+                            const newNotif = res.notifications[0];
+                            if (newNotif && window.showSystemToast) {
+                                window.showSystemToast(
+                                    newNotif.data.title || 'Notification',
+                                    newNotif.data.message,
+                                    newNotif.data.url
+                                );
+                            }
+                        }
+                        this.isFirstPoll = false;
+                    }
+                } catch (e) {
+                    console.error('Failed to poll notifications', e);
+                }
+            },
+
+            async readNotification(item) {
+                try {
+                    const response = await fetch(`/notifications/${item.id}/read`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+                    if (response.ok) {
+                        this.poll();
+                        if (item.data.url) {
+                            window.location.href = item.data.url;
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async markAllAsRead() {
+                try {
+                    const response = await fetch('{{ route('notifications.readAll') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+                    if (response.ok) {
+                        this.poll();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }));
+    });
     </script>
 
     @stack('scripts')

@@ -8,7 +8,7 @@
 
     {{-- En-tête --}}
     <div class="mb-6">
-        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId]) }}"
+        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour
@@ -75,12 +75,43 @@
             </a>
         </div>
     @else
-        <div class="space-y-4">
-            @foreach($roomTypes as $type)
-                @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
-                @if($rooms->isEmpty()) @continue @endif
+        <div x-data="{ activeCategory: 'all' }">
+            {{-- Filtres par catégorie --}}
+            <div class="flex items-center gap-2 flex-wrap mb-6">
+                <button type="button" 
+                        @click="activeCategory = 'all'"
+                        :class="activeCategory === 'all' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
+                        class="px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                    Toutes les catégories
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white">
+                        {{ $availableRooms->flatten(1)->count() }}
+                    </span>
+                </button>
+                @foreach($roomTypes as $type)
+                    @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
+                    @if($rooms->isEmpty()) @continue @endif
+                    <button type="button" 
+                            @click="activeCategory = '{{ $type->id }}'"
+                            :class="activeCategory === '{{ $type->id }}' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
+                            class="px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                        {{ $type->name }}
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 group-hover:bg-slate-200 transition-colors">
+                            {{ $rooms->count() }}
+                        </span>
+                    </button>
+                @endforeach
+            </div>
 
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="space-y-4">
+                @foreach($roomTypes as $type)
+                    @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
+                    @if($rooms->isEmpty()) @continue @endif
+
+                    <div x-show="activeCategory === 'all' || activeCategory === '{{ $type->id }}'"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-[0.98]"
+                         x-transition:enter-end="opacity-100 transform scale-100"
+                         class="bg-white rounded-xl shadow-sm overflow-hidden">
                     {{-- En-tête type --}}
                     <div class="px-5 py-4 border-b border-secondary/10 flex items-center justify-between">
                         <div>
@@ -150,7 +181,16 @@
                 </div>
             @endforeach
         </div>
+        </div>
     @endif
+
+    <div class="mt-6 flex justify-start">
+        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
+           class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Précédent
+        </a>
+    </div>
 </div>
 
 @endsection

@@ -271,3 +271,452 @@ test('group booking payments and calculations work when caisse is open', functio
     expect($payment2->amount)->toBe(1500000); // 15 000 FCFA
     expect($payment2->method)->toBe('cash');
 });
+
+test('bookings and groups index views receive isCashRegisterOpen correctly', function () {
+    $this->seed([\Database\Seeders\TenantSeeder::class]);
+    $tenant = Tenant::first();
+    $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    // 1. Caisse is closed
+    $this->actingAs($user);
+    $response = $this->get(route('bookings.index'));
+    $response->assertStatus(200);
+    $response->assertViewHas('isCashRegisterOpen', false);
+
+    $this->actingAs($manager);
+    $response = $this->get(route('groups.index'));
+    $response->assertStatus(200);
+    $response->assertViewHas('isCashRegisterOpen', false);
+
+    // 2. Open the caisse for user (receptionist)
+    $this->actingAs($user);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    // Now index view should have isCashRegisterOpen = true for user
+    $response = $this->get(route('bookings.index'));
+    $response->assertStatus(200);
+    $response->assertViewHas('isCashRegisterOpen', true);
+
+    // But for manager, it is still closed (since it's a different user)
+    $this->actingAs($manager);
+    $response = $this->get(route('groups.index'));
+    $response->assertStatus(200);
+    $response->assertViewHas('isCashRegisterOpen', false);
+
+    // Now open the caisse for manager
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '20000',
+    ])->assertRedirect();
+
+    // Now index view should have isCashRegisterOpen = true for manager too
+    $response = $this->get(route('groups.index'));
+    $response->assertStatus(200);
+    $response->assertViewHas('isCashRegisterOpen', true);
+});
+
+test('booking wizard previous button maps fields and returns select-room step', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+
+    $this->actingAs($user);
+
+    // Open the caisse
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    // Send step=4 POST request but with action_back=1
+    $response = $this->post(route('bookings.store'), [
+        'action_back' => '1',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+    ]);
+
+    $response->assertStatus(200);
+    $response->assertViewIs('bookings.select-room');
+    $response->assertViewHas('customer');
+    $response->assertViewHas('adults', 2);
+    $response->assertViewHas('children', 1);
+});
+
+test('receptionist cannot submit arbitrary custom price but manager can', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $roomType = $room->roomType;
+    $roomType->update(['base_price' => 5000000]); // 50 000 FCFA
+
+    // Set custom settings
+    $tenant->update([
+        'settings' => [
+            'reception' => [
+                'max_discount_percentage' => 15,
+                'min_deposit_percentage' => 30,
+            ]
+        ]
+    ]);
+
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $receptionist = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    // 1. Logged in as receptionist, caisse open
+    $this->actingAs($receptionist);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    // Try submitting arbitrary price (49 000 FCFA is not a multiple of 5% discount of 50 000 FCFA)
+    $response = $this->from(route('bookings.create'))->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '49000',
+        'payment_amount' => '15000',
+        'payment_method' => 'cash',
+    ]);
+
+    $response->assertRedirect(route('bookings.create'));
+    $response->assertSessionHasErrors('custom_price');
+
+    // Try submitting too low payment amount (10% of 47 500 is 4 750, but min deposit percentage is 30% = 14 250)
+    // Here we use 47 500 (5% discount), which is a valid custom price.
+    $response2 = $this->from(route('bookings.create'))->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '47500',
+        'payment_amount' => '10000', // < 14 250
+        'payment_method' => 'cash',
+    ]);
+
+    $response2->assertRedirect(route('bookings.create'));
+    $response2->assertSessionHasErrors('payment_amount');
+
+    // Try submitting valid discount and valid payment
+    $response3 = $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '47500', // 5% discount
+        'payment_amount' => '15000', // > 14 250
+        'payment_method' => 'cash',
+    ]);
+
+    $response3->assertRedirect();
+    $booking = Booking::orderBy('id', 'desc')->first();
+    expect($booking->price_per_night)->toBe(4750000); // in cents
+
+    // 2. Logged in as manager, caisse open
+    $this->actingAs($manager);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '20000',
+    ])->assertRedirect();
+
+    // Manager can set arbitrary price
+    $response4 = $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(3)->format('Y-m-d'),
+        'check_out' => now()->addDays(4)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '49000', // arbitrary price
+        'payment_amount' => '15000',
+        'payment_method' => 'cash',
+    ]);
+
+    $response4->assertRedirect();
+    $managerBooking = Booking::orderBy('id', 'desc')->first();
+    expect($managerBooking->price_per_night)->toBe(4900000); // in cents
+});
+
+test('receptionist complimentary booking needs approval and saves as pending', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $receptionist = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+
+    $this->actingAs($receptionist);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    $response = $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '0',
+        'payment_amount' => '0',
+        'payment_method' => 'cash',
+        'is_offerte' => '1',
+        'offerte_reason' => 'Guest of honor receptionist',
+    ]);
+
+    $response->assertRedirect();
+    $booking = Booking::orderBy('id', 'desc')->first();
+    expect($booking->status)->toBe(\App\Enums\BookingStatus::PENDING);
+    expect($booking->notes)->toContain('Offerte - Motif : Guest of honor receptionist');
+    expect($booking->payments()->count())->toBe(0);
+});
+
+test('manager complimentary booking is confirmed immediately', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    $this->actingAs($manager);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    $response = $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '0',
+        'payment_amount' => '0',
+        'payment_method' => 'cash',
+        'is_offerte' => '1',
+        'offerte_reason' => 'Guest of honor manager',
+    ]);
+
+    $response->assertRedirect();
+    $booking = Booking::orderBy('id', 'desc')->first();
+    expect($booking->status)->toBe(\App\Enums\BookingStatus::CONFIRMED);
+    expect($booking->notes)->toContain('Offerte - Motif : Guest of honor manager');
+    expect($booking->payments()->count())->toBe(0);
+});
+
+test('manager can approve pending complimentary booking', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $receptionist = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    // Create a pending booking
+    $this->actingAs($receptionist);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '0',
+        'payment_amount' => '0',
+        'payment_method' => 'cash',
+        'is_offerte' => '1',
+        'offerte_reason' => 'Complimentary test booking',
+    ]);
+
+    $booking = Booking::orderBy('id', 'desc')->first();
+    expect($booking->status)->toBe(\App\Enums\BookingStatus::PENDING);
+
+    // Receptionist tries to approve -> 403
+    $this->actingAs($receptionist);
+    $response = $this->post(route('bookings.approve', $booking));
+    $response->assertStatus(403);
+
+    // Manager approves -> success
+    $this->actingAs($manager);
+    $response = $this->post(route('bookings.approve', $booking));
+    $response->assertRedirect();
+
+    $booking->refresh();
+    expect($booking->status)->toBe(\App\Enums\BookingStatus::CONFIRMED);
+});
+
+test('complimentary bookings trigger in-app notifications correctly', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $receptionist = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'reception']);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    // 1. Receptionist logs in, opens caisse
+    $this->actingAs($receptionist);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    // 2. Create pending complimentary booking
+    $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '0',
+        'payment_amount' => '0',
+        'payment_method' => 'cash',
+        'is_offerte' => '1',
+        'offerte_reason' => 'Need approval notification',
+    ]);
+
+    $booking = Booking::orderBy('id', 'desc')->first();
+
+    // 3. Manager should have 1 unread notification
+    $this->actingAs($manager);
+    $response = $this->getJson(route('notifications.unread'));
+    $response->assertStatus(200);
+    $response->assertJsonPath('ok', true);
+    $response->assertJsonPath('total_unread', 1);
+    $response->assertJsonPath('notifications.0.data.booking_id', $booking->id);
+    $response->assertJsonPath('notifications.0.data.title', 'Chambre Offerte - Validation Requise');
+
+    $notifId = $response->json('notifications.0.id');
+
+    // 4. Manager approves the booking
+    $this->post(route('bookings.approve', $booking))->assertRedirect();
+
+    // 5. Receptionist should have 1 unread notification (approved)
+    $this->actingAs($receptionist);
+    $response2 = $this->getJson(route('notifications.unread'));
+    $response2->assertStatus(200);
+    $response2->assertJsonPath('total_unread', 1);
+    $response2->assertJsonPath('notifications.0.data.booking_id', $booking->id);
+    $response2->assertJsonPath('notifications.0.data.title', 'Réservation Offerte Validée');
+
+    $recNotifId = $response2->json('notifications.0.id');
+
+    // 6. Receptionist marks notification as read
+    $this->postJson(route('notifications.read', $recNotifId))->assertStatus(200);
+    $response3 = $this->getJson(route('notifications.unread'));
+    $response3->assertJsonPath('total_unread', 0);
+
+    // 7. Manager marks all as read
+    $this->actingAs($manager);
+    $this->postJson(route('notifications.readAll'))->assertStatus(200);
+    $response4 = $this->getJson(route('notifications.unread'));
+    $response4->assertJsonPath('total_unread', 0);
+});
+
+test('booking finalization sends check-in code email to customer and booker if present', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $customer = Customer::factory()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'customer@example.com'
+    ]);
+    $booker = Customer::factory()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'booker@example.com'
+    ]);
+    $manager = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'manager']);
+
+    $this->actingAs($manager);
+    $this->post(route('bookings.cash_register.open.store'), [
+        'opening_amount' => '10000',
+    ])->assertRedirect();
+
+    $this->post(route('bookings.store'), [
+        'step' => '4',
+        'customer_id' => $customer->id,
+        'booker_id' => $booker->id,
+        'room_id' => $room->id,
+        'check_in' => now()->addDays(1)->format('Y-m-d'),
+        'check_out' => now()->addDays(2)->format('Y-m-d'),
+        'adults_count' => 2,
+        'children_count' => 1,
+        'source' => 'direct',
+        'custom_price' => '50000',
+        'payment_amount' => '15000',
+        'payment_method' => 'cash',
+    ])->assertRedirect();
+
+    $booking = Booking::orderBy('id', 'desc')->first();
+    expect($booking)->not->toBeNull();
+
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\CheckinCodeMail::class, function ($mail) use ($customer) {
+        return $mail->hasTo('customer@example.com') && $mail->booking->checkin_code !== null;
+    });
+
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\CheckinCodeMail::class, function ($mail) use ($booker) {
+        return $mail->hasTo('booker@example.com');
+    });
+});

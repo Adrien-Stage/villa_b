@@ -10,6 +10,7 @@ class CashRegisterSession extends Model
         'tenant_id',
         'user_id',
         'module',
+        'status',
         'opened_at',
         'closed_at',
         'opening_amount',

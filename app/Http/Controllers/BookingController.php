@@ -107,7 +107,15 @@ class BookingController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'viewMode', 'status', 'calendarBookings'));
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+        $isCashRegisterOpen = $activeSession !== null;
+
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'viewMode', 'status', 'calendarBookings', 'isCashRegisterOpen'));
     }
 
     // ===== WIZARD ÉTAPE 1 : Sélection client =====
@@ -150,6 +158,16 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->filled('action_back')) {
+            if ($request->has('adults_count')) {
+                $request->merge(['adults' => $request->adults_count]);
+            }
+            if ($request->has('children_count')) {
+                $request->merge(['children' => $request->children_count]);
+            }
+            return $this->storeStep2($request);
+        }
+
         // Étape 1 → on stocke le client et on passe à l'étape 2
         if ($request->step === '1') {
             return $this->storeStep1($request);
@@ -300,6 +318,7 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
+        $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
 
         return view('bookings.confirm', [
             'customerId' => $validated['customer_id'],
@@ -314,7 +333,8 @@ class BookingController extends Controller
             'notes' => $validated['notes'] ?? '',
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
-            'minDepositPercentage' => $minDepositPercentage
+            'minDepositPercentage' => $minDepositPercentage,
+            'maxDiscountPercentage' => $maxDiscountPercentage
         ]);
     }
 
@@ -333,6 +353,8 @@ class BookingController extends Controller
             return redirect()->route('bookings.cash_register.open')->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
         }
 
+        $priceRule = $request->boolean('is_offerte') ? 'min:0' : 'min:1';
+
         $validated = $request->validate([
             'customer_id'  => ['required', 'exists:customers,id'],
             'booker_id'    => ['nullable', 'exists:customers,id'],
@@ -343,10 +365,12 @@ class BookingController extends Controller
             'children_count' => ['nullable', 'integer', 'min:0'],
             'source'       => ['nullable', 'string'],
             'notes'        => ['nullable', 'string'],
-            'custom_price' => ['required', 'numeric', 'min:1'],
-            'payment_amount' => ['required', 'numeric', 'min:1'],
+            'custom_price' => ['required', 'numeric', $priceRule],
+            'payment_amount' => ['required', 'numeric', $priceRule],
             'payment_method' => ['required', 'string', 'in:orange_money,mtn_momo,cash'],
             'payment_reference' => ['nullable', 'string'],
+            'is_offerte'   => ['nullable', 'boolean'],
+            'offerte_reason' => [$request->boolean('is_offerte') ? 'required' : 'nullable', 'string', 'max:500'],
         ]);
 
         $room     = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -354,12 +378,58 @@ class BookingController extends Controller
         $checkOut = \Carbon\Carbon::parse($validated['check_out']);
         $nights   = $checkIn->diffInDays($checkOut);
 
+        // Validations spécifiques pour le prix négocié et l'acompte
+        $basePricePerNight = $room->roomType->base_price / 100;
+        $baseTotalRoomAmount = $nights * $basePricePerNight;
+        $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+        $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
+        $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
+
+        // 1. Si réceptionniste, valider que custom_price correspond à une remise autorisée
+        if (Auth::user()->hasRole('reception') && !$request->boolean('is_offerte')) {
+            $allowedDiscounts = [];
+            for ($i = 0; $i <= $maxDiscountPercentage; $i += 5) {
+                $allowedDiscounts[] = $i;
+            }
+            if ($maxDiscountPercentage % 5 !== 0) {
+                $allowedDiscounts[] = $maxDiscountPercentage;
+            }
+
+            $submittedPrice = (float) $validated['custom_price'];
+            $isValidPrice = false;
+            $possiblePrices = [];
+            foreach ($allowedDiscounts as $discount) {
+                $expected = round($baseTotalRoomAmount * (1 - $discount / 100));
+                $possiblePrices[] = $expected;
+                if (abs($submittedPrice - $expected) < 1.0) {
+                    $isValidPrice = true;
+                    break;
+                }
+            }
+
+            if (!$isValidPrice) {
+                return back()->withErrors([
+                    'custom_price' => "Le prix négocié saisi n'est pas autorisé pour votre rôle. Vous devez utiliser une remise autorisée (jusqu'à {$maxDiscountPercentage}%)."
+                ])->withInput();
+            }
+        }
+
+        // 2. Si non offert, valider le dépôt minimum
+        if (!$request->boolean('is_offerte')) {
+            $minDeposit = ceil($validated['custom_price'] * ($minDepositPercentage / 100));
+            if ($validated['payment_amount'] < $minDeposit) {
+                return back()->withErrors([
+                    'payment_amount' => "Le montant versé doit être au moins de {$minDeposit} FCFA (acompte de {$minDepositPercentage}%)."
+                ])->withInput();
+            }
+        }
+
         // On convertit les montants (FCFA) en centimes pour la base de données
         $customPrice = (int) $validated['custom_price'] * 100;
         $paymentAmount = (int) $validated['payment_amount'] * 100;
 
         // Prix nets sans taxe
-        $pricePerNight = (int) round($customPrice / $nights);
+        $pricePerNight = $nights > 0 ? (int) round($customPrice / $nights) : 0;
         $totalRoomAmount = $pricePerNight * $nights;
         $taxAmount = 0;
         $totalAmount = $totalRoomAmount;
@@ -368,12 +438,22 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
+        $status = BookingStatus::CONFIRMED;
+        if ($request->boolean('is_offerte') && Auth::user()->hasRole('reception')) {
+            $status = BookingStatus::PENDING;
+        }
+
+        $notes = $validated['notes'] ?? null;
+        if ($request->boolean('is_offerte')) {
+            $notes = trim("Offerte - Motif : " . ($validated['offerte_reason'] ?? 'Non spécifié') . ($notes ? "\n" . $notes : ''));
+        }
+
         $booking = Booking::create([
             'tenant_id'       => $tenantId,
             'room_id'         => $room->id,
             'customer_id'     => $validated['customer_id'],
             'booker_id'       => $validated['booker_id'] ?? null,
-            'status'          => BookingStatus::CONFIRMED,
+            'status'          => $status,
             'check_in'        => $validated['check_in'],
             'check_out'       => $validated['check_out'],
             'adults_count'    => $validated['adults_count'],
@@ -389,27 +469,36 @@ class BookingController extends Controller
             'paid_amount'     => $paymentAmount,
             'balance_due'     => $balanceDue,
             'source'          => $validated['source'] ?? 'direct',
-            'notes'           => $validated['notes'] ?? null,
+            'notes'           => $notes,
             'created_by'      => Auth::id(),
             'checkin_code'    => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
         ]);
 
-        // Enregistrer le paiement (Acompte)
-        $payment = \App\Models\Payment::create([
-            'tenant_id' => $tenantId,
-            'booking_id' => $booking->id,
-            'customer_id' => $booking->customer_id,
-            'amount' => $paymentAmount,
-            'currency' => 'XAF',
-            'method' => $validated['payment_method'],
-            'status' => 'completed',
-            'reference' => 'PAY-' . now()->year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-            'external_reference' => $validated['payment_reference'] ?? ($validated['payment_method'] === 'cash' ? 'Espèces' : null),
-            'paid_at' => now(),
-            'processed_by' => Auth::id(),
-            'notes' => 'Acompte versé à la réservation',
-            'cash_register_session_id' => $activeSession->id,
-        ]);
+        if ($booking->status === BookingStatus::PENDING && $request->boolean('is_offerte')) {
+            $managers = \App\Models\User::where('tenant_id', $tenantId)
+                ->where('role', 'manager')
+                ->get();
+            \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\ComplimentaryBookingRequested($booking));
+        }
+
+        // Enregistrer le paiement (Acompte) si montant > 0
+        if ($paymentAmount > 0) {
+            $payment = \App\Models\Payment::create([
+                'tenant_id' => $tenantId,
+                'booking_id' => $booking->id,
+                'customer_id' => $booking->customer_id,
+                'amount' => $paymentAmount,
+                'currency' => 'XAF',
+                'method' => $validated['payment_method'],
+                'status' => 'completed',
+                'reference' => 'PAY-' . now()->year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'external_reference' => $validated['payment_reference'] ?? ($validated['payment_method'] === 'cash' ? 'Espèces' : null),
+                'paid_at' => now(),
+                'processed_by' => Auth::id(),
+                'notes' => 'Acompte versé à la réservation',
+                'cash_register_session_id' => $activeSession->id,
+            ]);
+        }
 
         // Ligne folio hébergement
         FolioItem::create([
@@ -426,25 +515,46 @@ class BookingController extends Controller
             'recorded_by'  => Auth::id(),
         ]);
 
-        // Ligne folio pour le paiement (en négatif)
-        FolioItem::create([
-            'tenant_id'    => $tenantId,
-            'booking_id'   => $booking->id,
-            'customer_id'  => $booking->customer_id,
-            'type'         => FolioItem::TYPE_PAYMENT,
-            'description'  => "Acompte à la réservation ({$validated['payment_method']})",
-            'quantity'     => 1,
-            'unit_price'   => -$paymentAmount,
-            'total_price'  => -$paymentAmount,
-            'is_complimentary' => false,
-            'earns_points' => false,
-            'occurred_at'  => now(),
-            'recorded_by'  => Auth::id(),
-        ]);
+        // Ligne folio pour le paiement (en négatif) si montant > 0
+        if ($paymentAmount > 0) {
+            FolioItem::create([
+                'tenant_id'    => $tenantId,
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_PAYMENT,
+                'description'  => "Acompte à la réservation ({$validated['payment_method']})",
+                'quantity'     => 1,
+                'unit_price'   => -$paymentAmount,
+                'total_price'  => -$paymentAmount,
+                'is_complimentary' => false,
+                'earns_points' => false,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+            ]);
+        }
+
+        // Envoi du mail de confirmation avec le code de check-in à 6 chiffres
+        try {
+            // Envoyer au client final s'il a un e-mail
+            if ($booking->customer && !empty($booking->customer->email)) {
+                \Illuminate\Support\Facades\Mail::to($booking->customer->email)->send(new \App\Mail\CheckinCodeMail($booking));
+            }
+
+            // Envoyer au mandataire s'il est présent et a un e-mail
+            if ($booking->booker && !empty($booking->booker->email)) {
+                \Illuminate\Support\Facades\Mail::to($booking->booker->email)->send(new \App\Mail\CheckinCodeMail($booking));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur d'envoi du mail de checkin pour la réservation #{$booking->booking_number} : " . $e->getMessage());
+        }
+
+        $successMsg = $booking->status === BookingStatus::PENDING
+            ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
+            : "Réservation {$booking->booking_number} créée et acompte enregistré.";
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('success', "Réservation {$booking->booking_number} créée et acompte enregistré.")
+            ->with('success', $successMsg)
             ->with('checkin_code', $booking->checkin_code);
     }
 
@@ -561,6 +671,24 @@ class BookingController extends Controller
         );
 
         return back()->with('success', 'Réservation annulée.');
+    }
+
+    public function approve(Booking $booking)
+    {
+        if (!Auth::user()->hasRole('manager')) {
+            abort(403, 'Seul le manager peut valider cette réservation.');
+        }
+
+        $booking->update([
+            'status' => BookingStatus::CONFIRMED,
+        ]);
+
+        $creator = \App\Models\User::find($booking->created_by);
+        if ($creator) {
+            $creator->notify(new \App\Notifications\ComplimentaryBookingApproved($booking));
+        }
+
+        return back()->with('success', 'La réservation offerte a été validée avec succès.');
     }
 
     // ===== AJOUT PRESTATION AU FOLIO =====
