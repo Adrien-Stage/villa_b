@@ -135,7 +135,7 @@
         <!-- Flash Messages -->
         @if(session('success'))
             <div class="mb-6 rounded-md bg-green-50 border border-green-200 p-4 text-xs font-bold text-green-800 shadow-sm flex items-center gap-2">
-                <svg class="h-4 w-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{{ session('success') }}</span>
@@ -144,7 +144,7 @@
 
         @if(session('error'))
             <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4 text-xs font-bold text-red-800 shadow-sm flex items-center gap-2">
-                <svg class="h-4 w-4 text-red-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span>{{ session('error') }}</span>
@@ -154,7 +154,7 @@
         @if(session('temp_password_info'))
             <div class="mb-6 rounded-lg bg-emerald-50 border-2 border-emerald-500 p-5 shadow-sm">
                 <div class="flex items-start gap-3.5">
-                    <div class="rounded-full bg-emerald-500 p-1 text-white shadow-sm flex-shrink-0">
+                    <div class="rounded-full bg-emerald-500 p-1 text-white shadow-sm shrink-0">
                         <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -490,14 +490,14 @@
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Couleur Primaire (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemePrimary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemePrimary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[primary]" x-model="tenantThemePrimary" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Couleur Secondaire (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeSecondary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeSecondary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[secondary]" x-model="tenantThemeSecondary" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
@@ -507,21 +507,21 @@
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Couleur Accent (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeAccent" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeAccent" class="h-6 w-6 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[accent]" x-model="tenantThemeAccent" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Fond Sombre (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[dark]" x-model="tenantThemeDark" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Surface Sombre (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeSurfaceDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeSurfaceDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[surface_dark]" x-model="tenantThemeSurfaceDark" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
@@ -531,14 +531,14 @@
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Texte sur Fond Clair (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeTextOnLight" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeTextOnLight" class="h-7 w-7 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[text_on_light]" x-model="tenantThemeTextOnLight" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] text-slate-400 mb-1">Texte sur Fond Sombre (HEX)</label>
                                         <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeTextOnDark" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
+                                            <input type="color" x-model="tenantThemeTextOnDark" class="h-7 w-7 rounded cursor-pointer border border-slate-200 shrink-0">
                                             <input type="text" name="theme[text_on_dark]" x-model="tenantThemeTextOnDark" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
                                         </div>
                                     </div>
@@ -604,7 +604,7 @@
                                         Génère un rapport consolidé de tous les établissements actifs ou inactifs (contacts, devise, pays, nombre d'utilisateurs et de réservations enregistrés).
                                     </p>
                                 </div>
-                                <div class="flex-shrink-0">
+                                <div class="shrink-0">
                                     <a href="{{ route('admin.export.supervision') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -624,7 +624,7 @@
                                         Génère une sauvegarde complète de la base de données PostgreSQL au format SQL compressé dans un fichier ZIP pour archivage.
                                     </p>
                                 </div>
-                                <div class="flex-shrink-0">
+                                <div class="shrink-0">
                                     <a href="{{ route('admin.export.backup') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -730,7 +730,7 @@
                     <div class="mt-4 space-y-3 text-xs">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <span class="text-slate-500">Interface</span>
-                            <span class="font-bold text-slate-800 bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200">Prête</span>
+                            <span class="font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200">Prête</span>
                         </div>
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <span class="text-slate-500">Backend</span>
@@ -764,7 +764,7 @@
             @if(isset($auditStats))
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
                     <!-- Total logs -->
-                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex justify-between items-center relative overflow-hidden border-t-4 border-slate-300">
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex justify-between items-center relative overflow-hidden border-t-4">
                         <div>
                             <p class="text-[9px] font-bold tracking-wider text-slate-400 uppercase">TOTAL DES LOGS</p>
                             <p class="mt-2 text-3xl font-extrabold text-slate-800">{{ $auditStats['total_logs'] }}</p>

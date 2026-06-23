@@ -64,4 +64,25 @@ class RoomType extends Model
     {
         return number_format($this->base_price / 100, 0, ',', ' ') . ' FCFA';
     }
+
+    /**
+     * Calcule le prix par nuit en fonction du nombre d'adultes et d'enfants.
+     * Applique une surcharge de +10% (ou le taux configuré dans les settings) 
+     * si le nombre de personnes dépasse la capacité de base (base_capacity).
+     */
+    public function getCalculatedPricePerNight(int $adults, int $children = 0, ?int $tenantId = null): int
+    {
+        $tenantId = $tenantId ?? $this->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+        $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
+
+        $totalPeople = $adults + $children;
+
+        if ($totalPeople > $this->base_capacity) {
+            $surcharged = $this->base_price * (1 + $surchargePercentage / 100);
+            return (int) round($surcharged);
+        }
+
+        return $this->base_price;
+    }
 }

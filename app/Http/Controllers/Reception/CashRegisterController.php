@@ -149,4 +149,31 @@ class CashRegisterController extends Controller
 
         return back()->with('success', 'Sortie de caisse (décaissement) enregistrée.');
     }
+
+    public function resume(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|exists:cash_register_sessions,id',
+        ]);
+
+        $session = CashRegisterSession::where('user_id', auth()->id())
+            ->whereNull('closed_at')
+            ->findOrFail($request->session_id);
+
+        $session->update(['status' => 'open']);
+
+        session()->forget('paused_caisse_session');
+
+        $moduleName = $session->module === 'reception' ? 'Hébergement' : 'Boutique';
+
+        if ($request->boolean('redirect_to_close')) {
+            $route = $session->module === 'reception' 
+                ? 'bookings.cash_register.close' 
+                : 'shop.cash_register.close';
+            
+            return redirect()->route($route)->with('success', "Caisse {$moduleName} réactivée. Veuillez procéder à la clôture.");
+        }
+
+        return redirect()->back()->with('success', "Caisse {$moduleName} réactivée avec succès. Vous pouvez continuer votre travail.");
+    }
 }

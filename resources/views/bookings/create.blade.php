@@ -57,7 +57,7 @@
         {{-- Étape 2 : Dates et personnes --}}
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h2 class="font-heading font-semibold text-primary mb-5">Dates et personnes</h2>
-            <form method="POST" action="{{ route('bookings.store') }}">
+            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}')">
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
@@ -65,16 +65,20 @@
                     <input type="hidden" name="booker_id" value="{{ $booker->id }}">
                 @endif
 
+                {{-- Hidden Inputs for Laravel validation & submission --}}
+                <input type="hidden" name="check_in" :value="checkInDate ? formatDbDate(checkInDate) : ''" required>
+                <input type="hidden" name="check_out" :value="checkOutDate ? formatDbDate(checkOutDate) : ''" required>
+
+                {{-- Visual range indicators --}}
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Arrivée *
                         </label>
-                        <input type="date" name="check_in"
-                               min="{{ now()->format('Y-m-d') }}"
-                               value="{{ old('check_in') }}"
-                               required
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50 text-primary flex items-center justify-between h-[38px] cursor-default">
+                            <span x-text="formatDisplayDate(checkInDate)" :class="!checkInDate ? 'text-primary/30' : ''"></span>
+                            <i data-lucide="calendar" class="w-4 h-4 text-primary/30"></i>
+                        </div>
                         @error('check_in')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
@@ -83,13 +87,64 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Départ *
                         </label>
-                        <input type="date" name="check_out"
-                               value="{{ old('check_out') }}"
-                               required
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50 text-primary flex items-center justify-between h-[38px] cursor-default">
+                            <span x-text="formatDisplayDate(checkOutDate)" :class="!checkOutDate ? 'text-primary/30' : ''"></span>
+                            <i data-lucide="calendar" class="w-4 h-4 text-primary/30"></i>
+                        </div>
                         @error('check_out')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
+                    </div>
+                </div>
+
+                {{-- Light Range Calendar Widget --}}
+                <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-4 select-none">
+                    {{-- Calendar Header --}}
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <button type="button" @click="prevMonth()" class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <h3 class="font-heading font-bold text-slate-800 text-sm" x-text="monthLabel"></h3>
+                        <button type="button" @click="nextMonth()" class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    {{-- Calendar Weekdays --}}
+                    <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                        <template x-for="dayName in ['L', 'M', 'M', 'J', 'V', 'S', 'D']">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase py-1" x-text="dayName"></span>
+                        </template>
+                    </div>
+
+                    {{-- Calendar Days Grid --}}
+                    <div class="grid grid-cols-7 gap-y-1 text-center">
+                        <template x-for="day in gridDays" :key="day.date.getTime()">
+                            <div class="relative py-0.5 flex items-center justify-center w-full"
+                                 :class="{
+                                     'bg-secondary/20 rounded-l-full': isInRange(day.date) && (day.date.getDay() === 1),
+                                     'bg-secondary/20 rounded-r-full': isInRange(day.date) && (day.date.getDay() === 0),
+                                     'bg-secondary/20': isInRange(day.date) && day.date.getDay() !== 1 && day.date.getDay() !== 0,
+                                     'bg-gradient-to-r from-transparent to-secondary/20 rounded-l-full': isStart(day.date) && checkOutDate,
+                                     'bg-gradient-to-l from-transparent to-secondary/20 rounded-r-full': isEnd(day.date)
+                                 }">
+                                <button type="button"
+                                        @click="selectDay(day)"
+                                        @mouseenter="if(checkInDate && !checkOutDate) hoverDate = day.date"
+                                        :disabled="day.isDisabled"
+                                        class="w-8 h-8 flex flex-col items-center justify-center text-xs font-semibold rounded-full transition-all relative focus:outline-none"
+                                        :class="{
+                                            'bg-primary text-white font-bold shadow-sm z-10': isStart(day.date) || isEnd(day.date),
+                                            'text-primary font-semibold': isInRange(day.date) && !isStart(day.date) && !isEnd(day.date),
+                                            'text-slate-800 hover:bg-slate-200': day.isCurrentMonth && !day.isDisabled && !isStart(day.date) && !isEnd(day.date) && !isInRange(day.date),
+                                            'text-slate-400 hover:bg-slate-100': !day.isCurrentMonth && !day.isDisabled && !isStart(day.date) && !isEnd(day.date) && !isInRange(day.date),
+                                            'text-slate-300 cursor-not-allowed opacity-40': day.isDisabled
+                                        }">
+                                    <span x-text="day.dayNum"></span>
+                                    <span x-show="isStart(day.date) || isEnd(day.date)" class="w-1 h-1 bg-white rounded-full absolute bottom-1"></span>
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -98,7 +153,7 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Adultes *
                         </label>
-                        <input type="number" name="adults" value="{{ old('adults', 1) }}"
+                        <input type="number" name="adults" value="{{ old('adults', request('adults', 1)) }}"
                                min="1" required
                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                     </div>
@@ -106,11 +161,21 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Enfants
                         </label>
-                        <input type="number" name="children" value="{{ old('children', 0) }}"
+                        <input type="number" name="children" value="{{ old('children', request('children', 0)) }}"
                                min="0"
                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                     </div>
                 </div>
+
+                @php
+                    $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+                    $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+                    $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
+                @endphp
+                <p class="text-[11px] text-primary/70 mb-4 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
+                    <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 text-primary/50 flex-shrink-0"></i>
+                    <span><strong>Politique de capacité :</strong> Si le nombre d'occupants dépasse la capacité de base d'une chambre (ex: 2 pers.), une surcharge de +{{ $surchargePercentage }}% est appliquée au prix de la chambre.</span>
+                </p>
 
                 <div class="mb-5">
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
@@ -126,11 +191,18 @@
                     </select>
                 </div>
 
-                <button type="submit"
-                        class="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
-                    Voir les chambres disponibles
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
+                <div class="flex gap-3">
+                    <a href="{{ route('bookings.create') }}"
+                       class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Précédent
+                    </a>
+                    <button type="submit"
+                            class="flex-1 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
+                        Voir les chambres disponibles
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </form>
         </div>
 
@@ -270,14 +342,174 @@
                     </x-customer-search>
                 </div>
 
-                <button type="submit" x-show="showCustomer" style="display: none;" class="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2 mt-4">
-                    Continuer la réservation
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
+                <div class="flex gap-3 mt-4" x-show="showCustomer" style="display: none;">
+                    <button type="button" x-show="isBooker === 'other'" @click="showCustomer = false" class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Précédent
+                    </button>
+                    <button type="submit" :class="isBooker === 'other' ? 'flex-1' : 'w-full'" class="py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
+                        Continuer la réservation
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </form>
         </div>
     @endif
 
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('bookingCalendar', (initialCheckIn = '', initialCheckOut = '') => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return {
+            today,
+            currentMonth: today.getMonth(),
+            currentYear: today.getFullYear(),
+            checkInDate: initialCheckIn ? new Date(initialCheckIn) : null,
+            checkOutDate: initialCheckOut ? new Date(initialCheckOut) : null,
+            hoverDate: null,
+            monthNames: [
+                'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+            ],
+            
+            init() {
+                if (this.checkInDate) {
+                    this.currentMonth = this.checkInDate.getMonth();
+                    this.currentYear = this.checkInDate.getFullYear();
+                }
+            },
+
+            get monthLabel() {
+                return this.monthNames[this.currentMonth] + ' ' + this.currentYear;
+            },
+
+            prevMonth() {
+                if (this.currentMonth === 0) {
+                    this.currentMonth = 11;
+                    this.currentYear--;
+                } else {
+                    this.currentMonth--;
+                }
+            },
+
+            nextMonth() {
+                if (this.currentMonth === 11) {
+                    this.currentMonth = 0;
+                    this.currentYear++;
+                } else {
+                    this.currentMonth++;
+                }
+            },
+
+            get gridDays() {
+                const days = [];
+                const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+                
+                let startDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday
+                if (startDayOfWeek === 0) startDayOfWeek = 7;
+                const paddingDaysCount = startDayOfWeek - 1;
+
+                const prevMonthYear = this.currentMonth === 0 ? this.currentYear - 1 : this.currentYear;
+                const prevMonth = this.currentMonth === 0 ? 11 : this.currentMonth - 1;
+                const daysInPrevMonth = new Date(prevMonthYear, prevMonth + 1, 0).getDate();
+
+                for (let i = paddingDaysCount - 1; i >= 0; i--) {
+                    const d = new Date(prevMonthYear, prevMonth, daysInPrevMonth - i);
+                    days.push({
+                        date: d,
+                        dayNum: d.getDate(),
+                        isCurrentMonth: false,
+                        isDisabled: d < this.today
+                    });
+                }
+
+                const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const d = new Date(this.currentYear, this.currentMonth, i);
+                    days.push({
+                        date: d,
+                        dayNum: i,
+                        isCurrentMonth: true,
+                        isDisabled: d < this.today
+                    });
+                }
+
+                const nextMonthYear = this.currentMonth === 11 ? this.currentYear + 1 : this.currentYear;
+                const nextMonth = this.currentMonth === 11 ? 0 : this.currentMonth + 1;
+                const remaining = 42 - days.length;
+                for (let i = 1; i <= remaining; i++) {
+                    const d = new Date(nextMonthYear, nextMonth, i);
+                    days.push({
+                        date: d,
+                        dayNum: i,
+                        isCurrentMonth: false,
+                        isDisabled: d < this.today
+                    });
+                }
+
+                return days;
+            },
+
+            selectDay(day) {
+                if (day.isDisabled) return;
+                const clickedDate = day.date;
+
+                if (!this.checkInDate || (this.checkInDate && this.checkOutDate)) {
+                    this.checkInDate = clickedDate;
+                    this.checkOutDate = null;
+                } else if (this.checkInDate && !this.checkOutDate) {
+                    if (clickedDate < this.checkInDate) {
+                        this.checkInDate = clickedDate;
+                    } else if (clickedDate.getTime() === this.checkInDate.getTime()) {
+                        // Clicked same date: do nothing or keep it
+                    } else {
+                        this.checkOutDate = clickedDate;
+                    }
+                }
+            },
+
+            isStart(date) {
+                return this.checkInDate && date.getTime() === this.checkInDate.getTime();
+            },
+
+            isEnd(date) {
+                return this.checkOutDate && date.getTime() === this.checkOutDate.getTime();
+            },
+
+            isInRange(date) {
+                if (this.checkInDate && this.checkOutDate) {
+                    return date > this.checkInDate && date < this.checkOutDate;
+                }
+                if (this.checkInDate && !this.checkOutDate && this.hoverDate) {
+                    return date > this.checkInDate && date <= this.hoverDate;
+                }
+                return false;
+            },
+
+            formatDbDate(date) {
+                if (!date) return '';
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            },
+
+            formatDisplayDate(date) {
+                if (!date) return 'Sélectionner...';
+                const d = String(date.getDate()).padStart(2, '0');
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const y = date.getFullYear();
+                return `${d}/${m}/${y}`;
+            }
+        };
+    });
+});
+</script>
+@endpush
 
 @endsection

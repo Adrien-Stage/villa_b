@@ -56,7 +56,15 @@ class GroupBookingController extends Controller
 
         $groups = $query->orderBy('start_date', 'desc')->paginate(20)->withQueryString();
 
-        return view('groups.index', compact('groups', 'stats'));
+        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('tenant_id', $tenantId)
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+        $isCashRegisterOpen = $activeSession !== null;
+
+        return view('groups.index', compact('groups', 'stats', 'isCashRegisterOpen'));
     }
 
     // ===== CRÉATION =====
@@ -289,7 +297,7 @@ class GroupBookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
-        $pricePerNight = $room->roomType->base_price;
+        $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount = $nights * $pricePerNight;
         $taxAmount = 0;
         $totalAmount = $totalRoomAmount;

@@ -32,6 +32,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+        if ($user && !$user->isAdmin()) {
+            $pausedSession = \App\Models\CashRegisterSession::where('user_id', $user->id)
+                ->whereNull('closed_at')
+                ->where('status', 'paused')
+                ->first();
+
+            if ($pausedSession) {
+                session(['paused_caisse_session' => [
+                    'id' => $pausedSession->id,
+                    'module' => $pausedSession->module,
+                ]]);
+            }
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -40,7 +55,27 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $redirectTo = Auth::user()?->isAdmin() ? '/admin' : '/';
+        $user = Auth::user();
+        if ($user && !$user->isAdmin()) {
+            $openSession = \App\Models\CashRegisterSession::where('user_id', $user->id)
+                ->whereNull('closed_at')
+                ->where('status', 'open')
+                ->first();
+
+            if ($openSession) {
+                if (!$request->has('force')) {
+                    return redirect()->back()->with([
+                        'confirm_logout_caisse_open' => true,
+                        'caisse_module' => $openSession->module,
+                        'caisse_id' => $openSession->id,
+                    ]);
+                } else {
+                    $openSession->update(['status' => 'paused']);
+                }
+            }
+        }
+
+        $redirectTo = $user?->isAdmin() ? '/admin' : '/';
 
         Auth::guard('web')->logout();
 

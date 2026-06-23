@@ -81,6 +81,19 @@
         @endrole
         @endif
 
+        @if($booking->status->value === 'pending')
+        @role('manager')
+        <form method="POST" action="{{ route('bookings.approve', $booking) }}" class="expect-popup">
+            @csrf
+            <button type="submit"
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                Valider la réservation offerte
+            </button>
+        </form>
+        @endrole
+        @endif
+
         @if(in_array($booking->status->value, ['pending', 'confirmed']))
         @role('reception', 'manager')
         <form method="POST" action="{{ route('bookings.cancel', $booking) }}" class="expect-popup">
@@ -121,6 +134,15 @@
             <li>{{ $error }}</li>
         @endforeach
     </ul>
+</div>
+@endif
+
+@if($booking->status->value === 'pending')
+<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-start gap-2">
+    <i data-lucide="info" class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600"></i>
+    <div>
+        <span class="font-bold">Réservation offerte en attente de validation :</span> Cette réservation est en attente d'autorisation par un manager.
+    </div>
 </div>
 @endif
 
