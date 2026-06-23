@@ -478,10 +478,15 @@ class BookingController extends Controller
         ]);
 
         if ($booking->status === BookingStatus::PENDING && $request->boolean('is_offerte')) {
-            $managers = \App\Models\User::where('tenant_id', $tenantId)
-                ->where('role', 'manager')
-                ->get();
-            \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\ComplimentaryBookingRequested($booking));
+            try {
+                $managers = \App\Models\User::where('tenant_id', $tenantId)
+                    ->where('role', 'manager')
+                    ->get();
+                \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\ComplimentaryBookingRequested($booking));
+                \Illuminate\Support\Facades\Log::info("Notification chambre offerte envoyée aux managers pour la réservation #{$booking->booking_number}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur notification chambre offerte #{$booking->booking_number} : " . $e->getMessage());
+            }
         }
 
         // Enregistrer le paiement (Acompte) si montant > 0
