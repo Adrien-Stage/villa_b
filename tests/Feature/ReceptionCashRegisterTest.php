@@ -393,7 +393,7 @@ test('receptionist cannot submit arbitrary custom price but manager can', functi
         'check_in' => now()->addDays(1)->format('Y-m-d'),
         'check_out' => now()->addDays(2)->format('Y-m-d'),
         'adults_count' => 2,
-        'children_count' => 1,
+        'children_count' => 0,
         'source' => 'direct',
         'custom_price' => '49000',
         'payment_amount' => '15000',
@@ -412,7 +412,7 @@ test('receptionist cannot submit arbitrary custom price but manager can', functi
         'check_in' => now()->addDays(1)->format('Y-m-d'),
         'check_out' => now()->addDays(2)->format('Y-m-d'),
         'adults_count' => 2,
-        'children_count' => 1,
+        'children_count' => 0,
         'source' => 'direct',
         'custom_price' => '47500',
         'payment_amount' => '10000', // < 14 250
@@ -430,7 +430,7 @@ test('receptionist cannot submit arbitrary custom price but manager can', functi
         'check_in' => now()->addDays(1)->format('Y-m-d'),
         'check_out' => now()->addDays(2)->format('Y-m-d'),
         'adults_count' => 2,
-        'children_count' => 1,
+        'children_count' => 0,
         'source' => 'direct',
         'custom_price' => '47500', // 5% discount
         'payment_amount' => '15000', // > 14 250
@@ -455,7 +455,7 @@ test('receptionist cannot submit arbitrary custom price but manager can', functi
         'check_in' => now()->addDays(3)->format('Y-m-d'),
         'check_out' => now()->addDays(4)->format('Y-m-d'),
         'adults_count' => 2,
-        'children_count' => 1,
+        'children_count' => 0,
         'source' => 'direct',
         'custom_price' => '49000', // arbitrary price
         'payment_amount' => '15000',
@@ -720,3 +720,38 @@ test('booking finalization sends check-in code email to customer and booker if p
         return $mail->hasTo('booker@example.com');
     });
 });
+
+test('booking calculates price with capacity surcharge when occupants exceed base capacity', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+    
+    $tenant = Tenant::first();
+    $room = Room::first();
+    $roomType = $room->roomType;
+    
+    // Set capacity surcharge settings to 15% and base capacity of standard room to 2
+    $roomType->update([
+        'base_capacity' => 2,
+        'base_price' => 4000000 // 40 000 FCFA
+    ]);
+    
+    $tenant->update([
+        'settings' => [
+            'reception' => [
+                'capacity_surcharge_percentage' => 15,
+            ]
+        ]
+    ]);
+    
+    // Test base capacity not exceeded (2 people)
+    $price1 = $roomType->getCalculatedPricePerNight(2, 0); // Should be 40 000 FCFA (4000000 centimes)
+    expect($price1)->toBe(4000000);
+    
+    // Test base capacity exceeded (3 people)
+    $price2 = $roomType->getCalculatedPricePerNight(2, 1); // 2 adults + 1 child = 3 > 2. Should be 40 000 * 1.15 = 46 000 FCFA (4600000 centimes)
+    expect($price2)->toBe(4600000);
+});
+

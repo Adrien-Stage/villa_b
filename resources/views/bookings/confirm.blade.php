@@ -123,6 +123,27 @@
                                 </select>
                             </div>
 
+                            {{-- Visual recap when discount is applied --}}
+                            <div x-show="selectedDiscount > 0 && !isOfferte" class="mt-4 p-3.5 bg-emerald-50 border border-emerald-200/50 rounded-xl flex items-center justify-between" style="display: none;">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+                                        <i data-lucide="percent" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">-<span x-text="selectedDiscount"></span>%</span>
+                                            <span class="text-xs text-primary/50 line-through"><span x-text="formatMoney(baseTotal)"></span> FCFA</span>
+                                        </div>
+                                        <p class="text-sm font-semibold text-emerald-800 mt-0.5">
+                                            Nouveau prix : <span class="text-base font-bold text-primary" x-text="formatMoney(customPrice)"></span> FCFA
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right text-xs text-emerald-700 font-medium">
+                                    Économie : <span x-text="formatMoney(baseTotal - customPrice)"></span> FCFA
+                                </div>
+                            </div>
+
                             {{-- Chambre Offerte Option --}}
                             <div class="mt-4 flex items-center gap-2">
                                 <input type="checkbox" id="is_offerte" name="is_offerte" value="1" x-model="isOfferte" @change="toggleOfferte()" class="rounded border-secondary/30 text-primary focus:ring-primary h-4 w-4">

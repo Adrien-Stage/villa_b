@@ -297,7 +297,7 @@ class GroupBookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
-        $pricePerNight = $room->roomType->base_price;
+        $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount = $nights * $pricePerNight;
         $taxAmount = 0;
         $totalAmount = $totalRoomAmount;

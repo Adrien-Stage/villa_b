@@ -138,7 +138,7 @@
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <h3 class="text-sm font-semibold text-primary mb-2">Tarification & Réductions</h3>
                         <p class="text-xs text-primary/60 mb-4">Définissez le pourcentage de réduction maximum autorisé et l'acompte minimum pour confirmer une réservation.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Pourcentage de réduction max (%)</label>
                                 <input type="number" name="settings[max_discount_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
@@ -146,7 +146,12 @@
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Acompte minimum requis (%)</label>
                                 <input type="number" name="settings[min_deposit_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
-                                <p class="text-[10px] text-primary/50 mt-1">Sera exigé lors de la confirmation de réservation.</p>
+                                <p class="text-[10px] text-primary/50 mt-1">Exigé pour confirmer.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Surcharge capacité dépassée (%)</label>
+                                <input type="number" name="settings[capacity_surcharge_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['capacity_surcharge_percentage'] ?? '10' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <p class="text-[10px] text-primary/50 mt-1">Taux si capacité de base dépassée.</p>
                             </div>
                         </div>
                     </div>

@@ -167,6 +167,16 @@
                     </div>
                 </div>
 
+                @php
+                    $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+                    $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+                    $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
+                @endphp
+                <p class="text-[11px] text-primary/70 mb-4 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
+                    <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 text-primary/50 flex-shrink-0"></i>
+                    <span><strong>Politique de capacité :</strong> Si le nombre d'occupants dépasse la capacité de base d'une chambre (ex: 2 pers.), une surcharge de +{{ $surchargePercentage }}% est appliquée au prix de la chambre.</span>
+                </p>
+
                 <div class="mb-5">
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Origine

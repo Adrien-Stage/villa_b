@@ -268,6 +268,8 @@ class BookingController extends Controller
         $children    = $request->children ?? 0;
         $source      = $request->source ?? 'direct';
         $totalPeople = $adults + $children;
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $maxCapacityLimit = RoomType::where('tenant_id', $tenantId)->max('max_capacity') ?? 4;
 
         // Chambres disponibles pour cette période avec capacité suffisante
         $availableRooms = Room::availableBetween($checkIn, $checkOut)
@@ -287,7 +289,8 @@ class BookingController extends Controller
             'children',
             'source',
             'availableRooms',
-            'roomTypes'
+            'roomTypes',
+            'maxCapacityLimit'
         ));
     }
 
@@ -310,8 +313,8 @@ class BookingController extends Controller
         $checkOut = \Carbon\Carbon::parse($validated['check_out']);
         $nights = $checkIn->diffInDays($checkOut);
         
-        // base_price est en centimes en BDD, on divise par 100 pour l'affichage (FCFA)
-        $pricePerNight = $room->roomType->base_price / 100;
+        // base_price est en centimes en BDD, on divise par 100 pour l'affichage (FCFA), avec surcharge éventuelle
+        $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0) / 100;
         $totalRoomAmount = $nights * $pricePerNight;
 
         // Récupérer le pourcentage d'acompte minimum depuis les paramètres du Tenant
@@ -378,8 +381,8 @@ class BookingController extends Controller
         $checkOut = \Carbon\Carbon::parse($validated['check_out']);
         $nights   = $checkIn->diffInDays($checkOut);
 
-        // Validations spécifiques pour le prix négocié et l'acompte
-        $basePricePerNight = $room->roomType->base_price / 100;
+        // Validations spécifiques pour le prix négocié et l'acompte (avec surcharge éventuelle)
+        $basePricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0) / 100;
         $baseTotalRoomAmount = $nights * $basePricePerNight;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
@@ -535,17 +538,26 @@ class BookingController extends Controller
 
         // Envoi du mail de confirmation avec le code de check-in à 6 chiffres
         try {
+            // Charger les relations nécessaires pour le template email
+            $booking->load(['customer', 'booker', 'room.roomType']);
+
             // Envoyer au client final s'il a un e-mail
             if ($booking->customer && !empty($booking->customer->email)) {
                 \Illuminate\Support\Facades\Mail::to($booking->customer->email)->send(new \App\Mail\CheckinCodeMail($booking));
+                \Illuminate\Support\Facades\Log::info("Mail de checkin envoyé au client {$booking->customer->email} pour la réservation #{$booking->booking_number}");
             }
 
             // Envoyer au mandataire s'il est présent et a un e-mail
             if ($booking->booker && !empty($booking->booker->email)) {
                 \Illuminate\Support\Facades\Mail::to($booking->booker->email)->send(new \App\Mail\CheckinCodeMail($booking));
+                \Illuminate\Support\Facades\Log::info("Mail de checkin envoyé au mandataire {$booking->booker->email} pour la réservation #{$booking->booking_number}");
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur d'envoi du mail de checkin pour la réservation #{$booking->booking_number} : " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("Erreur d'envoi du mail de checkin pour la réservation #{$booking->booking_number} : " . $e->getMessage(), [
+                'exception' => $e,
+                'from' => config('mail.from.address'),
+                'mailer' => config('mail.default'),
+            ]);
         }
 
         $successMsg = $booking->status === BookingStatus::PENDING
@@ -926,7 +938,7 @@ class BookingController extends Controller
             }
         }
 
-        $pricePerNight    = $room->roomType->base_price;
+        $pricePerNight    = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount  = $nights * $pricePerNight;
         $taxAmount        = 0;
         $totalAmount      = $totalRoomAmount;

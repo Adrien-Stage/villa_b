@@ -28,20 +28,11 @@ class CheckinCodeMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $fromAddress = config('mail.from.address');
-        $fromName = config('mail.from.name');
-
-        // Si l'application tourne localement et que l'adresse d'expédition par défaut utilise
-        // un domaine non vérifiable comme gmail.com ou example.com, on force le bac à sable de Resend.
-        if (app()->environment('local') && 
-            (str_ends_with($fromAddress, '@gmail.com') || 
-             str_ends_with($fromAddress, '@example.com') || 
-             $fromAddress === 'hello@example.com')) {
-            $fromAddress = 'onboarding@resend.dev';
-        }
-
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
+            from: new \Illuminate\Mail\Mailables\Address(
+                config('mail.from.address'),
+                config('mail.from.name'),
+            ),
             subject: "Votre code de check-in - Villa Boutanga ({$this->booking->booking_number})",
         );
     }
