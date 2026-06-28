@@ -141,6 +141,87 @@ class AdminAuditController extends Controller
         ]);
     }
 
+    public function createTenant()
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        return view('admin.tenants.create');
+    }
+
+    public function showTenant(Tenant $tenant)
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        $tenant->loadCount(['users', 'rooms', 'bookings']);
+
+        $tenantUsers = User::where('tenant_id', $tenant->id)
+            ->with('roles')
+            ->orderBy('name')
+            ->get();
+
+        $section = request('section', 'overview');
+
+        return view('admin.tenants.show', compact('tenant', 'tenantUsers', 'section'));
+    }
+
+    public function storeTenant(Request $request)
+    {
+        abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'country' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'currency' => ['required', 'string', 'size:3'],
+            'logo' => ['nullable', 'image', 'max:2048'],
+            'theme' => ['nullable', 'array'],
+            'theme.primary' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.secondary' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.accent' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.surface_dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.text_on_light' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme.text_on_dark' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+
+        $settings = [];
+        $settings['country'] = $validated['country'] ?? null;
+
+        if ($request->has('theme')) {
+            $settings['theme'] = $validated['theme'];
+        }
+
+        if ($request->hasFile('logo')) {
+            $settings['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $tenant = Tenant::create([
+            'name' => $validated['name'],
+            'slug' => $validated['slug'],
+            'address' => $validated['address'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'currency' => $validated['currency'],
+            'settings' => $settings,
+            'is_active' => true,
+        ]);
+
+        AuditLog::record(
+            Auth::id(),
+            'sensitive_action',
+            "Création d'un nouvel établissement : {$tenant->name} (slug: {$tenant->slug})",
+            'settings',
+            ['tenant_id' => $tenant->id, 'name' => $tenant->name, 'slug' => $tenant->slug]
+        );
+
+        return redirect()
+            ->route('admin.dashboard', ['tab' => 'tenants'])
+            ->with('success', "L'établissement « {$tenant->name} » a été créé avec succès.");
+    }
+
     public function updateTenant(Request $request, Tenant $tenant)
     {
         abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);

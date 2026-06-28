@@ -36,6 +36,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
     Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
     Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
+    Route::get('/admin/tenants/create', [AdminAuditController::class, 'createTenant'])->name('admin.tenants.create');
+    Route::post('/admin/tenants', [AdminAuditController::class, 'storeTenant'])->name('admin.tenants.store');
+    Route::get('/admin/tenants/{tenant}', [AdminAuditController::class, 'showTenant'])->name('admin.tenants.show');
     Route::post('/admin/tenants/{tenant}', [AdminAuditController::class, 'updateTenant'])->name('admin.tenants.update');
     Route::get('/admin/export/supervision', [AdminAuditController::class, 'exportSupervision'])->name('admin.export.supervision');
     Route::get('/admin/export/backup', [AdminAuditController::class, 'exportBackup'])->name('admin.export.backup');
