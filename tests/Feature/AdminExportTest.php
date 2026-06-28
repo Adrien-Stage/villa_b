@@ -34,6 +34,7 @@ test('a guest or non-admin user cannot access export routes', function () {
 });
 
 test('an admin can download supervision csv', function () {
+    \Carbon\Carbon::setTestNow(now());
     $this->seed(\Database\Seeders\RoleSeeder::class);
 
     $admin = User::factory()->create([
@@ -74,6 +75,7 @@ test('an admin can download supervision csv', function () {
 });
 
 test('an admin can download database backup zip', function () {
+    \Carbon\Carbon::setTestNow(now());
     $this->seed(\Database\Seeders\RoleSeeder::class);
 
     $admin = User::factory()->create([

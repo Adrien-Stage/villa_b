@@ -57,4 +57,37 @@ class CustomerController extends Controller
 
         return view('customers.show', compact('customer'));
     }
+
+    public function edit(Customer $customer)
+    {
+        return view('customers.edit', compact('customer'));
+    }
+
+    public function update(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'nationality' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
+            'id_document_type' => 'nullable|string|in:CNI,Passeport,Permis,CarteSejour',
+            'id_document_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'is_vip' => 'nullable|boolean',
+            'is_blacklisted' => 'nullable|boolean',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['is_vip'] = $request->boolean('is_vip');
+        $validated['is_blacklisted'] = $request->boolean('is_blacklisted');
+
+        $customer->update($validated);
+
+        return redirect()
+            ->route('customers.show', $customer)
+            ->with('success', 'Les informations du client ont été mises à jour avec succès.');
+    }
 }

@@ -1,4 +1,4 @@
-@php
+﻿﻿@php
     $tabs = [
         'dashboard' => [
             'label' => 'Supervision',
@@ -135,7 +135,7 @@
         <!-- Flash Messages -->
         @if(session('success'))
             <div class="mb-6 rounded-md bg-green-50 border border-green-200 p-4 text-xs font-bold text-green-800 shadow-sm flex items-center gap-2">
-                <svg class="h-4 w-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{{ session('success') }}</span>
@@ -144,7 +144,7 @@
 
         @if(session('error'))
             <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4 text-xs font-bold text-red-800 shadow-sm flex items-center gap-2">
-                <svg class="h-4 w-4 text-red-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span>{{ session('error') }}</span>
@@ -154,7 +154,7 @@
         @if(session('temp_password_info'))
             <div class="mb-6 rounded-lg bg-emerald-50 border-2 border-emerald-500 p-5 shadow-sm">
                 <div class="flex items-start gap-3.5">
-                    <div class="rounded-full bg-emerald-500 p-1 text-white shadow-sm flex-shrink-0">
+                    <div class="rounded-full bg-emerald-500 p-1 text-white shadow-sm shrink-0">
                         <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -178,7 +178,7 @@
             <!-- ================= GESTION DES ETABLISSEMENTS LAYOUT ================= -->
             
             <!-- Breadcrumb Path -->
-            <p class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase">ÉTABLISSEMENTS</p>
+            <p class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase">ETABLISSEMENTS</p>
             
             <!-- Page Title and Subtitle Row -->
             <div class="mt-2 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 border-b border-slate-200 pb-4">
@@ -186,36 +186,23 @@
                     <h1 class="text-2xl font-extrabold tracking-tight text-slate-800 font-heading">Gestion des Établissements</h1>
                     <p class="text-xs text-slate-500 mt-1">Gérer les informations générales, le statut et les paramètres des filiales de l'ONG.</p>
                 </div>
+                <a href="{{ route('admin.tenants.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition group">
+                    <svg class="h-4 w-4 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Nouvel Établissement
+                </a>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" x-data="{ 
-                openEditModal: false, 
-                tenantId: null, 
-                tenantName: '', 
-                tenantSlug: '', 
-                tenantCountry: '', 
-                tenantAddress: '', 
-                tenantPhone: '', 
-                tenantEmail: '', 
-                tenantCurrency: '',
-                tenantLogoUrl: '',
-                tenantThemePrimary: '#391F0E',
-                tenantThemeSecondary: '#CCAB87',
-                tenantThemeAccent: '#EED4A3',
-                tenantThemeDark: '#0F0201',
-                tenantThemeSurfaceDark: '#2C1810',
-                tenantThemeTextOnLight: '#391F0E',
-                tenantThemeTextOnDark: '#CCAB87'
-            }">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 @foreach($tenants as $tenant)
-                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between">
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md hover:border-slate-300 transition-all duration-200">
                         <div>
                             <!-- Header with logo / image placeholder -->
                             <div class="h-32 bg-slate-900 flex items-center justify-center relative">
                                 @if(!empty($tenant->settings['logo']))
                                     <img src="{{ asset('storage/' . $tenant->settings['logo']) }}" alt="Logo {{ $tenant->name }}" class="h-20 object-contain">
                                 @else
-                                    <!-- Elegant default SVG icon for hotel/establishment -->
                                     <div class="text-indigo-400 flex flex-col items-center">
                                         <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.053.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
@@ -223,8 +210,6 @@
                                         <span class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mt-2">Aucun logo</span>
                                     </div>
                                 @endif
-                                
-                                <!-- Active Status Badge -->
                                 <div class="absolute top-3 right-3">
                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border {{ $tenant->is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200' }}">
                                         {{ $tenant->is_active ? 'Actif' : 'Inactif' }}
@@ -235,7 +220,7 @@
                             <!-- Details -->
                             <div class="p-5">
                                 <h3 class="text-base font-bold text-slate-800 tracking-tight">{{ $tenant->name }}</h3>
-                                <p class="text-xs text-slate-400 font-mono mt-0.5">Slug: {{ $tenant->slug }}</p>
+                                <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $tenant->slug }}</p>
                                 
                                 <div class="mt-4 space-y-2.5 text-xs text-slate-600 border-t border-slate-100 pt-3">
                                     <div class="flex justify-between items-center">
@@ -243,20 +228,12 @@
                                         <span class="font-semibold text-slate-700">{{ $tenant->settings['country'] ?? 'Cameroun' }}</span>
                                     </div>
                                     <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">Adresse :</span>
-                                        <span class="font-semibold text-slate-700 truncate max-w-[180px]" title="{{ $tenant->address }}">{{ $tenant->address ?? 'N/A' }}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">Téléphone :</span>
-                                        <span class="font-semibold text-slate-700">{{ $tenant->phone ?? 'N/A' }}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">Email :</span>
-                                        <span class="font-semibold text-slate-700">{{ $tenant->email ?? 'N/A' }}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
                                         <span class="text-slate-400">Devise :</span>
                                         <span class="font-mono font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 text-[9px]">{{ $tenant->currency }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-400">Utilisateurs :</span>
+                                        <span class="font-semibold text-slate-700">{{ $tenant->users_count ?? $tenant->users()->count() }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -264,299 +241,19 @@
                         
                         <!-- Actions -->
                         <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex justify-end">
-                            <button 
-                                @click="
-                                    openEditModal = true;
-                                    tenantId = {{ $tenant->id }};
-                                    tenantName = '{{ addslashes($tenant->name) }}';
-                                    tenantSlug = '{{ addslashes($tenant->slug) }}';
-                                    tenantCountry = '{{ addslashes($tenant->settings['country'] ?? 'Cameroun') }}';
-                                    tenantAddress = '{{ addslashes($tenant->address ?? '') }}';
-                                    tenantPhone = '{{ addslashes($tenant->phone ?? '') }}';
-                                    tenantEmail = '{{ addslashes($tenant->email ?? '') }}';
-                                    tenantCurrency = '{{ addslashes($tenant->currency ?? 'XAF') }}';
-                                    tenantLogoUrl = '{{ !empty($tenant->settings['logo']) ? asset('storage/' . $tenant->settings['logo']) : '' }}';
-                                    tenantThemePrimary = '{{ $tenant->settings['theme']['primary'] ?? '#391F0E' }}';
-                                    tenantThemeSecondary = '{{ $tenant->settings['theme']['secondary'] ?? '#CCAB87' }}';
-                                    tenantThemeAccent = '{{ $tenant->settings['theme']['accent'] ?? '#EED4A3' }}';
-                                    tenantThemeDark = '{{ $tenant->settings['theme']['dark'] ?? '#0F0201' }}';
-                                    tenantThemeSurfaceDark = '{{ $tenant->settings['theme']['surface_dark'] ?? '#2C1810' }}';
-                                    tenantThemeTextOnLight = '{{ $tenant->settings['theme']['text_on_light'] ?? '#391F0E' }}';
-                                    tenantThemeTextOnDark = '{{ $tenant->settings['theme']['text_on_dark'] ?? '#CCAB87' }}';
-                                "
-                                type="button" 
-                                class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                            <a 
+                                href="{{ route('admin.tenants.show', $tenant) }}"
+                                class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition shadow-sm"
                             >
-                                Modifier les informations
-                            </button>
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Gérer
+                            </a>
                         </div>
                     </div>
                 @endforeach
-
-                <!-- Edit Modal (AlpineJS Overlay) -->
-                <div 
-                    x-show="openEditModal" 
-                    class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-slate-900/60 backdrop-blur-xs"
-                    x-transition
-                    style="display: none;"
-                >
-                    <div 
-                        @click.away="openEditModal = false" 
-                        class="bg-white rounded-lg border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden"
-                    >
-                        <!-- Modal Header -->
-                        <div class="bg-slate-900 px-5 py-4 flex items-center justify-between text-white border-b border-slate-800">
-                            <h3 class="text-xs font-bold uppercase tracking-wider">Modifier l'établissement</h3>
-                            <button @click="openEditModal = false" class="text-slate-400 hover:text-white">&times;</button>
-                        </div>
-                        
-                        <!-- Modal Body Form -->
-                        <form :action="'/admin/tenants/' + tenantId" method="POST" enctype="multipart/form-data" class="p-6 space-y-4 text-left">
-                            @csrf
-                            
-                            <!-- Logo Upload -->
-                            <div>
-                                <label class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Logo de l'établissement</label>
-                                <div class="mt-2 flex items-center gap-4">
-                                    <div class="h-14 w-20 bg-slate-950 border border-slate-800 rounded flex items-center justify-center overflow-hidden">
-                                        <template x-if="tenantLogoUrl">
-                                            <img :src="tenantLogoUrl" alt="Logo preview" class="h-12 object-contain">
-                                        </template>
-                                        <template x-if="!tenantLogoUrl">
-                                            <svg class="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                            </svg>
-                                        </template>
-                                    </div>
-                                    <input type="file" name="logo" class="text-xs text-slate-600 outline-none">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Name -->
-                                <div>
-                                    <label for="name" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nom de l'établissement</label>
-                                    <input type="text" id="name" name="name" x-model="tenantName" required class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                                
-                                <!-- Slug -->
-                                <div>
-                                    <label for="slug" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Code unique / Slug</label>
-                                    <input type="text" id="slug" name="slug" x-model="tenantSlug" required class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Country -->
-                                <div>
-                                    <label for="country" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Pays</label>
-                                    <input type="text" id="country" name="country" x-model="tenantCountry" class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                                
-                                <!-- Currency -->
-                                <div>
-                                    <label for="currency" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Devise par défaut</label>
-                                    <input type="text" id="currency" name="currency" x-model="tenantCurrency" required maxlength="3" class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                </div>
-                            </div>
-
-                            <!-- Address -->
-                            <div>
-                                <label for="address" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Adresse</label>
-                                <input type="text" id="address" name="address" x-model="tenantAddress" class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Phone -->
-                                <div>
-                                    <label for="phone" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Téléphone</label>
-                                    <input type="text" id="phone" name="phone" x-model="tenantPhone" class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                                
-                                <!-- Email -->
-                                <div>
-                                    <label for="email" class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Adresse e-mail</label>
-                                    <input type="email" id="email" name="email" x-model="tenantEmail" class="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                            <div class="border-t border-slate-100 pt-4 mt-4">
-                                <label class="block text-[10px] font-bold tracking-wider text-slate-400 uppercase">Thème & Couleurs</label>
-                                
-                                <!-- Pré-selections (Palettes de couleurs de la capture) -->
-                                <div class="mt-2.5">
-                                    <p class="text-[10px] text-slate-400 mb-1.5">Palettes prédéfinies :</p>
-                                    <div class="flex items-center gap-3">
-                                        <!-- Palette Terracotta (Original) -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#391F0E';
-                                                tenantThemeSecondary = '#CCAB87';
-                                                tenantThemeAccent = '#EED4A3';
-                                                tenantThemeDark = '#0F0201';
-                                                tenantThemeSurfaceDark = '#2C1810';
-                                                tenantThemeTextOnLight = '#391F0E';
-                                                tenantThemeTextOnDark = '#CCAB87';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #391F0E 50%, #CCAB87 50%);"
-                                            title="Terracotta (Original)">
-                                            <span x-show="tenantThemePrimary === '#391F0E'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                        <!-- Palette Royal Blue -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#1E3A8A';
-                                                tenantThemeSecondary = '#3B82F6';
-                                                tenantThemeAccent = '#93C5FD';
-                                                tenantThemeDark = '#0F172A';
-                                                tenantThemeSurfaceDark = '#1E293B';
-                                                tenantThemeTextOnLight = '#FFFFFF';
-                                                tenantThemeTextOnDark = '#93C5FD';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #1E3A8A 50%, #3B82F6 50%);"
-                                            title="Bleu Royal">
-                                            <span x-show="tenantThemePrimary === '#1E3A8A'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                        <!-- Palette Forest Green -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#064E3B';
-                                                tenantThemeSecondary = '#10B981';
-                                                tenantThemeAccent = '#A7F3D0';
-                                                tenantThemeDark = '#022C22';
-                                                tenantThemeSurfaceDark = '#064E3B';
-                                                tenantThemeTextOnLight = '#FFFFFF';
-                                                tenantThemeTextOnDark = '#A7F3D0';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #064E3B 50%, #10B981 50%);"
-                                            title="Vert Forêt">
-                                            <span x-show="tenantThemePrimary === '#064E3B'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                        <!-- Palette Imperial Purple -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#4C1D95';
-                                                tenantThemeSecondary = '#8B5CF6';
-                                                tenantThemeAccent = '#DDD6FE';
-                                                tenantThemeDark = '#1E1B4B';
-                                                tenantThemeSurfaceDark = '#312E81';
-                                                tenantThemeTextOnLight = '#FFFFFF';
-                                                tenantThemeTextOnDark = '#DDD6FE';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #4C1D95 50%, #8B5CF6 50%);"
-                                            title="Violet Impérial">
-                                            <span x-show="tenantThemePrimary === '#4C1D95'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                        <!-- Palette Rose / Pink -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#831843';
-                                                tenantThemeSecondary = '#EC4899';
-                                                tenantThemeAccent = '#FCE7F3';
-                                                tenantThemeDark = '#500724';
-                                                tenantThemeSurfaceDark = '#831843';
-                                                tenantThemeTextOnLight = '#FFFFFF';
-                                                tenantThemeTextOnDark = '#FCE7F3';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #831843 50%, #EC4899 50%);"
-                                            title="Rose Vibrant">
-                                            <span x-show="tenantThemePrimary === '#831843'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                        <!-- Palette Sunset Orange -->
-                                        <button type="button" 
-                                            @click="
-                                                tenantThemePrimary = '#7C2D12';
-                                                tenantThemeSecondary = '#F97316';
-                                                tenantThemeAccent = '#FFEDD5';
-                                                tenantThemeDark = '#431407';
-                                                tenantThemeSurfaceDark = '#7C2D12';
-                                                tenantThemeTextOnLight = '#FFFFFF';
-                                                tenantThemeTextOnDark = '#FFEDD5';
-                                            "
-                                            class="w-6 h-6 rounded-full border border-slate-300 relative focus:outline-none cursor-pointer"
-                                            style="background: linear-gradient(135deg, #7C2D12 50%, #F97316 50%);"
-                                            title="Orange Couchant">
-                                            <span x-show="tenantThemePrimary === '#7C2D12'" class="absolute inset-0 flex items-center justify-center text-white text-[10px]">✓</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Sélecteurs manuels et codes HEX -->
-                                <div class="grid grid-cols-2 gap-4 mt-4">
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Couleur Primaire (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemePrimary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[primary]" x-model="tenantThemePrimary" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Couleur Secondaire (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeSecondary" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[secondary]" x-model="tenantThemeSecondary" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-4 mt-3">
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Couleur Accent (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeAccent" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[accent]" x-model="tenantThemeAccent" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Fond Sombre (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[dark]" x-model="tenantThemeDark" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Surface Sombre (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeSurfaceDark" class="h-6 w-6 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[surface_dark]" x-model="tenantThemeSurfaceDark" required class="block w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Texte sur Fond Clair (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeTextOnLight" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[text_on_light]" x-model="tenantThemeTextOnLight" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1">Texte sur Fond Sombre (HEX)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="color" x-model="tenantThemeTextOnDark" class="h-7 w-7 rounded cursor-pointer border border-slate-200 flex-shrink-0">
-                                            <input type="text" name="theme[text_on_dark]" x-model="tenantThemeTextOnDark" required class="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 font-mono outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 uppercase">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
-                                <button @click="openEditModal = false" type="button" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
-                                    Annuler
-                                </button>
-                                <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition">
-                                    Enregistrer
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
         @elseif($activeTab === 'imports')
             <!-- ================= IMPORT & EXPORT LAYOUT ================= -->
@@ -604,7 +301,7 @@
                                         Génère un rapport consolidé de tous les établissements actifs ou inactifs (contacts, devise, pays, nombre d'utilisateurs et de réservations enregistrés).
                                     </p>
                                 </div>
-                                <div class="flex-shrink-0">
+                                <div class="shrink-0">
                                     <a href="{{ route('admin.export.supervision') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -624,7 +321,7 @@
                                         Génère une sauvegarde complète de la base de données PostgreSQL au format SQL compressé dans un fichier ZIP pour archivage.
                                     </p>
                                 </div>
-                                <div class="flex-shrink-0">
+                                <div class="shrink-0">
                                     <a href="{{ route('admin.export.backup') }}" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -719,7 +416,7 @@
                         @foreach($active['items'] as $item)
                             <div class="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
                                 <p class="text-sm font-semibold text-slate-800">{{ $item }}</p>
-                                <p class="mt-1 text-xs text-slate-500">Service backend à connecter prochainement.</p>
+                                <p class="mt-1 text-xs text-slate-500">Service backend Ã  connecter prochainement.</p>
                             </div>
                         @endforeach
                     </div>
@@ -730,7 +427,7 @@
                     <div class="mt-4 space-y-3 text-xs">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <span class="text-slate-500">Interface</span>
-                            <span class="font-bold text-slate-800 bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200">Prête</span>
+                            <span class="font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200">Prête</span>
                         </div>
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <span class="text-slate-500">Backend</span>
@@ -756,7 +453,7 @@
                     <p class="text-xs text-slate-500 mt-1">Suivi des connexions, accès refusés, actions sensibles et interventions admin.</p>
                 </div>
                 <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block sm:text-right">
-                    Dernière mise à jour : {{ now()->translatedFormat('d F Y – H:i') }}
+                    Dernière mise Ã  jour : {{ now()->translatedFormat('d F Y â€“ H:i') }}
                 </span>
             </div>
 
@@ -764,7 +461,7 @@
             @if(isset($auditStats))
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
                     <!-- Total logs -->
-                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex justify-between items-center relative overflow-hidden border-t-4 border-slate-300">
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex justify-between items-center relative overflow-hidden border-t-4">
                         <div>
                             <p class="text-[9px] font-bold tracking-wider text-slate-400 uppercase">TOTAL DES LOGS</p>
                             <p class="mt-2 text-3xl font-extrabold text-slate-800">{{ $auditStats['total_logs'] }}</p>
@@ -1051,7 +748,7 @@
                                         <span class="font-bold text-slate-500 bg-slate-200 px-1 rounded text-[8px] tracking-wide">IP</span>
                                         <span class="text-slate-700 font-semibold">{{ $log->ip_address ?? '127.0.0.1' }}</span>
                                         @if($log->user_agent)
-                                            <span class="text-slate-300">•</span>
+                                            <span class="text-slate-300">â€¢</span>
                                             <span class="truncate max-w-[260px] text-slate-600 hover:text-slate-800 cursor-help" title="{{ $log->user_agent }}">{{ $log->user_agent }}</span>
                                         @endif
                                     </div>
@@ -1062,7 +759,7 @@
                                     @if($log->payload)
                                         <button @click="open = !open" type="button" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-bold transition">
                                             <span>Voir variables</span>
-                                            <span class="text-[9px]">↗</span>
+                                            <span class="text-[9px]">â†—</span>
                                         </button>
                                         
                                         <!-- Code Popover box -->

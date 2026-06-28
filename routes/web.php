@@ -23,6 +23,7 @@ use App\Http\Controllers\ShopOrderController;
 use App\Http\Controllers\Shop\CashRegisterController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\AdminAuditController;
+use App\Http\Controllers\NotificationController;
 
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -35,6 +36,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
     Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
     Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
+    Route::get('/admin/tenants/create', [AdminAuditController::class, 'createTenant'])->name('admin.tenants.create');
+    Route::post('/admin/tenants', [AdminAuditController::class, 'storeTenant'])->name('admin.tenants.store');
+    Route::get('/admin/tenants/{tenant}', [AdminAuditController::class, 'showTenant'])->name('admin.tenants.show');
     Route::post('/admin/tenants/{tenant}', [AdminAuditController::class, 'updateTenant'])->name('admin.tenants.update');
     Route::get('/admin/export/supervision', [AdminAuditController::class, 'exportSupervision'])->name('admin.export.supervision');
     Route::get('/admin/export/backup', [AdminAuditController::class, 'exportBackup'])->name('admin.export.backup');
@@ -76,6 +80,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- ASSISTANT IA (Kuété) ---
     Route::post('/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('ai.chat');
+
+    // --- REPRISE DE CAISSE (HEBERGEMENT & BOUTIQUE) ---
+    Route::post('/cash-register/resume', [\App\Http\Controllers\Reception\CashRegisterController::class, 'resume'])->name('cash_register.resume');
+
+    // --- NOTIFICATIONS INTERNES ---
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/unread', [NotificationController::class, 'unread'])->name('unread');
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('readAll');
+    });
 
     // --- DISCUSSION INTERNE ---
     Route::prefix('discussions')->name('discussions.')->group(function () {
@@ -132,6 +146,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');
         Route::post('/{booking}/checkin',      [BookingController::class, 'checkIn'])->name('checkIn');
         Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
+        Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
         Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
         Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.add');
         Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.remove');

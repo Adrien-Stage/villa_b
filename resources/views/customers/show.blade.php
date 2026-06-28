@@ -11,6 +11,23 @@
     Retour aux clients
 </a>
 
+{{-- Messages --}}
+@if(session('success'))
+<div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+    <i data-lucide="check-circle" class="w-4 h-4"></i>
+    {{ session('success') }}
+</div>
+@endif
+@if($errors->any())
+<div class="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+    <ul class="list-disc list-inside">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 {{-- En-tête fiche client --}}
 <div class="bg-white rounded-xl shadow-sm p-6 mb-5">
     <div class="flex items-start justify-between">
@@ -69,7 +86,7 @@
             ];
             $lc = $levelConfig[$customer->loyalty_level] ?? $levelConfig['bronze'];
         @endphp
-        <div class="text-right">
+        <div class="flex flex-col items-end gap-2.5">
             <div class="inline-flex items-center gap-2 px-4 py-2 {{ $lc['bg'] }} {{ $lc['text'] }} border {{ $lc['border'] }} rounded-xl">
                 <i data-lucide="{{ $lc['icon'] }}" class="w-4 h-4"></i>
                 <div>
@@ -80,6 +97,13 @@
                     </p>
                 </div>
             </div>
+            @role('reception', 'manager')
+            <a href="{{ route('customers.edit', $customer) }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
+                <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                Modifier le profil
+            </a>
+            @endrole
         </div>
     </div>
 </div>

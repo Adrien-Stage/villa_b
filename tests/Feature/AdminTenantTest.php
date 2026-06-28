@@ -108,3 +108,51 @@ test('a non-admin user cannot update tenant information', function () {
     $tenant->refresh();
     expect($tenant->name)->toBe('Original Name');
 });
+
+test('an admin can view tenant management dashboard', function () {
+    $this->seed(\Database\Seeders\RoleSeeder::class);
+
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'is_active' => true,
+    ]);
+
+    $tenant = Tenant::create([
+        'name' => 'Original Name',
+        'slug' => 'original-slug',
+        'currency' => 'XAF',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($admin);
+
+    $response = $this->get(route('admin.tenants.show', $tenant));
+    $response->assertStatus(200);
+    $response->assertViewIs('admin.tenants.show');
+    $response->assertViewHas('tenant');
+    $response->assertViewHas('tenantUsers');
+    $response->assertViewHas('section', 'overview');
+});
+
+test('a non-admin user cannot view tenant management dashboard', function () {
+    $this->seed(\Database\Seeders\RoleSeeder::class);
+
+    $tenant = Tenant::create([
+        'name' => 'Original Name',
+        'slug' => 'original-slug',
+        'currency' => 'XAF',
+        'is_active' => true,
+    ]);
+
+    $manager = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'role' => 'manager',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($manager);
+
+    $response = $this->get(route('admin.tenants.show', $tenant));
+    $response->assertStatus(403);
+});
+
