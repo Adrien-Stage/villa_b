@@ -12,7 +12,7 @@ class CashRegisterController extends Controller
 {
     public function index()
     {
-        $sessions = CashRegisterSession::where('tenant_id', auth()->user()->tenant->id)
+        $sessions = CashRegisterSession::query()
             ->where('module', 'shop')
             ->with('user')
             ->orderBy('opened_at', 'desc')
@@ -24,7 +24,7 @@ class CashRegisterController extends Controller
     public function showOpenForm()
     {
         $activeSession = CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->where('module', 'shop')
             ->whereNull('closed_at')
             ->first();
@@ -43,7 +43,7 @@ class CashRegisterController extends Controller
         ]);
 
         $activeSession = CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->where('module', 'shop')
             ->whereNull('closed_at')
             ->first();
@@ -53,7 +53,6 @@ class CashRegisterController extends Controller
         }
 
         CashRegisterSession::create([
-            'tenant_id' => auth()->user()->tenant->id,
             'user_id' => auth()->id(),
             'module' => 'shop',
             'opening_amount' => $request->opening_amount * 100, // store in cents
@@ -66,7 +65,7 @@ class CashRegisterController extends Controller
     public function showCloseForm()
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->where('module', 'shop')
             ->whereNull('closed_at')
             ->firstOrFail();
@@ -99,7 +98,7 @@ class CashRegisterController extends Controller
     public function close(Request $request)
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->where('module', 'shop')
             ->whereNull('closed_at')
             ->firstOrFail();
@@ -128,7 +127,7 @@ class CashRegisterController extends Controller
     public function storeDisbursement(Request $request)
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->where('module', 'shop')
             ->whereNull('closed_at')
             ->firstOrFail();
@@ -139,7 +138,6 @@ class CashRegisterController extends Controller
         ]);
 
         CashRegisterDisbursement::create([
-            'tenant_id' => auth()->user()->tenant->id,
             'cash_register_session_id' => $session->id,
             'user_id' => auth()->id(),
             'amount' => $request->amount * 100, // cents

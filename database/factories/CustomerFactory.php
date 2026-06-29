@@ -10,7 +10,6 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id'           => Tenant::where('slug', 'villa-boutanga')->value('id'),
             'first_name'          => $this->faker->firstName(),
             'last_name'           => $this->faker->lastName(),
             'email'               => $this->faker->unique()->safeEmail(),

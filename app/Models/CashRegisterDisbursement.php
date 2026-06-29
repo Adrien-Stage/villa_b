@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class CashRegisterDisbursement extends Model
 {
     protected $fillable = [
-        'tenant_id',
         'cash_register_session_id',
         'user_id',
         'amount',

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Request;
 class AuditLog extends Model
 {
     protected $fillable = [
-        'tenant_id',
         'user_id',
         'event_type',
         'action',
@@ -23,11 +22,6 @@ class AuditLog extends Model
     protected $casts = [
         'payload' => 'array',
     ];
-
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     public function user(): BelongsTo
     {
@@ -54,7 +48,6 @@ class AuditLog extends Model
         }
 
         return self::create([
-            'tenant_id' => $tenantId,
             'user_id' => $userId,
             'event_type' => $eventType,
             'action' => $action,

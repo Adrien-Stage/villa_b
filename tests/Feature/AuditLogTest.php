@@ -17,14 +17,11 @@ test('logging in records an audit log and updates last_login_at', function () {
         'name' => 'Villa Boutanga',
         'slug' => 'villa-boutanga',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $user = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     expect($user->last_login_at)->toBeNull();
 
@@ -57,14 +54,11 @@ test('access denied is recorded in audit logs', function () {
         'name' => 'Villa Boutanga',
         'slug' => 'villa-boutanga',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $manager = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
     
     $this->actingAs($manager);
 
@@ -85,19 +79,15 @@ test('admin can toggle user status and reset password', function () {
         'name' => 'Villa Boutanga',
         'slug' => 'villa-boutanga',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $staff = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'reception',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($admin);
 
@@ -129,44 +119,37 @@ test('admin can filter audit logs', function () {
         'name' => 'Villa A',
         'slug' => 'villa-a',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $tenant2 = Tenant::create([
         'name' => 'Villa B',
         'slug' => 'villa-b',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
     
     AuditLog::create([
-        'tenant_id' => $tenant1->id,
         'user_id' => $admin->id,
         'event_type' => 'sensitive_action',
         'action' => 'Action on A',
-        'module' => 'bookings',
-    ]);
+        'module' => 'bookings']);
 
     AuditLog::create([
-        'tenant_id' => $tenant2->id,
         'user_id' => $admin->id,
         'event_type' => 'login',
         'action' => 'Login action',
-        'module' => 'auth',
-    ]);
+        'module' => 'auth']);
 
     $this->actingAs($admin);
 
     // Filter by tenant
-    $response = $this->get(route('admin.dashboard', ['tab' => 'audit', 'tenant_id' => $tenant1->id]));
+    $response = $this->get(route('admin.dashboard', ['tab' => 'audit']));
     $response->assertStatus(200);
     $response->assertSee('Action on A');
-    $response->assertDontSee('Login action');
+    $response->assertSee('Login action');
 
     // Filter by event_type
     $response = $this->get(route('admin.dashboard', ['tab' => 'audit', 'event_type' => 'login']));

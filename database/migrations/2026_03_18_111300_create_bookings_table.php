@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('room_id')->constrained()->onDelete('restrict');
             $table->foreignId('customer_id')->constrained()->onDelete('restrict');
 
@@ -68,9 +67,9 @@ return new class extends Migration
             $table->timestamps();
 
             // Recherches opérationnelles quotidiennes
-            $table->index(['tenant_id', 'status']);
-            $table->index(['tenant_id', 'check_in']);
-            $table->index(['tenant_id', 'check_out']);
+            $table->index(['status']);
+            $table->index(['check_in']);
+            $table->index(['check_out']);
             // Vérification de disponibilité d'une chambre sur une période
             $table->index(['room_id', 'check_in', 'check_out']);
         });

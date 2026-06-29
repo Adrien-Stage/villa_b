@@ -27,7 +27,7 @@ class RestaurantPortalController extends Controller
 
         $categories = RestaurantMenuCategory::query()
             ->withoutGlobalScopes()
-            ->where('tenant_id', $tenant->id)
+            
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -35,7 +35,7 @@ class RestaurantPortalController extends Controller
 
         $items = RestaurantMenuItem::query()
             ->withoutGlobalScopes()
-            ->where('tenant_id', $tenant->id)
+            
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -87,7 +87,7 @@ class RestaurantPortalController extends Controller
         $itemIds = array_keys($lines);
         $menuItems = RestaurantMenuItem::query()
             ->withoutGlobalScopes()
-            ->where('tenant_id', $tenant->id)
+            
             ->where('is_active', true)
             ->whereIn('id', $itemIds)
             ->get()
@@ -128,7 +128,6 @@ class RestaurantPortalController extends Controller
             $order = RestaurantCustomerOrder::query()
                 ->withoutGlobalScopes()
                 ->create([
-                    'tenant_id' => $tenant->id,
                     'source' => 'portal',
                     'created_by' => null,
                     'table_number' => $tableNumber,
@@ -147,7 +146,6 @@ class RestaurantPortalController extends Controller
                 RestaurantCustomerOrderItem::query()
                     ->withoutGlobalScopes()
                     ->create([
-                        'tenant_id' => $tenant->id,
                         'restaurant_customer_order_id' => $order->id,
                         'menu_item_id' => $item->id,
                         'item_name' => $item->name,
@@ -170,7 +168,7 @@ class RestaurantPortalController extends Controller
 
         $orderModel = RestaurantCustomerOrder::query()
             ->withoutGlobalScopes()
-            ->where('tenant_id', $tenant->id)
+            
             ->with('items')
             ->findOrFail($order);
 

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,12 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShopProduct extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $table = 'shop_products';
 
     protected $fillable = [
-        'tenant_id',
         'shop_category_id',
         'name',
         'description',

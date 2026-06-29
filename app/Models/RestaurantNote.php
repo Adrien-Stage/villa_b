@@ -3,7 +3,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,10 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RestaurantNote extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'booking_id',           // Le séjour concerné
         'customer_id',          // Client (si différent du titulaire du booking)
         

@@ -13,8 +13,6 @@ return new class extends Migration
 
             // Chaque type de chambre appartient à un établissement
             // cascade : si on supprime le tenant, ses types de chambres disparaissent aussi
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-
             // Nom affiché au client : "Suite Présidentielle", "Chambre Standard"
             $table->string('name');
 
@@ -48,11 +46,11 @@ return new class extends Migration
             $table->timestamps();
 
             // Contrainte d'unicité composite : le code doit être unique POUR ce tenant
-            $table->unique(['tenant_id', 'code']);
+            $table->unique(['code']);
 
             // Index pour la requête la plus fréquente :
             // "Donne-moi tous les types actifs de cet hôtel"
-            $table->index(['tenant_id', 'is_active']);
+            $table->index(['is_active']);
         });
     }
 

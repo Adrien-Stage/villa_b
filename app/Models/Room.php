@@ -4,7 +4,6 @@
 namespace App\Models;
 
 use App\Enums\RoomStatus;
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,10 +21,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class Room extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'room_type_id',
         'number',           // Numéro affiché (101, A12...)
         'floor',            // Étage
@@ -130,7 +128,6 @@ class Room extends Model
 
         // Création de l'historique
         $this->statusHistory()->create([
-            'tenant_id' => $this->tenant_id,
             'from_status' => $oldStatus,
             'to_status' => $newStatus,
             'reason' => $reason,

@@ -10,8 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_customer_orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-
             $table->string('table_number', 10)->nullable();
 
             $table->string('customer_name')->nullable();
@@ -28,8 +26,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['tenant_id', 'status', 'placed_at']);
-            $table->index(['tenant_id', 'table_number', 'placed_at']);
+            $table->index(['status', 'placed_at']);
+            $table->index(['table_number', 'placed_at']);
         });
     }
 

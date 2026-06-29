@@ -14,14 +14,11 @@ test('a guest or non-admin user cannot access export routes', function () {
         'name' => 'Villa Boutanga Test',
         'slug' => 'villa-boutanga-test',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $manager = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     // Test Guest access
     $this->get(route('admin.export.supervision'))->assertRedirect('/login');
@@ -39,15 +36,13 @@ test('an admin can download supervision csv', function () {
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $tenant = Tenant::create([
         'name' => 'Villa Boutanga Test',
         'slug' => 'villa-boutanga-test',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($admin);
 
@@ -80,8 +75,7 @@ test('an admin can download database backup zip', function () {
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($admin);
 

@@ -70,14 +70,13 @@ class RestaurantMenuController extends Controller
                 'required',
                 'string',
                 'max:120',
-                Rule::unique('restaurant_menu_categories', 'name')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::unique('restaurant_menu_categories', 'name')->where(fn ($q) => $q),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
         RestaurantMenuCategory::create([
-            'tenant_id' => Auth::user()->tenant_id,
             'name' => trim($validated['name']),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
@@ -97,7 +96,7 @@ class RestaurantMenuController extends Controller
                 'max:120',
                 Rule::unique('restaurant_menu_categories', 'name')
                     ->ignore($category->id)
-                    ->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                    ->where(fn ($q) => $q),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
@@ -135,13 +134,13 @@ class RestaurantMenuController extends Controller
             'restaurant_menu_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q),
             ],
             'name' => [
                 'required',
                 'string',
                 'max:140',
-                Rule::unique('restaurant_menu_items', 'name')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::unique('restaurant_menu_items', 'name')->where(fn ($q) => $q),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             // Saisi en FCFA -> stockage en centimes
@@ -153,7 +152,6 @@ class RestaurantMenuController extends Controller
         ]);
 
         $item = RestaurantMenuItem::create([
-            'tenant_id' => Auth::user()->tenant_id,
             'restaurant_menu_category_id' => $validated['restaurant_menu_category_id'] ?? null,
             'name' => trim($validated['name']),
             'description' => $validated['description'] ?? null,
@@ -179,7 +177,7 @@ class RestaurantMenuController extends Controller
             'restaurant_menu_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q),
             ],
             'name' => [
                 'required',
@@ -187,7 +185,7 @@ class RestaurantMenuController extends Controller
                 'max:140',
                 Rule::unique('restaurant_menu_items', 'name')
                     ->ignore($item->id)
-                    ->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                    ->where(fn ($q) => $q),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             // Saisi en FCFA -> stockage en centimes
@@ -230,7 +228,7 @@ class RestaurantMenuController extends Controller
     {
         $used = RestaurantOrderItem::query()
             ->withoutGlobalScopes()
-            ->where('tenant_id', Auth::user()->tenant_id)
+            
             ->where('menu_item_id', $item->id)
             ->exists();
 

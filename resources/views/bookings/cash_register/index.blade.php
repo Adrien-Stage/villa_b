@@ -12,7 +12,6 @@
         
         @php
             $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
-                ->where('tenant_id', auth()->user()->tenant->id)
                 ->where('module', 'reception')
                 ->whereNull('closed_at')
                 ->first();

@@ -22,13 +22,13 @@ class HousekeepingController extends Controller
         $teamIds = $user->housekeepingTeams()->pluck('housekeeping_teams.id');
 
         $teams = HousekeepingTeam::with(['leader', 'members', 'activeAssignments.room'])
-            ->where('tenant_id', $tenantId)
+            
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
         $staff = User::query()
-            ->where('tenant_id', $tenantId)
+            
             ->where(function ($query) {
                 $query->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping']);
             })
@@ -44,7 +44,7 @@ class HousekeepingController extends Controller
                     ->whereDate('check_out', '>=', today())
                     ->orderBy('check_in'),
             ])
-            ->where('tenant_id', $tenantId)
+            
             ->where('status', RoomStatus::DIRTY)
             ->orderBy('floor')
             ->orderBy('number')
@@ -53,27 +53,27 @@ class HousekeepingController extends Controller
         $priorityRooms = $this->buildPriorityRooms($dirtyRooms);
 
         $activeAssignments = HousekeepingAssignment::with(['room.roomType', 'team.leader', 'team.members'])
-            ->where('tenant_id', $tenantId)
+            
             ->whereIn('status', ['pending', 'in_progress', 'blocked'])
             ->latest('assigned_at')
             ->get();
 
         $completedToday = HousekeepingAssignment::with(['room.roomType', 'team'])
-            ->where('tenant_id', $tenantId)
+            
             ->where('status', 'completed')
             ->whereDate('completed_at', today())
             ->latest('completed_at')
             ->get();
 
         $myAssignments = HousekeepingAssignment::with(['room.roomType', 'team'])
-            ->where('tenant_id', $tenantId)
+            
             ->whereIn('housekeeping_team_id', $teamIds)
             ->whereIn('status', ['pending', 'in_progress', 'blocked'])
             ->latest('assigned_at')
             ->get();
 
         $housekeepingPipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team'])
-            ->where('tenant_id', $tenantId)
+            
             ->whereIn('status', [
                 RoomStatus::DIRTY,
                 RoomStatus::CLEANING,
@@ -134,7 +134,7 @@ class HousekeepingController extends Controller
         }
 
         $allowedStaffIds = User::query()
-            ->where('tenant_id', $tenantId)
+            
             ->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping'])
             ->pluck('id');
 
@@ -145,7 +145,6 @@ class HousekeepingController extends Controller
         }
 
         $team = HousekeepingTeam::create([
-            'tenant_id' => $tenantId,
             'name' => $validated['name'],
             'code' => $validated['code'] ?? null,
             'leader_id' => $validated['leader_id'] ?? null,
@@ -174,7 +173,7 @@ class HousekeepingController extends Controller
             abort(403, 'Equipe housekeeping hors tenant.');
         }
 
-        $rooms = Room::where('tenant_id', $tenantId)
+        $rooms = Room::query()
             ->whereIn('id', $validated['room_ids'])
             ->get();
 
@@ -209,7 +208,6 @@ class HousekeepingController extends Controller
                 }
 
                 HousekeepingAssignment::create([
-                    'tenant_id' => $room->tenant_id,
                     'housekeeping_team_id' => $team->id,
                     'room_id' => $room->id,
                     'assigned_by' => Auth::id(),

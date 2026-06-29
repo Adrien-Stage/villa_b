@@ -19,11 +19,10 @@ class AdminAuditController extends Controller
         $activeTab = $request->input('tab', 'audit');
         $subTab = $request->input('sub', 'logs'); // logs or users
 
-        // Logs Query with filters
-        $logsQuery = AuditLog::with(['user', 'tenant'])->latest();
+        $logsQuery = AuditLog::with(['user'])->latest();
 
         if ($request->filled('tenant_id')) {
-            $logsQuery->where('tenant_id', $request->tenant_id);
+            $logsQuery;
         }
 
         if ($request->filled('user_id')) {
@@ -49,7 +48,7 @@ class AdminAuditController extends Controller
         $logs = $logsQuery->paginate(20, ['*'], 'logs_page')->withQueryString();
 
         // Users Query with search
-        $usersQuery = User::with(['tenant', 'roles']);
+        $usersQuery = User::with(['roles']);
 
         if ($request->filled('user_search')) {
             $search = trim((string) $request->user_search);
@@ -152,10 +151,11 @@ class AdminAuditController extends Controller
     {
         abort_unless(Auth::check() && Auth::user()->isAdmin(), 403);
 
-        $tenant->loadCount(['users', 'rooms', 'bookings']);
+        $tenant->users_count = User::count();
+        $tenant->rooms_count = \App\Models\Room::count();
+        $tenant->bookings_count = \App\Models\Booking::count();
 
-        $tenantUsers = User::where('tenant_id', $tenant->id)
-            ->with('roles')
+        $tenantUsers = User::with('roles')
             ->orderBy('name')
             ->get();
 
@@ -214,7 +214,7 @@ class AdminAuditController extends Controller
             'sensitive_action',
             "Création d'un nouvel établissement : {$tenant->name} (slug: {$tenant->slug})",
             'settings',
-            ['tenant_id' => $tenant->id, 'name' => $tenant->name, 'slug' => $tenant->slug]
+            ['name' => $tenant->name, 'slug' => $tenant->slug]
         );
 
         return redirect()
@@ -274,7 +274,7 @@ class AdminAuditController extends Controller
             'sensitive_action',
             "Modification des informations générales de l'établissement {$tenant->name}",
             'settings',
-            ['tenant_id' => $tenant->id, 'changes' => array_diff_key($validated, ['logo' => ''])]
+            ['changes' => array_diff_key($validated, ['logo' => ''])]
         );
 
         return back()->with('success', "Les informations de l'établissement {$tenant->name} ont été mises à jour avec succès.");
@@ -321,9 +321,12 @@ class AdminAuditController extends Controller
                 'Réservations Totales'
             ], ';');
 
-            $tenants = Tenant::withCount(['users', 'bookings'])->orderBy('name')->get();
+            $tenants = Tenant::orderBy('name')->get();
 
             foreach ($tenants as $tenant) {
+                $tenant->users_count = User::count();
+                $tenant->bookings_count = \App\Models\Booking::count();
+
                 fputcsv($file, [
                     $tenant->id,
                     $tenant->name,

@@ -69,7 +69,7 @@ class DiscussionController extends Controller
         }
 
         $availableUsers = User::query()
-            ->where('tenant_id', $user->tenant_id)
+            
             ->where('id', '!=', $user->id)
             ->where('is_active', true)
             ->orderBy('name')
@@ -134,13 +134,13 @@ class DiscussionController extends Controller
             'participant_ids' => ['required_if:is_group,true', 'array'],
             'participant_ids.*' => [
                 'integer',
-                Rule::exists('users', 'id')->where(fn ($q) => $q->where('tenant_id', $user->tenant_id)->where('is_active', true)),
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
             'participant_id' => [
                 'required_without:is_group',
                 'nullable',
                 'integer',
-                Rule::exists('users', 'id')->where(fn ($q) => $q->where('tenant_id', $user->tenant_id)->where('is_active', true)),
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
         ]);
 
@@ -160,7 +160,6 @@ class DiscussionController extends Controller
             }
 
             $conversation = DiscussionConversation::create([
-                'tenant_id' => $user->tenant_id,
                 'title' => trim($validated['title']),
                 'is_group' => true,
                 'created_by' => $user->id,
@@ -205,7 +204,6 @@ class DiscussionController extends Controller
 
         $participant = User::findOrFail($participantId);
         $conversation = DiscussionConversation::create([
-            'tenant_id' => $user->tenant_id,
             'title' => null,
             'is_group' => false,
             'created_by' => $user->id,
@@ -253,7 +251,6 @@ class DiscussionController extends Controller
         ]);
 
         $message = DiscussionMessage::create([
-            'tenant_id' => Auth::user()->tenant_id,
             'conversation_id' => $conversation->id,
             'user_id' => $userId,
             'body' => $body,

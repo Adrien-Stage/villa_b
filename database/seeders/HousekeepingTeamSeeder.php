@@ -27,7 +27,7 @@ class HousekeepingTeamSeeder extends Seeder
         }
 
         $eastTeam = HousekeepingTeam::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Equipe Aile Est'],
+            ['name' => 'Equipe Aile Est'],
             [
                 'code' => 'HK-EAST',
                 'leader_id' => $leader->id,
@@ -43,7 +43,7 @@ class HousekeepingTeamSeeder extends Seeder
         ]);
 
         $villaTeam = HousekeepingTeam::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Equipe Villas'],
+            ['name' => 'Equipe Villas'],
             [
                 'code' => 'HK-VILLA',
                 'leader_id' => $leader->id,

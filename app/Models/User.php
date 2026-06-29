@@ -35,7 +35,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'tenant_id',      // ← AJOUTÉ : Liaison à l'établissement
+        // ← AJOUTÉ : Liaison à l'établissement
         'role',           // ← AJOUTÉ : RBAC
         'phone',
         'is_active',      // ← AJOUTÉ : Désactivation sans suppression
@@ -57,11 +57,6 @@ class User extends Authenticatable
     /**
      * Relation : L'utilisateur appartient à un établissement
      */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     /**
      * Relation : L'utilisateur peut avoir plusieurs rôles (RBAC étendu)
      */

@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('room_status_histories', function (Blueprint $table) {
-            $table->foreignId('tenant_id')
-                ->after('id')
-                ->constrained()
-                ->onDelete('cascade');
-        });
+            });
     }
 
     /**

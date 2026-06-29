@@ -14,37 +14,28 @@ beforeEach(function () {
         'name' => 'Villa Boutanga',
         'slug' => 'villa-boutanga',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->manager = User::factory()->create([
-        'tenant_id' => $this->tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->receptionist = User::factory()->create([
-        'tenant_id' => $this->tenant->id,
         'role' => 'reception',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->cashier = User::factory()->create([
-        'tenant_id' => $this->tenant->id,
         'role' => 'cashier',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->customer = Customer::create([
-        'tenant_id' => $this->tenant->id,
         'first_name' => 'John',
         'last_name' => 'Doe',
         'email' => 'john.doe@example.com',
         'phone' => '123456789',
         'nationality' => 'French',
         'is_vip' => false,
-        'is_blacklisted' => false,
-    ]);
+        'is_blacklisted' => false]);
 });
 
 test('a receptionist can access the customer edit view', function () {
@@ -92,8 +83,7 @@ test('receptionist can update customer details', function () {
         'city' => 'Abidjan',
         'is_vip' => '1',
         'is_blacklisted' => '1',
-        'notes' => 'Some private internal notes here.',
-    ]);
+        'notes' => 'Some private internal notes here.']);
 
     $response->assertRedirect(route('customers.show', $this->customer));
     $response->assertSessionHas('success');
@@ -120,8 +110,7 @@ test('receptionist cannot update customer with invalid details', function () {
     $response = $this->put(route('customers.update', $this->customer), [
         'first_name' => '', // required
         'last_name' => '',  // required
-        'email' => 'invalid-email-format',
-    ]);
+        'email' => 'invalid-email-format']);
 
     $response->assertSessionHasErrors(['first_name', 'last_name', 'email']);
     

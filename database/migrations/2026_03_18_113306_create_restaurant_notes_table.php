@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_notes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('booking_id')->constrained()->onDelete('restrict');
 
             // null = client externe sans réservation hôtel
@@ -33,7 +32,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['booking_id', 'status']);
-            $table->index(['tenant_id', 'status']);
+            $table->index(['status']);
         });
     }
 

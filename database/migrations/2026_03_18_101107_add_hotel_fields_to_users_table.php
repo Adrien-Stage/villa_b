@@ -12,11 +12,7 @@ return new class extends Migration
 
             // after('email') : on contrôle l'ordre des colonnes dans la table
             // C'est cosmétique mais utile quand tu inspectes la BD dans pgAdmin
-            $table->foreignId('tenant_id')
-                  ->nullable()           // nullable : le super-admin n'appartient à aucun tenant
-                  ->after('email')
-                  ->constrained()        // cherche automatiquement la table 'tenants'
-                  ->nullOnDelete();      // Si le tenant est supprimé → tenant_id devient null
+            // Si le tenant est supprimé → tenant_id devient null
                                         // (on préfère ça à cascade pour ne pas perdre les comptes)
 
             // Le rôle détermine ce que l'utilisateur peut faire dans l'app
@@ -36,7 +32,7 @@ return new class extends Migration
 
             // Index composite : on cherchera souvent "tous les réceptionnistes de ce tenant"
             // WHERE tenant_id = 1 AND role = 'reception'
-            $table->index(['tenant_id', 'role']);
+            $table->index(['role']);
         });
     }
 
@@ -46,7 +42,7 @@ return new class extends Migration
             // L'ordre est IMPORTANT : supprimer la FK avant la colonne
             // Sinon PostgreSQL se plaint de contraintes orphelines
             $table->dropForeign(['tenant_id']);
-            $table->dropIndex(['tenant_id', 'role']);
+            $table->dropIndex(['role']);
 
             // Supprimer les colonnes dans l'ordre inverse de leur ajout
             $table->dropColumn([
@@ -54,8 +50,7 @@ return new class extends Migration
                 'is_active',
                 'phone',
                 'role',
-                'tenant_id',
-            ]);
+                ]);
         });
     }
 };

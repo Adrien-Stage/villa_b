@@ -12,14 +12,14 @@ return new class extends Migration
             $table->foreignId('booking_id')->nullable()->after('table_number')->constrained()->nullOnDelete();
             $table->foreignId('folio_item_id')->nullable()->after('booking_id')->constrained('folio_items')->nullOnDelete();
 
-            $table->index(['tenant_id', 'booking_id', 'placed_at']);
+            $table->index(['booking_id', 'placed_at']);
         });
     }
 
     public function down(): void
     {
         Schema::table('restaurant_customer_orders', function (Blueprint $table) {
-            $table->dropIndex(['tenant_id', 'booking_id', 'placed_at']);
+            $table->dropIndex(['booking_id', 'placed_at']);
             $table->dropForeign(['folio_item_id']);
             $table->dropColumn('folio_item_id');
             $table->dropForeign(['booking_id']);

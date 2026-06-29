@@ -96,7 +96,6 @@ class RestaurantBillingController extends Controller
                 // Idempotence: ne pas recreer 2 fois la ligne folio.
                 if (!$order->folio_item_id) {
                     $folio = FolioItem::create([
-                        'tenant_id' => $booking->tenant_id,
                         'booking_id' => $booking->id,
                         'customer_id' => $booking->customer_id,
                         'type' => FolioItem::TYPE_RESTAURANT,

@@ -82,7 +82,7 @@ class RestaurantPantryController extends Controller
                 'required',
                 'string',
                 'max:120',
-                Rule::unique('restaurant_pantry_categories', 'name')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::unique('restaurant_pantry_categories', 'name')->where(fn ($q) => $q),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
@@ -106,7 +106,7 @@ class RestaurantPantryController extends Controller
                 'max:120',
                 Rule::unique('restaurant_pantry_categories', 'name')
                     ->ignore($category->id)
-                    ->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                    ->where(fn ($q) => $q),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
@@ -139,13 +139,13 @@ class RestaurantPantryController extends Controller
             'restaurant_pantry_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_pantry_categories', 'id')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::exists('restaurant_pantry_categories', 'id')->where(fn ($q) => $q),
             ],
             'name' => [
                 'required',
                 'string',
                 'max:140',
-                Rule::unique('restaurant_pantry_items', 'name')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::unique('restaurant_pantry_items', 'name')->where(fn ($q) => $q),
             ],
             'unit' => ['required', Rule::in(self::UNITS)],
             'min_stock' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
@@ -173,7 +173,7 @@ class RestaurantPantryController extends Controller
             'restaurant_pantry_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_pantry_categories', 'id')->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                Rule::exists('restaurant_pantry_categories', 'id')->where(fn ($q) => $q),
             ],
             'name' => [
                 'required',
@@ -181,7 +181,7 @@ class RestaurantPantryController extends Controller
                 'max:140',
                 Rule::unique('restaurant_pantry_items', 'name')
                     ->ignore($item->id)
-                    ->where(fn ($q) => $q->where('tenant_id', Auth::user()->tenant_id)),
+                    ->where(fn ($q) => $q),
             ],
             'unit' => ['required', Rule::in(self::UNITS)],
             'min_stock' => ['nullable', 'numeric', 'min:0', 'max:999999999'],

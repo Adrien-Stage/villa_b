@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('shop_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->foreignId('shop_category_id')->constrained('shop_categories')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
@@ -21,9 +20,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index('tenant_id');
             $table->index('shop_category_id');
-            $table->unique(['tenant_id', 'sku']);
+            $table->unique(['sku']);
         });
     }
 
