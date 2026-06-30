@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('restaurant_customer_orders', function (Blueprint $table) {
             // portal, staff
-            $table->string('source', 20)->default('portal')->after('tenant_id');
+            $table->string('source', 20)->default('portal');
 
             // User ID (serveur) si commande creee depuis l'espace staff
             $table->foreignId('created_by')->nullable()->after('source')->constrained('users')->nullOnDelete();

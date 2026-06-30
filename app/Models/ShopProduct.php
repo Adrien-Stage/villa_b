@@ -23,6 +23,7 @@ class ShopProduct extends Model
         'stock_quantity',
         'reorder_level',
         'is_active',
+        'tenant_id',
     ];
 
     protected $casts = [

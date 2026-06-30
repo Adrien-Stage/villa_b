@@ -69,9 +69,10 @@ class Booking extends Model
         'internal_notes',       // Notes staff (pas visible client)
 
         // Utilisateurs
-        'created_by',           // Réceptionniste qui a créé
-        'checked_in_by',        // Qui a fait le check-in
-        'checked_out_by',       // Qui a fait le check-out
+        'created_by',
+        'checked_in_by',
+        'checked_out_by',
+        'tenant_id',
     ];
 
     protected $casts = [

@@ -50,7 +50,8 @@ class Customer extends Model
         // Flags
         'is_vip',
         'is_blacklisted',
-        'notes',                // Notes internes staff
+        'notes',
+        'tenant_id',
     ];
 
     protected $casts = [

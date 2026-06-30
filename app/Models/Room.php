@@ -25,12 +25,13 @@ class Room extends Model
 
     protected $fillable = [
         'room_type_id',
-        'number',           // Numéro affiché (101, A12...)
-        'floor',            // Étage
-        'view_type',        // 'garden', 'pool', 'heritage', 'courtyard'
-        'status',           // Enum RoomStatus
-        'notes',            // Notes internes
+        'number',
+        'floor',
+        'view_type',
+        'status',
+        'notes',
         'is_active',
+        'tenant_id',
     ];
 
     protected $casts = [

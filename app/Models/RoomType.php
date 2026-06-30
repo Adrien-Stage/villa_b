@@ -20,16 +20,17 @@ class RoomType extends Model
 
     protected $fillable = [
         'name',
-        'code',              // Code interne (STD, SUP, SUI...)
+        'code',
         'description',
-        'base_capacity',     // Nombre de personnes inclus
-        'max_capacity',      // Maximum (avec lits supplémentaires)
-        'base_price',        // Prix de nuit de base (en centimes FCFA)
-        'amenities',         // Équipements JSON ["wifi", "minibar", "balcon"]
-        'photos',            // URLs des photos (stockage MinIO)
-        'size_sqm',          // Superficie
-        'bed_configuration', // "1 king", "2 twin", "1 king + 1 sofa"
+        'base_capacity',
+        'max_capacity',
+        'base_price',
+        'amenities',
+        'photos',
+        'size_sqm',
+        'bed_configuration',
         'is_active',
+        'tenant_id',
     ];
 
     protected $casts = [

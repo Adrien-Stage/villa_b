@@ -50,8 +50,9 @@ class GroupBooking extends Model
         'rooming_list_sent',    // Boolean
         'rooming_list_sent_at',
         
-        'notes',                // Notes générales
-        'internal_notes',       // Notes staff
+        'notes',
+        'internal_notes',
+        'tenant_id',
     ];
 
     protected $casts = [

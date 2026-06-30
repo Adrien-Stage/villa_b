@@ -155,6 +155,7 @@ class GroupBookingController extends Controller
             'group_code' => $groupCode,
             'total_deposit_paid' => $depositAmount,
             'status' => 'pending',
+            'tenant_id' => $tenantId,
         ]));
 
         if ($depositAmount > 0 && $request->filled('payment_method')) {
@@ -335,6 +336,7 @@ class GroupBookingController extends Controller
                 'source' => 'group',
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => Auth::id(),
+                'tenant_id' => $tenantId,
             ]);
 
             // Ligne folio hébergement

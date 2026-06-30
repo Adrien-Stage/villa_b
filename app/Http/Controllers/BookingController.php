@@ -474,6 +474,7 @@ class BookingController extends Controller
             'notes'           => $notes,
             'created_by'      => Auth::id(),
             'checkin_code'    => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
+            'tenant_id'       => $tenantId,
         ]);
 
         if ($booking->status === BookingStatus::PENDING && $request->boolean('is_offerte')) {
