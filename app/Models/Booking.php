@@ -4,7 +4,6 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,10 +27,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Booking extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'room_id',
         'customer_id',
         'booker_id',
@@ -71,9 +69,10 @@ class Booking extends Model
         'internal_notes',       // Notes staff (pas visible client)
 
         // Utilisateurs
-        'created_by',           // Réceptionniste qui a créé
-        'checked_in_by',        // Qui a fait le check-in
-        'checked_out_by',       // Qui a fait le check-out
+        'created_by',
+        'checked_in_by',
+        'checked_out_by',
+        'tenant_id',
     ];
 
     protected $casts = [

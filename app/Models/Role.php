@@ -12,17 +12,11 @@ class Role extends Model
         'name',
         'slug',
         'description',
-        'tenant_id',
-    ];
+        ];
 
     /**
      * Relation avec Tenant (multi-tenant)
      */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     /**
      * Relation avec Users (many-to-many pour multi-role support)
      */

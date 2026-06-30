@@ -50,7 +50,6 @@ class ShopSeeder extends Seeder
         foreach ($categories as $categoryData) {
             $category = ShopCategory::firstOrCreate(
                 [
-                    'tenant_id' => $tenant->id,
                     'name' => $categoryData['name'],
                 ],
                 [
@@ -185,7 +184,6 @@ class ShopSeeder extends Seeder
 
             ShopProduct::firstOrCreate(
                 [
-                    'tenant_id' => $tenant->id,
                     'sku' => $productData['sku'],
                 ],
                 [

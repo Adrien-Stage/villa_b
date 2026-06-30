@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_menu_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('restaurant_menu_category_id')
                 ->nullable()
                 ->constrained('restaurant_menu_categories')
@@ -30,9 +29,9 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['tenant_id', 'is_active', 'type', 'sort_order']);
+            $table->index(['is_active', 'type', 'sort_order']);
             $table->index(['restaurant_menu_category_id', 'sort_order']);
-            $table->unique(['tenant_id', 'name']);
+            $table->unique(['name']);
         });
     }
 

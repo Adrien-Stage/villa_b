@@ -151,9 +151,12 @@
                             @role('manager','restaurant_chief','cashier')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
                             @endrole
-                            @if(Auth::user()->tenant?->slug)
+                            @php
+                                $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
+                            @endphp
+                            @if($tenantSlug)
                                 <li>
-                                    <a href="{{ route('portal.restaurant.menu', ['tenant' => Auth::user()->tenant->slug]) }}"
+                                    <a href="{{ route('portal.restaurant.menu', ['tenant' => $tenantSlug]) }}"
                                        target="_blank"
                                        rel="noopener"
                                        class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-text-on-dark hover:bg-surface-dark hover:text-white">

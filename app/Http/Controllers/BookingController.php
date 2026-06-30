@@ -109,7 +109,7 @@ class BookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -124,7 +124,7 @@ class BookingController extends Controller
     {
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -269,7 +269,7 @@ class BookingController extends Controller
         $source      = $request->source ?? 'direct';
         $totalPeople = $adults + $children;
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
-        $maxCapacityLimit = RoomType::where('tenant_id', $tenantId)->max('max_capacity') ?? 4;
+        $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
 
         // Chambres disponibles pour cette période avec capacité suffisante
         $availableRooms = Room::availableBetween($checkIn, $checkOut)
@@ -347,7 +347,7 @@ class BookingController extends Controller
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -452,7 +452,6 @@ class BookingController extends Controller
         }
 
         $booking = Booking::create([
-            'tenant_id'       => $tenantId,
             'room_id'         => $room->id,
             'customer_id'     => $validated['customer_id'],
             'booker_id'       => $validated['booker_id'] ?? null,
@@ -475,11 +474,12 @@ class BookingController extends Controller
             'notes'           => $notes,
             'created_by'      => Auth::id(),
             'checkin_code'    => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
+            'tenant_id'       => $tenantId,
         ]);
 
         if ($booking->status === BookingStatus::PENDING && $request->boolean('is_offerte')) {
             try {
-                $managers = \App\Models\User::where('tenant_id', $tenantId)
+                $managers = \App\Models\User::query()
                     ->where('role', 'manager')
                     ->get();
                 \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\ComplimentaryBookingRequested($booking));
@@ -492,7 +492,6 @@ class BookingController extends Controller
         // Enregistrer le paiement (Acompte) si montant > 0
         if ($paymentAmount > 0) {
             $payment = \App\Models\Payment::create([
-                'tenant_id' => $tenantId,
                 'booking_id' => $booking->id,
                 'customer_id' => $booking->customer_id,
                 'amount' => $paymentAmount,
@@ -510,7 +509,6 @@ class BookingController extends Controller
 
         // Ligne folio hébergement
         FolioItem::create([
-            'tenant_id'    => $tenantId,
             'booking_id'   => $booking->id,
             'customer_id'  => $booking->customer_id,
             'type'         => FolioItem::TYPE_ROOM,
@@ -526,7 +524,6 @@ class BookingController extends Controller
         // Ligne folio pour le paiement (en négatif) si montant > 0
         if ($paymentAmount > 0) {
             FolioItem::create([
-                'tenant_id'    => $tenantId,
                 'booking_id'   => $booking->id,
                 'customer_id'  => $booking->customer_id,
                 'type'         => FolioItem::TYPE_PAYMENT,
@@ -732,7 +729,6 @@ class BookingController extends Controller
             : (int) round($validated['quantity'] * $validated['unit_price'] * 100);
 
         FolioItem::create([
-            'tenant_id'        => $tenantId,
             'booking_id'       => $booking->id,
             'customer_id'      => $booking->customer_id,
             'type'             => $validated['type'],
@@ -805,7 +801,7 @@ class BookingController extends Controller
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -825,7 +821,7 @@ class BookingController extends Controller
 
         // Génère le numéro de paiement de manière robuste pour éviter les collisions
         $payments = \App\Models\Payment::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
+            
             ->where('reference', 'like', 'PAY-' . now()->year . '-%')
             ->get(['reference']);
 
@@ -841,7 +837,6 @@ class BookingController extends Controller
         $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
         \App\Models\Payment::create([
-            'tenant_id'    => $tenantId,
             'booking_id'   => $booking->id,
             'customer_id'  => $booking->customer_id,
             'amount'       => $amountCentimes,

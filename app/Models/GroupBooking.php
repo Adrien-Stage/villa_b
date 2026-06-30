@@ -3,7 +3,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,10 +26,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class GroupBooking extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'booker_id',            // Utilisateur (staff) ayant enregistré la réservation
         'group_code',           // Numéro de dossier groupe (ex: GRP-2025-0001)
         'contact_customer_id',  // Client principal qui paie/organise
@@ -52,8 +50,9 @@ class GroupBooking extends Model
         'rooming_list_sent',    // Boolean
         'rooming_list_sent_at',
         
-        'notes',                // Notes générales
-        'internal_notes',       // Notes staff
+        'notes',
+        'internal_notes',
+        'tenant_id',
     ];
 
     protected $casts = [

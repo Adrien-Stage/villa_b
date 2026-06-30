@@ -10,8 +10,6 @@ return new class extends Migration
     {
         Schema::create('folio_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-
             // Lié à une réservation — le folio est attaché au séjour
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
 
@@ -53,7 +51,7 @@ return new class extends Migration
             $table->index(['customer_id', 'occurred_at']);
 
             // Index pour les rapports par type de prestation
-            $table->index(['tenant_id', 'type', 'occurred_at']);
+            $table->index(['type', 'occurred_at']);
         });
     }
 

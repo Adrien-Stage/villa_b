@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_pantry_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('restaurant_pantry_category_id')
                 ->nullable()
                 ->constrained('restaurant_pantry_categories')
@@ -28,9 +27,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'is_active', 'name']);
+            $table->index(['is_active', 'name']);
             $table->index(['restaurant_pantry_category_id']);
-            $table->unique(['tenant_id', 'name']);
+            $table->unique(['name']);
         });
     }
 

@@ -3,7 +3,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,10 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Guest extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'booking_id',           // La réservation concernée
         'customer_id',          // Optionnel : si lié à une fiche client
         

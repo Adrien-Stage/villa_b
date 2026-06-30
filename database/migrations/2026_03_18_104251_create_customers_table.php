@@ -11,8 +11,6 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-
             // --- IDENTITÉ ---
             $table->string('first_name');
             $table->string('last_name');
@@ -67,14 +65,14 @@ return new class extends Migration
             $table->timestamps();
 
             // Index pour la recherche rapide par nom (réception qui cherche "Dupont")
-            $table->index(['tenant_id', 'last_name', 'first_name']);
+            $table->index(['last_name', 'first_name']);
 
             // Index pour retrouver un client par email
-            $table->index(['tenant_id', 'email']);
+            $table->index(['email']);
 
             // Index pour les rapports VIP et blacklist
-            $table->index(['tenant_id', 'is_vip']);
-            $table->index(['tenant_id', 'is_blacklisted']);
+            $table->index(['is_vip']);
+            $table->index(['is_blacklisted']);
         });
     }
 

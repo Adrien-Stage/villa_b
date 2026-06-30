@@ -62,11 +62,9 @@ class RoomTypeSeeder extends Seeder
         foreach ($types as $type) {
             RoomType::updateOrCreate(
                 [
-                    'tenant_id' => $tenantId,
                     'code' => $type['code'],
                 ],
                 array_merge($type, [
-                    'tenant_id' => $tenantId,
                     'is_active' => true,
                 ])
             );

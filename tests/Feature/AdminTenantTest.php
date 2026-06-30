@@ -15,15 +15,13 @@ test('an admin can update tenant general information and upload a logo', functio
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $tenant = Tenant::create([
         'name' => 'Original Name',
         'slug' => 'original-slug',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($admin);
 
@@ -45,9 +43,7 @@ test('an admin can update tenant general information and upload a logo', functio
             'dark' => '#0F172A',
             'surface_dark' => '#1E293B',
             'text_on_light' => '#FFFFFF',
-            'text_on_dark' => '#93C5FD',
-        ],
-    ]);
+            'text_on_dark' => '#93C5FD']]);
 
     $response->assertStatus(302);
     $response->assertSessionHasNoErrors();
@@ -86,22 +82,18 @@ test('a non-admin user cannot update tenant information', function () {
         'name' => 'Original Name',
         'slug' => 'original-slug',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $manager = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($manager);
 
     $response = $this->post(route('admin.tenants.update', $tenant), [
         'name' => 'Hacked Name',
         'slug' => 'hacked-slug',
-        'currency' => 'USD',
-    ]);
+        'currency' => 'USD']);
 
     $response->assertStatus(403);
     
@@ -114,15 +106,13 @@ test('an admin can view tenant management dashboard', function () {
 
     $admin = User::factory()->create([
         'role' => 'admin',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $tenant = Tenant::create([
         'name' => 'Original Name',
         'slug' => 'original-slug',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($admin);
 
@@ -141,14 +131,11 @@ test('a non-admin user cannot view tenant management dashboard', function () {
         'name' => 'Original Name',
         'slug' => 'original-slug',
         'currency' => 'XAF',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $manager = User::factory()->create([
-        'tenant_id' => $tenant->id,
         'role' => 'manager',
-        'is_active' => true,
-    ]);
+        'is_active' => true]);
 
     $this->actingAs($manager);
 

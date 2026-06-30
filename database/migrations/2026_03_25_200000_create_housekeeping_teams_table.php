@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('housekeeping_teams', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name', 100);
             $table->string('code', 30)->nullable();
             $table->foreignId('leader_id')->nullable()->constrained('users')->nullOnDelete();
@@ -18,8 +17,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['tenant_id', 'name']);
-            $table->index(['tenant_id', 'is_active']);
+            $table->unique(['name']);
+            $table->index(['is_active']);
         });
     }
 

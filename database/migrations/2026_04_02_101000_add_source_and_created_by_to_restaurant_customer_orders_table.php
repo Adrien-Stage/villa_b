@@ -10,19 +10,19 @@ return new class extends Migration
     {
         Schema::table('restaurant_customer_orders', function (Blueprint $table) {
             // portal, staff
-            $table->string('source', 20)->default('portal')->after('tenant_id');
+            $table->string('source', 20)->default('portal');
 
             // User ID (serveur) si commande creee depuis l'espace staff
             $table->foreignId('created_by')->nullable()->after('source')->constrained('users')->nullOnDelete();
 
-            $table->index(['tenant_id', 'source', 'placed_at']);
+            $table->index(['source', 'placed_at']);
         });
     }
 
     public function down(): void
     {
         Schema::table('restaurant_customer_orders', function (Blueprint $table) {
-            $table->dropIndex(['tenant_id', 'source', 'placed_at']);
+            $table->dropIndex(['source', 'placed_at']);
             $table->dropForeign(['created_by']);
             $table->dropColumn(['source', 'created_by']);
         });

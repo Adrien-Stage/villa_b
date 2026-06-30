@@ -14,38 +14,31 @@ test('a user can create a booking with 0% VAT and correct net prices', function 
     $this->seed([
         \Database\Seeders\TenantSeeder::class,
         \Database\Seeders\RoomTypeSeeder::class,
-        \Database\Seeders\RoomSeeder::class,
-    ]);
+        \Database\Seeders\RoomSeeder::class]);
 
     $tenant = Tenant::where('slug', 'villa-boutanga')->first();
     $room = Room::where('number', '101')->first(); // Chambre Standard, base price 4500000 cents (45000 FCFA)
 
     // Setup user
     $user = User::factory()->create([
-        'tenant_id' => $tenant->id,
-        'role' => 'manager',
-    ]);
+        'role' => 'manager']);
 
     // Create active cash register session for reception
     \App\Models\CashRegisterSession::create([
-        'tenant_id' => $tenant->id,
         'user_id' => $user->id,
         'module' => 'reception',
         'opening_amount' => 5000000,
-        'opened_at' => now(),
-    ]);
+        'opened_at' => now()]);
 
     // Setup customers
-    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $customer = Customer::factory()->create([]);
     $booker = Customer::factory()->create([
-        'tenant_id' => $tenant->id,
         'first_name' => 'Mandataire',
         'last_name' => 'Tiers',
         'email' => 'mandataire@example.com',
         'phone' => '+237600000000',
         'id_document_type' => 'CNI',
-        'id_document_number' => '123456789',
-    ]);
+        'id_document_number' => '123456789']);
 
     // Login user
     $this->actingAs($user);
@@ -64,8 +57,7 @@ test('a user can create a booking with 0% VAT and correct net prices', function 
         'custom_price' => '90000', // 90000 FCFA total
         'payment_amount' => '30000', // 30000 FCFA deposit
         'payment_method' => 'cash',
-        'payment_reference' => 'REF123',
-    ]);
+        'payment_reference' => 'REF123']);
 
     // Check redirection or success status
     $response->assertRedirect();
@@ -103,27 +95,22 @@ test('a booking details view fallback to client himself if no booker is present'
     $this->seed([
         \Database\Seeders\TenantSeeder::class,
         \Database\Seeders\RoomTypeSeeder::class,
-        \Database\Seeders\RoomSeeder::class,
-    ]);
+        \Database\Seeders\RoomSeeder::class]);
 
     $tenant = Tenant::where('slug', 'villa-boutanga')->first();
     $room = Room::where('number', '101')->first();
 
     $user = User::factory()->create([
-        'tenant_id' => $tenant->id,
-        'role' => 'manager',
-    ]);
+        'role' => 'manager']);
 
     // Create active cash register session for reception
     \App\Models\CashRegisterSession::create([
-        'tenant_id' => $tenant->id,
         'user_id' => $user->id,
         'module' => 'reception',
         'opening_amount' => 5000000,
-        'opened_at' => now(),
-    ]);
+        'opened_at' => now()]);
 
-    $customer = Customer::factory()->create(['tenant_id' => $tenant->id]);
+    $customer = Customer::factory()->create([]);
 
     $this->actingAs($user);
 
@@ -140,8 +127,7 @@ test('a booking details view fallback to client himself if no booker is present'
         'custom_price' => '90000',
         'payment_amount' => '30000',
         'payment_method' => 'cash',
-        'payment_reference' => 'REF456',
-    ]);
+        'payment_reference' => 'REF456']);
 
     $response->assertRedirect();
 
@@ -159,20 +145,16 @@ test('a shop cashier can create a shop order with 0% VAT', function () {
     // Seed database
     $this->seed([
         \Database\Seeders\TenantSeeder::class,
-        \Database\Seeders\ShopSeeder::class,
-    ]);
+        \Database\Seeders\ShopSeeder::class]);
 
     $tenant = Tenant::where('slug', 'villa-boutanga')->first();
 
     // Create user with shop_cashier role
     $user = User::factory()->create([
-        'tenant_id' => $tenant->id,
-        'role' => 'shop_cashier',
-    ]);
+        'role' => 'shop_cashier']);
 
     // Create an active cash register session for this cashier
     \App\Models\CashRegisterSession::create([
-        'tenant_id' => $tenant->id,
         'user_id' => $user->id,
         'opened_at' => now(),
         'opening_amount' => 5000000, // 50000 FCFA in cents
@@ -190,10 +172,8 @@ test('a shop cashier can create a shop order with 0% VAT', function () {
         'items' => [
             [
                 'product_id' => $product->id,
-                'quantity' => 2,
-            ]
-        ],
-    ]);
+                'quantity' => 2]
+        ]]);
 
     $response->assertRedirect();
 

@@ -93,7 +93,6 @@ class LoyaltyService
 
         // Crée la transaction immuable
         $transaction = LoyaltyTransaction::create([
-            'tenant_id'    => $booking->tenant_id,
             'customer_id'  => $customer->id,
             'booking_id'   => $booking->id,
             'points'       => $points,
@@ -121,7 +120,6 @@ class LoyaltyService
         $customer->decrement('loyalty_points', $points);
 
         LoyaltyTransaction::create([
-            'tenant_id'    => $booking->tenant_id,
             'customer_id'  => $customer->id,
             'booking_id'   => $booking->id,
             'points'       => -$points, // Négatif = dépense

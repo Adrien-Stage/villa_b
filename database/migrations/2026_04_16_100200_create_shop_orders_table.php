@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('shop_orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->string('order_number')->unique();
             $table->foreignId('booking_id')->nullable()->constrained('bookings')->onDelete('set null');
             $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('set null');
@@ -27,7 +26,6 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index('tenant_id');
             $table->index('booking_id');
             $table->index('customer_id');
             $table->index('payment_status');

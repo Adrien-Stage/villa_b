@@ -6,27 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('room_status_histories', function (Blueprint $table) {
-            $table->foreignId('tenant_id')
-                ->after('id')
-                ->constrained()
-                ->onDelete('cascade');
-        });
+        // colonne supprimee lors du nettoyage Phase 2 (tenant_id retire du template)
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('room_status_histories', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-            $table->dropColumn('tenant_id');
-        });
+        // rien a restaurer
     }
 };

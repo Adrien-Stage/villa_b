@@ -11,8 +11,6 @@ return new class extends Migration
         Schema::create('room_rates', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-
             // Ce tarif s'applique à UN type de chambre
             // restrict : on ne supprime pas un type si des tarifs y sont attachés
             $table->foreignId('room_type_id')->constrained()->onDelete('restrict');
@@ -66,7 +64,7 @@ return new class extends Migration
 
             // Index pour le calcul de prix lors d'une recherche de disponibilité
             // "Quels tarifs actifs existent pour ce type de chambre de ce tenant ?"
-            $table->index(['tenant_id', 'room_type_id', 'is_active']);
+            $table->index(['room_type_id', 'is_active']);
 
             // Index pour filtrer par période rapidement
             $table->index(['start_date', 'end_date']);
