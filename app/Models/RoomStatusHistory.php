@@ -4,7 +4,6 @@
 namespace App\Models;
 
 use App\Enums\RoomStatus;
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RoomStatusHistory extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     /**
      * Désactive les timestamps automatiques car on a 'changed_at' explicite
@@ -30,7 +29,6 @@ class RoomStatusHistory extends Model
     protected $table = 'room_status_histories';
 
     protected $fillable = [
-        'tenant_id',
         'room_id',           // ← CLÉ ÉTRANGÈRE EXPLICITE
         'from_status',       // Valeur enum avant
         'to_status',         // Valeur enum après

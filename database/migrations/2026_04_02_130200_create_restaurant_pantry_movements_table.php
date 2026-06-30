@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_pantry_movements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('restaurant_pantry_item_id')->constrained('restaurant_pantry_items')->cascadeOnDelete();
 
             // in, out, adjust
@@ -27,7 +26,7 @@ return new class extends Migration
             $table->timestamp('occurred_at');
             $table->timestamps();
 
-            $table->index(['tenant_id', 'occurred_at']);
+            $table->index(['occurred_at']);
             $table->index(['restaurant_pantry_item_id', 'occurred_at']);
         });
     }

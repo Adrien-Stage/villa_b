@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('cash_register_disbursements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('cash_register_session_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // whoever made the out
             $table->integer('amount'); // in cents

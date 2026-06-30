@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::table('discussion_messages', function (Blueprint $table) {
             $table->foreignId('conversation_id')
                 ->nullable()
-                ->after('tenant_id')
                 ->constrained('discussion_conversations')
                 ->cascadeOnDelete();
 

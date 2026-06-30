@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('housekeeping_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('housekeeping_team_id')->constrained()->cascadeOnDelete();
             $table->foreignId('room_id')->constrained()->cascadeOnDelete();
             $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
@@ -21,7 +20,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'status']);
+            $table->index(['status']);
             $table->index(['room_id', 'status']);
         });
     }

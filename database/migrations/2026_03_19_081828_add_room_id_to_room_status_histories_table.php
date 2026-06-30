@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('room_status_histories', function (Blueprint $table) {
             $table->foreignId('room_id')
-                ->after('tenant_id')
                 ->constrained()
                 ->onDelete('cascade');
         });

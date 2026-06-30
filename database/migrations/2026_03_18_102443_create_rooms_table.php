@@ -11,8 +11,6 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-
             // restrict : impossible de supprimer un type de chambre
             // si des chambres physiques y sont encore rattachées
             // C'est une protection métier — tu dois d'abord reclasser les chambres
@@ -41,15 +39,15 @@ return new class extends Migration
             $table->timestamps();
 
             // Unicité du numéro de chambre par établissement
-            $table->unique(['tenant_id', 'number']);
+            $table->unique(['number']);
 
             // Index pour le dashboard temps réel :
             // "Combien de chambres disponibles dans cet hôtel ?"
-            $table->index(['tenant_id', 'status']);
+            $table->index(['status']);
 
             // Index composite pour le wizard de réservation :
             // "Toutes les chambres Standard disponibles de cet hôtel"
-            $table->index(['tenant_id', 'room_type_id', 'status']);
+            $table->index(['room_type_id', 'status']);
         });
     }
 

@@ -21,7 +21,7 @@ class ShopOrderController extends Controller
     public function index(Request $request): View
     {
         $tenant = auth()->user()->tenant;
-        $query = ShopOrder::where('tenant_id', $tenant->id)
+        $query = ShopOrder::query()
             ->with(['items', 'customer', 'booking', 'createdBy']);
 
         // Filtres
@@ -50,7 +50,7 @@ class ShopOrderController extends Controller
         
         // Verifier s'il y a une caisse ouverte !
         $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', $tenant->id)
+            
             ->whereNull('closed_at')
             ->first();
             
@@ -58,7 +58,7 @@ class ShopOrderController extends Controller
             return redirect()->route('shop.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une commande.');
         }
 
-        $products = ShopProduct::where('tenant_id', $tenant->id)
+        $products = ShopProduct::query()
             ->where('is_active', true)
             ->where('stock_quantity', '>', 0)
             ->with('category')
@@ -126,7 +126,6 @@ class ShopOrderController extends Controller
         // Créer un nouveau client si demandé
         if (!empty($validated['create_customer']) && empty($validated['customer_id'])) {
             $customer = Customer::create([
-                'tenant_id' => $tenant->id,
                 'first_name' => $validated['customer_first_name'] ?? 'Inconnu',
                 'last_name' => $validated['customer_name'] ?? 'Inconnu',
                 'phone' => $validated['customer_phone'] ?? null,
@@ -142,7 +141,7 @@ class ShopOrderController extends Controller
 
         // Vérifier que tous les produits appartiennent au tenant
         $productIds = collect($validated['items'])->pluck('product_id')->toArray();
-        $products = ShopProduct::where('tenant_id', $tenant->id)
+        $products = ShopProduct::query()
             ->whereIn('id', $productIds)
             ->get()
             ->keyBy('id');
@@ -160,7 +159,7 @@ class ShopOrderController extends Controller
         }
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', $tenant->id)
+            
             ->whereNull('closed_at')
             ->first();
 
@@ -175,7 +174,6 @@ class ShopOrderController extends Controller
             $subtotal = 0;
 
             $order = ShopOrder::create([
-                'tenant_id' => $tenant->id,
                 'order_number' => $orderNumber,
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'] ?? null,
@@ -222,7 +220,6 @@ class ShopOrderController extends Controller
             // Si room_charge → créer la ligne folio et marquer payé immédiatement
             if ($validated['payment_method'] === 'room_charge' && $booking) {
                 $folio = FolioItem::create([
-                    'tenant_id' => $booking->tenant_id,
                     'booking_id' => $booking->id,
                     'customer_id' => $booking->customer_id,
                     'type' => FolioItem::TYPE_SHOP,
@@ -270,7 +267,7 @@ class ShopOrderController extends Controller
         }
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
-            ->where('tenant_id', auth()->user()->tenant->id)
+            
             ->whereNull('closed_at')
             ->first();
 

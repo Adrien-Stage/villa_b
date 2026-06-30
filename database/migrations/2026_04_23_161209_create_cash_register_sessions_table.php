@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('cash_register_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('module')->default('shop'); // ex: shop, restaurant
             

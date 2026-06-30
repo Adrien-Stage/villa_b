@@ -107,11 +107,6 @@ class EnsureRoleAccess
             ]);
         }
 
-        // Vérifier l'isolation multi-tenant (sauf pour admin global)
-        if (!$user->isAdmin()) {
-            $this->validateTenantAccess($request, $user);
-        }
-
         return $next($request);
     }
 

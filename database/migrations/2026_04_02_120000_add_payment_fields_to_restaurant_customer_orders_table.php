@@ -21,14 +21,14 @@ return new class extends Migration
             $table->timestamp('paid_at')->nullable()->after('placed_at');
             $table->foreignId('paid_by')->nullable()->after('paid_at')->constrained('users')->nullOnDelete();
 
-            $table->index(['tenant_id', 'payment_status', 'paid_at']);
+            $table->index(['payment_status', 'paid_at']);
         });
     }
 
     public function down(): void
     {
         Schema::table('restaurant_customer_orders', function (Blueprint $table) {
-            $table->dropIndex(['tenant_id', 'payment_status', 'paid_at']);
+            $table->dropIndex(['payment_status', 'paid_at']);
             $table->dropForeign(['paid_by']);
             $table->dropColumn([
                 'payment_status',

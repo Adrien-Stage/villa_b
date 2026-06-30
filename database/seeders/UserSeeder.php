@@ -36,7 +36,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('admin'),
-                'tenant_id' => null,
                 'role' => 'admin',
                 'is_active' => true,
             ]
@@ -48,7 +47,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Jean-Pierre Kamga',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'manager',
                 'is_active' => true,
             ]
@@ -60,7 +58,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Marie Tchoupo',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'reception',
                 'is_active' => true,
             ]
@@ -72,7 +69,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Paul Nguemo',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'housekeeping_leader',
                 'is_active' => true,
             ]
@@ -84,7 +80,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Chef Restaurant',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'restaurant_chief',
                 'is_active' => true,
             ]
@@ -96,7 +91,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Serveur Restaurant',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'restaurant_staff',
                 'is_active' => true,
             ]
@@ -108,7 +102,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Caissier Restaurant',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'cashier',
                 'is_active' => true,
             ]
@@ -120,7 +113,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Gérant Boutique',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'shop_manager',
                 'is_active' => true,
             ]
@@ -132,7 +124,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Caissier Boutique',
                 'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
                 'role' => 'shop_cashier',
                 'is_active' => true,
             ]
@@ -160,7 +151,6 @@ class UserSeeder extends Seeder
                 [
                     'name' => $staffData['name'],
                     'password' => Hash::make('password'),
-                    'tenant_id' => $tenant->id,
                     'role' => 'housekeeping_staff',
                     'is_active' => true,
                 ]

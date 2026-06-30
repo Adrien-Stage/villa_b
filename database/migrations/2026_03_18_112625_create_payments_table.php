@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('booking_id')->constrained()->onDelete('restrict');
 
             // null = paiement restaurant sans réservation hôtel
@@ -42,9 +41,9 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['tenant_id', 'status']);
+            $table->index(['status']);
             $table->index(['booking_id']);
-            $table->index(['tenant_id', 'paid_at']);
+            $table->index(['paid_at']);
         });
     }
 

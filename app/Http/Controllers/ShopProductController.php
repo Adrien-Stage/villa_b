@@ -14,7 +14,7 @@ class ShopProductController extends Controller
     public function index(Request $request): View
     {
         $tenant = auth()->user()->tenant;
-        $query = ShopProduct::where('tenant_id', $tenant->id)
+        $query = ShopProduct::query()
             ->with('category');
 
         // Filtres
@@ -36,7 +36,7 @@ class ShopProductController extends Controller
 
         $view = $request->input('view', 'list');
         $products = $query->orderBy('name')->paginate(20)->withQueryString();
-        $categories = ShopCategory::where('tenant_id', $tenant->id)
+        $categories = ShopCategory::query()
             ->orderBy('sort_order')
             ->get();
 
@@ -50,7 +50,7 @@ class ShopProductController extends Controller
     public function create(): View
     {
         $tenant = auth()->user()->tenant;
-        $categories = ShopCategory::where('tenant_id', $tenant->id)
+        $categories = ShopCategory::query()
             ->orderBy('sort_order')
             ->get();
 
@@ -83,7 +83,7 @@ class ShopProductController extends Controller
         ]);
 
         // Vérifier que la catégorie appartient au tenant
-        ShopCategory::where('tenant_id', $tenant->id)
+        ShopCategory::query()
             ->where('id', $validated['shop_category_id'])
             ->firstOrFail();
 
@@ -110,7 +110,7 @@ class ShopProductController extends Controller
     {
         $tenant = auth()->user()->tenant;
 
-        $categories = ShopCategory::where('tenant_id', $tenant->id)
+        $categories = ShopCategory::query()
             ->orderBy('sort_order')
             ->get();
 
@@ -139,7 +139,7 @@ class ShopProductController extends Controller
         ]);
 
         // Vérifier que la catégorie appartient au tenant
-        ShopCategory::where('tenant_id', $tenant->id)
+        ShopCategory::query()
             ->where('id', $validated['shop_category_id'])
             ->firstOrFail();
 
@@ -198,7 +198,7 @@ class ShopProductController extends Controller
      */
     private function generateSku(int $tenantId): string
     {
-        $lastProduct = ShopProduct::where('tenant_id', $tenantId)
+        $lastProduct = ShopProduct::query()
             ->where('sku', 'like', 'ART-%')
             ->orderByRaw("CAST(SUBSTRING(sku FROM 5) AS INTEGER) DESC")
             ->first();

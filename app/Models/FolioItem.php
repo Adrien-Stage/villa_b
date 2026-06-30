@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class FolioItem extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     // Types de prestations disponibles
     const TYPE_ROOM       = 'room';
@@ -31,7 +30,6 @@ class FolioItem extends Model
     const TYPE_OTHER      = 'other';
 
     protected $fillable = [
-        'tenant_id',
         'booking_id',
         'customer_id',
         'type',

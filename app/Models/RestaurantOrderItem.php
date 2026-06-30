@@ -3,7 +3,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RestaurantOrderItem extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'restaurant_note_id',   // La note ouverte liée
         'menu_item_id',         // Référence au menu (si défini)
         

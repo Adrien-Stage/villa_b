@@ -137,7 +137,6 @@ class CheckOutService
     private function createInvoice(Booking $booking): Invoice
     {
         $invoice = Invoice::create([
-            'tenant_id'      => $booking->tenant_id,
             'booking_id'     => $booking->id,
             'customer_id'    => $booking->customer_id,
             'invoice_number' => $this->generateInvoiceNumber($booking->tenant_id),
@@ -153,7 +152,6 @@ class CheckOutService
 
         // Ligne hébergement
         InvoiceItem::create([
-            'tenant_id'   => $booking->tenant_id,
             'invoice_id'  => $invoice->id,
             'description' => "Hébergement — {$booking->total_nights} nuit(s) × " .
                 number_format($booking->price_per_night / 100, 0, ',', ' ') . " FCFA",
@@ -170,7 +168,6 @@ class CheckOutService
         // Lignes du folio (extras)
         foreach ($booking->folioItems()->where('type', '!=', FolioItem::TYPE_PAYMENT)->get() as $item) {
             InvoiceItem::create([
-                'tenant_id'   => $booking->tenant_id,
                 'invoice_id'  => $invoice->id,
                 'description' => $item->description,
                 'quantity'    => $item->quantity,
@@ -196,7 +193,7 @@ class CheckOutService
         $year = now()->year;
 
         $lastInvoice = Invoice::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
+            
             ->whereYear('invoice_date', $year)
             ->orderBy('id', 'desc')
             ->first();

@@ -17,7 +17,7 @@ class RoomSeeder extends Seeder
             return;
         }
 
-        $roomTypes = RoomType::where('tenant_id', $tenantId)
+        $roomTypes = RoomType::query()
             ->pluck('id', 'code');
 
         $rooms = [
@@ -40,11 +40,9 @@ class RoomSeeder extends Seeder
 
             Room::updateOrCreate(
                 [
-                    'tenant_id' => $tenantId,
                     'number' => $room['number'],
                 ],
                 array_merge($room, [
-                    'tenant_id' => $tenantId,
                     'status' => 'available',
                     'is_active' => true,
                 ])

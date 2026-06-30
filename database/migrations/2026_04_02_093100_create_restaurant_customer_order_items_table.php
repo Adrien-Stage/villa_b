@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('restaurant_customer_order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('restaurant_customer_order_id')->constrained()->cascadeOnDelete();
 
             // null = article libre non reference dans le menu
@@ -27,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['restaurant_customer_order_id']);
-            $table->index(['tenant_id', 'menu_item_id']);
+            $table->index(['menu_item_id']);
         });
     }
 

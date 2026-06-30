@@ -58,7 +58,7 @@ class GroupBookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -73,7 +73,7 @@ class GroupBookingController extends Controller
     {
         $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -94,7 +94,7 @@ class GroupBookingController extends Controller
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -141,7 +141,7 @@ class GroupBookingController extends Controller
 
         // Génère le code groupe : GRP-2026-0001
         $lastGroup = GroupBooking::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
+            
             ->whereYear('created_at', now()->year)
             ->orderBy('id', 'desc')->first();
         $seq = $lastGroup ? (int) substr($lastGroup->group_code, -4) + 1 : 1;
@@ -151,16 +151,15 @@ class GroupBookingController extends Controller
         $depositAmount = $request->filled('deposit_amount') ? (int) $request->deposit_amount * 100 : 0;
 
         $group = GroupBooking::create(array_merge($validated, [
-            'tenant_id' => $tenantId,
             'booker_id' => $bookerId,
             'group_code' => $groupCode,
             'total_deposit_paid' => $depositAmount,
             'status' => 'pending',
+            'tenant_id' => $tenantId,
         ]));
 
         if ($depositAmount > 0 && $request->filled('payment_method')) {
             $payment = \App\Models\Payment::create([
-                'tenant_id' => $tenantId,
                 'booking_id' => null, // Ce n'est pas lié à une chambre spécifique
                 'customer_id' => $group->contact_customer_id,
                 'amount' => $depositAmount,
@@ -177,7 +176,6 @@ class GroupBookingController extends Controller
             
             // On l'ajoute comme FolioItem pour qu'il soit sur la facture du groupe
             \App\Models\FolioItem::create([
-                'tenant_id'    => $tenantId,
                 'booking_id'   => null,
                 'customer_id'  => $group->contact_customer_id,
                 'type'         => \App\Models\FolioItem::TYPE_PAYMENT,
@@ -254,7 +252,6 @@ class GroupBookingController extends Controller
             $request->validate($customerRules);
             
             $customer = Customer::create([
-                'tenant_id' => $tenantId,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
@@ -317,7 +314,6 @@ class GroupBookingController extends Controller
             $totalAmount
         ) {
             $booking = Booking::create([
-                'tenant_id' => $tenantId,
                 'group_booking_id' => $groupBooking->id,
                 'room_id' => $room->id,
                 'customer_id' => $customerId,
@@ -340,11 +336,11 @@ class GroupBookingController extends Controller
                 'source' => 'group',
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => Auth::id(),
+                'tenant_id' => $tenantId,
             ]);
 
             // Ligne folio hébergement
             FolioItem::create([
-                'tenant_id' => $tenantId,
                 'booking_id' => $booking->id,
                 'customer_id' => $booking->customer_id,
                 'type' => FolioItem::TYPE_ROOM,
@@ -525,7 +521,6 @@ class GroupBookingController extends Controller
                 };
 
                 FolioItem::create([
-                    'tenant_id' => $tenantId,
                     'booking_id' => $booking->id,
                     'customer_id' => $booking->customer_id,
                     'type' => $validated['type'],
@@ -571,7 +566,7 @@ class GroupBookingController extends Controller
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('tenant_id', $tenantId)
+            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->first();
@@ -650,7 +645,7 @@ class GroupBookingController extends Controller
 
                 // Génère référence paiement de manière robuste pour éviter les collisions
                 $payments = Payment::withoutGlobalScopes()
-                    ->where('tenant_id', $tenantId)
+                    
                     ->where('reference', 'like', 'PAY-' . now()->year . '-%')
                     ->get(['reference']);
 
@@ -666,7 +661,6 @@ class GroupBookingController extends Controller
                 $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
                 Payment::create([
-                    'tenant_id' => $tenantId,
                     'booking_id' => $booking->id,
                     'customer_id' => $booking->customer_id,
                     'amount' => $share,

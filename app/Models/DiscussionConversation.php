@@ -13,7 +13,6 @@ class DiscussionConversation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
         'title',
         'is_group',
         'created_by',
@@ -22,11 +21,6 @@ class DiscussionConversation extends Model
     protected $casts = [
         'is_group' => 'boolean',
     ];
-
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     public function creator(): BelongsTo
     {

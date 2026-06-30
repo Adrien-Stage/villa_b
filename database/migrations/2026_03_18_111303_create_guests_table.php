@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('guests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
 
             // null = guest walk-in sans fiche client existante
@@ -43,7 +42,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['booking_id']);
-            $table->index(['tenant_id', 'id_document_number']);
+            $table->index(['id_document_number']);
         });
     }
 

@@ -37,7 +37,7 @@ class UserManagementController extends Controller
             ->get();
 
         $query = User::query()
-            ->where('tenant_id', $manager->tenant_id)
+            
             ->where('id', '!=', $manager->id)
             ->whereNotIn('role', ['admin', 'manager'])
             ->with('roles');
@@ -60,14 +60,14 @@ class UserManagementController extends Controller
         }
 
         $stats = [
-            'total' => User::where('tenant_id', $manager->tenant_id)
+            'total' => User::query()
                 ->whereNotIn('role', ['admin', 'manager'])
                 ->count(),
-            'active' => User::where('tenant_id', $manager->tenant_id)
+            'active' => User::query()
                 ->whereNotIn('role', ['admin', 'manager'])
                 ->where('is_active', true)
                 ->count(),
-            'inactive' => User::where('tenant_id', $manager->tenant_id)
+            'inactive' => User::query()
                 ->whereNotIn('role', ['admin', 'manager'])
                 ->where('is_active', false)
                 ->count(),
@@ -99,7 +99,6 @@ class UserManagementController extends Controller
             'email' => strtolower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'role' => $validated['role'],
-            'tenant_id' => $manager->tenant_id,
             'is_active' => $request->boolean('is_active', true),
             'password' => Hash::make($validated['password']),
         ]);
@@ -202,9 +201,7 @@ class UserManagementController extends Controller
     {
         $manager = Auth::user();
 
-        if ($manager->tenant_id !== $user->tenant_id) {
-            abort(403, 'Utilisateur hors perimetre du tenant.');
-        }
+        
 
         if (in_array($user->role, ['admin', 'manager'], true)) {
             abort(403, 'Ce profil ne peut pas etre gere par un manager.');

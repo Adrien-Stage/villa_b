@@ -10,12 +10,11 @@ return new class extends Migration
     {
         Schema::create('discussion_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('body');
             $table->timestamps();
 
-            $table->index(['tenant_id', 'created_at']);
+            $table->index(['created_at']);
         });
     }
 

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class CashRegisterSession extends Model
 {
     protected $fillable = [
-        'tenant_id',
         'user_id',
         'module',
         'status',
