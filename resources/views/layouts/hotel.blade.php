@@ -1,10 +1,9 @@
 @php
     $currentTenant = Auth::user()->tenant ?? \App\Models\Tenant::first();
     $tenantName = $currentTenant?->name ?? 'Établissement';
-    // URL absolue vers le storage de l'admin (voir
-    // TenantProvisioningService::generateDockerCompose) — pas un chemin
-    // local à cette application.
-    $tenantLogo = !empty($currentTenant?->settings['logo']) ? $currentTenant->settings['logo'] : null;
+    // Logo importé par le manager depuis les paramètres de l'application
+    // (stocké localement dans le storage de ce tenant, pas de l'admin).
+    $tenantLogo = !empty($currentTenant?->settings['logo']) ? asset('storage/' . $currentTenant->settings['logo']) : null;
 
     // Generate initials
     $words = explode(' ', $tenantName);

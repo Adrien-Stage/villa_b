@@ -1,10 +1,9 @@
 @php
     $tenant = \App\Models\Tenant::first();
     $tenantName = $tenant?->name ?? 'Établissement';
-    // Le logo (s'il existe) est une URL absolue vers le storage de l'admin
-    // (voir TenantProvisioningService::generateDockerCompose) — pas un
-    // chemin local à cette application.
-    $tenantLogo = ($tenant && !empty($tenant->settings['logo'])) ? $tenant->settings['logo'] : null;
+    // Logo importé par le manager depuis les paramètres de l'application
+    // (stocké localement dans le storage de ce tenant, pas de l'admin).
+    $tenantLogo = ($tenant && !empty($tenant->settings['logo'])) ? asset('storage/' . $tenant->settings['logo']) : null;
     $tenantInitial = mb_strtoupper(mb_substr($tenantName, 0, 1));
 @endphp
 <!DOCTYPE html>

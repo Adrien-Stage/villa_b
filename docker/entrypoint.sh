@@ -54,6 +54,12 @@ else
     echo "📦 Tenant déjà initialisé — seeders ignorés."
 fi
 
+# ── Lien symbolique storage (nécessaire pour les logos/images uploadés) ───────
+if [ ! -e /var/www/html/public/storage ]; then
+    echo "🔗 Création du lien storage..."
+    php artisan storage:link --no-interaction 2>&1 || true
+fi
+
 # ── Permissions storage ───────────────────────────────────────────────────────
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
