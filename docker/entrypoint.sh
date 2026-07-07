@@ -39,15 +39,19 @@ php artisan migrate --force --no-interaction 2>&1 || {
     echo "⚠️  Échec des migrations. Voir les logs pour plus de détails."
 }
 
-# Seeder uniquement si la table users est vide (premier lancement)
-USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
-if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
-    echo "🌱 Base vide — exécution des seeders..."
-    php artisan db:seed --force --no-interaction 2>&1 || {
-        echo "⚠️  Échec des seeders."
+# Seeder uniquement si aucun tenant n'existe encore (premier lancement).
+# ProductionTenantSeeder crée les rôles RBAC + le tenant réel de cet
+# établissement à partir des variables d'environnement (TENANT_SLUG,
+# APP_NAME, TENANT_SETTINGS...) — PAS le jeu de données de démo
+# "Villa Boutanga" (DatabaseSeeder), réservé au développement local.
+TENANT_COUNT=$(php artisan tinker --execute="echo \App\Models\Tenant::count();" 2>/dev/null || echo "0")
+if [ "$TENANT_COUNT" = "0" ] || [ -z "$TENANT_COUNT" ]; then
+    echo "🌱 Base vide — initialisation du tenant et des rôles..."
+    php artisan db:seed --class=ProductionTenantSeeder --force --no-interaction 2>&1 || {
+        echo "⚠️  Échec de l'initialisation."
     }
 else
-    echo "📦 Base déjà peuplée ($USER_COUNT users) — seeders ignorés."
+    echo "📦 Tenant déjà initialisé — seeders ignorés."
 fi
 
 # ── Permissions storage ───────────────────────────────────────────────────────

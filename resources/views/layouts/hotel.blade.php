@@ -1,8 +1,11 @@
 @php
     $currentTenant = Auth::user()->tenant ?? \App\Models\Tenant::first();
-    $tenantName = $currentTenant?->name ?? 'Villa Boutanga';
-    $tenantLogo = !empty($currentTenant?->settings['logo']) ? asset('storage/' . $currentTenant->settings['logo']) : asset('images/logo.png');
-    
+    $tenantName = $currentTenant?->name ?? 'Établissement';
+    // URL absolue vers le storage de l'admin (voir
+    // TenantProvisioningService::generateDockerCompose) — pas un chemin
+    // local à cette application.
+    $tenantLogo = !empty($currentTenant?->settings['logo']) ? $currentTenant->settings['logo'] : null;
+
     // Generate initials
     $words = explode(' ', $tenantName);
     $initials = '';
@@ -11,7 +14,7 @@
     }
     $initials = substr($initials, 0, 2);
     if (empty($initials)) {
-        $initials = 'VB';
+        $initials = 'ET';
     }
 @endphp
 <!DOCTYPE html>
@@ -46,10 +49,12 @@
             <div class="px-4 py-5 border-b border-surface-dark">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
-                        <img src="{{ $tenantLogo }}"
-                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                            class="bg-white w-full h-full object-cover">
-                        <div class="w-full h-full bg-secondary rounded-full items-center justify-center hidden">
+                        @if($tenantLogo)
+                            <img src="{{ $tenantLogo }}"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                                class="bg-white w-full h-full object-cover">
+                        @endif
+                        <div class="w-full h-full bg-secondary rounded-full items-center justify-center {{ $tenantLogo ? 'hidden' : 'flex' }}">
                             <span class="text-text-on-light font-heading font-bold text-sm">{{ $initials }}</span>
                         </div>
                     </div>
