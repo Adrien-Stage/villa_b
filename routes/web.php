@@ -51,9 +51,9 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 // Logout
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-// Page d'accueil → redirige vers le dashboard si connecté
+// Page d'accueil → dashboard si connecté, sinon login directement
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 // ===== PORTAIL CLIENT (QR MENU) =====
