@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# HotelixOS — Dockerfile du template établissement
+# MEKA ERP — Dockerfile du template établissement
 # Base : villa_b (Laravel 12 / PHP 8.2+ / PostgreSQL / Vite)
 #
 # Ce Dockerfile est partagé entre tous les établissements.
@@ -7,7 +7,7 @@
 # via les variables d'environnement du docker-compose généré par l'admin.
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM php:8.3-fpm
+FROM php:8.4-fpm
 
 # ── Dépendances système ───────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -72,5 +72,8 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
