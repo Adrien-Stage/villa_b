@@ -34,7 +34,8 @@ class SettingsController extends Controller
         $tab = $request->query('tab', $defaultTab);
 
         // Récupérer les settings actuels
-        $tenantSettings = \App\Models\Tenant::where('id', $user->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id'))->value('settings') ?? [];
+        // Une seule base = un seul établissement : pas besoin de filtrer par tenant_id.
+        $tenantSettings = \App\Models\Tenant::first()?->settings ?? [];
 
         return view('settings.index', compact('tab', 'user', 'tenantSettings'));
     }
@@ -47,21 +48,37 @@ class SettingsController extends Controller
             abort(403, 'Accès non autorisé aux paramètres.');
         }
 
-        $tenantId = $user->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
-        $tenant = \App\Models\Tenant::findOrFail($tenantId);
+        $tenant = \App\Models\Tenant::firstOrFail();
 
         // On récupère les anciens settings
         $settings = $tenant->settings ?? [];
+        $dirty = false;
+
+        // Logo : clé de premier niveau, gérée indépendamment des onglets
+        // (affiché tel quel par layouts/hotel.blade.php et auth/login.blade.php).
+        if ($request->hasFile('logo')) {
+            $request->validate(['logo' => ['image', 'max:2048']]);
+
+            if (!empty($settings['logo'])) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($settings['logo']);
+            }
+
+            $settings['logo'] = $request->file('logo')->store('logos', 'public');
+            $dirty = true;
+        }
 
         // L'onglet actuel pour savoir quelle clé mettre à jour
         $tab = $request->query('tab');
 
         if ($tab && $request->has('settings')) {
             $tabData = $request->input('settings');
-            
+
             // Fusionne avec les données existantes de cet onglet ou crée l'onglet
             $settings[$tab] = array_merge($settings[$tab] ?? [], $tabData);
+            $dirty = true;
+        }
 
+        if ($dirty) {
             $tenant->settings = $settings;
             $tenant->save();
         }
