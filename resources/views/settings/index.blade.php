@@ -82,37 +82,44 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'établissement</label>
-                        <input type="text" value="{{ Auth::user()->tenant?->name ?? 'Villa Boutanga' }}" class="w-full rounded-lg border-secondary/20 bg-gray-50 focus:ring-primary focus:border-primary text-sm p-2.5">
+                        <input type="text" value="{{ Auth::user()->tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>
-                        <select class="w-full rounded-lg border-secondary/20 bg-gray-50 focus:ring-primary focus:border-primary text-sm p-2.5">
-                            <option>FCFA (XAF)</option>
-                            <option>EUR (€)</option>
-                            <option>USD ($)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="mt-6">
-                    <label class="block text-xs font-medium text-primary/70 mb-1">Logo de l'établissement</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
-                        <div class="space-y-1 text-center">
-                            <i data-lucide="image" class="mx-auto h-8 w-8 text-primary/40"></i>
-                            <div class="flex text-sm text-primary/60">
-                                <span>Télécharger un fichier</span>
-                                <p class="pl-1">ou glisser-déposer</p>
-                            </div>
-                            <p class="text-xs text-primary/40">PNG, JPG, GIF jusqu'à 2MB</p>
-                        </div>
+                        <input type="text" value="{{ Auth::user()->tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                 </div>
 
-                <div class="mt-8 flex justify-end">
-                    <button type="button" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
-                        Enregistrer les modifications
-                    </button>
-                </div>
+                <form method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" enctype="multipart/form-data"
+                      class="mt-6" x-data="{ fileName: '' }">
+                    @csrf
+                    <label class="block text-xs font-medium text-primary/70 mb-1">Logo de l'établissement</label>
+
+                    @if(!empty($tenantSettings['logo'] ?? null))
+                        <div class="mb-3 flex items-center gap-3">
+                            <img src="{{ asset('storage/' . $tenantSettings['logo']) }}" alt="Logo actuel" class="w-14 h-14 rounded-full object-cover border border-secondary/20">
+                            <span class="text-xs text-primary/50">Logo actuel</span>
+                        </div>
+                    @endif
+
+                    <label class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+                        <input type="file" name="logo" accept="image/png,image/jpeg,image/gif" class="hidden"
+                               @change="fileName = $event.target.files[0]?.name ?? ''">
+                        <div class="space-y-1 text-center">
+                            <i data-lucide="image" class="mx-auto h-8 w-8 text-primary/40"></i>
+                            <div class="flex text-sm text-primary/60 justify-center">
+                                <span x-text="fileName || 'Télécharger un fichier'"></span>
+                            </div>
+                            <p class="text-xs text-primary/40">PNG, JPG, GIF jusqu'à 2MB</p>
+                        </div>
+                    </label>
+
+                    <div class="mt-4 flex justify-end">
+                        <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm cursor-pointer">
+                            Enregistrer le logo
+                        </button>
+                    </div>
+                </form>
             </div>
         @endif
 

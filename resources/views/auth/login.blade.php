@@ -1,7 +1,10 @@
 @php
     $tenant = \App\Models\Tenant::first();
-    $tenantName = $tenant?->name ?? 'Villa Boutanga';
-    $tenantLogo = !empty($tenant->settings['logo']) ? asset('storage/' . $tenant->settings['logo']) : asset('images/logo.png');
+    $tenantName = $tenant?->name ?? 'Établissement';
+    // Logo importé par le manager depuis les paramètres de l'application
+    // (stocké localement dans le storage de ce tenant, pas de l'admin).
+    $tenantLogo = ($tenant && !empty($tenant->settings['logo'])) ? asset('storage/' . $tenant->settings['logo']) : null;
+    $tenantInitial = mb_strtoupper(mb_substr($tenantName, 0, 1));
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
@@ -68,11 +71,15 @@
         <div class="relative z-10 flex flex-col items-center text-center px-12">
 
             {{-- Logo --}}
-            <div class="animate-up-1 w-28 h-28 rounded-full bg-white p-1 shadow-2xl mb-6"
-                 style="box-shadow: 0 0 40px rgba(204,171,135,0.2);">
-                <img src="{{ $tenantLogo }}"
-                     alt="{{ $tenantName }}"
-                     class="w-full h-full object-cover rounded-full">
+            <div class="animate-up-1 w-28 h-28 rounded-full shadow-2xl mb-6 flex items-center justify-center overflow-hidden"
+                 style="box-shadow: 0 0 40px rgba(204,171,135,0.2); background: {{ $tenantLogo ? 'white' : 'var(--color-secondary)' }};">
+                @if($tenantLogo)
+                    <img src="{{ $tenantLogo }}"
+                         alt="{{ $tenantName }}"
+                         class="w-full h-full object-cover rounded-full p-1">
+                @else
+                    <span class="font-heading text-5xl font-semibold" style="color: var(--color-text-on-light);">{{ $tenantInitial }}</span>
+                @endif
             </div>
 
             {{-- Nom --}}
