@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🏨 HotelixOS — Démarrage du container établissement"
+echo "🏨 MEKA ERP — Démarrage du container établissement"
 echo "    Tenant : ${TENANT_SLUG:-inconnu}"
 echo "    DB     : ${DB_DATABASE} @ ${DB_HOST}:${DB_PORT}"
 
@@ -32,6 +32,23 @@ echo "⚙️  Optimisation de la configuration Laravel..."
 php artisan config:cache  --no-interaction 2>/dev/null || true
 php artisan route:cache   --no-interaction 2>/dev/null || true
 php artisan view:cache    --no-interaction 2>/dev/null || true
+
+# ── Migrations + Seeders (exécutées automatiquement) ──────────────────────────
+echo "🗄️  Exécution des migrations..."
+php artisan migrate --force --no-interaction 2>&1 || {
+    echo "⚠️  Échec des migrations. Voir les logs pour plus de détails."
+}
+
+# Seeder uniquement si la table users est vide (premier lancement)
+USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
+if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+    echo "🌱 Base vide — exécution des seeders..."
+    php artisan db:seed --force --no-interaction 2>&1 || {
+        echo "⚠️  Échec des seeders."
+    }
+else
+    echo "📦 Base déjà peuplée ($USER_COUNT users) — seeders ignorés."
+fi
 
 # ── Permissions storage ───────────────────────────────────────────────────────
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
