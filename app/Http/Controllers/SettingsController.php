@@ -33,11 +33,11 @@ class SettingsController extends Controller
 
         $tab = $request->query('tab', $defaultTab);
 
-        // Récupérer les settings actuels
         // Une seule base = un seul établissement : pas besoin de filtrer par tenant_id.
-        $tenantSettings = \App\Models\Tenant::first()?->settings ?? [];
+        $tenant = \App\Models\Tenant::first();
+        $tenantSettings = $tenant?->settings ?? [];
 
-        return view('settings.index', compact('tab', 'user', 'tenantSettings'));
+        return view('settings.index', compact('tab', 'user', 'tenant', 'tenantSettings'));
     }
 
     public function update(Request $request)
@@ -57,7 +57,7 @@ class SettingsController extends Controller
         // Logo : clé de premier niveau, gérée indépendamment des onglets
         // (affiché tel quel par layouts/hotel.blade.php et auth/login.blade.php).
         if ($request->hasFile('logo')) {
-            $request->validate(['logo' => ['image', 'max:2048']]);
+            $request->validate(['logo' => ['image', 'mimes:png,jpg,jpeg,gif', 'max:2048']]);
 
             if (!empty($settings['logo'])) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($settings['logo']);

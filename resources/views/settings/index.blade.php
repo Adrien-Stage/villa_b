@@ -82,11 +82,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'établissement</label>
-                        <input type="text" value="{{ Auth::user()->tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input type="text" value="{{ $tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>
-                        <input type="text" value="{{ Auth::user()->tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input type="text" value="{{ $tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                 </div>
 
@@ -94,6 +94,10 @@
                       class="mt-6" x-data="{ fileName: '' }">
                     @csrf
                     <label class="block text-xs font-medium text-primary/70 mb-1">Logo de l'établissement</label>
+
+                    @error('logo')
+                        <p class="mb-2 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
 
                     @if(!empty($tenantSettings['logo'] ?? null))
                         <div class="mb-3 flex items-center gap-3">
