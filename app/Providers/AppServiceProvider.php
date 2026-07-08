@@ -93,6 +93,14 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('endhasnotRole', function () {
             return '<?php endif; ?>';
         });
+
+        // @module('restaurant') ... @endmodule
+        Blade::directive('module', function ($expression) {
+            return "<?php if(\\App\\Support\\TenantModules::has({$expression})): ?>";
+        });
+        Blade::directive('endmodule', function () {
+            return '<?php endif; ?>';
+        });
     }
 
     private function shareDiscussionUnreadState(): void
