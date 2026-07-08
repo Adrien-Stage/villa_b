@@ -73,12 +73,14 @@
                 </div>
 
                 @role('manager')
+                    @module('analytics')
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="analytics.index" icon="bar-chart-2">Tour de contrôle</x-sidebar-link>
                         </ul>
                     </div>
+                    @endmodule
                 @endrole
 
                 @role('manager','reception','housekeeping_leader','housekeeping_staff','housekeeping')
@@ -136,13 +138,16 @@
                             @endrole
 
                             @role('manager','housekeeping_leader','housekeeping_staff','housekeeping')
-                                <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
+                                @module('housekeeping')
+                                    <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
+                                @endmodule
                             @endrole
                         </ul>
                     </div>
                 @endrole
 
                 @role('manager','restaurant_chief','restaurant_staff','cashier')
+                    @module('restaurant')
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
@@ -173,6 +178,7 @@
                             @endif
                         </ul>
                     </div>
+                    @endmodule
                 @endrole
 
                 @role('manager','reception','cashier')
@@ -188,6 +194,7 @@
                 @endrole
 
                 @role('shop_manager','shop_cashier','manager')
+                    @module('shop')
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
@@ -200,6 +207,7 @@
                             @endrole
                         </ul>
                     </div>
+                    @endmodule
                 @endrole
 
                 @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
@@ -211,6 +219,7 @@
                 @endrole
             </nav>
 
+            @module('discussions')
             <div class="px-3 pb-3">
                 @php $isDiscussionActive = request()->routeIs('discussions.*'); @endphp
                 <a id="sidebar-discussions-link"
@@ -224,6 +233,7 @@
                           class="h-2 w-2 rounded-full bg-secondary {{ !($hasUnreadDiscussions ?? false) ? 'hidden' : '' }}"></span>
                 </a>
             </div>
+            @endmodule
 
             <div class="px-3 py-4 border-t border-surface-dark">
                 <div class="flex items-center justify-between gap-2">
