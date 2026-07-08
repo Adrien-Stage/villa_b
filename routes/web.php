@@ -57,7 +57,7 @@ Route::get('/', function () {
 });
 
 // ===== PORTAIL CLIENT (QR MENU) =====
-Route::prefix('portal')->name('portal.')->group(function () {
+Route::prefix('portal')->name('portal.')->middleware('module:restaurant')->group(function () {
     Route::get('/{tenant:slug}/restaurant', [RestaurantPortalController::class, 'menu'])->name('restaurant.menu');
     Route::post('/{tenant:slug}/restaurant/orders', [RestaurantPortalController::class, 'store'])->name('restaurant.store');
     Route::get('/{tenant:slug}/restaurant/orders/{order}', [RestaurantPortalController::class, 'order'])->whereNumber('order')->name('restaurant.order');
@@ -92,7 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- DISCUSSION INTERNE ---
-    Route::prefix('discussions')->name('discussions.')->group(function () {
+    Route::prefix('discussions')->name('discussions.')->middleware('module:discussions')->group(function () {
         Route::get('/', [DiscussionController::class, 'index'])->name('index');
         Route::get('/conversations/list', [DiscussionController::class, 'conversationsList'])->name('conversations.list');
         Route::get('/unread-summary', [DiscussionController::class, 'unreadSummary'])->name('unreadSummary');
@@ -181,7 +181,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- HOUSEKEEPING ---
-    Route::prefix('housekeeping')->name('housekeeping.')->middleware('role:housekeeping_leader,housekeeping_staff,housekeeping,manager')->group(function () {
+    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['role:housekeeping_leader,housekeeping_staff,housekeeping,manager', 'module:housekeeping'])->group(function () {
         Route::get('/',                    [HousekeepingController::class, 'index'])->name('index');
         Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('role:housekeeping_leader,manager')->name('teams.store');
         Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('role:housekeeping_leader,manager')->name('assignments.store');
@@ -192,7 +192,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (menus) ---
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware('role:manager,restaurant_chief,restaurant_staff')->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
@@ -200,7 +200,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Écriture RESTAURANT — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware('role:restaurant_chief,restaurant_staff')->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_chief,restaurant_staff', 'module:restaurant'])->group(function () {
         Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
         Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->name('pantry.movements.store');
@@ -226,14 +226,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (facturation interne) ---
     // Lecture (manager peut consulter)
-    Route::prefix('restaurant')->name('restaurant.')->middleware('role:manager,restaurant_chief,cashier')->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,cashier', 'module:restaurant'])->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
         Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
     });
 
     // Écriture facturation — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware('role:restaurant_chief,cashier')->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_chief,cashier', 'module:restaurant'])->group(function () {
         Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
         Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
     });
@@ -257,7 +257,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- SHOP ---
     // Lecture seule pour le manager (GET uniquement)
-    Route::prefix('shop')->name('shop.')->middleware('role:shop_manager,shop_cashier,manager')->group(function () {
+    Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier,manager', 'module:shop'])->group(function () {
         Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('role:shop_manager,manager')->name('cash_register.index');
         Route::get('/products', [ShopProductController::class, 'index'])->middleware('role:shop_manager,manager')->name('products.index');
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
@@ -266,7 +266,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Écriture SHOP — manager totalement exclu
-    Route::prefix('shop')->name('shop.')->middleware('role:shop_manager,shop_cashier')->group(function () {
+    Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier', 'module:shop'])->group(function () {
         // Caisse — ouverture : shop_manager + shop_cashier
         Route::get('/cash-register/open', [CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
@@ -305,7 +305,7 @@ Route::middleware(['auth'])->group(function () {
 // ==========================================
 // ANALYTICS (Manager uniquement)
 // ==========================================
-Route::middleware(['auth', 'role:manager'])->prefix('analytics')->name('analytics.')->group(function () {
+Route::middleware(['auth', 'role:manager', 'module:analytics'])->prefix('analytics')->name('analytics.')->group(function () {
     Route::get('/', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
     Route::get('/print', [\App\Http\Controllers\AnalyticsController::class, 'print'])->name('print');
 });
