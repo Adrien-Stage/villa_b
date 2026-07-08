@@ -91,7 +91,19 @@
                 </div>
 
                 <form method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" enctype="multipart/form-data"
-                      class="mt-6" x-data="{ fileName: '' }">
+                      class="mt-6"
+                      x-data="{
+                          fileName: '',
+                          preview: @js(!empty($tenantSettings['logo'] ?? null) ? asset('storage/' . $tenantSettings['logo']) : null),
+                          onFileSelected(event) {
+                              const file = event.target.files[0];
+                              if (!file) { this.fileName = ''; return; }
+                              this.fileName = file.name;
+                              const reader = new FileReader();
+                              reader.onload = (e) => { this.preview = e.target.result; };
+                              reader.readAsDataURL(file);
+                          }
+                      }">
                     @csrf
                     <label class="block text-xs font-medium text-primary/70 mb-1">Logo de l'établissement</label>
 
@@ -99,16 +111,14 @@
                         <p class="mb-2 text-xs text-red-500">{{ $message }}</p>
                     @enderror
 
-                    @if(!empty($tenantSettings['logo'] ?? null))
-                        <div class="mb-3 flex items-center gap-3">
-                            <img src="{{ asset('storage/' . $tenantSettings['logo']) }}" alt="Logo actuel" class="w-14 h-14 rounded-full object-cover border border-secondary/20">
-                            <span class="text-xs text-primary/50">Logo actuel</span>
-                        </div>
-                    @endif
+                    <div class="mb-3 flex items-center gap-3" x-show="preview" x-cloak>
+                        <img :src="preview" alt="Aperçu du logo" class="w-14 h-14 rounded-full object-cover border border-secondary/20">
+                        <span class="text-xs text-primary/50" x-text="fileName ? 'Nouveau logo (aperçu)' : 'Logo actuel'"></span>
+                    </div>
 
                     <label class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                         <input type="file" name="logo" accept="image/png,image/jpeg,image/gif" class="hidden"
-                               @change="fileName = $event.target.files[0]?.name ?? ''">
+                               @change="onFileSelected($event)">
                         <div class="space-y-1 text-center">
                             <i data-lucide="image" class="mx-auto h-8 w-8 text-primary/40"></i>
                             <div class="flex text-sm text-primary/60 justify-center">
