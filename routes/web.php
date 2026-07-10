@@ -44,6 +44,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/export/backup', [AdminAuditController::class, 'exportBackup'])->name('admin.export.backup');
 });
 
+// Entrée en mode assistance depuis le PMS (jeton signé, pas d'auth préalable)
+Route::get('/assistance/enter', [\App\Http\Controllers\AssistanceController::class, 'enter'])->name('assistance.enter');
+
 // Login
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
