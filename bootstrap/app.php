@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\TrackUserOnlineStatus::class,
+            \App\Http\Middleware\LogUserActivity::class,
         ]);
 
         // RBAC Middleware aliases
