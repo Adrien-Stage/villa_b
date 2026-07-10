@@ -305,10 +305,23 @@
                     </div>
                 </div>
 
-                <span class="hidden sm:flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    En ligne
-                </span>
+                @if(\App\Support\TenantModules::has('website'))
+                    {{-- Liaison avec le site vitrine : vert = le container web répond,
+                         rouge = injoignable (vérifié au chargement puis toutes les 60s) --}}
+                    <span class="hidden sm:flex items-center gap-1.5 text-xs font-medium"
+                          x-data="{ online: null, async check() { try { const r = await fetch('{{ route('site-sync.status') }}', { headers: { 'Accept': 'application/json' } }); this.online = (await r.json()).online; } catch (e) { this.online = false; } } }"
+                          x-init="check(); setInterval(() => check(), 60000)"
+                          :class="online === false ? 'text-red-600' : 'text-green-600'"
+                          :title="online === false ? 'Le site vitrine ne répond plus' : (online === null ? 'Vérification de la liaison avec le site vitrine…' : 'Site vitrine joignable')">
+                        <span class="w-2 h-2 rounded-full" :class="online === false ? 'bg-red-500' : 'bg-green-500 animate-pulse'"></span>
+                        <span x-text="online === false ? 'Site hors ligne' : 'Site en ligne'">Site en ligne</span>
+                    </span>
+                @else
+                    <span class="hidden sm:flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        En ligne
+                    </span>
+                @endif
                 <span class="text-xs text-primary/50">
                     {{ ucfirst(\Carbon\Carbon::now()->locale('fr')->isoFormat('ddd. D MMM')) }}
                 </span>

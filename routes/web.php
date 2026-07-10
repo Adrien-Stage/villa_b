@@ -300,6 +300,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/test-popup', function () {
         return response()->json(['access_denied' => true, 'message' => 'Ceci est un test du popup d\'accès refusé']);
     })->middleware('role:admin')->name('test-popup');
+
+    // Statut de la liaison avec le site vitrine (badge du header)
+    Route::get('/site-sync/status', [\App\Http\Controllers\SiteSyncController::class, 'status'])->name('site-sync.status');
 });
 
 // ==========================================
