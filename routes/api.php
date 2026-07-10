@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PublicPingController;
 use App\Http\Controllers\Api\PublicRestaurantMenuController;
 use App\Http\Controllers\Api\PublicRoomController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 // uniquement du contenu destiné à être affiché publiquement.
 // ==========================================
 Route::prefix('v1')->group(function () {
+    Route::get('/ping', PublicPingController::class)->name('api.ping');
     Route::get('/room-types', [PublicRoomController::class, 'index'])->name('api.room-types.index');
     Route::get('/room-types/{roomType}', [PublicRoomController::class, 'show'])->name('api.room-types.show');
 
