@@ -15,19 +15,43 @@
     </div>
     @if($tab === 'rooms')
     @role('manager', 'reception')
-    <button onclick="document.getElementById('modal-create-room').classList.remove('hidden')"
-        class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Nouvelle chambre
-    </button>
+    <div class="flex items-center gap-2">
+        <a href="{{ route('rooms.export') }}"
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter toutes les chambres en CSV">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Exporter CSV
+        </a>
+        <button onclick="document.getElementById('modal-import-rooms').classList.remove('hidden')"
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des chambres depuis un fichier CSV">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            Importer CSV
+        </button>
+        <button onclick="document.getElementById('modal-create-room').classList.remove('hidden')"
+            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nouvelle chambre
+        </button>
+    </div>
     @endrole
     @else
     @role('manager', 'reception')
-    <button onclick="document.getElementById('modal-create-type').classList.remove('hidden')"
-        class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Nouveau type
-    </button>
+    <div class="flex items-center gap-2">
+        <a href="{{ route('rooms.types.export') }}"
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter tous les types en CSV">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Exporter CSV
+        </a>
+        <button onclick="document.getElementById('modal-import-types').classList.remove('hidden')"
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des types depuis un fichier CSV">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            Importer CSV
+        </button>
+        <button onclick="document.getElementById('modal-create-type').classList.remove('hidden')"
+            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nouveau type
+        </button>
+    </div>
     @endrole
     @endif
 </div>
@@ -41,6 +65,21 @@
 @if($errors->has('delete'))
 <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
     {{ $errors->first('delete') }}
+</div>
+@endif
+@if(session('error'))
+<div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+    {{ session('error') }}
+</div>
+@endif
+@if(session('import_errors') && count(session('import_errors')))
+<div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg">
+    <p class="font-semibold mb-1.5">Lignes non importées :</p>
+    <ul class="list-disc list-inside space-y-0.5 text-xs">
+        @foreach(session('import_errors') as $err)
+            <li>{{ $err }}</li>
+        @endforeach
+    </ul>
 </div>
 @endif
 
@@ -790,6 +829,94 @@
                 </button>
             </template>
         </div>
+    </div>
+</div>
+
+{{-- ===== MODAL : IMPORT CSV CHAMBRES ===== --}}
+<div id="modal-import-rooms" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
+            <h3 class="font-heading font-semibold text-primary">Importer des chambres (CSV)</h3>
+            <button onclick="document.getElementById('modal-import-rooms').classList.add('hidden')"
+                class="text-primary/30 hover:text-primary transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <form method="POST" action="{{ route('rooms.import') }}" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden"
+              onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Import en cours…';">
+            @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70 leading-relaxed">
+                    <p class="font-semibold text-primary mb-1">Structure attendue (délimiteur « ; ») :</p>
+                    <p class="font-mono text-[11px] break-all">numero;code_type;etage;vue;statut;notes;actif</p>
+                    <ul class="mt-2 space-y-1 list-disc list-inside">
+                        <li><strong>numero</strong> et <strong>code_type</strong> obligatoires — le code doit correspondre à un type existant (importez les types d'abord)</li>
+                        <li><strong>statut</strong> optionnel (vide = available)</li>
+                        <li>Les numéros déjà existants sont ignorés (pas de doublon)</li>
+                        <li>Les <strong>photos ne sont pas importées</strong> : ajoutez-les ensuite sur chaque chambre via « Modifier »</li>
+                    </ul>
+                    <a href="{{ route('rooms.export', ['template' => 1]) }}" class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                        Télécharger le modèle CSV
+                    </a>
+                </div>
+                <div>
+                    <label class="modal-label">Fichier CSV *</label>
+                    <input type="file" name="csv_file" required accept=".csv,text/csv" class="modal-input">
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-secondary/20 shrink-0">
+                <button type="button" onclick="document.getElementById('modal-import-rooms').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors disabled:opacity-60">
+                    Importer les chambres
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ===== MODAL : IMPORT CSV TYPES DE CHAMBRE ===== --}}
+<div id="modal-import-types" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
+            <h3 class="font-heading font-semibold text-primary">Importer des types de chambre (CSV)</h3>
+            <button onclick="document.getElementById('modal-import-types').classList.add('hidden')"
+                class="text-primary/30 hover:text-primary transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <form method="POST" action="{{ route('rooms.types.import') }}" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden"
+              onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Import en cours…';">
+            @csrf
+            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70 leading-relaxed">
+                    <p class="font-semibold text-primary mb-1">Structure attendue (délimiteur « ; ») :</p>
+                    <p class="font-mono text-[11px] break-all">code;nom;description;capacite_base;capacite_max;prix_base_fcfa;superficie_m2;configuration_lits;equipements;actif</p>
+                    <ul class="mt-2 space-y-1 list-disc list-inside">
+                        <li><strong>code</strong>, <strong>nom</strong>, capacités et <strong>prix_base_fcfa</strong> (entier en FCFA, ex. 25000) obligatoires</li>
+                        <li><strong>equipements</strong> : liste séparée par « | » (ex. Wi-Fi|Climatisation|TV)</li>
+                        <li>Les codes déjà existants sont ignorés (pas de doublon)</li>
+                        <li>Les <strong>photos ne sont pas importées</strong> : ajoutez-les ensuite sur chaque type via « Modifier »</li>
+                    </ul>
+                    <a href="{{ route('rooms.types.export', ['template' => 1]) }}" class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                        Télécharger le modèle CSV
+                    </a>
+                </div>
+                <div>
+                    <label class="modal-label">Fichier CSV *</label>
+                    <input type="file" name="csv_file" required accept=".csv,text/csv" class="modal-input">
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-secondary/20 shrink-0">
+                <button type="button" onclick="document.getElementById('modal-import-types').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors disabled:opacity-60">
+                    Importer les types
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
