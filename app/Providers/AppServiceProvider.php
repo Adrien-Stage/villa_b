@@ -28,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
     {
         \Carbon\Carbon::setLocale('fr');
 
+        // Canal de notification Web Push (notifications système hors app)
+        \Illuminate\Support\Facades\Notification::extend('webpush', function ($app) {
+            return new \App\Notifications\Channels\WebPushChannel();
+        });
+
         // Directives Blade pour RBAC
         $this->registerBladeDirectives();
         $this->shareDiscussionUnreadState();

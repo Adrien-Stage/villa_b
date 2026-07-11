@@ -273,6 +273,17 @@
                 <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
             </div>
             <div class="flex items-center gap-4">
+                {{-- Bouton d'activation des notifications push (visible tant que la
+                     permission n'est pas accordée). Requiert un geste utilisateur. --}}
+                <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
+                        class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                        title="Activer les notifications système (même hors de l'application)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="hidden sm:inline">Activer les notifications</span>
+                </button>
+
                 {{-- In-app Notifications Dropdown --}}
                 <div x-data="notificationCenter()" class="relative">
                     <button @click="open = !open" class="relative p-1.5 rounded-full hover:bg-secondary/15 text-primary/70 hover:text-primary transition-colors focus:outline-none flex items-center justify-center">
@@ -701,6 +712,97 @@
             }
         }));
     });
+    </script>
+
+    {{-- ===== WEB PUSH : notifications système même application fermée ===== --}}
+    <script>
+    (function () {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+        const CSRF = '{{ csrf_token() }}';
+        const VAPID_URL = '{{ route('push.vapid') }}';
+        const SUBSCRIBE_URL = '{{ route('push.subscribe') }}';
+
+        // Affiche le bouton « Activer les notifications » tant que la
+        // permission n'a pas été accordée (ni définitivement refusée).
+        window.updatePushButton = function () {
+            const btn = document.getElementById('enable-push-btn');
+            if (!btn) return;
+            const show = ('Notification' in window) && Notification.permission === 'default';
+            btn.classList.toggle('hidden', !show);
+            btn.classList.toggle('flex', show);
+        };
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw = atob(base64);
+            const output = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+            return output;
+        }
+
+        async function subscribe(registration) {
+            const res = await fetch(VAPID_URL, { headers: { 'Accept': 'application/json' } });
+            const { key } = await res.json();
+            if (!key) { console.warn('[push] Clé VAPID absente — abonnement impossible.'); return false; }
+
+            let sub = await registration.pushManager.getSubscription();
+            if (!sub) {
+                sub = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(key),
+                });
+            }
+
+            const json = sub.toJSON();
+            await fetch(SUBSCRIBE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    endpoint: sub.endpoint,
+                    keys: json.keys,
+                    content_encoding: (PushManager.supportedContentEncodings || ['aesgcm'])[0],
+                }),
+            });
+            return true;
+        }
+
+        async function register() {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                // Reflète l'état de permission sur le bouton d'activation du header
+                window.updatePushButton && window.updatePushButton();
+                if (Notification.permission === 'granted') {
+                    await subscribe(registration);
+                }
+            } catch (e) {
+                console.error('[push] Enregistrement du service worker échoué', e);
+            }
+        }
+
+        // Déclenché par le bouton « Activer les notifications » (geste utilisateur
+        // requis par les navigateurs pour demander la permission).
+        window.enablePushNotifications = async function () {
+            try {
+                const permission = await Notification.requestPermission();
+                window.updatePushButton && window.updatePushButton();
+                if (permission !== 'granted') {
+                    alert('Notifications refusées. Vous pouvez les réactiver dans les paramètres du navigateur.');
+                    return;
+                }
+                const registration = await navigator.serviceWorker.ready;
+                const ok = await subscribe(registration);
+                if (ok && window.showSystemToast) {
+                    window.showSystemToast('Notifications activées', 'Vous recevrez les alertes même hors de l\'application.');
+                }
+            } catch (e) {
+                console.error('[push] Activation échouée', e);
+            }
+        };
+
+        window.addEventListener('load', register);
+    })();
     </script>
 
     @stack('scripts')

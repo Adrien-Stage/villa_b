@@ -489,6 +489,26 @@ class BookingController extends Controller
             }
         }
 
+        // Notifier managers + réception (hors créateur) d'une nouvelle
+        // réservation — in-app (cloche) et push système (même app fermée).
+        try {
+            $recipients = \App\Models\User::query()
+                ->whereIn('role', ['manager', 'reception'])
+                ->where('id', '!=', Auth::id())
+                ->where('is_active', true)
+                ->get();
+
+            if ($recipients->isNotEmpty()) {
+                $creatorName = Auth::user()->name ?? 'Réception';
+                \Illuminate\Support\Facades\Notification::send(
+                    $recipients,
+                    new \App\Notifications\NewBookingCreated($booking, $creatorName)
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur notification nouvelle réservation #{$booking->booking_number} : " . $e->getMessage());
+        }
+
         // Enregistrer le paiement (Acompte) si montant > 0
         if ($paymentAmount > 0) {
             $payment = \App\Models\Payment::create([

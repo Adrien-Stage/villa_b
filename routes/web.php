@@ -94,6 +94,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('readAll');
     });
 
+    // Abonnements Web Push (notifications système)
+    Route::prefix('push')->name('push.')->group(function () {
+        Route::get('/vapid-key', [\App\Http\Controllers\PushSubscriptionController::class, 'vapidKey'])->name('vapid');
+        Route::post('/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('subscribe');
+        Route::post('/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('unsubscribe');
+    });
+
     // --- DISCUSSION INTERNE ---
     Route::prefix('discussions')->name('discussions.')->middleware('module:discussions')->group(function () {
         Route::get('/', [DiscussionController::class, 'index'])->name('index');
