@@ -20,14 +20,15 @@ class RoomResource extends JsonResource
     {
         $type = $this->roomType;
 
-        // Photos propres à la chambre (RoomImage), sinon photos du type.
-        $roomPhotos = $this->images
-            ->map(fn ($img) => asset('storage/' . ltrim($img->path, '/')))
-            ->all();
+        // URL absolue basée sur APP_URL (navigable depuis le navigateur),
+        // pas asset() qui dépendrait du hostname interne quand l'API est
+        // appelée en Docker par le site vitrine.
+        $base = rtrim((string) config('app.url'), '/');
+        $url  = fn (string $path) => $base . '/storage/' . ltrim($path, '/');
 
-        $typePhotos = collect($type?->photos ?? [])
-            ->map(fn (string $path) => asset('storage/' . ltrim($path, '/')))
-            ->all();
+        // Photos propres à la chambre (RoomImage), sinon photos du type.
+        $roomPhotos = $this->images->map(fn ($img) => $url($img->path))->all();
+        $typePhotos = collect($type?->photos ?? [])->map($url)->all();
 
         return [
             'id'                => $this->id,
