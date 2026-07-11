@@ -23,8 +23,10 @@ class RoomTypeResource extends JsonResource
             'size_sqm' => $this->size_sqm,
             'bed_configuration' => $this->bed_configuration,
             'amenities' => $this->amenities ?? [],
+            // URL absolue basée sur APP_URL (navigable), pas asset() qui
+            // dépendrait du hostname interne en contexte Docker.
             'photos' => collect($this->photos ?? [])
-                ->map(fn (string $path) => asset('storage/' . ltrim($path, '/')))
+                ->map(fn (string $path) => rtrim((string) config('app.url'), '/') . '/storage/' . ltrim($path, '/'))
                 ->all(),
             'price' => [
                 'amount' => $this->base_price,

@@ -26,8 +26,11 @@ class SiteSyncController extends Controller
 
         if ($slug !== '') {
             try {
-                $online = Http::timeout(2)
-                    ->get("http://meka-erp-{$slug}-web:3000/")
+                // On sonde /health (réponse immédiate) plutôt que / qui
+                // déclenche le rendu SSR complet de la home (fetch CMS +
+                // ping retour) et peut dépasser un court timeout.
+                $online = Http::timeout(4)->connectTimeout(2)
+                    ->get("http://meka-erp-{$slug}-web:3000/health")
                     ->successful();
             } catch (\Throwable) {
                 $online = false;
