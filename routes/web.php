@@ -116,6 +116,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader')->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
         Route::post('/',               [RoomController::class, 'store'])->middleware('role:manager,reception')->name('store');
+
+        // Import / export CSV — déclarés avant /{room} pour ne pas être
+        // capturés par le binding de modèle (sinon "export" = id de chambre)
+        Route::get('/export',         [\App\Http\Controllers\RoomCsvController::class, 'exportRooms'])->middleware('role:manager,reception')->name('export');
+        Route::post('/import',        [\App\Http\Controllers\RoomCsvController::class, 'importRooms'])->middleware('role:manager,reception')->name('import');
+        Route::get('/types/export',   [\App\Http\Controllers\RoomCsvController::class, 'exportTypes'])->middleware('role:manager,reception')->name('types.export');
+        Route::post('/types/import',  [\App\Http\Controllers\RoomCsvController::class, 'importTypes'])->middleware('role:manager,reception')->name('types.import');
+
         Route::get('/{room}',          [RoomController::class, 'show'])->name('show');
         Route::put('/{room}',          [RoomController::class, 'update'])->middleware('role:manager,reception')->name('update');
         Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('role:manager,reception')->name('destroy');

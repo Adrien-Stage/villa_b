@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 Route::prefix('v1')->group(function () {
     Route::get('/ping', PublicPingController::class)->name('api.ping');
+    Route::get('/rooms', [PublicRoomController::class, 'rooms'])->name('api.rooms.index');
+    Route::get('/rooms/{room}', [PublicRoomController::class, 'roomShow'])->name('api.rooms.show');
     Route::get('/room-types', [PublicRoomController::class, 'index'])->name('api.room-types.index');
     Route::get('/room-types/{roomType}', [PublicRoomController::class, 'show'])->name('api.room-types.show');
 
