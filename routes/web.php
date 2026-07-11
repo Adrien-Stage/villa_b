@@ -161,14 +161,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
-        Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');
-        Route::post('/{booking}/checkin',      [BookingController::class, 'checkIn'])->name('checkIn');
-        Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
-        Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
-        Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
-        Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.add');
-        Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.remove');
-        Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('role:reception,manager,cashier')->name('payment.add');
+
+        // Actions métier : impossibles tant que la caisse n'est pas ouverte
+        Route::middleware('caisse')->group(function () {
+            Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');
+            Route::post('/{booking}/checkin',      [BookingController::class, 'checkIn'])->name('checkIn');
+            Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
+            Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
+            Route::post('/{booking}/confirm',      [BookingController::class, 'confirm'])->name('confirm');
+            Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
+            Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.add');
+            Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.remove');
+            Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('role:reception,manager,cashier')->name('payment.add');
+        });
     });
 
     Route::prefix('groups')->name('groups.')->middleware('role:manager,reception')->group(function () {

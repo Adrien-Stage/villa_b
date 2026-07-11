@@ -39,19 +39,20 @@ class NewBookingCreated extends Notification
         return [
             'room' => $room,
             'customer' => $customer !== '' ? $customer : 'Client',
+            'url' => rtrim((string) config('app.url'), '/') . '/bookings/' . $this->booking->id,
         ];
     }
 
     public function toArray(object $notifiable): array
     {
-        ['room' => $room, 'customer' => $customer] = $this->context();
+        ['room' => $room, 'customer' => $customer, 'url' => $url] = $this->context();
 
         return [
             'booking_id'     => $this->booking->id,
             'booking_number' => $this->booking->booking_number,
             'title'          => 'Nouvelle réservation',
             'message'        => "Réservation {$this->booking->booking_number} — Chambre {$room} pour {$customer} (par {$this->creatorName}).",
-            'url'            => route('bookings.show', $this->booking->id),
+            'url'            => $url,
         ];
     }
 
@@ -60,14 +61,14 @@ class NewBookingCreated extends Notification
      */
     public function toWebPush(object $notifiable): array
     {
-        ['room' => $room, 'customer' => $customer] = $this->context();
+        ['room' => $room, 'customer' => $customer, 'url' => $url] = $this->context();
 
         return [
             'title' => 'Nouvelle réservation',
             'body'  => "Chambre {$room} — {$customer} · {$this->booking->booking_number}",
-            'url'   => route('bookings.show', $this->booking->id),
+            'url'   => $url,
             'tag'   => 'booking-' . $this->booking->id,
-            'icon'  => asset('favicon.ico'),
+            'icon'  => rtrim((string) config('app.url'), '/') . '/favicon.ico',
         ];
     }
 }

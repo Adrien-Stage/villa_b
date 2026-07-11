@@ -30,10 +30,17 @@
             <span class="px-3 py-1 text-xs font-semibold rounded-full border {{ $sc }}">
                 {{ $booking->status->label() }}
             </span>
+            @if($booking->source === 'website')
+            <span class="px-3 py-1 text-xs font-semibold rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 inline-flex items-center gap-1.5">
+                <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                Réservation en ligne
+            </span>
+            @endif
         </div>
     </div>
 
-    {{-- Actions selon statut --}}
+    {{-- Actions selon statut — visibles uniquement caisse ouverte --}}
+    @if($isCashRegisterOpen)
     <div class="flex items-center gap-2">
         @if($booking->status->value === 'confirmed')
         @role('reception', 'manager')
@@ -81,7 +88,20 @@
         @endrole
         @endif
 
-        @if($booking->status->value === 'pending')
+        @if($booking->status->value === 'pending' && $booking->source === 'website')
+        {{-- Réservation issue du site : payante, à confirmer par la réception --}}
+        @role('reception', 'manager')
+        <form method="POST" action="{{ route('bookings.confirm', $booking) }}" class="expect-popup">
+            @csrf
+            <button type="submit"
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                Confirmer la réservation
+            </button>
+        </form>
+        @endrole
+        @elseif($booking->status->value === 'pending')
+        {{-- Réservation offerte : montant à 0, validée par un manager --}}
         @role('manager')
         <form method="POST" action="{{ route('bookings.approve', $booking) }}" class="expect-popup">
             @csrf
@@ -118,7 +138,25 @@
         @endrole
         @endif
     </div>
+    @endif
 </div>
+
+{{-- Caisse fermée : aucune action possible --}}
+@unless($isCashRegisterOpen)
+<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center justify-between gap-3">
+    <div class="flex items-start gap-2">
+        <i data-lucide="lock" class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600"></i>
+        <div>
+            <span class="font-bold">Caisse fermée :</span> ouvrez votre caisse pour effectuer des actions sur cette réservation (confirmation, encaissement, check-in…).
+        </div>
+    </div>
+    <a href="{{ route('bookings.cash_register.open') }}"
+        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+        <i data-lucide="unlock" class="w-4 h-4"></i>
+        Ouvrir ma caisse
+    </a>
+</div>
+@endunless
 
 {{-- Messages --}}
 @if(session('success'))
@@ -137,7 +175,14 @@
 </div>
 @endif
 
-@if($booking->status->value === 'pending')
+@if($booking->status->value === 'pending' && $booking->source === 'website')
+<div class="mb-5 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-800 text-sm rounded-lg flex items-start gap-2">
+    <i data-lucide="globe" class="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-600"></i>
+    <div>
+        <span class="font-bold">Réservation reçue depuis le site :</span> demande à confirmer par la réception. Contrairement à une réservation offerte, elle est <span class="font-semibold">payante</span> — le solde s'encaisse normalement.
+    </div>
+</div>
+@elseif($booking->status->value === 'pending')
 <div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-start gap-2">
     <i data-lucide="info" class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600"></i>
     <div>
@@ -345,7 +390,7 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
                 <h2 class="font-heading font-semibold text-primary text-sm">Folio du séjour</h2>
-                @if($booking->status->value === 'checked_in')
+                @if($booking->status->value === 'checked_in' && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-folio').classList.remove('hidden')"
                     class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -421,7 +466,7 @@
 
                 {{-- Action --}}
                 <div class="col-span-1 flex justify-end">
-                    @if($booking->status->value === 'checked_in' && $item->type !== 'room')
+                    @if($booking->status->value === 'checked_in' && $item->type !== 'room' && $isCashRegisterOpen)
                     <form method="POST"
                         action="{{ route('bookings.folio.remove', [$booking, $item]) }}"
                         onsubmit="return confirm('Retirer cette prestation ?')">
@@ -487,7 +532,7 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
                 <h2 class="font-heading font-semibold text-primary text-sm">Paiements</h2>
-                @if(in_array($booking->status->value, ['confirmed', 'checked_in']) && $booking->balance_due > 0)
+                @if(in_array($booking->status->value, ['confirmed', 'checked_in']) && $booking->balance_due > 0 && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-payment').classList.remove('hidden')"
                     class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
