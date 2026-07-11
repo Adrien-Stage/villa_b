@@ -65,6 +65,14 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class)->withTimestamps();
     }
 
+    /**
+     * Abonnements Web Push de l'utilisateur (un par navigateur/appareil).
+     */
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     public function housekeepingTeams(): BelongsToMany
     {
         return $this->belongsToMany(HousekeepingTeam::class, 'housekeeping_team_user')->withTimestamps();
