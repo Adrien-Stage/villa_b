@@ -19,8 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
         libpng-dev \
         libonig-dev \
+        libgmp-dev \
         postgresql-client \
-    && docker-php-ext-install pdo_pgsql zip gd mbstring \
+    # gmp + bcmath : crypto sur courbe elliptique requise par les
+    # notifications Web Push (VAPID / minishlink/web-push). Sans elles,
+    # l'envoi des push échoue.
+    && docker-php-ext-install pdo_pgsql zip gd mbstring bcmath gmp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

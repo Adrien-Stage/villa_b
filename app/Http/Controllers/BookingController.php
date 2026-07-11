@@ -605,7 +605,37 @@ class BookingController extends Controller
             'folioItems',
         ]);
 
-        return view('bookings.show', compact('booking'));
+        // Aucune action n'est possible tant que la caisse de l'utilisateur
+        // n'est pas ouverte — la vue masque tous les contrôles d'action et
+        // invite à ouvrir la caisse.
+        $isCashRegisterOpen = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->exists();
+
+        return view('bookings.show', compact('booking', 'isCashRegisterOpen'));
+    }
+
+    /**
+     * Confirme une réservation reçue depuis le site vitrine (source
+     * "website") : passe de PENDING à CONFIRMED. Contrairement à une
+     * réservation offerte (validée par un manager, montant à 0), une
+     * réservation web est payante — le solde reste dû et s'encaisse
+     * normalement via le flux de paiement.
+     */
+    public function confirm(Booking $booking)
+    {
+        if (!Auth::user()->hasAnyRole(['reception', 'manager'])) {
+            abort(403);
+        }
+
+        if ($booking->source !== 'website' || $booking->status !== BookingStatus::PENDING) {
+            return back()->withErrors(['confirm' => "Cette réservation ne peut pas être confirmée ici."]);
+        }
+
+        $booking->update(['status' => BookingStatus::CONFIRMED]);
+
+        return back()->with('success', "Réservation {$booking->booking_number} confirmée. Le solde est à encaisser.");
     }
 
     // ===== CHECK-IN =====
