@@ -106,6 +106,12 @@ class ReportingController extends Controller
         ]);
     }
 
+    /** Rapport financier complet (page Rapport / audit + exports). */
+    public function finance(Request $request): JsonResponse
+    {
+        return response()->json($this->reporting->financeReport($this->period($request)));
+    }
+
     /** Alertes/anomalies détectées localement. */
     public function alerts(Request $request): JsonResponse
     {

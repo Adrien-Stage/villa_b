@@ -40,6 +40,7 @@ Route::prefix('reporting')->middleware('reporting.token')->group(function () {
     Route::get('/cash-audit', [ReportingController::class, 'cashAudit'])->name('api.reporting.cash-audit');
     Route::get('/expenses',   [ReportingController::class, 'expenses'])->name('api.reporting.expenses');
     Route::get('/invoices',   [ReportingController::class, 'invoices'])->name('api.reporting.invoices');
+    Route::get('/finance',    [ReportingController::class, 'finance'])->name('api.reporting.finance');
     Route::get('/staff',      [ReportingController::class, 'staff'])->name('api.reporting.staff');
     Route::get('/alerts',     [ReportingController::class, 'alerts'])->name('api.reporting.alerts');
 });

@@ -154,6 +154,27 @@ class BusinessReportingService
             ->toArray();
     }
 
+    /**
+     * Répartition des encaissements par méthode de paiement (cash, Orange
+     * Money, MTN, carte...) — d'où l'argent rentre physiquement.
+     */
+    public function paymentMethods(Carbon $start, Carbon $end): array
+    {
+        return Payment::where('status', 'completed')
+            ->whereBetween('paid_at', [$start, $end])
+            ->selectRaw('method, COUNT(*) as n, SUM(amount) as total')
+            ->groupBy('method')
+            ->get()
+            ->map(fn ($r) => [
+                'method' => $r->method,
+                'count'  => (int) $r->n,
+                'total'  => (int) $r->total,
+            ])
+            ->sortByDesc('total')
+            ->values()
+            ->all();
+    }
+
     // ── Occupation ──────────────────────────────────────────────────────────
 
     public function occupancy(): array
@@ -290,6 +311,41 @@ class BusinessReportingService
             });
 
         return $alerts;
+    }
+
+    // ── Rapport financier complet (page Rapport / audit) ──────────────────────
+
+    /**
+     * Photographie financière complète d'un établissement sur une période :
+     * revenus, méthodes de paiement, facturé/encaissé/dû, dépenses, audit de
+     * caisse et résultat net. Consommé par la page Rapport de pms (affichage
+     * + exports Excel/PDF).
+     */
+    public function financeReport(string $period): array
+    {
+        [$start, $end] = $this->periodRange($period);
+
+        $revenue  = $this->revenue($start, $end);
+        $expenses = $this->expenses($start, $end);
+
+        $invoices = \App\Models\Invoice::whereBetween('invoice_date', [$start, $end])->get();
+        $invoiceSummary = [
+            'count'          => $invoices->count(),
+            'total_invoiced' => (int) $invoices->sum('total_amount'),
+            'total_paid'     => (int) $invoices->sum('paid_amount'),
+            'total_due'      => (int) $invoices->sum('balance_due'),
+        ];
+
+        return [
+            'period'          => $period,
+            'currency'        => (string) env('TENANT_CURRENCY', 'XAF'),
+            'revenue'         => $revenue,
+            'payment_methods' => $this->paymentMethods($start, $end),
+            'invoices'        => $invoiceSummary,
+            'expenses'        => $expenses,
+            'cash'            => $this->cashSummary($start, $end),
+            'net'             => $revenue['total'] - (int) $expenses['total'],
+        ];
     }
 
     // ── Résumé 360° (page d'accueil business) ─────────────────────────────────
