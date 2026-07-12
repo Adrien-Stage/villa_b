@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicPingController;
 use App\Http\Controllers\Api\PublicRestaurantMenuController;
 use App\Http\Controllers\Api\PublicRoomController;
+use App\Http\Controllers\Api\ReportingController;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
@@ -26,4 +27,19 @@ Route::prefix('v1')->group(function () {
     Route::middleware('module:restaurant')->group(function () {
         Route::get('/restaurant/menu', [PublicRestaurantMenuController::class, 'index'])->name('api.restaurant.menu');
     });
+});
+
+// ==========================================
+// API REPORTING BUSINESS — consommée par la console business de pms.
+// Données financières sensibles : jamais publiques, protégées par un jeton
+// de service (Authorization: Bearer REPORTING_SECRET). Lecture seule.
+// ==========================================
+Route::prefix('reporting')->middleware('reporting.token')->group(function () {
+    Route::get('/summary',    [ReportingController::class, 'summary'])->name('api.reporting.summary');
+    Route::get('/revenue',    [ReportingController::class, 'revenue'])->name('api.reporting.revenue');
+    Route::get('/cash-audit', [ReportingController::class, 'cashAudit'])->name('api.reporting.cash-audit');
+    Route::get('/expenses',   [ReportingController::class, 'expenses'])->name('api.reporting.expenses');
+    Route::get('/invoices',   [ReportingController::class, 'invoices'])->name('api.reporting.invoices');
+    Route::get('/staff',      [ReportingController::class, 'staff'])->name('api.reporting.staff');
+    Route::get('/alerts',     [ReportingController::class, 'alerts'])->name('api.reporting.alerts');
 });

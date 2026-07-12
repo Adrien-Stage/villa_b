@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminOnly::class,
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
             'caisse' => \App\Http\Middleware\EnsureCashRegisterOpen::class,
+            'reporting.token' => \App\Http\Middleware\ValidateReportingToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
