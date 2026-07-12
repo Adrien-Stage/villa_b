@@ -45,6 +45,25 @@ class BusinessReportingService
         return [$start, Carbon::now()->endOfDay()];
     }
 
+    /**
+     * Période précédente comparable (même durée écoulée, décalée d'une
+     * unité) — pour calculer les tendances « vs période précédente ».
+     */
+    public function previousRange(string $period): array
+    {
+        [$start, $end] = $this->periodRange($period);
+        $elapsed = $start->diffInSeconds($end);
+
+        $prevStart = match ($period) {
+            'today' => $start->copy()->subDay(),
+            'week'  => $start->copy()->subWeek(),
+            'year'  => $start->copy()->subYear(),
+            default => $start->copy()->subMonthNoOverflow(),
+        };
+
+        return [$prevStart, $prevStart->copy()->addSeconds($elapsed)];
+    }
+
     // ── Revenus ───────────────────────────────────────────────────────────────
 
     /**
@@ -278,6 +297,7 @@ class BusinessReportingService
     public function summary(string $period): array
     {
         [$start, $end] = $this->periodRange($period);
+        [$prevStart, $prevEnd] = $this->previousRange($period);
 
         $revenue = $this->revenue($start, $end);
         $cash    = $this->cashSummary($start, $end);
@@ -286,6 +306,7 @@ class BusinessReportingService
             'period'   => $period,
             'currency' => (string) env('TENANT_CURRENCY', 'XAF'),
             'revenue'  => $revenue,
+            'revenue_previous' => $this->revenue($prevStart, $prevEnd),
             'occupancy' => $this->occupancy(),
             'bookings' => [
                 'total'     => Booking::whereBetween('created_at', [$start, $end])->count(),
