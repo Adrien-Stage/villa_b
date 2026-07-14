@@ -75,11 +75,10 @@
                 <a href="{{ route('shop.orders.create') }}" class="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-[#4a2a14] transition-all shadow-sm hover:shadow-md">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i> Nouvelle Vente Boutique
                 </a>
-                @role('shop_manager')
+                {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('shop.cash_register.close') }}" class="flex items-center gap-2 px-5 py-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-semibold hover:bg-red-100 transition-all shadow-sm hover:shadow-md">
                     <i data-lucide="lock" class="w-4 h-4"></i> Fermer ma caisse
                 </a>
-                @endrole
             @endif
         @endrole
     </div>

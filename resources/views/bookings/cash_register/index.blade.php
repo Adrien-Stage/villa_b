@@ -19,17 +19,11 @@
         
         <div>
             @if ($activeSession)
-                @role('manager')
-                    <a href="{{ route('bookings.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                        <i data-lucide="lock" class="w-4 h-4"></i>
-                        Fermer la caisse
-                    </a>
-                @else
-                    <span class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium rounded-lg">
-                        <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Caisse ouverte par vous
-                    </span>
-                @endrole
+                {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
+                <a href="{{ route('bookings.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    Fermer la caisse
+                </a>
             @else
                 <a href="{{ route('bookings.cash_register.open') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="lock-open" class="w-4 h-4"></i>

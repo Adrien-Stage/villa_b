@@ -156,8 +156,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
-        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->middleware('role:manager')->name('cash_register.close');
-        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->middleware('role:manager')->name('cash_register.close.store');
+        // Fermeture : celui qui a ouvert la caisse la ferme (le contrôleur
+        // scope la session à auth()->id()) — pas de restriction de rôle.
+        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
+        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
@@ -295,11 +297,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::post('/cash-register/disbursements', [CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
 
-        // Caisse — fermeture : shop_manager uniquement
-        Route::middleware('role:shop_manager')->group(function () {
-            Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
-            Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
-        });
+        // Caisse — fermeture : celui qui a ouvert la caisse la ferme (le
+        // contrôleur scope la session à auth()->id()) — pas de restriction
+        // supplémentaire au-delà du groupe (shop_manager + shop_cashier).
+        Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
+        Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
         // Commandes
         Route::get('/orders/create', [ShopOrderController::class, 'create'])->name('orders.create');
