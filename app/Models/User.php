@@ -125,6 +125,39 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope : les utilisateurs porteurs d'un des rôles donnés, quel que soit le
+     * système utilisé (ancienne colonne role ou relation roles).
+     */
+    public function scopeHavingRole($query, array $slugs)
+    {
+        return $query->where(function ($q) use ($slugs) {
+            $q->whereIn('role', $slugs)
+                ->orWhereHas('roles', fn ($r) => $r->whereIn('slug', $slugs));
+        });
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Prises de service en salle de ce serveur.
+     */
+    public function restaurantShifts(): HasMany
+    {
+        return $this->hasMany(RestaurantShift::class);
+    }
+
+    /**
+     * Le serveur est-il actuellement en service ? (prise de service ouverte)
+     */
+    public function isOnRestaurantDuty(): bool
+    {
+        return $this->restaurantShifts()->whereNull('closed_at')->exists();
+    }
+
+    /**
      * Vérifie les permissions de niveau admin (cross-tenants)
      */
     public function isAdmin(): bool

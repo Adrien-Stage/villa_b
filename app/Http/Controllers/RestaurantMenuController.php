@@ -47,6 +47,10 @@ class RestaurantMenuController extends Controller
             $itemsQuery->where('type', (string) $request->input('type'));
         }
 
+        if ($request->filled('meal') && array_key_exists($request->input('meal'), RestaurantMenuItem::MEAL_SERVICES)) {
+            $itemsQuery->whereJsonContains('meal_services', (string) $request->input('meal'));
+        }
+
         if ($request->filled('status')) {
             $itemsQuery->where('is_active', (string) $request->input('status') === 'active');
         }
@@ -60,6 +64,7 @@ class RestaurantMenuController extends Controller
             'items' => $items,
             'canManage' => $canManage,
             'itemTypes' => self::ITEM_TYPES,
+            'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
         ]);
     }
 
@@ -146,10 +151,21 @@ class RestaurantMenuController extends Controller
             // Saisi en FCFA -> stockage en centimes
             'price' => ['required', 'integer', 'min:0', 'max:5000000'],
             'type' => ['required', Rule::in(self::ITEM_TYPES)],
+            'meal_services' => ['nullable', 'array'],
+            'meal_services.*' => [Rule::in(array_keys(RestaurantMenuItem::MEAL_SERVICES))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
+
+        // Aucun service coché = article proposé toute la journée
+        $mealServices = array_values(array_intersect(
+            array_keys(RestaurantMenuItem::MEAL_SERVICES),
+            $validated['meal_services'] ?? []
+        ));
+        if ($mealServices === []) {
+            $mealServices = array_keys(RestaurantMenuItem::MEAL_SERVICES);
+        }
 
         $item = RestaurantMenuItem::create([
             'restaurant_menu_category_id' => $validated['restaurant_menu_category_id'] ?? null,
@@ -157,6 +173,7 @@ class RestaurantMenuController extends Controller
             'description' => $validated['description'] ?? null,
             'price' => (int) $validated['price'] * 100,
             'type' => (string) $validated['type'],
+            'meal_services' => $mealServices,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -191,10 +208,21 @@ class RestaurantMenuController extends Controller
             // Saisi en FCFA -> stockage en centimes
             'price' => ['required', 'integer', 'min:0', 'max:5000000'],
             'type' => ['required', Rule::in(self::ITEM_TYPES)],
+            'meal_services' => ['nullable', 'array'],
+            'meal_services.*' => [Rule::in(array_keys(RestaurantMenuItem::MEAL_SERVICES))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
+
+        // Aucun service coché = article proposé toute la journée
+        $mealServices = array_values(array_intersect(
+            array_keys(RestaurantMenuItem::MEAL_SERVICES),
+            $validated['meal_services'] ?? []
+        ));
+        if ($mealServices === []) {
+            $mealServices = array_keys(RestaurantMenuItem::MEAL_SERVICES);
+        }
 
         $item->update([
             'restaurant_menu_category_id' => $validated['restaurant_menu_category_id'] ?? null,
@@ -202,6 +230,7 @@ class RestaurantMenuController extends Controller
             'description' => $validated['description'] ?? null,
             'price' => (int) $validated['price'] * 100,
             'type' => (string) $validated['type'],
+            'meal_services' => $mealServices,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);

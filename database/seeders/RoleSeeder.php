@@ -49,9 +49,14 @@ class RoleSeeder extends Seeder
                 'description' => 'Responsable de la cuisine et restaurant',
                 ],
             [
-                'name' => 'Serveur/Cuisinier',
+                'name' => 'Serveur (salle)',
                 'slug' => 'restaurant_staff',
-                'description' => 'Personnel de restaurant',
+                'description' => 'Service en salle : prise de commande, navette avec la cuisine, service des plats',
+                ],
+            [
+                'name' => 'Cuisinier (cuisine)',
+                'slug' => 'restaurant_cook',
+                'description' => 'Cuisine : réception des bons de commande et signalement des plats prêts',
                 ],
             [
                 'name' => 'Caissier',

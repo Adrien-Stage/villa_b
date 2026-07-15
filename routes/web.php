@@ -81,6 +81,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('settings.update')
         ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
 
+    // Catalogue des prestations (onglet "Prestations" des paramètres)
+    Route::middleware('role:manager')->group(function () {
+        Route::post('/settings/services', [App\Http\Controllers\ServiceCatalogController::class, 'store'])
+            ->name('settings.services.store');
+        Route::put('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'update'])
+            ->name('settings.services.update');
+        Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'destroy'])
+            ->name('settings.services.destroy');
+    });
+
     // --- ASSISTANT IA (Kuété) ---
     Route::post('/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('ai.chat');
 
@@ -156,8 +166,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
-        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->middleware('role:manager')->name('cash_register.close');
-        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->middleware('role:manager')->name('cash_register.close.store');
+        // Fermeture : celui qui a ouvert la caisse la ferme (le contrôleur
+        // scope la session à auth()->id()) — pas de restriction de rôle.
+        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
+        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
@@ -215,11 +227,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (menus) ---
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff', 'module:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff,restaurant_cook', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+        Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
+        Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
+        Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
+        Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+    });
+
+    // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_cook,restaurant_chief', 'module:restaurant'])->group(function () {
+        Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])->whereNumber('order')->name('orders.preparing');
+        Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')->name('orders.ready');
+    });
+
+    // Salle : prise de service, transmission en cuisine, service (serveur + chef)
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_staff,restaurant_chief', 'module:restaurant'])->group(function () {
+        Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])->name('shifts.open');
+        Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])->name('shifts.close');
+
+        Route::post('/orders/{order}/send-to-kitchen', [RestaurantOrderController::class, 'sendToKitchen'])->whereNumber('order')->name('orders.send_to_kitchen');
+        Route::post('/orders/{order}/served', [RestaurantOrderController::class, 'markServed'])->whereNumber('order')->name('orders.served');
+        Route::post('/orders/{order}/claim', [RestaurantOrderController::class, 'claim'])->whereNumber('order')->name('orders.claim');
+        Route::post('/orders/{order}/reassign', [RestaurantOrderController::class, 'reassign'])->whereNumber('order')->name('orders.reassign');
     });
 
     // Écriture RESTAURANT — manager exclu
@@ -244,6 +277,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/pantry/items', [RestaurantPantryController::class, 'storeItem'])->name('pantry.items.store');
             Route::put('/pantry/items/{item}', [RestaurantPantryController::class, 'updateItem'])->name('pantry.items.update');
             Route::delete('/pantry/items/{item}', [RestaurantPantryController::class, 'destroyItem'])->name('pantry.items.destroy');
+
+            // Réception de marchandise : saisie en unités d'achat, valorisée.
+            Route::post('/pantry/items/{item}/receive', [RestaurantPantryController::class, 'receive'])->name('pantry.items.receive');
+
+            // Fiches techniques
+            Route::post('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'store'])->name('recipes.store');
+            Route::put('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'update'])->name('recipes.update');
+            Route::delete('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'destroy'])->name('recipes.destroy');
+            Route::post('/recipes/{recipe}/produce', [App\Http\Controllers\RestaurantRecipeController::class, 'produce'])->name('recipes.produce');
+
+            // Inventaire physique
+            Route::post('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'store'])->name('stock_counts.store');
+            Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
+            Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
+            Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
         });
     });
 
@@ -295,11 +343,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::post('/cash-register/disbursements', [CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
 
-        // Caisse — fermeture : shop_manager uniquement
-        Route::middleware('role:shop_manager')->group(function () {
-            Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
-            Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
-        });
+        // Caisse — fermeture : celui qui a ouvert la caisse la ferme (le
+        // contrôleur scope la session à auth()->id()) — pas de restriction
+        // supplémentaire au-delà du groupe (shop_manager + shop_cashier).
+        Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
+        Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
         // Commandes
         Route::get('/orders/create', [ShopOrderController::class, 'create'])->name('orders.create');

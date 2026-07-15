@@ -146,15 +146,24 @@
                     </div>
                 @endrole
 
-                @role('manager','restaurant_chief','restaurant_staff','cashier')
+                @role('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @role('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
+                            @endrole
+
+                            @role('restaurant_chief','restaurant_cook')
+                                <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
+                            @endrole
+
+                            @role('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
+                                <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
+                                <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
                             @endrole
 
                             @role('manager','restaurant_chief','cashier')

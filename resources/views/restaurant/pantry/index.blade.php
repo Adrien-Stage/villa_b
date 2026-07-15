@@ -44,14 +44,26 @@
     </div>
 @endif
 
-<div class="grid grid-cols-2 gap-4 mb-5">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
     <div class="bg-white rounded-xl shadow-sm p-4 text-center border border-secondary/15">
         <p class="text-2xl font-heading font-semibold text-primary">{{ $stats['total_items'] }}</p>
         <p class="text-xs text-primary/50 mt-1">Articles suivis</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4 text-center border border-secondary/15">
-        <p class="text-2xl font-heading font-semibold text-red-600">{{ $stats['low_stock'] }}</p>
+        <p class="text-2xl font-heading font-semibold text-primary">
+            {{ number_format($stats['stock_value'] / 100, 0, ',', ' ') }} <span class="text-sm">FCFA</span>
+        </p>
+        <p class="text-xs text-primary/50 mt-1">Valeur du stock</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center border border-secondary/15">
+        <p class="text-2xl font-heading font-semibold {{ $stats['low_stock'] > 0 ? 'text-red-600' : 'text-primary' }}">{{ $stats['low_stock'] }}</p>
         <p class="text-xs text-primary/50 mt-1">Stocks bas</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center border {{ $stats['negative_stock'] > 0 ? 'border-red-200' : 'border-secondary/15' }}">
+        <p class="text-2xl font-heading font-semibold {{ $stats['negative_stock'] > 0 ? 'text-red-600' : 'text-primary' }}">{{ $stats['negative_stock'] }}</p>
+        <p class="text-xs text-primary/50 mt-1" title="La cuisine a servi plus que le stock ne contenait : réception oubliée ou fiche technique fausse.">
+            Stocks négatifs
+        </p>
     </div>
 </div>
 
@@ -119,39 +131,73 @@
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Catégorie</th>
                             <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Stock</th>
                             <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Min</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Coût moyen</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Valeur</th>
                             <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
                         @foreach($items as $item)
                             @php
-                                $isLow = (float) $item->current_stock <= (float) $item->min_stock;
+                                $isLow = $item->isLowStock();
+                                $isNegative = (float) $item->current_stock < 0;
                             @endphp
                             <tr class="{{ $item->is_active ? '' : 'opacity-60' }} {{ $isLow ? 'bg-red-50/40' : '' }}">
                                 <td class="px-4 py-3">
-                                    <p class="text-sm font-semibold text-primary">{{ $item->name }}</p>
+                                    <p class="text-sm font-semibold text-primary">
+                                        {{ $item->name }}
+                                        @if($item->is_prepared)
+                                            <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/40 text-primary" title="Article fabriqué en cuisine, produit par une fiche technique">
+                                                fabriqué
+                                            </span>
+                                        @endif
+                                    </p>
                                     <p class="text-xs text-primary/45 mt-0.5">
                                         {{ strtoupper($item->unit) }}
+                                        @if($item->purchase_unit)
+                                            · achat : {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
+                                        @endif
                                         @if($isLow) · <span class="text-red-700 font-semibold">Stock bas</span> @endif
                                     </p>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-primary/70">
                                     {{ $item->category?->name ?? '—' }}
                                 </td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
+                                <td class="px-4 py-3 text-right text-sm font-semibold {{ $isNegative ? 'text-red-600' : 'text-primary' }}">
                                     {{ rtrim(rtrim(number_format((float) $item->current_stock, 3, '.', ''), '0'), '.') }}
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm text-primary/70">
                                     {{ rtrim(rtrim(number_format((float) $item->min_stock, 3, '.', ''), '0'), '.') }}
                                 </td>
+                                <td class="px-4 py-3 text-right text-xs whitespace-nowrap {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
+                                    @if((float) $item->average_cost <= 0)
+                                        <span title="Sans coût, les plats qui utilisent cet ingrédient ne peuvent pas être chiffrés.">coût inconnu</span>
+                                    @else
+                                        {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-right text-sm text-primary whitespace-nowrap">
+                                    {{ number_format($item->stockValue() / 100, 0, ',', ' ') }} FCFA
+                                </td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="inline-flex items-center gap-2">
+                                        @if($canManage)
+                                            <button type="button"
+                                                onclick="openReceiveModal({{ $item->id }})"
+                                                class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700"
+                                                title="Réception de marchandise : met à jour le stock et le coût moyen">
+                                                Réception
+                                            </button>
+                                        @endif
                                         @role('restaurant_chief', 'restaurant_staff')
-                                        <button type="button"
-                                            onclick="openMovementModal({{ $item->id }}, 'in')"
-                                            class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
-                                            Entrée
-                                        </button>
+                                        @unless($canManage)
+                                            {{-- Le staff enregistre une entrée simple ; la réception valorisée est au chef. --}}
+                                            <button type="button"
+                                                onclick="openMovementModal({{ $item->id }}, 'in')"
+                                                class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
+                                                Entrée
+                                            </button>
+                                        @endunless
                                         <button type="button"
                                             onclick="openMovementModal({{ $item->id }}, 'out')"
                                             class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark">
@@ -193,9 +239,14 @@
                 <div class="px-4 py-3">
                     <p class="text-sm font-semibold text-primary truncate">{{ $move->item?->name ?? 'Article' }}</p>
                     <p class="text-xs text-primary/45 mt-0.5">
-                        {{ strtoupper($move->type) }}
-                        · {{ rtrim(rtrim(number_format((float) $move->quantity, 3, '.', ''), '0'), '.') }}
-                        · {{ strtoupper($move->reason) }}
+                        <span class="font-semibold {{ $move->type === 'in' ? 'text-green-700' : ($move->type === 'out' ? 'text-primary/70' : 'text-amber-700') }}">
+                            {{ $move->type === 'in' ? '+' : ($move->type === 'out' ? '−' : '=') }}{{ rtrim(rtrim(number_format((float) $move->quantity, 3, '.', ''), '0'), '.') }}
+                            {{ $move->item?->unit }}
+                        </span>
+                        · {{ $move->reasonLabel() }}
+                        @if($move->total_cost)
+                            · {{ number_format(abs((int) $move->total_cost) / 100, 0, ',', ' ') }} FCFA
+                        @endif
                         · {{ $move->occurred_at?->format('d/m H:i') }}
                     </p>
                     @if($move->notes)
@@ -229,7 +280,7 @@
             <label class="text-xs text-primary/60">Raison</label>
             <select name="reason" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
                 @foreach($moveReasons as $reason)
-                    <option value="{{ $reason }}">{{ strtoupper($reason) }}</option>
+                    <option value="{{ $reason }}">{{ $reasonLabels[$reason] ?? strtoupper($reason) }}</option>
                 @endforeach
             </select>
         </div>
@@ -248,6 +299,63 @@
 </x-modal>
 
 @if($canManage)
+    {{-- Réception de marchandise : une par article, pour connaître son unité d'achat --}}
+    @foreach($items as $item)
+        <x-modal id="receive-modal-{{ $item->id }}"
+            title="Réception — {{ $item->name }}"
+            subtitle="Le coût moyen de l'ingrédient sera recalculé, donc le coût matière des plats qui l'utilisent."
+            max-width="max-w-xl"
+            formAction="{{ route('restaurant.pantry.items.receive', $item) }}"
+            closeAction="closeReceiveModal({{ $item->id }})">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-primary/60">
+                        Quantité reçue ({{ $item->purchase_unit ?: $item->unit }})
+                    </label>
+                    <input type="number" name="purchase_quantity" step="0.001" min="0.001" required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    @if($item->purchase_unit)
+                        <p class="text-[11px] text-primary/40 mt-1">
+                            1 {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
+                        </p>
+                    @else
+                        <p class="text-[11px] text-primary/40 mt-1">
+                            Aucune unité d'achat définie : la saisie se fait directement en {{ $item->unit }}.
+                        </p>
+                    @endif
+                </div>
+                <div>
+                    <label class="text-xs text-primary/60">Prix total payé (FCFA)</label>
+                    <input type="number" name="total_price" min="0"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <p class="text-[11px] text-primary/40 mt-1">
+                        Laisser vide conserve le coût moyen actuel
+                        ({{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA / {{ $item->unit }}).
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-primary/60">Date (optionnel)</label>
+                    <input type="datetime-local" name="occurred_at"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                </div>
+                <div>
+                    <label class="text-xs text-primary/60">Fournisseur / notes</label>
+                    <input type="text" name="notes" maxlength="2000"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                </div>
+            </div>
+
+            <x-slot:footer>
+                <button type="button" onclick="closeReceiveModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Enregistrer la réception</button>
+            </x-slot:footer>
+        </x-modal>
+    @endforeach
+
     {{-- Create category modal --}}
     <x-modal id="create-category-modal" title="Nouvelle categorie" formAction="{{ route('restaurant.pantry.categories.store') }}" closeAction="closeCreateCategoryModal()">
         <input type="hidden" name="form_type" value="create_category">
@@ -307,15 +415,43 @@
                 <input type="number" step="0.001" min="0" name="min_stock" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
             </div>
             <div>
-                <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
+                <label class="text-xs text-primary/60">Coût unitaire initial (FCFA)</label>
                 <input type="number" min="0" name="cost_price" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
             </div>
         </div>
 
-        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-            <input type="checkbox" name="is_active" value="1" checked>
-            Actif
-        </label>
+        {{-- Conversion d'unités : la source d'erreur numéro un quand elle manque --}}
+        <div class="rounded-xl border border-secondary/20 bg-gray-50 p-4">
+            <p class="text-xs font-semibold text-primary mb-2">Unité d'achat (optionnel)</p>
+            <p class="text-[11px] text-primary/50 mb-3">
+                Si vous achetez au sac de 50 kg mais cuisinez en grammes, indiquez-le ici :
+                la réception se saisira en sacs, et le stock se tiendra en grammes.
+            </p>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
+                    <input type="text" name="purchase_unit" maxlength="40" placeholder="Ex : sac de 50 kg, bidon de 20 L"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                </div>
+                <div>
+                    <label class="text-xs text-primary/60">Contenu, en unités de stock</label>
+                    <input type="number" step="0.001" min="0.001" name="purchase_conversion" value="1"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <p class="text-[11px] text-primary/40 mt-1">Ex : 50 000 si l'article est suivi en grammes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <label class="flex items-center gap-2 text-xs text-primary/70">
+                <input type="checkbox" name="is_prepared" value="1">
+                Article fabriqué en cuisine (préparation de base : sauce, fond, marinade)
+            </label>
+            <label class="flex items-center gap-2 text-xs text-primary/70">
+                <input type="checkbox" name="is_active" value="1" checked>
+                Actif
+            </label>
+        </div>
 
         <x-slot:footer>
             <button type="button" onclick="closeCreateItemModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
@@ -359,15 +495,43 @@
                     <input type="number" step="0.001" min="0" name="min_stock" value="{{ (float) $item->min_stock }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
                 </div>
                 <div>
-                    <label class="text-xs text-primary/60">Prix achat (FCFA)</label>
+                    <label class="text-xs text-primary/60">Coût unitaire de référence (FCFA)</label>
                     <input type="number" min="0" name="cost_price" value="{{ $item->cost_price ? (int) ($item->cost_price / 100) : '' }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <p class="text-[11px] text-primary/40 mt-1">
+                        Coût moyen actuel : {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA / {{ $item->unit }}
+                        (recalculé à chaque réception).
+                    </p>
                 </div>
             </div>
 
-            <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                <input type="checkbox" name="is_active" value="1" @checked($item->is_active)>
-                Actif
-            </label>
+            <div class="rounded-xl border border-secondary/20 bg-gray-50 p-4">
+                <p class="text-xs font-semibold text-primary mb-3">Unité d'achat (optionnel)</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
+                        <input type="text" name="purchase_unit" value="{{ $item->purchase_unit }}" maxlength="40"
+                            placeholder="Ex : sac de 50 kg, bidon de 20 L"
+                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                    </div>
+                    <div>
+                        <label class="text-xs text-primary/60">Contenu, en {{ $item->unit }}</label>
+                        <input type="number" step="0.001" min="0.001" name="purchase_conversion"
+                            value="{{ rtrim(rtrim(number_format($item->conversion(), 3, '.', ''), '0'), '.') }}"
+                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="flex items-center gap-2 text-xs text-primary/70">
+                    <input type="checkbox" name="is_prepared" value="1" @checked($item->is_prepared)>
+                    Article fabriqué en cuisine (préparation de base)
+                </label>
+                <label class="flex items-center gap-2 text-xs text-primary/70">
+                    <input type="checkbox" name="is_active" value="1" @checked($item->is_active)>
+                    Actif
+                </label>
+            </div>
 
             <x-slot:footer>
                 <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
@@ -408,6 +572,15 @@ window.closeMovementModal = function() {
     const modal = document.getElementById('movement-modal');
     if (!modal) return;
     modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+window.openReceiveModal = function(itemId) {
+    document.getElementById(`receive-modal-${itemId}`)?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+window.closeReceiveModal = function(itemId) {
+    document.getElementById(`receive-modal-${itemId}`)?.classList.add('hidden');
     document.body.style.overflow = '';
 };
 

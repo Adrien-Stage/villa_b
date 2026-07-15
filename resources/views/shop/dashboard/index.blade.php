@@ -19,11 +19,10 @@
                 <a href="{{ route('shop.orders.create') }}" class="bg-primary hover:bg-surface-dark text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm inline-flex items-center">
                     <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Créer une vente
                 </a>
-                @role('shop_manager')
+                {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('shop.cash_register.close') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm inline-flex items-center text-center" title="Fermer la caisse">
                     <i data-lucide="lock" class="w-4 h-4"></i>
                 </a>
-                @endrole
             @endif
         </div>
     </div>

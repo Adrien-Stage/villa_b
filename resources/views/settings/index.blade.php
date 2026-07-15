@@ -70,6 +70,15 @@
                 Boutique
             </a>
         @endrole
+
+        @role('manager')
+            <a href="{{ route('settings.index', ['tab' => 'services']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'services' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="concierge-bell" class="w-4 h-4"></i>
+                Prestations
+            </a>
+        @endrole
     </div>
 
     {{-- Contenu des onglets --}}
@@ -337,6 +346,252 @@
             </div>
         @endif
 
+        {{-- ONGLET: PRESTATIONS (Manager) --}}
+        @if($tab === 'services' && $user->hasRole('manager'))
+            <div x-data="serviceCatalog({{ Js::from(\App\Models\ServiceItem::CATEGORIES) }})">
+                <div class="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-primary">Catalogue des prestations</h2>
+                        <p class="text-sm text-primary/60 mt-1 max-w-2xl">
+                            Ces prestations sont proposées à la réception lors de l'ajout d'une ligne au folio d'un séjour.
+                            Les plats du restaurant, eux, se gèrent dans le menu du restaurant.
+                        </p>
+                    </div>
+                    <button type="button" @click="openCreate()"
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nouvelle prestation
+                    </button>
+                </div>
+
+                @if($errors->any())
+                    <div class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <div class="space-y-6">
+                    @foreach($serviceCategories as $categoryKey => $categoryLabel)
+                        @php $categoryItems = $serviceItems[$categoryKey] ?? collect(); @endphp
+                        <div class="border border-secondary/20 rounded-xl overflow-hidden">
+                            <div class="flex items-center justify-between px-5 py-3 bg-gray-50/70 border-b border-secondary/20">
+                                <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+                                    <i data-lucide="{{ [
+                                        'activity' => 'mountain-snow',
+                                        'spa' => 'flower-2',
+                                        'housekeeping' => 'sparkles',
+                                        'laundry' => 'shirt',
+                                        'minibar' => 'wine',
+                                        'other' => 'ellipsis',
+                                    ][$categoryKey] ?? 'tag' }}" class="w-4 h-4 text-primary/50"></i>
+                                    {{ $categoryLabel }}
+                                </h3>
+                                <span class="text-xs text-primary/40">{{ $categoryItems->count() }} prestation(s)</span>
+                            </div>
+
+                            @if($categoryItems->isEmpty())
+                                <div class="px-5 py-6 text-center">
+                                    <p class="text-xs text-primary/40">Aucune prestation dans cette catégorie.</p>
+                                    <button type="button" @click="openCreate('{{ $categoryKey }}')"
+                                        class="mt-2 text-xs font-medium text-primary hover:underline">
+                                        Ajouter la première
+                                    </button>
+                                </div>
+                            @else
+                                <table class="min-w-full divide-y divide-secondary/10">
+                                    <tbody class="divide-y divide-secondary/10">
+                                        @foreach($categoryItems as $service)
+                                            <tr class="{{ $service->is_active ? '' : 'opacity-60' }}">
+                                                <td class="px-5 py-3">
+                                                    <p class="text-sm font-medium text-primary">{{ $service->name }}</p>
+                                                    @if($service->description)
+                                                        <p class="text-xs text-primary/45 mt-0.5">{{ $service->description }}</p>
+                                                    @endif
+                                                </td>
+                                                <td class="px-5 py-3 text-xs text-primary/60 whitespace-nowrap">
+                                                    @if($service->duration_minutes)
+                                                        <span class="inline-flex items-center gap-1">
+                                                            <i data-lucide="clock" class="w-3 h-3"></i>
+                                                            {{ $service->duration_minutes }} min
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-5 py-3 text-right text-sm font-semibold text-primary whitespace-nowrap">
+                                                    {{ number_format($service->price / 100, 0, ',', ' ') }} FCFA
+                                                </td>
+                                                <td class="px-5 py-3 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $service->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
+                                                        {{ $service->is_active ? 'Actif' : 'Inactif' }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-5 py-3">
+                                                    <div class="flex justify-end gap-2">
+                                                        <button type="button" @click='openEdit(@json([
+                                                            "id" => $service->id,
+                                                            "category" => $service->category,
+                                                            "name" => $service->name,
+                                                            "description" => $service->description,
+                                                            "price" => $service->priceInFcfa(),
+                                                            "duration_minutes" => $service->duration_minutes,
+                                                            "sort_order" => $service->sort_order,
+                                                            "is_active" => $service->is_active,
+                                                        ]))'
+                                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                                        </button>
+                                                        <form method="POST" action="{{ route('settings.services.destroy', $service) }}"
+                                                            onsubmit="return confirm('Supprimer « {{ $service->name }} » du catalogue ?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
+                                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Modal création / édition --}}
+                <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
+                    <div class="absolute inset-0" @click="open = false"></div>
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 flex flex-col max-h-[90vh]">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
+                            <h3 class="font-heading font-semibold text-primary"
+                                x-text="editing ? 'Modifier la prestation' : 'Nouvelle prestation'"></h3>
+                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            @csrf
+                            <template x-if="editing">
+                                <input type="hidden" name="_method" value="PUT">
+                            </template>
+
+                            <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+                                <div>
+                                    <label class="block text-xs font-medium text-primary/70 mb-1">Catégorie *</label>
+                                    <select name="category" x-model="form.category" required
+                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        <template x-for="(label, key) in categories" :key="key">
+                                            <option :value="key" x-text="label"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-primary/70 mb-1">Nom *</label>
+                                    <input type="text" name="name" x-model="form.name" required maxlength="140"
+                                        placeholder="Ex : Excursion lac Barombi, Massage relaxant 60 min..."
+                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Prix (FCFA) *</label>
+                                        <input type="number" name="price" x-model="form.price" min="0" required
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Durée (min)</label>
+                                        <input type="number" name="duration_minutes" x-model="form.duration_minutes" min="0" max="1440"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Ordre</label>
+                                        <input type="number" name="sort_order" x-model="form.sort_order" min="0"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-primary/70 mb-1">Description (optionnel)</label>
+                                    <textarea name="description" x-model="form.description" rows="2" maxlength="500"
+                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary"></textarea>
+                                </div>
+
+                                <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                    <input type="checkbox" name="is_active" value="1" x-model="form.is_active">
+                                    Actif (proposé à la réception)
+                                </label>
+                            </div>
+
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                                <button type="button" @click="open = false"
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    <span x-text="editing ? 'Enregistrer' : 'Ajouter'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function serviceCatalog(categories) {
+        const storeUrl = @js(route('settings.services.store'));
+        const baseUrl = @js(url('/settings/services'));
+
+        return {
+            categories,
+            open: false,
+            editing: false,
+            formAction: storeUrl,
+            form: {},
+
+            blank(category) {
+                return {
+                    id: null,
+                    category: category || Object.keys(this.categories)[0],
+                    name: '',
+                    description: '',
+                    price: 0,
+                    duration_minutes: '',
+                    sort_order: 0,
+                    is_active: true,
+                };
+            },
+
+            openCreate(category) {
+                this.form = this.blank(category);
+                this.editing = false;
+                this.formAction = storeUrl;
+                this.open = true;
+            },
+
+            openEdit(service) {
+                this.form = {
+                    ...service,
+                    description: service.description ?? '',
+                    duration_minutes: service.duration_minutes ?? '',
+                };
+                this.editing = true;
+                this.formAction = `${baseUrl}/${service.id}`;
+                this.open = true;
+            },
+        };
+    }
+</script>
+@endpush
 @endsection

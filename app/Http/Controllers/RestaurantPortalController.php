@@ -7,6 +7,7 @@ use App\Models\RestaurantCustomerOrderItem;
 use App\Models\RestaurantMenuCategory;
 use App\Models\RestaurantMenuItem;
 use App\Models\Tenant;
+use App\Services\RestaurantAssignmentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,10 @@ use Illuminate\View\View;
 
 class RestaurantPortalController extends Controller
 {
+    public function __construct(private readonly RestaurantAssignmentService $assignment)
+    {
+    }
+
     public function menu(Request $request, Tenant $tenant): View
     {
         abort_unless($tenant->is_active, 404);
@@ -158,6 +163,11 @@ class RestaurantPortalController extends Controller
 
             return $order;
         });
+
+        // Le client a validé : la commande est aussitôt confiée à un serveur en
+        // salle (répartition au moins chargé), à charge de lui de la transmettre en
+        // cuisine puis d'apporter le plat à la table.
+        $this->assignment->assignPortalOrder($order);
 
         return redirect()->route('portal.restaurant.order', ['tenant' => $tenant->slug, 'order' => $order->id]);
     }

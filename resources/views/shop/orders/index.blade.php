@@ -23,12 +23,11 @@
                     <i data-lucide="lock-open" class="w-4 h-4 inline mr-2"></i> Ouvrir la caisse
                 </a>
             @else
-                @role('shop_manager')
+                {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('shop.cash_register.close') }}"
                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors" title="Fermer la caisse">
                     <i data-lucide="lock" class="w-4 h-4 inline"></i>
                 </a>
-                @endrole
                 <a href="{{ route('shop.orders.create') }}"
                    class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                     <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i> Nouvelle commande

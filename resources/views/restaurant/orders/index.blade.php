@@ -19,9 +19,59 @@
     @endrole
 </div>
 
+{{-- Prise de service : seuls les serveurs en service reçoivent des commandes du portail --}}
+@if($isServer)
+    <div class="mb-5 rounded-xl border {{ $onDuty ? 'border-green-200 bg-green-50' : 'border-secondary/20 bg-white' }} px-5 py-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="relative flex h-2.5 w-2.5">
+                    @if($onDuty)
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    @endif
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 {{ $onDuty ? 'bg-green-500' : 'bg-primary/25' }}"></span>
+                </span>
+                <div>
+                    <p class="text-sm font-semibold {{ $onDuty ? 'text-green-800' : 'text-primary/70' }}">
+                        {{ $onDuty ? 'Vous êtes en service' : 'Vous n\'êtes pas en service' }}
+                    </p>
+                    <p class="text-xs {{ $onDuty ? 'text-green-700/80' : 'text-primary/45' }}">
+                        {{ $onDuty
+                            ? 'Les commandes du portail peuvent vous être confiées.'
+                            : 'Prenez votre service pour recevoir des commandes du portail.' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                @if($onDutyServers->isNotEmpty())
+                    <span class="text-xs text-primary/50 hidden md:inline">
+                        En salle : {{ $onDutyServers->pluck('name')->implode(', ') }}
+                    </span>
+                @endif
+                <form method="POST" action="{{ $onDuty ? route('restaurant.shifts.close') : route('restaurant.shifts.open') }}">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
+                            {{ $onDuty ? 'bg-white border border-red-200 text-red-600 hover:bg-red-50' : 'bg-primary text-white hover:bg-surface-dark' }}">
+                        <i data-lucide="{{ $onDuty ? 'log-out' : 'log-in' }}" class="w-3.5 h-3.5"></i>
+                        {{ $onDuty ? 'Terminer mon service' : 'Prendre mon service' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
 @if(session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
         {{ session('success') }}
+    </div>
+@endif
+
+@if(session('stock_warning'))
+    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 shrink-0"></i>
+        <span>{{ session('stock_warning') }}</span>
     </div>
 @endif
 
@@ -45,9 +95,17 @@
         @foreach($statuses as $status)
             <a href="{{ route('restaurant.orders.index', array_merge(request()->except('status', 'page'), ['status' => $status])) }}"
                 class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request('status') === $status ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
-                {{ strtoupper($status) }}
+                {{ $statusLabels[$status] ?? ucfirst($status) }}
             </a>
         @endforeach
+
+        @if($isServer)
+            <span class="mx-1 h-4 w-px bg-secondary/20"></span>
+            <a href="{{ route('restaurant.orders.index', array_merge(request()->except('mine', 'page'), request()->boolean('mine') ? [] : ['mine' => 1])) }}"
+                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request()->boolean('mine') ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
+                <i data-lucide="user" class="w-3 h-3"></i> Mes commandes
+            </a>
+        @endif
     </div>
 
     <form method="GET" action="{{ route('restaurant.orders.index') }}" class="flex items-center gap-2">
@@ -80,6 +138,7 @@
                     <tr>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Commande</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Table</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Serveur</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Source</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Total</th>
@@ -87,6 +146,16 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
+                    @php
+                        $statusStyles = [
+                            'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
+                            'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                            'preparing' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                            'ready' => 'bg-green-50 text-green-700 border-green-200',
+                            'served' => 'bg-gray-100 text-gray-600 border-gray-200',
+                            'canceled' => 'bg-red-50 text-red-600 border-red-200',
+                        ];
+                    @endphp
                     @foreach($orders as $order)
                         <tr class="hover:bg-accent/10">
                             <td class="px-4 py-3">
@@ -100,24 +169,57 @@
                             <td class="px-4 py-3 text-sm text-primary/70">
                                 {{ $order->table_number ?? '—' }}
                             </td>
+                            <td class="px-4 py-3 text-sm">
+                                @if($order->assignedServer)
+                                    <span class="text-primary/70">{{ $order->assignedServer->name }}</span>
+                                @else
+                                    <span class="text-red-500 text-xs font-medium">Non affectée</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary border border-secondary/15">
-                                    {{ strtoupper($order->source ?? 'portal') }}
+                                    {{ ($order->source ?? 'portal') === 'portal' ? 'Portail' : 'Salle' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-primary border border-secondary/25">
-                                    {{ strtoupper($order->status) }}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border {{ $statusStyles[$order->status] ?? 'bg-white text-primary border-secondary/25' }}">
+                                    {{ $statusLabels[$order->status] ?? ucfirst($order->status) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
                                 {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
                             </td>
-                            <td class="px-4 py-3 text-right">
-                                <a href="{{ route('restaurant.orders.show', $order) }}"
-                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                                </a>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-end gap-2">
+                                    {{-- Action contextuelle rapide selon l'étape --}}
+                                    @if($isServer && $order->status === 'pending')
+                                        @if(!$order->assigned_server_id)
+                                            <form method="POST" action="{{ route('restaurant.orders.claim', $order) }}">
+                                                @csrf
+                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg border border-secondary/25 bg-white text-primary text-xs font-semibold hover:bg-accent/20">
+                                                    Prendre en charge
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <form method="POST" action="{{ route('restaurant.orders.send_to_kitchen', $order) }}">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark">
+                                                Transmettre en cuisine
+                                            </button>
+                                        </form>
+                                    @elseif($isServer && $order->status === 'ready')
+                                        <form method="POST" action="{{ route('restaurant.orders.served', $order) }}">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
+                                                Marquer servi
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('restaurant.orders.show', $order) }}"
+                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

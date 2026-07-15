@@ -23,6 +23,7 @@ class FolioItem extends Model
     const TYPE_SHOP       = 'shop';
     const TYPE_ACTIVITY   = 'activity';
     const TYPE_SPA        = 'spa';
+    const TYPE_HOUSEKEEPING = 'housekeeping';
     const TYPE_MINIBAR    = 'minibar';
     const TYPE_LAUNDRY    = 'laundry';
     const TYPE_DISCOUNT   = 'discount';
@@ -92,6 +93,7 @@ class FolioItem extends Model
             self::TYPE_SHOP       => 'Boutique',
             self::TYPE_ACTIVITY   => 'Activité',
             self::TYPE_SPA        => 'Spa',
+            self::TYPE_HOUSEKEEPING => 'Housekeeping',
             self::TYPE_MINIBAR    => 'Minibar',
             self::TYPE_LAUNDRY    => 'Blanchisserie',
             self::TYPE_DISCOUNT   => 'Remise',
