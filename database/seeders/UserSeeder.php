@@ -26,6 +26,7 @@ class UserSeeder extends Seeder
             'housekeeping_staff',
             'restaurant_chief',
             'restaurant_staff',
+            'restaurant_cook',
             'cashier',
             'shop_manager',
             'shop_cashier',
@@ -96,6 +97,17 @@ class UserSeeder extends Seeder
             ]
         );
         $roles->get('restaurant_staff')?->users()->syncWithoutDetaching([$restaurantStaff->id]);
+
+        $restaurantCook = User::firstOrCreate(
+            ['email' => 'restaurant.cook@villaboutanga.cm'],
+            [
+                'name' => 'Cuisinier Restaurant',
+                'password' => Hash::make('password'),
+                'role' => 'restaurant_cook',
+                'is_active' => true,
+            ]
+        );
+        $roles->get('restaurant_cook')?->users()->syncWithoutDetaching([$restaurantCook->id]);
 
         $restaurantCashier = User::firstOrCreate(
             ['email' => 'restaurant.cashier@villaboutanga.cm'],

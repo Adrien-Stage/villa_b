@@ -4,12 +4,26 @@
 
 @section('content')
 <div class="flex items-start justify-between mb-6">
+    @php
+        $statusStyles = [
+            'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
+            'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+            'preparing' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            'ready' => 'bg-green-50 text-green-700 border-green-200',
+            'served' => 'bg-gray-100 text-gray-600 border-gray-200',
+            'canceled' => 'bg-red-50 text-red-600 border-red-200',
+        ];
+    @endphp
     <div>
-        <h1 class="font-heading text-2xl font-semibold text-primary">Commande #{{ $order->id }}</h1>
+        <div class="flex items-center gap-3">
+            <h1 class="font-heading text-2xl font-semibold text-primary">Commande #{{ $order->id }}</h1>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $statusStyles[$order->status] ?? 'bg-white text-primary border-secondary/25' }}">
+                {{ $statusLabels[$order->status] ?? ucfirst($order->status) }}
+            </span>
+        </div>
         <p class="text-sm text-primary/50 mt-0.5">
-            {{ strtoupper($order->status) }}
-            @if($order->table_number) · Table {{ $order->table_number }} @endif
-            · {{ strtoupper($order->source ?? 'portal') }}
+            @if($order->table_number) Table {{ $order->table_number }} · @endif
+            {{ ($order->source ?? 'portal') === 'portal' ? 'Commande du portail' : 'Commande saisie en salle' }}
         </p>
     </div>
     <a href="{{ route('restaurant.orders.index') }}"
@@ -98,51 +112,145 @@
             @endif
         </div>
 
-        <div class="px-4 py-4 border-t border-secondary/15 bg-accent/10">
-            <p class="text-xs font-semibold uppercase tracking-widest text-primary/45 mb-2">Statut</p>
-            @role('restaurant_chief', 'restaurant_staff')
-            <form id="status-form" method="POST" action="{{ route('restaurant.orders.status', $order) }}" class="flex items-center gap-2">
-                @csrf
-                <select name="status" class="flex-1 px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                    @foreach($statuses as $status)
-                        <option value="{{ $status }}" @selected($order->status === $status)>{{ strtoupper($status) }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">OK</button>
-            </form>
-            <p id="status-hint" class="text-[11px] text-primary/45 mt-2 hidden">Statut mis a jour.</p>
+        {{-- Serveur responsable --}}
+        <div class="px-4 py-4 border-t border-secondary/15">
+            <p class="text-xs font-semibold uppercase tracking-widest text-primary/45 mb-2">Serveur</p>
+            @if($order->assignedServer)
+                <div class="flex items-center gap-2">
+                    <div class="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center text-primary text-xs font-bold">
+                        {{ strtoupper(mb_substr($order->assignedServer->name, 0, 2)) }}
+                    </div>
+                    <p class="text-sm font-semibold text-primary">{{ $order->assignedServer->name }}</p>
+                </div>
             @else
-                <p class="text-xs text-primary/40 italic text-center py-2">Consultation uniquement — actions réservées au personnel du restaurant.</p>
-            @endrole
+                <p class="text-sm text-red-500 font-medium">Aucun serveur affecté</p>
+                @if($isServer && $order->isActive())
+                    <form method="POST" action="{{ route('restaurant.orders.claim', $order) }}" class="mt-2">
+                        @csrf
+                        <button type="submit" class="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-secondary/25 bg-white text-primary hover:bg-accent/20">
+                            Prendre cette commande en charge
+                        </button>
+                    </form>
+                @endif
+            @endif
+
+            {{-- Le chef peut réaffecter à un serveur en service --}}
+            @if($isChief && $order->isActive() && $onDutyServers->isNotEmpty())
+                <form method="POST" action="{{ route('restaurant.orders.reassign', $order) }}" class="mt-3 flex items-center gap-2">
+                    @csrf
+                    <select name="assigned_server_id" class="flex-1 px-2 py-1.5 text-xs border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        @foreach($onDutyServers as $server)
+                            <option value="{{ $server->id }}" @selected($order->assigned_server_id === $server->id)>{{ $server->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-secondary/25 bg-white text-primary hover:bg-accent/20">
+                        Réaffecter
+                    </button>
+                </form>
+            @endif
+        </div>
+
+        {{-- Parcours de la commande --}}
+        @if($order->status !== 'canceled')
+            <div class="px-4 py-4 border-t border-secondary/15">
+                <p class="text-xs font-semibold uppercase tracking-widest text-primary/45 mb-3">Parcours</p>
+                @php
+                    $steps = [
+                        ['label' => 'Reçue', 'at' => $order->placed_at, 'done' => true],
+                        ['label' => 'Transmise en cuisine', 'at' => $order->sent_to_kitchen_at, 'done' => (bool) $order->sent_to_kitchen_at],
+                        ['label' => 'Prête', 'at' => $order->ready_at, 'done' => (bool) $order->ready_at],
+                        ['label' => 'Servie', 'at' => $order->served_at, 'done' => (bool) $order->served_at],
+                    ];
+                @endphp
+                <ol class="space-y-2.5">
+                    @foreach($steps as $step)
+                        <li class="flex items-center gap-3">
+                            <span class="h-5 w-5 rounded-full flex items-center justify-center shrink-0 {{ $step['done'] ? 'bg-green-500 text-white' : 'bg-secondary/15 text-primary/30' }}">
+                                <i data-lucide="{{ $step['done'] ? 'check' : 'circle' }}" class="w-3 h-3"></i>
+                            </span>
+                            <span class="text-sm {{ $step['done'] ? 'text-primary' : 'text-primary/40' }}">{{ $step['label'] }}</span>
+                            @if($step['at'])
+                                <span class="ml-auto text-[11px] text-primary/40">{{ $step['at']->format('H:i') }}</span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        @endif
+
+        {{-- Actions contextuelles selon le rôle et l'étape --}}
+        <div class="px-4 py-4 border-t border-secondary/15 bg-accent/10 space-y-2">
+            @php $acted = false; @endphp
+
+            @if($isServer && $order->status === 'pending')
+                @php $acted = true; @endphp
+                <form method="POST" action="{{ route('restaurant.orders.send_to_kitchen', $order) }}">
+                    @csrf
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark">
+                        <i data-lucide="send" class="w-4 h-4"></i> Transmettre le bon en cuisine
+                    </button>
+                </form>
+            @endif
+
+            @if($isCook && $order->status === 'confirmed')
+                @php $acted = true; @endphp
+                <form method="POST" action="{{ route('restaurant.orders.preparing', $order) }}">
+                    @csrf
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
+                        <i data-lucide="flame" class="w-4 h-4"></i> Prendre en préparation
+                    </button>
+                </form>
+            @endif
+
+            @if($isCook && $order->status === 'preparing')
+                @php $acted = true; @endphp
+                <form method="POST" action="{{ route('restaurant.orders.ready', $order) }}">
+                    @csrf
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                        <i data-lucide="bell-ring" class="w-4 h-4"></i> Signaler le plat prêt
+                    </button>
+                </form>
+            @endif
+
+            @if($isServer && $order->status === 'ready')
+                @php $acted = true; @endphp
+                <form method="POST" action="{{ route('restaurant.orders.served', $order) }}">
+                    @csrf
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                        <i data-lucide="check-check" class="w-4 h-4"></i> Marquer comme servie
+                    </button>
+                </form>
+            @endif
+
+            @if(!$acted && !in_array($order->status, ['served', 'canceled']))
+                <p class="text-xs text-primary/40 text-center py-1">
+                    @if($order->status === 'confirmed' || $order->status === 'preparing')
+                        En attente de la cuisine.
+                    @elseif($order->status === 'ready')
+                        En attente du serveur.
+                    @else
+                        Aucune action pour votre rôle à cette étape.
+                    @endif
+                </p>
+            @endif
+
+            {{-- Le chef garde la main : annulation et correction de statut --}}
+            @if($isChief)
+                <details class="pt-2">
+                    <summary class="text-[11px] text-primary/45 cursor-pointer hover:text-primary/70">Correction manuelle du statut (chef)</summary>
+                    <form method="POST" action="{{ route('restaurant.orders.status', $order) }}" class="flex items-center gap-2 mt-2">
+                        @csrf
+                        <select name="status" class="flex-1 px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            @foreach($statuses as $status)
+                                <option value="{{ $status }}" @selected($order->status === $status)>{{ $statusLabels[$status] ?? ucfirst($status) }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">OK</button>
+                    </form>
+                </details>
+            @endif
         </div>
     </aside>
 </div>
-
-<script>
-document.getElementById('status-form')?.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    try {
-        const response = await fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-        });
-        if (!response.ok) return;
-        const payload = await response.json();
-        if (!payload || !payload.ok) return;
-
-        const hint = document.getElementById('status-hint');
-        if (hint) {
-            hint.classList.remove('hidden');
-            setTimeout(() => hint.classList.add('hidden'), 1200);
-        }
-    } catch (err) {
-        console.error(err);
-    }
-});
-</script>
 @endsection
 

@@ -93,7 +93,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-primary border border-secondary/25">
-                                    {{ strtoupper($order->status) }}
+                                    {{ \App\Models\RestaurantCustomerOrder::STATUS_LABELS[$order->status] ?? ucfirst($order->status) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3">

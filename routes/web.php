@@ -227,14 +227,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (menus) ---
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff', 'module:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff,restaurant_cook', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+        Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
         Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
         Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
         Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+    });
+
+    // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_cook,restaurant_chief', 'module:restaurant'])->group(function () {
+        Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])->whereNumber('order')->name('orders.preparing');
+        Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')->name('orders.ready');
+    });
+
+    // Salle : prise de service, transmission en cuisine, service (serveur + chef)
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_staff,restaurant_chief', 'module:restaurant'])->group(function () {
+        Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])->name('shifts.open');
+        Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])->name('shifts.close');
+
+        Route::post('/orders/{order}/send-to-kitchen', [RestaurantOrderController::class, 'sendToKitchen'])->whereNumber('order')->name('orders.send_to_kitchen');
+        Route::post('/orders/{order}/served', [RestaurantOrderController::class, 'markServed'])->whereNumber('order')->name('orders.served');
+        Route::post('/orders/{order}/claim', [RestaurantOrderController::class, 'claim'])->whereNumber('order')->name('orders.claim');
+        Route::post('/orders/{order}/reassign', [RestaurantOrderController::class, 'reassign'])->whereNumber('order')->name('orders.reassign');
     });
 
     // Écriture RESTAURANT — manager exclu
