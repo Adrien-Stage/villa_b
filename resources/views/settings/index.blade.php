@@ -405,6 +405,20 @@
                                 <table class="min-w-full divide-y divide-secondary/10">
                                     <tbody class="divide-y divide-secondary/10">
                                         @foreach($categoryItems as $service)
+                                            @php
+                                                // Charge utile de l'éditeur, calculée ici : un tableau multi-ligne
+                                                // passé directement à @json dans un attribut casse le parseur Blade.
+                                                $editPayload = [
+                                                    'id' => $service->id,
+                                                    'category' => $service->category,
+                                                    'name' => $service->name,
+                                                    'description' => $service->description,
+                                                    'price' => $service->priceInFcfa(),
+                                                    'duration_minutes' => $service->duration_minutes,
+                                                    'sort_order' => $service->sort_order,
+                                                    'is_active' => $service->is_active,
+                                                ];
+                                            @endphp
                                             <tr class="{{ $service->is_active ? '' : 'opacity-60' }}">
                                                 <td class="px-5 py-3">
                                                     <p class="text-sm font-medium text-primary">{{ $service->name }}</p>
@@ -430,16 +444,7 @@
                                                 </td>
                                                 <td class="px-5 py-3">
                                                     <div class="flex justify-end gap-2">
-                                                        <button type="button" @click='openEdit(@json([
-                                                            "id" => $service->id,
-                                                            "category" => $service->category,
-                                                            "name" => $service->name,
-                                                            "description" => $service->description,
-                                                            "price" => $service->priceInFcfa(),
-                                                            "duration_minutes" => $service->duration_minutes,
-                                                            "sort_order" => $service->sort_order,
-                                                            "is_active" => $service->is_active,
-                                                        ]))'
+                                                        <button type="button" @click="openEdit(@json($editPayload))"
                                                             class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
                                                             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                                         </button>
