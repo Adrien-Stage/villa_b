@@ -530,7 +530,11 @@
                                 </div>
 
                                 <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                                    <input type="checkbox" name="is_active" value="1" x-model="form.is_active">
+                                    {{-- Champ caché piloté par Alpine : une case à cocher liée en x-model
+                                         peut soumettre une valeur vide (→ null → inactif). On envoie donc
+                                         une valeur déterministe 1/0, la case n'étant qu'un contrôle visuel. --}}
+                                    <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
+                                    <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
                                     Actif (proposé à la réception)
                                 </label>
                             </div>

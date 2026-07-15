@@ -484,7 +484,10 @@
                     </div>
 
                     <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                        <input type="checkbox" name="is_active" value="1" x-model="form.is_active">
+                        {{-- Valeur déterministe 1/0 : une case liée en x-model peut soumettre
+                             une valeur vide (→ null → inactif). La case reste le contrôle visuel. --}}
+                        <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
+                        <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
                         Fiche active (la vente du plat déduit le stock)
                     </label>
                 </div>
