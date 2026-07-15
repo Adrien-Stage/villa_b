@@ -613,7 +613,79 @@ class BookingController extends Controller
             ->whereNull('closed_at')
             ->exists();
 
-        return view('bookings.show', compact('booking', 'isCashRegisterOpen'));
+        return view('bookings.show', [
+            'booking' => $booking,
+            'isCashRegisterOpen' => $isCashRegisterOpen,
+            'folioCatalog' => $this->folioCatalog(),
+        ]);
+    }
+
+    /**
+     * Catalogue des prestations proposées dans le formulaire d'ajout au folio,
+     * indexé par type de ligne de folio.
+     *
+     * Chaque type renvoie une liste de groupes : [label, options[]], où chaque
+     * option porte son libellé, son prix en FCFA et une précision facultative.
+     * Le restaurant est groupé par service de repas (petit déj / déjeuner /
+     * dîner) ; les autres types viennent du catalogue des prestations géré
+     * dans Paramètres › Prestations.
+     */
+    private function folioCatalog(): array
+    {
+        $catalog = [];
+
+        // --- Restaurant : les plats, groupés par service de repas ---
+        $menuItems = \App\Models\RestaurantMenuItem::query()
+            ->active()
+            ->with('category')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $restaurantGroups = [];
+
+        foreach (\App\Models\RestaurantMenuItem::MEAL_SERVICES as $meal => $mealLabel) {
+            $options = $menuItems
+                ->filter(fn ($item) => $item->isServedAt($meal))
+                ->map(fn ($item) => [
+                    'label' => $item->name,
+                    'price' => (int) ($item->price / 100),
+                    'hint' => $item->category?->name,
+                ])
+                ->values()
+                ->all();
+
+            if ($options !== []) {
+                $restaurantGroups[] = ['label' => $mealLabel, 'options' => $options];
+            }
+        }
+
+        $catalog[FolioItem::TYPE_RESTAURANT] = $restaurantGroups;
+
+        // --- Activités, spa, housekeeping, blanchisserie, minibar ---
+        $services = \App\Models\ServiceItem::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('category');
+
+        foreach (\App\Models\ServiceItem::CATEGORIES as $category => $categoryLabel) {
+            $options = ($services[$category] ?? collect())
+                ->map(fn ($service) => [
+                    'label' => $service->name,
+                    'price' => $service->priceInFcfa(),
+                    'hint' => $service->duration_minutes ? $service->duration_minutes . ' min' : null,
+                ])
+                ->values()
+                ->all();
+
+            $catalog[$category] = $options === []
+                ? []
+                : [['label' => $categoryLabel, 'options' => $options]];
+        }
+
+        return $catalog;
     }
 
     /**

@@ -125,6 +125,14 @@
                     @endforeach
                 </select>
 
+                <select name="meal" onchange="this.form.submit()"
+                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <option value="">Tous les services</option>
+                    @foreach($mealServices as $meal => $mealLabel)
+                        <option value="{{ $meal }}" @selected(request('meal') === $meal)>{{ $mealLabel }}</option>
+                    @endforeach
+                </select>
+
                 <select name="status" onchange="this.form.submit()"
                     class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                     <option value="">Tous</option>
@@ -148,6 +156,7 @@
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Article</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Categorie</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Type</th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Service</th>
                             <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Prix</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
                             @if($canManage)
@@ -171,6 +180,9 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary">
                                         {{ strtoupper($item->type) }}
                                     </span>
+                                </td>
+                                <td class="px-4 py-3 text-xs text-primary/60 whitespace-nowrap">
+                                    {{ $item->mealServicesLabel() }}
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
                                     {{ number_format($item->price / 100, 0, ',', ' ') }} FCFA
@@ -307,6 +319,20 @@
         </div>
 
         <div>
+            <label class="text-xs text-primary/60">Servi à</label>
+            <div class="mt-1.5 flex flex-wrap gap-4">
+                @foreach($mealServices as $meal => $mealLabel)
+                    <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                        <input type="checkbox" name="meal_services[]" value="{{ $meal }}"
+                            @checked(in_array($meal, (array) old('meal_services', array_keys($mealServices)), true))>
+                        {{ $mealLabel }}
+                    </label>
+                @endforeach
+            </div>
+            <p class="mt-1 text-[11px] text-primary/40">Détermine les plats proposés à la réception lors de l'ajout d'une prestation au folio.</p>
+        </div>
+
+        <div>
             <label class="text-xs text-primary/60">Description (optionnel)</label>
             <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">{{ old('description') }}</textarea>
         </div>
@@ -377,6 +403,20 @@
                     <label class="text-xs text-primary/60">Ordre</label>
                     <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $item->sort_order) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
                 </div>
+            </div>
+
+            <div>
+                <label class="text-xs text-primary/60">Servi à</label>
+                <div class="mt-1.5 flex flex-wrap gap-4">
+                    @foreach($mealServices as $meal => $mealLabel)
+                        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                            <input type="checkbox" name="meal_services[]" value="{{ $meal }}"
+                                @checked(in_array($meal, (array) old('meal_services', $item->mealServices()), true))>
+                            {{ $mealLabel }}
+                        </label>
+                    @endforeach
+                </div>
+                <p class="mt-1 text-[11px] text-primary/40">Détermine les plats proposés à la réception lors de l'ajout d'une prestation au folio.</p>
             </div>
 
             <div>

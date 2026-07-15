@@ -154,7 +154,9 @@
                             @role('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
+                                <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
+                                <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
                             @endrole
 
                             @role('manager','restaurant_chief','cashier')

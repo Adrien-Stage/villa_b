@@ -81,6 +81,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('settings.update')
         ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
 
+    // Catalogue des prestations (onglet "Prestations" des paramètres)
+    Route::middleware('role:manager')->group(function () {
+        Route::post('/settings/services', [App\Http\Controllers\ServiceCatalogController::class, 'store'])
+            ->name('settings.services.store');
+        Route::put('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'update'])
+            ->name('settings.services.update');
+        Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'destroy'])
+            ->name('settings.services.destroy');
+    });
+
     // --- ASSISTANT IA (Kuété) ---
     Route::post('/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('ai.chat');
 
@@ -222,6 +232,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
+        Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
+        Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
+        Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
     });
 
     // Écriture RESTAURANT — manager exclu
@@ -246,6 +259,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/pantry/items', [RestaurantPantryController::class, 'storeItem'])->name('pantry.items.store');
             Route::put('/pantry/items/{item}', [RestaurantPantryController::class, 'updateItem'])->name('pantry.items.update');
             Route::delete('/pantry/items/{item}', [RestaurantPantryController::class, 'destroyItem'])->name('pantry.items.destroy');
+
+            // Réception de marchandise : saisie en unités d'achat, valorisée.
+            Route::post('/pantry/items/{item}/receive', [RestaurantPantryController::class, 'receive'])->name('pantry.items.receive');
+
+            // Fiches techniques
+            Route::post('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'store'])->name('recipes.store');
+            Route::put('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'update'])->name('recipes.update');
+            Route::delete('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'destroy'])->name('recipes.destroy');
+            Route::post('/recipes/{recipe}/produce', [App\Http\Controllers\RestaurantRecipeController::class, 'produce'])->name('recipes.produce');
+
+            // Inventaire physique
+            Route::post('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'store'])->name('stock_counts.store');
+            Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
+            Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
+            Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
         });
     });
 

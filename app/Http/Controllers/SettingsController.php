@@ -37,7 +37,23 @@ class SettingsController extends Controller
         $tenant = \App\Models\Tenant::first();
         $tenantSettings = $tenant?->settings ?? [];
 
-        return view('settings.index', compact('tab', 'user', 'tenant', 'tenantSettings'));
+        // Catalogue des prestations, groupé par catégorie (onglet "Prestations")
+        $serviceItems = \App\Models\ServiceItem::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('category');
+
+        $serviceCategories = \App\Models\ServiceItem::CATEGORIES;
+
+        return view('settings.index', compact(
+            'tab',
+            'user',
+            'tenant',
+            'tenantSettings',
+            'serviceItems',
+            'serviceCategories'
+        ));
     }
 
     public function update(Request $request)

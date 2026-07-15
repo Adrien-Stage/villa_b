@@ -6,6 +6,7 @@ use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantCustomerOrderItem;
 use App\Models\RestaurantMenuCategory;
 use App\Models\RestaurantMenuItem;
+use App\Services\RestaurantStockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,16 @@ use Illuminate\View\View;
 class RestaurantOrderController extends Controller
 {
     private const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served', 'canceled'];
+
+    /**
+     * Statuts à partir desquels la cuisine a engagé les ingrédients : le stock
+     * est sorti du garde-manger dès l'envoi en cuisine, pas au paiement.
+     */
+    private const KITCHEN_STATUSES = ['confirmed', 'preparing', 'ready', 'served'];
+
+    public function __construct(private readonly RestaurantStockService $stock)
+    {
+    }
 
     public function index(Request $request): View
     {
@@ -143,9 +154,13 @@ class RestaurantOrderController extends Controller
             return $order;
         });
 
+        // La commande part directement en cuisine : les ingrédients sortent du stock.
+        $shortages = $this->stock->deductForOrder($order);
+
         return redirect()
             ->route('restaurant.orders.show', $order)
-            ->with('success', 'Commande creee.');
+            ->with('success', 'Commande creee.')
+            ->with('stock_warning', $this->shortageMessage($shortages));
     }
 
     public function updateStatus(Request $request, RestaurantCustomerOrder $order): RedirectResponse|JsonResponse
@@ -154,12 +169,57 @@ class RestaurantOrderController extends Controller
             'status' => ['required', Rule::in(self::STATUSES)],
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $status = $validated['status'];
+        $order->update(['status' => $status]);
 
-        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-            return response()->json(['ok' => true, 'status' => $order->status, 'order_id' => $order->id]);
+        // Le stock suit le parcours de la commande : il sort à l'envoi en cuisine,
+        // et revient si la commande est annulée après coup.
+        $shortages = [];
+
+        if (in_array($status, self::KITCHEN_STATUSES, true)) {
+            $shortages = $this->stock->deductForOrder($order);
+        } elseif ($status === 'canceled') {
+            $this->stock->restoreForOrder($order);
         }
 
-        return back()->with('success', 'Statut mis a jour.');
+        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'ok' => true,
+                'status' => $order->status,
+                'order_id' => $order->id,
+                'stock_warning' => $this->shortageMessage($shortages),
+            ]);
+        }
+
+        return back()
+            ->with('success', 'Statut mis a jour.')
+            ->with('stock_warning', $this->shortageMessage($shortages));
+    }
+
+    /**
+     * Les ingrédients passés en négatif ne bloquent pas la vente, mais le chef doit
+     * le savoir immédiatement : soit le garde-manger est mal tenu, soit il faut
+     * réapprovisionner.
+     *
+     * @param  array<int, array{item: string, needed: float, available: float, unit: string}>  $shortages
+     */
+    private function shortageMessage(array $shortages): ?string
+    {
+        if ($shortages === []) {
+            return null;
+        }
+
+        $details = collect($shortages)
+            ->map(fn (array $shortage) => sprintf(
+                '%s (besoin %s %s, stock %s %s)',
+                $shortage['item'],
+                rtrim(rtrim(number_format($shortage['needed'], 3, ',', ' '), '0'), ','),
+                $shortage['unit'],
+                rtrim(rtrim(number_format($shortage['available'], 3, ',', ' '), '0'), ','),
+                $shortage['unit'],
+            ))
+            ->implode(' · ');
+
+        return "Stock insuffisant : {$details}. La commande est passée, mais le garde-manger est en négatif.";
     }
 }

@@ -421,7 +421,8 @@
             'room' => 'hotel',
             'restaurant' => 'utensils',
             'activity' => 'map-pin',
-            'spa' => 'sparkles',
+            'spa' => 'flower-2',
+            'housekeeping' => 'sparkles',
             'minibar' => 'wine',
             'laundry' => 'shirt',
             'discount' => 'tag',
@@ -568,7 +569,8 @@
 {{-- Modal : Ajouter prestation au folio --}}
 <div id="modal-folio" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]"
+        x-data="folioForm(@js($folioCatalog))">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Ajouter une prestation</h3>
             <button onclick="document.getElementById('modal-folio').classList.add('hidden')"
@@ -581,37 +583,103 @@
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
-                <select name="type" required
+                <select name="type" required x-model="type" @change="onTypeChange()"
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                     <option value="restaurant">Restaurant</option>
                     <option value="activity">Activité</option>
                     <option value="spa">Spa</option>
-                    <option value="minibar">Minibar</option>
+                    <option value="housekeeping">Housekeeping</option>
                     <option value="laundry">Blanchisserie</option>
+                    <option value="minibar">Minibar</option>
                     <option value="discount">Remise</option>
                     <option value="other">Autre</option>
                 </select>
             </div>
+
+            {{-- Catalogue : plats du restaurant par service, prestations spa / activités / housekeeping… --}}
+            <div x-show="hasCatalog" style="display: none;">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50">Catalogue</label>
+                    <span class="text-[11px] text-primary/40" x-show="selected" style="display: none;"
+                        x-text="'Sélection : ' + selected"></span>
+                </div>
+
+                <div class="border border-secondary/30 rounded-lg overflow-hidden">
+                    {{-- Services de repas (petit déj / déjeuner / dîner) --}}
+                    <div class="flex border-b border-secondary/20 bg-gray-50" x-show="groups.length > 1">
+                        <template x-for="(group, index) in groups" :key="group.label">
+                            <button type="button" @click="activeGroup = index; search = ''"
+                                class="flex-1 px-3 py-2 text-xs font-medium border-b-2 transition-colors"
+                                :class="activeGroup === index
+                                    ? 'border-primary text-primary bg-white'
+                                    : 'border-transparent text-primary/40 hover:text-primary/70'"
+                                x-text="group.label"></button>
+                        </template>
+                    </div>
+
+                    <div class="px-3 py-2 border-b border-secondary/20">
+                        <input type="text" x-model="search" placeholder="Rechercher..."
+                            class="w-full px-2 py-1 text-xs border-0 text-primary outline-none placeholder-primary/30">
+                    </div>
+
+                    <div class="max-h-52 overflow-y-auto divide-y divide-secondary/10">
+                        <template x-for="option in options" :key="option.label">
+                            <button type="button" @click="pick(option)"
+                                class="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-accent/20 transition-colors"
+                                :class="selected === option.label ? 'bg-accent/30' : ''">
+                                <span class="min-w-0">
+                                    <span class="block text-sm text-primary truncate" x-text="option.label"></span>
+                                    <span class="block text-[11px] text-primary/40" x-show="option.hint" x-text="option.hint"></span>
+                                </span>
+                                <span class="shrink-0 text-sm font-semibold text-primary"
+                                    x-text="format(option.price) + ' FCFA'"></span>
+                            </button>
+                        </template>
+                        <div x-show="options.length === 0" style="display: none;" class="px-3 py-4 text-center text-xs text-primary/40">
+                            Aucun élément ne correspond.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Type sans catalogue : on invite à le remplir, la saisie libre reste possible --}}
+            <p x-show="!hasCatalog && catalogable" style="display: none;"
+                class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Aucune prestation au catalogue pour ce type.
+                <template x-if="type === 'restaurant'">
+                    <span>Ajoutez des plats dans <a href="{{ route('restaurant.menus.index') }}" class="underline font-medium">Restaurant › Menus</a>.</span>
+                </template>
+                <template x-if="type !== 'restaurant'">
+                    <span>Ajoutez-en dans <a href="{{ route('settings.index', ['tab' => 'services']) }}" class="underline font-medium">Paramètres › Prestations</a>.</span>
+                </template>
+                En attendant, la saisie reste libre.
+            </p>
+
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Description *</label>
-                <input type="text" name="description" required
+                <input type="text" name="description" required x-model="description"
                     placeholder="Ex: Dîner gastronomique, Excursion lac Barombi..."
                     class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Quantité *</label>
-                    <input type="number" name="quantity" value="1" min="0.5" step="0.5" required
+                    <input type="number" name="quantity" x-model="quantity" min="0.5" step="0.5" required
                         class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prix unitaire (FCFA)</label>
-                    <input type="number" name="unit_price" value="0" min="0"
+                    <input type="number" name="unit_price" x-model="unitPrice" min="0"
                         class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                 </div>
             </div>
+            <div class="flex items-center justify-between bg-gray-50 border border-secondary/20 rounded-lg px-3 py-2">
+                <span class="text-xs font-semibold uppercase tracking-widest text-primary/50">Total</span>
+                <span class="text-sm font-bold text-primary"
+                    x-text="complimentary ? 'Offert' : format(total) + ' FCFA'"></span>
+            </div>
             <div class="flex items-center gap-2">
-                <input type="checkbox" name="is_complimentary" value="1" id="complimentary"
+                <input type="checkbox" name="is_complimentary" value="1" id="complimentary" x-model="complimentary"
                     class="w-4 h-4 rounded border-secondary/30 text-primary">
                 <label for="complimentary" class="text-xs text-primary/70">
                     Prestation offerte (montant à 0, mais tracée dans l'historique)
@@ -861,6 +929,65 @@
 @push('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
+        // Formulaire d'ajout d'une prestation au folio : le type sélectionné
+        // charge le catalogue correspondant (plats par service de repas,
+        // prestations spa / activités / housekeeping…). La saisie libre reste
+        // toujours possible.
+        Alpine.data('folioForm', (catalog) => ({
+            catalog,
+            type: 'restaurant',
+            activeGroup: 0,
+            search: '',
+            selected: null,
+            description: '',
+            unitPrice: 0,
+            quantity: 1,
+            complimentary: false,
+
+            // Types dont on attend un catalogue (la remise et la saisie libre n'en ont pas)
+            get catalogable() {
+                return this.type in this.catalog;
+            },
+
+            get groups() {
+                return this.catalog[this.type] ?? [];
+            },
+
+            get hasCatalog() {
+                return this.groups.length > 0;
+            },
+
+            get options() {
+                const group = this.groups[this.activeGroup];
+                if (!group) return [];
+
+                const query = this.search.trim().toLowerCase();
+                if (!query) return group.options;
+
+                return group.options.filter((option) => option.label.toLowerCase().includes(query));
+            },
+
+            get total() {
+                return Math.round((parseFloat(this.quantity) || 0) * (parseInt(this.unitPrice) || 0));
+            },
+
+            onTypeChange() {
+                this.activeGroup = 0;
+                this.search = '';
+                this.selected = null;
+            },
+
+            pick(option) {
+                this.selected = option.label;
+                this.description = option.label;
+                this.unitPrice = option.price;
+            },
+
+            format(amount) {
+                return new Intl.NumberFormat('fr-FR').format(amount || 0);
+            },
+        }));
+
         Alpine.data('bookingTimer', (checkInStr, checkOutStr) => ({
             timeSpent: 'Calcul...',
             timeLeft: 'Calcul...',

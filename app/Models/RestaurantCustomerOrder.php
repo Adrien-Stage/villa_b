@@ -28,14 +28,39 @@ class RestaurantCustomerOrder extends Model
         'placed_at',
         'paid_at',
         'paid_by',
+        'stock_deducted_at',
+        'food_cost',
     ];
 
     protected $casts = [
         'total_amount' => 'integer',
         'amount_paid' => 'integer',
+        'food_cost' => 'integer',
         'placed_at' => 'datetime',
         'paid_at' => 'datetime',
+        'stock_deducted_at' => 'datetime',
     ];
+
+    /**
+     * Les ingrédients de cette commande ont-ils déjà été sortis du garde-manger ?
+     */
+    public function stockWasDeducted(): bool
+    {
+        return $this->stock_deducted_at !== null;
+    }
+
+    /**
+     * Marge brute de la commande, en centimes FCFA. Null tant que le coût matière
+     * n'a pas été figé (commande non envoyée en cuisine).
+     */
+    public function margin(): ?int
+    {
+        if ($this->food_cost === null) {
+            return null;
+        }
+
+        return (int) $this->total_amount - (int) $this->food_cost;
+    }
 
     public function items(): HasMany
     {

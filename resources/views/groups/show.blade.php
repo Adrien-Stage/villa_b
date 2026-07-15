@@ -344,7 +344,8 @@
             $typeIcons = [
             'restaurant' => 'utensils',
             'activity' => 'map-pin',
-            'spa' => 'sparkles',
+            'spa' => 'flower-2',
+            'housekeeping' => 'sparkles',
             'minibar' => 'wine',
             'laundry' => 'shirt',
             'discount' => 'tag',
