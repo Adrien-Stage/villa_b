@@ -162,7 +162,27 @@
                             @if($canManage)
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-2">
-                                        <button type="button" onclick='openRecipeEditor(@json($recipe->load("lines")->only(["id", "name", "type", "restaurant_menu_item_id", "produces_pantry_item_id", "yield_quantity", "notes", "is_active"]) + ["lines" => $recipe->lines->map(fn ($l) => ["restaurant_pantry_item_id" => $l->restaurant_pantry_item_id, "quantity" => (float) $l->quantity, "waste_percent" => (float) $l->waste_percent, "notes" => $l->notes])->values()]))'
+                                        @php
+                                            // Charge utile préparée ici : un @json avec tableau inline
+                                            // multi-clé casse le parseur Blade selon la version.
+                                            $recipePayload = [
+                                                'id' => $recipe->id,
+                                                'name' => $recipe->name,
+                                                'type' => $recipe->type,
+                                                'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
+                                                'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
+                                                'yield_quantity' => $recipe->yield_quantity,
+                                                'notes' => $recipe->notes,
+                                                'is_active' => $recipe->is_active,
+                                                'lines' => $recipe->lines->map(fn ($l) => [
+                                                    'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
+                                                    'quantity' => (float) $l->quantity,
+                                                    'waste_percent' => (float) $l->waste_percent,
+                                                    'notes' => $l->notes,
+                                                ])->values(),
+                                            ];
+                                        @endphp
+                                        <button type="button" onclick="openRecipeEditor(@json($recipePayload))"
                                             class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
                                             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                         </button>
@@ -260,7 +280,25 @@
                                                 Produire
                                             </button>
                                         </form>
-                                        <button type="button" onclick='openRecipeEditor(@json($recipe->only(["id", "name", "type", "restaurant_menu_item_id", "produces_pantry_item_id", "yield_quantity", "notes", "is_active"]) + ["lines" => $recipe->lines->map(fn ($l) => ["restaurant_pantry_item_id" => $l->restaurant_pantry_item_id, "quantity" => (float) $l->quantity, "waste_percent" => (float) $l->waste_percent, "notes" => $l->notes])->values()]))'
+                                        @php
+                                            $recipePayload = [
+                                                'id' => $recipe->id,
+                                                'name' => $recipe->name,
+                                                'type' => $recipe->type,
+                                                'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
+                                                'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
+                                                'yield_quantity' => $recipe->yield_quantity,
+                                                'notes' => $recipe->notes,
+                                                'is_active' => $recipe->is_active,
+                                                'lines' => $recipe->lines->map(fn ($l) => [
+                                                    'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
+                                                    'quantity' => (float) $l->quantity,
+                                                    'waste_percent' => (float) $l->waste_percent,
+                                                    'notes' => $l->notes,
+                                                ])->values(),
+                                            ];
+                                        @endphp
+                                        <button type="button" onclick="openRecipeEditor(@json($recipePayload))"
                                             class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
                                             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                         </button>
