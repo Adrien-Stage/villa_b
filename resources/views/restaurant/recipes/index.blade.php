@@ -441,7 +441,8 @@
                                 <div class="col-span-2 text-right">Quantité</div>
                                 <div class="col-span-2 text-right" title="Perte au parage ou à la cuisson">Perte %</div>
                                 <div class="col-span-2 text-right">Sortie du stock</div>
-                                <div class="col-span-2 text-right">Coût</div>
+                                <div class="col-span-1 text-right">Coût</div>
+                                <div class="col-span-1"></div>
                             </div>
 
                             <template x-for="(line, index) in form.lines" :key="index">
@@ -472,10 +473,17 @@
                                     </div>
                                     <div class="col-span-2 text-right text-xs text-primary/60" x-text="grossOf(line)"></div>
                                     <div class="col-span-1 text-right text-xs font-semibold text-primary" x-text="costOf(line)"></div>
-                                    <div class="col-span-1 text-right">
+                                    <div class="col-span-1 flex justify-end">
+                                        {{-- SVG inline (et non un icône Lucide) : les lignes sont créées
+                                             dynamiquement par Alpine, or Lucide ne convertit que les icônes
+                                             présentes au chargement — un <i data-lucide> resterait invisible. --}}
                                         <button type="button" @click="removeLine(index)"
-                                            class="h-7 w-7 inline-flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50">
-                                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                            title="Retirer cet ingrédient" aria-label="Retirer cet ingrédient"
+                                            class="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M18 6 6 18M6 6l12 12"/>
+                                            </svg>
                                         </button>
                                     </div>
                                 </div>
