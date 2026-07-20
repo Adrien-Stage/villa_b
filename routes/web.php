@@ -321,9 +321,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggleStatus');
     });
 
-    // --- COMPTABILITÉ (futur module) ---
+    // --- COMPTABILITÉ (comptabilité de caisse : hébergement + resto + boutique) ---
     Route::prefix('accounting')->name('accounting.')->middleware('role:accountant,manager,admin')->group(function () {
-        // Ces routes seront implémentées quand le module comptable sera développé
+        $c = App\Http\Controllers\AccountingController::class;
+
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::get('/journal', [$c, 'journal'])->name('journal');
+        Route::get('/compte-de-resultat', [$c, 'incomeStatement'])->name('income_statement');
+        Route::get('/creances', [$c, 'receivables'])->name('receivables');
+        Route::get('/caisse', [$c, 'cash'])->name('cash');
+
+        Route::get('/depenses', [$c, 'expenses'])->name('expenses');
+        Route::post('/depenses', [$c, 'storeExpense'])->name('expenses.store');
+        Route::put('/depenses/{expense}', [$c, 'updateExpense'])->name('expenses.update');
+        Route::delete('/depenses/{expense}', [$c, 'destroyExpense'])->name('expenses.destroy');
     });
 
     // --- SHOP ---

@@ -403,7 +403,7 @@
 
         <div class="grid grid-cols-3 gap-4">
             <div>
-                <label class="text-xs text-primary/60">Unité</label>
+                <label class="text-xs text-primary/60">Unité de stock</label>
                 <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
                     @foreach($units as $unit)
                         <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
@@ -415,8 +415,10 @@
                 <input type="number" step="0.001" min="0" name="min_stock" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
             </div>
             <div>
-                <label class="text-xs text-primary/60">Coût unitaire initial (FCFA)</label>
-                <input type="number" min="0" name="cost_price" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <label class="text-xs text-primary/60">Coût de départ (FCFA)</label>
+                <input type="number" min="0" name="cost_price" placeholder="optionnel"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                <p class="text-[11px] text-primary/40 mt-1">Optionnel — le coût réel se calcule à la réception.</p>
             </div>
         </div>
 
@@ -483,7 +485,7 @@
 
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="text-xs text-primary/60">Unité</label>
+                    <label class="text-xs text-primary/60">Unité de stock</label>
                     <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
                         @foreach($units as $unit)
                             <option value="{{ $unit }}" @selected($item->unit === $unit)>{{ strtoupper($unit) }}</option>
