@@ -219,6 +219,15 @@
                     @endmodule
                 @endrole
 
+                @role('accountant','manager','admin')
+                    <div>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endrole
+
                 @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
                     <div class="mt-4 pt-4 border-t border-surface-dark">
                         <ul class="space-y-0.5">
