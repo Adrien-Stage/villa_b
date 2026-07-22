@@ -94,7 +94,7 @@
         <div>
             <h3 class="text-sm font-semibold text-primary mb-4 pb-2 border-b border-secondary/10">3. Adresse géographique</h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-primary/70 mb-1.5">Adresse de résidence</label>
                     <input type="text" name="address" value="{{ old('address', $customer->address) }}" placeholder="Rue, Quartier..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
@@ -103,6 +103,8 @@
                     <label class="block text-xs font-semibold text-primary/70 mb-1.5">Ville</label>
                     <input type="text" name="city" value="{{ old('city', $customer->city) }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                 </div>
+                {{-- Pays de résidence : alimente l'analyse des marchés émetteurs. --}}
+                <x-country-select name="country" :value="$customer->country" />
             </div>
         </div>
 

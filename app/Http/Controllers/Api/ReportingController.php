@@ -77,6 +77,18 @@ class ReportingController extends Controller
         return response()->json($this->reporting->staff());
     }
 
+    /** Analytique de la clientèle : valeur, classements, RFM, marchés émetteurs. */
+    public function customers(Request $request): JsonResponse
+    {
+        $period = $this->period($request);
+        [$start, $end] = $this->reporting->periodRange($period);
+
+        return response()->json(array_merge(
+            ['period' => $period],
+            $this->reporting->customers($start, $end)
+        ));
+    }
+
     /** Factures (rapports financiers formels). */
     public function invoices(Request $request): JsonResponse
     {

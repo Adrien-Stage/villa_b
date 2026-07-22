@@ -266,19 +266,12 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type CNI/Pass</label>
-                                <select name="booker_id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
-                                    <option value="CNI" {{ old('booker_id_document_type') == 'CNI' ? 'selected' : '' }}>CNI</option>
-                                    <option value="Passeport" {{ old('booker_id_document_type') == 'Passeport' ? 'selected' : '' }}>Passeport</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro CNI/Pass *</label>
-                                <input type="text" name="booker_id_document_number" value="{{ old('booker_id_document_number') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
-                                @error('booker_id_document_number')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-                            </div>
+                            {{-- Facultatif ici : le marché émetteur se mesure sur le client
+                                 qui séjourne, pas sur celui qui règle la réservation. --}}
+                            <x-country-select name="booker_country" label="Pays de résidence" x-bind:disabled="!isCreatingNew" />
                         </div>
+                        {{-- La pièce d'identité n'est plus demandée à la réservation :
+                             elle est collectée au check-in (arrivée du client). --}}
                     </x-customer-search>
                     
                     <div class="mt-4 text-right" x-show="!showCustomer">
@@ -314,8 +307,8 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email</label>
-                                <input type="email" name="email" value="{{ old('email') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email *</label>
+                                <input type="email" name="email" value="{{ old('email') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
                                 @error('email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
@@ -324,21 +317,16 @@
                                 @error('phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-5">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            {{-- Pays de résidence : marché émetteur, base de l'analyse géographique. --}}
+                            <x-country-select name="country" :required="true" x-bind:disabled="!isCreatingNew" />
                             <div>
-                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type document</label>
-                                <select name="id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
-                                    <option value="">Sélectionner...</option>
-                                    <option value="CNI" {{ old('id_document_type') == 'CNI' ? 'selected' : '' }}>CNI</option>
-                                    <option value="Passeport" {{ old('id_document_type') == 'Passeport' ? 'selected' : '' }}>Passeport</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro document</label>
-                                <input type="text" name="id_document_number" value="{{ old('id_document_number') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
-                                @error('id_document_number')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nationalité</label>
+                                <input type="text" name="nationality" value="{{ old('nationality') }}" placeholder="Facultatif" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                @error('nationality')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
+                        {{-- La pièce d'identité du client est demandée au check-in, pas ici. --}}
                     </x-customer-search>
                 </div>
 

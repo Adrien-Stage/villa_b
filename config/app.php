@@ -69,6 +69,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pays d'implantation de l'établissement
+    |--------------------------------------------------------------------------
+    |
+    | Code ISO 3166-1 alpha-2 du pays où se trouve l'établissement. Sert à
+    | distinguer la clientèle domestique de la clientèle internationale dans
+    | l'analyse des marchés émetteurs.
+    |
+    */
+
+    'home_country' => env('HOME_COUNTRY', 'CM'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

@@ -51,14 +51,11 @@
                 Check-in
             </button>
         @else
-            <form method="POST" action="{{ route('bookings.checkIn', $booking) }}" class="expect-popup">
-                @csrf
-                <button type="submit"
-                    class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
-                    <i data-lucide="log-in" class="w-4 h-4"></i>
-                    Check-in
-                </button>
-            </form>
+            <button type="button" onclick="document.getElementById('modal-checkin').classList.remove('hidden')"
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <i data-lucide="log-in" class="w-4 h-4"></i>
+                Check-in
+            </button>
         @endif
         @endrole
         @endif
@@ -774,6 +771,48 @@
     </div>
 </div>
 
+{{-- Modal : Check-in direct — relevé de la pièce d'identité à l'arrivée --}}
+@if($booking->status->value === 'confirmed' && !$booking->checkin_code)
+@role('reception', 'manager')
+<div id="modal-checkin" class="hidden fixed inset-0 z-50 flex items-center justify-center"
+     style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+            <h3 class="font-heading font-semibold text-primary text-sm">Check-in — pièce d'identité</h3>
+            <button type="button" onclick="document.getElementById('modal-checkin').classList.add('hidden')" class="text-primary/30 hover:text-primary transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <form method="POST" action="{{ route('bookings.checkIn', $booking) }}">
+            @csrf
+            <div class="px-6 py-5 space-y-4">
+                <p class="text-xs text-primary/55">Relevez la pièce d'identité de <b>{{ $booking->customer->full_name ?? 'du client' }}</b> à son arrivée.</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type</label>
+                        <select name="id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                            <option value="CNI">CNI</option>
+                            <option value="Passeport">Passeport</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro *</label>
+                        <input type="text" name="id_document_number" required maxlength="50" autofocus
+                            placeholder="Ex : 20261430524…"
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                <button type="button" onclick="document.getElementById('modal-checkin').classList.add('hidden')" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">Valider le check-in</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endrole
+@endif
+
 {{-- Modal : Check-in OTP (Validation automatique) --}}
 @if($booking->checkin_code && $booking->status->value === 'confirmed')
 <div id="modal-checkin-otp"
@@ -818,8 +857,24 @@
             {{-- Saisie OTP --}}
             <template x-if="!locked">
                 <div>
+                    {{-- Pièce d'identité relevée à l'arrivée (à renseigner avant le code) --}}
+                    <div class="mb-5 grid grid-cols-3 gap-3 text-left">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-primary/50 mb-1">Type</label>
+                            <select id="checkin-id-type" class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                <option value="CNI">CNI</option>
+                                <option value="Passeport">Passeport</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-semibold text-primary/50 mb-1">N° pièce d'identité *</label>
+                            <input type="text" id="checkin-id-number" maxlength="50" placeholder="CNI / Passeport du client"
+                                class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                        </div>
+                    </div>
+
                     <p class="text-sm text-primary/60 text-center mb-6">
-                        Saisissez le code à 6 chiffres communiqué lors de la réservation.
+                        Renseignez la pièce d'identité, puis saisissez le code à 6 chiffres communiqué lors de la réservation.
                     </p>
 
                     {{-- 6 inputs individuels --}}
@@ -1132,6 +1187,17 @@
             },
 
             async submitCode(code) {
+                // La pièce d'identité doit être relevée avant de valider le code.
+                const idNumber = (document.getElementById('checkin-id-number')?.value || '').trim();
+                const idType = document.getElementById('checkin-id-type')?.value || '';
+                if (!idNumber) {
+                    this.errorState = true;
+                    this.errorMessage = "Renseignez d'abord le numéro de pièce d'identité du client.";
+                    this.shake = true;
+                    setTimeout(() => { this.shake = false; document.getElementById('checkin-id-number')?.focus(); }, 600);
+                    return;
+                }
+
                 this.verifying = true;
                 this.errorMessage = '';
                 this.errorState = false;
@@ -1144,7 +1210,7 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json',
                         },
-                        body: JSON.stringify({ checkin_code: code }),
+                        body: JSON.stringify({ checkin_code: code, id_document_type: idType, id_document_number: idNumber }),
                     });
 
                     const data = await response.json();

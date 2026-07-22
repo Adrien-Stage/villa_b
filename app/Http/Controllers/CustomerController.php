@@ -76,6 +76,8 @@ class CustomerController extends Controller
             'id_document_number' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
+            // Pays de résidence (code ISO) : marché émetteur du client.
+            'country' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
             'is_vip' => 'nullable|boolean',
             'is_blacklisted' => 'nullable|boolean',
             'notes' => 'nullable|string',
