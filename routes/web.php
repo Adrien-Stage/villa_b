@@ -98,6 +98,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.partners.update');
         Route::delete('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'destroy'])
             ->name('settings.partners.destroy');
+
+        // Packs d'hébergement (onglet "Hébergement" des paramètres).
+        Route::post('/settings/packages', [App\Http\Controllers\RoomPackageController::class, 'store'])
+            ->name('settings.packages.store');
+        Route::put('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class, 'update'])
+            ->name('settings.packages.update');
+        Route::delete('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class, 'destroy'])
+            ->name('settings.packages.destroy');
     });
 
     // --- ASSISTANT IA (Kuété) ---

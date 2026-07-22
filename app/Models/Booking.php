@@ -34,6 +34,7 @@ class Booking extends Model
         'customer_id',
         'booker_id',
         'partner_organization_id', // Convention appliquée à CE séjour
+        'room_package_id',         // Formule d'hébergement retenue
         'group_booking_id',     // Null si individuel
         'booking_number',       // Numéro unique affiché (VB-2025-0001)
         'status',
@@ -55,6 +56,7 @@ class Booking extends Model
         'price_per_night',      // Prix appliqué (peut différer du tarif base)
         'total_room_amount',    // total_nights * price_per_night
         'extras_amount',        // Restaurant, minibar...
+        'package_amount',       // Formule figée au moment de la réservation
         'tax_amount',
         'discount_amount',      // Points fidélité ou remise
         'total_amount',         // Montant final
@@ -85,6 +87,7 @@ class Booking extends Model
         'price_per_night' => 'integer',
         'total_room_amount' => 'integer',
         'extras_amount' => 'integer',
+        'package_amount' => 'integer',
         'tax_amount' => 'integer',
         'discount_amount' => 'integer',
         'total_amount' => 'integer',
@@ -153,6 +156,12 @@ class Booking extends Model
         return $this->belongsTo(PartnerOrganization::class);
     }
 
+    /** Formule d'hébergement retenue pour ce séjour, s'il y en a une. */
+    public function roomPackage(): BelongsTo
+    {
+        return $this->belongsTo(RoomPackage::class);
+    }
+
     public function groupBooking(): BelongsTo
     {
         return $this->belongsTo(GroupBooking::class);
@@ -207,6 +216,7 @@ class Booking extends Model
         $this->total_nights = $this->check_in->diffInDays($this->check_out);
         $this->total_room_amount = $this->total_nights * $this->price_per_night;
         $this->total_amount = $this->total_room_amount
+            + $this->package_amount
             + $this->extras_amount
             + $this->tax_amount
             - $this->discount_amount;

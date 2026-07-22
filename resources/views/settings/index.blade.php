@@ -44,6 +44,15 @@
             </a>
         @endrole
 
+        @role('manager')
+            <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="bed-double" class="w-4 h-4"></i>
+                Hébergement
+            </a>
+        @endrole
+
         @role('manager', 'housekeeping_leader')
             <a href="{{ route('settings.index', ['tab' => 'housekeeping']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
@@ -562,6 +571,370 @@
             </div>
         @endif
 
+        {{-- ONGLET: HÉBERGEMENT — PACKS (Uniquement Manager) --}}
+        @if($tab === 'hebergement' && $user->hasRole('manager'))
+            @php
+                // Charge utile de l'éditeur préparée ici : un tableau multi-ligne
+                // passé directement à @json dans un attribut casse le parseur Blade.
+                $packPayloads = $roomPackages->mapWithKeys(fn ($p) => [$p->id => [
+                    'id'                  => $p->id,
+                    'name'                => $p->name,
+                    'code'                => $p->code,
+                    'description'         => $p->description,
+                    'meals'               => $p->meals ?? [],
+                    'service_item_ids'    => array_map('intval', $p->service_item_ids ?? []),
+                    'pricing_mode'        => $p->pricing_mode,
+                    'price'               => (int) ($p->price / 100),
+                    'room_discount_type'  => $p->room_discount_type,
+                    'room_discount_value' => $p->room_discount_type === 'amount'
+                                                ? (int) ($p->room_discount_value / 100)
+                                                : (int) $p->room_discount_value,
+                    'room_type_ids'       => array_map('intval', $p->room_type_ids ?? []),
+                    'sort_order'          => (int) $p->sort_order,
+                    'is_active'           => (bool) $p->is_active,
+                ]])->all();
+
+                $packServiceOptions = $serviceItemsFlat->map(fn ($s) => [
+                    'id'    => $s->id,
+                    'name'  => $s->name,
+                    'group' => $s->categoryLabel(),
+                    'price' => (int) ($s->price / 100),
+                ])->values()->all();
+
+                $packRoomTypeOptions = $roomTypes->map(fn ($t) => [
+                    'id'   => $t->id,
+                    'name' => $t->name,
+                ])->values()->all();
+            @endphp
+
+            <div x-data="packCatalog({{ Js::from($mealServices) }}, {{ Js::from($packServiceOptions) }}, {{ Js::from($packRoomTypeOptions) }}, {{ Js::from($packPricingModes) }})">
+                <div class="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-primary">Packs d'hébergement</h2>
+                        <p class="text-sm text-primary/60 mt-1 max-w-2xl">
+                            Formules proposées au client au moment de la réservation : demi-pension, pension complète,
+                            séjour affaires avec blanchisserie… Chaque pack regroupe des repas et des prestations à un
+                            tarif forfaitaire, et peut s'accompagner d'une remise sur la nuitée.
+                        </p>
+                    </div>
+                    <button type="button" @click="openCreate()"
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nouveau pack
+                    </button>
+                </div>
+
+                @if($errors->any())
+                    <div class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if($roomPackages->isEmpty())
+                    <div class="border border-dashed border-secondary/30 rounded-xl px-6 py-12 text-center">
+                        <i data-lucide="bed-double" class="w-8 h-8 mx-auto text-primary/20 mb-3"></i>
+                        <p class="text-sm text-primary/50">Aucun pack configuré.</p>
+                        <button type="button" @click="openCreate()" class="mt-2 text-xs font-medium text-primary hover:underline">
+                            Créer le premier
+                        </button>
+                    </div>
+                @else
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        @foreach($roomPackages as $package)
+                            <div class="border border-secondary/20 rounded-xl overflow-hidden {{ $package->is_active ? 'bg-white' : 'bg-gray-50/60' }}">
+                                <div class="px-5 py-3 border-b border-secondary/20 flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-primary truncate">
+                                            {{ $package->name }}
+                                            @if($package->code)
+                                                <span class="ml-1 text-[10px] font-mono text-primary/40">{{ $package->code }}</span>
+                                            @endif
+                                        </p>
+                                        <p class="text-[11px] text-primary/40">{{ $package->pricingModeLabel() }}</p>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <p class="text-sm font-bold text-primary">{{ number_format($package->price / 100, 0, ',', ' ') }} F</p>
+                                        @unless($package->is_active)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">Inactif</span>
+                                        @endunless
+                                    </div>
+                                </div>
+
+                                <div class="px-5 py-3">
+                                    @php $contents = $package->contentLabels(); @endphp
+                                    @if(empty($contents))
+                                        <p class="text-xs text-primary/30">Pack vide — aucun repas ni prestation.</p>
+                                    @else
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($contents as $label)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/30 text-primary border border-secondary/20">{{ $label }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    <p class="text-[11px] text-primary/40 mt-2">
+                                        @if(empty($package->room_type_ids))
+                                            Proposé sur tous les types de chambre
+                                        @else
+                                            {{ count($package->room_type_ids) }} type(s) de chambre concerné(s)
+                                        @endif
+                                    </p>
+                                </div>
+
+                                <div class="px-5 py-2.5 bg-gray-50/70 border-t border-secondary/20 flex justify-end gap-2">
+                                    <button type="button" @click="openEdit(@json($packPayloads[$package->id]))"
+                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('settings.packages.destroy', $package) }}"
+                                        onsubmit="return confirm('Supprimer le pack « {{ $package->name }} » ? Les séjours déjà vendus conservent leur montant.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Modal création / édition --}}
+                <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
+                    <div class="absolute inset-0" @click="open = false"></div>
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col max-h-[90vh]">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
+                            <h3 class="font-heading font-semibold text-primary"
+                                x-text="editing ? 'Modifier le pack' : 'Nouveau pack d\'hébergement'"></h3>
+                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            @csrf
+                            <template x-if="editing">
+                                <input type="hidden" name="_method" value="PUT">
+                            </template>
+
+                            <div class="px-6 py-5 space-y-6 flex-1 overflow-y-auto min-h-0 bg-gray-50/40">
+
+                                {{-- Identité --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                                        Identité
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom du pack <span class="text-red-500">*</span></label>
+                                            <input type="text" name="name" x-model="form.name" required maxlength="140"
+                                                placeholder="Ex : Demi-pension, Pension complète, Séjour affaires"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
+                                            <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="DP"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Description</label>
+                                        <textarea name="description" x-model="form.description" rows="2" maxlength="500"
+                                            placeholder="Ce que le client obtient, en une phrase..."
+                                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30"></textarea>
+                                    </div>
+                                </section>
+
+                                {{-- Composition --}}
+                                <section class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/60 mb-1">
+                                        <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+                                        Composition du pack
+                                    </h4>
+                                    <p class="text-[11px] text-primary/40 mb-4">Ce que la formule comprend, facturé forfaitairement.</p>
+
+                                    {{-- Repas --}}
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3.5">
+                                        <p class="text-xs font-semibold text-primary mb-2.5">Repas inclus</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            <template x-for="(label, key) in meals" :key="key">
+                                                <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
+                                                    :class="form.meals.includes(key) ? 'bg-accent/20 border-secondary/40' : ''">
+                                                    <input type="checkbox" :value="key" x-model="form.meals"
+                                                        class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                                    <span class="text-xs text-primary/80" x-text="label"></span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                        <template x-for="meal in form.meals" :key="'meal-' + meal">
+                                            <input type="hidden" name="meals[]" :value="meal">
+                                        </template>
+                                    </div>
+
+                                    {{-- Prestations --}}
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3.5 mt-3">
+                                        <div class="flex items-baseline justify-between mb-2.5">
+                                            <p class="text-xs font-semibold text-primary">Prestations incluses</p>
+                                            <span class="text-[10px] text-primary/40"
+                                                x-show="form.service_item_ids.length > 0"
+                                                x-text="form.service_item_ids.length + ' sélectionnée' + (form.service_item_ids.length > 1 ? 's' : '')"></span>
+                                        </div>
+
+                                        <template x-if="services.length === 0">
+                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                                                Aucune prestation au catalogue. Ajoutez-en dans l'onglet Prestations (blanchisserie, spa…).
+                                            </p>
+                                        </template>
+
+                                        <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-40 overflow-y-auto divide-y divide-secondary/10">
+                                            <template x-for="service in services" :key="service.id">
+                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
+                                                    :class="form.service_item_ids.includes(service.id) ? 'bg-accent/20' : ''">
+                                                    <input type="checkbox" :value="service.id" x-model.number="form.service_item_ids"
+                                                        class="w-4 h-4 rounded border-secondary/40 text-primary shrink-0">
+                                                    <span class="flex-1 min-w-0">
+                                                        <span class="block text-sm text-primary truncate" x-text="service.name"></span>
+                                                        <span class="block text-[10px] text-primary/40" x-text="service.group"></span>
+                                                    </span>
+                                                    <span class="text-xs text-primary/50 shrink-0"
+                                                        x-text="new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                        <template x-for="id in form.service_item_ids" :key="'svc-' + id">
+                                            <input type="hidden" name="service_item_ids[]" :value="id">
+                                        </template>
+                                    </div>
+                                </section>
+
+                                {{-- Tarification --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="coins" class="w-3.5 h-3.5"></i>
+                                        Tarification
+                                    </h4>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Mode de facturation <span class="text-red-500">*</span></label>
+                                            <select name="pricing_mode" x-model="form.pricing_mode" required
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                <template x-for="(label, key) in pricingModes" :key="key">
+                                                    <option :value="key" x-text="label"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Prix du pack <span class="text-red-500">*</span></label>
+                                            <div class="relative">
+                                                <input type="number" name="price" x-model="form.price" min="0" required
+                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Aperçu du coût réel d'un séjour type, pour éviter les erreurs de mode --}}
+                                    <p class="text-[11px] text-primary/50 mt-3 bg-gray-50 border border-secondary/20 rounded-lg px-3 py-2">
+                                        Pour un séjour de 3 nuits à 2 personnes, ce pack serait facturé
+                                        <strong class="text-primary" x-text="new Intl.NumberFormat('fr-FR').format(previewAmount(3, 2)) + ' FCFA'"></strong>.
+                                    </p>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-secondary/20">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise sur l'hébergement</label>
+                                            <select name="room_discount_type" x-model="form.room_discount_type"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                <option value="none">Aucune</option>
+                                                <option value="percent">Pourcentage</option>
+                                                <option value="amount">Montant par nuitée</option>
+                                            </select>
+                                        </div>
+                                        <div x-show="form.room_discount_type !== 'none'" style="display:none;">
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5"
+                                                x-text="form.room_discount_type === 'percent' ? 'Pourcentage' : 'Montant par nuitée'"></label>
+                                            <div class="relative">
+                                                <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
+                                                    :max="form.room_discount_type === 'percent' ? 100 : 10000000"
+                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40"
+                                                    x-text="form.room_discount_type === 'percent' ? '%' : 'FCFA'"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[11px] text-primary/40 mt-2">
+                                        Geste commercial sur la nuitée elle-même, en plus de la formule. Il se cumule avec une éventuelle remise partenaire.
+                                    </p>
+                                </section>
+
+                                {{-- Portée --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="door-open" class="w-3.5 h-3.5"></i>
+                                        Chambres concernées
+                                    </h4>
+
+                                    <template x-if="roomTypes.length === 0">
+                                        <p class="text-[11px] text-primary/50">Aucun type de chambre enregistré.</p>
+                                    </template>
+
+                                    <div x-show="roomTypes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <template x-for="type in roomTypes" :key="type.id">
+                                            <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
+                                                :class="form.room_type_ids.includes(type.id) ? 'bg-accent/20 border-secondary/40' : ''">
+                                                <input type="checkbox" :value="type.id" x-model.number="form.room_type_ids"
+                                                    class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                                <span class="text-xs text-primary/80 truncate" x-text="type.name"></span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                    <template x-for="id in form.room_type_ids" :key="'rt-' + id">
+                                        <input type="hidden" name="room_type_ids[]" :value="id">
+                                    </template>
+                                    <p class="text-[11px] text-primary/40 mt-2">
+                                        Ne rien cocher revient à proposer le pack sur <strong>tous</strong> les types de chambre.
+                                    </p>
+                                </section>
+
+                                {{-- Affichage --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Ordre d'affichage</label>
+                                            <input type="number" name="sort_order" x-model="form.sort_order" min="0"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                        </div>
+                                        <label class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                                            <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
+                                            <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                            <span class="text-xs text-primary/80">Pack proposé à la réservation</span>
+                                        </label>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                                <button type="button" @click="open = false"
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- ONGLET: PARTENAIRES (Uniquement Manager) --}}
         @if($tab === 'partners' && $user->hasRole('manager'))
             @php
@@ -1012,6 +1385,71 @@
                 };
                 this.editing = true;
                 this.formAction = `${baseUrl}/${service.id}`;
+                this.open = true;
+            },
+        };
+    }
+
+    function packCatalog(meals, services, roomTypes, pricingModes) {
+        const storeUrl = @js(route('settings.packages.store'));
+        const baseUrl = @js(url('/settings/packages'));
+
+        return {
+            meals,
+            services,
+            roomTypes,
+            pricingModes,
+            open: false,
+            editing: false,
+            formAction: storeUrl,
+            form: {},
+
+            blank() {
+                return {
+                    id: null,
+                    name: '',
+                    code: '',
+                    description: '',
+                    meals: [],
+                    service_item_ids: [],
+                    pricing_mode: 'per_person_night',
+                    price: 0,
+                    room_discount_type: 'none',
+                    room_discount_value: 0,
+                    room_type_ids: [],
+                    sort_order: 0,
+                    is_active: true,
+                };
+            },
+
+            // Aperçu du montant réellement facturé : le mode de tarification
+            // est la source d'erreur la plus fréquente à la saisie.
+            previewAmount(nights, occupants) {
+                const price = parseInt(this.form.price) || 0;
+                if (this.form.pricing_mode === 'per_person_night') return price * nights * occupants;
+                if (this.form.pricing_mode === 'per_room_night') return price * nights;
+                return price;
+            },
+
+            openCreate() {
+                this.form = this.blank();
+                this.editing = false;
+                this.formAction = storeUrl;
+                this.open = true;
+            },
+
+            openEdit(pack) {
+                this.form = {
+                    ...this.blank(),
+                    ...pack,
+                    code: pack.code ?? '',
+                    description: pack.description ?? '',
+                    meals: pack.meals ?? [],
+                    service_item_ids: pack.service_item_ids ?? [],
+                    room_type_ids: pack.room_type_ids ?? [],
+                };
+                this.editing = true;
+                this.formAction = `${baseUrl}/${pack.id}`;
                 this.open = true;
             },
         };
