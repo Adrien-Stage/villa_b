@@ -151,7 +151,13 @@ class BookingController extends Controller
             $booker = Customer::find($request->booker_id);
         }
 
-        return view('bookings.create', compact('customer', 'booker', 'customers'));
+        // Conventions en cours de validité, pour rattacher un nouveau client
+        // à son organisation dès sa création.
+        $partnerOrganizations = \App\Models\PartnerOrganization::validOn()
+            ->orderBy('name')
+            ->get();
+
+        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations'));
     }
 
     // ===== WIZARD ÉTAPE 2 : Choix chambre + dates =====
@@ -204,6 +210,9 @@ class BookingController extends Controller
                 // Le pays de résidence est obligatoire : c'est le marché
                 // émetteur, base de l'analyse géographique de la clientèle.
                 'country'            => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+                // Appartenance déclarée à la création : mémorisée sur la fiche
+                // pour être reproposée aux séjours suivants.
+                'partner_organization_id' => ['nullable', 'exists:partner_organizations,id'],
             ], [
                 'email.required'   => "L'adresse email du client est obligatoire.",
                 'country.required' => "Le pays de résidence du client est obligatoire.",
@@ -327,9 +336,23 @@ class BookingController extends Controller
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
 
+        // Convention du client, si elle est en cours de validité à l'arrivée.
+        // La réception peut la retirer pour ce séjour (déplacement privé) via
+        // le champ du formulaire de confirmation.
+        $customer = Customer::with('partnerOrganization')->find($validated['customer_id']);
+        $partnerOrganization = $customer?->partnerOrganization;
+        if ($partnerOrganization && !$partnerOrganization->isValidOn($checkIn)) {
+            $partnerOrganization = null;
+        }
+
         return view('bookings.confirm', [
             'customerId' => $validated['customer_id'],
             'bookerId' => $validated['booker_id'] ?? null,
+            'partnerOrganization' => $partnerOrganization,
+            // Remise estimée sur le brut, pour l'afficher avant validation.
+            'partnerRoomDiscount' => $partnerOrganization
+                ? (int) ($partnerOrganization->roomDiscountFor((int) round($totalRoomAmount * 100), $nights) / 100)
+                : 0,
             'room' => $room,
             'checkIn' => $validated['check_in'],
             'checkOut' => $validated['check_out'],
@@ -378,6 +401,8 @@ class BookingController extends Controller
             'payment_reference' => ['nullable', 'string'],
             'is_offerte'   => ['nullable', 'boolean'],
             'offerte_reason' => [$request->boolean('is_offerte') ? 'required' : 'nullable', 'string', 'max:500'],
+            // La réception peut écarter la convention pour un séjour privé.
+            'apply_partner_privileges' => ['nullable', 'boolean'],
         ]);
 
         $room     = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -421,9 +446,32 @@ class BookingController extends Controller
             }
         }
 
-        // 2. Si non offert, valider le dépôt minimum
+        // 1 bis. Convention partenaire du client. La remise se calcule sur le
+        // prix négocié et vient en déduction : le brut reste affiché, la remise
+        // apparaît en ligne distincte (folio et comptabilité).
+        $partnerOrganization = null;
+        $partnerDiscount     = 0;   // centimes
+        if ($request->boolean('apply_partner_privileges') && !$request->boolean('is_offerte')) {
+            $bookingCustomer = Customer::with('partnerOrganization')->find($validated['customer_id']);
+            $organization    = $bookingCustomer?->partnerOrganization;
+
+            // La convention doit couvrir la date d'arrivée : une convention
+            // échue ne peut pas être appliquée rétroactivement à un séjour.
+            if ($organization && $organization->isValidOn($checkIn)) {
+                $partnerOrganization = $organization;
+                $partnerDiscount = $organization->roomDiscountFor(
+                    (int) round($validated['custom_price'] * 100),
+                    $nights
+                );
+            }
+        }
+
+        // 2. Si non offert, valider le dépôt minimum. Il porte sur le montant
+        // réellement dû, remise partenaire déduite : exiger l'acompte sur le
+        // brut ferait payer au client une part qu'il ne doit pas.
         if (!$request->boolean('is_offerte')) {
-            $minDeposit = ceil($validated['custom_price'] * ($minDepositPercentage / 100));
+            $netPrice   = max(0, (float) $validated['custom_price'] - $partnerDiscount / 100);
+            $minDeposit = ceil($netPrice * ($minDepositPercentage / 100));
             if ($validated['payment_amount'] < $minDeposit) {
                 return back()->withErrors([
                     'payment_amount' => "Le montant versé doit être au moins de {$minDeposit} FCFA (acompte de {$minDepositPercentage}%)."
@@ -439,7 +487,11 @@ class BookingController extends Controller
         $pricePerNight = $nights > 0 ? (int) round($customPrice / $nights) : 0;
         $totalRoomAmount = $pricePerNight * $nights;
         $taxAmount = 0;
-        $totalAmount = $totalRoomAmount;
+        // La remise partenaire ne peut pas dépasser l'hébergement facturé :
+        // l'arrondi du prix par nuitée peut faire varier le brut de quelques
+        // centimes par rapport au montant sur lequel elle a été calculée.
+        $partnerDiscount = min($partnerDiscount, $totalRoomAmount);
+        $totalAmount = $totalRoomAmount + $taxAmount - $partnerDiscount;
         $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
@@ -459,6 +511,7 @@ class BookingController extends Controller
             'room_id'         => $room->id,
             'customer_id'     => $validated['customer_id'],
             'booker_id'       => $validated['booker_id'] ?? null,
+            'partner_organization_id' => $partnerOrganization?->id,
             'status'          => $status,
             'check_in'        => $validated['check_in'],
             'check_out'       => $validated['check_out'],
@@ -469,7 +522,7 @@ class BookingController extends Controller
             'total_room_amount' => $totalRoomAmount,
             'extras_amount'   => 0,
             'tax_amount'      => $taxAmount,
-            'discount_amount' => 0,
+            'discount_amount' => $partnerDiscount,
             'total_amount'    => $totalAmount,
             'deposit_amount'  => $paymentAmount,
             'paid_amount'     => $paymentAmount,
@@ -545,6 +598,25 @@ class BookingController extends Controller
             'recorded_by'  => Auth::id(),
         ]);
 
+        // Ligne folio de la remise partenaire (en négatif), pour que le dossier
+        // montre le brut et la remise consentie plutôt qu'un prix net opaque.
+        if ($partnerDiscount > 0 && $partnerOrganization) {
+            FolioItem::create([
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_DISCOUNT,
+                'description'  => "Remise partenaire — {$partnerOrganization->name}",
+                'quantity'     => 1,
+                'unit_price'   => -$partnerDiscount,
+                'total_price'  => -$partnerDiscount,
+                'is_complimentary' => false,
+                'earns_points' => false,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => $partnerOrganization->roomDiscountLabel(),
+            ]);
+        }
+
         // Ligne folio pour le paiement (en négatif) si montant > 0
         if ($paymentAmount > 0) {
             FolioItem::create([
@@ -617,10 +689,15 @@ class BookingController extends Controller
             ->whereNull('closed_at')
             ->exists();
 
+        // Convention appliquée au séjour : elle marque les prestations offertes
+        // dans le catalogue du folio.
+        $partnerOrganization = $booking->partnerOrganization;
+
         return view('bookings.show', [
             'booking' => $booking,
             'isCashRegisterOpen' => $isCashRegisterOpen,
-            'folioCatalog' => $this->folioCatalog(),
+            'folioCatalog' => $this->folioCatalog($partnerOrganization),
+            'partnerOrganization' => $partnerOrganization,
         ]);
     }
 
@@ -634,9 +711,10 @@ class BookingController extends Controller
      * dîner) ; les autres types viennent du catalogue des prestations géré
      * dans Paramètres › Prestations.
      */
-    private function folioCatalog(): array
+    private function folioCatalog(?\App\Models\PartnerOrganization $organization = null): array
     {
         $catalog = [];
+        $grantsFree = $organization && $organization->isValidOn();
 
         // --- Restaurant : les plats, groupés par service de repas ---
         $menuItems = \App\Models\RestaurantMenuItem::query()
@@ -677,9 +755,13 @@ class BookingController extends Controller
         foreach (\App\Models\ServiceItem::CATEGORIES as $category => $categoryLabel) {
             $options = ($services[$category] ?? collect())
                 ->map(fn ($service) => [
+                    'id'    => $service->id,
                     'label' => $service->name,
                     'price' => $service->priceInFcfa(),
-                    'hint' => $service->duration_minutes ? $service->duration_minutes . ' min' : null,
+                    'hint'  => $service->duration_minutes ? $service->duration_minutes . ' min' : null,
+                    // Prestation couverte par la convention : la réception n'a
+                    // rien à calculer, la ligne part offerte.
+                    'free'  => $grantsFree && $organization->grantsFreeServiceItem($service->id),
                 ])
                 ->values()
                 ->all();
@@ -860,12 +942,31 @@ class BookingController extends Controller
             'unit_price'       => ['required', 'integer', 'min:0'],
             'is_complimentary' => ['boolean'],
             'notes'            => ['nullable', 'string'],
+            // Prestation choisie au catalogue : permet de reconnaître celles
+            // que la convention partenaire couvre.
+            'service_item_id'  => ['nullable', 'integer', 'exists:service_items,id'],
         ]);
 
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
 
-        $totalPrice = $validated['is_complimentary'] ?? false
+        $isComplimentary = $validated['is_complimentary'] ?? false;
+        $notes           = $validated['notes'] ?? null;
+
+        // La gratuité conventionnelle est décidée côté serveur : se fier à la
+        // case cochée par le navigateur permettrait d'offrir n'importe quoi.
+        $organization = $booking->partnerOrganization;
+        if (
+            !empty($validated['service_item_id'])
+            && $organization
+            && $organization->isValidOn()
+            && $organization->grantsFreeServiceItem((int) $validated['service_item_id'])
+        ) {
+            $isComplimentary = true;
+            $notes = trim("Offert — convention {$organization->name}" . ($notes ? "\n" . $notes : ''));
+        }
+
+        $totalPrice = $isComplimentary
             ? 0
             : (int) round($validated['quantity'] * $validated['unit_price'] * 100);
 
@@ -877,15 +978,15 @@ class BookingController extends Controller
             'quantity'         => $validated['quantity'],
             'unit_price'       => $validated['unit_price'] * 100,
             'total_price'      => $totalPrice,
-            'is_complimentary' => $validated['is_complimentary'] ?? false,
-            'earns_points'     => !($validated['is_complimentary'] ?? false),
+            'is_complimentary' => $isComplimentary,
+            'earns_points'     => !$isComplimentary,
             'occurred_at'      => now(),
             'recorded_by'      => Auth::id(),
-            'notes'            => $validated['notes'] ?? null,
+            'notes'            => $notes,
         ]);
 
         // Recalcule les extras et le solde du booking
-        if (!($validated['is_complimentary'] ?? false)) {
+        if (!$isComplimentary) {
             $extrasAmount = $booking->folioItems()
                 ->whereNotIn('type', [FolioItem::TYPE_ROOM, FolioItem::TYPE_PAYMENT, FolioItem::TYPE_DISCOUNT])
                 ->where('is_complimentary', false)

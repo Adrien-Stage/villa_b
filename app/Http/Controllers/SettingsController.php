@@ -46,13 +46,29 @@ class SettingsController extends Controller
 
         $serviceCategories = \App\Models\ServiceItem::CATEGORIES;
 
+        // Organisations partenaires (onglet "Partenaires"). Le catalogue à plat
+        // sert à cocher les prestations offertes dans le formulaire.
+        $partnerOrganizations = \App\Models\PartnerOrganization::query()
+            ->orderBy('name')
+            ->get();
+
+        $serviceItemsFlat = \App\Models\ServiceItem::query()
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        $partnerTypes = \App\Models\PartnerOrganization::TYPES;
+
         return view('settings.index', compact(
             'tab',
             'user',
             'tenant',
             'tenantSettings',
             'serviceItems',
-            'serviceCategories'
+            'serviceCategories',
+            'partnerOrganizations',
+            'serviceItemsFlat',
+            'partnerTypes'
         ));
     }
 

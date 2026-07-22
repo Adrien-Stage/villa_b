@@ -107,6 +107,42 @@
                                 </template>
                             </div>
 
+                            {{-- Convention partenaire : la remise s'applique sur le prix
+                                 négocié et apparaît en ligne distincte sur le folio. --}}
+                            @if($partnerOrganization)
+                                <div class="mt-4 p-3 rounded-lg border border-secondary/30 bg-accent/20"
+                                     x-data="{ applyPartner: true }">
+                                    <label class="flex items-start gap-2.5 cursor-pointer">
+                                        <input type="hidden" name="apply_partner_privileges" :value="applyPartner ? 1 : 0">
+                                        <input type="checkbox" x-model="applyPartner" class="mt-0.5 rounded border-secondary/30 text-primary">
+                                        <span class="min-w-0">
+                                            <span class="block text-sm font-medium text-primary">
+                                                <i data-lucide="handshake" class="w-3.5 h-3.5 inline -mt-0.5"></i>
+                                                Membre de « {{ $partnerOrganization->name }} »
+                                            </span>
+                                            <span class="block text-xs text-primary/60 mt-0.5">
+                                                @if($partnerRoomDiscount > 0)
+                                                    Remise partenaire de <strong>{{ number_format($partnerRoomDiscount, 0, ',', ' ') }} FCFA</strong>
+                                                    ({{ $partnerOrganization->roomDiscountLabel() }}) déduite du prix négocié.
+                                                @else
+                                                    Aucune remise sur l'hébergement, mais les autres privilèges s'appliquent au séjour.
+                                                @endif
+                                            </span>
+                                            @if(count($partnerOrganization->privilegeLabels()))
+                                                <span class="flex flex-wrap gap-1 mt-1.5">
+                                                    @foreach($partnerOrganization->privilegeLabels() as $privilege)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white text-primary border border-secondary/20">{{ $privilege }}</span>
+                                                    @endforeach
+                                                </span>
+                                            @endif
+                                            <span class="block text-[10px] text-primary/40 mt-1.5">
+                                                Décochez si ce séjour est privé et ne relève pas de la convention.
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            @endif
+
                             {{-- Remise Autorisée (Dropdown) --}}
                             <div class="mt-4">
                                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">

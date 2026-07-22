@@ -79,6 +79,15 @@
                             {{ $customer->nationality }}
                         </span>
                     @endif
+                    @if($customer->partnerOrganization)
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="handshake" class="w-3.5 h-3.5"></i>
+                            {{ $customer->partnerOrganization->name }}
+                            @unless($customer->partnerOrganization->isValidOn())
+                                <span class="text-[10px] text-red-500">(convention inactive)</span>
+                            @endunless
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
