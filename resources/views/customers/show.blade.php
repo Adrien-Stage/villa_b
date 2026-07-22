@@ -66,6 +66,13 @@
                             {{ $customer->phone }}
                         </span>
                     @endif
+                    {{-- Pays de résidence : marché émetteur, distinct de la nationalité. --}}
+                    @if($customer->country)
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                            {{ \App\Support\Countries::name($customer->country) }}
+                        </span>
+                    @endif
                     @if($customer->nationality)
                         <span class="flex items-center gap-1.5">
                             <i data-lucide="globe" class="w-3.5 h-3.5"></i>

@@ -196,12 +196,18 @@ class BookingController extends Controller
             $validated = $request->validate([
                 'first_name'         => ['required', 'string', 'max:100'],
                 'last_name'          => ['required', 'string', 'max:100'],
-                'email'              => ['nullable', 'email'],
+                // L'email du client est obligatoire ; la pièce d'identité est
+                // désormais collectée au check-in, plus à la réservation.
+                'email'              => ['required', 'email', 'max:150'],
                 'phone'              => ['nullable', 'string', 'max:30'],
                 'nationality'        => ['nullable', 'string', 'max:100'],
-                'country'            => ['nullable', 'string', 'max:5'],
-                'id_document_type'   => ['nullable', 'string'],
-                'id_document_number' => ['nullable', 'string', 'max:50'],
+                // Le pays de résidence est obligatoire : c'est le marché
+                // émetteur, base de l'analyse géographique de la clientèle.
+                'country'            => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+            ], [
+                'email.required'   => "L'adresse email du client est obligatoire.",
+                'country.required' => "Le pays de résidence du client est obligatoire.",
+                'country.in'       => "Le pays sélectionné n'est pas reconnu.",
             ]);
 
             $customer = Customer::create(array_merge($validated, ['tenant_id' => $tenantId]));
@@ -221,9 +227,7 @@ class BookingController extends Controller
                     'booker_email'              => ['nullable', 'email'],
                     'booker_phone'              => ['nullable', 'string', 'max:30'],
                     'booker_nationality'        => ['nullable', 'string', 'max:100'],
-                    'booker_country'            => ['nullable', 'string', 'max:5'],
-                    'booker_id_document_type'   => ['nullable', 'string'],
-                    'booker_id_document_number' => ['nullable', 'string', 'max:50'],
+                    'booker_country'            => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
                 ]);
                 
                 // Mappage des champs préfixés 'booker_' vers les colonnes normales
@@ -752,12 +756,27 @@ class BookingController extends Controller
             }
         }
 
-        DB::transaction(function () use ($booking) {
+        // La pièce d'identité du client est relevée à l'arrivée (check-in),
+        // plus à la réservation.
+        $idValidated = $request->validate([
+            'id_document_type'   => ['nullable', 'string', 'in:CNI,Passeport'],
+            'id_document_number' => ['required', 'string', 'max:50'],
+        ], [
+            'id_document_number.required' => "Le numéro de pièce d'identité du client est requis pour le check-in.",
+        ]);
+
+        DB::transaction(function () use ($booking, $idValidated) {
             $booking->update([
                 'status'         => BookingStatus::CHECKED_IN,
                 'actual_check_in' => now(),
                 'checked_in_by'  => Auth::id(),
                 'checkin_attempts' => 0,
+            ]);
+
+            // Enregistre la pièce d'identité relevée sur le client séjournant.
+            $booking->customer->update([
+                'id_document_type'   => $idValidated['id_document_type'] ?: $booking->customer->id_document_type,
+                'id_document_number' => $idValidated['id_document_number'],
             ]);
 
             $booking->room->updateStatus(
