@@ -89,6 +89,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.services.update');
         Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'destroy'])
             ->name('settings.services.destroy');
+
+        // Organisations partenaires (onglet "Partenaires" des paramètres).
+        // Réservé au manager : ces conventions engagent des remises.
+        Route::post('/settings/partners', [App\Http\Controllers\PartnerOrganizationController::class, 'store'])
+            ->name('settings.partners.store');
+        Route::put('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'update'])
+            ->name('settings.partners.update');
+        Route::delete('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'destroy'])
+            ->name('settings.partners.destroy');
     });
 
     // --- ASSISTANT IA (Kuété) ---

@@ -33,6 +33,7 @@ class Booking extends Model
         'room_id',
         'customer_id',
         'booker_id',
+        'partner_organization_id', // Convention appliquée à CE séjour
         'group_booking_id',     // Null si individuel
         'booking_number',       // Numéro unique affiché (VB-2025-0001)
         'status',
@@ -140,6 +141,16 @@ class Booking extends Model
     public function booker(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'booker_id');
+    }
+
+    /**
+     * Convention partenaire appliquée à ce séjour. Peut différer de celle du
+     * client : un membre peut séjourner à titre privé, ou pour le compte d'une
+     * autre organisation.
+     */
+    public function partnerOrganization(): BelongsTo
+    {
+        return $this->belongsTo(PartnerOrganization::class);
     }
 
     public function groupBooking(): BelongsTo

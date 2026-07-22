@@ -108,9 +108,41 @@
             </div>
         </div>
 
+        {{-- Section Organisation partenaire --}}
+        <div>
+            <h3 class="text-sm font-semibold text-primary mb-4 pb-2 border-b border-secondary/10">4. Organisation partenaire</h3>
+
+            <div class="max-w-xl">
+                <label class="block text-xs font-semibold text-primary/70 mb-1.5">Membre de l'organisation</label>
+                <select name="partner_organization_id"
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary bg-white">
+                    <option value="">Aucune — client particulier</option>
+                    @foreach($partnerOrganizations as $organization)
+                        <option value="{{ $organization->id }}"
+                            @selected((int) old('partner_organization_id', $customer->partner_organization_id) === $organization->id)>
+                            {{ $organization->name }}@if(!$organization->isValidOn()) (convention inactive)@endif
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-primary/50 mt-1.5">
+                    Une fois renseignée, l'organisation est reproposée automatiquement à chaque nouvelle réservation
+                    et ses privilèges sont appliqués au séjour.
+                </p>
+                @error('partner_organization_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+
+                @if($customer->partnerOrganization && count($customer->partnerOrganization->privilegeLabels()))
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        @foreach($customer->partnerOrganization->privilegeLabels() as $privilege)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/30 text-primary border border-secondary/20">{{ $privilege }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+
         {{-- Section Statut et Notes --}}
         <div>
-            <h3 class="text-sm font-semibold text-primary mb-4 pb-2 border-b border-secondary/10">4. Statut & Notes internes</h3>
+            <h3 class="text-sm font-semibold text-primary mb-4 pb-2 border-b border-secondary/10">5. Statut & Notes internes</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <div class="flex items-start gap-3 p-3 bg-yellow-50/50 border border-yellow-200/50 rounded-lg">

@@ -79,6 +79,15 @@
                 Prestations
             </a>
         @endrole
+
+        @role('manager')
+            <a href="{{ route('settings.index', ['tab' => 'partners']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'partners' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="handshake" class="w-4 h-4"></i>
+                Partenaires
+            </a>
+        @endrole
     </div>
 
     {{-- Contenu des onglets --}}
@@ -553,6 +562,348 @@
             </div>
         @endif
 
+        {{-- ONGLET: PARTENAIRES (Uniquement Manager) --}}
+        @if($tab === 'partners' && $user->hasRole('manager'))
+            @php
+                // Charge utile de l'éditeur préparée ici : un tableau multi-ligne
+                // passé directement à @json dans un attribut casse le parseur Blade.
+                $partnerPayloads = $partnerOrganizations->mapWithKeys(fn ($o) => [$o->id => [
+                    'id'                          => $o->id,
+                    'name'                        => $o->name,
+                    'code'                        => $o->code,
+                    'type'                        => $o->type,
+                    'contact_name'                => $o->contact_name,
+                    'contact_email'               => $o->contact_email,
+                    'contact_phone'               => $o->contact_phone,
+                    'valid_from'                  => $o->valid_from?->format('Y-m-d'),
+                    'valid_until'                 => $o->valid_until?->format('Y-m-d'),
+                    'is_active'                   => (bool) $o->is_active,
+                    'room_discount_type'          => $o->room_discount_type,
+                    // Un montant est stocké en centimes mais se saisit en FCFA.
+                    'room_discount_value'         => $o->room_discount_type === 'amount'
+                                                        ? (int) ($o->room_discount_value / 100)
+                                                        : (int) $o->room_discount_value,
+                    'restaurant_discount_percent' => (int) $o->restaurant_discount_percent,
+                    'shop_discount_percent'       => (int) $o->shop_discount_percent,
+                    'free_service_item_ids'       => array_map('intval', $o->free_service_item_ids ?? []),
+                    'late_checkout'               => (bool) $o->late_checkout,
+                    'early_checkin'               => (bool) $o->early_checkin,
+                    'notes'                       => $o->notes,
+                ]])->all();
+
+                $partnerServiceOptions = $serviceItemsFlat->map(fn ($s) => [
+                    'id'    => $s->id,
+                    'name'  => $s->name,
+                    'group' => $s->categoryLabel(),
+                    'price' => (int) ($s->price / 100),
+                ])->values()->all();
+            @endphp
+
+            <div x-data="partnerCatalog({{ Js::from($partnerTypes) }}, {{ Js::from($partnerServiceOptions) }})">
+                <div class="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-primary">Organisations partenaires</h2>
+                        <p class="text-sm text-primary/60 mt-1 max-w-2xl">
+                            Entreprises, ONG, ambassades ou agences avec lesquelles vous avez une convention.
+                            Les privilèges définis ici sont appliqués automatiquement dès qu'un client déclaré
+                            membre effectue une réservation.
+                        </p>
+                    </div>
+                    <button type="button" @click="openCreate()"
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nouvelle organisation
+                    </button>
+                </div>
+
+                @if($errors->any())
+                    <div class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if($partnerOrganizations->isEmpty())
+                    <div class="border border-dashed border-secondary/30 rounded-xl px-6 py-12 text-center">
+                        <i data-lucide="handshake" class="w-8 h-8 mx-auto text-primary/20 mb-3"></i>
+                        <p class="text-sm text-primary/50">Aucune organisation partenaire enregistrée.</p>
+                        <button type="button" @click="openCreate()" class="mt-2 text-xs font-medium text-primary hover:underline">
+                            Créer la première
+                        </button>
+                    </div>
+                @else
+                    <div class="border border-secondary/20 rounded-xl overflow-hidden">
+                        <table class="min-w-full divide-y divide-secondary/10">
+                            <thead class="bg-gray-50/70">
+                                <tr>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Organisation</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Privilèges</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Convention</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Membres</th>
+                                    <th class="px-5 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-secondary/10">
+                                @foreach($partnerOrganizations as $organization)
+                                    @php
+                                        $privileges = $organization->privilegeLabels();
+                                        $expired    = !$organization->isValidOn();
+                                    @endphp
+                                    <tr class="{{ $expired ? 'bg-gray-50/50' : '' }}">
+                                        <td class="px-5 py-3">
+                                            <p class="text-sm font-medium text-primary">
+                                                {{ $organization->name }}
+                                                @if($organization->code)
+                                                    <span class="ml-1 text-[10px] font-mono text-primary/40">{{ $organization->code }}</span>
+                                                @endif
+                                            </p>
+                                            <p class="text-[11px] text-primary/40">{{ $organization->typeLabel() }}</p>
+                                        </td>
+                                        <td class="px-5 py-3">
+                                            @if(empty($privileges))
+                                                <span class="text-xs text-primary/30">Aucun privilège défini</span>
+                                            @else
+                                                <div class="flex flex-wrap gap-1">
+                                                    @foreach($privileges as $privilege)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/30 text-primary border border-secondary/20">{{ $privilege }}</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-3 whitespace-nowrap text-[11px] text-primary/60">
+                                            @if($organization->valid_from || $organization->valid_until)
+                                                {{ $organization->valid_from?->format('d/m/Y') ?? '…' }}
+                                                &rarr;
+                                                {{ $organization->valid_until?->format('d/m/Y') ?? '…' }}
+                                            @else
+                                                <span class="text-primary/30">Sans échéance</span>
+                                            @endif
+                                            @if($expired)
+                                                <span class="block mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                    {{ $organization->is_active ? 'Hors période' : 'Désactivée' }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-3 text-sm text-primary/70 whitespace-nowrap">
+                                            {{ $organization->customers()->count() }}
+                                        </td>
+                                        <td class="px-5 py-3">
+                                            <div class="flex justify-end gap-2">
+                                                <button type="button" @click="openEdit(@json($partnerPayloads[$organization->id]))"
+                                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                                </button>
+                                                <form method="POST" action="{{ route('settings.partners.destroy', $organization) }}"
+                                                    onsubmit="return confirm('Supprimer « {{ $organization->name }} » ? Les clients rattachés ne perdront pas leur historique, mais ne bénéficieront plus des privilèges.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
+                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+                {{-- Modal création / édition --}}
+                <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
+                    <div class="absolute inset-0" @click="open = false"></div>
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col max-h-[90vh]">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
+                            <h3 class="font-heading font-semibold text-primary"
+                                x-text="editing ? 'Modifier l\'organisation' : 'Nouvelle organisation partenaire'"></h3>
+                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            @csrf
+                            <template x-if="editing">
+                                <input type="hidden" name="_method" value="PUT">
+                            </template>
+
+                            <div class="px-6 py-5 space-y-5 flex-1 overflow-y-auto min-h-0">
+                                {{-- Identité --}}
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'organisation *</label>
+                                        <input type="text" name="name" x-model="form.name" required maxlength="160"
+                                            placeholder="Ex : Total Energies Cameroun, Ambassade de France..."
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Code</label>
+                                        <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="Ex : TEC"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-primary/70 mb-1">Type *</label>
+                                    <select name="type" x-model="form.type" required
+                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        <template x-for="(label, key) in types" :key="key">
+                                            <option :value="key" x-text="label"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                {{-- Contact --}}
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Contact</label>
+                                        <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Email</label>
+                                        <input type="email" name="contact_email" x-model="form.contact_email" maxlength="150"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Téléphone</label>
+                                        <input type="text" name="contact_phone" x-model="form.contact_phone" maxlength="30"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                </div>
+
+                                {{-- Validité --}}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Convention valable du</label>
+                                        <input type="date" name="valid_from" x-model="form.valid_from"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">au</label>
+                                        <input type="date" name="valid_until" x-model="form.valid_until"
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-primary/40 -mt-3">
+                                    Laisser vide pour une convention sans échéance. Hors de cette période, les privilèges ne s'appliquent plus.
+                                </p>
+
+                                {{-- Privilèges --}}
+                                <div class="border-t border-secondary/20 pt-5">
+                                    <h4 class="text-sm font-semibold text-primary mb-3">Privilèges accordés aux membres</h4>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise sur l'hébergement</label>
+                                            <select name="room_discount_type" x-model="form.room_discount_type"
+                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                                <option value="none">Aucune</option>
+                                                <option value="percent">Pourcentage</option>
+                                                <option value="amount">Montant par nuitée</option>
+                                            </select>
+                                        </div>
+                                        <div x-show="form.room_discount_type !== 'none'" style="display:none;">
+                                            <label class="block text-xs font-medium text-primary/70 mb-1"
+                                                x-text="form.room_discount_type === 'percent' ? 'Pourcentage (%)' : 'Montant par nuitée (FCFA)'"></label>
+                                            <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
+                                                :max="form.room_discount_type === 'percent' ? 100 : 10000000"
+                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise restaurant (%)</label>
+                                            <input type="number" name="restaurant_discount_percent" x-model="form.restaurant_discount_percent" min="0" max="100"
+                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise boutique (%)</label>
+                                            <input type="number" name="shop_discount_percent" x-model="form.shop_discount_percent" min="0" max="100"
+                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        </div>
+                                    </div>
+
+                                    {{-- Prestations offertes --}}
+                                    <div class="mt-4">
+                                        <label class="block text-xs font-medium text-primary/70 mb-1">Prestations offertes</label>
+                                        <template x-if="services.length === 0">
+                                            <p class="text-[11px] text-primary/40 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                                Aucune prestation au catalogue. Ajoutez-en dans l'onglet Prestations pour pouvoir en offrir.
+                                            </p>
+                                        </template>
+                                        <div x-show="services.length > 0" class="border border-secondary/20 rounded-lg max-h-44 overflow-y-auto divide-y divide-secondary/10">
+                                            <template x-for="service in services" :key="service.id">
+                                                <label class="flex items-center gap-3 px-3 py-2 hover:bg-accent/10 cursor-pointer">
+                                                    {{-- Case purement visuelle : les valeurs réellement soumises
+                                                         sont les champs cachés générés plus bas, pour éviter la
+                                                         soumission d'une valeur vide par x-model. --}}
+                                                    <input type="checkbox" :value="service.id" x-model.number="form.free_service_item_ids"
+                                                        class="rounded border-secondary/30 text-primary">
+                                                    <span class="flex-1 min-w-0">
+                                                        <span class="block text-sm text-primary truncate" x-text="service.name"></span>
+                                                        <span class="block text-[10px] text-primary/40" x-text="service.group"></span>
+                                                    </span>
+                                                    <span class="text-xs text-primary/50 shrink-0"
+                                                        x-text="new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                        <template x-for="id in form.free_service_item_ids" :key="'hidden-' + id">
+                                            <input type="hidden" name="free_service_item_ids[]" :value="id">
+                                        </template>
+                                    </div>
+
+                                    {{-- Arrangements horaires --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                            <input type="hidden" name="late_checkout" :value="form.late_checkout ? 1 : 0">
+                                            <input type="checkbox" x-model="form.late_checkout" class="rounded border-secondary/30 text-primary">
+                                            Départ tardif sans frais
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                            <input type="hidden" name="early_checkin" :value="form.early_checkin ? 1 : 0">
+                                            <input type="checkbox" x-model="form.early_checkin" class="rounded border-secondary/30 text-primary">
+                                            Arrivée anticipée sans frais
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="border-t border-secondary/20 pt-5">
+                                    <label class="block text-xs font-medium text-primary/70 mb-1">Notes internes</label>
+                                    <textarea name="notes" x-model="form.notes" rows="2" maxlength="2000"
+                                        placeholder="Référence de la convention, interlocuteur, conditions particulières..."
+                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30"></textarea>
+                                </div>
+
+                                <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                    <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
+                                    <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
+                                    Convention active
+                                </label>
+                            </div>
+
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                                <button type="button" @click="open = false"
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
 </div>
 
@@ -597,6 +948,70 @@
                 };
                 this.editing = true;
                 this.formAction = `${baseUrl}/${service.id}`;
+                this.open = true;
+            },
+        };
+    }
+
+    function partnerCatalog(types, services) {
+        const storeUrl = @js(route('settings.partners.store'));
+        const baseUrl = @js(url('/settings/partners'));
+
+        return {
+            types,
+            services,
+            open: false,
+            editing: false,
+            formAction: storeUrl,
+            form: {},
+
+            blank() {
+                return {
+                    id: null,
+                    name: '',
+                    code: '',
+                    type: Object.keys(this.types)[0],
+                    contact_name: '',
+                    contact_email: '',
+                    contact_phone: '',
+                    valid_from: '',
+                    valid_until: '',
+                    is_active: true,
+                    room_discount_type: 'none',
+                    room_discount_value: 0,
+                    restaurant_discount_percent: 0,
+                    shop_discount_percent: 0,
+                    free_service_item_ids: [],
+                    late_checkout: false,
+                    early_checkin: false,
+                    notes: '',
+                };
+            },
+
+            openCreate() {
+                this.form = this.blank();
+                this.editing = false;
+                this.formAction = storeUrl;
+                this.open = true;
+            },
+
+            openEdit(organization) {
+                // Les champs date et texte doivent être des chaînes, pas null,
+                // sinon Alpine affiche "null" dans les inputs.
+                this.form = {
+                    ...this.blank(),
+                    ...organization,
+                    code: organization.code ?? '',
+                    contact_name: organization.contact_name ?? '',
+                    contact_email: organization.contact_email ?? '',
+                    contact_phone: organization.contact_phone ?? '',
+                    valid_from: organization.valid_from ?? '',
+                    valid_until: organization.valid_until ?? '',
+                    notes: organization.notes ?? '',
+                    free_service_item_ids: organization.free_service_item_ids ?? [],
+                };
+                this.editing = true;
+                this.formAction = `${baseUrl}/${organization.id}`;
                 this.open = true;
             },
         };

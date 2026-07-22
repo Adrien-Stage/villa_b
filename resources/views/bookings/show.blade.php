@@ -628,8 +628,9 @@
                                     <span class="block text-sm text-primary truncate" x-text="option.label"></span>
                                     <span class="block text-[11px] text-primary/40" x-show="option.hint" x-text="option.hint"></span>
                                 </span>
-                                <span class="shrink-0 text-sm font-semibold text-primary"
-                                    x-text="format(option.price) + ' FCFA'"></span>
+                                <span class="shrink-0 text-sm font-semibold"
+                                    :class="option.free ? 'text-green-700' : 'text-primary'"
+                                    x-text="option.free ? 'Offert' : format(option.price) + ' FCFA'"></span>
                             </button>
                         </template>
                         <div x-show="options.length === 0" style="display: none;" class="px-3 py-4 text-center text-xs text-primary/40">
@@ -675,6 +676,10 @@
                 <span class="text-sm font-bold text-primary"
                     x-text="complimentary ? 'Offert' : format(total) + ' FCFA'"></span>
             </div>
+            {{-- Identifie la prestation du catalogue : le serveur s'en sert pour
+                 reconnaître ce que la convention partenaire couvre. --}}
+            <input type="hidden" name="service_item_id" :value="serviceItemId">
+
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="is_complimentary" value="1" id="complimentary" x-model="complimentary"
                     class="w-4 h-4 rounded border-secondary/30 text-primary">
@@ -682,6 +687,12 @@
                     Prestation offerte (montant à 0, mais tracée dans l'historique)
                 </label>
             </div>
+            @if($partnerOrganization)
+                <p x-show="partnerFree" style="display:none;"
+                    class="text-[11px] text-green-800 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    Cette prestation est couverte par la convention « {{ $partnerOrganization->name }} » : elle sera facturée à 0.
+                </p>
+            @endif
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
                 <input type="text" name="notes"
@@ -998,6 +1009,10 @@
             unitPrice: 0,
             quantity: 1,
             complimentary: false,
+            // Prestation choisie au catalogue : transmise au serveur, qui
+            // décide seul de la gratuité conventionnelle.
+            serviceItemId: '',
+            partnerFree: false,
 
             // Types dont on attend un catalogue (la remise et la saisie libre n'en ont pas)
             get catalogable() {
@@ -1030,12 +1045,21 @@
                 this.activeGroup = 0;
                 this.search = '';
                 this.selected = null;
+                this.serviceItemId = '';
+                this.partnerFree = false;
             },
 
             pick(option) {
                 this.selected = option.label;
                 this.description = option.label;
                 this.unitPrice = option.price;
+                this.serviceItemId = option.id ?? '';
+                this.partnerFree = option.free === true;
+                // Prestation couverte par la convention : la ligne part offerte
+                // sans que la réception ait à y penser.
+                if (this.partnerFree) {
+                    this.complimentary = true;
+                }
             },
 
             format(amount) {

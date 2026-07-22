@@ -326,6 +326,19 @@
                                 @error('nationality')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
+                        @if($partnerOrganizations->isNotEmpty())
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold text-primary/50 mb-1.5">Organisation partenaire</label>
+                                <select name="partner_organization_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary bg-white" x-bind:disabled="!isCreatingNew">
+                                    <option value="">Aucune — client particulier</option>
+                                    @foreach($partnerOrganizations as $organization)
+                                        <option value="{{ $organization->id }}" @selected(old('partner_organization_id') == $organization->id)>{{ $organization->name }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-[10px] text-primary/40 mt-1">Si le client déclare appartenir à une organisation partenaire, ses privilèges seront appliqués au séjour.</p>
+                                @error('partner_organization_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
                         {{-- La pièce d'identité du client est demandée au check-in, pas ici. --}}
                     </x-customer-search>
                 </div>

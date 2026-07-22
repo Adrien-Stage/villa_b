@@ -60,7 +60,14 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer)
     {
-        return view('customers.edit', compact('customer'));
+        // Les conventions échues restent proposées si le client y est déjà
+        // rattaché, pour ne pas effacer silencieusement l'information.
+        $partnerOrganizations = \App\Models\PartnerOrganization::query()
+            ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $customer->partner_organization_id))
+            ->orderBy('name')
+            ->get();
+
+        return view('customers.edit', compact('customer', 'partnerOrganizations'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -78,6 +85,8 @@ class CustomerController extends Controller
             'city' => 'nullable|string|max:255',
             // Pays de résidence (code ISO) : marché émetteur du client.
             'country' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+            // Organisation partenaire dont le client est membre.
+            'partner_organization_id' => ['nullable', 'exists:partner_organizations,id'],
             'is_vip' => 'nullable|boolean',
             'is_blacklisted' => 'nullable|boolean',
             'notes' => 'nullable|string',
