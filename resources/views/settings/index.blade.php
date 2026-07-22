@@ -100,11 +100,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'établissement</label>
-                        <input type="text" value="{{ $tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input type="text" value="{{ $tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>
-                        <input type="text" value="{{ $tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input type="text" value="{{ $tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
                 </div>
 
@@ -169,7 +169,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Heure limite de sortie (Check-out)</label>
-                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? '12:00' }}" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? '12:00' }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                         </div>
                     </div>
@@ -180,16 +180,16 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Pourcentage de réduction max (%)</label>
-                                <input type="number" name="settings[max_discount_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input type="number" name="settings[max_discount_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Acompte minimum requis (%)</label>
-                                <input type="number" name="settings[min_deposit_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input type="number" name="settings[min_deposit_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
                                 <p class="text-[10px] text-primary/50 mt-1">Exigé pour confirmer.</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Surcharge capacité dépassée (%)</label>
-                                <input type="number" name="settings[capacity_surcharge_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['capacity_surcharge_percentage'] ?? '10' }}" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input type="number" name="settings[capacity_surcharge_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['capacity_surcharge_percentage'] ?? '10' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
                                 <p class="text-[10px] text-primary/50 mt-1">Taux si capacité de base dépassée.</p>
                             </div>
                         </div>
@@ -210,14 +210,14 @@
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Montant dépensé pour 1 point</label>
                                 <div class="relative">
-                                    <input type="number" value="10000" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
+                                    <input type="number" value="10000" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
                                     <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Valeur d'un point en réduction</label>
                                 <div class="relative">
-                                    <input type="number" value="500" class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
+                                    <input type="number" value="500" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
                                     <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
                                 </div>
                             </div>
@@ -226,7 +226,7 @@
 
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <h3 class="text-sm font-semibold text-primary mb-2">Politique d'annulation</h3>
-                        <textarea name="settings[cancellation_policy]" rows="3" placeholder="Saisissez les règles d'annulation..." class="w-full rounded-lg border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">{{ $tenantSettings['reception']['cancellation_policy'] ?? '' }}</textarea>
+                        <textarea name="settings[cancellation_policy]" rows="3" placeholder="Saisissez les règles d'annulation..." class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">{{ $tenantSettings['reception']['cancellation_policy'] ?? '' }}</textarea>
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end">
@@ -275,15 +275,15 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Nettoyage standard</label>
-                                <input type="number" value="30" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="number" value="30" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Nettoyage à fond</label>
-                                <input type="number" value="60" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="number" value="60" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Inspection</label>
-                                <input type="number" value="10" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="number" value="10" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                         </div>
                     </div>
@@ -306,11 +306,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Ouverture</label>
-                                <input type="time" value="07:00" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="time" value="07:00" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Fermeture</label>
-                                <input type="time" value="23:30" class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="time" value="23:30" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                         </div>
                     </div>
@@ -500,7 +500,7 @@
                                 <div>
                                     <label class="block text-xs font-medium text-primary/70 mb-1">Catégorie *</label>
                                     <select name="category" x-model="form.category" required
-                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
                                         <template x-for="(label, key) in categories" :key="key">
                                             <option :value="key" x-text="label"></option>
                                         </template>
@@ -511,31 +511,31 @@
                                     <label class="block text-xs font-medium text-primary/70 mb-1">Nom *</label>
                                     <input type="text" name="name" x-model="form.name" required maxlength="140"
                                         placeholder="Ex : Excursion lac Barombi, Massage relaxant 60 min..."
-                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Prix (FCFA) *</label>
                                         <input type="number" name="price" x-model="form.price" min="0" required
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Durée (min)</label>
                                         <input type="number" name="duration_minutes" x-model="form.duration_minutes" min="0" max="1440"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Ordre</label>
                                         <input type="number" name="sort_order" x-model="form.sort_order" min="0"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
                                     </div>
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-medium text-primary/70 mb-1">Description (optionnel)</label>
                                     <textarea name="description" x-model="form.description" rows="2" maxlength="500"
-                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary"></textarea>
+                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary"></textarea>
                                 </div>
 
                                 <label class="inline-flex items-center gap-2 text-xs text-primary/70">
@@ -733,161 +733,225 @@
                                 <input type="hidden" name="_method" value="PUT">
                             </template>
 
-                            <div class="px-6 py-5 space-y-5 flex-1 overflow-y-auto min-h-0">
-                                {{-- Identité --}}
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div class="md:col-span-2">
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'organisation *</label>
-                                        <input type="text" name="name" x-model="form.name" required maxlength="160"
-                                            placeholder="Ex : Total Energies Cameroun, Ambassade de France..."
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Code</label>
-                                        <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="Ex : TEC"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
-                                    </div>
-                                </div>
+                            {{-- Note : le plugin @tailwindcss/forms n'est pas chargé dans
+                                 app.css, donc le preflight met border-width à 0. Les champs
+                                 doivent porter la classe `border` explicitement, sinon la
+                                 couleur de bordure seule reste invisible. --}}
+                            <div class="px-6 py-5 space-y-6 flex-1 overflow-y-auto min-h-0 bg-gray-50/40">
 
-                                <div>
-                                    <label class="block text-xs font-medium text-primary/70 mb-1">Type *</label>
-                                    <select name="type" x-model="form.type" required
-                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                        <template x-for="(label, key) in types" :key="key">
-                                            <option :value="key" x-text="label"></option>
-                                        </template>
-                                    </select>
-                                </div>
+                                {{-- ── Identité ── --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+                                        Identité
+                                    </h4>
 
-                                {{-- Contact --}}
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Contact</label>
-                                        <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom de l'organisation <span class="text-red-500">*</span></label>
+                                            <input type="text" name="name" x-model="form.name" required maxlength="160"
+                                                placeholder="Ex : Total Energies Cameroun"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
+                                            <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="TEC"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Email</label>
-                                        <input type="email" name="contact_email" x-model="form.contact_email" maxlength="150"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Téléphone</label>
-                                        <input type="text" name="contact_phone" x-model="form.contact_phone" maxlength="30"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                    </div>
-                                </div>
 
-                                {{-- Validité --}}
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Convention valable du</label>
-                                        <input type="date" name="valid_from" x-model="form.valid_from"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    <div class="mt-4">
+                                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Type <span class="text-red-500">*</span></label>
+                                        <select name="type" x-model="form.type" required
+                                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                            <template x-for="(label, key) in types" :key="key">
+                                                <option :value="key" x-text="label"></option>
+                                            </template>
+                                        </select>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">au</label>
-                                        <input type="date" name="valid_until" x-model="form.valid_until"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                    </div>
-                                </div>
-                                <p class="text-[11px] text-primary/40 -mt-3">
-                                    Laisser vide pour une convention sans échéance. Hors de cette période, les privilèges ne s'appliquent plus.
-                                </p>
+                                </section>
 
-                                {{-- Privilèges --}}
-                                <div class="border-t border-secondary/20 pt-5">
-                                    <h4 class="text-sm font-semibold text-primary mb-3">Privilèges accordés aux membres</h4>
+                                {{-- ── Contact ── --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="user-round" class="w-3.5 h-3.5"></i>
+                                        Interlocuteur
+                                    </h4>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom</label>
+                                            <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Email</label>
+                                            <input type="email" name="contact_email" x-model="form.contact_email" maxlength="150"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Téléphone</label>
+                                            <input type="text" name="contact_phone" x-model="form.contact_phone" maxlength="30"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {{-- ── Validité ── --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+                                        Validité de la convention
+                                    </h4>
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise sur l'hébergement</label>
-                                            <select name="room_discount_type" x-model="form.room_discount_type"
-                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                                <option value="none">Aucune</option>
-                                                <option value="percent">Pourcentage</option>
-                                                <option value="amount">Montant par nuitée</option>
-                                            </select>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Du</label>
+                                            <input type="date" name="valid_from" x-model="form.valid_from"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
                                         </div>
-                                        <div x-show="form.room_discount_type !== 'none'" style="display:none;">
-                                            <label class="block text-xs font-medium text-primary/70 mb-1"
-                                                x-text="form.room_discount_type === 'percent' ? 'Pourcentage (%)' : 'Montant par nuitée (FCFA)'"></label>
-                                            <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
-                                                :max="form.room_discount_type === 'percent' ? 100 : 10000000"
-                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        <div>
+                                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Au</label>
+                                            <input type="date" name="valid_until" x-model="form.valid_until"
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                        </div>
+                                    </div>
+                                    <p class="text-[11px] text-primary/40 mt-2">
+                                        Laisser vide pour une convention sans échéance. Hors de cette période, les privilèges cessent de s'appliquer.
+                                    </p>
+
+                                    <label class="mt-4 flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                                        <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
+                                        <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                        <span class="text-xs text-primary/80">Convention active</span>
+                                    </label>
+                                </section>
+
+                                {{-- ── Privilèges ── --}}
+                                <section class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/60 mb-1">
+                                        <i data-lucide="gift" class="w-3.5 h-3.5"></i>
+                                        Privilèges accordés aux membres
+                                    </h4>
+                                    <p class="text-[11px] text-primary/40 mb-4">
+                                        Appliqués automatiquement dès qu'un client rattaché à cette organisation réserve.
+                                    </p>
+
+                                    {{-- Hébergement --}}
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3.5">
+                                        <p class="text-xs font-semibold text-primary mb-2.5">Hébergement</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-medium text-primary/70 mb-1.5">Type de remise</label>
+                                                <select name="room_discount_type" x-model="form.room_discount_type"
+                                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    <option value="none">Aucune</option>
+                                                    <option value="percent">Pourcentage</option>
+                                                    <option value="amount">Montant par nuitée</option>
+                                                </select>
+                                            </div>
+                                            <div x-show="form.room_discount_type !== 'none'" style="display:none;">
+                                                <label class="block text-xs font-medium text-primary/70 mb-1.5"
+                                                    x-text="form.room_discount_type === 'percent' ? 'Pourcentage' : 'Montant par nuitée'"></label>
+                                                <div class="relative">
+                                                    <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
+                                                        :max="form.room_discount_type === 'percent' ? 100 : 10000000"
+                                                        class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40"
+                                                        x-text="form.room_discount_type === 'percent' ? '%' : 'FCFA'"></span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                        <div>
-                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise restaurant (%)</label>
-                                            <input type="number" name="restaurant_discount_percent" x-model="form.restaurant_discount_percent" min="0" max="100"
-                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-primary/70 mb-1">Remise boutique (%)</label>
-                                            <input type="number" name="shop_discount_percent" x-model="form.shop_discount_percent" min="0" max="100"
-                                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                    {{-- Autres pôles --}}
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3.5 mt-3">
+                                        <p class="text-xs font-semibold text-primary mb-2.5">Restauration et boutique</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise restaurant</label>
+                                                <div class="relative">
+                                                    <input type="number" name="restaurant_discount_percent" x-model="form.restaurant_discount_percent" min="0" max="100"
+                                                        class="w-full px-3 py-2.5 pr-9 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">%</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise boutique</label>
+                                                <div class="relative">
+                                                    <input type="number" name="shop_discount_percent" x-model="form.shop_discount_percent" min="0" max="100"
+                                                        class="w-full px-3 py-2.5 pr-9 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">%</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {{-- Prestations offertes --}}
-                                    <div class="mt-4">
-                                        <label class="block text-xs font-medium text-primary/70 mb-1">Prestations offertes</label>
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3.5 mt-3">
+                                        <div class="flex items-baseline justify-between mb-2.5">
+                                            <p class="text-xs font-semibold text-primary">Prestations offertes</p>
+                                            <span class="text-[10px] text-primary/40"
+                                                x-show="form.free_service_item_ids.length > 0"
+                                                x-text="form.free_service_item_ids.length + ' sélectionnée' + (form.free_service_item_ids.length > 1 ? 's' : '')"></span>
+                                        </div>
+
                                         <template x-if="services.length === 0">
-                                            <p class="text-[11px] text-primary/40 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
                                                 Aucune prestation au catalogue. Ajoutez-en dans l'onglet Prestations pour pouvoir en offrir.
                                             </p>
                                         </template>
-                                        <div x-show="services.length > 0" class="border border-secondary/20 rounded-lg max-h-44 overflow-y-auto divide-y divide-secondary/10">
+
+                                        <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-44 overflow-y-auto divide-y divide-secondary/10">
                                             <template x-for="service in services" :key="service.id">
-                                                <label class="flex items-center gap-3 px-3 py-2 hover:bg-accent/10 cursor-pointer">
+                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
+                                                    :class="form.free_service_item_ids.includes(service.id) ? 'bg-accent/20' : ''">
                                                     {{-- Case purement visuelle : les valeurs réellement soumises
                                                          sont les champs cachés générés plus bas, pour éviter la
                                                          soumission d'une valeur vide par x-model. --}}
                                                     <input type="checkbox" :value="service.id" x-model.number="form.free_service_item_ids"
-                                                        class="rounded border-secondary/30 text-primary">
+                                                        class="w-4 h-4 rounded border-secondary/40 text-primary shrink-0">
                                                     <span class="flex-1 min-w-0">
                                                         <span class="block text-sm text-primary truncate" x-text="service.name"></span>
                                                         <span class="block text-[10px] text-primary/40" x-text="service.group"></span>
                                                     </span>
-                                                    <span class="text-xs text-primary/50 shrink-0"
-                                                        x-text="new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
+                                                    <span class="text-xs shrink-0"
+                                                        :class="form.free_service_item_ids.includes(service.id) ? 'text-green-700 font-semibold' : 'text-primary/50'"
+                                                        x-text="form.free_service_item_ids.includes(service.id) ? 'Offert' : new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
                                                 </label>
                                             </template>
                                         </div>
+
                                         <template x-for="id in form.free_service_item_ids" :key="'hidden-' + id">
                                             <input type="hidden" name="free_service_item_ids[]" :value="id">
                                         </template>
                                     </div>
 
                                     {{-- Arrangements horaires --}}
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                                        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors">
                                             <input type="hidden" name="late_checkout" :value="form.late_checkout ? 1 : 0">
-                                            <input type="checkbox" x-model="form.late_checkout" class="rounded border-secondary/30 text-primary">
-                                            Départ tardif sans frais
+                                            <input type="checkbox" x-model="form.late_checkout" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                            <span class="text-xs text-primary/80">Départ tardif sans frais</span>
                                         </label>
-                                        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
+                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors">
                                             <input type="hidden" name="early_checkin" :value="form.early_checkin ? 1 : 0">
-                                            <input type="checkbox" x-model="form.early_checkin" class="rounded border-secondary/30 text-primary">
-                                            Arrivée anticipée sans frais
+                                            <input type="checkbox" x-model="form.early_checkin" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                            <span class="text-xs text-primary/80">Arrivée anticipée sans frais</span>
                                         </label>
                                     </div>
-                                </div>
+                                </section>
 
-                                <div class="border-t border-secondary/20 pt-5">
-                                    <label class="block text-xs font-medium text-primary/70 mb-1">Notes internes</label>
+                                {{-- ── Notes ── --}}
+                                <section class="bg-white border border-secondary/20 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                        <i data-lucide="notebook-pen" class="w-3.5 h-3.5"></i>
+                                        Notes internes
+                                    </h4>
                                     <textarea name="notes" x-model="form.notes" rows="2" maxlength="2000"
-                                        placeholder="Référence de la convention, interlocuteur, conditions particulières..."
-                                        class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30"></textarea>
-                                </div>
-
-                                <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-                                    <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                                    <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
-                                    Convention active
-                                </label>
+                                        placeholder="Référence de la convention, conditions particulières..."
+                                        class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30"></textarea>
+                                </section>
                             </div>
 
                             <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
