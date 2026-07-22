@@ -30,6 +30,7 @@ class User extends Authenticatable
     public const ROLE_MANAGER = 'manager';       // Directeur d'établissement
     public const ROLE_RECEPTION = 'reception';   // Agent de réception
     public const ROLE_HOUSEKEEPING = 'housekeeping'; // Femme/Valet de chambre
+    public const ROLE_ECONOME = 'econome';       // Gestionnaire de l'économat / magasin central
 
     protected $fillable = [
         'name',

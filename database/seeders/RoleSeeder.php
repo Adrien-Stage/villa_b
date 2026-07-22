@@ -83,6 +83,11 @@ class RoleSeeder extends Seeder
                 'slug' => 'shop_cashier',
                 'description' => 'Ventes et encaissements boutique',
                 ],
+            [
+                'name' => 'Économe',
+                'slug' => 'econome',
+                'description' => 'Gestion du magasin central : stock, fournisseurs, bons de commande et demandes des départements',
+                ],
         ];
 
         foreach ($roles as $roleData) {

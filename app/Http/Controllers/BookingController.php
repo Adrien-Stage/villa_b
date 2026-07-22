@@ -345,10 +345,30 @@ class BookingController extends Controller
             $partnerOrganization = null;
         }
 
+        // Packs proposables pour ce type de chambre. Le montant est calculé ici
+        // pour le séjour demandé : la vue n'a plus qu'à l'afficher.
+        $occupants = (int) $validated['adults_count'] + (int) ($validated['children_count'] ?? 0);
+        $roomPackages = \App\Models\RoomPackage::active()
+            ->orderBy('sort_order')->orderBy('name')->get()
+            ->filter(fn ($p) => $p->appliesToRoomType($room->room_type_id))
+            ->map(fn ($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'description' => $p->description,
+                'contents'    => $p->contentLabels(),
+                'mode'        => $p->pricingModeLabel(),
+                'amount'      => (int) ($p->amountFor($nights, $occupants) / 100),
+                // Remise éventuelle sur la nuitée, calculée sur le tarif de base.
+                'room_discount' => (int) ($p->roomDiscountFor((int) round($totalRoomAmount * 100), $nights) / 100),
+            ])
+            ->values()
+            ->all();
+
         return view('bookings.confirm', [
             'customerId' => $validated['customer_id'],
             'bookerId' => $validated['booker_id'] ?? null,
             'partnerOrganization' => $partnerOrganization,
+            'roomPackages' => $roomPackages,
             // Remise estimée sur le brut, pour l'afficher avant validation.
             'partnerRoomDiscount' => $partnerOrganization
                 ? (int) ($partnerOrganization->roomDiscountFor((int) round($totalRoomAmount * 100), $nights) / 100)
@@ -403,6 +423,7 @@ class BookingController extends Controller
             'offerte_reason' => [$request->boolean('is_offerte') ? 'required' : 'nullable', 'string', 'max:500'],
             // La réception peut écarter la convention pour un séjour privé.
             'apply_partner_privileges' => ['nullable', 'boolean'],
+            'room_package_id' => ['nullable', 'exists:room_packages,id'],
         ]);
 
         $room     = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -466,11 +487,35 @@ class BookingController extends Controller
             }
         }
 
+        // 1 ter. Formule d'hébergement retenue. Elle ajoute un montant au séjour
+        // et peut elle aussi ouvrir droit à une remise sur la nuitée, qui se
+        // cumule avec celle du partenaire.
+        $roomPackage     = null;
+        $packageAmount   = 0;   // centimes
+        $packageDiscount = 0;   // centimes
+        if (!empty($validated['room_package_id']) && !$request->boolean('is_offerte')) {
+            $candidate = \App\Models\RoomPackage::find($validated['room_package_id']);
+
+            // Le pack doit être actif et autorisé sur ce type de chambre : on ne
+            // se fie pas au formulaire, qui peut avoir été forgé.
+            if ($candidate && $candidate->is_active && $candidate->appliesToRoomType($room->room_type_id)) {
+                $roomPackage   = $candidate;
+                $occupants     = (int) $validated['adults_count'] + (int) ($validated['children_count'] ?? 0);
+                $packageAmount = $candidate->amountFor($nights, $occupants);
+                $packageDiscount = $candidate->roomDiscountFor(
+                    (int) round($validated['custom_price'] * 100),
+                    $nights
+                );
+            }
+        }
+
         // 2. Si non offert, valider le dépôt minimum. Il porte sur le montant
-        // réellement dû, remise partenaire déduite : exiger l'acompte sur le
-        // brut ferait payer au client une part qu'il ne doit pas.
+        // réellement dû — formule comprise, remises déduites : exiger l'acompte
+        // sur le brut ferait payer au client une part qu'il ne doit pas.
         if (!$request->boolean('is_offerte')) {
-            $netPrice   = max(0, (float) $validated['custom_price'] - $partnerDiscount / 100);
+            $netPrice   = max(0, (float) $validated['custom_price']
+                                 + $packageAmount / 100
+                                 - ($partnerDiscount + $packageDiscount) / 100);
             $minDeposit = ceil($netPrice * ($minDepositPercentage / 100));
             if ($validated['payment_amount'] < $minDeposit) {
                 return back()->withErrors([
@@ -487,11 +532,11 @@ class BookingController extends Controller
         $pricePerNight = $nights > 0 ? (int) round($customPrice / $nights) : 0;
         $totalRoomAmount = $pricePerNight * $nights;
         $taxAmount = 0;
-        // La remise partenaire ne peut pas dépasser l'hébergement facturé :
+        // Les remises cumulées ne peuvent pas dépasser l'hébergement facturé :
         // l'arrondi du prix par nuitée peut faire varier le brut de quelques
-        // centimes par rapport au montant sur lequel elle a été calculée.
-        $partnerDiscount = min($partnerDiscount, $totalRoomAmount);
-        $totalAmount = $totalRoomAmount + $taxAmount - $partnerDiscount;
+        // centimes par rapport au montant sur lequel elles ont été calculées.
+        $totalDiscount = min($partnerDiscount + $packageDiscount, $totalRoomAmount);
+        $totalAmount = $totalRoomAmount + $packageAmount + $taxAmount - $totalDiscount;
         $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
@@ -512,6 +557,7 @@ class BookingController extends Controller
             'customer_id'     => $validated['customer_id'],
             'booker_id'       => $validated['booker_id'] ?? null,
             'partner_organization_id' => $partnerOrganization?->id,
+            'room_package_id' => $roomPackage?->id,
             'status'          => $status,
             'check_in'        => $validated['check_in'],
             'check_out'       => $validated['check_out'],
@@ -521,8 +567,9 @@ class BookingController extends Controller
             'price_per_night' => $pricePerNight,
             'total_room_amount' => $totalRoomAmount,
             'extras_amount'   => 0,
+            'package_amount'  => $packageAmount,
             'tax_amount'      => $taxAmount,
-            'discount_amount' => $partnerDiscount,
+            'discount_amount' => $totalDiscount,
             'total_amount'    => $totalAmount,
             'deposit_amount'  => $paymentAmount,
             'paid_amount'     => $paymentAmount,
@@ -598,8 +645,29 @@ class BookingController extends Controller
             'recorded_by'  => Auth::id(),
         ]);
 
-        // Ligne folio de la remise partenaire (en négatif), pour que le dossier
-        // montre le brut et la remise consentie plutôt qu'un prix net opaque.
+        // Ligne folio de la formule retenue, détaillant ce qu'elle comprend.
+        if ($packageAmount > 0 && $roomPackage) {
+            $contents = $roomPackage->contentLabels();
+
+            FolioItem::create([
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_OTHER,
+                'description'  => "Formule — {$roomPackage->name}",
+                'quantity'     => 1,
+                'unit_price'   => $packageAmount,
+                'total_price'  => $packageAmount,
+                'is_complimentary' => false,
+                'earns_points' => true,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => $roomPackage->pricingModeLabel()
+                    . (empty($contents) ? '' : ' — ' . implode(' · ', $contents)),
+            ]);
+        }
+
+        // Lignes folio des remises (en négatif), une par origine : le dossier
+        // montre le brut et chaque geste consenti plutôt qu'un net opaque.
         if ($partnerDiscount > 0 && $partnerOrganization) {
             FolioItem::create([
                 'booking_id'   => $booking->id,
@@ -614,6 +682,23 @@ class BookingController extends Controller
                 'occurred_at'  => now(),
                 'recorded_by'  => Auth::id(),
                 'notes'        => $partnerOrganization->roomDiscountLabel(),
+            ]);
+        }
+
+        if ($packageDiscount > 0 && $roomPackage) {
+            FolioItem::create([
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_DISCOUNT,
+                'description'  => "Remise formule — {$roomPackage->name}",
+                'quantity'     => 1,
+                'unit_price'   => -$packageDiscount,
+                'total_price'  => -$packageDiscount,
+                'is_complimentary' => false,
+                'earns_points' => false,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => $roomPackage->roomDiscountLabel(),
             ]);
         }
 

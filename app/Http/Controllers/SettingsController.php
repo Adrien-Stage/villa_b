@@ -59,6 +59,16 @@ class SettingsController extends Controller
 
         $partnerTypes = \App\Models\PartnerOrganization::TYPES;
 
+        // Packs d'hébergement (onglet "Hébergement").
+        $roomPackages = \App\Models\RoomPackage::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $roomTypes         = \App\Models\RoomType::orderBy('name')->get();
+        $mealServices      = \App\Models\RestaurantMenuItem::MEAL_SERVICES;
+        $packPricingModes  = \App\Models\RoomPackage::PRICING_MODES;
+
         return view('settings.index', compact(
             'tab',
             'user',
@@ -68,7 +78,11 @@ class SettingsController extends Controller
             'serviceCategories',
             'partnerOrganizations',
             'serviceItemsFlat',
-            'partnerTypes'
+            'partnerTypes',
+            'roomPackages',
+            'roomTypes',
+            'mealServices',
+            'packPricingModes'
         ));
     }
 

@@ -60,6 +60,7 @@ class EnsureRoleAccess
                 'housekeeping' => 'Réservé au personnel housekeeping.',
                 'accountant' => 'Accès réservé à la comptabilité.',
                 'cashier' => 'Accès réservé aux caissiers.',
+                'econome' => 'Accès réservé à l\'économat.',
             ];
 
             $message = 'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles);

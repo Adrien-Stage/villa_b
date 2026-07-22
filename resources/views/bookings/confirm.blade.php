@@ -107,6 +107,48 @@
                                 </template>
                             </div>
 
+                            {{-- Packs d'hébergement : formule facturée en plus de la nuitée,
+                                 configurée dans Paramètres › Hébergement. --}}
+                            @if(!empty($roomPackages))
+                                <div class="mt-4 pt-4 border-t border-secondary/20"
+                                     x-data="{ packs: @js($roomPackages), selected: '' }">
+                                    <p class="text-sm font-semibold text-primary mb-1">Formule d'hébergement</p>
+                                    <p class="text-xs text-primary/60 mb-3">Facturée en supplément de la nuitée pour ce séjour.</p>
+
+                                    <div class="space-y-2">
+                                        <label class="flex items-center gap-3 border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
+                                               :class="selected === '' ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
+                                            <input type="radio" name="room_package_id" value="" x-model="selected" class="w-4 h-4 text-primary">
+                                            <span class="text-sm text-primary">Aucune formule — chambre seule</span>
+                                        </label>
+
+                                        <template x-for="pack in packs" :key="pack.id">
+                                            <label class="flex items-start gap-3 border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
+                                                   :class="selected == pack.id ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
+                                                <input type="radio" name="room_package_id" :value="pack.id" x-model="selected" class="mt-0.5 w-4 h-4 text-primary">
+                                                <span class="flex-1 min-w-0">
+                                                    <span class="flex items-baseline justify-between gap-3">
+                                                        <span class="text-sm font-medium text-primary" x-text="pack.name"></span>
+                                                        <span class="text-sm font-bold text-primary shrink-0"
+                                                              x-text="'+ ' + new Intl.NumberFormat('fr-FR').format(pack.amount) + ' FCFA'"></span>
+                                                    </span>
+                                                    <span class="block text-[11px] text-primary/40" x-text="pack.mode"></span>
+                                                    <span class="flex flex-wrap gap-1 mt-1.5">
+                                                        <template x-for="content in pack.contents" :key="content">
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white text-primary border border-secondary/20"
+                                                                  x-text="content"></span>
+                                                        </template>
+                                                    </span>
+                                                    <span class="block text-[11px] text-green-700 font-medium mt-1"
+                                                          x-show="pack.room_discount > 0"
+                                                          x-text="'Inclut une remise de ' + new Intl.NumberFormat('fr-FR').format(pack.room_discount) + ' FCFA sur la nuitée'"></span>
+                                                </span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                </div>
+                            @endif
+
                             {{-- Convention partenaire : la remise s'applique sur le prix
                                  négocié et apparaît en ligne distincte sur le folio. --}}
                             @if($partnerOrganization)
