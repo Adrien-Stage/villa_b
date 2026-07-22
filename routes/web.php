@@ -354,6 +354,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/depenses/{expense}', [$c, 'destroyExpense'])->name('expenses.destroy');
     });
 
+    // --- ÉCONOMAT / INVENTAIRE ---
+    Route::prefix('economat')->name('economat.')->group(function () {
+        $eco = 'App\\Http\\Controllers\\Economat\\';
+
+        // Gestion du magasin : réservée à l'économe (et manager/admin).
+        Route::middleware('role:econome,manager,admin')->group(function () use ($eco) {
+            Route::get('/', [$eco . 'EconomatController', 'index'])->name('index');
+
+            // Articles
+            Route::get('/articles', [$eco . 'StockItemController', 'index'])->name('items.index');
+            Route::post('/articles', [$eco . 'StockItemController', 'store'])->name('items.store');
+            Route::get('/articles/{item}', [$eco . 'StockItemController', 'show'])->whereNumber('item')->name('items.show');
+            Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
+            Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
+            Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
+
+            // Fournisseurs
+            Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
+            Route::post('/fournisseurs', [$eco . 'SupplierController', 'store'])->name('suppliers.store');
+            Route::put('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'update'])->name('suppliers.update');
+            Route::delete('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'destroy'])->name('suppliers.destroy');
+
+            // Bons de commande
+            Route::get('/bons', [$eco . 'PurchaseOrderController', 'index'])->name('orders.index');
+            Route::get('/bons/nouveau', [$eco . 'PurchaseOrderController', 'create'])->name('orders.create');
+            Route::post('/bons', [$eco . 'PurchaseOrderController', 'store'])->name('orders.store');
+            Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
+            Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
+            Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')->name('orders.receive');
+            Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')->name('orders.cancel');
+
+            // Traitement des demandes (validation / livraison)
+            Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])->whereNumber('requisition')->name('requisitions.approve');
+            Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
+            Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
+        });
+
+        // Demandes : ouvertes aussi aux responsables de département qui
+        // sollicitent l'économat. Le contrôleur cloisonne à leurs propres demandes.
+        Route::middleware('role:econome,manager,admin,reception,housekeeping_leader,restaurant_chief,shop_manager')->group(function () use ($eco) {
+            Route::get('/demandes', [$eco . 'StockRequisitionController', 'index'])->name('requisitions.index');
+            Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
+            Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
+            Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
+            Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
+        });
+    });
+
     // --- SHOP ---
     // Lecture seule pour le manager (GET uniquement)
     Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier,manager', 'module:shop'])->group(function () {

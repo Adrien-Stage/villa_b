@@ -219,6 +219,29 @@
                     @endmodule
                 @endrole
 
+                @role('econome','manager','admin')
+                    <div>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="economat.index" icon="warehouse">Tableau de bord</x-sidebar-link>
+                            <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
+                            <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
+                            <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Demandes</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endrole
+
+                {{-- Lien de demande à l'économat, pour les responsables de département --}}
+                @role('reception','housekeeping_leader','restaurant_chief','shop_manager')
+                    <div>
+                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endrole
+
                 @role('accountant','manager','admin')
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
