@@ -46,9 +46,9 @@
                 <!-- SKU -->
                 <div>
                     <label class="block text-sm font-medium text-primary mb-2">SKU (Code) *</label>
-                    <input type="text" name="sku" required value="{{ old('sku', $nextSku) }}" readonly
-                           class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-primary focus:border-transparent @error('sku') border-red-500 @enderror">
-                    <p class="text-xs text-secondary mt-1">Généré automatiquement</p>
+                    <input type="text" name="sku" required value="{{ old('sku', $nextSku) }}"
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('sku') border-red-500 @enderror">
+                    <p class="text-xs text-secondary mt-1">Généré automatiquement — modifiable avant création</p>
                     @error('sku')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror

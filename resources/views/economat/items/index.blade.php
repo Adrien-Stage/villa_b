@@ -10,12 +10,33 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
             <p class="text-sm text-primary/60 mt-0.5">Catalogue du magasin central et niveaux de stock.</p>
         </div>
-        <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('economat.items.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+                <i data-lucide="download" class="w-4 h-4"></i> Exporter
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-stock').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                <i data-lucide="upload" class="w-4 h-4"></i> Importer
+            </button>
+            <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
+            </button>
+        </div>
     </div>
 
     @include('economat.partials.flash')
+    <x-csv-import-errors />
+
+    <x-csv-import-modal
+        id="modal-import-stock"
+        title="Importer des articles (CSV)"
+        :action="route('economat.items.import')"
+        :template="route('economat.items.export', ['template' => 1])"
+        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif"
+        submit-label="Importer les articles">
+        <li><strong>nom</strong> obligatoire — les noms déjà existants sont ignorés (pas de doublon)</li>
+        <li><strong>categorie</strong> et <strong>fournisseur</strong> optionnels, mais doivent exister s'ils sont renseignés</li>
+        <li>Le <strong>stock démarre à 0</strong> : réglez-le ensuite par un ajustement ou une réception</li>
+    </x-csv-import-modal>
 
     <div class="flex gap-2 mb-4">
         <a href="{{ route('economat.items.index') }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
@@ -106,7 +127,7 @@
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" x-model="form.name" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -115,7 +136,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Référence</label>
-                            <input type="text" name="reference" x-model="form.reference" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
+                            <input type="text" name="reference" x-model="form.reference" @input="autoCode = false" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -205,15 +226,19 @@
             categories, suppliers,
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
+            autoCode: true,
             blank() {
                 return { id: null, name: '', reference: '', unit: 'pièce', description: '',
                     stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true };
             },
-            openCreate() { this.form = this.blank(); this.editing = false; this.formAction = storeUrl; this.open = true; },
+            // La référence suit le nom tant qu'elle n'a pas été saisie à la main.
+            applyAutoCode() { if (this.autoCode) this.form.reference = window.suggestCode(this.form.name || ''); },
+            openCreate() { this.form = this.blank(); this.autoCode = true; this.editing = false; this.formAction = storeUrl; this.open = true; },
             openEdit(item) {
                 this.form = { ...this.blank(), ...item,
                     reference: item.reference ?? '', description: item.description ?? '',
                     stock_category_id: item.stock_category_id ?? '', supplier_id: item.supplier_id ?? '' };
+                this.autoCode = false;
                 this.editing = true; this.formAction = `${baseUrl}/${item.id}`; this.open = true;
             },
             openAdjust(item) {

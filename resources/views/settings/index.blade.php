@@ -735,13 +735,13 @@
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div class="md:col-span-2">
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom du pack <span class="text-red-500">*</span></label>
-                                            <input type="text" name="name" x-model="form.name" required maxlength="140"
+                                            <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="140"
                                                 placeholder="Ex : Demi-pension, Pension complète, Séjour affaires"
                                                 class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
-                                            <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="DP"
+                                            <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" placeholder="DP"
                                                 class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
                                         </div>
                                     </div>
@@ -1122,13 +1122,13 @@
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div class="md:col-span-2">
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom de l'organisation <span class="text-red-500">*</span></label>
-                                            <input type="text" name="name" x-model="form.name" required maxlength="160"
+                                            <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160"
                                                 placeholder="Ex : Total Energies Cameroun"
                                                 class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
-                                            <input type="text" name="code" x-model="form.code" maxlength="30" placeholder="TEC"
+                                            <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" placeholder="TEC"
                                                 class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
                                         </div>
                                     </div>
@@ -1403,6 +1403,7 @@
             editing: false,
             formAction: storeUrl,
             form: {},
+            autoCode: true,
 
             blank() {
                 return {
@@ -1422,6 +1423,9 @@
                 };
             },
 
+            // Le code suit le nom tant qu'il n'a pas été édité à la main.
+            applyAutoCode() { if (this.autoCode) this.form.code = window.suggestCode(this.form.name || ''); },
+
             // Aperçu du montant réellement facturé : le mode de tarification
             // est la source d'erreur la plus fréquente à la saisie.
             previewAmount(nights, occupants) {
@@ -1433,6 +1437,7 @@
 
             openCreate() {
                 this.form = this.blank();
+                this.autoCode = true;
                 this.editing = false;
                 this.formAction = storeUrl;
                 this.open = true;
@@ -1448,6 +1453,7 @@
                     service_item_ids: pack.service_item_ids ?? [],
                     room_type_ids: pack.room_type_ids ?? [],
                 };
+                this.autoCode = false;
                 this.editing = true;
                 this.formAction = `${baseUrl}/${pack.id}`;
                 this.open = true;
@@ -1466,6 +1472,7 @@
             editing: false,
             formAction: storeUrl,
             form: {},
+            autoCode: true,
 
             blank() {
                 return {
@@ -1490,8 +1497,12 @@
                 };
             },
 
+            // Le code suit le nom tant qu'il n'a pas été édité à la main.
+            applyAutoCode() { if (this.autoCode) this.form.code = window.suggestCode(this.form.name || ''); },
+
             openCreate() {
                 this.form = this.blank();
+                this.autoCode = true;
                 this.editing = false;
                 this.formAction = storeUrl;
                 this.open = true;
@@ -1512,6 +1523,7 @@
                     notes: organization.notes ?? '',
                     free_service_item_ids: organization.free_service_item_ids ?? [],
                 };
+                this.autoCode = false;
                 this.editing = true;
                 this.formAction = `${baseUrl}/${organization.id}`;
                 this.open = true;

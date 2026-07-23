@@ -9,15 +9,39 @@
         <p class="text-sm text-primary/50 mt-0.5">Gestion des categories et des articles du restaurant</p>
     </div>
 
-    @if($canManage)
-        <button type="button"
-            onclick="openCreateItemModal()"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            Ajouter un article
-        </button>
-    @endif
+    <div class="flex items-center gap-2">
+        <a href="{{ route('restaurant.menus.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter les menus en CSV">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
+        </a>
+        @if($canManage)
+            <button type="button" onclick="document.getElementById('modal-import-menus').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des plats depuis un CSV">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
+            </button>
+            <button type="button"
+                onclick="openCreateItemModal()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                Ajouter un article
+            </button>
+        @endif
+    </div>
 </div>
+
+<x-csv-import-errors />
+
+@if($canManage)
+    <x-csv-import-modal
+        id="modal-import-menus"
+        title="Importer des plats (CSV)"
+        :action="route('restaurant.menus.import')"
+        :template="route('restaurant.menus.export', ['template' => 1])"
+        structure="categorie;nom;description;type;prix_fcfa;services;actif"
+        submit-label="Importer les plats">
+        <li><strong>nom</strong> et <strong>type</strong> (food, drink, other) obligatoires — les noms déjà présents sont ignorés</li>
+        <li><strong>categorie</strong> optionnelle mais doit exister ; <strong>prix_fcfa</strong> en FCFA (ex. 6000)</li>
+        <li><strong>services</strong> : liste séparée par « | » parmi Petit déjeuner, Déjeuner, Dîner (vide = toute la journée)</li>
+    </x-csv-import-modal>
+@endif
 
 @if(session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
