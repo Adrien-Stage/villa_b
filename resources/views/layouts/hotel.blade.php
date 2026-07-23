@@ -142,6 +142,10 @@
                                     <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
                                 @endmodule
                             @endrole
+
+                            @role('manager')
+                                <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
+                            @endrole
                         </ul>
                     </div>
                 @endrole
@@ -247,6 +251,10 @@
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
+                            {{-- Le manager voit déjà les fiches techniques dans la section Hôtel. --}}
+                            @role('accountant','admin')
+                                <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
+                            @endrole
                         </ul>
                     </div>
                 @endrole
@@ -844,6 +852,36 @@
 
         window.addEventListener('load', register);
     })();
+    </script>
+
+    <script>
+    // ── Suggestion automatique de code à la création ───────────────────────
+    // Génère un code lisible à partir d'un libellé : initiales pour un intitulé
+    // à plusieurs mots (« Total Energies Cameroun » → « TEC »), quatre premières
+    // lettres pour un mot unique (« Standard » → « STAN »). Toujours modifiable.
+    window.suggestCode = function (name) {
+        if (!name) return '';
+        const words = name.trim().split(/[\s\-_/]+/).filter(Boolean);
+        let code = words.length >= 2
+            ? words.map(w => w[0]).join('')
+            : (words[0] || '').slice(0, 4);
+        return code
+            .normalize('NFD').replace(/[̀-ͯ]/g, '') // enlève les accents
+            .replace(/[^A-Za-z0-9]/g, '')
+            .toUpperCase();
+    };
+
+    // Relie un champ « nom » à un champ « code » pour les formulaires en HTML
+    // simple : le code suit le nom tant que l'utilisateur ne l'a pas édité.
+    window.wireAutoCode = function (nameEl, codeEl) {
+        if (!nameEl || !codeEl) return;
+        // Un code déjà rempli (ré-affichage après erreur) est réputé maîtrisé.
+        let manual = codeEl.value.trim() !== '';
+        codeEl.addEventListener('input', () => { manual = true; });
+        nameEl.addEventListener('input', () => {
+            if (!manual) codeEl.value = window.suggestCode(nameEl.value);
+        });
+    };
     </script>
 
     @stack('scripts')

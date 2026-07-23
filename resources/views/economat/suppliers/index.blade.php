@@ -92,11 +92,11 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div class="col-span-2">
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" x-model="form.name" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
-                            <input type="text" name="code" x-model="form.code" maxlength="30" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
+                            <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -144,10 +144,14 @@
         const baseUrl = @js(url('/economat/fournisseurs'));
         return {
             open: false, editing: false, formAction: storeUrl, form: {},
+            autoCode: true,
             blank() { return { id: null, name: '', code: '', contact_name: '', email: '', phone: '', address: '', notes: '', is_active: true }; },
-            openCreate() { this.form = this.blank(); this.editing = false; this.formAction = storeUrl; this.open = true; },
+            // Le code suit le nom tant qu'il n'a pas été édité à la main.
+            applyAutoCode() { if (this.autoCode) this.form.code = window.suggestCode(this.form.name || ''); },
+            openCreate() { this.form = this.blank(); this.autoCode = true; this.editing = false; this.formAction = storeUrl; this.open = true; },
             openEdit(s) {
                 this.form = { ...this.blank(), ...s, code: s.code ?? '', contact_name: s.contact_name ?? '', email: s.email ?? '', phone: s.phone ?? '', address: s.address ?? '', notes: s.notes ?? '' };
+                this.autoCode = false;
                 this.editing = true; this.formAction = `${baseUrl}/${s.id}`; this.open = true;
             },
         };

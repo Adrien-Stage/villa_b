@@ -106,7 +106,7 @@
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" x-model="form.name" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -115,7 +115,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Référence</label>
-                            <input type="text" name="reference" x-model="form.reference" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
+                            <input type="text" name="reference" x-model="form.reference" @input="autoCode = false" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -205,15 +205,19 @@
             categories, suppliers,
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
+            autoCode: true,
             blank() {
                 return { id: null, name: '', reference: '', unit: 'pièce', description: '',
                     stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true };
             },
-            openCreate() { this.form = this.blank(); this.editing = false; this.formAction = storeUrl; this.open = true; },
+            // La référence suit le nom tant qu'elle n'a pas été saisie à la main.
+            applyAutoCode() { if (this.autoCode) this.form.reference = window.suggestCode(this.form.name || ''); },
+            openCreate() { this.form = this.blank(); this.autoCode = true; this.editing = false; this.formAction = storeUrl; this.open = true; },
             openEdit(item) {
                 this.form = { ...this.blank(), ...item,
                     reference: item.reference ?? '', description: item.description ?? '',
                     stock_category_id: item.stock_category_id ?? '', supplier_id: item.supplier_id ?? '' };
+                this.autoCode = false;
                 this.editing = true; this.formAction = `${baseUrl}/${item.id}`; this.open = true;
             },
             openAdjust(item) {

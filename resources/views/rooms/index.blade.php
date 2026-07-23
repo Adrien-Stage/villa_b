@@ -634,11 +634,11 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
-                    <input type="text" name="name" placeholder="Standard" required class="modal-input">
+                    <input type="text" id="create-type-name" name="name" placeholder="Standard" required class="modal-input">
                 </div>
                 <div>
                     <label class="modal-label">Code *</label>
-                    <input type="text" name="code" placeholder="STD" required class="modal-input">
+                    <input type="text" id="create-type-code" name="code" placeholder="STD" required class="modal-input">
                 </div>
             </div>
             <div>
@@ -922,6 +922,13 @@
 
 @push('scripts')
 <script>
+// Code du type de chambre suggéré automatiquement depuis le nom, à la création.
+document.addEventListener('DOMContentLoaded', () => {
+    window.wireAutoCode(
+        document.getElementById('create-type-name'),
+        document.getElementById('create-type-code')
+    );
+});
 document.addEventListener('alpine:init', () => {
     Alpine.data('multiImagePreview', () => ({
         previews: [],

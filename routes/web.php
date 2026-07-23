@@ -168,6 +168,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('role:manager,reception')->name('types.update');
         Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('role:manager,reception')->name('types.destroy');
     });
+
+    // --- FICHES TECHNIQUES DES CHAMBRES (marge sur une chambre louée) ---
+    // Donnée de gestion : réservée au manager et au comptable. Préfixe hors du
+    // groupe « rooms » pour ne pas heurter sa route rooms/{room}.
+    Route::prefix('hebergement/fiches-techniques')->name('rooms.cost_sheets.')->middleware('role:manager,accountant')->group(function () {
+        $c = App\Http\Controllers\RoomCostSheetController::class;
+
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::get('/{roomType}', [$c, 'show'])->whereNumber('roomType')->name('show');
+        Route::put('/{roomType}/hypotheses', [$c, 'updateAssumptions'])->whereNumber('roomType')->name('assumptions');
+        Route::post('/{roomType}/postes', [$c, 'storeItem'])->whereNumber('roomType')->name('items.store');
+        Route::put('/{roomType}/postes/{item}', [$c, 'updateItem'])->whereNumber('roomType')->whereNumber('item')->name('items.update');
+        Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')->name('items.destroy');
+    });
     Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
         ->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')
         ->name('rooms.updateStatus');
