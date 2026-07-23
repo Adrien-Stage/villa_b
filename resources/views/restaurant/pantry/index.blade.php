@@ -9,8 +9,14 @@
         <p class="text-sm text-primary/50 mt-0.5">Inventaire restaurant (séparé de l'inventaire hôtel)</p>
     </div>
 
-    @if($canManage)
-        <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2">
+        <a href="{{ route('restaurant.pantry.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter le garde-manger en CSV">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
+        </a>
+        @if($canManage)
+            <button type="button" onclick="document.getElementById('modal-import-pantry').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des articles depuis un CSV">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
+            </button>
             <button type="button"
                 onclick="openCreateCategoryModal()"
                 class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20">
@@ -23,9 +29,25 @@
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 Nouvel article
             </button>
-        </div>
-    @endif
+        @endif
+    </div>
 </div>
+
+<x-csv-import-errors />
+
+@if($canManage)
+    <x-csv-import-modal
+        id="modal-import-pantry"
+        title="Importer des articles garde-manger (CSV)"
+        :action="route('restaurant.pantry.import')"
+        :template="route('restaurant.pantry.export', ['template' => 1])"
+        structure="categorie;nom;unite;preparation;unite_achat;conversion_achat;cout_fcfa;stock_min;actif"
+        submit-label="Importer les articles">
+        <li><strong>nom</strong> et <strong>unite</strong> (pcs, kg, g, l, ml) obligatoires — les noms déjà présents sont ignorés</li>
+        <li><strong>preparation</strong> = oui/non · <strong>cout_fcfa</strong> en FCFA · <strong>categorie</strong> optionnelle mais doit exister</li>
+        <li>Le <strong>stock démarre à 0</strong> : réglez-le ensuite via une réception</li>
+    </x-csv-import-modal>
+@endif
 
 @if(session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">

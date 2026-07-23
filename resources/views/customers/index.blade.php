@@ -13,6 +13,14 @@
         </p>
     </div>
     <div class="flex items-center gap-3">
+        @role('reception','manager')
+            <a href="{{ route('customers.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les clients en CSV">
+                <i data-lucide="download" class="w-4 h-4"></i> Exporter
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-customers').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des clients depuis un CSV">
+                <i data-lucide="upload" class="w-4 h-4"></i> Importer
+            </button>
+        @endrole
         <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-secondary/20 shadow-sm">
             <i data-lucide="star" class="w-3.5 h-3.5 text-yellow-500"></i>
             <span class="text-xs font-medium text-primary">{{ $stats['vip'] }} VIP</span>
@@ -27,6 +35,8 @@
         </div>
     </div>
 </div>
+
+<x-csv-import-errors />
 
 {{-- Barre outils --}}
 <div class="flex items-center justify-between gap-4 mb-5">
@@ -179,5 +189,19 @@ document.getElementById('search-input').addEventListener('input', function() {
     searchTimer = setTimeout(() => this.closest('form').submit(), 400);
 });
 </script>
+
+@role('reception','manager')
+    <x-csv-import-modal
+        id="modal-import-customers"
+        title="Importer des clients (CSV)"
+        :action="route('customers.import')"
+        :template="route('customers.export', ['template' => 1])"
+        structure="prenom;nom;email;telephone;pays;nationalite;type_piece;numero_piece;date_naissance;adresse;ville;vip;blackliste;notes"
+        submit-label="Importer les clients">
+        <li><strong>prenom</strong> et <strong>nom</strong> obligatoires</li>
+        <li><strong>email</strong> sert de clé anti-doublon (les emails déjà présents sont ignorés)</li>
+        <li><strong>pays</strong> = code ISO (CM, FR…) · <strong>date_naissance</strong> = AAAA-MM-JJ · <strong>vip</strong>/<strong>blackliste</strong> = oui/non</li>
+    </x-csv-import-modal>
+@endrole
 
 @endsection

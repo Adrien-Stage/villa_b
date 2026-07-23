@@ -239,6 +239,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- CLIENTS ---
     Route::prefix('customers')->name('customers.')->middleware('role:manager,reception,cashier')->group(function () {
         Route::get('/',               [CustomerController::class, 'index'])->name('index');
+        // Import / export CSV — déclarés avant /{customer} pour ne pas être capturés par le binding.
+        Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])->middleware('role:reception,manager')->name('export');
+        Route::post('/import',        [App\Http\Controllers\CustomerCsvController::class, 'import'])->middleware('role:reception,manager')->name('import');
         Route::get('/create',         [CustomerController::class, 'create'])->middleware('role:reception,manager')->name('create');
         Route::post('/',              [CustomerController::class, 'store'])->middleware('role:reception,manager')->name('store');
         Route::get('/{customer}',     [CustomerController::class, 'show'])->name('show');
@@ -260,6 +263,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
     Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff,restaurant_cook', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
+        Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
+        Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
@@ -297,6 +302,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/menus/categories/{category}', [RestaurantMenuController::class, 'updateCategory'])->name('menus.categories.update');
             Route::delete('/menus/categories/{category}', [RestaurantMenuController::class, 'destroyCategory'])->name('menus.categories.destroy');
 
+            Route::post('/menus-import', [App\Http\Controllers\RestaurantCsvController::class, 'importMenus'])->name('menus.import');
+            Route::post('/pantry-import', [App\Http\Controllers\RestaurantCsvController::class, 'importPantry'])->name('pantry.import');
             Route::post('/menus/items', [RestaurantMenuController::class, 'storeItem'])->name('menus.items.store');
             Route::put('/menus/items/{item}', [RestaurantMenuController::class, 'updateItem'])->name('menus.items.update');
             Route::delete('/menus/items/{item}', [RestaurantMenuController::class, 'destroyItem'])->name('menus.items.destroy');
@@ -379,6 +386,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Articles
             Route::get('/articles', [$eco . 'StockItemController', 'index'])->name('items.index');
             Route::post('/articles', [$eco . 'StockItemController', 'store'])->name('items.store');
+            // Import / export CSV — avant /articles/{item} (contrainte numérique, pas de collision).
+            Route::get('/articles-export', [App\Http\Controllers\StockItemCsvController::class, 'export'])->name('items.export');
+            Route::post('/articles-import', [App\Http\Controllers\StockItemCsvController::class, 'import'])->name('items.import');
             Route::get('/articles/{item}', [$eco . 'StockItemController', 'show'])->whereNumber('item')->name('items.show');
             Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
             Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
@@ -421,6 +431,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier,manager', 'module:shop'])->group(function () {
         Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('role:shop_manager,manager')->name('cash_register.index');
         Route::get('/products', [ShopProductController::class, 'index'])->middleware('role:shop_manager,manager')->name('products.index');
+        Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])->middleware('role:shop_manager,manager')->name('products.export');
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->whereNumber('order')->name('orders.receipt');
         Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
@@ -449,6 +460,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware('role:shop_manager')->group(function () {
             Route::get('/products/create', [ShopProductController::class, 'create'])->name('products.create');
             Route::post('/products', [ShopProductController::class, 'store'])->name('products.store');
+            Route::post('/products-import', [App\Http\Controllers\ShopProductCsvController::class, 'import'])->name('products.import');
             Route::get('/products/{product}/edit', [ShopProductController::class, 'edit'])->whereNumber('product')->name('products.edit');
             Route::patch('/products/{product}', [ShopProductController::class, 'update'])->whereNumber('product')->name('products.update');
             Route::delete('/products/{product}', [ShopProductController::class, 'destroy'])->whereNumber('product')->name('products.destroy');

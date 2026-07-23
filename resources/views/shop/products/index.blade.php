@@ -9,10 +9,20 @@
             <h1 class="text-3xl font-bold text-primary">Articles Boutique</h1>
             <p class="text-secondary mt-1">Gestion des articles culturels</p>
         </div>
-        <a href="{{ route('shop.products.create') }}"
-           class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i> Nouvel article
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('shop.products.export') }}" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+                <i data-lucide="download" class="w-4 h-4"></i> Exporter
+            </a>
+            @role('shop_manager')
+                <button type="button" onclick="document.getElementById('modal-import-products').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Importer
+                </button>
+            @endrole
+            <a href="{{ route('shop.products.create') }}"
+               class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i> Nouvel article
+            </a>
+        </div>
     </div>
 
     @if ($message = session('success'))
@@ -20,6 +30,12 @@
             <i data-lucide="check-circle" class="w-5 h-5 inline mr-2"></i> {{ $message }}
         </div>
     @endif
+    @if ($message = session('error'))
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            <i data-lucide="alert-circle" class="w-5 h-5 inline mr-2"></i> {{ $message }}
+        </div>
+    @endif
+    <x-csv-import-errors />
 
     {{-- Barre outils --}}
     <div class="flex items-center justify-between gap-4 mb-6">
@@ -306,5 +322,19 @@
     });
 </script>
 @endpush
+
+@role('shop_manager')
+    <x-csv-import-modal
+        id="modal-import-products"
+        title="Importer des articles boutique (CSV)"
+        :action="route('shop.products.import')"
+        :template="route('shop.products.export', ['template' => 1])"
+        structure="sku;nom;categorie;description;prix_fcfa;stock;seuil_reappro;actif"
+        submit-label="Importer les articles">
+        <li><strong>nom</strong> et <strong>categorie</strong> obligatoires — la catégorie doit exister</li>
+        <li><strong>sku</strong> vide = généré automatiquement (ART-…) ; un SKU déjà présent est ignoré</li>
+        <li><strong>prix_fcfa</strong> en FCFA (ex. 5000)</li>
+    </x-csv-import-modal>
+@endrole
 
 @endsection

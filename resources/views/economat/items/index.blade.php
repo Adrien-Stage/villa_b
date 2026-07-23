@@ -10,12 +10,33 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
             <p class="text-sm text-primary/60 mt-0.5">Catalogue du magasin central et niveaux de stock.</p>
         </div>
-        <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('economat.items.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+                <i data-lucide="download" class="w-4 h-4"></i> Exporter
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-stock').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                <i data-lucide="upload" class="w-4 h-4"></i> Importer
+            </button>
+            <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
+            </button>
+        </div>
     </div>
 
     @include('economat.partials.flash')
+    <x-csv-import-errors />
+
+    <x-csv-import-modal
+        id="modal-import-stock"
+        title="Importer des articles (CSV)"
+        :action="route('economat.items.import')"
+        :template="route('economat.items.export', ['template' => 1])"
+        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif"
+        submit-label="Importer les articles">
+        <li><strong>nom</strong> obligatoire — les noms déjà existants sont ignorés (pas de doublon)</li>
+        <li><strong>categorie</strong> et <strong>fournisseur</strong> optionnels, mais doivent exister s'ils sont renseignés</li>
+        <li>Le <strong>stock démarre à 0</strong> : réglez-le ensuite par un ajustement ou une réception</li>
+    </x-csv-import-modal>
 
     <div class="flex gap-2 mb-4">
         <a href="{{ route('economat.items.index') }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
