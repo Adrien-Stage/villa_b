@@ -63,7 +63,44 @@ class User extends Authenticatable
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class)->withTimestamps();
+        // Le pivot porte le niveau d'accès (read / write) par rôle, donc par module.
+        return $this->belongsToMany(Role::class)->withPivot('level')->withTimestamps();
+    }
+
+    /**
+     * Niveau d'accès explicite de l'utilisateur sur un module métier, d'après
+     * ses rôles : 'write', 'read', ou null s'il n'a aucun rôle rattaché à ce
+     * module (donc aucune restriction de niveau à appliquer).
+     *
+     * Un niveau pivot vide (comptes créés avant cette fonctionnalité) vaut
+     * 'write' : la lecture seule est une restriction qu'on active volontairement.
+     */
+    public function moduleLevel(string $module): ?string
+    {
+        $levels = $this->roles->where('module', $module)
+            ->map(fn ($role) => $role->pivot->level ?: 'write');
+
+        if ($levels->isEmpty()) {
+            return null; // aucun rôle pivot sur ce module → pas de restriction
+        }
+
+        return $levels->contains('write') ? 'write' : 'read';
+    }
+
+    /**
+     * L'utilisateur peut-il écrire (agir) dans ce module ? On ne bloque que
+     * lorsqu'un niveau « lecture seule » explicite est posé ; l'absence de
+     * marqueur (comptes hérités, mono-rôle) reste en écriture.
+     */
+    public function canWrite(string $module): bool
+    {
+        return $this->moduleLevel($module) !== 'read';
+    }
+
+    /** L'utilisateur a-t-il un rôle explicitement rattaché à ce module ? */
+    public function canAccessModule(string $module): bool
+    {
+        return $this->moduleLevel($module) !== null;
     }
 
     /**

@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureRoleAccess::class,
             'admin' => \App\Http\Middleware\AdminOnly::class,
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
+            'module.access' => \App\Http\Middleware\EnsureModuleWriteAccess::class,
             'caisse' => \App\Http\Middleware\EnsureCashRegisterOpen::class,
             'reporting.token' => \App\Http\Middleware\ValidateReportingToken::class,
         ]);
