@@ -81,6 +81,16 @@ class Room extends Model
     }
 
     /**
+     * Dernière affectation housekeeping, quel que soit son statut. Sert à
+     * retrouver l'équipe responsable même après clôture (chambre nettoyée en
+     * attente de contrôle), pour les permissions du chef d'équipe.
+     */
+    public function latestHousekeepingAssignment(): HasOne
+    {
+        return $this->hasOne(HousekeepingAssignment::class)->latestOfMany();
+    }
+
+    /**
      * Scope : Chambres disponibles pour une période
      * Utilisé dans le wizard de réservation (section 4.4.1)
      */

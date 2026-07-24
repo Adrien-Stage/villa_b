@@ -95,7 +95,9 @@ test('roles are seeded correctly', function () {
     expect(Role::where('slug', 'manager')->exists())->toBeTrue();
     expect(Role::where('slug', 'reception')->exists())->toBeTrue();
     expect(Role::where('slug', 'accountant')->exists())->toBeTrue();
-    expect(Role::count())->toBe(12);
+    expect(Role::where('slug', 'econome')->exists())->toBeTrue();
+    // 14 rôles depuis l'ajout de l'économe (module économat/inventaire).
+    expect(Role::count())->toBe(14);
 });
 
 test('room routes are protected by RBAC middleware', function () {

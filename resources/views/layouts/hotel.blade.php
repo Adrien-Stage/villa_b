@@ -87,7 +87,10 @@
                     <div>
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                         <ul class="space-y-0.5">
-                            <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                            {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
+                            @role('manager','reception')
+                                <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                            @endrole
 
                             @role('manager','reception')
                                 <li>

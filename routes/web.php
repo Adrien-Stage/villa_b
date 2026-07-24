@@ -147,7 +147,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
 
     // --- CHAMBRES ---
-    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception,housekeeping_leader')->group(function () {
+    // Chambres : géré par manager/réception. Le housekeeping change les statuts
+    // depuis son propre module, plus depuis cette rubrique.
+    Route::prefix('rooms')->name('rooms.')->middleware('role:manager,reception')->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
         Route::post('/',               [RoomController::class, 'store'])->middleware('role:manager,reception')->name('store');
 
@@ -183,7 +185,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')->name('items.destroy');
     });
     Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
-        ->middleware('role:manager,reception,housekeeping_leader,housekeeping_staff,housekeeping')
+        ->middleware('role:manager,reception')
         ->name('rooms.updateStatus');
 
     // --- RÉSERVATIONS ---
@@ -256,6 +258,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('role:housekeeping_leader,manager')->name('assignments.store');
         Route::post('/{room}/clean',       [HousekeepingController::class, 'markCleaning'])->name('clean');
         Route::post('/{room}/ready',       [HousekeepingController::class, 'markReady'])->name('ready');
+        Route::post('/{room}/inspect',     [HousekeepingController::class, 'markInspected'])->name('inspect');
+        Route::post('/{room}/available',   [HousekeepingController::class, 'markAvailable'])->name('available');
+        Route::post('/{room}/reject',      [HousekeepingController::class, 'rejectCleaning'])->name('reject');
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
     });
 

@@ -11,27 +11,41 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class HousekeepingController extends Controller
 {
+    /** Rôles pilotant tout le service (vue chef complète). */
+    private const CHIEF_ROLES = ['manager', 'housekeeping_leader'];
+
+    /** Statuts couverts par le cycle de nettoyage. */
+    private const CYCLE_STATUSES = [
+        RoomStatus::DIRTY,
+        RoomStatus::CLEANING,
+        RoomStatus::CLEAN,
+        RoomStatus::INSPECTED,
+    ];
+
     public function index()
     {
-        $tenantId = Auth::user()->tenant_id;
-        $user = Auth::user();
-        $teamIds = $user->housekeepingTeams()->pluck('housekeeping_teams.id');
+        // Le chef de service voit tout le pilotage ; un agent de terrain ne voit
+        // que son équipe et ses chambres — deux écrans distincts.
+        return $this->isChief()
+            ? $this->chiefDashboard()
+            : $this->memberDashboard();
+    }
 
+    /** Tableau de bord du chef de service : pipeline, affectation, équipes. */
+    private function chiefDashboard()
+    {
         $teams = HousekeepingTeam::with(['leader', 'members', 'activeAssignments.room'])
-            
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
         $staff = User::query()
-            
-            ->where(function ($query) {
-                $query->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping']);
-            })
+            ->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping'])
             ->orderBy('name')
             ->get();
 
@@ -44,7 +58,6 @@ class HousekeepingController extends Controller
                     ->whereDate('check_out', '>=', today())
                     ->orderBy('check_in'),
             ])
-            
             ->where('status', RoomStatus::DIRTY)
             ->orderBy('floor')
             ->orderBy('number')
@@ -52,65 +65,93 @@ class HousekeepingController extends Controller
 
         $priorityRooms = $this->buildPriorityRooms($dirtyRooms);
 
-        $activeAssignments = HousekeepingAssignment::with(['room.roomType', 'team.leader', 'team.members'])
-            
-            ->whereIn('status', ['pending', 'in_progress', 'blocked'])
-            ->latest('assigned_at')
+        $blockedAssignments = HousekeepingAssignment::with(['room.roomType', 'team'])
+            ->where('status', 'blocked')
+            ->latest('reported_at')
             ->get();
 
         $completedToday = HousekeepingAssignment::with(['room.roomType', 'team'])
-            
             ->where('status', 'completed')
             ->whereDate('completed_at', today())
             ->latest('completed_at')
             ->get();
 
-        $myAssignments = HousekeepingAssignment::with(['room.roomType', 'team'])
-            
-            ->whereIn('housekeeping_team_id', $teamIds)
-            ->whereIn('status', ['pending', 'in_progress', 'blocked'])
-            ->latest('assigned_at')
-            ->get();
-
-        $housekeepingPipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team'])
-            
-            ->whereIn('status', [
-                RoomStatus::DIRTY,
-                RoomStatus::CLEANING,
-                RoomStatus::CLEAN,
-                RoomStatus::INSPECTED,
-            ])
+        $pipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team'])
+            ->whereIn('status', self::CYCLE_STATUSES)
             ->orderByRaw("CASE status
-                WHEN 'dirty' THEN 1
-                WHEN 'cleaning' THEN 2
-                WHEN 'clean' THEN 3
-                WHEN 'inspected' THEN 4
-                ELSE 5 END")
+                WHEN 'dirty' THEN 1 WHEN 'cleaning' THEN 2
+                WHEN 'clean' THEN 3 WHEN 'inspected' THEN 4 ELSE 5 END")
             ->orderBy('floor')
             ->orderBy('number')
             ->get()
             ->groupBy(fn ($room) => $room->status->value);
 
         $stats = [
-            'dirty_rooms' => $dirtyRooms->count(),
-            'teams' => $teams->count(),
-            'pending_assignments' => $activeAssignments->where('status', 'pending')->count(),
-            'in_progress_assignments' => $activeAssignments->where('status', 'in_progress')->count(),
-            'blocked_assignments' => $activeAssignments->where('status', 'blocked')->count(),
+            'dirty_rooms'  => $dirtyRooms->count(),
+            'cleaning'     => ($pipeline['cleaning'] ?? collect())->count(),
+            'to_inspect'   => ($pipeline['clean'] ?? collect())->count(),
+            'inspected'    => ($pipeline['inspected'] ?? collect())->count(),
+            'teams'        => $teams->count(),
+            'blocked'      => $blockedAssignments->count(),
             'completed_today' => $completedToday->count(),
         ];
 
-        return view('housekeeping.index', compact(
-            'teams',
-            'staff',
-            'dirtyRooms',
-            'priorityRooms',
-            'activeAssignments',
-            'completedToday',
-            'myAssignments',
-            'housekeepingPipeline',
-            'stats'
-        ));
+        return view('housekeeping.index', [
+            'isChief'            => true,
+            'teams'              => $teams,
+            'staff'              => $staff,
+            'dirtyRooms'         => $dirtyRooms,
+            'priorityRooms'      => $priorityRooms,
+            'blockedAssignments' => $blockedAssignments,
+            'completedToday'     => $completedToday,
+            'pipeline'           => $pipeline,
+            'stats'              => $stats,
+        ]);
+    }
+
+    /** Écran simple d'un agent de terrain : son équipe et ses chambres. */
+    private function memberDashboard()
+    {
+        $user = Auth::user();
+
+        $myTeams = HousekeepingTeam::with(['leader', 'members'])
+            ->where('is_active', true)
+            ->whereHas('members', fn ($q) => $q->where('users.id', $user->id))
+            ->orderBy('name')
+            ->get();
+
+        $myTeamIds = $myTeams->pluck('id');
+        // Équipes que l'utilisateur dirige : accès aux actions de contrôle/libération.
+        $ledTeamIds = $myTeams->where('leader_id', $user->id)->pluck('id');
+
+        // Chambres dont mes équipes ont la charge, encore dans le cycle.
+        $roomIds = HousekeepingAssignment::whereIn('housekeeping_team_id', $myTeamIds)
+            ->pluck('room_id')->unique();
+
+        $myRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team'])
+            ->whereIn('id', $roomIds)
+            ->whereIn('status', self::CYCLE_STATUSES)
+            ->orderByRaw("CASE status
+                WHEN 'dirty' THEN 1 WHEN 'cleaning' THEN 2
+                WHEN 'clean' THEN 3 WHEN 'inspected' THEN 4 ELSE 5 END")
+            ->orderBy('number')
+            ->get();
+
+        // Présence des coéquipiers (cache online, 2 min), pour « qui est là ».
+        $presence = [];
+        foreach ($myTeams as $team) {
+            foreach ($team->members as $member) {
+                $presence[$member->id] = (bool) Cache::get('user-is-online-' . $member->id, false);
+            }
+        }
+
+        return view('housekeeping.index', [
+            'isChief'    => false,
+            'myTeams'    => $myTeams,
+            'ledTeamIds' => $ledTeamIds,
+            'myRooms'    => $myRooms,
+            'presence'   => $presence,
+        ]);
     }
 
     public function storeTeam(Request $request)
@@ -183,7 +224,7 @@ class HousekeepingController extends Controller
 
         if ($rooms->contains(fn ($room) => $room->status !== RoomStatus::DIRTY)) {
             return back()->withErrors([
-                'assignment' => 'Seules les chambres sales peuvent etre affectees a une equipe.',
+                'assignment' => 'Seules les chambres à nettoyer peuvent être affectées à une équipe.',
             ]);
         }
 
@@ -234,7 +275,7 @@ class HousekeepingController extends Controller
             return back()->withErrors(['status' => 'Aucune affectation active trouvee pour cette chambre.']);
         }
 
-        $this->ensureAssignmentPermission($assignment);
+        $this->ensureCanClean($room);
 
         DB::transaction(function () use ($room, $assignment, $validated) {
             $assignment->update([
@@ -261,7 +302,7 @@ class HousekeepingController extends Controller
             return back()->withErrors(['status' => 'Cette chambre n\'a pas encore ete affectee a une equipe.']);
         }
 
-        $this->ensureAssignmentPermission($assignment);
+        $this->ensureCanClean($room);
 
         if (!$room->status->canTransitionTo(RoomStatus::CLEANING)) {
             return back()->withErrors(['status' => 'Cette chambre ne peut pas etre mise en nettoyage.']);
@@ -287,7 +328,7 @@ class HousekeepingController extends Controller
             return back()->withErrors(['status' => 'Aucune affectation active trouvee pour cette chambre.']);
         }
 
-        $this->ensureAssignmentPermission($assignment);
+        $this->ensureCanClean($room);
 
         if (!$room->status->canTransitionTo(RoomStatus::CLEAN)) {
             return back()->withErrors(['status' => 'Cette chambre ne peut pas etre marquee propre.']);
@@ -302,23 +343,102 @@ class HousekeepingController extends Controller
             ]);
         });
 
-        return back()->with('success', "Chambre {$room->number} marquee propre.");
+        return back()->with('success', "Chambre {$room->number} marquée nettoyée, à contrôler.");
     }
 
-    private function ensureAssignmentPermission(HousekeepingAssignment $assignment): void
+    /** Contrôle qualité : Nettoyée → Contrôlée. Chef de service ou chef d'équipe. */
+    public function markInspected(Request $request, Room $room)
     {
-        $user = Auth::user();
+        $this->ensureCanValidate($room);
 
-        if ($user->hasAnyRole(['manager', 'housekeeping_leader'])) {
+        if (!$room->status->canTransitionTo(RoomStatus::INSPECTED)) {
+            return back()->withErrors(['status' => 'Cette chambre doit être nettoyée avant contrôle.']);
+        }
+
+        $room->updateStatus(RoomStatus::INSPECTED, 'Contrôle qualité validé', Auth::id());
+
+        return back()->with('success', "Chambre {$room->number} contrôlée.");
+    }
+
+    /** Libération : Contrôlée → Disponible. Chef de service ou chef d'équipe. */
+    public function markAvailable(Request $request, Room $room)
+    {
+        $this->ensureCanValidate($room);
+
+        if (!$room->status->canTransitionTo(RoomStatus::AVAILABLE)) {
+            return back()->withErrors(['status' => 'Seule une chambre contrôlée peut être remise à disposition.']);
+        }
+
+        $room->updateStatus(RoomStatus::AVAILABLE, 'Chambre remise à disposition par le housekeeping', Auth::id());
+
+        return back()->with('success', "Chambre {$room->number} disponible.");
+    }
+
+    /** Contrôle refusé : Nettoyée → À nettoyer, et l'affectation repart. */
+    public function rejectCleaning(Request $request, Room $room)
+    {
+        $this->ensureCanValidate($room);
+
+        if ($room->status !== RoomStatus::CLEAN) {
+            return back()->withErrors(['status' => 'Seule une chambre nettoyée peut être refusée au contrôle.']);
+        }
+
+        $reason = trim((string) $request->input('reason')) ?: 'Contrôle non conforme';
+
+        DB::transaction(function () use ($room, $reason) {
+            // updateStatus() ne bloque pas cette transition inverse (rare) : on
+            // repasse volontairement la chambre à nettoyer.
+            $room->updateStatus(RoomStatus::DIRTY, $reason, Auth::id());
+
+            // On rouvre la dernière affectation pour que l'équipe la reprenne.
+            $room->latestHousekeepingAssignment?->update([
+                'status'       => 'pending',
+                'started_at'   => null,
+                'completed_at' => null,
+                'notes'        => $reason,
+            ]);
+        });
+
+        return back()->with('success', "Chambre {$room->number} renvoyée au nettoyage.");
+    }
+
+    private function isChief(): bool
+    {
+        return Auth::user()->hasAnyRole(self::CHIEF_ROLES);
+    }
+
+    /** Équipe responsable de la chambre (affectation active, sinon la dernière). */
+    private function roomTeam(Room $room): ?HousekeepingTeam
+    {
+        return $room->activeHousekeepingAssignment?->team
+            ?? $room->latestHousekeepingAssignment?->team;
+    }
+
+    /** Actions de terrain (nettoyage) : chef de service ou membre de l'équipe. */
+    private function ensureCanClean(Room $room): void
+    {
+        if ($this->isChief()) {
             return;
         }
 
-        $isMember = $assignment->team
-            ? $assignment->team->members()->where('users.id', $user->id)->exists()
-            : false;
+        $team = $this->roomTeam($room);
+        $isMember = $team && $team->members()->where('users.id', Auth::id())->exists();
 
         if (!$isMember) {
-            abort(403, 'Cette chambre est assignee a une autre equipe.');
+            abort(403, "Cette chambre est confiée à une autre équipe.");
+        }
+    }
+
+    /** Actions de validation (contrôle, libération) : chef de service ou chef d'équipe. */
+    private function ensureCanValidate(Room $room): void
+    {
+        if ($this->isChief()) {
+            return;
+        }
+
+        $team = $this->roomTeam($room);
+        if (!$team || $team->leader_id !== Auth::id()) {
+            abort(403, "Seul le chef d'équipe ou le chef de service peut valider cette chambre.");
         }
     }
 
