@@ -32,9 +32,11 @@ enum RoomStatus: string
         return match($this) {
             self::AVAILABLE => 'Disponible',
             self::OCCUPIED => 'Occupée',
-            self::DIRTY => 'Sale',
+            // « À nettoyer » plutôt que « Sale » : évite la confusion avec
+            // l'anglais « sales » et décrit l'action attendue.
+            self::DIRTY => 'À nettoyer',
             self::CLEANING => 'En nettoyage',
-            self::CLEAN => 'Propre',
+            self::CLEAN => 'Nettoyée',
             self::INSPECTED => 'Contrôlée',
             self::MAINTENANCE => 'Maintenance',
             self::OUT_OF_ORDER => 'Hors service',
