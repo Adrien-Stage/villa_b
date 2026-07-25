@@ -151,10 +151,19 @@
                     <p class="text-xs text-primary/40">{{ $staff->phone ?: '-' }}</p>
                 </div>
 
-                <div class="col-span-2">
-                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border bg-secondary/10 text-primary border-secondary/20">
-                        {{ $roles->firstWhere('slug', $staff->role)?->name ?? ucfirst(str_replace('_', ' ', $staff->role)) }}
-                    </span>
+                <div class="col-span-2 flex flex-wrap gap-1">
+                    @forelse($staff->roles as $r)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
+                            {{ $r->name }}
+                            @if(($r->pivot->level ?: 'write') === 'read')
+                                <i data-lucide="eye" class="w-2.5 h-2.5 text-primary/40" title="Lecture seule"></i>
+                            @endif
+                        </span>
+                    @empty
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
+                            {{ ucfirst(str_replace('_', ' ', $staff->role)) }}
+                        </span>
+                    @endforelse
                 </div>
 
                 <div class="col-span-2">
@@ -214,9 +223,20 @@
                 @endif
             </div>
 
-            <div class="space-y-1 mb-4">
-                <p class="text-xs text-primary/70">Role: <span class="font-medium">{{ $roles->firstWhere('slug', $staff->role)?->name ?? ucfirst(str_replace('_', ' ', $staff->role)) }}</span></p>
-                <p class="text-xs text-primary/50">Telephone: {{ $staff->phone ?: '-' }}</p>
+            <div class="space-y-2 mb-4">
+                <div class="flex flex-wrap gap-1">
+                    @forelse($staff->roles as $r)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
+                            {{ $r->name }}
+                            @if(($r->pivot->level ?: 'write') === 'read')
+                                <i data-lucide="eye" class="w-2.5 h-2.5 text-primary/40" title="Lecture seule"></i>
+                            @endif
+                        </span>
+                    @empty
+                        <span class="text-xs text-primary/70">{{ ucfirst(str_replace('_', ' ', $staff->role)) }}</span>
+                    @endforelse
+                </div>
+                <p class="text-xs text-primary/50">Téléphone : {{ $staff->phone ?: '-' }}</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -267,19 +287,16 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div>
-            <label class="text-xs text-primary/60">Telephone</label>
-            <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-        </div>
-        <div>
-            <label class="text-xs text-primary/60">Role</label>
-            <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                @foreach($roles as $role)
-                    <option value="{{ $role->slug }}" @selected(old('role') === $role->slug)>{{ $role->name }}</option>
-                @endforeach
-            </select>
-        </div>
+    <div>
+        <label class="text-xs text-primary/60">Téléphone</label>
+        <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+    </div>
+
+    <div>
+        <label class="text-xs text-primary/60">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
+        <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles. Chaque rôle donne accès à son module ; choisissez le niveau (lecture ou lecture / écriture).</p>
+        <x-role-picker :rolesByModule="$rolesByModule" :moduleLabels="$moduleLabels"
+                       :selected="old('roles', [])" :levels="old('levels', [])" />
     </div>
 
     <div class="grid grid-cols-2 gap-4">
@@ -300,7 +317,7 @@
 
     <x-slot:footer>
         <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Créer</button>
     </x-slot:footer>
 </x-modal>
 
@@ -322,19 +339,21 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-xs text-primary/60">Telephone</label>
-                <input type="text" name="phone" value="{{ old('phone', $staff->phone) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-            </div>
-            <div>
-                <label class="text-xs text-primary/60">Role</label>
-                <select name="role" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                    @foreach($roles as $role)
-                        <option value="{{ $role->slug }}" @selected(old('role', $staff->role) === $role->slug)>{{ $role->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+        <div>
+            <label class="text-xs text-primary/60">Téléphone</label>
+            <input type="text" name="phone" value="{{ old('phone', $staff->phone) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        </div>
+
+        @php
+            // Rôles et niveaux actuels de l'utilisateur, pour pré-cocher les cartes.
+            $staffRoleSlugs = $staff->roles->pluck('slug')->all() ?: [$staff->role];
+            $staffLevels = $staff->roles->mapWithKeys(fn ($r) => [$r->slug => $r->pivot->level ?: 'write'])->all();
+        @endphp
+        <div>
+            <label class="text-xs text-primary/60">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
+            <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles et leur niveau d'accès par module.</p>
+            <x-role-picker :rolesByModule="$rolesByModule" :moduleLabels="$moduleLabels"
+                           :selected="old('roles', $staffRoleSlugs)" :levels="old('levels', $staffLevels)" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">

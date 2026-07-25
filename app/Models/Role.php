@@ -8,11 +8,52 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
+    /** Modules métier → libellé affiché dans la rubrique Utilisateurs. */
+    public const MODULES = [
+        'hebergement'  => 'Hébergement',
+        'housekeeping' => 'Housekeeping',
+        'restaurant'   => 'Restaurant',
+        'boutique'     => 'Boutique',
+        'economat'     => 'Économat',
+        'comptabilite' => 'Comptabilité',
+        'direction'    => 'Direction',
+        'portail'      => 'Portail client',
+    ];
+
     protected $fillable = [
         'name',
         'slug',
         'description',
-        ];
+        'module',
+        'icon',
+        'sort_order',
+        'is_assignable',
+    ];
+
+    protected $casts = [
+        'sort_order'    => 'integer',
+        'is_assignable' => 'boolean',
+    ];
+
+    /**
+     * Rôles qu'un manager peut attribuer à son personnel. Lu depuis la table :
+     * tout rôle ajouté au référentiel devient disponible sans toucher au code.
+     */
+    public function scopeAssignable($query)
+    {
+        return $query->where('is_assignable', true);
+    }
+
+    public function moduleLabel(): string
+    {
+        return self::MODULES[$this->module] ?? 'Autre';
+    }
+
+    /** Icône Lucide, avec un repli neutre pour un rôle créé sans icône. */
+    public function iconName(): string
+    {
+        return $this->icon ?: 'user-round';
+    }
 
     /**
      * Relation avec Tenant (multi-tenant)
