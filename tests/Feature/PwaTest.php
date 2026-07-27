@@ -47,7 +47,9 @@ test('les icônes sont générées aux bonnes dimensions', function () {
     $this->seed(\Database\Seeders\TenantSeeder::class);
 
     foreach ([192, 512] as $size) {
-        $response = $this->get("/pwa/icon-{$size}.png");
+        // Route nommée : le test suit l'URL réelle au lieu de se figer sur une
+        // forme codée en dur — c'est ce décalage qui avait masqué le blocage.
+        $response = $this->get(route('pwa.icon', ['size' => $size]));
         $response->assertOk()->assertHeader('Content-Type', 'image/png');
 
         $info = getimagesizefromstring($response->getContent());
@@ -61,7 +63,7 @@ test('une taille d’icône non prévue est refusée', function () {
     $this->seed(\Database\Seeders\TenantSeeder::class);
 
     // Borne volontaire : empêche de faire générer des images arbitraires.
-    $this->get('/pwa/icon-4096.png')->assertNotFound();
+    $this->get(route('pwa.icon', ['size' => 4096]))->assertNotFound();
 });
 
 test('la page hors connexion est accessible sans authentification', function () {
@@ -111,4 +113,37 @@ test('la page de connexion est installable', function () {
         ->assertOk()
         ->assertSee('rel="manifest"', false)
         ->assertSee('pwa-install-banner', false);
+});
+
+test('les icônes déclarées dans le manifeste sont réellement servies', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+
+    $manifest = $this->get(route('pwa.manifest'))->assertOk()->json();
+
+    expect($manifest['icons'])->not->toBeEmpty();
+
+    foreach ($manifest['icons'] as $icon) {
+        // On suit l'URL telle que le navigateur la lira dans le manifeste :
+        // c'est le décalage entre manifeste et route qui avait cassé l'install.
+        $path = parse_url($icon['src'], PHP_URL_PATH);
+
+        $this->get($path)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+    }
+});
+
+test('aucune URL du manifeste ne porte une extension servie en statique', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+
+    $manifest = $this->get(route('pwa.manifest'))->assertOk()->json();
+
+    // nginx sert les .png/.jpg/.svg… depuis le disque. Une ressource générée
+    // par Laravel ne doit donc pas porter ces extensions, sinon elle est
+    // interceptée avant d'atteindre PHP et le navigateur ne l'obtient jamais.
+    foreach ($manifest['icons'] as $icon) {
+        $path = parse_url($icon['src'], PHP_URL_PATH);
+
+        expect($path)->not->toMatch('/\.(png|jpe?g|gif|svg|webp|ico)$/i');
+    }
 });

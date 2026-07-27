@@ -29,7 +29,11 @@ use App\Http\Controllers\NotificationController;
 // Publiques : le navigateur récupère le manifeste et les icônes avant même
 // que l'utilisateur soit connecté, sinon l'installation est impossible.
 Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
-Route::get('/pwa/icon-{size}.png', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')->name('pwa.icon');
+// Sans extension « .png » : une URL se terminant par .png serait interceptée
+// par la règle nginx des fichiers statiques (try_files $uri =404) et n'arriverait
+// jamais jusqu'à Laravel, l'icône étant générée à la volée. Le type est de toute
+// façon annoncé par l'en-tête Content-Type et par le champ « type » du manifeste.
+Route::get('/pwa/icon/{size}', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')->name('pwa.icon');
 Route::get('/offline', [App\Http\Controllers\PwaController::class, 'offline'])->name('pwa.offline');
 
 // ===== AUTH ROUTES (Breeze) =====

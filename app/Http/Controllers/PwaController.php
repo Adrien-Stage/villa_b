@@ -89,7 +89,9 @@ class PwaController extends Controller
         $icons = [];
         foreach (self::ICON_SIZES as $size) {
             $icons[] = [
-                'src'     => url("/pwa/icon-{$size}.png"),
+                // Route nommée : l'URL du manifeste suit toute évolution du
+                // routage, au lieu de diverger silencieusement.
+                'src'     => route('pwa.icon', ['size' => $size]),
                 'sizes'   => "{$size}x{$size}",
                 'type'    => 'image/png',
                 // 'any maskable' : l'icône s'adapte aux masques Android sans être rognée.
