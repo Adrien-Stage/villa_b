@@ -187,6 +187,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [$c, 'index'])->name('index');
         Route::get('/{roomType}', [$c, 'show'])->whereNumber('roomType')->name('show');
         Route::put('/{roomType}/hypotheses', [$c, 'updateAssumptions'])->whereNumber('roomType')->name('assumptions');
+        Route::post('/{roomType}/demarrage-rapide', [$c, 'applyStarter'])->whereNumber('roomType')->name('starter');
         Route::post('/{roomType}/postes', [$c, 'storeItem'])->whereNumber('roomType')->name('items.store');
         Route::put('/{roomType}/postes/{item}', [$c, 'updateItem'])->whereNumber('roomType')->whereNumber('item')->name('items.update');
         Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')->name('items.destroy');

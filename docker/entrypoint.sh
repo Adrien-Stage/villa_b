@@ -51,8 +51,18 @@ if [ "$TENANT_COUNT" = "0" ] || [ -z "$TENANT_COUNT" ]; then
         echo "⚠️  Échec de l'initialisation."
     }
 else
-    echo "📦 Tenant déjà initialisé — seeders ignorés."
+    echo "📦 Tenant déjà initialisé — seeders d'installation ignorés."
 fi
+
+# Référentiel des rôles : rejoué à CHAQUE démarrage, contrairement aux seeders
+# d'installation ci-dessus. C'est ce qui permet à un rôle ajouté au catalogue
+# (App\Support\RoleCatalog) d'arriver sur un établissement déjà en service.
+# L'opération est idempotente : aucun doublon, aucun rattachement utilisateur
+# n'est touché.
+echo "👥 Synchronisation des rôles..."
+php artisan roles:sync --no-interaction 2>&1 || {
+    echo "⚠️  Échec de la synchronisation des rôles."
+}
 
 # ── Lien symbolique storage (nécessaire pour les logos/images uploadés) ───────
 if [ ! -e /var/www/html/public/storage ]; then

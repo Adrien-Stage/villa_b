@@ -27,43 +27,98 @@
 
     @include('economat.partials.flash')
 
+    {{-- À quoi sert cette page, en une phrase --}}
+    <div class="bg-accent/20 border border-secondary/20 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <i data-lucide="info" class="w-4 h-4 text-primary/50 shrink-0 mt-0.5"></i>
+        <p class="text-xs text-primary/70 leading-relaxed">
+            Listez ici ce que <strong>coûte réellement une nuit</strong> dans ce type de chambre : électricité, eau,
+            produits d'accueil, blanchisserie, ménage. L'application compare ensuite ce coût au prix auquel vous louez,
+            et vous dit <strong>ce qui vous reste</strong> sur chaque nuit vendue.
+        </p>
+    </div>
+
+    @if(!$sheet['is_configured'])
+        {{-- État vide actionnable : on propose un point de départ plutôt qu'une page blanche --}}
+        <div class="bg-white border-2 border-dashed border-secondary/30 rounded-xl p-6 sm:p-10 text-center mb-6">
+            <i data-lucide="clipboard-list" class="w-10 h-10 mx-auto text-primary/20 mb-3"></i>
+            <h2 class="text-base font-semibold text-primary">Cette fiche n'est pas encore remplie</h2>
+            <p class="text-sm text-primary/50 mt-1.5 max-w-lg mx-auto">
+                Tant qu'aucun coût n'est saisi, la marge ne peut pas être calculée.
+                Commencez avec les postes habituels d'une chambre, puis ajustez les montants à votre établissement.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2 justify-center mt-5">
+                <form method="POST" action="{{ route('rooms.cost_sheets.starter', $roomType) }}">
+                    @csrf
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                        <i data-lucide="wand-sparkles" class="w-4 h-4"></i> Démarrer avec les postes courants
+                    </button>
+                </form>
+                <button type="button" @click="openCreate()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Saisir un poste moi-même
+                </button>
+            </div>
+            <p class="text-[11px] text-primary/40 mt-4">
+                Postes proposés : électricité, eau, kit d'accueil, blanchisserie, ménage — tous modifiables ou supprimables ensuite.
+            </p>
+        </div>
+    @endif
+
     {{-- Synthèse de marge --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border border-secondary/20 rounded-xl p-4">
-            <p class="text-[11px] uppercase tracking-wider text-primary/50">Prix {{ $sheet['reference_is_realized'] ? 'réalisé (ADR)' : 'de base' }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-primary/50">Prix de location / nuit</p>
             <p class="text-2xl font-bold text-primary mt-1">{{ $money($sheet['reference_price']) }}</p>
             @if($sheet['reference_is_realized'])
-                <p class="text-[10px] text-primary/40 mt-0.5">base : {{ $money($sheet['base_price']) }} F</p>
+                <p class="text-[10px] text-primary/40 mt-0.5">moyenne réellement encaissée</p>
             @else
-                <p class="text-[10px] text-amber-600 mt-0.5">aucune vente encore</p>
+                <p class="text-[10px] text-amber-600 mt-0.5">tarif affiché (aucune vente encore)</p>
             @endif
         </div>
         <div class="bg-white border border-secondary/20 rounded-xl p-4">
-            <p class="text-[11px] uppercase tracking-wider text-primary/50">Coût variable / nuitée</p>
-            <p class="text-2xl font-bold text-red-600 mt-1">{{ $money($sheet['variable_cost']) }}</p>
-            <p class="text-[10px] text-primary/40 mt-0.5">taux de coût : {{ $sheet['cost_ratio'] ?? '—' }}%</p>
+            <p class="text-[11px] uppercase tracking-wider text-primary/50">Ce que coûte la nuit</p>
+            <p class="text-2xl font-bold {{ $sheet['is_configured'] ? 'text-red-600' : 'text-primary/30' }} mt-1">
+                {{ $sheet['is_configured'] ? $money($sheet['variable_cost']) : '—' }}
+            </p>
+            <p class="text-[10px] text-primary/40 mt-0.5">
+                {{ $sheet['is_configured'] ? 'soit ' . $sheet['cost_ratio'] . '% du prix' : 'aucun coût saisi' }}
+            </p>
         </div>
         <div class="bg-white border border-secondary/20 rounded-xl p-4">
-            <p class="text-[11px] uppercase tracking-wider text-primary/50">Marge de contribution</p>
-            <p class="text-2xl font-bold {{ $tone }} mt-1">{{ $money($sheet['contribution_margin']) }}</p>
-            <p class="text-[10px] text-primary/40 mt-0.5">{{ $pct ?? '—' }}% du prix</p>
+            <p class="text-[11px] uppercase tracking-wider text-primary/50">Ce qui vous reste</p>
+            <p class="text-2xl font-bold {{ $sheet['is_configured'] ? $tone : 'text-primary/30' }} mt-1">
+                {{ $sheet['is_configured'] ? $money($sheet['contribution_margin']) : '—' }}
+            </p>
+            <p class="text-[10px] text-primary/40 mt-0.5">
+                {{ $sheet['is_configured'] ? $pct . '% du prix' : 'à calculer' }}
+            </p>
         </div>
         <div class="bg-white border border-secondary/20 rounded-xl p-4">
-            <p class="text-[11px] uppercase tracking-wider text-primary/50">Marge nette</p>
-            <p class="text-2xl font-bold text-primary mt-1">{{ $money($sheet['net_margin']) }}</p>
-            <p class="text-[10px] text-primary/40 mt-0.5">après {{ $money($sheet['fixed_cost']) }} F fixe</p>
+            <p class="text-[11px] uppercase tracking-wider text-primary/50">Après charges fixes</p>
+            <p class="text-2xl font-bold {{ $sheet['is_configured'] ? 'text-primary' : 'text-primary/30' }} mt-1">
+                {{ $sheet['is_configured'] ? $money($sheet['net_margin']) : '—' }}
+            </p>
+            <p class="text-[10px] text-primary/40 mt-0.5">
+                {{ $sheet['fixed_cost'] > 0 ? 'dont ' . $money($sheet['fixed_cost']) . ' F de fixe' : 'aucune charge fixe saisie' }}
+            </p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Postes de coût --}}
         <div class="lg:col-span-2 bg-white border border-secondary/20 rounded-xl overflow-hidden">
-            <div class="px-5 py-3 border-b border-secondary/20">
-                <h2 class="text-sm font-semibold text-primary">Postes de coût variable</h2>
+            <div class="px-5 py-3 border-b border-secondary/20 flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-sm font-semibold text-primary">Ce que coûte une nuit</h2>
+                @if($sheet['is_configured'])
+                    <button type="button" @click="openCreate()" class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter un poste
+                    </button>
+                @endif
             </div>
 
             @if(empty($sheet['groups']))
-                <p class="px-5 py-10 text-center text-sm text-primary/40">Aucun poste. Ajoutez l'électricité, l'eau, les consommables…</p>
+                <p class="px-5 py-10 text-center text-sm text-primary/40">
+                    Aucun coût saisi pour l'instant — utilisez le démarrage rapide ci-dessus.
+                </p>
             @else
                 <div class="divide-y divide-secondary/10">
                     @foreach($sheet['groups'] as $group)
@@ -160,47 +215,69 @@
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
-                    <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">De quel coût s'agit-il ? <span class="text-red-500">*</span></label>
+                        <input type="text" name="label" x-model="form.label" required maxlength="160" placeholder="Ex : Électricité, Kit d'accueil, Blanchisserie des draps" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Type de dépense <span class="text-red-500">*</span></label>
                             <select name="category" x-model="form.category" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                                 <template x-for="(label, key) in categories" :key="key"><option :value="key" x-text="label"></option></template>
                             </select>
+                            <p class="text-[10px] text-primary/40 mt-1">Sert à regrouper les coûts dans la fiche.</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Base de calcul <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Ce coût revient… <span class="text-red-500">*</span></label>
                             <select name="basis" x-model="form.basis" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                                 <template x-for="(label, key) in bases" :key="key"><option :value="key" x-text="label"></option></template>
                             </select>
+                            {{-- Exemple concret adapté au choix : la notion la plus mal comprise --}}
+                            <p class="text-[10px] text-primary/40 mt-1"
+                               x-text="form.basis === 'per_night' ? 'Une fois par nuit, quel que soit le nombre de clients (ex. électricité).'
+                                     : (form.basis === 'per_guest_night' ? 'Pour chaque client et chaque nuit (ex. kit d\'accueil, eau).'
+                                     : 'Une seule fois pour tout le séjour (ex. lavage des draps au départ).')"></p>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Libellé <span class="text-red-500">*</span></label>
-                        <input type="text" name="label" x-model="form.label" required maxlength="160" placeholder="Ex : Électricité, Kit d'accueil, Blanchisserie draps" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Quantité <span class="text-red-500">*</span></label>
+                            <input type="number" step="0.001" min="0" name="quantity" x-model="form.quantity" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <p class="text-[10px] text-primary/40 mt-1">Ex : 8 (kWh), 0,15 (m³), 1 (kit).</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Prix de l'unité (FCFA)</label>
+                            <input type="number" min="0" name="unit_cost" x-model="form.unit_cost" :disabled="!!form.stock_item_id"
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary disabled:bg-gray-100 disabled:text-primary/40">
+                            <p class="text-[10px] text-primary/40 mt-1" x-show="!form.stock_item_id">Ex : 75 F le kWh, 500 F le m³.</p>
+                            <p class="text-[10px] text-blue-600 mt-1" x-show="!!form.stock_item_id" x-cloak>Repris automatiquement de l'économat.</p>
+                        </div>
+                    </div>
+
+                    {{-- Aperçu du calcul : lève le doute sur ce qui sera compté --}}
+                    <div class="bg-accent/20 border border-secondary/20 rounded-lg px-3 py-2.5">
+                        <p class="text-[11px] text-primary/70">
+                            Coût compté par nuit :
+                            <strong class="text-primary" x-text="new Intl.NumberFormat('fr-FR').format(previewCost()) + ' FCFA'"></strong>
+                            <span class="text-primary/40" x-show="form.basis === 'per_guest_night'" x-cloak>
+                                (pour {{ $sheet['assumptions']['reference_occupants'] }} personne(s))
+                            </span>
+                            <span class="text-primary/40" x-show="form.basis === 'per_stay'" x-cloak>
+                                (réparti sur {{ $sheet['assumptions']['avg_length_of_stay'] }} nuit(s) de séjour moyen)
+                            </span>
+                        </p>
                     </div>
 
                     {{-- Lien économat --}}
                     <div>
-                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Article de l'économat <span class="text-primary/30">(optionnel)</span></label>
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Lier à un article de l'économat <span class="text-primary/30">(facultatif)</span></label>
                         <select name="stock_item_id" x-model="form.stock_item_id" @change="onStockChange()" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <option value="">— Prix saisi manuellement —</option>
+                            <option value="">Non — je saisis le prix moi-même</option>
                             <template x-for="it in stockItems" :key="it.id"><option :value="it.id" x-text="it.name + ' (' + fmt(it.average_cost) + ' F/' + it.unit + ')'"></option></template>
                         </select>
-                        <p class="text-[10px] text-primary/40 mt-1">Si lié, le prix unitaire suit automatiquement le coût moyen pondéré de l'article.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Quantité <span class="text-red-500">*</span></label>
-                            <input type="number" step="0.001" min="0" name="quantity" x-model="form.quantity" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <p class="text-[10px] text-primary/40 mt-1">kWh, m³, nombre d'unités…</p>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Prix unitaire (FCFA)</label>
-                            <input type="number" min="0" name="unit_cost" x-model="form.unit_cost" :disabled="!!form.stock_item_id"
-                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary disabled:bg-gray-100 disabled:text-primary/40">
-                            <p class="text-[10px] text-primary/40 mt-1" x-show="!!form.stock_item_id">Fourni par l'économat.</p>
-                        </div>
+                        <p class="text-[10px] text-primary/40 mt-1">Si vous liez un article, son prix se met à jour tout seul quand vos achats changent.</p>
                     </div>
 
                     <div>
@@ -227,6 +304,15 @@
             stockItems, categories, bases,
             open: false, editing: false, formAction: storeUrl, form: {},
             fmt(c) { return new Intl.NumberFormat('fr-FR').format(Math.round(c / 100)); },
+            // Hypothèses de la fiche, pour montrer le coût réellement compté par nuit.
+            occupants: {{ $sheet['assumptions']['reference_occupants'] }},
+            avgNights: {{ $sheet['assumptions']['avg_length_of_stay'] ?: 1 }},
+            previewCost() {
+                const base = (parseFloat(this.form.quantity) || 0) * (parseInt(this.form.unit_cost) || 0);
+                if (this.form.basis === 'per_guest_night') return Math.round(base * Math.max(1, this.occupants));
+                if (this.form.basis === 'per_stay') return Math.round(base / Math.max(1, this.avgNights));
+                return Math.round(base);
+            },
             blank() {
                 return { id: null, category: Object.keys(this.categories)[0], label: '', basis: 'per_night',
                     quantity: 1, unit_cost: 0, stock_item_id: '', notes: '' };
