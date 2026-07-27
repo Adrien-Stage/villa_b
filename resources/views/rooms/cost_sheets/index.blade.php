@@ -34,25 +34,36 @@
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h2 class="text-sm font-semibold text-primary">{{ $type->name }}</h2>
-                            <p class="text-[11px] text-primary/40">{{ $s['line_count'] }} poste(s) de coût</p>
+                            <p class="text-[11px] text-primary/40">
+                                {{ $s['is_configured'] ? $s['line_count'] . ' poste(s) de coût' : 'fiche à remplir' }}
+                            </p>
                         </div>
-                        <span class="text-lg font-bold {{ $toneClasses }}">
-                            {{ $pct === null ? '—' : $pct . '%' }}
-                        </span>
+                        @if($s['is_configured'])
+                            <span class="text-lg font-bold {{ $toneClasses }}">{{ $pct }}%</span>
+                        @else
+                            {{-- Sans coût saisi, aucun pourcentage : afficher 100 % serait mensonger. --}}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i> À configurer
+                            </span>
+                        @endif
                     </div>
 
                     <div class="grid grid-cols-3 gap-3 mt-4 text-center">
                         <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Prix {{ $s['reference_is_realized'] ? 'réalisé' : 'de base' }}</p>
+                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Prix / nuit</p>
                             <p class="text-sm font-semibold text-primary mt-0.5">{{ number_format($s['reference_price'] / 100, 0, ',', ' ') }}</p>
                         </div>
                         <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Coût variable</p>
-                            <p class="text-sm font-semibold text-red-600 mt-0.5">{{ number_format($s['variable_cost'] / 100, 0, ',', ' ') }}</p>
+                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Coût</p>
+                            <p class="text-sm font-semibold {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }} mt-0.5">
+                                {{ $s['is_configured'] ? number_format($s['variable_cost'] / 100, 0, ',', ' ') : '—' }}
+                            </p>
                         </div>
                         <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Marge</p>
-                            <p class="text-sm font-semibold {{ $toneClasses }} mt-0.5">{{ number_format($s['contribution_margin'] / 100, 0, ',', ' ') }}</p>
+                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Reste</p>
+                            <p class="text-sm font-semibold {{ $s['is_configured'] ? $toneClasses : 'text-primary/30' }} mt-0.5">
+                                {{ $s['is_configured'] ? number_format($s['contribution_margin'] / 100, 0, ',', ' ') : '—' }}
+                            </p>
                         </div>
                     </div>
                 </a>

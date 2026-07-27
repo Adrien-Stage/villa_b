@@ -93,8 +93,15 @@ class RoomCostingService
         $contributionMargin = $referencePrice - $variableCost;
         $netMargin          = $contributionMargin - $fixedCost;
 
+        // Sans aucun poste saisi, le coût variable vaut zéro : afficher « 100 %
+        // de marge » serait faussement rassurant. On signale donc une fiche non
+        // configurée et on n'expose aucun pourcentage tant qu'elle l'est.
+        $isConfigured = $items->isNotEmpty();
+        $canComputeRatios = $isConfigured && $referencePrice > 0;
+
         return [
             'room_type'   => $roomType,
+            'is_configured' => $isConfigured,
             'assumptions' => [
                 'reference_occupants'  => $occupants,
                 'avg_length_of_stay'   => round($avgNights, 2),
@@ -111,10 +118,10 @@ class RoomCostingService
             'reference_price' => $referencePrice,
             'reference_is_realized' => $realizedAdr !== null,
             'contribution_margin' => $contributionMargin,
-            'contribution_pct'    => $referencePrice > 0 ? round($contributionMargin / $referencePrice * 100, 1) : null,
-            'cost_ratio'          => $referencePrice > 0 ? round($variableCost / $referencePrice * 100, 1) : null,
+            'contribution_pct'    => $canComputeRatios ? round($contributionMargin / $referencePrice * 100, 1) : null,
+            'cost_ratio'          => $canComputeRatios ? round($variableCost / $referencePrice * 100, 1) : null,
             'net_margin'          => $netMargin,
-            'net_margin_pct'      => $referencePrice > 0 ? round($netMargin / $referencePrice * 100, 1) : null,
+            'net_margin_pct'      => $canComputeRatios ? round($netMargin / $referencePrice * 100, 1) : null,
         ];
     }
 
@@ -127,6 +134,7 @@ class RoomCostingService
         $full = $this->sheetFor($roomType);
 
         return [
+            'is_configured'       => $full['is_configured'],
             'variable_cost'       => $full['variable_cost'],
             'reference_price'     => $full['reference_price'],
             'reference_is_realized' => $full['reference_is_realized'],
