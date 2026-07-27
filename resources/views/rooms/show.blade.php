@@ -5,7 +5,7 @@
 @section('content')
 
     {{-- En-tête --}}
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
             <a href="{{ route('rooms.index') }}"
                class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">

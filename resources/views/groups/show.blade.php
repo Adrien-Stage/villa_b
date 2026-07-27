@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <a href="{{ route('groups.index') }}"
             class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
@@ -153,7 +153,7 @@
 
         {{-- Totaux financiers --}}
         <div class="bg-white rounded-xl shadow-sm p-5">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="font-heading font-semibold text-primary text-sm">Résumé financier</h2>
                 @if(in_array($groupBooking->status, ['confirmed', 'in_house']) && $totals['balance_due'] > 0)
                 <button onclick="document.getElementById('modal-group-payment').classList.remove('hidden')"
@@ -227,7 +227,7 @@
             </div>
             @else
             {{-- En-tête --}}
-            <div class="grid grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
+            <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambre</div>
                 <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Client</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Personnes</div>
@@ -246,7 +246,7 @@
             ];
             $bsc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
             @endphp
-            <div class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
                 <div class="col-span-2">
                     <p class="text-sm font-semibold text-primary">{{ $booking->room->number }}</p>
                     <p class="text-xs text-primary/40">{{ $booking->room->roomType->name }}</p>
@@ -279,7 +279,7 @@
                 </div>
                 <div class="col-span-1 flex items-center justify-end gap-1">
                     <a href="{{ route('bookings.show', $booking) }}"
-                        class="p-1.5 text-primary/30 hover:text-primary transition-colors"
+                        class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors"
                         title="Voir la réservation">
                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                     </a>
@@ -332,7 +332,7 @@
                 <p class="text-xs">Aucune prestation de groupe enregistrée</p>
             </div>
             @else
-            <div class="grid grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
+            <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
                 <div class="col-span-5 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambres</div>
@@ -359,7 +359,7 @@
             $totalAmount = $items->sum('total_price');
             $roomCount = $items->count();
             @endphp
-            <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
                 <div class="col-span-1">
                     <i data-lucide="{{ $typeIcons[$firstItem->type] ?? 'package' }}" class="w-4 h-4 text-primary/30"></i>
                 </div>

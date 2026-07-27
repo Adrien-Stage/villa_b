@@ -15,7 +15,7 @@
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Toutes les fiches
     </a>
 
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">{{ $roomType->name }}</h1>
             <p class="text-sm text-primary/60 mt-0.5">Fiche technique — marge sur une nuitée occupée</p>

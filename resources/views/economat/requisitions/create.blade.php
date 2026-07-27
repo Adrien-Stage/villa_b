@@ -43,8 +43,10 @@
             <div class="p-5 space-y-3">
                 <template x-if="lines.length === 0"><p class="text-sm text-primary/40 text-center py-4">Aucun article.</p></template>
                 <template x-for="(line, idx) in lines" :key="line.key">
-                    <div class="grid grid-cols-12 gap-2 items-center">
-                        <div class="col-span-7">
+                    {{-- Sur mobile : l'article prend toute la largeur, la
+                         quantité et la suppression passent en dessous. --}}
+                    <div class="grid grid-cols-12 gap-2 items-center border-b border-secondary/10 pb-2 md:border-0 md:pb-0">
+                        <div class="col-span-12 md:col-span-7">
                             <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                                 <option value="">Article…</option>
                                 <template x-for="it in items" :key="it.id">
@@ -52,11 +54,11 @@
                                 </template>
                             </select>
                         </div>
-                        <div class="col-span-4">
+                        <div class="col-span-10 md:col-span-4">
                             <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`" x-model.number="line.qty" placeholder="Quantité" required class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
                         </div>
-                        <div class="col-span-1 text-right">
-                            <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <div class="col-span-2 md:col-span-1 text-right">
+                            <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700 p-2 -mr-2"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </template>

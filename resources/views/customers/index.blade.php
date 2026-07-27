@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Clients</h1>
         <p class="text-sm text-primary/50 mt-0.5">
@@ -39,7 +39,7 @@
 <x-csv-import-errors />
 
 {{-- Barre outils --}}
-<div class="flex items-center justify-between gap-4 mb-5">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-5">
     <div class="flex items-center gap-2">
         @php
             $levels = [
@@ -93,7 +93,7 @@
         </div>
     @else
         {{-- En-tête tableau --}}
-        <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Client</div>
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Contact</div>
             <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Fidélité</div>
@@ -105,7 +105,7 @@
         {{-- Lignes --}}
         @foreach($customers as $customer)
             <a href="{{ route('customers.show', $customer) }}"
-               class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
+               class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
 
                 {{-- Client --}}
                 <div class="col-span-3 flex items-center gap-3">

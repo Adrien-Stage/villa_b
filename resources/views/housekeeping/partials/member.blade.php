@@ -25,7 +25,7 @@
         @foreach($myTeams as $team)
             @php $iLead = $team->leader_id === $me; @endphp
             <div class="bg-white rounded-xl shadow-sm p-5 border border-secondary/20">
-                <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                     <div>
                         <p class="font-heading font-semibold text-primary text-lg">{{ $team->name }}</p>
                         <p class="text-xs text-primary/50">Chef d'équipe : {{ $team->leader?->name ?? 'non défini' }}</p>
@@ -68,7 +68,7 @@
                             && $ledTeamIds->contains($room->latestHousekeepingAssignment->housekeeping_team_id);
                     @endphp
                     <div class="rounded-xl border {{ $style['card'] }} p-4 flex flex-col">
-                        <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 class="font-heading font-bold text-primary text-lg">Chambre {{ $room->number }}</h3>
                                 <p class="text-xs text-primary/50">{{ $room->roomType->name }}</p>

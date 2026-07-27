@@ -3,7 +3,7 @@
 @section('title', 'Facturation restaurant')
 
 @section('content')
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Facturation restaurant</h1>
         <p class="text-sm text-primary/50 mt-0.5">Encaissement interne (manager, chef restaurant, caissier)</p>

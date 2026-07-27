@@ -49,24 +49,26 @@
                     <p class="text-sm text-primary/40 text-center py-4">Aucun article. Cliquez sur « Ajouter une ligne ».</p>
                 </template>
                 <template x-for="(line, idx) in lines" :key="line.key">
-                    <div class="grid grid-cols-12 gap-2 items-center">
-                        <div class="col-span-6">
+                    {{-- Sur mobile : l'article occupe sa propre rangée, puis
+                         quantité / prix / suppression sur la suivante. --}}
+                    <div class="grid grid-cols-12 gap-2 items-center border-b border-secondary/10 pb-2 md:border-0 md:pb-0">
+                        <div class="col-span-12 md:col-span-6">
                             <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" @change="onItemChange(line)" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                                 <option value="">Article…</option>
                                 <template x-for="it in items" :key="it.id"><option :value="it.id" x-text="it.name"></option></template>
                             </select>
                         </div>
-                        <div class="col-span-2">
+                        <div class="col-span-4 md:col-span-2">
                             <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`" x-model.number="line.qty" placeholder="Qté" required class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
                         </div>
-                        <div class="col-span-3">
+                        <div class="col-span-6 md:col-span-3">
                             <div class="relative">
                                 <input type="number" min="0" :name="`lines[${idx}][unit_price]`" x-model.number="line.price" placeholder="P.U." required class="w-full px-2 py-2 pr-8 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
                                 <span class="absolute right-2 top-2 text-[10px] text-primary/40">F</span>
                             </div>
                         </div>
-                        <div class="col-span-1 text-right">
-                            <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <div class="col-span-2 md:col-span-1 text-right">
+                            <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700 p-2 -mr-2"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </template>

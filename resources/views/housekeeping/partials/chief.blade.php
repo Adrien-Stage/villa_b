@@ -47,7 +47,7 @@
                 @if($status === 'dirty')
                     {{-- À NETTOYER --}}
                     <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm flex flex-col">
-                        <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 class="font-heading font-bold text-red-900 text-lg">Chambre {{ $room->number }}</h3>
                                 <p class="text-xs text-red-700 font-medium">{{ $room->roomType->name }}</p>
@@ -86,7 +86,7 @@
                 @elseif($status === 'cleaning')
                     {{-- EN NETTOYAGE --}}
                     <div class="rounded-xl border border-yellow-300 bg-yellow-50 p-4 shadow-sm flex flex-col">
-                        <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 class="font-heading font-bold text-yellow-900 text-lg">Chambre {{ $room->number }}</h3>
                                 <p class="text-xs text-yellow-800 font-medium">{{ $room->roomType->name }}</p>
@@ -119,7 +119,7 @@
                 @elseif($status === 'clean')
                     {{-- À CONTRÔLER --}}
                     <div class="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm flex flex-col">
-                        <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 class="font-heading font-bold text-purple-900 text-lg">Chambre {{ $room->number }}</h3>
                                 <p class="text-xs text-purple-700 font-medium">{{ $room->roomType->name }}</p>
@@ -147,7 +147,7 @@
                 @elseif($status === 'inspected')
                     {{-- CONTRÔLÉE : le chef peut libérer la chambre --}}
                     <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex flex-col">
-                        <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 class="font-heading font-bold text-emerald-900 text-lg">Chambre {{ $room->number }}</h3>
                                 <p class="text-xs text-emerald-700 font-medium">{{ $room->roomType->name }}</p>
@@ -171,7 +171,7 @@
 
 {{-- ═══ Affectation en lot des chambres à nettoyer ═══ --}}
 <div class="bg-white rounded-xl shadow-sm p-5 mb-6">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
             <h2 class="font-heading font-semibold text-primary text-sm">Affecter les chambres à nettoyer</h2>
             <p class="text-xs text-primary/40 mt-0.5">Sélection multiple, suivant la liste de priorités.</p>
@@ -200,7 +200,7 @@
             </div>
 
             <div>
-                <div class="flex items-center justify-between mb-2">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
                     <label class="block text-xs font-semibold text-primary">Chambres (priorisées)</label>
                     <button type="button" onclick="document.querySelectorAll('.dirty-room-checkbox').forEach(c => c.checked = true)" class="text-xs text-secondary hover:text-primary transition-colors">Tout cocher</button>
                 </div>
@@ -280,7 +280,7 @@
             <div class="p-4 space-y-3">
                 @foreach($teams as $team)
                     <div class="rounded-xl border border-secondary/20 p-4 bg-accent/10">
-                        <div class="flex items-start justify-between gap-3 mb-2">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
                             <div>
                                 <p class="font-heading font-semibold text-primary">{{ $team->name }}</p>
                                 <p class="text-xs text-primary/50">Chef : {{ $team->leader?->name ?? 'non défini' }}</p>
@@ -306,7 +306,7 @@
         <div class="divide-y divide-secondary/10 max-h-96 overflow-y-auto">
             @forelse($blockedAssignments as $assignment)
                 <div class="px-5 py-3">
-                    <div class="flex items-center justify-between gap-3 mb-1">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
                         <p class="text-sm font-medium text-primary">Chambre {{ $assignment->room->number }} — {{ $assignment->team?->name }}</p>
                         <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium">Problème</span>
                     </div>

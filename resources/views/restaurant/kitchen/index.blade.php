@@ -64,7 +64,7 @@
                         $late = $elapsed !== null && $elapsed >= 20 && $statusKey !== 'ready';
                     @endphp
                     <div class="rounded-lg border {{ $late ? 'border-red-300 bg-red-50/50' : 'border-secondary/20 bg-gray-50/50' }} p-3">
-                        <div class="flex items-center justify-between gap-2 mb-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-primary">
                                     {{ $order->table_number ? 'Table ' . $order->table_number : 'Sans table' }}

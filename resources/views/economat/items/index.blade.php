@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-7xl mx-auto"
      x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }})">
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
             <p class="text-sm text-primary/60 mt-0.5">Catalogue du magasin central et niveaux de stock.</p>

@@ -205,7 +205,7 @@
                     </div>
 
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                             <div>
                                 <h3 class="text-sm font-semibold text-primary">Programme de Fidélisation</h3>
                                 <p class="text-xs text-primary/60">Récompensez vos clients réguliers avec un système de points.</p>
@@ -249,7 +249,7 @@
         {{-- ONGLET: TAXES (Réception & Manager) --}}
         @if($tab === 'taxes' && $user->hasAnyRole(['manager', 'reception']))
             <div class="max-w-3xl">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h2 class="text-lg font-semibold text-primary">Taxes et Tarifs</h2>
                     <button type="button" class="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors">
                         <i data-lucide="plus" class="w-3.5 h-3.5 inline-block mr-1"></i> Nouvelle Taxe
@@ -367,7 +367,7 @@
         {{-- ONGLET: PRESTATIONS (Manager) --}}
         @if($tab === 'services' && $user->hasRole('manager'))
             <div x-data="serviceCatalog({{ Js::from(\App\Models\ServiceItem::CATEGORIES) }})">
-                <div class="flex items-start justify-between gap-4 mb-6">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
                     <div>
                         <h2 class="text-lg font-semibold text-primary">Catalogue des prestations</h2>
                         <p class="text-sm text-primary/60 mt-1 max-w-2xl">
@@ -523,7 +523,7 @@
                                         class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
                                 </div>
 
-                                <div class="grid grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Prix (FCFA) *</label>
                                         <input type="number" name="price" x-model="form.price" min="0" required
@@ -608,7 +608,7 @@
             @endphp
 
             <div x-data="packCatalog({{ Js::from($mealServices) }}, {{ Js::from($packServiceOptions) }}, {{ Js::from($packRoomTypeOptions) }}, {{ Js::from($packPricingModes) }})">
-                <div class="flex items-start justify-between gap-4 mb-6">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
                     <div>
                         <h2 class="text-lg font-semibold text-primary">Packs d'hébergement</h2>
                         <p class="text-sm text-primary/60 mt-1 max-w-2xl">
@@ -973,7 +973,7 @@
             @endphp
 
             <div x-data="partnerCatalog({{ Js::from($partnerTypes) }}, {{ Js::from($partnerServiceOptions) }})">
-                <div class="flex items-start justify-between gap-4 mb-6">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
                     <div>
                         <h2 class="text-lg font-semibold text-primary">Organisations partenaires</h2>
                         <p class="text-sm text-primary/60 mt-1 max-w-2xl">

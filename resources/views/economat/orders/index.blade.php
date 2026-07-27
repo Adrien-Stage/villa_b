@@ -11,7 +11,7 @@
     ];
 @endphp
 <div class="max-w-6xl mx-auto">
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Bons de commande</h1>
             <p class="text-sm text-primary/60 mt-0.5">Commandes aux fournisseurs et suivi des réceptions.</p>

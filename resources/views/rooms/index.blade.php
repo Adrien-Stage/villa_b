@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Chambres</h1>
         <p class="text-sm text-primary/50 mt-0.5">
@@ -103,7 +103,7 @@
 @if($tab === 'rooms')
 
 {{-- Barre outils --}}
-<div class="flex items-center justify-between gap-4 mb-4">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
     <div class="flex items-center gap-2 flex-wrap">
         @php
         $user = auth()->user();
@@ -180,7 +180,7 @@
         <p class="text-sm">Aucune chambre trouvée</p>
     </div>
     @else
-    <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+    <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
         <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambre</div>
         <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
         <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Étage / Vue</div>
@@ -200,7 +200,7 @@
     ];
     $colorClass = $statusColors[$room->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/30';
     @endphp
-    <div class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
+    <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
         <div class="col-span-2 flex items-center gap-2">
             <i data-lucide="door-open" class="w-4 h-4 text-primary/30 flex-shrink-0"></i>
             <span class="text-sm font-semibold text-primary">{{ $room->number }}</span>
@@ -239,7 +239,7 @@
         </div>
         <div class="col-span-1 flex items-center justify-end gap-1">
             <a href="{{ route('rooms.show', $room) }}"
-                class="p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
+                class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
                 title="Voir détail">
                 <i data-lucide="settings" class="w-4 h-4"></i>
             </a>
@@ -251,7 +251,7 @@
                 data-floor="{{ $room->floor }}"
                 data-view="{{ $room->view_type }}"
                 onclick="openEditRoom(this)"
-                class="p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
+                class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
                 title="Modifier">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
@@ -259,7 +259,7 @@
                 onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')"
                 class="expect-popup">
                 @csrf @method('DELETE')
-                <button type="submit" class="p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded" title="Supprimer">
+                <button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded" title="Supprimer">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
@@ -346,7 +346,7 @@
         @endif
 
         <div class="p-4">
-            <div class="flex items-start justify-between mb-2">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
                 <div>
                     <span class="font-heading font-semibold text-primary text-lg">{{ $room->number }}</span>
                     <p class="text-xs text-primary/50 mt-0.5">{{ $room->roomType->name }}</p>
@@ -365,9 +365,9 @@
                 <div class="flex items-center gap-1.5 text-xs text-primary/50"><i data-lucide="users" class="w-3 h-3"></i> {{ $room->roomType->base_capacity }} pers.</div>
             </div>
             <div class="flex items-center justify-end gap-1 pt-3 border-t border-secondary/10">
-                <a href="{{ route('rooms.show', $room) }}" class="p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="settings" class="w-3.5 h-3.5"></i></a>
-                <button data-id="{{ $room->id }}" data-number="{{ $room->number }}" data-type="{{ $room->room_type_id }}" data-floor="{{ $room->floor }}" data-view="{{ $room->view_type }}" onclick="openEditRoom(this)" class="p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                <form method="POST" action="{{ route('rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')" class="expect-popup">@csrf @method('DELETE')<button type="submit" class="p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></form>
+                <a href="{{ route('rooms.show', $room) }}" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="settings" class="w-3.5 h-3.5"></i></a>
+                <button data-id="{{ $room->id }}" data-number="{{ $room->number }}" data-type="{{ $room->room_type_id }}" data-floor="{{ $room->floor }}" data-view="{{ $room->view_type }}" onclick="openEditRoom(this)" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                <form method="POST" action="{{ route('rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')" class="expect-popup">@csrf @method('DELETE')<button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></form>
             </div>
         </div>
     </div>
@@ -388,7 +388,7 @@
         <p class="text-sm">Aucun type de chambre</p>
     </div>
     @else
-    <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+    <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
         <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Nom</div>
         <div class="col-span-4 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
         <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Capacité</div>
@@ -397,7 +397,7 @@
     </div>
 
     @foreach($roomTypes as $type)
-    <div class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
+    <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
         <div class="col-span-3 font-medium text-sm text-primary">{{ $type->name }}</div>
         <div class="col-span-4 text-sm text-primary/50">{{ $type->description ?? '—' }}</div>
         <div class="col-span-2 text-sm text-primary/70">{{ $type->base_capacity }} pers.</div>
@@ -414,14 +414,14 @@
                 data-price="{{ $type->base_price / 100 }}"
                 data-sqm="{{ $type->size_sqm ?? 0 }}"
                 onclick="openEditType(this)"
-                class="p-1.5 text-primary/30 hover:text-primary transition-colors rounded">
+                class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
             <form method="POST" action="{{ route('rooms.types.destroy', $type) }}"
                 onsubmit="return confirm('Supprimer le type {{ $type->name }} ?')"
                 class="expect-popup">
                 @csrf @method('DELETE')
-                <button type="submit" class="p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded">
+                <button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
