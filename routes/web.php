@@ -25,6 +25,13 @@ use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\AdminAuditController;
 use App\Http\Controllers\NotificationController;
 
+// ===== PWA (application installable) =====
+// Publiques : le navigateur récupère le manifeste et les icônes avant même
+// que l'utilisateur soit connecté, sinon l'installation est impossible.
+Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/pwa/icon-{size}.png', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')->name('pwa.icon');
+Route::get('/offline', [App\Http\Controllers\PwaController::class, 'offline'])->name('pwa.offline');
+
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // Admin login

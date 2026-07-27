@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:hidden">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div>
             <h1 class="text-3xl font-bold text-primary">{{ $order->order_number }}</h1>
             <p class="text-secondary mt-1">{{ $order->created_at->locale('fr')->format('d F Y H:i') }}</p>

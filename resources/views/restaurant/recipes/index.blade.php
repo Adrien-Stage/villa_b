@@ -426,7 +426,7 @@
 
                     {{-- Les ingrédients --}}
                     <div>
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
                             <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50">Ingrédients</label>
                             <button type="button" @click="addLine()"
                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-secondary/20 text-xs font-medium text-primary hover:bg-accent/20">
@@ -436,7 +436,7 @@
                         </div>
 
                         <div class="border border-secondary/20 rounded-xl overflow-hidden">
-                            <div class="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b border-secondary/20 text-[11px] font-semibold uppercase tracking-widest text-primary/40">
+                            <div class="hidden md:grid md:grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b border-secondary/20 text-[11px] font-semibold uppercase tracking-widest text-primary/40">
                                 <div class="col-span-4">Ingrédient</div>
                                 <div class="col-span-2 text-right">Quantité</div>
                                 <div class="col-span-2 text-right" title="Perte au parage ou à la cuisson">Perte %</div>
@@ -446,7 +446,7 @@
                             </div>
 
                             <template x-for="(line, index) in form.lines" :key="index">
-                                <div class="grid grid-cols-12 gap-2 px-3 py-2 items-center border-b border-secondary/10 last:border-0">
+                                <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-2 px-3 py-2 items-center border-b border-secondary/10 last:border-0">
                                     <div class="col-span-4">
                                         <select :name="`lines[${index}][restaurant_pantry_item_id]`" x-model="line.restaurant_pantry_item_id" required
                                             class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2 text-primary">

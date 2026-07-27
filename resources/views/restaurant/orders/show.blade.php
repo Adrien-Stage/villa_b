@@ -3,7 +3,7 @@
 @section('title', 'Commande #' . $order->id)
 
 @section('content')
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     @php
         $statusStyles = [
             'pending' => 'bg-amber-50 text-amber-700 border-amber-200',

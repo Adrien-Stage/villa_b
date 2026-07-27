@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <a href="{{ route('bookings.index') }}"
             class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
@@ -403,7 +403,7 @@
             </div>
             @else
             {{-- En-tête folio --}}
-            <div class="grid grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
+            <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
                 <div class="col-span-5 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Qté</div>
@@ -427,7 +427,7 @@
             'other' => 'package',
             ];
             @endphp
-            <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
 
                 {{-- Icône type --}}
                 <div class="col-span-1">

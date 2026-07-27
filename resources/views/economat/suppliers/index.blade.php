@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto" x-data="suppliers()">
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Fournisseurs</h1>
             <p class="text-sm text-primary/60 mt-0.5">Leur adresse email permet l'envoi automatique des bons de commande.</p>

@@ -141,7 +141,7 @@
         
         <!-- Chart: CA par secteur (Line chart) -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-secondary/10 p-6">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="font-heading font-semibold text-primary">Évolution des revenus</h2>
                 <button class="text-primary/40 hover:text-primary transition-colors">
                     <i data-lucide="download" class="w-4 h-4"></i>
@@ -154,7 +154,7 @@
 
         <!-- Chart: Répartition (Doughnut) -->
         <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="font-heading font-semibold text-primary">Répartition globale</h2>
             </div>
             <div class="relative h-56 w-full flex justify-center">

@@ -6,7 +6,7 @@
 <div x-data="{ showOpenRegisterModal: @json(!$isCashRegisterOpen) }">
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Réservations</h1>
         <p class="text-sm text-primary/50 mt-0.5">{{ $stats['all'] }} réservation{{ $stats['all'] > 1 ? 's' : '' }} au total</p>
@@ -202,7 +202,7 @@
                                  ]"
                                  class="relative flex flex-col min-h-[90px] sm:min-h-[110px] border-r border-b border-slate-200 p-1.5 sm:p-2.5 cursor-pointer transition-colors group">
                                 
-                                <header class="flex items-center justify-between mb-1">
+                                <header class="flex flex-wrap items-center justify-between gap-3 mb-1">
                                     <span :class="[
                                               day.isToday ? 'bg-[#4F46E5] text-white font-semibold flex items-center justify-center rounded-full w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm shadow-sm' : 
                                               ((!day.isCurrentMonth || day.isWeekend) ? 'text-slate-400 text-xs sm:text-sm font-medium' : 'text-slate-700 text-xs sm:text-sm font-medium')
@@ -269,7 +269,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                         <template x-for="booking in selectedEvents" :key="booking.id">
                             <a :href="booking.url" class="block rounded-xl border border-slate-200/60 hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs group">
-                                <div class="flex items-center justify-between mb-2">
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
                                     <span class="text-[10px] font-mono font-bold text-slate-400" x-text="booking.booking_number"></span>
                                     <span class="px-2 py-0.5 rounded-full text-[9px] font-bold"
                                           :class="[
@@ -313,7 +313,7 @@
             </div>
         @else
             {{-- En-tête --}}
-            <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+            <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">N° Réservation</div>
                 <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Client</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambre</div>
@@ -337,7 +337,7 @@
                     $sc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
                 @endphp
                 <a href="{{ route('bookings.show', $booking) }}"
-                   class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
+                   class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
 
                     <div class="col-span-2">
                         <span class="text-sm font-mono font-medium text-primary">{{ $booking->booking_number }}</span>

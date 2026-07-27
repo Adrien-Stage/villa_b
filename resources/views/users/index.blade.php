@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Gestion du staff</h1>
         <p class="text-sm text-primary/50 mt-0.5">
@@ -56,7 +56,7 @@
     </div>
 </div>
 
-<div class="flex items-center justify-between gap-4 mb-5">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-5">
     <div class="flex items-center gap-2">
         @php
             $statuses = [
@@ -122,7 +122,7 @@
             <p class="text-sm">Aucun membre du staff trouve</p>
         </div>
     @else
-        <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Collaborateur</div>
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Contact</div>
             <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Role</div>
@@ -131,7 +131,7 @@
         </div>
 
         @foreach($staffUsers as $staff)
-            <div class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 items-center">
                 <div class="col-span-3 flex items-center gap-3 min-w-0">
                     <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                         <span class="text-white text-xs font-semibold">
@@ -206,7 +206,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
     @forelse($staffUsers as $staff)
         <div class="bg-white rounded-xl shadow-sm p-4 border border-secondary/10">
-            <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                         <span class="text-white text-xs font-semibold">{{ strtoupper(substr($staff->name, 0, 2)) }}</span>

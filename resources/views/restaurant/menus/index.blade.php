@@ -3,7 +3,7 @@
 @section('title', 'Menus')
 
 @section('content')
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Menus</h1>
         <p class="text-sm text-primary/50 mt-0.5">Gestion des categories et des articles du restaurant</p>
@@ -323,7 +323,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Prix (FCFA)</label>
                 <input type="number" name="price" min="0" value="{{ old('price', 0) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">

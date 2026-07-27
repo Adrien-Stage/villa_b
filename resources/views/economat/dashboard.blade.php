@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto">
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Économat</h1>
             <p class="text-sm text-primary/60 mt-0.5">Magasin central de l'établissement — stock, fournisseurs et demandes des départements.</p>

@@ -6,7 +6,7 @@
 <div x-data="{ showOpenRegisterModal: @json(!$isCashRegisterOpen) }">
 
 {{-- En-tête --}}
-<div class="flex items-start justify-between mb-6">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-2xl font-semibold text-primary">Réservations Groupe</h1>
         <p class="text-sm text-primary/50 mt-0.5">{{ $stats['total'] }} dossier{{ $stats['total'] > 1 ? 's' : '' }} au total</p>
@@ -52,7 +52,7 @@
 </div>
 
 {{-- Barre outils --}}
-<div class="flex items-center justify-between gap-4 mb-5">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-5">
     <div class="flex items-center gap-2">
         @php
             $filters = [
@@ -93,7 +93,7 @@
             <p class="text-sm">Aucun dossier groupe trouvé</p>
         </div>
     @else
-        <div class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
+        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
             <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Code</div>
             <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Groupe</div>
             <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Contact</div>
@@ -121,7 +121,7 @@
                 ];
             @endphp
             <a href="{{ route('groups.show', $group) }}"
-               class="grid grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
+               class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
 
                 <div class="col-span-2">
                     <span class="text-sm font-mono font-medium text-primary">{{ $group->group_code }}</span>

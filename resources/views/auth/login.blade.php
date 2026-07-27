@@ -12,6 +12,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connexion — {{ $tenantName }}</title>
+    @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -54,12 +55,15 @@
         }
     </style>
 </head>
-<body class="bg-dark font-body" style="height:100vh; overflow:hidden;">
+{{-- min-h-screen plutôt que height/overflow fixes : sur mobile le clavier
+     virtuel réduit la hauteur utile, un overflow:hidden couperait le formulaire. --}}
+<body class="bg-dark font-body" style="min-height:100vh;">
 
-<div class="flex h-screen">
+<div class="flex min-h-screen">
 
-    {{-- ===== PANNEAU GAUCHE — Branding ===== --}}
-    <div class="w-5/12 relative flex flex-col items-center justify-center bg-surface-dark animate-left"
+    {{-- ===== PANNEAU GAUCHE — Branding (écrans larges uniquement) =====
+         Décoratif : masqué sur mobile pour laisser toute la place au formulaire. --}}
+    <div class="hidden lg:flex w-5/12 relative flex-col items-center justify-center bg-surface-dark animate-left overflow-hidden"
          style="background: radial-gradient(ellipse at 30% 50%, var(--color-surface-dark) 0%, var(--color-dark) 70%);">
 
         {{-- Cercles décoratifs --}}
@@ -104,15 +108,32 @@
         </div>
     </div>
 
-    {{-- ===== PANNEAU DROIT — Formulaire ===== --}}
-    <div class="w-7/12 flex items-center justify-center animate-right"
+    {{-- ===== PANNEAU DROIT — Formulaire (pleine largeur sur mobile) ===== --}}
+    <div class="w-full lg:w-7/12 flex items-center justify-center animate-right py-10 px-5"
          style="background: #080100;">
 
-        <div class="w-full max-w-sm px-4">
+        <div class="w-full max-w-sm">
+
+            {{-- Identité de l'établissement : visible uniquement sur mobile,
+                 où le panneau de marque latéral est masqué. --}}
+            <div class="lg:hidden flex flex-col items-center text-center mb-8">
+                <div class="w-20 h-20 rounded-full shadow-2xl mb-4 flex items-center justify-center overflow-hidden"
+                     style="box-shadow: 0 0 30px rgba(204,171,135,0.2); background: {{ $tenantLogo ? 'white' : 'var(--color-secondary)' }};">
+                    @if($tenantLogo)
+                        <img src="{{ $tenantLogo }}" alt="{{ $tenantName }}" class="w-full h-full object-cover rounded-full p-1">
+                    @else
+                        <span class="font-heading text-3xl font-semibold" style="color: var(--color-text-on-light);">{{ $tenantInitial }}</span>
+                    @endif
+                </div>
+                <h1 class="font-heading text-2xl font-semibold text-text-on-dark">{{ $tenantName }}</h1>
+                <p class="text-xs mt-1" style="color: var(--color-text-on-dark); opacity: 0.5;">
+                    Plateforme de gestion hôtelière
+                </p>
+            </div>
 
             {{-- Titre formulaire --}}
             <div class="animate-up-1 mb-8">
-                <h2 class="font-heading text-3xl font-semibold text-text-on-dark mb-1">Connexion</h2>
+                <h2 class="font-heading text-2xl sm:text-3xl font-semibold text-text-on-dark mb-1">Connexion</h2>
                 <p class="text-sm" style="color: var(--color-text-on-dark); opacity: 0.5;">
                     Entrez vos identifiants pour continuer
                 </p>
@@ -237,6 +258,8 @@ function togglePassword() {
     }
 }
 </script>
+
+@include('partials.pwa-install')
 
 </body>
 </html>

@@ -23,6 +23,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', $tenantName . ' PMS')</title>
+    @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -822,6 +823,8 @@
 
         async function register() {
             try {
+                // Même URL que l'enregistrement PWA : l'appel est idempotent,
+                // le navigateur renvoie l'enregistrement déjà en place.
                 const registration = await navigator.serviceWorker.register('/sw.js');
                 // Reflète l'état de permission sur le bouton d'activation du header
                 window.updatePushButton && window.updatePushButton();
@@ -886,6 +889,8 @@
         });
     };
     </script>
+
+    @include('partials.pwa-install')
 
     @stack('scripts')
 

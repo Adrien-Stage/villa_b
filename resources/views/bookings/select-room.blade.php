@@ -184,7 +184,7 @@
                                 <input type="hidden" name="source" value="{{ $source }}">
                                 <button type="submit"
                                         class="w-full p-3 border border-secondary/20 rounded-lg hover:border-primary hover:bg-accent/10 transition-all text-left group">
-                                    <div class="flex items-center justify-between mb-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
                                         <span class="font-heading font-semibold text-primary text-sm group-hover:text-primary">
                                             {{ $room->number }}
                                         </span>
