@@ -147,3 +147,71 @@ test('aucune URL du manifeste ne porte une extension servie en statique', functi
         expect($path)->not->toMatch('/\.(png|jpe?g|gif|svg|webp|ico)$/i');
     }
 });
+
+// ── Favicon composé depuis le logo importé ────────────────────────────────────
+
+test('toutes les URL d’icônes déclarées dans le head répondent', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $user = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+
+    $html = $this->actingAs($user)->get(route('dashboard'))->assertOk()->getContent();
+
+    // Extrait les href des <link rel="icon"> / apple-touch-icon réellement rendus.
+    preg_match_all('/<link[^>]+rel="(?:icon|apple-touch-icon)"[^>]+href="([^"]+)"/i', $html, $m);
+
+    expect($m[1])->not->toBeEmpty('Aucune balise d\'icône dans le head');
+
+    foreach ($m[1] as $href) {
+        $path = parse_url(html_entity_decode($href), PHP_URL_PATH)
+            . '?' . (parse_url(html_entity_decode($href), PHP_URL_QUERY) ?? '');
+
+        // Une URL d'icône morte laisse l'onglet sans logo, sans rien signaler.
+        $this->get($path)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+    }
+});
+
+test('le head déclare une taille d’onglet adaptée', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $user = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+
+    // 192 px pour un favicon d'onglet, c'est lourd et mal redimensionné :
+    // les navigateurs préfèrent une déclaration 32x32.
+    $this->actingAs($user)->get(route('dashboard'))->assertOk()
+        ->assertSee('sizes="32x32"', false)
+        ->assertSee('rel="apple-touch-icon"', false);
+});
+
+test('l’icône reprend le logo importé et change avec lui', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $tenant = Tenant::first();
+
+    // Logo rouge uni : on vérifie que l'icône servie en porte la couleur.
+    $logo = imagecreatetruecolor(200, 200);
+    imagefilledrectangle($logo, 0, 0, 200, 200, imagecolorallocate($logo, 0xE1, 0x1D, 0x48));
+    ob_start();
+    imagepng($logo);
+    \Illuminate\Support\Facades\Storage::disk('public')->put('logos/test-logo.png', ob_get_clean());
+    imagedestroy($logo);
+
+    $sansLogo = $this->get(\App\Http\Controllers\PwaController::iconUrl(32))->assertOk()->getContent();
+
+    $tenant->settings = array_merge($tenant->settings ?? [], ['logo' => 'logos/test-logo.png']);
+    $tenant->save();
+
+    $avecLogo = $this->get(\App\Http\Controllers\PwaController::iconUrl(32))->assertOk()->getContent();
+
+    // Le cache est indexé sur l'empreinte du logo : changer de logo doit
+    // servir une image différente, sinon le manager garde l'ancienne icône.
+    expect($avecLogo)->not->toBe($sansLogo);
+
+    // Le rouge du logo doit se retrouver au centre de l'icône générée.
+    $icone = imagecreatefromstring($avecLogo);
+    $centre = imagecolorsforindex($icone, imagecolorat($icone, 16, 16));
+    imagedestroy($icone);
+
+    expect($centre['red'])->toBeGreaterThan(180)
+        ->and($centre['green'])->toBeLessThan(80);
+});
+

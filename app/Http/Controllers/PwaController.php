@@ -18,8 +18,14 @@ use Illuminate\Support\Facades\Storage;
  */
 class PwaController extends Controller
 {
-    /** Tailles d'icônes générées (px). 192 et 512 sont exigées par Android. */
-    private const ICON_SIZES = [192, 512];
+    /** Tailles du manifeste (px). 192 et 512 sont exigées par Android. */
+    private const MANIFEST_SIZES = [192, 512];
+
+    /** Tailles pour l'onglet du navigateur (32) et l'écran d'accueil iOS (180). */
+    private const FAVICON_SIZES = [32, 180];
+
+    /** Tailles que la route accepte de générer. */
+    private const ICON_SIZES = [32, 180, 192, 512];
 
     private const BRAND_BG = [0x39, 0x1F, 0x0E];   // --color-primary
     private const BRAND_FG = [0xEE, 0xD4, 0xA3];   // --color-accent
@@ -63,7 +69,7 @@ class PwaController extends Controller
         $tenant   = Tenant::first();
         $logoPath = $tenant?->settings['logo'] ?? null;
         // La clé de cache inclut le logo : changer de logo régénère l'icône.
-        $cacheKey = 'pwa-icon-' . $size . '-' . md5((string) $logoPath . ($tenant?->name ?? ''));
+        $cacheKey = 'pwa-icon-' . $size . '-' . self::brandVersion();
 
         $png = Cache::remember($cacheKey, now()->addDay(), function () use ($size, $logoPath, $tenant) {
             return $this->buildIcon($size, $logoPath, $tenant?->name ?? 'WT');
@@ -87,11 +93,11 @@ class PwaController extends Controller
     private function iconEntries(): array
     {
         $icons = [];
-        foreach (self::ICON_SIZES as $size) {
+        foreach (self::MANIFEST_SIZES as $size) {
             $icons[] = [
                 // Route nommée : l'URL du manifeste suit toute évolution du
                 // routage, au lieu de diverger silencieusement.
-                'src'     => route('pwa.icon', ['size' => $size]),
+                'src'     => self::iconUrl($size),
                 'sizes'   => "{$size}x{$size}",
                 'type'    => 'image/png',
                 // 'any maskable' : l'icône s'adapte aux masques Android sans être rognée.
@@ -102,27 +108,47 @@ class PwaController extends Controller
         return $icons;
     }
 
+    /**
+     * URL d'une icône, suffixée d'une empreinte du logo.
+     *
+     * Sans ce suffixe, le navigateur garderait l'ancienne icône d'onglet en
+     * cache après un changement de logo : c'est justement le moment où le
+     * manager veut voir sa nouvelle identité apparaître.
+     */
+    public static function iconUrl(int $size): string
+    {
+        return route('pwa.icon', ['size' => $size, 'v' => self::brandVersion()]);
+    }
+
+    /** Empreinte courte du logo et du nom : change quand la marque change. */
+    public static function brandVersion(): string
+    {
+        $tenant = Tenant::first();
+
+        return substr(md5(($tenant?->settings['logo'] ?? '') . ($tenant?->name ?? '')), 0, 8);
+    }
+
     /** Raccourcis d'application (appui long sur l'icône), selon les modules actifs. */
     private function shortcuts(): array
     {
         $shortcuts = [[
             'name'  => 'Réservations',
             'url'   => '/bookings',
-            'icons' => [['src' => url('/pwa/icon-192.png'), 'sizes' => '192x192']],
+            'icons' => [['src' => self::iconUrl(192), 'sizes' => '192x192']],
         ]];
 
         if (TenantModules::has('housekeeping')) {
             $shortcuts[] = [
                 'name'  => 'Housekeeping',
                 'url'   => '/housekeeping',
-                'icons' => [['src' => url('/pwa/icon-192.png'), 'sizes' => '192x192']],
+                'icons' => [['src' => self::iconUrl(192), 'sizes' => '192x192']],
             ];
         }
         if (TenantModules::has('restaurant')) {
             $shortcuts[] = [
                 'name'  => 'Restaurant',
                 'url'   => '/restaurant/orders',
-                'icons' => [['src' => url('/pwa/icon-192.png'), 'sizes' => '192x192']],
+                'icons' => [['src' => self::iconUrl(192), 'sizes' => '192x192']],
             ];
         }
 
@@ -145,8 +171,11 @@ class PwaController extends Controller
         $logo = $this->loadLogo($logoPath);
 
         if ($logo) {
-            // Marge de 18 % : la zone sûre d'une icône masquable Android.
-            $inner = (int) round($size * 0.64);
+            // Icône masquable Android : 18 % de marge, la zone sûre. Un favicon
+            // n'est jamais masqué et ne fait que 32 px : la même marge y
+            // rendrait le logo illisible, on la réduit fortement.
+            $ratio = in_array($size, self::FAVICON_SIZES, true) ? 0.88 : 0.64;
+            $inner = (int) round($size * $ratio);
             $offset = (int) round(($size - $inner) / 2);
 
             imagealphablending($canvas, true);

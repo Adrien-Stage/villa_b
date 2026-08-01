@@ -141,8 +141,10 @@ self.addEventListener('push', (event) => {
 	const title = payload.title || 'WeTchah';
 	const options = {
 		body: payload.body || '',
-		icon: payload.icon || '/pwa/icon-192.png',
-		badge: payload.badge || '/pwa/icon-192.png',
+		// Chemin sans extension : nginx sert directement les fichiers en .png
+		// et la requête n'atteindrait jamais PHP, qui compose l'icône.
+		icon: payload.icon || '/pwa/icon/192',
+		badge: payload.badge || '/pwa/icon/192',
 		tag: payload.tag || undefined,          // regroupe/évite les doublons
 		renotify: Boolean(payload.tag),         // re-sonne même si tag identique
 		requireInteraction: payload.requireInteraction || false,
