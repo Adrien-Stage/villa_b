@@ -7,6 +7,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Notifications\PurchaseOrderUpdated;
+use App\Services\Notifier;
 use App\Services\PurchaseOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +17,13 @@ use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller
 {
+    /** Direction et comptabilité suivent l'engagement puis la dette fournisseur. */
+    private const WATCHERS = ['manager', 'admin', 'accountant'];
+
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
     public function index(): View
     {
         $orders = PurchaseOrder::with('supplier')
@@ -92,6 +101,10 @@ class PurchaseOrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
+        // Le bon est marqué envoyé même si l'email échoue : l'engagement de
+        // dépense existe, la direction doit le savoir dans les deux cas.
+        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+
         return $sent
             ? back()->with('success', "Bon {$order->number} envoyé à {$order->supplier->email}.")
             : back()->with('error', "Le bon est marqué comme envoyé, mais l'email n'a pas pu partir. Vérifiez l'adresse et réessayez.");
@@ -110,6 +123,9 @@ class PurchaseOrderController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+
+        // La marchandise est entrée en stock : la facture fournisseur suit.
+        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
 
         return back()->with('success', "Réception enregistrée pour le bon {$order->number}.");
     }

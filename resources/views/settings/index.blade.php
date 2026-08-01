@@ -29,11 +29,15 @@
             </a>
         @endrole
 
+        {{-- Hébergement : un seul onglet regroupant horaires et règles de séjour,
+             délais de remise en vente et packs. Les réglages restent stockés sous
+             deux clés distinctes (« reception » et « hebergement »), lues ailleurs
+             dans l'application — seul l'affichage est unifié. --}}
         @role('manager', 'reception')
-            <a href="{{ route('settings.index', ['tab' => 'reception']) }}"
+            <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                      {{ $tab === 'reception' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
-                <i data-lucide="concierge-bell" class="w-4 h-4"></i>
+                      {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="bed-double" class="w-4 h-4"></i>
                 Hébergement
             </a>
             <a href="{{ route('settings.index', ['tab' => 'taxes']) }}"
@@ -41,15 +45,6 @@
                       {{ $tab === 'taxes' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="calculator" class="w-4 h-4"></i>
                 Taxes & Tarifs
-            </a>
-        @endrole
-
-        @role('manager')
-            <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
-                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                      {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
-                <i data-lucide="bed-double" class="w-4 h-4"></i>
-                Hébergement
             </a>
         @endrole
 
@@ -165,21 +160,47 @@
         @endif
 
         {{-- ONGLET: HÉBERGEMENT (Réception & Manager) --}}
-        @if($tab === 'reception' && $user->hasAnyRole(['manager', 'reception']))
+        {{-- Section 1 de l'onglet Hébergement : horaires et règles de séjour.
+             Le formulaire poste sur ?tab=reception pour que ces valeurs restent
+             sous la clé « reception », d'où les lisent BookingController,
+             RoomType et RoomAvailabilityService. --}}
+        @if($tab === 'hebergement' && $user->hasAnyRole(['manager', 'reception']))
             <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
                 @csrf
-                <h2 class="text-lg font-semibold text-primary mb-4">Paramètres Hébergement & Réception</h2>
+                <h2 class="text-lg font-semibold text-primary mb-4">Horaires et règles de séjour</h2>
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <div class="mb-4">
-                            <h3 class="text-sm font-semibold text-primary mb-1">Règle de Check-out</h3>
+                            <h3 class="text-sm font-semibold text-primary mb-1">Horaires d'arrivée et de départ</h3>
                             <p class="text-xs text-primary/60">Le client doit libérer sa chambre au plus tard à l'heure limite de sortie (Check-out) le jour de la fin de son séjour (J + nombre de nuits).</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Heure limite de sortie (Check-out)</label>
-                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? '12:00' }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Heure d'arrivée (Check-in)</label>
+                                <input type="time" name="settings[check_in_time]" value="{{ $tenantSettings['reception']['check_in_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_IN_TIME }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                            </div>
+                        </div>
+                        @php
+                            $dispo       = app(\App\Services\RoomAvailabilityService::class);
+                            $pretA       = \Illuminate\Support\Carbon::parse($dispo->checkOutTime())->addMinutes($dispo->defaultDelayMinutes());
+                            $rotationOk  = $dispo->canTurnOverSameDay(null);
+                        @endphp
+                        <div class="mt-4 px-3 py-2.5 rounded-lg text-xs border {{ $rotationOk ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800' }}">
+                            <span class="font-semibold">Rotation le jour même :</span>
+                            @if($rotationOk)
+                                possible. Départ à {{ $dispo->checkOutTime() }}, chambre prête à {{ $pretA->format('H:i') }}
+                                après {{ $dispo->defaultDelayMinutes() }} min de ménage, arrivée à {{ $dispo->checkInTime() }}.
+                            @else
+                                impossible. Avec {{ $dispo->defaultDelayMinutes() }} min de ménage après un départ à
+                                {{ $dispo->checkOutTime() }}, la chambre n'est prête qu'à {{ $pretA->format('H:i') }},
+                                soit après l'heure d'arrivée ({{ $dispo->checkInTime() }}). Une chambre libérée un jour
+                                ne pourra être reprise que le lendemain.
+                            @endif
+                            <span class="block mt-1 text-[10px] opacity-80">Le délai de ménage se règle dans l'onglet Hébergement, et peut différer par type de chambre.</span>
                         </div>
                     </div>
 
@@ -571,8 +592,82 @@
             </div>
         @endif
 
-        {{-- ONGLET: HÉBERGEMENT — PACKS (Uniquement Manager) --}}
+        {{-- Sections 2 et 3 du même onglet Hébergement : délais de remise en
+             vente puis packs. Réservées au manager — la réception n'a accès
+             qu'aux horaires et règles de séjour ci-dessus. --}}
         @if($tab === 'hebergement' && $user->hasRole('manager'))
+            <hr class="border-secondary/15 my-10">
+
+            @php
+                $hebergement   = $tenantSettings['hebergement'] ?? [];
+                $globalDelay   = $hebergement['cleaning_delay_minutes'] ?? \App\Services\RoomAvailabilityService::DEFAULT_DELAY_MINUTES;
+                $delayByType   = (array) ($hebergement['cleaning_delay_by_type'] ?? []);
+            @endphp
+
+            <form method="POST" action="{{ route('settings.update', ['tab' => 'hebergement']) }}" class="max-w-3xl mb-10">
+                @csrf
+                <h2 class="text-lg font-semibold text-primary mb-1">Remise en vente après départ</h2>
+                <p class="text-sm text-primary/60 mb-5 max-w-2xl">
+                    Temps nécessaire à l'équipe de ménage pour remettre une chambre en état. Pendant ce délai, la chambre
+                    reste visible sur le site de réservation avec la mention de l'heure à laquelle elle sera prête,
+                    au lieu de disparaître de l'offre et de faire perdre la réservation.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <h3 class="text-sm font-semibold text-primary mb-1">Délai par défaut</h3>
+                        <p class="text-xs text-primary/60 mb-4">Appliqué à tout type de chambre sans réglage propre.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Durée (minutes)</label>
+                                <input type="number" name="settings[cleaning_delay_minutes]" min="0" max="1440" step="5"
+                                       value="{{ $globalDelay }}"
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <p class="text-[10px] text-primary/50 mt-1">120 minutes = 2 h.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <h3 class="text-sm font-semibold text-primary mb-1">Délai par type de chambre</h3>
+                        <p class="text-xs text-primary/60 mb-4">
+                            Une suite présidentielle ne se remet pas en état aussi vite qu'une chambre économique.
+                            Laissez vide pour appliquer le délai par défaut.
+                        </p>
+
+                        @if($roomTypes->isEmpty())
+                            <p class="text-xs text-primary/50 italic">Aucun type de chambre enregistré pour le moment.</p>
+                        @else
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                @foreach($roomTypes as $type)
+                                    <div class="flex items-center gap-3 bg-white rounded-lg border border-secondary/20 p-2.5">
+                                        <span class="flex-1 min-w-0 text-xs font-medium text-primary truncate" title="{{ $type->name }}">
+                                            {{ $type->name }}
+                                        </span>
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <input type="number" name="settings[cleaning_delay_by_type][{{ $type->id }}]"
+                                                   min="0" max="1440" step="5"
+                                                   value="{{ $delayByType[$type->id] ?? '' }}"
+                                                   placeholder="{{ $globalDelay }}"
+                                                   class="w-20 rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2 text-right">
+                                            <span class="text-[10px] text-primary/50">min</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        Enregistrer les délais
+                    </button>
+                </div>
+            </form>
+
+            <hr class="border-secondary/15 mb-10">
+
             @php
                 // Charge utile de l'éditeur préparée ici : un tableau multi-ligne
                 // passé directement à @json dans un attribut casse le parseur Blade.

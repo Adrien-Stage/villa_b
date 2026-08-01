@@ -8,6 +8,10 @@ use App\Models\HousekeepingTeam;
 use App\Models\Room;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\HousekeepingIssueReported;
+use App\Notifications\HousekeepingRoomsAssigned;
+use App\Notifications\HousekeepingRoomToInspect;
+use App\Services\Notifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class HousekeepingController extends Controller
 {
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
     /** Rôles pilotant tout le service (vue chef complète). */
     private const CHIEF_ROLES = ['manager', 'housekeeping_leader'];
 
@@ -86,6 +94,26 @@ class HousekeepingController extends Controller
             ->get()
             ->groupBy(fn ($room) => $room->status->value);
 
+        // Le chef de service met aussi la main à la pâte : les chambres
+        // confiées aux équipes dont il fait partie lui sont présentées avec
+        // les mêmes actions de terrain qu'à un agent.
+        $myTeamIds = $teams
+            ->filter(fn (HousekeepingTeam $team) => $team->leader_id === Auth::id()
+                || $team->members->contains('id', Auth::id()))
+            ->pluck('id');
+
+        $myRooms = $myTeamIds->isEmpty()
+            ? collect()
+            : Room::with(['roomType', 'latestHousekeepingAssignment.team'])
+                ->whereIn('id', HousekeepingAssignment::whereIn('housekeeping_team_id', $myTeamIds)
+                    ->pluck('room_id')->unique())
+                ->whereIn('status', self::CYCLE_STATUSES)
+                ->orderByRaw("CASE status
+                    WHEN 'dirty' THEN 1 WHEN 'cleaning' THEN 2
+                    WHEN 'clean' THEN 3 WHEN 'inspected' THEN 4 ELSE 5 END")
+                ->orderBy('number')
+                ->get();
+
         $stats = [
             'dirty_rooms'  => $dirtyRooms->count(),
             'cleaning'     => ($pipeline['cleaning'] ?? collect())->count(),
@@ -106,6 +134,7 @@ class HousekeepingController extends Controller
             'completedToday'     => $completedToday,
             'pipeline'           => $pipeline,
             'stats'              => $stats,
+            'myRooms'            => $myRooms,
         ]);
     }
 
@@ -259,7 +288,13 @@ class HousekeepingController extends Controller
             }
         });
 
-        return redirect()->route('housekeeping.index')->with('success', 'Chambres affectees a l\'equipe.');
+        // L'équipe est prévenue de sa feuille de route (hors auteur de l'action).
+        $this->notifier->send(
+            $team->members()->where('users.id', '!=', Auth::id())->get(),
+            new HousekeepingRoomsAssigned($team, $rooms->pluck('number')->all())
+        );
+
+        return redirect()->route('housekeeping.index')->with('success', 'Chambres affectées à l\'équipe.');
     }
 
     public function reportIssue(Request $request, Room $room)
@@ -291,7 +326,14 @@ class HousekeepingController extends Controller
             }
         });
 
-        return redirect()->route('housekeeping.index')->with('success', 'Le probleme a ete signale au chef de service.');
+        // La chambre est immobilisée : le chef de service doit arbitrer vite.
+        $this->notifier->toRoles(
+            self::CHIEF_ROLES,
+            new HousekeepingIssueReported($room, $validated['issue_notes'], Auth::user()?->name),
+            Auth::id()
+        );
+
+        return redirect()->route('housekeeping.index')->with('success', 'Le problème a été signalé au chef de service.');
     }
 
     public function markCleaning(Request $request, Room $room)
@@ -342,6 +384,19 @@ class HousekeepingController extends Controller
                 'completed_at' => now(),
             ]);
         });
+
+        // Le contrôle conditionne la remise à la vente : on prévient ceux qui
+        // peuvent valider — chef d'équipe de la chambre et chef de service.
+        $team = $this->roomTeam($room);
+        $this->notifier->send(
+            collect([$team?->leader])->filter(),
+            new HousekeepingRoomToInspect($room, $team?->name)
+        );
+        $this->notifier->toRoles(
+            self::CHIEF_ROLES,
+            new HousekeepingRoomToInspect($room, $team?->name),
+            Auth::id()
+        );
 
         return back()->with('success', "Chambre {$room->number} marquée nettoyée, à contrôler.");
     }

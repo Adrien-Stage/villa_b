@@ -127,3 +127,52 @@ test('l’agent voit l’espace membre et le chef voit le pilotage', function ()
 test('le libellé du statut « à nettoyer » remplace « Sale »', function () {
     expect(RoomStatus::DIRTY->label())->toBe('À nettoyer');
 });
+
+test('le chef de service voit ses chambres et peut lancer le nettoyage', function () {
+    $room = hkSetup();
+    $room->update(['status' => RoomStatus::DIRTY]);
+
+    // Le chef fait partie d'une équipe : les chambres de cette équipe sont
+    // les siennes, il doit pouvoir les traiter lui-même et pas seulement
+    // les affecter à quelqu'un d'autre.
+    $chief = User::factory()->create(['role' => 'housekeeping_leader']);
+    hkTeamWithAssignment($room, $chief, [], 'pending');
+
+    $this->actingAs($chief)->get(route('housekeeping.index'))
+        ->assertOk()
+        ->assertSee('Mes chambres')
+        ->assertSee('Commencer le nettoyage');
+
+    $this->actingAs($chief)->post(route('housekeeping.clean', $room))->assertRedirect();
+
+    expect($room->fresh()->status)->toBe(RoomStatus::CLEANING);
+});
+
+test('le chef mène une chambre du nettoyage jusqu’à la remise en vente', function () {
+    $room = hkSetup();
+    $room->update(['status' => RoomStatus::DIRTY]);
+
+    $chief = User::factory()->create(['role' => 'housekeeping_leader']);
+    hkTeamWithAssignment($room, $chief, [], 'pending');
+    $this->actingAs($chief);
+
+    $this->post(route('housekeeping.clean', $room))->assertRedirect();
+    $this->post(route('housekeeping.ready', $room))->assertRedirect();
+    expect($room->fresh()->status)->toBe(RoomStatus::CLEAN);
+
+    $this->post(route('housekeeping.inspect', $room))->assertRedirect();
+    $this->post(route('housekeeping.available', $room))->assertRedirect();
+
+    expect($room->fresh()->status)->toBe(RoomStatus::AVAILABLE);
+});
+
+test('sans équipe, le chef ne voit pas la section « Mes chambres »', function () {
+    $room = hkSetup();
+    $room->update(['status' => RoomStatus::DIRTY]);
+
+    $chief = User::factory()->create(['role' => 'housekeeping_leader']);
+
+    $this->actingAs($chief)->get(route('housekeeping.index'))
+        ->assertOk()
+        ->assertDontSee('Mes chambres');
+});

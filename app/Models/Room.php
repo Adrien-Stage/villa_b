@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use App\Enums\RoomStatus;
+use App\Services\RoomAvailabilityService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -91,22 +92,40 @@ class Room extends Model
     }
 
     /**
-     * Scope : Chambres disponibles pour une période
-     * Utilisé dans le wizard de réservation (section 4.4.1)
+     * Scope : Chambres vendables, toutes dates confondues.
+     *
+     * Une chambre occupée aujourd'hui reste vendable pour le mois prochain :
+     * seules maintenance et hors service, dont l'indisponibilité n'a pas
+     * d'échéance connue, sont écartées. C'est la période demandée qui décide
+     * ensuite, via RoomAvailabilityService.
+     */
+    public function scopeSellable($query)
+    {
+        return $query->where('is_active', true)
+            ->whereNotIn('status', array_map(
+                fn (RoomStatus $s) => $s->value,
+                RoomAvailabilityService::UNSELLABLE_STATUSES
+            ));
+    }
+
+    /**
+     * Scope : Chambres libres sur une période.
+     *
+     * Intervalles semi-ouverts [arrivée, départ) : deux séjours bout à bout ne
+     * se chevauchent pas. Le tampon de ménage de la rotation le jour même n'est
+     * pas exprimable ici — il est appliqué par RoomAvailabilityService, qui
+     * reste l'autorité sur l'acceptation d'une réservation.
      */
     public function scopeAvailableBetween($query, $checkIn, $checkOut)
     {
+        $checkIn  = \Illuminate\Support\Carbon::parse($checkIn)->toDateString();
+        $checkOut = \Illuminate\Support\Carbon::parse($checkOut)->toDateString();
+
         return $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
-            $q->where(function ($sq) use ($checkIn, $checkOut) {
-                $sq->whereBetween('check_in', [$checkIn, $checkOut])
-                    ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                    ->orWhere(function ($ssq) use ($checkIn, $checkOut) {
-                        $ssq->where('check_in', '<=', $checkIn)
-                            ->where('check_out', '>=', $checkOut);
-                    });
-            })->whereNotIn('status', ['cancelled', 'no_show']);
-        })->where('status', RoomStatus::AVAILABLE)
-            ->where('is_active', true);
+            $q->whereDate('check_in', '<', $checkOut)
+                ->whereDate('check_out', '>', $checkIn)
+                ->whereNotIn('status', ['cancelled', 'no_show']);
+        })->sellable();
     }
 
     /**

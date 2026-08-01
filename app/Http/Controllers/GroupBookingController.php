@@ -278,18 +278,13 @@ class GroupBookingController extends Controller
         $checkOut = $groupBooking->end_date;
         $nights = $checkIn->diffInDays($checkOut);
 
-        // Vérifie disponibilité
-        $conflict = Booking::where('room_id', $room->id)
-            ->whereNotIn('status', ['cancelled', 'no_show'])
-            ->where(function ($q) use ($checkIn, $checkOut) {
-                $q->whereBetween('check_in', [$checkIn, $checkOut])
-                    ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                    ->orWhere(fn ($sq) => $sq->where('check_in', '<=', $checkIn)
-                        ->where('check_out', '>=', $checkOut));
-            })->exists();
+        // Vérifie disponibilité — même règle que la réservation individuelle
+        // et que le site : intervalles semi-ouverts et tampon de ménage.
+        $refus = app(\App\Services\RoomAvailabilityService::class)
+            ->conflictReason($room, $checkIn, $checkOut);
 
-        if ($conflict) {
-            return back()->withErrors(['room_id' => 'Cette chambre est déjà réservée sur cette période.']);
+        if ($refus !== null) {
+            return back()->withErrors(['room_id' => $refus]);
         }
 
         $tenantId = Auth::user()->tenant_id

@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 class BookingController extends Controller
 {
     public function __construct(
-        private CheckOutService $checkOutService
+        private CheckOutService $checkOutService,
+        private \App\Services\Notifier $notifier
     ) {}
 
     // ===== LISTE =====
@@ -581,37 +582,22 @@ class BookingController extends Controller
             'tenant_id'       => $tenantId,
         ]);
 
-        if ($booking->status === BookingStatus::PENDING && $request->boolean('is_offerte')) {
-            try {
-                $managers = \App\Models\User::query()
-                    ->where('role', 'manager')
-                    ->get();
-                \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\ComplimentaryBookingRequested($booking));
-                \Illuminate\Support\Facades\Log::info("Notification chambre offerte envoyée aux managers pour la réservation #{$booking->booking_number}");
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur notification chambre offerte #{$booking->booking_number} : " . $e->getMessage());
-            }
+        $needsApproval = $booking->status === BookingStatus::PENDING && $request->boolean('is_offerte');
+
+        if ($needsApproval) {
+            $this->notifier->toRoles(['manager'], new \App\Notifications\ComplimentaryBookingRequested($booking));
         }
 
-        // Notifier managers + réception (hors créateur) d'une nouvelle
-        // réservation — in-app (cloche) et push système (même app fermée).
-        try {
-            $recipients = \App\Models\User::query()
-                ->whereIn('role', ['manager', 'reception'])
-                ->where('id', '!=', Auth::id())
-                ->where('is_active', true)
-                ->get();
-
-            if ($recipients->isNotEmpty()) {
-                $creatorName = Auth::user()->name ?? 'Réception';
-                \Illuminate\Support\Facades\Notification::send(
-                    $recipients,
-                    new \App\Notifications\NewBookingCreated($booking, $creatorName)
-                );
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur notification nouvelle réservation #{$booking->booking_number} : " . $e->getMessage());
-        }
+        // Nouvelle réservation — in-app (cloche) et push système (même app
+        // fermée). Le manager qui vient de recevoir la demande de validation
+        // est écarté : deux cloches pour la même réservation noient le signal
+        // actionnable sous l'information.
+        $creatorName = Auth::user()->name ?? 'Réception';
+        $this->notifier->toRoles(
+            $needsApproval ? ['reception'] : ['manager', 'reception'],
+            new \App\Notifications\NewBookingCreated($booking, $creatorName),
+            Auth::id()
+        );
 
         // Enregistrer le paiement (Acompte) si montant > 0
         if ($paymentAmount > 0) {
@@ -1005,10 +991,10 @@ class BookingController extends Controller
             'status' => BookingStatus::CONFIRMED,
         ]);
 
-        $creator = \App\Models\User::find($booking->created_by);
-        if ($creator) {
-            $creator->notify(new \App\Notifications\ComplimentaryBookingApproved($booking));
-        }
+        $this->notifier->send(
+            \App\Models\User::find($booking->created_by),
+            new \App\Notifications\ComplimentaryBookingApproved($booking)
+        );
 
         return back()->with('success', 'La réservation offerte a été validée avec succès.');
     }
@@ -1246,22 +1232,14 @@ class BookingController extends Controller
             $checkIn->ne($booking->check_in) ||
             $checkOut->ne($booking->check_out)
         ) {
-            $conflict = Booking::where('room_id', $room->id)
-                ->where('id', '!=', $booking->id)
-                ->whereNotIn('status', ['cancelled', 'no_show'])
-                ->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->whereBetween('check_in', [$checkIn, $checkOut])
-                        ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                        ->orWhere(function ($sq) use ($checkIn, $checkOut) {
-                            $sq->where('check_in', '<=', $checkIn)
-                                ->where('check_out', '>=', $checkOut);
-                        });
-                })->exists();
+            // Même règle que le site : intervalles semi-ouverts et tampon de
+            // ménage. Le séjour en cours de modification est ignoré, sinon il
+            // se bloquerait lui-même.
+            $refus = app(\App\Services\RoomAvailabilityService::class)
+                ->conflictReason($room, $checkIn, $checkOut, $booking->id);
 
-            if ($conflict) {
-                return back()->withErrors([
-                    'room_id' => 'Cette chambre est déjà réservée sur cette période.'
-                ])->withInput();
+            if ($refus !== null) {
+                return back()->withErrors(['room_id' => $refus])->withInput();
             }
         }
 

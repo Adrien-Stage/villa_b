@@ -7,7 +7,39 @@
         'Normale'  => 'bg-secondary/10 text-primary/70 border-secondary/20',
     ];
     $activeRooms = $pipeline->flatten(1);
+
+    // Mêmes codes couleur que l'écran des agents : le chef bascule d'un écran
+    // à l'autre, les statuts doivent se lire pareil des deux côtés.
+    $statusStyles = [
+        'dirty'     => ['label' => 'À nettoyer',    'chip' => 'bg-red-100 text-red-800',        'card' => 'border-red-200 bg-red-50'],
+        'cleaning'  => ['label' => 'En nettoyage',  'chip' => 'bg-yellow-100 text-yellow-900',  'card' => 'border-yellow-300 bg-yellow-50'],
+        'clean'     => ['label' => 'À contrôler',   'chip' => 'bg-purple-100 text-purple-800',  'card' => 'border-purple-200 bg-purple-50'],
+        'inspected' => ['label' => 'Contrôlée',     'chip' => 'bg-emerald-100 text-emerald-800','card' => 'border-emerald-200 bg-emerald-50'],
+    ];
 @endphp
+
+{{-- ═══ Les chambres que le chef traite lui-même ═══ --}}
+@if($myRooms->isNotEmpty())
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+                <h2 class="font-heading font-semibold text-primary text-lg">Mes chambres</h2>
+                <p class="text-xs text-primary/50">Chambres confiées aux équipes dont vous faites partie — vous pouvez les traiter vous-même.</p>
+            </div>
+            <span class="text-xs text-primary/40">{{ $myRooms->count() }} chambre{{ $myRooms->count() > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            @foreach($myRooms as $room)
+                {{-- Le chef de service contrôle et libère sans restriction. --}}
+                @include('housekeeping.partials.room-card', [
+                    'room'         => $room,
+                    'statusStyles' => $statusStyles,
+                    'canValidate'  => true,
+                ])
+            @endforeach
+        </div>
+    </div>
+@endif
 
 <div class="flex flex-col gap-2 mb-6">
     <h1 class="font-heading text-2xl font-semibold text-primary">Housekeeping</h1>
@@ -62,9 +94,17 @@
                         @endif
                         <div class="mt-auto">
                             @if($room->activeHousekeepingAssignment)
-                                <div class="px-3 py-2 bg-white/60 rounded-lg border border-red-200 text-xs text-red-800">
+                                <div class="px-3 py-2 bg-white/60 rounded-lg border border-red-200 text-xs text-red-800 mb-2">
                                     Assignée à : <span class="font-bold">{{ $room->activeHousekeepingAssignment->team->name }}</span>
                                 </div>
+                                {{-- Le chef ne fait pas que superviser : il peut lancer le
+                                     nettoyage lui-même quand l'équipe est débordée. --}}
+                                <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
+                                    @csrf
+                                    <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-1.5">
+                                        <i data-lucide="play" class="w-4 h-4"></i> Commencer le nettoyage
+                                    </button>
+                                </form>
                             @elseif($teams->isEmpty())
                                 <p class="text-xs text-red-600/70 italic">Créez une équipe pour l'assigner.</p>
                             @else

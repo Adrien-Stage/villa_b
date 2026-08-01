@@ -9,7 +9,9 @@ use App\Models\ShopOrder;
 use App\Models\ShopOrderItem;
 use App\Models\ShopProduct;
 use App\Enums\BookingStatus;
+use App\Notifications\ShopProductLowStock;
 use App\Services\CheckOutService;
+use App\Services\Notifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +20,10 @@ use Illuminate\View\View;
 
 class ShopOrderController extends Controller
 {
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
     public function index(Request $request): View
     {
         $tenant = auth()->user()->tenant;
@@ -167,8 +173,12 @@ class ShopOrderController extends Controller
             return redirect()->route('shop.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse.');
         }
 
+        // Produits passés sous leur seuil de réassort par cette vente ; rempli
+        // dans la transaction, notifié une fois la commande réellement acquise.
+        $lowStock = [];
+
         // Créer la commande dans une transaction
-        $order = DB::transaction(function () use ($validated, $tenant, $products, $activeSession, $booking) {
+        $order = DB::transaction(function () use ($validated, $tenant, $products, $activeSession, $booking, &$lowStock) {
             $orderNumber = 'SHOP-' . date('YmdHis') . '-' . Str::random(4);
             $totalItems = 0;
             $subtotal = 0;
@@ -202,7 +212,14 @@ class ShopOrderController extends Controller
                 ]);
 
                 // Décrémenter le stock
+                $wasAboveThreshold = $product->stock_quantity > $product->reorder_level;
                 $product->decrement('stock_quantity', $item['quantity']);
+
+                // Seul le franchissement du seuil alerte le gérant : un article
+                // déjà bas ne doit pas renotifier à chaque vente suivante.
+                if ($wasAboveThreshold && $product->stock_quantity <= $product->reorder_level) {
+                    $lowStock[] = $product;
+                }
             }
 
             // Pas de taxe (TVA à 0)
@@ -246,6 +263,10 @@ class ShopOrderController extends Controller
 
             return $order;
         });
+
+        foreach ($lowStock as $product) {
+            $this->notifier->toRoles(['shop_manager', 'manager'], new ShopProductLowStock($product));
+        }
 
         return redirect()->route('shop.orders.show', $order)
             ->with('success', 'Commande créée avec succès');
