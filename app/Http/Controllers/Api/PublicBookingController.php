@@ -3,17 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\BookingStatus;
-use App\Enums\RoomStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Room;
-use App\Models\User;
 use App\Notifications\WebsiteBookingReceived;
+use App\Services\Notifier;
+use App\Services\RoomAvailabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -50,8 +48,7 @@ class PublicBookingController extends Controller
         /** @var Room $room */
         $room = Room::with('roomType')->findOrFail($data['room_id']);
 
-        // La chambre doit être vendable et son type actif
-        if (!$room->is_active || $room->status !== RoomStatus::AVAILABLE || !$room->roomType || !$room->roomType->is_active) {
+        if (!$room->roomType || !$room->roomType->is_active) {
             return response()->json(['ok' => false, 'message' => "Cette chambre n'est plus disponible à la réservation."], 409);
         }
 
@@ -61,21 +58,14 @@ class PublicBookingController extends Controller
             return response()->json(['ok' => false, 'message' => "Le nombre de personnes dépasse la capacité de la chambre ({$room->roomType->max_capacity} max)."], 422);
         }
 
-        // Disponibilité sur les dates demandées (pas de réservation active qui chevauche)
-        $overlaps = Booking::where('room_id', $room->id)
-            ->whereNotIn('status', [BookingStatus::CANCELLED->value, BookingStatus::NO_SHOW->value])
-            ->where(function ($q) use ($data) {
-                $q->whereBetween('check_in', [$data['check_in'], $data['check_out']])
-                  ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
-                  ->orWhere(function ($sq) use ($data) {
-                      $sq->where('check_in', '<=', $data['check_in'])
-                         ->where('check_out', '>=', $data['check_out']);
-                  });
-            })
-            ->exists();
+        // Disponibilité sur les dates demandées. Même autorité que la réception :
+        // une chambre occupée aujourd'hui accepte une réservation pour plus tard,
+        // et le tampon de ménage est appliqué à l'identique des deux côtés.
+        $refus = app(RoomAvailabilityService::class)
+            ->conflictReason($room, $data['check_in'], $data['check_out']);
 
-        if ($overlaps) {
-            return response()->json(['ok' => false, 'message' => "La chambre est déjà réservée sur ces dates. Choisissez d'autres dates."], 409);
+        if ($refus !== null) {
+            return response()->json(['ok' => false, 'message' => $refus], 409);
         }
 
         // Client : réutilise un client existant (email ou téléphone), sinon en crée un
@@ -127,18 +117,10 @@ class PublicBookingController extends Controller
             'tenant_id'         => $room->tenant_id,
         ]);
 
-        // Notifier managers + réception (in-app + push système)
-        try {
-            $recipients = User::whereIn('role', ['manager', 'reception'])
-                ->where('is_active', true)
-                ->get();
-
-            if ($recipients->isNotEmpty()) {
-                Notification::send($recipients, new WebsiteBookingReceived($booking));
-            }
-        } catch (\Throwable $e) {
-            Log::error("Erreur notification réservation site #{$booking->booking_number} : " . $e->getMessage());
-        }
+        // Notifier managers + réception (in-app + push système). Passe par le
+        // Notifier : il résout aussi les rôles portés par le pivot, donc les
+        // utilisateurs multi-modules ne sont pas oubliés.
+        app(Notifier::class)->toRoles(['manager', 'reception'], new WebsiteBookingReceived($booking));
 
         return response()->json([
             'ok'             => true,

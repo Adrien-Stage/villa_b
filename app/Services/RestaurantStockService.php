@@ -9,6 +9,7 @@ use App\Models\RestaurantPantryMovement;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantStockCount;
 use App\Models\RestaurantStockCountLine;
+use App\Notifications\PantryItemLowStock;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +61,7 @@ class RestaurantStockService
 
             $current = (float) $item->current_stock;
             $average = (float) $item->average_cost;
+            $wasAboveThreshold = !$item->isLowStock();
 
             switch ($type) {
                 case RestaurantPantryMovement::TYPE_IN:
@@ -109,6 +111,15 @@ class RestaurantStockService
                 'current_stock' => round($next, 3),
                 'average_cost' => round($average, 4),
             ]);
+
+            // Seul le franchissement alerte : la cuisine sort des ingrédients à
+            // chaque service, renotifier sur chaque sortie noierait le signal.
+            // afterCommit car une vente déduit plusieurs ingrédients d'un coup,
+            // dans une transaction englobante qui peut encore échouer.
+            if ($wasAboveThreshold && $item->isLowStock()) {
+                DB::afterCommit(fn () => app(Notifier::class)
+                    ->toRoles(['restaurant_chief', 'manager'], new PantryItemLowStock($item)));
+            }
 
             return $movement;
         });

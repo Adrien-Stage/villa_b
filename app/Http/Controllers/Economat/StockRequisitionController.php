@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\StockItem;
 use App\Models\StockRequisition;
 use App\Models\StockRequisitionLine;
+use App\Notifications\StockRequisitionSubmitted;
+use App\Notifications\StockRequisitionUpdated;
+use App\Services\Notifier;
 use App\Services\StockRequisitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +24,10 @@ use Illuminate\View\View;
  */
 class StockRequisitionController extends Controller
 {
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
     public function index(): View
     {
         $isKeeper = $this->isStoreKeeper();
@@ -91,6 +98,9 @@ class StockRequisitionController extends Controller
             return $requisition;
         });
 
+        // L'economat doit savoir qu'une demande attend son arbitrage.
+        $this->notifier->toRoles(['econome', 'manager'], new StockRequisitionSubmitted($requisition), Auth::id());
+
         return redirect()
             ->route('economat.requisitions.show', $requisition)
             ->with('success', "Demande {$requisition->number} transmise à l'économat.");
@@ -118,6 +128,8 @@ class StockRequisitionController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
+        $this->notifier->send($requisition->fresh()->requestedBy, new StockRequisitionUpdated($requisition->fresh()));
+
         return back()->with('success', "Demande {$requisition->number} validée. Vous pouvez procéder à la livraison.");
     }
 
@@ -130,6 +142,8 @@ class StockRequisitionController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+
+        $this->notifier->send($requisition->fresh()->requestedBy, new StockRequisitionUpdated($requisition->fresh()));
 
         return back()->with('success', "Demande {$requisition->number} refusée.");
     }
@@ -149,6 +163,8 @@ class StockRequisitionController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+
+        $this->notifier->send($requisition->fresh()->requestedBy, new StockRequisitionUpdated($requisition->fresh()));
 
         return back()->with('success', "Articles livrés au département — demande {$requisition->number} clôturée.");
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\RoomAvailabilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -50,6 +51,11 @@ class RoomResource extends JsonResource
                 'amount'    => $type?->base_price,
                 'formatted' => $type?->formattedBasePrice(),
             ],
+
+            // Remise en vente : une chambre libérée le matin reste réservable,
+            // avec l'heure à laquelle l'équipe de ménage l'aura rendue prête.
+            // ready_now à true : occupable tout de suite, label à null.
+            'availability'      => app(RoomAvailabilityService::class)->payload($this->resource),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Notifications\StockItemBelowThreshold;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -76,7 +77,11 @@ class StockService
             throw new \InvalidArgumentException('La quantité sortie doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason) {
+        // Renseigné dans la transaction, consommé après : l'alerte ne part
+        // qu'une fois le déstockage réellement acquis en base.
+        $crossedThreshold = null;
+
+        $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
 
             // On ne sort jamais plus que ce qui est présent : un stock négatif
@@ -88,11 +93,28 @@ class StockService
                 );
             }
 
+            $wasAboveThreshold = !$item->isBelowThreshold();
             $newQty = (float) $item->current_stock - $quantity;
             $item->update(['current_stock' => $newQty]);
 
+            // Seul le franchissement déclenche l'alerte : sans ça, chaque sortie
+            // sur un article déjà bas renotifierait l'économe pour rien.
+            if ($wasAboveThreshold && $item->isBelowThreshold()) {
+                $crossedThreshold = $item;
+            }
+
             return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId, $reason);
         });
+
+        if ($crossedThreshold) {
+            // afterCommit : ce service peut être appelé depuis une transaction
+            // englobante (livraison d'une demande). On n'alerte pas sur un
+            // déstockage qui finirait par être annulé.
+            DB::afterCommit(fn () => app(Notifier::class)
+                ->toRoles(['econome', 'manager'], new StockItemBelowThreshold($crossedThreshold)));
+        }
+
+        return $movement;
     }
 
     /**
@@ -105,7 +127,9 @@ class StockService
             throw new \InvalidArgumentException('La quantité constatée ne peut pas être négative.');
         }
 
-        return DB::transaction(function () use ($item, $countedQuantity, $reason) {
+        $crossedThreshold = null;
+
+        $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $delta = $countedQuantity - (float) $item->current_stock;
 
@@ -113,7 +137,14 @@ class StockService
                 return null;   // Rien à corriger.
             }
 
+            $wasAboveThreshold = !$item->isBelowThreshold();
             $item->update(['current_stock' => $countedQuantity]);
+
+            // Un comptage physique révèle souvent un manque (casse, perte) :
+            // c'est aussi un moment où l'économe doit être prévenu.
+            if ($wasAboveThreshold && $item->isBelowThreshold()) {
+                $crossedThreshold = $item;
+            }
 
             return $this->log(
                 $item,
@@ -125,6 +156,16 @@ class StockService
                 $reason ?? 'Ajustement d\'inventaire'
             );
         });
+
+        if ($crossedThreshold) {
+            // afterCommit : ce service peut être appelé depuis une transaction
+            // englobante (livraison d'une demande). On n'alerte pas sur un
+            // déstockage qui finirait par être annulé.
+            DB::afterCommit(fn () => app(Notifier::class)
+                ->toRoles(['econome', 'manager'], new StockItemBelowThreshold($crossedThreshold)));
+        }
+
+        return $movement;
     }
 
     private function log(

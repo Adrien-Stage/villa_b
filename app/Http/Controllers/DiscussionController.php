@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\DiscussionConversation;
 use App\Models\DiscussionMessage;
 use App\Models\User;
+use App\Notifications\DiscussionMessageReceived;
+use App\Services\Notifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,10 @@ use Illuminate\View\View;
 
 class DiscussionController extends Controller
 {
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
     private function isDiscussionSchemaReady(): bool
     {
         return Schema::hasTable('discussion_messages')
@@ -265,6 +271,13 @@ class DiscussionController extends Controller
                 'deleted_at' => null,
                 'archived_at' => null,
             ]);
+
+        // Prevenir les autres participants : sans ca, un message n'est vu que
+        // par ceux qui ont la page discussion ouverte au bon moment.
+        $this->notifier->send(
+            $conversation->participants()->where('users.id', '!=', $userId)->get(),
+            new DiscussionMessageReceived($conversation, $message, Auth::user()?->name ?? 'Un collegue')
+        );
 
         if ($request->expectsJson() || $request->wantsJson()) {
             $conversations = $this->getVisibleConversations(Auth::user());
