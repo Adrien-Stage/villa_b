@@ -29,11 +29,15 @@
             </a>
         @endrole
 
+        {{-- Hébergement : un seul onglet regroupant horaires et règles de séjour,
+             délais de remise en vente et packs. Les réglages restent stockés sous
+             deux clés distinctes (« reception » et « hebergement »), lues ailleurs
+             dans l'application — seul l'affichage est unifié. --}}
         @role('manager', 'reception')
-            <a href="{{ route('settings.index', ['tab' => 'reception']) }}"
+            <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                      {{ $tab === 'reception' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
-                <i data-lucide="concierge-bell" class="w-4 h-4"></i>
+                      {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="bed-double" class="w-4 h-4"></i>
                 Hébergement
             </a>
             <a href="{{ route('settings.index', ['tab' => 'taxes']) }}"
@@ -41,15 +45,6 @@
                       {{ $tab === 'taxes' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="calculator" class="w-4 h-4"></i>
                 Taxes & Tarifs
-            </a>
-        @endrole
-
-        @role('manager')
-            <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
-                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                      {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
-                <i data-lucide="bed-double" class="w-4 h-4"></i>
-                Hébergement
             </a>
         @endrole
 
@@ -165,10 +160,14 @@
         @endif
 
         {{-- ONGLET: HÉBERGEMENT (Réception & Manager) --}}
-        @if($tab === 'reception' && $user->hasAnyRole(['manager', 'reception']))
+        {{-- Section 1 de l'onglet Hébergement : horaires et règles de séjour.
+             Le formulaire poste sur ?tab=reception pour que ces valeurs restent
+             sous la clé « reception », d'où les lisent BookingController,
+             RoomType et RoomAvailabilityService. --}}
+        @if($tab === 'hebergement' && $user->hasAnyRole(['manager', 'reception']))
             <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
                 @csrf
-                <h2 class="text-lg font-semibold text-primary mb-4">Paramètres Hébergement & Réception</h2>
+                <h2 class="text-lg font-semibold text-primary mb-4">Horaires et règles de séjour</h2>
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <div class="mb-4">
@@ -593,8 +592,12 @@
             </div>
         @endif
 
-        {{-- ONGLET: HÉBERGEMENT — PACKS (Uniquement Manager) --}}
+        {{-- Sections 2 et 3 du même onglet Hébergement : délais de remise en
+             vente puis packs. Réservées au manager — la réception n'a accès
+             qu'aux horaires et règles de séjour ci-dessus. --}}
         @if($tab === 'hebergement' && $user->hasRole('manager'))
+            <hr class="border-secondary/15 my-10">
+
             @php
                 $hebergement   = $tenantSettings['hebergement'] ?? [];
                 $globalDelay   = $hebergement['cleaning_delay_minutes'] ?? \App\Services\RoomAvailabilityService::DEFAULT_DELAY_MINUTES;

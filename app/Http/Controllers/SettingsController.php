@@ -18,10 +18,10 @@ class SettingsController extends Controller
 
         // Déterminer l'onglet par défaut en fonction du rôle principal si aucun onglet n'est spécifié
         $defaultTab = 'general';
-        
+
         if (!$user->hasRole('manager')) {
             if ($user->hasRole('reception')) {
-                $defaultTab = 'reception';
+                $defaultTab = 'hebergement';
             } elseif ($user->hasRole('housekeeping_leader')) {
                 $defaultTab = 'housekeeping';
             } elseif ($user->hasRole('restaurant_chief')) {
@@ -32,6 +32,15 @@ class SettingsController extends Controller
         }
 
         $tab = $request->query('tab', $defaultTab);
+
+        // « reception » et « hebergement » ne font plus qu'un onglet à l'écran.
+        // La clé de stockage « reception » reste distincte — le formulaire des
+        // horaires poste dessus et l'application l'y relit — donc la
+        // redirection d'après enregistrement, comme un ancien favori, arrive
+        // ici avec l'ancien nom : on la ramène sur l'onglet affiché.
+        if ($tab === 'reception') {
+            $tab = 'hebergement';
+        }
 
         // Une seule base = un seul établissement : pas besoin de filtrer par tenant_id.
         $tenant = \App\Models\Tenant::first();
