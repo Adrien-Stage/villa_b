@@ -86,3 +86,31 @@ test('le mode de facturation propose ses options sans JavaScript', function () {
         expect($html)->toContain('<option value="' . $mode . '"');
     }
 });
+
+test('le formulaire Alpine a sa forme complète dès l\'initialisation', function () {
+    $this->actingAs(packFormManager());
+
+    $html = $this->get(route('settings.index', ['tab' => 'hebergement']))->assertOk()->getContent();
+
+    // C'était la cause racine : parti d'un objet vide, le tableau visé par
+    // x-model valait undefined à la liaison, et Alpine vidait l'attribut value
+    // de chaque case. init() doit remplir le formulaire avant cette liaison.
+    expect($html)->toContain('init() {')
+        ->and($html)->toContain('this.form = this.blank();');
+});
+
+test('les types de chambre sont cochés par défaut', function () {
+    RoomType::create([
+        'code' => 'STD', 'name' => 'Chambre Standard',
+        'base_capacity' => 2, 'max_capacity' => 3,
+        'base_price' => 4500000, 'is_active' => true,
+    ]);
+
+    $this->actingAs(packFormManager());
+
+    $html = $this->get(route('settings.index', ['tab' => 'hebergement']))->assertOk()->getContent();
+
+    // Un pack s'adresse par défaut à tout le parc : on décoche ce qu'on exclut,
+    // au lieu de l'ancien « rien de coché vaut tout », illisible à l'écran.
+    expect($html)->toContain('room_type_ids: roomTypes.map((t) => t.id)');
+});

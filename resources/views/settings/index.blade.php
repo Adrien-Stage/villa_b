@@ -1515,6 +1515,24 @@
             form: {},
             autoCode: true,
 
+            /**
+             * Le formulaire doit avoir sa forme complète AVANT qu'Alpine ne lie
+             * les cases à cocher.
+             *
+             * Parti d'un objet vide, le tableau visé par x-model vaut undefined
+             * au moment de la liaison : Alpine écrit alors une chaîne vide dans
+             * l'attribut value de la case, écrasant celle rendue par le serveur.
+             * Toutes les cases se retrouvaient avec la même valeur vide — d'où
+             * plusieurs cases qui se cochaient ensemble, et une création refusée
+             * sur « The selected meals.0 is invalid ».
+             *
+             * init() s'exécute avant la liaison des enfants : les tableaux
+             * existent, Alpine laisse les valeurs tranquilles.
+             */
+            init() {
+                this.form = this.blank();
+            },
+
             blank() {
                 return {
                     id: null,
@@ -1527,7 +1545,10 @@
                     price: 0,
                     room_discount_type: 'none',
                     room_discount_value: 0,
-                    room_type_ids: [],
+                    // Toutes les chambres cochées d'entrée : un pack s'adresse
+                    // par défaut à tout le parc, et on décoche ce qu'on exclut.
+                    // Plus lisible que l'ancien « rien de coché vaut tout ».
+                    room_type_ids: roomTypes.map((t) => t.id),
                     sort_order: 0,
                     is_active: true,
                 };
@@ -1554,6 +1575,13 @@
             },
 
             openEdit(pack) {
+                // Un pack existant sans aucun type enregistré s'applique à tout
+                // le parc : on rouvre donc avec toutes les cases cochées, sinon
+                // il paraîtrait ne concerner aucune chambre.
+                const typesDuPack = (pack.room_type_ids ?? []).length > 0
+                    ? pack.room_type_ids
+                    : roomTypes.map((t) => t.id);
+
                 this.form = {
                     ...this.blank(),
                     ...pack,
@@ -1561,7 +1589,7 @@
                     description: pack.description ?? '',
                     meals: pack.meals ?? [],
                     service_item_ids: pack.service_item_ids ?? [],
-                    room_type_ids: pack.room_type_ids ?? [],
+                    room_type_ids: typesDuPack,
                 };
                 this.autoCode = false;
                 this.editing = true;
@@ -1583,6 +1611,24 @@
             formAction: storeUrl,
             form: {},
             autoCode: true,
+
+            /**
+             * Le formulaire doit avoir sa forme complète AVANT qu'Alpine ne lie
+             * les cases à cocher.
+             *
+             * Parti d'un objet vide, le tableau visé par x-model vaut undefined
+             * au moment de la liaison : Alpine écrit alors une chaîne vide dans
+             * l'attribut value de la case, écrasant celle rendue par le serveur.
+             * Toutes les cases se retrouvaient avec la même valeur vide — d'où
+             * plusieurs cases qui se cochaient ensemble, et une création refusée
+             * sur « The selected meals.0 is invalid ».
+             *
+             * init() s'exécute avant la liaison des enfants : les tableaux
+             * existent, Alpine laisse les valeurs tranquilles.
+             */
+            init() {
+                this.form = this.blank();
+            },
 
             blank() {
                 return {
