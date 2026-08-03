@@ -113,3 +113,27 @@ test('la réception voit les horaires mais pas les packs', function () {
         ->assertDontSee('Remise en vente après départ')
         ->assertDontSee('Packs d\'hébergement', false);
 });
+
+test('les horaires s\'enregistrent depuis le haut comme depuis le bas', function () {
+    $this->actingAs(settingsManager());
+
+    $html = $this->get(route('settings.index', ['tab' => 'hebergement']))->assertOk()->getContent();
+
+    // La section est suivie des délais puis des packs : un seul bouton en fin
+    // de section se retrouve au milieu de la page. Il en faut un de chaque côté.
+    $debut = strpos($html, "settings?tab=reception");
+    $fin   = strpos($html, '</form>', $debut);
+    $bloc  = substr($html, $debut, $fin - $debut);
+
+    expect(substr_count($bloc, 'Enregistrer'))->toBe(2);
+
+    $boutons = [];
+    preg_match_all('/Enregistrer/', $bloc, $m, PREG_OFFSET_CAPTURE);
+    foreach ($m[0] as $occurrence) {
+        $boutons[] = $occurrence[1];
+    }
+
+    // L'un précède le premier champ, l'autre suit le dernier.
+    expect($boutons[0])->toBeLessThan(strpos($bloc, 'check_out_time'))
+        ->and($boutons[1])->toBeGreaterThan(strrpos($bloc, 'cancellation_policy'));
+});

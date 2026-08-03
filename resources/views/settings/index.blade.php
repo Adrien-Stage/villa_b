@@ -167,7 +167,19 @@
         @if($tab === 'hebergement' && $user->hasAnyRole(['manager', 'reception']))
             <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
                 @csrf
-                <h2 class="text-lg font-semibold text-primary mb-4">Horaires et règles de séjour</h2>
+
+                {{-- Deux boutons pour un même formulaire : cette section est
+                     suivie des délais de remise en vente puis des packs, si
+                     bien qu'un unique bouton en fin de section se retrouve au
+                     milieu de la page. Celui du haut évite de remonter après
+                     une modification faite en tête. --}}
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-primary">Horaires et règles de séjour</h2>
+                    <button type="submit" class="shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        Enregistrer
+                    </button>
+                </div>
+
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <div class="mb-4">
@@ -260,7 +272,7 @@
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end">
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>

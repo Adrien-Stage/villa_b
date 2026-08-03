@@ -361,6 +361,13 @@ class BookingController extends Controller
                 'amount'      => (int) ($p->amountFor($nights, $occupants) / 100),
                 // Remise éventuelle sur la nuitée, calculée sur le tarif de base.
                 'room_discount' => (int) ($p->roomDiscountFor((int) round($totalRoomAmount * 100), $nights) / 100),
+                // Type et valeur bruts : la remise se recalcule à l'écran sur le
+                // prix réellement négocié, sinon un pourcentage afficherait un
+                // montant assis sur le tarif de base et divergerait du serveur.
+                'discount_type'  => $p->room_discount_type,
+                'discount_value' => $p->room_discount_type === \App\Models\RoomPackage::DISCOUNT_AMOUNT
+                    ? (int) ($p->room_discount_value / 100)   // centimes → FCFA
+                    : (int) $p->room_discount_value,          // pourcentage tel quel
             ])
             ->values()
             ->all();
