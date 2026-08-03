@@ -859,15 +859,21 @@
                                     {{-- Repas --}}
                                     <div class="bg-white border border-secondary/20 rounded-lg p-3.5">
                                         <p class="text-xs font-semibold text-primary mb-2.5">Repas inclus</p>
+                                        {{-- Cases rendues côté serveur avec une valeur littérale.
+                                             Associer « :value » à « x-model » ne fonctionne pas :
+                                             x-model s'approprie la propriété value de la case et
+                                             écrase la liaison, si bien que chaque case partait avec
+                                             une valeur vide — d'où « The selected meals.0 is invalid »
+                                             au moment de créer le pack. --}}
                                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                            <template x-for="(label, key) in meals" :key="key">
+                                            @foreach($mealServices as $mealKey => $mealLabel)
                                                 <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
-                                                    :class="form.meals.includes(key) ? 'bg-accent/20 border-secondary/40' : ''">
-                                                    <input type="checkbox" :value="key" x-model="form.meals"
+                                                    :class="form.meals.includes(@js($mealKey)) ? 'bg-accent/20 border-secondary/40' : ''">
+                                                    <input type="checkbox" value="{{ $mealKey }}" x-model="form.meals"
                                                         class="w-4 h-4 rounded border-secondary/40 text-primary">
-                                                    <span class="text-xs text-primary/80" x-text="label"></span>
+                                                    <span class="text-xs text-primary/80">{{ $mealLabel }}</span>
                                                 </label>
-                                            </template>
+                                            @endforeach
                                         </div>
                                         <template x-for="meal in form.meals" :key="'meal-' + meal">
                                             <input type="hidden" name="meals[]" :value="meal">
@@ -890,19 +896,20 @@
                                         </template>
 
                                         <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-40 overflow-y-auto divide-y divide-secondary/10">
-                                            <template x-for="service in services" :key="service.id">
+                                            @foreach($serviceItemsFlat as $svc)
                                                 <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
-                                                    :class="form.service_item_ids.includes(service.id) ? 'bg-accent/20' : ''">
-                                                    <input type="checkbox" :value="service.id" x-model.number="form.service_item_ids"
+                                                    :class="form.service_item_ids.includes({{ (int) $svc->id }}) ? 'bg-accent/20' : ''">
+                                                    <input type="checkbox" value="{{ (int) $svc->id }}" x-model.number="form.service_item_ids"
                                                         class="w-4 h-4 rounded border-secondary/40 text-primary shrink-0">
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="block text-sm text-primary truncate" x-text="service.name"></span>
-                                                        <span class="block text-[10px] text-primary/40" x-text="service.group"></span>
+                                                        <span class="block text-sm text-primary truncate">{{ $svc->name }}</span>
+                                                        <span class="block text-[10px] text-primary/40">{{ $svc->categoryLabel() }}</span>
                                                     </span>
-                                                    <span class="text-xs text-primary/50 shrink-0"
-                                                        x-text="new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
+                                                    <span class="text-xs text-primary/50 shrink-0">
+                                                        {{ number_format((int) ($svc->price / 100), 0, ',', ' ') }} F
+                                                    </span>
                                                 </label>
-                                            </template>
+                                            @endforeach
                                         </div>
                                         <template x-for="id in form.service_item_ids" :key="'svc-' + id">
                                             <input type="hidden" name="service_item_ids[]" :value="id">
@@ -920,11 +927,18 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Mode de facturation <span class="text-red-500">*</span></label>
+                                            {{-- Options rendues côté serveur : elles viennent d'une
+                                                 constante PHP, rien ne justifie de les fabriquer en
+                                                 JavaScript. Générées par x-for, un JavaScript en
+                                                 défaut laissait un select vide, donc un envoi sans
+                                                 mode de facturation — refusé par la validation avec
+                                                 « Le champ pricing mode sélectionné n'est pas
+                                                 valide », sans que la cause soit visible à l'écran. --}}
                                             <select name="pricing_mode" x-model="form.pricing_mode" required
                                                 class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
-                                                <template x-for="(label, key) in pricingModes" :key="key">
-                                                    <option :value="key" x-text="label"></option>
-                                                </template>
+                                                @foreach($packPricingModes as $key => $label)
+                                                    <option value="{{ $key }}">{{ $label }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                         <div>
@@ -982,14 +996,14 @@
                                     </template>
 
                                     <div x-show="roomTypes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <template x-for="type in roomTypes" :key="type.id">
+                                        @foreach($roomTypes as $rt)
                                             <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
-                                                :class="form.room_type_ids.includes(type.id) ? 'bg-accent/20 border-secondary/40' : ''">
-                                                <input type="checkbox" :value="type.id" x-model.number="form.room_type_ids"
+                                                :class="form.room_type_ids.includes({{ (int) $rt->id }}) ? 'bg-accent/20 border-secondary/40' : ''">
+                                                <input type="checkbox" value="{{ (int) $rt->id }}" x-model.number="form.room_type_ids"
                                                     class="w-4 h-4 rounded border-secondary/40 text-primary">
-                                                <span class="text-xs text-primary/80 truncate" x-text="type.name"></span>
+                                                <span class="text-xs text-primary/80 truncate">{{ $rt->name }}</span>
                                             </label>
-                                        </template>
+                                        @endforeach
                                     </div>
                                     <template x-for="id in form.room_type_ids" :key="'rt-' + id">
                                         <input type="hidden" name="room_type_ids[]" :value="id">
@@ -1371,23 +1385,24 @@
                                         </template>
 
                                         <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-44 overflow-y-auto divide-y divide-secondary/10">
-                                            <template x-for="service in services" :key="service.id">
+                                            @foreach($serviceItemsFlat as $svc)
+                                                @php $svcId = (int) $svc->id; @endphp
                                                 <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
-                                                    :class="form.free_service_item_ids.includes(service.id) ? 'bg-accent/20' : ''">
-                                                    {{-- Case purement visuelle : les valeurs réellement soumises
-                                                         sont les champs cachés générés plus bas, pour éviter la
-                                                         soumission d'une valeur vide par x-model. --}}
-                                                    <input type="checkbox" :value="service.id" x-model.number="form.free_service_item_ids"
+                                                    :class="form.free_service_item_ids.includes({{ $svcId }}) ? 'bg-accent/20' : ''">
+                                                    {{-- Valeur littérale, rendue côté serveur : associée à
+                                                         x-model, une liaison « :value » est écrasée et la case
+                                                         partait vide. --}}
+                                                    <input type="checkbox" value="{{ $svcId }}" x-model.number="form.free_service_item_ids"
                                                         class="w-4 h-4 rounded border-secondary/40 text-primary shrink-0">
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="block text-sm text-primary truncate" x-text="service.name"></span>
-                                                        <span class="block text-[10px] text-primary/40" x-text="service.group"></span>
+                                                        <span class="block text-sm text-primary truncate">{{ $svc->name }}</span>
+                                                        <span class="block text-[10px] text-primary/40">{{ $svc->categoryLabel() }}</span>
                                                     </span>
                                                     <span class="text-xs shrink-0"
-                                                        :class="form.free_service_item_ids.includes(service.id) ? 'text-green-700 font-semibold' : 'text-primary/50'"
-                                                        x-text="form.free_service_item_ids.includes(service.id) ? 'Offert' : new Intl.NumberFormat('fr-FR').format(service.price) + ' F'"></span>
+                                                        :class="form.free_service_item_ids.includes({{ $svcId }}) ? 'text-green-700 font-semibold' : 'text-primary/50'"
+                                                        x-text="form.free_service_item_ids.includes({{ $svcId }}) ? 'Offert' : '{{ number_format((int) ($svc->price / 100), 0, ',', ' ') }} F'"></span>
                                                 </label>
-                                            </template>
+                                            @endforeach
                                         </div>
 
                                         <template x-for="id in form.free_service_item_ids" :key="'hidden-' + id">
