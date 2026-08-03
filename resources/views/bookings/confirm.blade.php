@@ -78,7 +78,7 @@
                 <input type="hidden" name="source" value="{{ $source }}">
                 <input type="hidden" name="notes" value="{{ $notes }}">
 
-                <div x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')))" class="space-y-6">
+                <div x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }})" class="space-y-6">
                     
                     {{-- Section Tarification --}}
                     <div>
@@ -110,22 +110,25 @@
                             {{-- Packs d'hébergement : formule facturée en plus de la nuitée,
                                  configurée dans Paramètres › Hébergement. --}}
                             @if(!empty($roomPackages))
-                                <div class="mt-4 pt-4 border-t border-secondary/20"
-                                     x-data="{ packs: @js($roomPackages), selected: '' }">
+                                {{-- Plus de x-data imbriqué ici : le bloc vivait dans son
+                                     propre périmètre Alpine, donc choisir une formule ne
+                                     touchait ni le total ni l'acompte — rien ne bougeait
+                                     à l'écran alors que le serveur, lui, en tenait compte. --}}
+                                <div class="mt-4 pt-4 border-t border-secondary/20">
                                     <p class="text-sm font-semibold text-primary mb-1">Formule d'hébergement</p>
                                     <p class="text-xs text-primary/60 mb-3">Facturée en supplément de la nuitée pour ce séjour.</p>
 
                                     <div class="space-y-2">
                                         <label class="flex items-center gap-3 border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
-                                               :class="selected === '' ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
-                                            <input type="radio" name="room_package_id" value="" x-model="selected" class="w-4 h-4 text-primary">
+                                               :class="selectedPackage === '' ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
+                                            <input type="radio" name="room_package_id" value="" x-model="selectedPackage" @change="updateCalculations()" class="w-4 h-4 text-primary">
                                             <span class="text-sm text-primary">Aucune formule — chambre seule</span>
                                         </label>
 
                                         <template x-for="pack in packs" :key="pack.id">
                                             <label class="flex items-start gap-3 border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
-                                                   :class="selected == pack.id ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
-                                                <input type="radio" name="room_package_id" :value="pack.id" x-model="selected" class="mt-0.5 w-4 h-4 text-primary">
+                                                   :class="selectedPackage == pack.id ? 'border-secondary bg-accent/20' : 'border-secondary/30 hover:bg-accent/10'">
+                                                <input type="radio" name="room_package_id" :value="pack.id" x-model="selectedPackage" @change="updateCalculations()" class="mt-0.5 w-4 h-4 text-primary">
                                                 <span class="flex-1 min-w-0">
                                                     <span class="flex items-baseline justify-between gap-3">
                                                         <span class="text-sm font-medium text-primary" x-text="pack.name"></span>
@@ -148,6 +151,38 @@
                                     </div>
                                 </div>
                             @endif
+
+                            {{-- Détail du montant dû. Sans lui, choisir une formule ne
+                                 produisait aucun signal visible, alors que le serveur
+                                 facture bien le supplément et déduit la remise. --}}
+                            <div class="mt-4 pt-4 border-t border-secondary/20 space-y-1.5">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-primary/70">Hébergement négocié</span>
+                                    <span class="font-medium text-primary" x-text="formatMoney(parseInt(customPrice) || 0) + ' FCFA'"></span>
+                                </div>
+
+                                <div class="flex items-center justify-between text-sm" x-show="packageAmount > 0" style="display:none;">
+                                    <span class="text-primary/70">
+                                        Formule <span class="text-primary/40" x-text="selectedPackageName"></span>
+                                    </span>
+                                    <span class="font-medium text-primary" x-text="'+ ' + formatMoney(packageAmount) + ' FCFA'"></span>
+                                </div>
+
+                                <div class="flex items-center justify-between text-sm" x-show="packageDiscount > 0" style="display:none;">
+                                    <span class="text-green-700">Remise incluse dans la formule</span>
+                                    <span class="font-medium text-green-700" x-text="'− ' + formatMoney(packageDiscount) + ' FCFA'"></span>
+                                </div>
+
+                                <div class="flex items-center justify-between text-sm" x-show="partnerDiscount > 0" style="display:none;">
+                                    <span class="text-green-700">Remise partenaire</span>
+                                    <span class="font-medium text-green-700" x-text="'− ' + formatMoney(partnerDiscount) + ' FCFA'"></span>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-2 mt-1 border-t border-secondary/20">
+                                    <span class="text-sm font-semibold text-primary">Total dû pour le séjour</span>
+                                    <span class="text-lg font-bold text-primary" x-text="formatMoney(netTotal) + ' FCFA'"></span>
+                                </div>
+                            </div>
 
                             {{-- Convention partenaire : la remise s'applique sur le prix
                                  négocié et apparaît en ligne distincte sur le folio. --}}
@@ -267,11 +302,14 @@
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-semibold text-primary mb-1">Montant versé *</label>
                                     <div class="relative">
-                                        <input type="number" name="payment_amount" x-model="paymentAmount" @input="updateCalculations()" :min="minDeposit" :max="customPrice" :required="!isOfferte" class="w-full px-3 py-2 text-lg font-bold border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary pr-12">
+                                        {{-- Borné au total dû, formule comprise : borner au seul
+                                             prix négocié empêcherait de régler l'intégralité
+                                             d'un séjour avec formule. --}}
+                                        <input type="number" name="payment_amount" x-model="paymentAmount" @input="updateCalculations()" :min="minDeposit" :max="netTotal" :required="!isOfferte" class="w-full px-3 py-2 text-lg font-bold border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary pr-12">
                                         <span class="absolute right-3 top-3 text-sm text-primary/50 font-medium">FCFA</span>
                                     </div>
                                     <p class="text-xs text-red-500 mt-1" x-show="paymentAmount < minDeposit">Le montant doit être au moins égal à l'acompte minimum.</p>
-                                    <p class="text-xs text-red-500 mt-1" x-show="paymentAmount > customPrice">Le montant ne peut pas dépasser le total.</p>
+                                    <p class="text-xs text-red-500 mt-1" x-show="paymentAmount > netTotal">Le montant ne peut pas dépasser le total.</p>
                                 </div>
 
                                 <div>
@@ -308,7 +346,7 @@
                         <button type="submit" name="action_back" value="1" formnovalidate class="px-6 py-3 bg-white border border-secondary/30 text-primary text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
                             Précédent
                         </button>
-                        <button type="submit" :disabled="!isOfferte && (paymentAmount < minDeposit || paymentAmount > customPrice)" class="px-6 py-3 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button type="submit" :disabled="!isOfferte && (paymentAmount < minDeposit || paymentAmount > netTotal)" class="px-6 py-3 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                             Finaliser et Enregistrer
                         </button>
                     </div>
@@ -320,7 +358,7 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist) => ({
+        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist, packs, partnerDiscount, nights) => ({
             baseTotal: baseTotal,
             customPrice: baseTotal,
             minPercentage: minPct,
@@ -332,23 +370,70 @@
             paymentAmount: 0,
             balanceDue: 0,
             paymentMethod: 'orange_money',
-            
+
+            // Formules d'hébergement : le montant dû n'est plus le seul prix
+            // négocié, il faut y ajouter la formule et en déduire les remises —
+            // exactement ce que fait BookingController::store à l'enregistrement.
+            packs: packs || [],
+            nights: nights || 1,
+            selectedPackage: '',
+            packageAmount: 0,
+            packageDiscount: 0,
+            partnerDiscount: partnerDiscount || 0,
+            selectedPackageName: '',
+            netTotal: baseTotal,
+
             init() {
                 this.updateCalculations();
                 this.paymentAmount = this.minDeposit; // Par défaut, on pré-remplit l'acompte min
                 this.updateCalculations();
             },
-            
+
+            /** Formule retenue, ou null si le client reste en chambre seule. */
+            currentPack() {
+                if (this.selectedPackage === '' || this.selectedPackage === null) return null;
+
+                return this.packs.find((p) => String(p.id) === String(this.selectedPackage)) || null;
+            },
+
             updateCalculations() {
-                let total = parseInt(this.customPrice) || 0;
-                
+                const prix = parseInt(this.customPrice) || 0;
+                const pack = this.currentPack();
+
+                // Une chambre offerte ne facture ni nuitée ni formule.
+                if (this.isOfferte || !pack) {
+                    this.packageAmount = 0;
+                    this.packageDiscount = 0;
+                    this.selectedPackageName = '';
+                } else {
+                    this.packageAmount = pack.amount || 0;
+                    this.selectedPackageName = pack.name || '';
+
+                    // Recalculée sur le prix négocié, et non sur le tarif de base :
+                    // un pourcentage suivrait sinon une assiette que la réception
+                    // vient peut-être de modifier, et divergerait du serveur.
+                    if (pack.discount_type === 'percent') {
+                        this.packageDiscount = Math.round(prix * Math.min(100, pack.discount_value || 0) / 100);
+                    } else if (pack.discount_type === 'amount') {
+                        this.packageDiscount = (pack.discount_value || 0) * Math.max(1, this.nights);
+                    } else {
+                        this.packageDiscount = 0;
+                    }
+                    this.packageDiscount = Math.max(0, Math.min(this.packageDiscount, prix));
+                }
+
+                const remises = this.isOfferte ? 0 : (this.partnerDiscount + this.packageDiscount);
+                this.netTotal = this.isOfferte ? 0 : Math.max(0, prix + this.packageAmount - remises);
+
                 if (this.isOfferte) {
                     this.minDeposit = 0;
                     this.balanceDue = 0;
                 } else {
-                    this.minDeposit = Math.ceil(total * (this.minPercentage / 100));
+                    // L'acompte porte sur le montant réellement dû : l'asseoir sur
+                    // le brut ferait payer au client une part qu'il ne doit pas.
+                    this.minDeposit = Math.ceil(this.netTotal * (this.minPercentage / 100));
                     let paid = parseInt(this.paymentAmount) || 0;
-                    this.balanceDue = Math.max(0, total - paid);
+                    this.balanceDue = Math.max(0, this.netTotal - paid);
                 }
             },
 
