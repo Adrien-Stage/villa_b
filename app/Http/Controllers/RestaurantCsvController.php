@@ -8,12 +8,14 @@ use App\Models\RestaurantMenuCategory;
 use App\Models\RestaurantMenuItem;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
+use App\Models\RestaurantRecipe;
+use App\Models\RestaurantRecipeLine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Import / export CSV du restaurant : plats du menu et articles du
- * garde-manger. Doublons repérés par nom dans chaque catalogue.
+ * Import / export CSV du restaurant : plats du menu, articles du
+ * garde-manger et fiches techniques (recettes).
  */
 class RestaurantCsvController extends Controller
 {
@@ -21,6 +23,10 @@ class RestaurantCsvController extends Controller
 
     private const MENU_HEADERS   = ['categorie', 'nom', 'description', 'type', 'prix_fcfa', 'services', 'actif'];
     private const PANTRY_HEADERS = ['categorie', 'nom', 'unite', 'preparation', 'unite_achat', 'conversion_achat', 'cout_fcfa', 'stock_min', 'actif'];
+    private const RECIPE_HEADERS = [
+        'nom_fiche', 'type', 'plat_menu', 'article_produit', 'rendement',
+        'notes_fiche', 'ingredient', 'quantite', 'perte_pct', 'notes_ingredient',
+    ];
 
     private const MENU_TYPES   = ['food', 'drink', 'other'];
     private const PANTRY_UNITS = ['pcs', 'kg', 'g', 'l', 'ml'];
@@ -235,6 +241,186 @@ class RestaurantCsvController extends Controller
 
         return $this->csvImportRedirect('restaurant.pantry.index', [], $created, $skipped, $errors,
             'article(s) créé(s) — le stock initial se règle via une réception');
+    }
+
+    // ── Fiches Techniques (Recettes) ──────────────────────────────────────────
+
+    public function exportRecipes(Request $request)
+    {
+        if ($request->boolean('template')) {
+            return $this->streamCsv('modele_fiches_techniques_restaurant.csv', self::RECIPE_HEADERS, [
+                ['Ndolè aux crevettes', 'plat', 'Ndolè aux crevettes', '', '1', 'Servir chaud', 'Crevettes fraîches', '250', '10', 'décortiquées'],
+                ['Ndolè aux crevettes', 'plat', 'Ndolè aux crevettes', '', '1', 'Servir chaud', 'Feuilles de ndolè', '200', '0', 'lavées'],
+                ['Sauce ndolè', 'preparation', '', 'Sauce ndolè', '5000', 'Préparation en batch 5kg', 'Feuilles de ndolè', '2000', '5', 'hachées'],
+            ]);
+        }
+
+        $recipes = RestaurantRecipe::with(['lines.item', 'menuItem', 'producedItem'])
+            ->orderBy('type')
+            ->orderBy('name')
+            ->get();
+
+        $rows = [];
+        foreach ($recipes as $recipe) {
+            $recipeType       = $recipe->type === RestaurantRecipe::TYPE_PREP ? 'preparation' : 'plat';
+            $menuItemName     = $recipe->menuItem?->name ?? '';
+            $producedItemName = $recipe->producedItem?->name ?? '';
+            $yield            = rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ''), '0'), ',');
+
+            $base = [
+                $recipe->name,
+                $recipeType,
+                $menuItemName,
+                $producedItemName,
+                $yield,
+                $recipe->notes,
+            ];
+
+            if ($recipe->lines->isEmpty()) {
+                $rows[] = array_merge($base, ['', '', '', '']);
+                continue;
+            }
+
+            foreach ($recipe->lines as $line) {
+                $rows[] = array_merge($base, [
+                    $line->item?->name ?? '',
+                    rtrim(rtrim(number_format((float) $line->quantity, 3, ',', ''), '0'), ','),
+                    rtrim(rtrim(number_format((float) $line->waste_percent, 2, ',', ''), '0'), ','),
+                    $line->notes,
+                ]);
+            }
+        }
+
+        return $this->streamCsv('fiches_techniques_restaurant_' . now()->format('Ymd_His') . '.csv', self::RECIPE_HEADERS, $rows);
+    }
+
+    public function importRecipes(Request $request)
+    {
+        $request->validate(['csv_file' => ['required', 'file', 'max:5120']]);
+
+        [$rows, $parseError] = $this->parseCsv($request->file('csv_file')->getRealPath(), self::RECIPE_HEADERS);
+        if ($parseError) {
+            return back()->with('error', $parseError);
+        }
+
+        $menuItemsByName  = RestaurantMenuItem::all()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
+        $pantryItemsByName = RestaurantPantryItem::all()->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
+
+        $created = 0;
+        $skipped = 0;
+        $errors  = [];
+
+        foreach ($rows as $i => $row) {
+            $line = $i + 2;
+
+            $recipeName = trim((string) ($row['nom_fiche'] ?? ''));
+            if ($recipeName === '') {
+                $errors[] = "Ligne {$line} : nom_fiche obligatoire.";
+                continue;
+            }
+
+            $rawType = mb_strtolower(trim((string) ($row['type'] ?? '')));
+            $isPrep  = in_array($rawType, ['prep', 'préparation', 'preparation'], true);
+            $type    = $isPrep ? RestaurantRecipe::TYPE_PREP : RestaurantRecipe::TYPE_DISH;
+
+            $menuItemId     = null;
+            $producedItemId = null;
+
+            if ($type === RestaurantRecipe::TYPE_DISH) {
+                $platName = trim((string) ($row['plat_menu'] ?? ''));
+                if ($platName !== '') {
+                    $menuItem = $menuItemsByName->get(mb_strtolower($platName));
+                    if (!$menuItem) {
+                        $errors[] = "Ligne {$line} : plat du menu « {$platName} » introuvable — créez-le d'abord dans la carte.";
+                        continue;
+                    }
+                    $menuItemId = $menuItem->id;
+                }
+            } else {
+                $prepItemName = trim((string) ($row['article_produit'] ?? ''));
+                if ($prepItemName !== '') {
+                    $producedItem = $pantryItemsByName->get(mb_strtolower($prepItemName));
+                    if (!$producedItem) {
+                        $errors[] = "Ligne {$line} : article de garde-manger « {$prepItemName} » introuvable.";
+                        continue;
+                    }
+                    $producedItemId = $producedItem->id;
+                }
+            }
+
+            $yieldRaw   = str_replace(',', '.', (string) ($row['rendement'] ?? '1'));
+            $yieldVal   = is_numeric($yieldRaw) && (float) $yieldRaw > 0 ? (float) $yieldRaw : 1.0;
+            $notesFiche = trim((string) ($row['notes_fiche'] ?? '')) ?: null;
+
+            // Création ou mise à jour de la fiche technique (par son nom)
+            $recipe = RestaurantRecipe::where('name', $recipeName)->first();
+            if ($recipe) {
+                $recipe->update([
+                    'type'                    => $type,
+                    'restaurant_menu_item_id' => $menuItemId ?? $recipe->restaurant_menu_item_id,
+                    'produces_pantry_item_id' => $producedItemId ?? $recipe->produces_pantry_item_id,
+                    'yield_quantity'          => $yieldVal,
+                    'notes'                   => $notesFiche ?? $recipe->notes,
+                ]);
+            } else {
+                $recipe = RestaurantRecipe::create([
+                    'name'                    => $recipeName,
+                    'type'                    => $type,
+                    'restaurant_menu_item_id' => $menuItemId,
+                    'produces_pantry_item_id' => $producedItemId,
+                    'yield_quantity'          => $yieldVal,
+                    'notes'                   => $notesFiche,
+                    'is_active'               => true,
+                ]);
+            }
+
+            // Gestion de l'ingrédient (si renseigné)
+            $ingredientName = trim((string) ($row['ingredient'] ?? ''));
+            if ($ingredientName === '') {
+                $created++;
+                continue;
+            }
+
+            $pantryItem = $pantryItemsByName->get(mb_strtolower($ingredientName));
+            if (!$pantryItem) {
+                $errors[] = "Ligne {$line} : ingrédient « {$ingredientName} » introuvable dans le garde-manger.";
+                continue;
+            }
+
+            $qtyRaw   = str_replace(',', '.', (string) ($row['quantite'] ?? '0'));
+            $wasteRaw = str_replace(',', '.', (string) ($row['perte_pct'] ?? '0'));
+            $quantity = is_numeric($qtyRaw) && (float) $qtyRaw > 0 ? (float) $qtyRaw : 0.001;
+            $wastePct = is_numeric($wasteRaw) && (float) $wasteRaw >= 0 ? (float) $wasteRaw : 0.0;
+            $notesIng = trim((string) ($row['notes_ingredient'] ?? '')) ?: null;
+
+            $recipeLine = RestaurantRecipeLine::where('restaurant_recipe_id', $recipe->id)
+                ->where('restaurant_pantry_item_id', $pantryItem->id)
+                ->first();
+
+            if ($recipeLine) {
+                $recipeLine->update([
+                    'quantity'      => $quantity,
+                    'waste_percent' => $wastePct,
+                    'notes'         => $notesIng,
+                ]);
+            } else {
+                RestaurantRecipeLine::create([
+                    'restaurant_recipe_id'      => $recipe->id,
+                    'restaurant_pantry_item_id' => $pantryItem->id,
+                    'quantity'                  => $quantity,
+                    'waste_percent'             => $wastePct,
+                    'notes'                     => $notesIng,
+                ]);
+            }
+
+            $created++;
+        }
+
+        AuditLog::record(Auth::id(), 'recipes_import',
+            "Import CSV des fiches techniques : {$created} ligne(s) traitée(s), " . count($errors) . ' erreur(s)',
+            'restaurant');
+
+        return $this->csvImportRedirect('restaurant.recipes.index', [], $created, $skipped, $errors, 'ligne(s) de fiche technique traitée(s)');
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
