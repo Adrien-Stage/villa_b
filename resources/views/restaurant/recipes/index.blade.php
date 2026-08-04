@@ -25,14 +25,30 @@
             les quantités correspondantes du garde-manger, et le coût matière suit le prix réel de vos achats.
         </p>
     </div>
-    @if($canManage)
-        <button type="button" onclick="openRecipeEditor()"
-            class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Nouvelle fiche
-        </button>
-    @endif
+    <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ route('restaurant.recipes.export') }}"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           title="Exporter les fiches techniques en CSV">
+            <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
+            <span>Exporter</span>
+        </a>
+        @if($canManage)
+            <button type="button" onclick="document.getElementById('modal-import-recipes').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+                    title="Importer des fiches techniques depuis un CSV">
+                <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
+                <span>Importer</span>
+            </button>
+            <button type="button" onclick="openRecipeEditor()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Nouvelle fiche
+            </button>
+        @endif
+    </div>
 </div>
+
+<x-csv-import-errors />
 
 @if(session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -549,6 +565,18 @@
             </form>
         </div>
     </div>
+@if($canManage)
+    <x-csv-import-modal
+        id="modal-import-recipes"
+        title="Importer des fiches techniques (CSV)"
+        :action="route('restaurant.recipes.import')"
+        :template="route('restaurant.recipes.export', ['template' => 1])"
+        structure="nom_fiche;type;plat_menu;article_produit;rendement;notes_fiche;ingredient;quantite;perte_pct;notes_ingredient"
+        submit-label="Importer les fiches">
+        <li><strong>nom_fiche</strong> obligatoire (ex. <em>Ndolè aux crevettes</em> ou <em>Sauce ndolè</em>)</li>
+        <li><strong>type</strong> = <em>plat</em> ou <em>preparation</em>. Pour un plat, <strong>plat_menu</strong> doit correspondre à un plat de la carte existant.</li>
+        <li><strong>ingredient</strong> doit correspondre au nom d'un article présent dans le garde-manger.</li>
+    </x-csv-import-modal>
 @endif
 @endsection
 

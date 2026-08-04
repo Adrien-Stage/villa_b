@@ -286,6 +286,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
         Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
+        Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
@@ -325,6 +326,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::post('/menus-import', [App\Http\Controllers\RestaurantCsvController::class, 'importMenus'])->name('menus.import');
             Route::post('/pantry-import', [App\Http\Controllers\RestaurantCsvController::class, 'importPantry'])->name('pantry.import');
+            Route::post('/recipes-import', [App\Http\Controllers\RestaurantCsvController::class, 'importRecipes'])->name('recipes.import');
             Route::post('/menus/items', [RestaurantMenuController::class, 'storeItem'])->name('menus.items.store');
             Route::put('/menus/items/{item}', [RestaurantMenuController::class, 'updateItem'])->name('menus.items.update');
             Route::delete('/menus/items/{item}', [RestaurantMenuController::class, 'destroyItem'])->name('menus.items.destroy');
