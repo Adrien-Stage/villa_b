@@ -14,11 +14,13 @@ uses(RefreshDatabase::class);
  * aucun déplacement des données.
  */
 
-function settingsManager(): User
-{
-    test()->seed(\Database\Seeders\TenantSeeder::class);
+if (!function_exists('settingsManager')) {
+    function settingsManager(): User
+    {
+        test()->seed(\Database\Seeders\TenantSeeder::class);
 
-    return User::factory()->create(['role' => 'manager', 'is_active' => true]);
+        return User::factory()->create(['role' => 'manager', 'is_active' => true]);
+    }
 }
 
 test('un seul onglet porte le libellé Hébergement', function () {
