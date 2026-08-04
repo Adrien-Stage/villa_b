@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\HandlesCsv;
 use App\Models\RoomCostItem;
+use App\Models\RoomCostSheet;
 use App\Models\RoomType;
 use App\Services\RoomCostingService;
 use Illuminate\Http\Request;
 
 /**
- * Export tableur des fiches techniques.
+ * Import / Export tableur des fiches techniques.
  *
  * Pensé pour le déploiement chez un client : on exporte le squelette des
  * fiches, le personnel le remplit dans Excel — un outil qu'il maîtrise déjà —
- * et les données sont ensuite reversées dans la plateforme.
+ * et les données sont ensuite reversées dans la plateforme via l'import.
  *
  * Le fichier est donc volontairement à plat : une ligne par poste de coût,
  * les hypothèses de la fiche répétées sur chaque ligne de son type. Un type
@@ -36,11 +37,19 @@ class RoomCostSheetCsvController extends Controller
     }
 
     /**
-     * Export des fiches. Sans sélection, tout le catalogue actif part dans un
-     * seul fichier ; avec « types[] », seules les fiches cochées.
+     * Export des fiches (ou modèle d'importation si ?template=1).
+     * Sans sélection, tout le catalogue actif part dans un seul fichier ;
+     * avec « types[] », seules les fiches cochées.
      */
     public function export(Request $request)
     {
+        if ($request->boolean('template')) {
+            return $this->streamCsv('modele_fiches_techniques.csv', self::HEADERS, [
+                ['Chambre Standard', 'STD', '2', '2,5', '5000', 'Électricité', 'Électricité & climatisation', 'Par nuitée', '1', '1200', 'oui', 'Éclairage + clim'],
+                ['Chambre Standard', 'STD', '2', '2,5', '5000', 'Consommables', 'Savonnette', 'Par personne et nuitée', '2', '250', 'oui', '2 savons par personne'],
+            ]);
+        }
+
         $validated = $request->validate([
             'types'   => ['nullable', 'array'],
             'types.*' => ['integer', 'exists:room_types,id'],
@@ -105,5 +114,150 @@ class RoomCostSheetCsvController extends Controller
             : 'fiches_techniques';
 
         return $this->streamCsv($nom . '_' . now()->format('Ymd_His') . '.csv', self::HEADERS, $rows);
+    }
+
+    /**
+     * Importation d'un fichier CSV de fiches techniques.
+     */
+    public function import(Request $request)
+    {
+        $request->validate(['csv_file' => ['required', 'file', 'max:5120']]);
+
+        [$rows, $parseError] = $this->parseCsv($request->file('csv_file')->getRealPath(), self::HEADERS);
+        if ($parseError) {
+            return back()->with('error', $parseError);
+        }
+
+        $tenantId = $this->csvTenantId();
+
+        $roomTypesByName = RoomType::all()->keyBy(fn ($t) => mb_strtolower(trim($t->name)));
+        $roomTypesByCode = RoomType::all()->keyBy(fn ($t) => mb_strtolower(trim($t->code)));
+
+        // Tables de correspondance des catégories et des bases (accepte libellés ou clés techniques)
+        $catMap = [];
+        foreach (RoomCostItem::CATEGORIES as $key => $label) {
+            $catMap[mb_strtolower($key)]   = $key;
+            $catMap[mb_strtolower($label)] = $key;
+        }
+
+        $basisMap = [];
+        foreach (RoomCostItem::BASES as $key => $label) {
+            $basisMap[mb_strtolower($key)]   = $key;
+            $basisMap[mb_strtolower($label)] = $key;
+        }
+
+        $created = 0;
+        $skipped = 0;
+        $errors  = [];
+
+        foreach ($rows as $i => $row) {
+            $line = $i + 2;
+
+            $typeName = trim((string) ($row['type_chambre'] ?? ''));
+            $typeCode = trim((string) ($row['code_type'] ?? ''));
+
+            $roomType = null;
+            if ($typeCode !== '') {
+                $roomType = $roomTypesByCode->get(mb_strtolower($typeCode));
+            }
+            if (!$roomType && $typeName !== '') {
+                $roomType = $roomTypesByName->get(mb_strtolower($typeName));
+            }
+
+            if (!$roomType) {
+                $identifier = $typeCode ?: $typeName ?: "Ligne {$line}";
+                $errors[] = "Ligne {$line} : type de chambre « {$identifier} » introuvable.";
+                continue;
+            }
+
+            // Hypothèses de la fiche
+            $sheet = RoomCostSheet::firstOrNew(['room_type_id' => $roomType->id]);
+            if (!empty($tenantId) && !$sheet->tenant_id) {
+                $sheet->tenant_id = $tenantId;
+            }
+
+            if (isset($row['occupants_reference']) && trim((string) $row['occupants_reference']) !== '') {
+                $sheet->reference_occupants = max(1, (int) $row['occupants_reference']);
+            }
+            if (isset($row['sejour_moyen_nuits']) && trim((string) $row['sejour_moyen_nuits']) !== '') {
+                $val = (float) str_replace(',', '.', (string) $row['sejour_moyen_nuits']);
+                if ($val > 0) {
+                    $sheet->avg_length_of_stay = $val;
+                }
+            }
+            if (isset($row['charge_fixe_par_nuitee_fcfa']) && trim((string) $row['charge_fixe_par_nuitee_fcfa']) !== '') {
+                $val = (float) str_replace(',', '.', (string) $row['charge_fixe_par_nuitee_fcfa']);
+                $sheet->fixed_cost_per_night = (int) round($val * 100);
+            }
+            $sheet->save();
+
+            // Ligne de poste de coût
+            $label = trim((string) ($row['poste'] ?? ''));
+            if ($label === '') {
+                // Type répertorié sans poste (ligne d'amorce ou mise à jour des hypothèses seules)
+                $created++;
+                continue;
+            }
+
+            $catKey   = mb_strtolower(trim((string) ($row['categorie'] ?? '')));
+            $category = $catMap[$catKey] ?? 'other';
+
+            $basisKey = mb_strtolower(trim((string) ($row['base_calcul'] ?? '')));
+            $basis    = $basisMap[$basisKey] ?? RoomCostItem::BASIS_PER_NIGHT;
+
+            $quantity = 1.0;
+            if (isset($row['quantite']) && trim((string) $row['quantite']) !== '') {
+                $quantity = max(0.001, (float) str_replace(',', '.', (string) $row['quantite']));
+            }
+
+            $unitCost = 0;
+            if (isset($row['cout_unitaire_fcfa']) && trim((string) $row['cout_unitaire_fcfa']) !== '') {
+                $val = (float) str_replace(',', '.', (string) $row['cout_unitaire_fcfa']);
+                $unitCost = (int) round($val * 100);
+            }
+
+            $isActive = $this->parseBool($row['actif'] ?? 'oui');
+            $notes    = trim((string) ($row['notes'] ?? '')) ?: null;
+
+            $item = RoomCostItem::where('room_type_id', $roomType->id)
+                ->where('label', $label)
+                ->first();
+
+            if ($item) {
+                $item->update([
+                    'category'  => $category,
+                    'basis'     => $basis,
+                    'quantity'  => $quantity,
+                    'unit_cost' => $unitCost,
+                    'is_active' => $isActive,
+                    'notes'     => $notes,
+                ]);
+            } else {
+                $maxSort = (int) RoomCostItem::where('room_type_id', $roomType->id)->max('sort_order');
+                RoomCostItem::create([
+                    'room_type_id' => $roomType->id,
+                    'category'     => $category,
+                    'label'        => $label,
+                    'basis'        => $basis,
+                    'quantity'     => $quantity,
+                    'unit_cost'    => $unitCost,
+                    'sort_order'   => $maxSort + 1,
+                    'is_active'    => $isActive,
+                    'notes'        => $notes,
+                    'tenant_id'    => $tenantId,
+                ]);
+            }
+
+            $created++;
+        }
+
+        return $this->csvImportRedirect(
+            'rooms.cost_sheets.index',
+            [],
+            $created,
+            $skipped,
+            $errors,
+            'ligne(s) traitée(s)'
+        );
     }
 }

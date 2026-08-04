@@ -36,6 +36,11 @@
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="document.getElementById('modal-import-cost-sheets').classList.remove('hidden')"
+                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors">
+                        <i data-lucide="file-up" class="w-4 h-4 text-secondary"></i>
+                        <span>Importer (CSV)</span>
+                    </button>
                     <button type="button" @click="selection = []" x-show="!toutes" x-cloak
                             class="px-3 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
                         Tout décocher
@@ -124,6 +129,18 @@
         <p class="text-[11px] text-primary/40 mt-4">
             La marge affichée est la <strong>marge de contribution</strong> (prix − coût variable par nuitée). Ouvrez une fiche pour le détail et les charges fixes.
         </p>
+
+        <x-csv-import-modal
+            id="modal-import-cost-sheets"
+            title="Importer des fiches techniques (CSV)"
+            :action="route('rooms.cost_sheets.import')"
+            :template="route('rooms.cost_sheets.export', ['template' => 1])"
+            structure="type_chambre;code_type;occupants_reference;sejour_moyen_nuits;charge_fixe_par_nuitee_fcfa;categorie;poste;base_calcul;quantite;cout_unitaire_fcfa;actif;notes"
+            submit-label="Importer les fiches">
+            <li><strong>type_chambre</strong> ou <strong>code_type</strong> doit correspondre à un type de chambre existant.</li>
+            <li>Si le poste existe déjà (même libellé sous la fiche), il sera mis à jour. Sinon, un nouveau poste sera créé.</li>
+            <li><strong>categorie</strong> (ex. <em>Électricité, Consommables, Blanchisserie…</em>) et <strong>base_calcul</strong> (ex. <em>Par nuitée, Par séjour, Par personne et nuitée</em>).</li>
+        </x-csv-import-modal>
     @endif
 </div>
 @endsection
