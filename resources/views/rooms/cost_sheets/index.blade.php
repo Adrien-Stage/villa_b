@@ -17,6 +17,38 @@
             <p class="text-sm text-primary/50">Aucun type de chambre actif.</p>
         </div>
     @else
+        {{-- Export tableur. Pensé pour le déploiement : le personnel remplit les
+             fiches dans Excel, qu'il maîtrise déjà, avant de prendre en main la
+             plateforme. Le formulaire enveloppe la grille pour que les cases des
+             cartes lui appartiennent. --}}
+        <form method="GET" action="{{ route('rooms.cost_sheets.export') }}"
+              x-data="{ selection: [], get toutes() { return this.selection.length === 0; } }">
+
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white border border-secondary/20 rounded-xl px-4 py-3">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-primary">Exporter vers Excel</p>
+                    <p class="text-[11px] text-primary/50 mt-0.5">
+                        <span x-show="toutes">Aucune fiche cochée : l'export prendra <strong>toutes les fiches</strong>.</span>
+                        <span x-show="!toutes" x-cloak>
+                            <strong x-text="selection.length"></strong> fiche(s) sélectionnée(s).
+                        </span>
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" @click="selection = []" x-show="!toutes" x-cloak
+                            class="px-3 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+                        Tout décocher
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        <span x-show="toutes">Exporter toutes les fiches</span>
+                        <span x-show="!toutes" x-cloak>Exporter la sélection</span>
+                    </button>
+                </div>
+            </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @foreach($rows as $row)
                 @php
@@ -30,13 +62,25 @@
                         'red' => 'text-red-600', 'slate' => 'text-primary/40',
                     ][$tone];
                 @endphp
-                <a href="{{ route('rooms.cost_sheets.show', $type) }}" class="block bg-white border border-secondary/20 rounded-xl p-5 hover:border-secondary/40 transition-colors">
+                {{-- La carte n'est plus un lien d'un bloc : une case à cocher à
+                     l'intérieur d'un <a> déclencherait la navigation au clic.
+                     Seul le titre porte le lien, la case reste indépendante. --}}
+                <div class="bg-white border rounded-xl p-5 transition-colors"
+                     :class="selection.includes({{ $type->id }}) ? 'border-primary/40 ring-1 ring-primary/20' : 'border-secondary/20 hover:border-secondary/40'">
                     <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <h2 class="text-sm font-semibold text-primary">{{ $type->name }}</h2>
-                            <p class="text-[11px] text-primary/40">
-                                {{ $s['is_configured'] ? $s['line_count'] . ' poste(s) de coût' : 'fiche à remplir' }}
-                            </p>
+                        <div class="flex items-start gap-3 min-w-0">
+                            <input type="checkbox" name="types[]" value="{{ $type->id }}" x-model.number="selection"
+                                   class="mt-0.5 w-4 h-4 rounded border-secondary/40 text-primary shrink-0 cursor-pointer"
+                                   aria-label="Sélectionner la fiche {{ $type->name }}">
+                            <div class="min-w-0">
+                                <a href="{{ route('rooms.cost_sheets.show', $type) }}"
+                                   class="text-sm font-semibold text-primary hover:text-secondary transition-colors">
+                                    {{ $type->name }}
+                                </a>
+                                <p class="text-[11px] text-primary/40">
+                                    {{ $s['is_configured'] ? $s['line_count'] . ' poste(s) de coût' : 'fiche à remplir' }}
+                                </p>
+                            </div>
                         </div>
                         @if($s['is_configured'])
                             <span class="text-lg font-bold {{ $toneClasses }}">{{ $pct }}%</span>
@@ -66,9 +110,16 @@
                             </p>
                         </div>
                     </div>
-                </a>
+
+                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
+                       class="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-secondary hover:text-primary transition-colors">
+                        Ouvrir la fiche
+                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    </a>
+                </div>
             @endforeach
         </div>
+        </form>
 
         <p class="text-[11px] text-primary/40 mt-4">
             La marge affichée est la <strong>marge de contribution</strong> (prix − coût variable par nuitée). Ouvrez une fiche pour le détail et les charges fixes.
