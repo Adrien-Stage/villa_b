@@ -11,11 +11,13 @@ use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
 
-function enableModules(array $modules): void
-{
-    $prop = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
-    $prop->setAccessible(true);
-    $prop->setValue(null, $modules);
+if (!function_exists('enableModules')) {
+    function enableModules(array $modules): void
+    {
+        $prop = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
+        $prop->setAccessible(true);
+        $prop->setValue(null, $modules);
+    }
 }
 
 function recipeManager(): User

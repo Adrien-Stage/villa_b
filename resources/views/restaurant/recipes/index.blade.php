@@ -565,6 +565,8 @@
             </form>
         </div>
     </div>
+@endif
+
 @if($canManage)
     <x-csv-import-modal
         id="modal-import-recipes"
