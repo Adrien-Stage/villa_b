@@ -3,10 +3,53 @@
 @section('title', 'Paramètres de l\'établissement')
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-semibold text-primary font-heading">Paramètres</h1>
-    <p class="text-sm text-primary/60 mt-1">Configurez les règles et préférences de votre département.</p>
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-semibold text-primary font-heading">Paramètres</h1>
+        <p class="text-sm text-primary/60 mt-1">Configurez les règles et préférences de votre établissement.</p>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+        @if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'restaurant', 'shop']))
+            <a href="{{ route('settings.export', ['tab' => $tab]) }}"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+               title="Exporter les réglages de cet onglet en CSV">
+                <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
+                <span>Exporter CSV</span>
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-settings-{{ $tab }}').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+                    title="Importer des réglages depuis un CSV">
+                <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
+                <span>Importer CSV</span>
+            </button>
+        @elseif($tab === 'services')
+            <a href="{{ route('settings.services.export') }}"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
+                <span>Exporter CSV</span>
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-services').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
+                <span>Importer CSV</span>
+            </button>
+        @elseif($tab === 'partners')
+            <a href="{{ route('settings.partners.export') }}"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
+                <span>Exporter CSV</span>
+            </a>
+            <button type="button" onclick="document.getElementById('modal-import-partners').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
+                <span>Importer CSV</span>
+            </button>
+        @endif
+    </div>
 </div>
+
+<x-csv-import-errors />
 
 @if(session('success'))
     <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
@@ -1463,8 +1506,58 @@
             </div>
         @endif
 
-    </div>
-</div>
+@if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'restaurant', 'shop']))
+    <x-csv-import-modal
+        id="modal-import-settings-{{ $tab }}"
+        title="Importer les paramètres (CSV)"
+        :action="route('settings.import', ['tab' => $tab])"
+        :template="route('settings.export', ['tab' => $tab, 'template' => 1])"
+        structure="cle_parametre;valeur;type;description"
+        submit-label="Importer les paramètres">
+        <li><strong>cle_parametre</strong> doit appartenir à la liste autorisée pour cet onglet.</li>
+        <li><strong>type</strong> autorisés : <em>string, integer, decimal, boolean, json</em>.</li>
+        <li>Les valeurs modifiées mettront à jour la configuration immédiatement après validation.</li>
+    </x-csv-import-modal>
+@endif
+
+@if($tab === 'services')
+    <x-csv-import-modal
+        id="modal-import-services"
+        title="Importer des prestations (CSV)"
+        :action="route('settings.services.import')"
+        :template="route('settings.services.export', ['template' => 1])"
+        structure="categorie;nom;description;prix_fcfa;duree_minutes;actif"
+        submit-label="Importer les prestations">
+        <li><strong>nom</strong> obligatoire. L'upsert s'effectue sur le couple <em>(categorie, nom)</em>.</li>
+        <li><strong>prix_fcfa</strong> en FCFA entiers.</li>
+    </x-csv-import-modal>
+@endif
+
+@if($tab === 'partners')
+    <x-csv-import-modal
+        id="modal-import-partners"
+        title="Importer des organisations partenaires (CSV)"
+        :action="route('settings.partners.import')"
+        :template="route('settings.partners.export', ['template' => 1])"
+        structure="nom;code;type;nom_contact;email_contact;telephone_contact;remise_chambre_type;remise_chambre_valeur;remise_restaurant_pct;remise_boutique_pct;depart_tardif;arrivee_anticipee;date_debut;date_fin;actif;notes"
+        submit-label="Importer les partenaires">
+        <li><strong>nom</strong> obligatoire. <strong>code</strong> unique recommandé (clé d'upsert).</li>
+        <li><strong>remise_chambre_type</strong> : <em>none, percent, amount</em>.</li>
+    </x-csv-import-modal>
+@endif
+
+@if($tab === 'hebergement')
+    <x-csv-import-modal
+        id="modal-import-packages"
+        title="Importer des packs d'hébergement (CSV)"
+        :action="route('settings.packages.import')"
+        :template="route('settings.packages.export', ['template' => 1])"
+        structure="nom;code;description;mode_tarification;prix_fcfa;repas;remise_chambre_type;remise_chambre_valeur;types_chambres;prestations_incluses;actif"
+        submit-label="Importer les packs">
+        <li><strong>nom</strong> obligatoire. <strong>code</strong> unique recommandé (clé d'upsert).</li>
+        <li><strong>repas</strong> séparés par « \| » (ex. <em>breakfast\|dinner</em>).</li>
+    </x-csv-import-modal>
+@endif
 
 @push('scripts')
 <script>

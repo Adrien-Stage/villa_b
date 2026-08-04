@@ -91,6 +91,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/settings', [App\Http\Controllers\SettingsController::class, 'update'])
         ->name('settings.update')
         ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+    Route::get('/settings/export/{tab}', [App\Http\Controllers\SettingsCsvController::class, 'exportSettings'])
+        ->name('settings.export')
+        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+    Route::post('/settings/import/{tab}', [App\Http\Controllers\SettingsCsvController::class, 'importSettings'])
+        ->name('settings.import')
+        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
 
     // Catalogue des prestations (onglet "Prestations" des paramètres)
     Route::middleware('role:manager')->group(function () {
@@ -101,6 +107,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'destroy'])
             ->name('settings.services.destroy');
 
+        Route::get('/settings/services-export', [App\Http\Controllers\SettingsCsvController::class, 'exportServices'])
+            ->name('settings.services.export');
+        Route::post('/settings/services-import', [App\Http\Controllers\SettingsCsvController::class, 'importServices'])
+            ->name('settings.services.import');
+
         // Organisations partenaires (onglet "Partenaires" des paramètres).
         // Réservé au manager : ces conventions engagent des remises.
         Route::post('/settings/partners', [App\Http\Controllers\PartnerOrganizationController::class, 'store'])
@@ -109,6 +120,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.partners.update');
         Route::delete('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'destroy'])
             ->name('settings.partners.destroy');
+        Route::get('/settings/partners-export', [App\Http\Controllers\SettingsCsvController::class, 'exportPartners'])
+            ->name('settings.partners.export');
+        Route::post('/settings/partners-import', [App\Http\Controllers\SettingsCsvController::class, 'importPartners'])
+            ->name('settings.partners.import');
 
         // Packs d'hébergement (onglet "Hébergement" des paramètres).
         Route::post('/settings/packages', [App\Http\Controllers\RoomPackageController::class, 'store'])
@@ -117,6 +132,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.packages.update');
         Route::delete('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class, 'destroy'])
             ->name('settings.packages.destroy');
+        Route::get('/settings/packages-export', [App\Http\Controllers\SettingsCsvController::class, 'exportPackages'])
+            ->name('settings.packages.export');
+        Route::post('/settings/packages-import', [App\Http\Controllers\SettingsCsvController::class, 'importPackages'])
+            ->name('settings.packages.import');
     });
 
     // --- ASSISTANT IA (Kuété) ---
