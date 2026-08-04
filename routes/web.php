@@ -192,6 +192,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Déclaré avant /{roomType} par prudence, même si la contrainte
         // numérique protège déjà : l'ordre reste lisible pour la suite.
         Route::get('/export', [App\Http\Controllers\RoomCostSheetCsvController::class, 'export'])->name('export');
+        Route::post('/import', [App\Http\Controllers\RoomCostSheetCsvController::class, 'import'])->name('import');
         Route::get('/{roomType}', [$c, 'show'])->whereNumber('roomType')->name('show');
         Route::put('/{roomType}/hypotheses', [$c, 'updateAssumptions'])->whereNumber('roomType')->name('assumptions');
         Route::post('/{roomType}/demarrage-rapide', [$c, 'applyStarter'])->whereNumber('roomType')->name('starter');
