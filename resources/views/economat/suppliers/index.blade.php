@@ -89,8 +89,8 @@
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="col-span-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2">
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
                             <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                         </div>
@@ -99,7 +99,7 @@
                             <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Contact</label>
                             <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">

@@ -29,7 +29,7 @@
 </div>
 
 {{-- Stats --}}
-<div class="grid grid-cols-4 gap-3 mb-5">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
     @php
         $statCards = [
             ['key' => 'total',     'label' => 'Total dossiers', 'icon' => 'folder',     'color' => 'text-primary',      'bg' => 'bg-accent/30'],

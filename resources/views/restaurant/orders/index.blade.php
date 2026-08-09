@@ -289,7 +289,7 @@
                 <input type="hidden" name="items_json" id="items-json">
 
                 <div class="space-y-4 flex-1 overflow-y-auto pr-1">
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Table</label>
                             <input name="table_number" type="text" maxlength="10" required class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary" placeholder="12">

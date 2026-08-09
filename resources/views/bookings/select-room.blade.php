@@ -167,7 +167,7 @@
                     @endif
 
                     {{-- Chambres disponibles --}}
-                    <div class="p-4 grid grid-cols-3 gap-3">
+                    <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         @foreach($rooms as $room)
                             <form method="POST" action="{{ route('bookings.store') }}">
                                 @csrf

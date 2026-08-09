@@ -75,7 +75,7 @@
     </div>
 
     {{-- Infos contact + séjour --}}
-    <div class="px-8 py-5 border-b border-secondary/10 grid grid-cols-3 gap-6">
+    <div class="px-5 sm:px-8 py-5 border-b border-secondary/10 grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-6">
         <div>
             <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Facturé à</p>
             <p class="text-sm font-medium text-primary">{{ $groupBooking->contactCustomer?->full_name ?? '—' }}</p>

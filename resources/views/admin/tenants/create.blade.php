@@ -343,7 +343,7 @@
                     </div>
 
                     <!-- Color Pickers Grid -->
-                    <div class="grid grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Couleur Primaire</label>
                             <div class="flex items-center gap-2">
@@ -360,7 +360,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Accent</label>
                             <div class="flex items-center gap-2">
@@ -384,7 +384,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Texte sur Fond Clair</label>
                             <div class="flex items-center gap-2">

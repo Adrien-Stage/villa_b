@@ -70,7 +70,7 @@
                 <input type="hidden" name="check_out" :value="checkOutDate ? formatDbDate(checkOutDate) : ''" required>
 
                 {{-- Visual range indicators --}}
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Arrivée *
@@ -148,7 +148,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Adultes *
@@ -241,7 +241,7 @@
                             <div class="flex items-center"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i><span class="font-medium">Nouveau mandataire</span></div>
                             <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
                                 <input type="text" name="booker_first_name" value="{{ old('booker_first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
@@ -253,7 +253,7 @@
                                 @error('booker_last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Téléphone *</label>
                                 <input type="text" name="booker_phone" value="{{ old('booker_phone') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
@@ -265,7 +265,7 @@
                                 @error('booker_email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             {{-- Facultatif ici : le marché émetteur se mesure sur le client
                                  qui séjourne, pas sur celui qui règle la réservation. --}}
                             <x-country-select name="booker_country" label="Pays de résidence" x-bind:disabled="!isCreatingNew" />
@@ -293,7 +293,7 @@
                             </div>
                             <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
                                 <input type="text" name="first_name" value="{{ old('first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
@@ -305,7 +305,7 @@
                                 @error('last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email *</label>
                                 <input type="email" name="email" value="{{ old('email') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
@@ -317,7 +317,7 @@
                                 @error('phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             {{-- Pays de résidence : marché émetteur, base de l'analyse géographique. --}}
                             <x-country-select name="country" :required="true" x-bind:disabled="!isCreatingNew" />
                             <div>

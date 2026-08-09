@@ -388,7 +388,7 @@
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <h3 class="text-sm font-semibold text-primary mb-4">Horaires d'ouverture</h3>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Ouverture</label>
                                 <input type="time" value="07:00" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
@@ -496,6 +496,8 @@
                                     </button>
                                 </div>
                             @else
+                                {{-- overflow-x-auto : sur mobile le tableau défile au lieu de pousser la page --}}
+                                <div class="overflow-x-auto -mx-1 px-1">
                                 <table class="min-w-full divide-y divide-secondary/10">
                                     <tbody class="divide-y divide-secondary/10">
                                         @foreach($categoryItems as $service)
@@ -557,6 +559,7 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+                                </div>
                             @endif
                         </div>
                     @endforeach

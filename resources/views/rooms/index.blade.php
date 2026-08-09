@@ -492,7 +492,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Numéro *</label>
                     <input type="text" name="number" placeholder="101" required class="modal-input">
@@ -568,7 +568,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Numéro *</label>
                     <input type="text" id="edit-room-number" name="number" required class="modal-input">
@@ -631,7 +631,7 @@
         <form method="POST" action="{{ route('rooms.types.store') }}" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
                     <input type="text" id="create-type-name" name="name" placeholder="Standard" required class="modal-input">
@@ -645,7 +645,7 @@
                 <label class="modal-label">Description</label>
                 <textarea name="description" rows="2" class="modal-input resize-none"></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Capacité base *</label>
                     <input type="number" name="base_capacity" value="2" min="1" required class="modal-input">
@@ -655,7 +655,7 @@
                     <input type="number" name="max_capacity" value="3" min="1" required class="modal-input">
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Prix / nuit (FCFA) *</label>
                     <input type="number" name="base_price" placeholder="45000" min="0" required class="modal-input">
@@ -692,7 +692,7 @@
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @method('PUT')
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
                     <input type="text" id="edit-type-name" name="name" required class="modal-input">
@@ -706,7 +706,7 @@
                 <label class="modal-label">Description</label>
                 <textarea id="edit-type-desc" name="description" rows="2" class="modal-input resize-none"></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Capacité base *</label>
                     <input type="number" id="edit-type-base-cap" name="base_capacity" min="1" required class="modal-input">
@@ -716,7 +716,7 @@
                     <input type="number" id="edit-type-max-cap" name="max_capacity" min="1" required class="modal-input">
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Prix / nuit (FCFA) *</label>
                     <input type="number" id="edit-type-price" name="base_price" min="0" required class="modal-input">

@@ -125,7 +125,7 @@
 </div>
 
 {{-- Métriques --}}
-<div class="grid grid-cols-4 gap-4 mb-5">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
     <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <p class="text-2xl font-heading font-semibold text-primary">{{ $customer->bookings->count() }}</p>
         <p class="text-xs text-primary/50 mt-1">Réservations</p>
@@ -146,10 +146,10 @@
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-5">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
     {{-- Historique des réservations (2/3) --}}
-    <div class="col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-secondary/20">
             <h2 class="font-heading font-semibold text-primary text-sm">Historique des séjours</h2>
         </div>

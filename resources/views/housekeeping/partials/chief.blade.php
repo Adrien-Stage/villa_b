@@ -271,7 +271,7 @@
         <h2 class="font-heading font-semibold text-primary text-sm mb-4">Créer une équipe</h2>
         <form method="POST" action="{{ route('housekeeping.teams.store') }}" class="space-y-4">
             @csrf
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs text-primary/50 mb-1.5">Nom</label>
                     <input type="text" id="create-team-name" name="name" required class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">

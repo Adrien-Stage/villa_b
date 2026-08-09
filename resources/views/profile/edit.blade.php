@@ -84,7 +84,7 @@
                 @enderror
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs text-primary/60 mb-1">Role actuel</label>
                     <input type="text" value="{{ str_replace('_', ' ', $user->role ?? 'staff') }}" readonly
