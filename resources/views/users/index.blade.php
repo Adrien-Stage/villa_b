@@ -41,17 +41,17 @@
     </div>
 @endif
 
-<div class="grid grid-cols-3 gap-4 mb-5">
-    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-        <p class="text-2xl font-heading font-semibold text-primary">{{ $stats['total'] }}</p>
+<div class="grid grid-cols-3 gap-2 sm:gap-4 mb-5">
+    <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 text-center">
+        <p class="text-xl sm:text-2xl font-heading font-semibold text-primary">{{ $stats['total'] }}</p>
         <p class="text-xs text-primary/50 mt-1">Staff total</p>
     </div>
-    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-        <p class="text-2xl font-heading font-semibold text-green-600">{{ $stats['active'] }}</p>
+    <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 text-center">
+        <p class="text-xl sm:text-2xl font-heading font-semibold text-green-600">{{ $stats['active'] }}</p>
         <p class="text-xs text-primary/50 mt-1">Comptes actifs</p>
     </div>
-    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-        <p class="text-2xl font-heading font-semibold text-red-500">{{ $stats['inactive'] }}</p>
+    <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 text-center">
+        <p class="text-xl sm:text-2xl font-heading font-semibold text-red-500">{{ $stats['inactive'] }}</p>
         <p class="text-xs text-primary/50 mt-1">Comptes inactifs</p>
     </div>
 </div>
@@ -276,7 +276,7 @@
 <x-modal id="create-user-modal" title="Nouveau membre du staff" max-width="max-w-2xl" formAction="{{ route('users.store') }}" closeAction="closeCreateModal()">
     <input type="hidden" name="form_type" value="create">
     <input type="hidden" name="view" value="{{ $viewMode }}">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="text-xs text-primary/60">Nom complet</label>
             <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -299,7 +299,7 @@
                        :selected="old('roles', [])" :levels="old('levels', [])" />
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="text-xs text-primary/60">Mot de passe</label>
             <input type="password" name="password" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -328,7 +328,7 @@
         <input type="hidden" name="form_type" value="edit_{{ $staff->id }}">
         <input type="hidden" name="view" value="{{ $viewMode }}">
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nom complet</label>
                 <input type="text" name="name" value="{{ old('name', $staff->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -356,7 +356,7 @@
                            :selected="old('roles', $staffRoleSlugs)" :levels="old('levels', $staffLevels)" />
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nouveau mot de passe (optionnel)</label>
                 <input type="password" name="password" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">

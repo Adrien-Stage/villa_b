@@ -258,7 +258,7 @@
             <label class="text-xs text-primary/60">Nom</label>
             <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Ordre</label>
                 <input type="number" name="sort_order" min="0" value="{{ old('sort_order', 0) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -285,7 +285,7 @@
                 <label class="text-xs text-primary/60">Nom</label>
                 <input type="text" name="name" value="{{ old('name', $category->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Ordre</label>
                     <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $category->sort_order) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -307,7 +307,7 @@
     <x-modal id="create-item-modal" title="Nouvel article" max-width="max-w-2xl" formAction="{{ route('restaurant.menus.items.store') }}" enctype="multipart/form-data" closeAction="closeCreateItemModal()">
         <input type="hidden" name="form_type" value="create_item">
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nom</label>
                 <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -394,7 +394,7 @@
             @method('PUT')
             <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Nom</label>
                     <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -410,7 +410,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Prix (FCFA)</label>
                     <input type="number" name="price" min="0" value="{{ old('price', (int) ($item->price / 100)) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">

@@ -292,7 +292,7 @@
     
     <input type="hidden" name="type" id="movement-type">
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="text-xs text-primary/60">Quantité</label>
             <input type="number" name="quantity" step="0.001" min="0.001" required
@@ -330,7 +330,7 @@
             formAction="{{ route('restaurant.pantry.items.receive', $item) }}"
             closeAction="closeReceiveModal({{ $item->id }})">
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">
                         Quantité reçue ({{ $item->purchase_unit ?: $item->unit }})
@@ -358,7 +358,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Date (optionnel)</label>
                     <input type="datetime-local" name="occurred_at"
@@ -386,7 +386,7 @@
             <label class="text-xs text-primary/60">Nom</label>
             <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Ordre</label>
                 <input type="number" name="sort_order" min="0" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -407,7 +407,7 @@
     <x-modal id="create-item-modal" title="Nouvel article" max-width="max-w-2xl" formAction="{{ route('restaurant.pantry.items.store') }}" closeAction="closeCreateItemModal()">
         <input type="hidden" name="form_type" value="create_item">
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nom</label>
                 <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -451,7 +451,7 @@
                 Si vous achetez au sac de 50 kg mais cuisinez en grammes, indiquez-le ici :
                 la réception se saisira en sacs, et le stock se tiendra en grammes.
             </p>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
                     <input type="text" name="purchase_unit" maxlength="40" placeholder="Ex : sac de 50 kg, bidon de 20 L"
@@ -489,7 +489,7 @@
             @method('PUT')
             <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Nom</label>
                     <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
@@ -505,7 +505,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Unité de stock</label>
                     <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
@@ -530,7 +530,7 @@
 
             <div class="rounded-xl border border-secondary/20 bg-gray-50 p-4">
                 <p class="text-xs font-semibold text-primary mb-3">Unité d'achat (optionnel)</p>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
                         <input type="text" name="purchase_unit" value="{{ $item->purchase_unit }}" maxlength="40"

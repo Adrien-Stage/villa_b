@@ -58,7 +58,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Nom du groupe *
@@ -87,7 +87,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Date d'arrivée *
@@ -120,7 +120,7 @@
                     Acompte initial (Optionnel)
                 </h3>
                 <p class="text-xs text-primary/60 mb-3">Pour un dossier groupe, vous pouvez enregistrer une avance globale maintenant.</p>
-                <div class="grid grid-cols-3 gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg">
                     <div>
                         <label class="block text-xs font-semibold text-primary/70 mb-1">Montant versé</label>
                         <div class="relative">

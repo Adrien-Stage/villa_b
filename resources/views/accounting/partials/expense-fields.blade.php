@@ -1,5 +1,5 @@
 {{-- Champs partagés du formulaire de dépense (création + édition). --}}
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
         <label class="text-xs text-primary/60">Date *</label>
         <input type="date" name="occurred_at" required
@@ -24,7 +24,7 @@
         class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
 </div>
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
         <label class="text-xs text-primary/60">Montant (FCFA) *</label>
         <input type="number" name="amount" required min="1"

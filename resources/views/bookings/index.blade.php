@@ -119,26 +119,65 @@
         <script>
             window.calendarBookingsData = @json($calendarBookings ?? []);
         </script>
+        <style>
+            /*
+             * Chaque séjour porte sa propre teinte, servie par --sejour.
+             * La couleur tient dans la barre latérale et un fond très clair ;
+             * le texte reste en encre lisible, jamais dans la teinte du séjour.
+             */
+            .agenda-sejour {
+                background: color-mix(in oklab, var(--sejour) 12%, #ffffff);
+                border-left: 3px solid var(--sejour);
+            }
+            .agenda-sejour:hover {
+                background: color-mix(in oklab, var(--sejour) 20%, #ffffff);
+            }
+            /* Demande non confirmée : le séjour n'est pas acquis. */
+            .agenda-sejour--attente {
+                border-left-style: dashed;
+                background: color-mix(in oklab, var(--sejour) 5%, #ffffff);
+            }
+            /* Jour de départ : la chambre se libère, le fond s'efface. */
+            .agenda-sejour--depart {
+                background: transparent;
+                box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sejour) 30%, #ffffff);
+            }
+            .agenda-sejour--depart:hover {
+                background: color-mix(in oklab, var(--sejour) 8%, #ffffff);
+            }
+            .agenda-pastille { background: var(--sejour); }
+            .agenda-pastille--attente {
+                background: transparent;
+                box-shadow: inset 0 0 0 1.5px var(--sejour);
+            }
+            .agenda-fiche { border-left: 3px solid var(--sejour); }
+        </style>
         <div x-data="bookingCalendar(window.calendarBookingsData)" class="flex flex-col flex-1 bg-white">
             <!-- Calendar Header -->
             <div class="flex flex-col space-y-4 p-5 md:flex-row md:items-center md:justify-between md:space-y-0 border-b border-slate-100 bg-white">
                 
                 <!-- Left: Month Navigation -->
                 <div class="flex items-center gap-3">
-                    <button type="button" @click="prevMonth()" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                    <button type="button" @click="reculer()" title="Période précédente" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
                         <i data-lucide="chevron-left" class="w-4 h-4"></i>
                     </button>
-                    <h2 class="text-lg font-semibold text-slate-800 tracking-tight select-none w-44 text-center" x-text="currentMonthLabel"></h2>
-                    <button type="button" @click="nextMonth()" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                    <h2 class="text-lg font-semibold text-slate-800 tracking-tight select-none min-w-44 text-center" x-text="periodeLabel"></h2>
+                    <button type="button" @click="avancer()" title="Période suivante" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </button>
                 </div>
 
                 <!-- Center: View Toggle Pill -->
                 <div class="inline-flex bg-slate-100 rounded-full p-0.5 border border-slate-200/50 shadow-inner select-none">
-                    <button type="button" class="px-3 py-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer">Jour</button>
-                    <button type="button" class="px-3 py-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer">Semaine</button>
-                    <button type="button" class="px-4.5 py-1 text-[11px] font-bold text-slate-900 bg-white rounded-full shadow-xs border border-slate-200/40">Mois</button>
+                    <template x-for="[valeur, libelle] in [['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois']]" :key="valeur">
+                        <button type="button"
+                                @click="changerGrain(valeur)"
+                                :class="grain === valeur
+                                    ? 'text-slate-900 bg-white rounded-full shadow-xs border border-slate-200/40 font-bold'
+                                    : 'text-slate-400 hover:text-slate-600 font-semibold'"
+                                class="px-3.5 py-1 text-[11px] transition cursor-pointer"
+                                x-text="libelle"></button>
+                    </template>
                 </div>
 
                 <!-- Right: Search Bar & Actions -->
@@ -161,7 +200,7 @@
                 <div class="w-full flex flex-col">
                     
                     <!-- Week Days Header -->
-                    <div class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
+                    <div x-show="grain !== 'jour'" class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
                         <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
                             <span class="hidden sm:inline">Lundi</span>
                             <span class="sm:hidden">Lun</span>
@@ -193,14 +232,16 @@
                     </div>
 
                     <!-- Single Responsive Grid -->
-                    <div class="grid grid-cols-7 border-l border-t border-slate-200 mt-3 shadow-xs rounded-xl overflow-hidden bg-white">
+                    <div :class="grain === 'jour' ? 'grid-cols-1' : 'grid-cols-7'"
+                         class="grid border-l border-t border-slate-200 mt-3 shadow-xs rounded-xl overflow-hidden bg-white">
                         <template x-for="day in days" :key="day.key">
                             <div @click="selectDay(day.iso)"
                                  :class="[
                                      day.isCurrentMonth ? 'bg-white' : 'bg-[#F1F5F9] text-slate-400',
-                                     selectedIso === day.iso ? 'bg-indigo-50/20' : 'hover:bg-[#F8F9FF]'
+                                     selectedIso === day.iso ? 'bg-indigo-50/20' : 'hover:bg-[#F8F9FF]',
+                                     grain === 'mois' ? 'min-h-[90px] sm:min-h-[110px]' : 'min-h-[200px] sm:min-h-[280px]'
                                  ]"
-                                 class="relative flex flex-col min-h-[90px] sm:min-h-[110px] border-r border-b border-slate-200 p-1.5 sm:p-2.5 cursor-pointer transition-colors group">
+                                 class="relative flex flex-col border-r border-b border-slate-200 p-1.5 sm:p-2.5 cursor-pointer transition-colors group">
                                 
                                 <header class="flex flex-wrap items-center justify-between gap-3 mb-1">
                                     <span :class="[
@@ -215,25 +256,24 @@
                                 </header>
 
                                 <!-- Bookings List inside Day Cell (Desktop) -->
-                                <div class="hidden sm:block space-y-1 overflow-y-auto max-h-[75px] pr-0.5 mt-1">
-                                    <template x-for="booking in day.bookings.slice(0, 3)" :key="booking.id">
+                                <div :class="grain === 'mois' ? 'max-h-[75px]' : 'max-h-[230px]'"
+                                     class="hidden sm:block space-y-1 overflow-y-auto pr-0.5 mt-1">
+                                    <template x-for="booking in day.bookings.slice(0, parJour)" :key="booking.id">
                                         <a :href="booking.url"
                                            @click.stop
-                                           :class="[
-                                               booking.status === 'pending' ? 'bg-[#FFFBEB] text-[#D97706]' : '',
-                                               booking.status === 'confirmed' ? 'bg-[#EFF6FF] text-[#1D4ED8]' : '',
-                                               booking.status === 'checked_in' ? 'bg-[#F0FDF4] text-[#16A34A]' : '',
-                                               booking.status === 'checked_out' ? 'bg-[#F5F3FF] text-[#7C3AED]' : '',
-                                               booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show' ? 'bg-[#FEF2F2] text-[#DC2626]' : ''
-                                           ]"
-                                           class="px-2 py-0.5 rounded text-[11px] font-medium leading-relaxed block truncate hover:brightness-95 transition-all"
-                                           :title="'Ch. ' + booking.room_number + ' — ' + booking.customer">
+                                           :style="'--sejour:' + booking.color"
+                                           :class="{
+                                               'agenda-sejour--attente': !booking.is_firm,
+                                               'agenda-sejour--depart': booking.check_out === day.iso,
+                                           }"
+                                           class="agenda-sejour pl-2 pr-2 py-0.5 rounded-r text-[11px] font-medium leading-relaxed block truncate text-slate-700 transition-all"
+                                           :title="etiquette(booking, day.iso)">
                                             <span x-text="'Ch. ' + booking.room_number + ' — ' + booking.customer"></span>
                                         </a>
                                     </template>
-                                    <template x-if="day.bookings.length > 3">
+                                    <template x-if="day.bookings.length > parJour">
                                         <div class="text-[9px] font-semibold text-slate-400 pl-1 mt-0.5">
-                                            +<span x-text="day.bookings.length - 3"></span> de plus
+                                            +<span x-text="day.bookings.length - parJour"></span> de plus
                                         </div>
                                     </template>
                                 </div>
@@ -241,14 +281,10 @@
                                 <!-- Dots indicator on Mobile -->
                                 <div class="flex flex-wrap items-center justify-center gap-0.5 mt-1 h-3 sm:hidden">
                                     <template x-for="b in day.bookings.slice(0, 3)" :key="b.id">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                              :class="[
-                                                  b.status === 'pending' ? 'bg-amber-500' : '',
-                                                  b.status === 'confirmed' ? 'bg-blue-500' : '',
-                                                  b.status === 'checked_in' ? 'bg-emerald-500' : '',
-                                                  b.status === 'checked_out' ? 'bg-purple-500' : '',
-                                                  b.status === 'completed' || b.status === 'cancelled' || b.status === 'no_show' ? 'bg-rose-500' : ''
-                                              ]"></span>
+                                        <span class="agenda-pastille w-1.5 h-1.5 rounded-full"
+                                              :style="'--sejour:' + b.color"
+                                              :class="{ 'agenda-pastille--attente': !b.is_firm }"
+                                              :title="etiquette(b, day.iso)"></span>
                                     </template>
                                     <template x-if="day.bookings.length > 3">
                                         <span class="text-[8px] text-slate-400 font-bold leading-none">+</span>
@@ -256,6 +292,25 @@
                                 </div>
                             </div>
                         </template>
+                    </div>
+                    {{-- Légende : la couleur seule ne porte jamais d'information --}}
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3 px-1 text-[10px] text-slate-500">
+                        <span class="inline-flex items-center gap-1.5">
+                            <i data-lucide="palette" class="w-3.5 h-3.5 text-slate-400"></i>
+                            Une couleur par séjour
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="agenda-sejour agenda-sejour--attente inline-block w-7 h-3.5 rounded-r" style="--sejour:#52514e"></span>
+                            En attente de confirmation
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="agenda-sejour agenda-sejour--depart inline-block w-7 h-3.5 rounded-r" style="--sejour:#52514e"></span>
+                            Jour de départ (chambre libérée)
+                        </span>
+                        <span class="ml-auto inline-flex items-center gap-1.5 font-medium text-slate-600">
+                            <span x-text="nbSejoursPeriode"></span>
+                            <span x-text="nbSejoursPeriode > 1 ? 'séjours sur la période' : 'séjour sur la période'"></span>
+                        </span>
                     </div>
                 </div>
 
@@ -268,7 +323,9 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                         <template x-for="booking in selectedEvents" :key="booking.id">
-                            <a :href="booking.url" class="block rounded-xl border border-slate-200/60 hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs group">
+                            <a :href="booking.url"
+                               :style="'--sejour:' + booking.color"
+                               class="agenda-fiche block rounded-xl rounded-l-sm border border-l-0 border-slate-200/60 hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs group">
                                 <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
                                     <span class="text-[10px] font-mono font-bold text-slate-400" x-text="booking.booking_number"></span>
                                     <span class="px-2 py-0.5 rounded-full text-[9px] font-bold"
@@ -279,7 +336,7 @@
                                               booking.status === 'checked_out' ? 'bg-purple-50 text-purple-700 border border-purple-200' : '',
                                               booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show' ? 'bg-pink-50 text-pink-700 border border-pink-200' : ''
                                           ]"
-                                          x-text="booking.status === 'pending' ? 'En attente' : (booking.status === 'confirmed' ? 'Confirmé' : (booking.status === 'checked_in' ? 'En séjour' : (booking.status === 'checked_out' ? 'Checkout' : 'Terminé')))"></span>
+                                          x-text="booking.status_label"></span>
                                 </div>
                                 <div class="text-xs font-bold text-slate-800 group-hover:text-slate-900 transition-colors" x-text="booking.customer"></div>
                                 
@@ -410,28 +467,22 @@ document.getElementById('search-input').addEventListener('input', function() {
             year: new Date().getFullYear(),
             month: new Date().getMonth(),
             events: events || [],
-            selectedIso: (new Date()).toISOString().slice(0,10),
+            selectedIso: '',
             searchQuery: '',
+            grain: 'mois',   // 'jour' | 'semaine' | 'mois'
 
             init() {
-                this.$nextTick(() => {
+                // toISOString() bascule en UTC : à l'ouest de Greenwich le
+                // « aujourd'hui » du calendrier partait la veille.
+                this.selectedIso = this.isoFromDate(new Date());
+
+                const redessiner = () => this.$nextTick(() => {
                     if (window.refreshLucideIcons) window.refreshLucideIcons();
                 });
-                this.$watch('month', () => {
-                    this.$nextTick(() => {
-                        if (window.refreshLucideIcons) window.refreshLucideIcons();
-                    });
-                });
-                this.$watch('selectedIso', () => {
-                    this.$nextTick(() => {
-                        if (window.refreshLucideIcons) window.refreshLucideIcons();
-                    });
-                });
-                this.$watch('searchQuery', () => {
-                    this.$nextTick(() => {
-                        if (window.refreshLucideIcons) window.refreshLucideIcons();
-                    });
-                });
+
+                redessiner();
+                ['month', 'year', 'grain', 'selectedIso', 'searchQuery']
+                    .forEach((champ) => this.$watch(champ, redessiner));
             },
 
             get currentMonthLabel() {

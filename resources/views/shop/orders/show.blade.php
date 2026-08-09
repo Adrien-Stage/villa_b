@@ -197,7 +197,7 @@
     </div>
 
     {{-- Infos client --}}
-    <div class="px-8 py-5 border-b border-secondary/10 grid grid-cols-2 gap-6">
+    <div class="px-5 sm:px-8 py-5 border-b border-secondary/10 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-6">
         <div>
             <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Acheteur</p>
             <p class="text-sm font-medium text-primary">{{ $order->customer_name ?: 'Client de passage' }}</p>

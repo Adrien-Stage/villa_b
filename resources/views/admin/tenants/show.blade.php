@@ -321,7 +321,9 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table class="w-full text-left text-xs">
+                    {{-- overflow-x-auto : sur mobile le tableau défile au lieu de pousser la page --}}
+                    <div class="overflow-x-auto">
+                    <table class="w-full min-w-[36rem] text-left text-xs">
                         <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
                                 <th class="px-5 py-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nom</th>
@@ -356,6 +358,7 @@
                             @endforelse
                         </tbody>
                     </table>
+                    </div>
                 </div>
 
             {{-- ==================== THÈME ==================== --}}
@@ -400,7 +403,7 @@
                         </div>
 
                         <!-- Color Pickers -->
-                        <div class="grid grid-cols-2 gap-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Couleur Primaire</label>
                                 <div class="flex items-center gap-2">
@@ -416,7 +419,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Accent</label>
                                 <div class="flex items-center gap-2">
@@ -439,7 +442,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-[10px] text-slate-400 mb-1.5 font-semibold">Texte sur Fond Clair</label>
                                 <div class="flex items-center gap-2">

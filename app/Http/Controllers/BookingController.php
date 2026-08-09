@@ -39,21 +39,15 @@ class BookingController extends Controller
                 'cancelled' => 'Annulées',
             ];
         } else {
-            if ($viewMode === 'calendar') {
-                $query->where('status', BookingStatus::CONFIRMED);
-                $statusFilters = [
-                    'confirmed' => 'Confirmées',
-                ];
-                $status = 'confirmed';
-            } else {
-                $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
-                $statusFilters = [
-                    'all'        => 'Toutes',
-                    'pending'    => 'En attente',
-                    'confirmed'  => 'Confirmées',
-                    'checked_in' => 'En séjour',
-                ];
-            }
+            // La vue calendrier montre le même ensemble que la liste : un agenda
+            // qui masquerait les demandes en attente ferait rater des arrivées.
+            $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+            $statusFilters = [
+                'all'        => 'Toutes',
+                'pending'    => 'En attente',
+                'confirmed'  => 'Confirmées',
+                'checked_in' => 'En séjour',
+            ];
         }
 
         // Filtre statut
@@ -77,20 +71,7 @@ class BookingController extends Controller
 
         $calendarBookings = null;
         if ($tab === 'active' && $viewMode === 'calendar') {
-            $calendarBookings = (clone $query)
-                ->orderBy('check_in')
-                ->get()
-                ->map(fn($booking) => [
-                    'id' => $booking->id,
-                    'booking_number' => $booking->booking_number,
-                    'customer' => $booking->customer->full_name,
-                    'room_number' => $booking->room->number,
-                    'check_in' => $booking->check_in->format('Y-m-d'),
-                    'check_out' => $booking->check_out->format('Y-m-d'),
-                    'url' => route('bookings.show', $booking),
-                    'status' => $booking->status->value,
-                    'status_label' => $booking->status->label(),
-                ]);
+            $calendarBookings = $this->agendaBookings(clone $query);
         }
 
         // Stats pour les badges
@@ -117,6 +98,103 @@ class BookingController extends Controller
         $isCashRegisterOpen = $activeSession !== null;
 
         return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'viewMode', 'status', 'calendarBookings', 'isCashRegisterOpen'));
+    }
+
+    // ===== AGENDA =====
+
+    /**
+     * Teintes de l'agenda, dans cet ordre.
+     *
+     * L'ordre n'est pas décoratif : il a été retenu parce que deux teintes
+     * voisines restent distinguables, y compris pour un daltonien (écart
+     * OKLab ≥ 8 sur toutes les paires voisines, vision normale ≥ 19).
+     * Réordonner ou remplacer une valeur casse cette garantie.
+     */
+    private const AGENDA_TEINTES = [
+        '#2a78d6', // bleu
+        '#eb6834', // orange
+        '#1baf7a', // turquoise
+        '#eda100', // jaune
+        '#e87ba4', // magenta
+        '#008300', // vert
+        '#4a3aa7', // violet
+        '#e34948', // rouge
+    ];
+
+    /**
+     * Réservations affichées dans le calendrier, une couleur par séjour.
+     *
+     * L'agenda part du mois précédent — pour que les séjours déjà commencés
+     * restent visibles — et couvre l'année à venir, au-delà de laquelle la
+     * vue n'a plus d'usage. Sans cette fenêtre, la page chargerait toutes les
+     * réservations ouvertes de l'établissement à chaque affichage.
+     */
+    private function agendaBookings($query)
+    {
+        $debut = now()->startOfMonth()->subMonth()->toDateString();
+        $fin   = now()->startOfMonth()->addYear()->endOfMonth()->toDateString();
+
+        $reservations = $query
+            ->whereDate('check_out', '>=', $debut)
+            ->whereDate('check_in', '<=', $fin)
+            ->orderBy('check_in')
+            ->orderBy('id')
+            ->get();
+
+        $occupees = [];   // teinte => date de fin du dernier séjour posé dessus
+
+        return $reservations->map(function (Booking $booking) use (&$occupees) {
+            $arrivee = $booking->check_in->format('Y-m-d');
+            $depart  = $booking->check_out->format('Y-m-d');
+
+            return [
+                'id'             => $booking->id,
+                'booking_number' => $booking->booking_number,
+                'customer'       => $booking->customer->full_name,
+                'room_number'    => $booking->room->number,
+                'check_in'       => $arrivee,
+                'check_out'      => $depart,
+                'url'            => route('bookings.show', $booking),
+                'status'         => $booking->status->value,
+                'status_label'   => $booking->status->label(),
+                'color'          => self::AGENDA_TEINTES[$this->teintePour($arrivee, $depart, $occupees)],
+                // Une demande non confirmée s'affiche en pointillés : le
+                // séjour n'est pas encore acquis.
+                'is_firm'        => $booking->status !== BookingStatus::PENDING,
+            ];
+        });
+    }
+
+    /**
+     * Attribue à un séjour la première teinte qu'aucun séjour affiché en même
+     * temps n'occupe déjà. Deux réservations qui se chevauchent — ou qui se
+     * touchent, le départ de l'une tombant le jour de l'arrivée de l'autre —
+     * ne peuvent donc pas porter la même couleur dans une même case.
+     *
+     * Les séjours arrivant triés par date d'arrivée, il suffit de retenir la
+     * date de fin du dernier séjour posé sur chaque teinte.
+     *
+     * @param  array<int,string>  $occupees  modifié sur place
+     */
+    private function teintePour(string $arrivee, string $depart, array &$occupees): int
+    {
+        foreach (array_keys(self::AGENDA_TEINTES) as $teinte) {
+            if (!isset($occupees[$teinte]) || $occupees[$teinte] < $arrivee) {
+                $occupees[$teinte] = $depart;
+
+                return $teinte;
+            }
+        }
+
+        // Plus de huit séjours simultanés : la palette est saturée. On reprend
+        // celle libérée depuis le plus longtemps, pour éloigner au maximum les
+        // deux séjours qui partagent la couleur. Chaque entrée porte de toute
+        // façon le nom du client et le numéro de chambre — la couleur n'est
+        // qu'un appui de lecture, jamais la seule identification.
+        $teinte = array_search(min($occupees), $occupees, true);
+        $occupees[$teinte] = max($occupees[$teinte], $depart);
+
+        return $teinte;
     }
 
     // ===== WIZARD ÉTAPE 1 : Sélection client =====

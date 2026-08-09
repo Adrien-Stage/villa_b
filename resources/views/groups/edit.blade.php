@@ -45,7 +45,7 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Nom du groupe *
@@ -75,7 +75,7 @@
             {{-- Dates --}}
             @php $hasCheckedIn = $groupBooking->bookings->where('status', 'checked_in')->count() > 0; @endphp
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Date d'arrivée *
