@@ -105,7 +105,8 @@ class PublicBookingController extends Controller
             'price_per_night'   => $pricePerNight,
             'total_room_amount' => $totalRoom,
             'extras_amount'     => 0,
-            'tax_amount'        => 0,
+            // TVA extraite du total TTC, jamais ajoutée par dessus.
+            'tax_amount'        => app(\App\Services\TaxationService::class)->breakdown($totalRoom)->vat,
             'discount_amount'   => 0,
             'total_amount'      => $totalRoom,
             'deposit_amount'    => 0,

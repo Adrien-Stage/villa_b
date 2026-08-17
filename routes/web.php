@@ -415,6 +415,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/depenses', [$c, 'storeExpense'])->name('expenses.store');
         Route::put('/depenses/{expense}', [$c, 'updateExpense'])->name('expenses.update');
         Route::delete('/depenses/{expense}', [$c, 'destroyExpense'])->name('expenses.destroy');
+
+        // --- COMPTABILITÉ AVANCÉE (grand livre SYSCOHADA) ---
+        // S'ajoute à la comptabilité de caisse ci-dessus sans la remplacer :
+        // l'une répond au quotidien de la réception, l'autre à l'obligation
+        // légale et au pilotage.
+        Route::prefix('ledger')->name('ledger.')->group(function () {
+            $l = App\Http\Controllers\LedgerController::class;
+
+            Route::get('/', [$l, 'index'])->name('index');
+            Route::get('/plan-de-comptes', [$l, 'accounts'])->name('accounts');
+            Route::get('/journaux', [$l, 'journals'])->name('journals');
+            Route::get('/grand-livre', [$l, 'generalLedger'])->name('general');
+            Route::get('/balance', [$l, 'balance'])->name('balance');
+
+            // Périodes et exercices — le verrouillage matérialise l'Article 22.
+            Route::get('/periodes', [$l, 'periods'])->name('periods');
+            Route::post('/exercices', [$l, 'openYear'])->name('years.open');
+            Route::post('/periodes/{period}/verrouiller', [$l, 'lockPeriod'])->name('periods.lock');
+
+            // Reprise des à-nouveaux — déclarée avant /ecritures/{entry}.
+            Route::get('/a-nouveaux', [$l, 'openingBalance'])->name('opening');
+            Route::post('/a-nouveaux', [$l, 'storeOpeningBalance'])->name('opening.store');
+
+            Route::get('/ecritures/{entry}', [$l, 'show'])->whereNumber('entry')->name('entry');
+            Route::post('/ecritures/{entry}/extourne', [$l, 'reverse'])->whereNumber('entry')->name('entry.reverse');
+        });
     });
 
     // --- ÉCONOMAT / INVENTAIRE ---
