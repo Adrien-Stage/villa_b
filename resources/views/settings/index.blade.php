@@ -324,19 +324,134 @@
 
         {{-- ONGLET: TAXES (Réception & Manager) --}}
         @if($tab === 'taxes' && $user->hasAnyRole(['manager', 'reception']))
-            <div class="max-w-3xl">
+            @php
+                $fisc          = app(\App\Services\TaxationService::class);
+                $taxes         = $tenantSettings['taxes'] ?? [];
+                $tauxStandard  = \App\Models\TaxRate::default();
+                $bareme        = \App\Models\TouristTaxBracket::orderBy('amount_per_night')->get();
+                $classement    = $taxes['classification'] ?? null;
+                // Exemple parlant : une nuitée à 50 000 F TTC.
+                $exemple       = $fisc->breakdown(5_000_000, $tauxStandard);
+            @endphp
+
+            <form method="POST" action="{{ route('settings.update', ['tab' => 'taxes']) }}" class="max-w-3xl">
+                @csrf
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h2 class="text-lg font-semibold text-primary">Taxes et Tarifs</h2>
-                    <button type="button" class="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 inline-block mr-1"></i> Nouvelle Taxe
+                    <h2 class="text-lg font-semibold text-primary">Taxes</h2>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        Enregistrer
                     </button>
                 </div>
-                
-                <div class="bg-gray-50 rounded-xl border border-secondary/20 p-6 text-center text-primary/60">
-                    <i data-lucide="calculator" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                    <p class="text-sm">Aucune taxe configurée pour le moment.</p>
+
+                <div class="space-y-6">
+
+                    {{-- ── TVA ────────────────────────────────────────────── --}}
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-primary mb-1">Taxe sur la valeur ajoutée</h3>
+                                <p class="text-xs text-primary/60">
+                                    Les prix saisis restent des montants <strong>TTC</strong> : activer la TVA ne change
+                                    aucun tarif, elle est extraite du montant pour apparaître séparément sur les documents.
+                                </p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                                <input type="hidden" name="settings[vat_enabled]" value="0">
+                                <input type="checkbox" name="settings[vat_enabled]" value="1" class="sr-only peer"
+                                       @checked($taxes['vat_enabled'] ?? false)>
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+
+                        @if($tauxStandard)
+                            <div class="rounded-lg border border-secondary/20 bg-white p-3">
+                                <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+                                    <span class="text-xs font-semibold text-primary">{{ $tauxStandard->label }}</span>
+                                    <span class="text-lg font-heading font-semibold text-primary">{{ number_format($tauxStandard->percentage(), 2, ',', ' ') }} %</span>
+                                </div>
+                                <p class="text-[11px] text-primary/55 leading-relaxed">
+                                    Sur une nuitée à <strong>{{ number_format($exemple->ttc / 100, 0, ',', ' ') }} F TTC</strong> :
+                                    base hors taxes <strong>{{ number_format($exemple->ht / 100, 0, ',', ' ') }} F</strong>,
+                                    taxe <strong>{{ number_format($exemple->vat / 100, 0, ',', ' ') }} F</strong>
+                                    @if($exemple->surtax > 0)
+                                        (dont {{ number_format($exemple->surtax / 100, 0, ',', ' ') }} F de centimes additionnels communaux)
+                                    @endif.
+                                </p>
+                            </div>
+                        @else
+                            <p class="text-xs text-amber-700">Aucun taux de TVA n'est configuré en base.</p>
+                        @endif
+                    </div>
+
+                    {{-- ── Taxe de séjour ─────────────────────────────────── --}}
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-primary mb-1">Taxe de séjour</h3>
+                                <p class="text-xs text-primary/60">
+                                    Perçue pour le compte de la fiscalité locale : elle s'ajoute au prix de la nuitée et
+                                    constitue une dette, jamais une recette de l'établissement.
+                                </p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                                <input type="hidden" name="settings[tourist_tax_enabled]" value="0">
+                                <input type="checkbox" name="settings[tourist_tax_enabled]" value="1" class="sr-only peer"
+                                       @checked($taxes['tourist_tax_enabled'] ?? false)>
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Classement de l'établissement</label>
+                                <select name="settings[classification]" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                    <option value="">— Non renseigné —</option>
+                                    @foreach(\App\Models\TouristTaxBracket::CLASSIFICATIONS as $code => $libelle)
+                                        <option value="{{ $code }}" @selected($classement === $code)>{{ $libelle }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Base de calcul</label>
+                                <select name="settings[tourist_tax_basis]" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                    <option value="room" @selected(($taxes['tourist_tax_basis'] ?? 'room') === 'room')>Par nuitée (chambre)</option>
+                                    <option value="person" @selected(($taxes['tourist_tax_basis'] ?? '') === 'person')>Par nuitée et par personne</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full text-xs">
+                                <thead>
+                                    <tr class="text-left text-primary/45 uppercase tracking-widest text-[10px]">
+                                        <th class="py-1.5 pr-4 font-semibold">Classement</th>
+                                        <th class="py-1.5 font-semibold">Montant par nuitée</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-secondary/10">
+                                    @foreach($bareme as $ligne)
+                                        <tr class="{{ $classement === $ligne->classification ? 'font-semibold text-primary' : 'text-primary/65' }}">
+                                            <td class="py-1.5 pr-4">
+                                                {{ $ligne->label }}
+                                                @if($classement === $ligne->classification)
+                                                    <span class="ml-1.5 text-[10px] text-secondary">— appliqué</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-1.5">{{ number_format($ligne->amount_per_night / 100, 0, ',', ' ') }} F</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
+                            <strong>Barème à confirmer.</strong> Ces montants sont provisoires et doivent être validés par
+                            votre expert-comptable au regard des textes en vigueur, de même que l'assiette retenue
+                            (par chambre ou par personne).
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </form>
         @endif
 
         {{-- ONGLET: HOUSEKEEPING (Leader & Manager) --}}
