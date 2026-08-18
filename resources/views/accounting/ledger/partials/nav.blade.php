@@ -4,8 +4,11 @@
         'accounting.ledger.index'    => ['Tableau de bord', 'layout-dashboard'],
         'accounting.ledger.balance'  => ['Balance', 'scale'],
         'accounting.ledger.general'  => ['Grand livre', 'book-open'],
+        'accounting.ledger.auxiliary' => ['Tiers', 'users'],
+        'accounting.ledger.aged'     => ['Balance âgée', 'hourglass'],
         'accounting.ledger.journals' => ['Journaux', 'notebook-pen'],
         'accounting.ledger.accounts' => ['Plan de comptes', 'list-tree'],
+        'accounting.ledger.night_audit' => ['Clôture', 'moon'],
         'accounting.ledger.periods'  => ['Périodes', 'lock'],
     ];
 @endphp
@@ -19,7 +22,7 @@
     <span class="hidden sm:block w-px bg-secondary/20 mx-1 self-stretch"></span>
 
     @foreach($ledgerTabs as $route => [$label, $icon])
-        @php $active = request()->routeIs($route); @endphp
+        @php $active = request()->routeIs($route) || request()->routeIs($route . '.*'); @endphp
         <a href="{{ route($route) }}"
             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
                 {{ $active ? 'bg-primary text-white' : 'text-primary/60 hover:text-primary hover:bg-accent/20' }}">

@@ -14,6 +14,18 @@
 
 @include('accounting.partials.nav')
 
+{{-- Cette page dit qui doit ; elle ne dit pas depuis quand. Pour relancer,
+     c'est l'ancienneté qui compte — la balance âgée la donne. --}}
+<a href="{{ route('accounting.ledger.aged') }}"
+   class="flex items-center gap-2.5 px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed hover:bg-accent/30 transition-colors">
+    <i data-lucide="hourglass" class="w-4 h-4 text-primary/45 shrink-0"></i>
+    <span>
+        <strong>Instantané.</strong> Cette liste dit qui doit, pas depuis quand.
+        La <strong>balance âgée</strong> ventile les impayés par ancienneté et tient compte des lettrages.
+    </span>
+    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-primary/35 shrink-0 ml-auto"></i>
+</a>
+
 <div class="bg-white rounded-xl border {{ $creances['total'] > 0 ? 'border-amber-200' : 'border-secondary/20' }} shadow-sm p-5 mb-6 flex items-center justify-between">
     <span class="text-sm font-semibold text-primary/70 uppercase tracking-widest text-[11px]">Total à percevoir</span>
     <span class="text-2xl font-heading font-bold {{ $creances['total'] > 0 ? 'text-amber-600' : 'text-primary' }}">{{ $fcfa($creances['total']) }}</span>

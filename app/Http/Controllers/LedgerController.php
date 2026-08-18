@@ -175,6 +175,55 @@ class LedgerController extends Controller
         return back()->with('success', "La période {$period->label()} est verrouillée. Toute correction passera désormais par une contre-passation.");
     }
 
+    // ── Clôture journalière (night audit) ───────────────────────────────────
+
+    public function nightAudits(Request $request): View
+    {
+        $cloture = app(\App\Services\NightAuditService::class);
+
+        $jour = $request->filled('date')
+            ? Carbon::parse($request->input('date'))->startOfDay()
+            : now()->copy()->subDay()->startOfDay();
+
+        $apercu = $cloture->preview($jour);
+        $enAttente = $cloture->pendingDays();
+
+        $historique = \App\Models\NightAudit::with('closedBy')
+            ->orderByDesc('audit_date')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('accounting.ledger.night-audit', compact('apercu', 'enAttente', 'historique', 'jour'));
+    }
+
+    public function runNightAudit(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date'  => ['required', 'date'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $audit = app(\App\Services\NightAuditService::class)
+                ->run(Carbon::parse($validated['date']), $validated['notes'] ?? null);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $message = "Journée du {$audit->audit_date->format('d/m/Y')} clôturée — {$audit->entries_posted} écriture(s).";
+
+        // Un écart de caisse se signale, il ne se noie pas dans un message
+        // de succès : c'est précisément ce que la clôture sert à révéler.
+        if ($audit->hasDiscrepancy()) {
+            $ecart = number_format(abs($audit->cash_discrepancy) / 100, 0, ',', ' ');
+            $message .= " Attention : écart de caisse de {$ecart} FCFA constaté.";
+        }
+
+        return redirect()
+            ->route('accounting.ledger.night_audit', ['date' => $audit->audit_date->toDateString()])
+            ->with('success', $message);
+    }
+
     // ── Balance d'ouverture (à-nouveaux) ────────────────────────────────────
 
     public function openingBalance(Request $request): View

@@ -7,6 +7,7 @@ use App\Models\FiscalPeriod;
 use App\Models\FiscalYear;
 use App\Models\Journal;
 use App\Models\JournalEntry;
+use App\Models\NightAudit;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
@@ -77,6 +78,16 @@ class LedgerService
             throw new RuntimeException(
                 "La période {$period->label()} est verrouillée : aucune écriture ne peut y être ajoutée. "
                 . "Passez par une contre-passation datée d'une période ouverte."
+            );
+        }
+
+        // La clôture journalière fige la journée au même titre que le
+        // verrouillage fige le mois : un mouvement découvert après coup ne
+        // doit pas s'y glisser rétroactivement.
+        if (NightAudit::isClosed($date)) {
+            throw new RuntimeException(
+                "La journée du {$date->format('d/m/Y')} est clôturée : aucune écriture ne peut y être ajoutée. "
+                . "Portez l'opération à une date ouverte."
             );
         }
 

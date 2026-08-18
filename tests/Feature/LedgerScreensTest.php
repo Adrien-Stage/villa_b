@@ -14,17 +14,21 @@ uses(RefreshDatabase::class);
 /** Comptable connecté — le rôle qui pilote le module. */
 function comptable(): User
 {
-    $user = User::create([
-        'name'      => 'Comptable',
-        'email'     => 'comptable@test.cm',
-        'password'  => bcrypt('secret'),
-        'role'      => 'accountant',
-        'is_active' => true,
-    ]);
+    // firstOrCreate : un test peut appeler ce helper plusieurs fois, il ne
+    // doit pas buter sur l'unicité de l'adresse.
+    $user = User::firstOrCreate(
+        ['email' => 'comptable@test.cm'],
+        [
+            'name'      => 'Comptable',
+            'password'  => bcrypt('secret'),
+            'role'      => 'accountant',
+            'is_active' => true,
+        ]
+    );
 
     // roles:sync a livré le catalogue ; on rattache par le pivot.
     $role = Role::where('slug', 'accountant')->first();
-    if ($role) {
+    if ($role && !$user->roles()->where('roles.id', $role->id)->exists()) {
         $user->roles()->attach($role->id, ['level' => 'write']);
     }
 
@@ -83,6 +87,7 @@ test('tous les écrans du grand livre s’ouvrent', function () {
         'accounting.ledger.accounts',
         'accounting.ledger.periods',
         'accounting.ledger.opening',
+        'accounting.ledger.night_audit',
     ] as $route) {
         $this->get(route($route))->assertOk();
     }
@@ -94,6 +99,27 @@ test('le module s’ouvre même sans aucune écriture', function () {
     $this->get(route('accounting.ledger.index'))->assertOk();
     $this->get(route('accounting.ledger.balance'))->assertOk();
     $this->get(route('accounting.ledger.general'))->assertOk();
+    $this->get(route('accounting.ledger.night_audit'))->assertOk();
+});
+
+test('la clôture d’une journée se déclenche depuis l’écran', function () {
+    ecritureType(Carbon::parse('2026-06-15'));
+
+    $this->actingAs(comptable())
+        ->post(route('accounting.ledger.night_audit.run'), ['date' => '2026-06-15'])
+        ->assertRedirect();
+
+    expect(\App\Models\NightAudit::isClosed(Carbon::parse('2026-06-15')))->toBeTrue();
+});
+
+test('clôturer deux fois la même journée est refusé avec un message', function () {
+    ecritureType(Carbon::parse('2026-06-15'));
+
+    $this->actingAs(comptable())->post(route('accounting.ledger.night_audit.run'), ['date' => '2026-06-15']);
+
+    $this->actingAs(comptable())
+        ->post(route('accounting.ledger.night_audit.run'), ['date' => '2026-06-15'])
+        ->assertSessionHas('error');
 });
 
 // ── Balance ─────────────────────────────────────────────────────────────────
@@ -210,6 +236,59 @@ test('une balance d’ouverture déséquilibrée est refusée', function () {
     ])->assertSessionHas('error');
 
     expect($exercice->fresh()->hasOpeningBalance())->toBeFalse();
+});
+
+// ── Comptabilité auxiliaire ─────────────────────────────────────────────────
+
+test('l’écran des tiers s’ouvre sur le compte clients', function () {
+    ecritureType();
+
+    $this->actingAs(comptable())
+        ->get(route('accounting.ledger.auxiliary'))
+        ->assertOk()
+        ->assertSee(Account::CLIENTS);
+});
+
+test('la balance âgée s’affiche', function () {
+    ecritureType();
+
+    $this->actingAs(comptable())
+        ->get(route('accounting.ledger.aged'))
+        ->assertOk()
+        ->assertSee('Balance âgée');
+});
+
+test('le grand livre d’un tiers refuse un type d’auxiliaire inconnu', function () {
+    ecritureType();
+
+    // Le type vient de l'URL : il ne doit jamais servir à instancier
+    // n'importe quelle classe de l'application.
+    $this->actingAs(comptable())
+        ->get(route('accounting.ledger.auxiliary.ledger', [
+            'compte' => Account::CLIENTS,
+            'type'   => \App\Models\User::class,
+            'id'     => 1,
+        ]))
+        ->assertForbidden();
+});
+
+test('un lettrage à une seule ligne est rejeté par la validation', function () {
+    $entry = ecritureType();
+    $ligne = $entry->lines->firstWhere('account_code', Account::CLIENTS);
+
+    $this->actingAs(comptable())
+        ->from(route('accounting.ledger.auxiliary'))
+        ->post(route('accounting.ledger.reconcile'), ['lines' => [$ligne->id]])
+        ->assertSessionHasErrors('lines');
+});
+
+test('le lettrage automatique signale l’absence de rapprochement', function () {
+    ecritureType();
+
+    $this->actingAs(comptable())
+        ->from(route('accounting.ledger.auxiliary'))
+        ->post(route('accounting.ledger.reconcile.auto'), ['compte' => Account::CLIENTS])
+        ->assertSessionHas('error');
 });
 
 // ── Navigation ──────────────────────────────────────────────────────────────
