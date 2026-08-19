@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantPantryMovement;
 use App\Models\ShopOrder;
+use App\Models\SupplierInvoice;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -39,6 +40,7 @@ class LedgerPostingService
     public const SCHEMA_SHOP_SALE = 'shop_sale';
     public const SCHEMA_EXPENSE = 'expense';
     public const SCHEMA_FOOD_COST = 'food_cost';
+    public const SCHEMA_SUPPLIER_INVOICE = 'supplier_invoice';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -274,6 +276,75 @@ class LedgerPostingService
             source: $payment,
             schema: self::SCHEMA_PAYMENT,
             reference: $payment->reference,
+        );
+    }
+
+    /**
+     * Facture fournisseur, retenue à la source comprise.
+     *
+     *   D 6xx      base hors taxes           (nature de la charge)
+     *   D 445100   TVA récupérable
+     *     C 401000   net à payer             (auxiliaire : le fournisseur)
+     *     C 442100   retenue à la source
+     *
+     * La retenue se comptabilise **dans la même écriture**, en taxe négative :
+     * la dette envers le fournisseur naît déjà nette de ce qu'on prélèvera
+     * pour l'État. La sortir dans une seconde écriture laisserait, entre les
+     * deux, un solde fournisseur qui n'a jamais été dû.
+     *
+     * Sans retenue, la ligne 442100 est simplement absente et le net à payer
+     * vaut le TTC.
+     */
+    public function postSupplierInvoice(SupplierInvoice $invoice): ?JournalEntry
+    {
+        if ($this->dejaComptabilise($invoice, self::SCHEMA_SUPPLIER_INVOICE)) {
+            return null;
+        }
+
+        if ($invoice->amount_ttc <= 0) {
+            return null;
+        }
+
+        $libelle = $invoice->supplier?->name . ' — ' . $invoice->number;
+
+        $lignes = [[
+            'account' => $invoice->charge_account,
+            'label'   => $invoice->label,
+            'debit'   => $invoice->amount_ht,
+        ]];
+
+        if ($invoice->amount_vat > 0) {
+            $lignes[] = [
+                'account' => Account::VAT_DEDUCTIBLE,
+                'label'   => 'TVA récupérable',
+                'debit'   => $invoice->amount_vat,
+            ];
+        }
+
+        $lignes[] = [
+            'account'   => Account::SUPPLIERS,
+            'label'     => 'Facture ' . $invoice->number,
+            'credit'    => $invoice->net_payable,
+            'auxiliary' => $invoice->supplier,
+        ];
+
+        if ($invoice->withholding_amount > 0) {
+            $lignes[] = [
+                'account' => Account::WITHHOLDING,
+                'label'   => 'Retenue ' . $invoice->withholdingLabel()
+                    . ' ' . rtrim(rtrim(number_format($invoice->withholdingRate(), 2, ',', ''), '0'), ',') . ' %',
+                'credit'  => $invoice->withholding_amount,
+            ];
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::PURCHASES,
+            date: Carbon::parse($invoice->invoice_date),
+            label: $libelle,
+            lines: $lignes,
+            source: $invoice,
+            schema: self::SCHEMA_SUPPLIER_INVOICE,
+            reference: $invoice->number,
         );
     }
 

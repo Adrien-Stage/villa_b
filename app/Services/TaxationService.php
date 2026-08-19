@@ -31,6 +31,22 @@ class TaxationService
     public const BASIS_PER_ROOM = 'room';
     public const BASIS_PER_PERSON = 'person';
 
+    /**
+     * Taux de retenue à la source par défaut, en points de base.
+     *
+     * **Ces taux ne sont pas confirmés pour le Cameroun.** Ils proviennent du
+     * document de référence béninois cité au plan et attendent la validation
+     * du cabinet, au même titre que la taxe de séjour. Ils sont donc des
+     * défauts surchargeables par les réglages de l'établissement, jamais des
+     * constantes en dur dans les schémas d'imputation : le jour où un arrêté
+     * les corrige, rien ne se recompile.
+     */
+    public const WITHHOLDING_DEFAULTS = [
+        'services'     => 500,   // Prestations de services — 5 %
+        'fees'         => 1_000, // Honoraires — 10 %
+        'intellectual' => 1_500, // Prestations intellectuelles — 15 %
+    ];
+
     private ?array $settings = null;
     private ?TaxRate $defaultRate = null;
 
@@ -198,6 +214,77 @@ class TaxationService
         }
 
         return $this->defaultRate();
+    }
+
+    // ── Retenue à la source ─────────────────────────────────────────────────
+
+    /**
+     * Retenue à la source due sur une facture fournisseur.
+     *
+     * L'établissement ne paie pas cette part au fournisseur : il la prélève et
+     * la reverse à l'État. Ce n'est donc ni une charge ni un produit, mais une
+     * dette — d'où le compte 442100 au crédit et un net à payer diminué
+     * d'autant.
+     *
+     * **L'assiette est le hors taxes.** Retenir sur le TTC reviendrait à
+     * prélever sur une TVA qui appartient déjà à l'État et que le fournisseur
+     * ne fait que collecter : la retenue serait comptée deux fois.
+     *
+     * @param  int  $ht  Base hors taxes, en centimes.
+     * @return array{type: string|null, basis_points: int, amount: int}
+     */
+    public function withholding(int $ht, ?string $type): array
+    {
+        $bp = $this->withholdingRate($type);
+
+        if ($type === null || $bp <= 0 || $ht <= 0) {
+            return ['type' => null, 'basis_points' => 0, 'amount' => 0];
+        }
+
+        // Arrondi au centime le plus proche, en arithmétique entière.
+        $amount = intdiv($ht * $bp + 5_000, 10_000);
+
+        return ['type' => $type, 'basis_points' => $bp, 'amount' => $amount];
+    }
+
+    /** Taux applicable à une nature de retenue, en points de base. */
+    public function withholdingRate(?string $type): int
+    {
+        if ($type === null) {
+            return 0;
+        }
+
+        $configures = (array) $this->setting('withholding_rates', []);
+
+        return (int) ($configures[$type] ?? self::WITHHOLDING_DEFAULTS[$type] ?? 0);
+    }
+
+    /**
+     * Taux en vigueur, toutes natures confondues.
+     *
+     * @return array<string, int>
+     */
+    public function withholdingRates(): array
+    {
+        $taux = [];
+
+        foreach (array_keys(self::WITHHOLDING_DEFAULTS) as $type) {
+            $taux[$type] = $this->withholdingRate($type);
+        }
+
+        return $taux;
+    }
+
+    /**
+     * Les taux ont-ils été confirmés par le cabinet ?
+     *
+     * Tant que non, les écrans le signalent : appliquer une retenue au mauvais
+     * taux expose à un redressement, et le silence coûterait plus cher qu'un
+     * bandeau.
+     */
+    public function withholdingRatesConfirmed(): bool
+    {
+        return (bool) $this->setting('withholding_rates_confirmed', false);
     }
 
     private function resolveRate(TaxRate|string|null $rate): ?TaxRate

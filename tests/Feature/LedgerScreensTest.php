@@ -291,6 +291,120 @@ test('le lettrage automatique signale l’absence de rapprochement', function ()
         ->assertSessionHas('error');
 });
 
+// ── Fournisseurs et retenues à la source ────────────────────────────────────
+
+test('les écrans fournisseurs s’ouvrent', function () {
+    $this->actingAs(comptable())->get(route('accounting.ledger.suppliers'))->assertOk();
+    $this->actingAs(comptable())->get(route('accounting.ledger.suppliers.create'))->assertOk();
+    $this->actingAs(comptable())->get(route('accounting.ledger.withholding'))->assertOk();
+});
+
+test('la saisie d’une facture fournisseur produit son écriture', function () {
+    $fournisseur = \App\Models\Supplier::create([
+        'name' => 'Établissements Mbarga', 'email' => 'mbarga@test.cm', 'is_active' => true,
+    ]);
+
+    $this->actingAs(comptable())->post(route('accounting.ledger.suppliers.store'), [
+        'supplier_id'      => $fournisseur->id,
+        'number'           => 'FA-2026-0142',
+        'invoice_date'     => '2026-06-15',
+        'charge_account'   => '601000',
+        'label'            => 'Approvisionnement économat',
+        // Saisie en francs.
+        'amount_ttc'       => 11_925,
+        'withholding_type' => \App\Models\SupplierInvoice::WITHHOLDING_SERVICES,
+    ])->assertRedirect(route('accounting.ledger.suppliers'));
+
+    $facture = \App\Models\SupplierInvoice::first();
+
+    expect($facture->amount_ttc)->toBe(1_192_500);
+    expect($facture->isPosted())->toBeTrue();
+    expect($facture->net_payable)->toBeLessThan($facture->amount_ttc);
+});
+
+test('une référence déjà saisie pour ce fournisseur est refusée', function () {
+    $fournisseur = \App\Models\Supplier::create([
+        'name' => 'Fournisseur', 'email' => 'f@test.cm', 'is_active' => true,
+    ]);
+
+    $payload = [
+        'supplier_id'    => $fournisseur->id,
+        'number'         => 'FA-DOUBLON',
+        'invoice_date'   => '2026-06-15',
+        'charge_account' => '601000',
+        'label'          => 'Achat',
+        'amount_ttc'     => 5_000,
+    ];
+
+    $this->actingAs(comptable())->post(route('accounting.ledger.suppliers.store'), $payload)->assertRedirect();
+
+    // La double saisie doublerait la charge et la dette : elle s'arrête ici.
+    $this->actingAs(comptable())
+        ->from(route('accounting.ledger.suppliers.create'))
+        ->post(route('accounting.ledger.suppliers.store'), $payload)
+        ->assertSessionHas('error');
+
+    expect(\App\Models\SupplierInvoice::count())->toBe(1);
+});
+
+// ── Analytique (classe 9) ───────────────────────────────────────────────────
+
+test('les écrans analytiques s’ouvrent', function () {
+    ecritureType();
+
+    $this->actingAs(comptable())->get(route('accounting.ledger.analytic'))->assertOk();
+    $this->actingAs(comptable())->get(route('accounting.ledger.analytic.margins'))->assertOk();
+});
+
+test('le reflet analytique se produit depuis l’écran', function () {
+    ecritureType(Carbon::parse('2026-06-15'));
+
+    // Une charge, sinon il n'y a rien à refléter.
+    app(LedgerService::class)->post(
+        Journal::PURCHASES,
+        Carbon::parse('2026-06-15'),
+        'Achat',
+        [
+            ['account' => '601000', 'debit' => 400_000, 'center' => 'restaurant'],
+            ['account' => Account::SUPPLIERS, 'credit' => 400_000],
+        ]
+    );
+
+    $this->actingAs(comptable())
+        ->from(route('accounting.ledger.analytic'))
+        ->post(route('accounting.ledger.analytic.mirror'), [
+            'from' => '2026-06-01',
+            'to'   => '2026-06-30',
+        ])
+        ->assertSessionHas('success');
+
+    $reflet = \App\Models\JournalEntry::where('schema', 'like', 'analytic_mirror%')->with('lines')->first();
+
+    expect($reflet)->not->toBeNull();
+    expect($reflet->isBalanced())->toBeTrue();
+});
+
+test('refléter deux fois la même période est refusé', function () {
+    app(LedgerService::class)->post(
+        Journal::PURCHASES,
+        Carbon::parse('2026-06-15'),
+        'Achat',
+        [
+            ['account' => '601000', 'debit' => 400_000],
+            ['account' => Account::SUPPLIERS, 'credit' => 400_000],
+        ]
+    );
+
+    $payload = ['from' => '2026-06-01', 'to' => '2026-06-30'];
+
+    $this->actingAs(comptable())->post(route('accounting.ledger.analytic.mirror'), $payload);
+
+    $this->actingAs(comptable())
+        ->from(route('accounting.ledger.analytic'))
+        ->post(route('accounting.ledger.analytic.mirror'), $payload)
+        ->assertSessionHas('error');
+});
+
 // ── Navigation ──────────────────────────────────────────────────────────────
 
 test('la comptabilité de caisse renvoie vers la comptabilité générale', function () {

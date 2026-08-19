@@ -453,6 +453,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/lettrage/annuler', [$aux, 'unreconcile'])->name('reconcile.undo');
             Route::post('/lettrage/auto', [$aux, 'autoReconcile'])->name('reconcile.auto');
 
+            // Fournisseurs : factures reçues et retenues à la source.
+            $fou = App\Http\Controllers\SupplierInvoiceController::class;
+
+            Route::get('/fournisseurs', [$fou, 'index'])->name('suppliers');
+            Route::get('/fournisseurs/nouvelle', [$fou, 'create'])->name('suppliers.create');
+            Route::post('/fournisseurs', [$fou, 'store'])->name('suppliers.store');
+            Route::get('/retenues', [$fou, 'withholdingStatement'])->name('withholding');
+            Route::get('/fournisseurs/{invoice}', [$fou, 'show'])->whereNumber('invoice')->name('suppliers.show');
+
+            // Analytique (classe 9) : rentabilité par point de vente.
+            $ana = App\Http\Controllers\AnalyticController::class;
+
+            Route::get('/analytique', [$ana, 'index'])->name('analytic');
+            Route::get('/analytique/marges', [$ana, 'margins'])->name('analytic.margins');
+            Route::post('/analytique/reflet', [$ana, 'postMirror'])->name('analytic.mirror');
+
             Route::get('/ecritures/{entry}', [$l, 'show'])->whereNumber('entry')->name('entry');
             Route::post('/ecritures/{entry}/extourne', [$l, 'reverse'])->whereNumber('entry')->name('entry.reverse');
         });

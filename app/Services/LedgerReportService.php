@@ -38,7 +38,8 @@ class LedgerReportService
                 DB::raw('SUM(journal_entry_lines.credit) as total_credit')
             )
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
-            ->whereBetween('journal_entries.entry_date', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('journal_entries.entry_date', '>=', $from->toDateString())
+            ->whereDate('journal_entries.entry_date', '<=', $to->toDateString())
             ->whereNotNull('journal_entries.posted_at')
             ->groupBy('journal_entry_lines.account_code')
             ->get();
@@ -105,7 +106,8 @@ class LedgerReportService
             ->with(['entry.journal'])
             ->where('account_code', $accountCode)
             ->whereHas('entry', fn ($q) => $q
-                ->whereBetween('entry_date', [$from->toDateString(), $to->toDateString()])
+                ->whereDate('entry_date', '>=', $from->toDateString())
+                ->whereDate('entry_date', '<=', $to->toDateString())
                 ->whereNotNull('posted_at'))
             ->get()
             ->sortBy(fn ($line) => [$line->entry->entry_date->timestamp, $line->id])
@@ -144,7 +146,8 @@ class LedgerReportService
     {
         return JournalEntry::query()
             ->with(['journal', 'lines'])
-            ->whereBetween('entry_date', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('entry_date', '>=', $from->toDateString())
+            ->whereDate('entry_date', '<=', $to->toDateString())
             ->when($journalId, fn ($q) => $q->where('journal_id', $journalId))
             ->orderByDesc('entry_date')
             ->orderByDesc('id')
@@ -162,7 +165,8 @@ class LedgerReportService
     {
         $codes = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
-            ->whereBetween('journal_entries.entry_date', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('journal_entries.entry_date', '>=', $from->toDateString())
+            ->whereDate('journal_entries.entry_date', '<=', $to->toDateString())
             ->whereNotNull('journal_entries.posted_at')
             ->distinct()
             ->pluck('journal_entry_lines.account_code');
