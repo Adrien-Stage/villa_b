@@ -11,6 +11,17 @@ use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
 
+/**
+ * Le grand livre est un module activable par établissement : sans lui, toutes
+ * ses routes répondent 403. On l'active pour ce fichier, et un test dédié
+ * vérifie qu'il bloque bien quand il est absent.
+ */
+beforeEach(function () {
+    $prop = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
+    $prop->setAccessible(true);
+    $prop->setValue(null, ['ledger']);
+});
+
 /** Comptable connecté — le rôle qui pilote le module. */
 function comptable(): User
 {
@@ -53,6 +64,24 @@ function ecritureType(?Carbon $date = null): \App\Models\JournalEntry
 
 test('le module est fermé aux visiteurs non connectés', function () {
     $this->get(route('accounting.ledger.index'))->assertRedirect(route('login'));
+});
+
+test('le module désactivé ferme le grand livre, sans toucher à la caisse', function () {
+    $prop = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
+    $prop->setAccessible(true);
+    $prop->setValue(null, []);
+
+    $comptable = comptable();
+
+    // Le garde-fou vaut aussi pour l'accès direct par URL, pas seulement pour
+    // le masquage du lien.
+    $this->actingAs($comptable)->get(route('accounting.ledger.index'))->assertForbidden();
+    $this->actingAs($comptable)->get(route('accounting.ledger.balance'))->assertForbidden();
+
+    // La comptabilité de caisse ne dépend pas du module : elle reste ouverte.
+    $this->actingAs($comptable)->get(route('accounting.index'))
+        ->assertOk()
+        ->assertDontSee(route('accounting.ledger.index'));
 });
 
 test('un réceptionniste n’accède pas à la comptabilité générale', function () {

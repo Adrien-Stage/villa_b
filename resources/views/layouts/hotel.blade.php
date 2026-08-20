@@ -255,6 +255,9 @@
                         <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
+                            @module('ledger')
+                                <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
+                            @endmodule
                             {{-- Le manager voit déjà les fiches techniques dans la section Hôtel. --}}
                             @role('accountant','admin')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>

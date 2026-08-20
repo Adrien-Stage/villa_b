@@ -420,7 +420,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // S'ajoute à la comptabilité de caisse ci-dessus sans la remplacer :
         // l'une répond au quotidien de la réception, l'autre à l'obligation
         // légale et au pilotage.
-        Route::prefix('ledger')->name('ledger.')->group(function () {
+        // Activable par établissement depuis l'ERP : tout le monde n'a pas
+        // besoin d'un grand livre. La comptabilité de caisse ci-dessus, elle,
+        // reste toujours accessible.
+        Route::prefix('ledger')->name('ledger.')->middleware('module:ledger')->group(function () {
             $l = App\Http\Controllers\LedgerController::class;
 
             Route::get('/', [$l, 'index'])->name('index');
