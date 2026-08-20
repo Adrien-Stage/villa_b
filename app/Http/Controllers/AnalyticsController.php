@@ -16,15 +16,11 @@ class AnalyticsController extends Controller
     {
         $period = $request->query('period', 'month');
 
-        $startDate = match ($period) {
-            'today' => Carbon::today(),
-            'week' => Carbon::now()->startOfWeek(),
-            'month' => Carbon::now()->startOfMonth(),
-            'year' => Carbon::now()->startOfYear(),
-            default => Carbon::now()->startOfMonth(),
-        };
+        $annees = $this->anneesDisponibles();
+        $year = $this->anneeChoisie($request, $annees);
 
-        $endDate = Carbon::now()->endOfDay();
+        [$startDate, $endDate] = $this->intervalle($period, $year);
+        $periodLabel = $this->libellePeriode($period, $year);
 
         // Hotel Revenue (Completed Payments)
         $hotelRevenue = Payment::where('status', 'completed')
@@ -75,25 +71,31 @@ class AnalyticsController extends Controller
         // Prevent too many labels if year is selected
         if ($period === 'year') {
             // Group by month
+            $mois = $this->extractionMois('paid_at');
+
             $monthlyHotel = Payment::where('status', 'completed')
                 ->whereBetween('paid_at', [$startDate, $endDate])
-                ->selectRaw('EXTRACT(MONTH FROM paid_at) as month, SUM(amount) as total')
-                ->groupByRaw('EXTRACT(MONTH FROM paid_at)')
+                ->selectRaw("{$mois} as month, SUM(amount) as total")
+                ->groupByRaw($mois)
                 ->get()->keyBy('month');
                 
             $monthlyRestaurant = RestaurantCustomerOrder::where('payment_status', 'paid')
                 ->whereBetween('paid_at', [$startDate, $endDate])
-                ->selectRaw('EXTRACT(MONTH FROM paid_at) as month, SUM(amount_paid) as total')
-                ->groupByRaw('EXTRACT(MONTH FROM paid_at)')
+                ->selectRaw("{$mois} as month, SUM(amount_paid) as total")
+                ->groupByRaw($mois)
                 ->get()->keyBy('month');
                 
             $monthlyShop = ShopOrder::where('payment_status', 'paid')
                 ->whereBetween('paid_at', [$startDate, $endDate])
-                ->selectRaw('EXTRACT(MONTH FROM paid_at) as month, SUM(total_amount) as total')
-                ->groupByRaw('EXTRACT(MONTH FROM paid_at)')
+                ->selectRaw("{$mois} as month, SUM(total_amount) as total")
+                ->groupByRaw($mois)
                 ->get()->keyBy('month');
 
-            for ($i = 1; $i <= Carbon::now()->month; $i++) {
+            // Une année révolue se lit jusqu'en décembre ; l'année en cours
+            // s'arrête au mois courant, les mois à venir n'ayant rien à dire.
+            $dernierMois = $year < Carbon::now()->year ? 12 : Carbon::now()->month;
+
+            for ($i = 1; $i <= $dernierMois; $i++) {
                 $chartLabels[] = Carbon::create()->month($i)->locale('fr')->shortMonthName;
                 // PostgreSQL EXTRACT returns float, so keys might be "1" or 1.0 depending on the driver. Casting to float handles both.
                 $monthKey = (string)$i;
@@ -115,6 +117,11 @@ class AnalyticsController extends Controller
 
         return view('analytics.index', compact(
             'period',
+            'periodLabel',
+            'year',
+            'annees',
+            'startDate',
+            'endDate',
             'hotelRevenue',
             'restaurantRevenue',
             'shopRevenue',
@@ -127,20 +134,107 @@ class AnalyticsController extends Controller
         ));
     }
 
+    /**
+     * Extraction du numéro de mois, dans le dialecte de la connexion.
+     *
+     * La production tourne sous PostgreSQL, les tests sous SQLite : EXTRACT
+     * n'existe pas côté SQLite, où la même lecture passe par strftime.
+     */
+    private function extractionMois(string $colonne): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "CAST(strftime('%m', {$colonne}) AS INTEGER)"
+            : "EXTRACT(MONTH FROM {$colonne})";
+    }
+
+    /**
+     * Bornes de la période demandée.
+     *
+     * Une année révolue se lit en entier — c'est tout l'intérêt de pouvoir
+     * choisir 2023 depuis 2026. L'année en cours, elle, s'arrête aujourd'hui :
+     * la prolonger jusqu'au 31 décembre écraserait les moyennes avec des
+     * journées qui n'ont pas encore eu lieu.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function intervalle(string $period, int $year): array
+    {
+        if ($period === 'year') {
+            $debut = Carbon::create($year, 1, 1)->startOfYear();
+
+            return [
+                $debut,
+                $year < Carbon::now()->year ? $debut->copy()->endOfYear() : Carbon::now()->endOfDay(),
+            ];
+        }
+
+        $debut = match ($period) {
+            'today' => Carbon::today(),
+            'week'  => Carbon::now()->startOfWeek(),
+            'month' => Carbon::now()->startOfMonth(),
+            default => Carbon::now()->startOfMonth(),
+        };
+
+        return [$debut, Carbon::now()->endOfDay()];
+    }
+
+    /**
+     * Millésimes proposés au filtre : de la première écriture encaissée à
+     * l'année en cours. Aucune donnée encore : seule l'année en cours.
+     *
+     * @return array<int,int>  du plus récent au plus ancien
+     */
+    private function anneesDisponibles(): array
+    {
+        $premiers = array_filter([
+            Payment::where('status', 'completed')->min('paid_at'),
+            RestaurantCustomerOrder::where('payment_status', 'paid')->min('paid_at'),
+            ShopOrder::where('payment_status', 'paid')->min('paid_at'),
+            Booking::min('created_at'),
+        ]);
+
+        $depart = $premiers
+            ? min(array_map(fn($date) => Carbon::parse($date)->year, $premiers))
+            : Carbon::now()->year;
+
+        return range(Carbon::now()->year, min($depart, Carbon::now()->year));
+    }
+
+    /**
+     * Année demandée, ramenée à une année réellement proposée : une valeur
+     * bricolée dans l'URL ne doit pas sortir un rapport vide sans le dire.
+     *
+     * @param  array<int,int>  $annees
+     */
+    private function anneeChoisie(Request $request, array $annees): int
+    {
+        $year = (int) $request->query('year', Carbon::now()->year);
+
+        return in_array($year, $annees, true) ? $year : Carbon::now()->year;
+    }
+
+    private function libellePeriode(string $period, int $year): string
+    {
+        if ($period === 'year') {
+            return $year === Carbon::now()->year ? 'cette année' : "l'année {$year}";
+        }
+
+        return match ($period) {
+            'today' => "aujourd'hui",
+            'week'  => 'cette semaine',
+            default => 'ce mois',
+        };
+    }
+
     public function print(Request $request)
     {
         $period = $request->query('period', 'month');
         $department = $request->query('department', 'all');
 
-        $startDate = match ($period) {
-            'today' => Carbon::today(),
-            'week' => Carbon::now()->startOfWeek(),
-            'month' => Carbon::now()->startOfMonth(),
-            'year' => Carbon::now()->startOfYear(),
-            default => Carbon::now()->startOfMonth(),
-        };
+        $year = $this->anneeChoisie($request, $this->anneesDisponibles());
 
-        $endDate = Carbon::now()->endOfDay();
+        [$startDate, $endDate] = $this->intervalle($period, $year);
+        $periodLabel = $this->libellePeriode($period, $year);
 
         // Hotel
         $hotelRevenue = Payment::where('status', 'completed')
@@ -168,6 +262,8 @@ class AnalyticsController extends Controller
 
         return view('analytics.print', compact(
             'period',
+            'periodLabel',
+            'year',
             'department',
             'startDate',
             'endDate',

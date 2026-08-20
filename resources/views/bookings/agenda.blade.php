@@ -347,7 +347,9 @@
             ancre: '',
             selectedIso: '',
             searchQuery: '',
-            grain: 'mois',   // 'jour' | 'semaine' | 'mois'
+            // La journée en cours à l'ouverture : c'est elle que la réception
+            // consulte, le mois et la semaine restent à un clic.
+            grain: 'jour',   // 'jour' | 'semaine' | 'mois'
 
             init() {
                 // toISOString() bascule en UTC : à l'ouest de Greenwich le

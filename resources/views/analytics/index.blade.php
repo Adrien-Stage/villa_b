@@ -22,24 +22,23 @@
                 </button>
                 <div x-show="open" x-transition style="display: none;" 
                      class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-secondary/20 py-1 z-50">
-                    <a href="{{ route('analytics.print', ['period' => $period, 'department' => 'all']) }}" target="_blank"
+                    <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'all']) }}" target="_blank"
                        class="block px-4 py-2 text-xs text-primary hover:bg-accent/20">Rapport Global</a>
-                    <a href="{{ route('analytics.print', ['period' => $period, 'department' => 'hotel']) }}" target="_blank"
+                    <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'hotel']) }}" target="_blank"
                        class="block px-4 py-2 text-xs text-primary hover:bg-accent/20">Rapport Hébergement</a>
-                    <a href="{{ route('analytics.print', ['period' => $period, 'department' => 'restaurant']) }}" target="_blank"
+                    <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'restaurant']) }}" target="_blank"
                        class="block px-4 py-2 text-xs text-primary hover:bg-accent/20">Rapport Restaurant</a>
-                    <a href="{{ route('analytics.print', ['period' => $period, 'department' => 'shop']) }}" target="_blank"
+                    <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'shop']) }}" target="_blank"
                        class="block px-4 py-2 text-xs text-primary hover:bg-accent/20">Rapport Boutique</a>
                 </div>
             </div>
 
-            <div class="flex bg-white rounded-lg p-1 border border-secondary/20 shadow-sm">
+            <div class="flex items-center bg-white rounded-lg p-1 border border-secondary/20 shadow-sm">
                 @php
                     $periods = [
                         'today' => 'Aujourd\'hui',
                         'week'  => 'Cette semaine',
                         'month' => 'Ce mois',
-                        'year'  => 'Cette année'
                     ];
                 @endphp
                 @foreach($periods as $key => $label)
@@ -49,6 +48,28 @@
                         {{ $label }}
                     </a>
                 @endforeach
+
+                {{-- Le filtre annuel porte son millésime : depuis 2026, on peut
+                     redemander les chiffres de 2023 sans quitter l'écran. --}}
+                <div class="relative">
+                    <select onchange="if (this.value) window.location.href = this.value"
+                            aria-label="Année du rapport"
+                            class="appearance-none cursor-pointer pl-4 pr-8 py-1.5 text-xs font-medium rounded-md border-0 outline-none transition-colors
+                            {{ $period === 'year' ? 'bg-primary text-white shadow' : 'bg-transparent text-primary/60 hover:text-primary hover:bg-accent/20' }}">
+                        @unless($period === 'year')
+                            <option value="" selected class="bg-white text-primary">Par année</option>
+                        @endunless
+                        @foreach($annees as $annee)
+                            <option value="{{ route('analytics.index', ['period' => 'year', 'year' => $annee]) }}"
+                                    class="bg-white text-primary"
+                                    @selected($period === 'year' && $year === $annee)>
+                                {{ $annee === now()->year ? 'Cette année (' . $annee . ')' : 'Année ' . $annee }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <i data-lucide="chevron-down"
+                       class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 {{ $period === 'year' ? 'text-white/70' : 'text-primary/40' }}"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -68,7 +89,9 @@
                 </div>
             </div>
             <p class="text-xs text-primary/40 mt-4 flex items-center gap-1">
-                <i data-lucide="calendar" class="w-3 h-3"></i> Période : {{ strtolower($periods[$period] ?? '') }}
+                <i data-lucide="calendar" class="w-3 h-3"></i> Période : {{ $periodLabel }}
+                <span class="text-primary/30">·</span>
+                {{ $startDate->locale('fr')->isoFormat('D MMM') }} → {{ $endDate->locale('fr')->isoFormat('D MMM YYYY') }}
             </p>
         </div>
 
