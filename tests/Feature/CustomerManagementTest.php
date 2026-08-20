@@ -38,6 +38,63 @@ beforeEach(function () {
         'is_blacklisted' => false]);
 });
 
+// Le bouton « Nouveau Client » du tableau de bord renvoyait une 500 : les
+// routes customers.create / customers.store existaient, mais ni les méthodes
+// de contrôleur ni la vue. Rien ne les exerçait, d'où le passage inaperçu.
+test('a manager can access the customer create view', function () {
+    $this->actingAs($this->manager);
+
+    $response = $this->get(route('customers.create'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Nouveau client');
+});
+
+test('a receptionist can access the customer create view', function () {
+    $this->actingAs($this->receptionist);
+
+    $this->get(route('customers.create'))->assertStatus(200);
+});
+
+test('a cashier cannot access the customer create view', function () {
+    $this->actingAs($this->cashier);
+
+    $response = $this->from(route('dashboard'))->get(route('customers.create'));
+
+    $response->assertStatus(302);
+    $response->assertSessionHas('access_denied_popup', true);
+});
+
+test('a manager can create a customer', function () {
+    $this->actingAs($this->manager);
+
+    $response = $this->post(route('customers.store'), [
+        'first_name' => 'Awa',
+        'last_name'  => 'Ngassa',
+        'phone'      => '+237690000000',
+        'email'      => 'awa.ngassa@example.com',
+    ]);
+
+    $customer = Customer::where('email', 'awa.ngassa@example.com')->first();
+
+    expect($customer)->not->toBeNull();
+    expect($customer->first_name)->toBe('Awa');
+    // Sans tenant_id, la fiche n'apparaîtrait dans aucune liste filtrée.
+    expect($customer->tenant_id)->toBe($this->tenant->id);
+
+    $response->assertRedirect(route('customers.show', $customer));
+});
+
+test('creating a customer requires a first and last name', function () {
+    $this->actingAs($this->manager);
+
+    $response = $this->from(route('customers.create'))
+        ->post(route('customers.store'), ['first_name' => '', 'last_name' => '']);
+
+    $response->assertSessionHasErrors(['first_name', 'last_name']);
+    expect(Customer::count())->toBe(1); // seul le client du beforeEach
+});
+
 test('a receptionist can access the customer edit view', function () {
     $this->actingAs($this->receptionist);
 

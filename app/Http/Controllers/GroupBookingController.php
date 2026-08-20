@@ -291,8 +291,9 @@ class GroupBookingController extends Controller
             ?? Tenant::where('slug', 'villa-boutanga')->value('id');
         $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount = $nights * $pricePerNight;
-        $taxAmount = 0;
         $totalAmount = $totalRoomAmount;
+        // TVA extraite du total TTC, jamais ajoutée par dessus.
+        $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
 
         DB::transaction(function () use (
             $groupBooking,
@@ -537,8 +538,9 @@ class GroupBookingController extends Controller
                         ->where('is_complimentary', false)
                         ->sum('total_price');
 
-                    $taxAmount = 0;
-                    $totalAmount = $booking->total_room_amount + $extrasAmount + $taxAmount;
+                    $totalAmount = $booking->total_room_amount + $extrasAmount;
+                    // TVA extraite du total TTC, jamais ajoutée par dessus.
+                    $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
 
                     $booking->update([
                         'extras_amount' => $extrasAmount,

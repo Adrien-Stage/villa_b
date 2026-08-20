@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
@@ -44,6 +45,55 @@ class CustomerController extends Controller
             ->withQueryString();
 
         return view('customers.index', compact('customers', 'stats'));
+    }
+
+    public function create()
+    {
+        // Seules les conventions en cours sont proposées : contrairement à
+        // l'édition, il n'y a pas de rattachement existant à préserver.
+        $partnerOrganizations = \App\Models\PartnerOrganization::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('customers.create', compact('partnerOrganizations'));
+    }
+
+    public function store(Request $request)
+    {
+        // Mêmes règles que update() : l'email reste facultatif, un client
+        // walk-in se présente souvent sans adresse.
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'nationality' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
+            'id_document_type' => 'nullable|string|in:CNI,Passeport,Permis,CarteSejour',
+            'id_document_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+            'partner_organization_id' => ['nullable', 'exists:partner_organizations,id'],
+            'is_vip' => 'nullable|boolean',
+            'is_blacklisted' => 'nullable|boolean',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['is_vip'] = $request->boolean('is_vip');
+        $validated['is_blacklisted'] = $request->boolean('is_blacklisted');
+
+        // Même résolution que partout ailleurs (BookingController, imports CSV) :
+        // sans tenant_id, la fiche n'apparaîtrait dans aucune liste filtrée.
+        $validated['tenant_id'] = Auth::user()->tenant_id
+            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+
+        $customer = Customer::create($validated);
+
+        return redirect()
+            ->route('customers.show', $customer)
+            ->with('success', 'Le client a été créé avec succès.');
     }
 
     public function show(Customer $customer)

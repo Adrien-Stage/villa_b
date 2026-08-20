@@ -222,9 +222,10 @@ class ShopOrderController extends Controller
                 }
             }
 
-            // Pas de taxe (TVA à 0)
-            $taxAmount = 0;
+            // Les prix boutique sont des TTC : la TVA est extraite du total,
+            // jamais ajoutée par dessus — le client paie le même montant.
             $totalAmount = $subtotal;
+            $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
 
             // Mettre à jour la commande
             $order->update([

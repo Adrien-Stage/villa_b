@@ -18,7 +18,8 @@ class BookingController extends Controller
 {
     public function __construct(
         private CheckOutService $checkOutService,
-        private \App\Services\Notifier $notifier
+        private \App\Services\Notifier $notifier,
+        private \App\Services\TaxationService $taxation
     ) {}
 
     // ===== LISTE =====
@@ -614,15 +615,18 @@ class BookingController extends Controller
         $customPrice = (int) $validated['custom_price'] * 100;
         $paymentAmount = (int) $validated['payment_amount'] * 100;
 
-        // Prix nets sans taxe
+        // Les prix saisis sont des montants TTC.
         $pricePerNight = $nights > 0 ? (int) round($customPrice / $nights) : 0;
         $totalRoomAmount = $pricePerNight * $nights;
-        $taxAmount = 0;
         // Les remises cumulées ne peuvent pas dépasser l'hébergement facturé :
         // l'arrondi du prix par nuitée peut faire varier le brut de quelques
         // centimes par rapport au montant sur lequel elles ont été calculées.
         $totalDiscount = min($partnerDiscount + $packageDiscount, $totalRoomAmount);
-        $totalAmount = $totalRoomAmount + $packageAmount + $taxAmount - $totalDiscount;
+        $totalAmount = $totalRoomAmount + $packageAmount - $totalDiscount;
+        // La TVA est EXTRAITE du total, jamais ajoutée : le client paie le
+        // même montant qu'avant sa mise en service, seule la décomposition
+        // apparaît désormais sur la facture.
+        $taxAmount = $this->taxation->breakdown($totalAmount)->vat;
         $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
@@ -1148,8 +1152,9 @@ class BookingController extends Controller
                 ->where('is_complimentary', false)
                 ->sum('total_price');
 
-            $taxAmount    = 0;
-            $totalAmount  = $booking->total_room_amount + $extrasAmount + $taxAmount - $booking->discount_amount;
+            $totalAmount  = $booking->total_room_amount + $extrasAmount - $booking->discount_amount;
+            // TVA extraite du total TTC, jamais ajoutée par dessus.
+            $taxAmount    = $this->taxation->breakdown($totalAmount)->vat;
             $balanceDue   = max(0, $totalAmount - $booking->paid_amount);
 
             $booking->update([
@@ -1330,8 +1335,9 @@ class BookingController extends Controller
 
         $pricePerNight    = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount  = $nights * $pricePerNight;
-        $taxAmount        = 0;
         $totalAmount      = $totalRoomAmount;
+        // TVA extraite du total TTC, jamais ajoutée par dessus.
+        $taxAmount        = $this->taxation->breakdown($totalAmount)->vat;
 
         $booking->update([
             'room_id'          => $room->id,

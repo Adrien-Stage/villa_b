@@ -415,6 +415,66 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/depenses', [$c, 'storeExpense'])->name('expenses.store');
         Route::put('/depenses/{expense}', [$c, 'updateExpense'])->name('expenses.update');
         Route::delete('/depenses/{expense}', [$c, 'destroyExpense'])->name('expenses.destroy');
+
+        // --- COMPTABILITÉ AVANCÉE (grand livre SYSCOHADA) ---
+        // S'ajoute à la comptabilité de caisse ci-dessus sans la remplacer :
+        // l'une répond au quotidien de la réception, l'autre à l'obligation
+        // légale et au pilotage.
+        // Activable par établissement depuis l'ERP : tout le monde n'a pas
+        // besoin d'un grand livre. La comptabilité de caisse ci-dessus, elle,
+        // reste toujours accessible.
+        Route::prefix('ledger')->name('ledger.')->middleware('module:ledger')->group(function () {
+            $l = App\Http\Controllers\LedgerController::class;
+
+            Route::get('/', [$l, 'index'])->name('index');
+            Route::get('/plan-de-comptes', [$l, 'accounts'])->name('accounts');
+            Route::get('/journaux', [$l, 'journals'])->name('journals');
+            Route::get('/grand-livre', [$l, 'generalLedger'])->name('general');
+            Route::get('/balance', [$l, 'balance'])->name('balance');
+
+            // Clôture journalière — déclarée avant /ecritures/{entry}.
+            Route::get('/cloture', [$l, 'nightAudits'])->name('night_audit');
+            Route::post('/cloture', [$l, 'runNightAudit'])->name('night_audit.run');
+
+            // Périodes et exercices — le verrouillage matérialise l'Article 22.
+            Route::get('/periodes', [$l, 'periods'])->name('periods');
+            Route::post('/exercices', [$l, 'openYear'])->name('years.open');
+            Route::post('/periodes/{period}/verrouiller', [$l, 'lockPeriod'])->name('periods.lock');
+
+            // Reprise des à-nouveaux — déclarée avant /ecritures/{entry}.
+            Route::get('/a-nouveaux', [$l, 'openingBalance'])->name('opening');
+            Route::post('/a-nouveaux', [$l, 'storeOpeningBalance'])->name('opening.store');
+
+            // Comptabilité auxiliaire et lettrage : le détail par tiers derrière
+            // les comptes collectifs, et la balance âgée qui en découle.
+            $aux = App\Http\Controllers\AuxiliaryController::class;
+
+            Route::get('/auxiliaire', [$aux, 'index'])->name('auxiliary');
+            Route::get('/auxiliaire/tiers', [$aux, 'ledger'])->name('auxiliary.ledger');
+            Route::get('/balance-agee', [$aux, 'agedBalance'])->name('aged');
+            Route::post('/lettrage', [$aux, 'reconcile'])->name('reconcile');
+            Route::post('/lettrage/annuler', [$aux, 'unreconcile'])->name('reconcile.undo');
+            Route::post('/lettrage/auto', [$aux, 'autoReconcile'])->name('reconcile.auto');
+
+            // Fournisseurs : factures reçues et retenues à la source.
+            $fou = App\Http\Controllers\SupplierInvoiceController::class;
+
+            Route::get('/fournisseurs', [$fou, 'index'])->name('suppliers');
+            Route::get('/fournisseurs/nouvelle', [$fou, 'create'])->name('suppliers.create');
+            Route::post('/fournisseurs', [$fou, 'store'])->name('suppliers.store');
+            Route::get('/retenues', [$fou, 'withholdingStatement'])->name('withholding');
+            Route::get('/fournisseurs/{invoice}', [$fou, 'show'])->whereNumber('invoice')->name('suppliers.show');
+
+            // Analytique (classe 9) : rentabilité par point de vente.
+            $ana = App\Http\Controllers\AnalyticController::class;
+
+            Route::get('/analytique', [$ana, 'index'])->name('analytic');
+            Route::get('/analytique/marges', [$ana, 'margins'])->name('analytic.margins');
+            Route::post('/analytique/reflet', [$ana, 'postMirror'])->name('analytic.mirror');
+
+            Route::get('/ecritures/{entry}', [$l, 'show'])->whereNumber('entry')->name('entry');
+            Route::post('/ecritures/{entry}/extourne', [$l, 'reverse'])->whereNumber('entry')->name('entry.reverse');
+        });
     });
 
     // --- ÉCONOMAT / INVENTAIRE ---
