@@ -158,6 +158,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('unsubscribe');
     });
 
+    // --- TICKETS DE SUPPORT (bouton « Suggestion » de la barre supérieure) ---
+    // Ouvert à tous les rôles : c'est le canal par lequel le personnel remonte
+    // un problème ou une amélioration au support technique, qui les traite
+    // depuis l'ERP. Aucun module ni rôle requis, sinon la remontée se perdrait
+    // exactement là où elle est la plus utile.
+    Route::prefix('support-tickets')->name('support-tickets.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SupportTicketController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\SupportTicketController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('store');
+    });
+
     // --- DISCUSSION INTERNE ---
     Route::prefix('discussions')->name('discussions.')->middleware('module:discussions')->group(function () {
         Route::get('/', [DiscussionController::class, 'index'])->name('index');

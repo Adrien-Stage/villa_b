@@ -27,6 +27,7 @@
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white border border-secondary/20 rounded-xl px-4 py-3">
                 <div class="min-w-0">
                     <p class="text-sm font-semibold text-primary">Exporter vers Excel</p>
+                    <p class="text-[11px] text-primary/60">Classeur complet : synthèse, coûts unitaires et une fiche par type de chambre.</p>
                     <p class="text-[11px] text-primary/50 mt-0.5">
                         <span x-show="toutes">Aucune fiche cochée : l'export prendra <strong>toutes les fiches</strong>.</span>
                         <span x-show="!toutes" x-cloak>
@@ -44,6 +45,13 @@
                     <button type="button" @click="selection = []" x-show="!toutes" x-cloak
                             class="px-3 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
                         Tout décocher
+                    </button>
+                    {{-- Le CSV à plat n'est pas un doublon du classeur : c'est le
+                         seul format que l'import sait relire. --}}
+                    <button type="submit" name="format" value="csv"
+                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors">
+                        <i data-lucide="file-text" class="w-4 h-4 text-secondary"></i>
+                        <span>CSV (ré-importable)</span>
                     </button>
                     <button type="submit"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">

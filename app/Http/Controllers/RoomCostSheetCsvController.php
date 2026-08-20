@@ -6,8 +6,11 @@ use App\Http\Controllers\Concerns\HandlesCsv;
 use App\Models\RoomCostItem;
 use App\Models\RoomCostSheet;
 use App\Models\RoomType;
+use App\Models\Tenant;
 use App\Services\RoomCostingService;
+use App\Services\RoomCostSheetWorkbook;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Import / Export tableur des fiches techniques.
@@ -32,14 +35,20 @@ class RoomCostSheetCsvController extends Controller
         'actif', 'notes',
     ];
 
-    public function __construct(private RoomCostingService $costing)
-    {
+    public function __construct(
+        private RoomCostingService $costing,
+        private RoomCostSheetWorkbook $workbook,
+    ) {
     }
 
     /**
-     * Export des fiches (ou modèle d'importation si ?template=1).
-     * Sans sélection, tout le catalogue actif part dans un seul fichier ;
-     * avec « types[] », seules les fiches cochées.
+     * Export des fiches.
+     *
+     * Deux formats, deux usages : le classeur Excel est le document de
+     * gestion — une fiche par onglet, formules vivantes, aux couleurs de
+     * l'établissement — tandis que le CSV à plat (?format=csv, ou ?template=1
+     * pour le squelette) reste le format de l'aller-retour d'importation,
+     * seul lisible par l'import.
      */
     public function export(Request $request)
     {
@@ -67,6 +76,10 @@ class RoomCostSheetCsvController extends Controller
         // l'utilisateur vers la liste plutôt que de livrer un fichier trompeur.
         if ($types->isEmpty()) {
             return back()->with('error', "Aucune fiche à exporter — créez d'abord un type de chambre.");
+        }
+
+        if ($request->query('format') !== 'csv') {
+            return $this->exportXlsx($types);
         }
 
         $rows = [];
@@ -114,6 +127,39 @@ class RoomCostSheetCsvController extends Controller
             : 'fiches_techniques';
 
         return $this->streamCsv($nom . '_' . now()->format('Ymd_His') . '.csv', self::HEADERS, $rows);
+    }
+
+    /**
+     * Classeur Excel des fiches : un onglet de synthèse, un onglet de coûts
+     * unitaires, puis une fiche par type de chambre.
+     */
+    private function exportXlsx($types)
+    {
+        $tenant = $this->tenantCourant();
+        $classeur = $this->workbook->build($types, $tenant);
+
+        $etablissement = $tenant?->slug ? \Illuminate\Support\Str::slug($tenant->slug) . '_' : '';
+        $nom = $types->count() === 1
+            ? 'fiche_technique_' . \Illuminate\Support\Str::slug($types->first()->name)
+            : $etablissement . 'fiches_techniques';
+
+        return response()->streamDownload(function () use ($classeur) {
+            $writer = new Xlsx($classeur);
+            // Excel recalcule à l'ouverture : inutile d'évaluer ici des
+            // formules qui référencent une douzaine d'onglets.
+            $writer->setPreCalculateFormulas(false);
+            $writer->save('php://output');
+        }, $nom . '_' . now()->format('Ymd_His') . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /** Établissement en cours : c'est lui qui signe le document exporté. */
+    private function tenantCourant(): ?Tenant
+    {
+        $id = $this->csvTenantId();
+
+        return $id ? Tenant::find($id) : null;
     }
 
     /**

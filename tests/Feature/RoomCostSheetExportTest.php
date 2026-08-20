@@ -9,12 +9,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 /**
- * Export tableur des fiches techniques.
+ * Export CSV à plat des fiches techniques (?format=csv).
  *
  * Sa raison d'être est le déploiement : le personnel remplit les fiches dans
- * Excel avant de prendre en main la plateforme. Le fichier doit donc être
- * complet et à plat — un type sans aucun poste doit y figurer, sinon personne
- * ne pensera à le renseigner.
+ * Excel avant de prendre en main la plateforme, puis le fichier est réinjecté
+ * par l'import — qui ne lit que ce format à plat. Il doit donc être complet :
+ * un type sans aucun poste doit y figurer, sinon personne ne pensera à le
+ * renseigner.
+ *
+ * Le document de gestion, lui, est le classeur Excel servi par défaut —
+ * voir RoomCostSheetWorkbookTest.
  */
 
 function exportManager(): User
@@ -48,7 +52,7 @@ test('l\'export sans sélection prend toutes les fiches', function () {
     typeAvecFiche('Chambre Standard', 'STD');
     typeAvecFiche('Suite Présidentielle', 'SUIP', 35000000);
 
-    $csv = contenuExport($this->get(route('rooms.cost_sheets.export'))->assertOk()->baseResponse);
+    $csv = contenuExport($this->get(route('rooms.cost_sheets.export', ['format' => 'csv']))->assertOk()->baseResponse);
 
     expect($csv)->toContain('Chambre Standard')
         ->and($csv)->toContain('Suite Présidentielle');
@@ -61,7 +65,7 @@ test('l\'export d\'une sélection ne retient que les fiches cochées', function 
     typeAvecFiche('Suite Présidentielle', 'SUIP', 35000000);
 
     $csv = contenuExport(
-        $this->get(route('rooms.cost_sheets.export', ['types' => [$standard->id]]))->assertOk()->baseResponse
+        $this->get(route('rooms.cost_sheets.export', ['format' => 'csv', 'types' => [$standard->id]]))->assertOk()->baseResponse
     );
 
     expect($csv)->toContain('Chambre Standard')
@@ -73,7 +77,7 @@ test('un type sans aucun poste figure quand même dans le fichier', function () 
 
     typeAvecFiche('Chambre Économique', 'ECO', 3200000);
 
-    $csv = contenuExport($this->get(route('rooms.cost_sheets.export'))->assertOk()->baseResponse);
+    $csv = contenuExport($this->get(route('rooms.cost_sheets.export', ['format' => 'csv']))->assertOk()->baseResponse);
     $lignes = array_filter(explode("\n", trim($csv)));
 
     // En-tête + une ligne d'amorce : sans elle, le type serait invisible dans
@@ -103,7 +107,7 @@ test('chaque poste de coût sort sur sa ligne, avec les hypothèses de sa fiche'
         'sort_order' => 2, 'is_active' => true,
     ]);
 
-    $csv = contenuExport($this->get(route('rooms.cost_sheets.export'))->assertOk()->baseResponse);
+    $csv = contenuExport($this->get(route('rooms.cost_sheets.export', ['format' => 'csv']))->assertOk()->baseResponse);
     $lignes = array_filter(explode("\n", trim($csv)));
 
     expect($lignes)->toHaveCount(3);   // en-tête + 2 postes
@@ -124,7 +128,7 @@ test('le fichier porte les en-têtes attendus et le séparateur point-virgule', 
     $this->actingAs(exportManager());
     typeAvecFiche('Chambre Standard', 'STD');
 
-    $reponse = $this->get(route('rooms.cost_sheets.export'))->assertOk();
+    $reponse = $this->get(route('rooms.cost_sheets.export', ['format' => 'csv']))->assertOk();
     $csv = contenuExport($reponse->baseResponse);
     $entete = explode("\n", $csv)[0];
 
@@ -141,7 +145,7 @@ test('le fichier s\'ouvre correctement dans Excel', function () {
     $this->actingAs(exportManager());
     typeAvecFiche('Chambre Économique', 'ECO');
 
-    $reponse = $this->get(route('rooms.cost_sheets.export'))->assertOk();
+    $reponse = $this->get(route('rooms.cost_sheets.export', ['format' => 'csv']))->assertOk();
 
     ob_start();
     $reponse->baseResponse->sendContent();
@@ -156,7 +160,7 @@ test('une sélection contenant un identifiant inconnu est refusée', function ()
     $this->actingAs(exportManager());
     typeAvecFiche('Chambre Standard', 'STD');
 
-    $this->get(route('rooms.cost_sheets.export', ['types' => [999999]]))
+    $this->get(route('rooms.cost_sheets.export', ['format' => 'csv', 'types' => [999999]]))
         ->assertSessionHasErrors('types.0');
 });
 
