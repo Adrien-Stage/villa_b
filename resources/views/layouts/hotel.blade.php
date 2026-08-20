@@ -344,6 +344,141 @@
                     <span class="hidden sm:inline">Activer les notifications</span>
                 </button>
 
+                {{-- Bouton « Suggestion » : ouvert à tout le personnel, quel que
+                     soit son rôle. Les tickets partent vers le support technique,
+                     qui les traite depuis l'ERP et répond dans le même ticket. --}}
+                <div x-data="supportTicketCenter()" class="relative">
+                    <button type="button" @click="ouvrir()"
+                            class="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                            title="Signaler un problème ou proposer une amélioration">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <span class="hidden sm:inline">Suggestion</span>
+                        <span x-show="ouverts > 0" style="display: none;"
+                              class="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 flex items-center justify-center bg-secondary text-text-on-light rounded-full text-[9px] font-bold border border-white"
+                              x-text="ouverts"></span>
+                    </button>
+
+                    {{-- Fenêtre de saisie --}}
+                    <div x-show="modal" style="display: none;"
+                         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8"
+                         @click.self="modal = false" @keydown.escape.window="modal = false">
+                        <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+
+                            <div class="flex items-center justify-between gap-3 bg-primary px-5 py-3.5">
+                                <div>
+                                    <h3 class="text-sm font-heading font-semibold text-white">Remonter au support</h3>
+                                    <p class="text-[10px] text-text-on-dark/70">Un problème rencontré, une idée d'amélioration.</p>
+                                </div>
+                                <button type="button" @click="modal = false" class="text-text-on-dark/60 hover:text-white transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+
+                            <div class="flex border-b border-secondary/20">
+                                <button type="button" @click="vue = 'nouveau'"
+                                        class="px-4 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px"
+                                        :class="vue === 'nouveau' ? 'text-primary border-primary' : 'text-primary/40 border-transparent hover:text-primary/70'">
+                                    Nouveau ticket
+                                </button>
+                                <button type="button" @click="vue = 'miens'; charger()"
+                                        class="px-4 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px"
+                                        :class="vue === 'miens' ? 'text-primary border-primary' : 'text-primary/40 border-transparent hover:text-primary/70'">
+                                    Mes tickets <span x-show="tickets.length > 0" style="display: none;" x-text="'(' + tickets.length + ')'"></span>
+                                </button>
+                            </div>
+
+                            {{-- Formulaire --}}
+                            <div x-show="vue === 'nouveau'" style="display: none;" class="p-5">
+                                <div x-show="envoye" style="display: none;" class="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+                                    <svg class="w-8 h-8 mx-auto text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <p class="mt-2 text-sm font-semibold text-green-800">Ticket transmis au support</p>
+                                    <p class="mt-1 text-xs text-green-700">Vous pourrez suivre son traitement dans « Mes tickets ».</p>
+                                    <button type="button" @click="reinitialiser()" class="mt-4 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity">
+                                        Écrire un autre ticket
+                                    </button>
+                                </div>
+
+                                <form x-show="!envoye" style="display: none;" @submit.prevent="envoyer()" class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" @click="type = 'probleme'"
+                                                class="rounded-xl border px-3 py-2.5 text-left transition-colors"
+                                                :class="type === 'probleme' ? 'border-primary bg-accent/30' : 'border-secondary/30 hover:bg-accent/10'">
+                                            <span class="block text-xs font-semibold text-primary">Problème</span>
+                                            <span class="block text-[10px] text-primary/50">Quelque chose ne marche pas</span>
+                                        </button>
+                                        <button type="button" @click="type = 'suggestion'"
+                                                class="rounded-xl border px-3 py-2.5 text-left transition-colors"
+                                                :class="type === 'suggestion' ? 'border-primary bg-accent/30' : 'border-secondary/30 hover:bg-accent/10'">
+                                            <span class="block text-xs font-semibold text-primary">Suggestion</span>
+                                            <span class="block text-[10px] text-primary/50">Une idée d'amélioration</span>
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wider text-primary/50 mb-1">Objet</label>
+                                        <input type="text" x-model="subject" required minlength="5" maxlength="160"
+                                               placeholder="Ex : impossible d'encaisser une commande"
+                                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary outline-none focus:border-primary">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wider text-primary/50 mb-1">Description</label>
+                                        <textarea x-model="message" rows="4" required minlength="10" maxlength="2000"
+                                                  placeholder="Ce que vous faisiez, ce qui s'est passé, et ce que vous attendiez."
+                                                  class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary outline-none focus:border-primary"></textarea>
+                                        <p class="mt-1 text-[10px] text-primary/40">
+                                            La page courante est jointe automatiquement au ticket.
+                                        </p>
+                                    </div>
+
+                                    <p x-show="erreur" style="display: none;" class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700" x-text="erreur"></p>
+
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button type="button" @click="modal = false" class="rounded-lg border border-secondary/30 px-4 py-2 text-xs font-semibold text-primary/70 hover:bg-accent/20 transition-colors">
+                                            Annuler
+                                        </button>
+                                        <button type="submit" :disabled="envoiEnCours"
+                                                class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50">
+                                            <span x-show="!envoiEnCours">Envoyer au support</span>
+                                            <span x-show="envoiEnCours" style="display: none;">Envoi…</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {{-- Suivi de mes tickets --}}
+                            <div x-show="vue === 'miens'" style="display: none;" class="max-h-96 overflow-y-auto p-5">
+                                <p x-show="chargement" style="display: none;" class="py-6 text-center text-xs text-primary/40">Chargement…</p>
+
+                                <template x-if="!chargement && tickets.length === 0">
+                                    <p class="py-6 text-center text-xs text-primary/40">Vous n'avez encore envoyé aucun ticket.</p>
+                                </template>
+
+                                <ul class="space-y-3">
+                                    <template x-for="t in tickets" :key="t.id">
+                                        <li class="rounded-xl border border-secondary/20 p-3">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <span class="text-xs font-semibold text-primary" x-text="t.subject"></span>
+                                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                                      :class="t.status === 'resolu' ? 'bg-green-100 text-green-700' : (t.status === 'en_cours' ? 'bg-amber-100 text-amber-700' : (t.status === 'rejete' ? 'bg-slate-100 text-slate-500' : 'bg-sky-100 text-sky-700'))"
+                                                      x-text="t.label"></span>
+                                            </div>
+                                            <p class="mt-1 text-[10px] text-primary/40" x-text="t.at + ' · ' + t.ago"></p>
+                                            <template x-if="t.reply">
+                                                <p class="mt-2 rounded-lg bg-accent/30 px-2.5 py-2 text-[11px] text-primary/80">
+                                                    <span class="font-semibold">Réponse du support :</span> <span x-text="t.reply"></span>
+                                                </p>
+                                            </template>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- In-app Notifications Dropdown --}}
                 <div x-data="notificationCenter()" class="relative">
                     <button @click="open = !open" class="relative p-1.5 rounded-full hover:bg-secondary/15 text-primary/70 hover:text-primary transition-colors focus:outline-none flex items-center justify-center">
@@ -685,6 +820,92 @@
     })();
 
     document.addEventListener('alpine:init', () => {
+        // Tickets de support : saisie et suivi. Le compteur du bouton ne montre
+        // que les tickets encore ouverts, pour ne pas rester allumé à vie.
+        Alpine.data('supportTicketCenter', () => ({
+            modal: false,
+            vue: 'nouveau',
+            type: 'probleme',
+            subject: '',
+            message: '',
+            erreur: '',
+            envoye: false,
+            envoiEnCours: false,
+            chargement: false,
+            tickets: [],
+            ouverts: 0,
+
+            init() {
+                this.charger();
+            },
+
+            ouvrir() {
+                this.modal = true;
+                this.vue = 'nouveau';
+                this.charger();
+            },
+
+            reinitialiser() {
+                this.envoye = false;
+                this.erreur = '';
+                this.subject = '';
+                this.message = '';
+                this.type = 'probleme';
+            },
+
+            async charger() {
+                this.chargement = true;
+                try {
+                    const r = await fetch('{{ route('support-tickets.index') }}', {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (r.ok) {
+                        const d = await r.json();
+                        this.tickets = d.tickets ?? [];
+                        this.ouverts = d.ouverts ?? 0;
+                    }
+                } catch (e) {
+                    // Silencieux : le suivi n'est pas critique, la saisie reste possible.
+                }
+                this.chargement = false;
+            },
+
+            async envoyer() {
+                this.envoiEnCours = true;
+                this.erreur = '';
+                try {
+                    const r = await fetch('{{ route('support-tickets.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({
+                            type: this.type,
+                            subject: this.subject,
+                            message: this.message,
+                            context_url: window.location.pathname + window.location.search,
+                        }),
+                    });
+
+                    if (r.ok) {
+                        this.envoye = true;
+                        this.subject = '';
+                        this.message = '';
+                        this.charger();
+                    } else {
+                        const d = await r.json().catch(() => ({}));
+                        this.erreur = d.message || 'Envoi impossible. Réessayez dans un instant.';
+                    }
+                } catch (e) {
+                    this.erreur = 'Envoi impossible : vérifiez votre connexion.';
+                }
+                this.envoiEnCours = false;
+            },
+        }));
+
         Alpine.data('notificationCenter', () => ({
             open: false,
             totalUnread: 0,
