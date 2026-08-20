@@ -111,8 +111,8 @@
         </div>
 
         <!-- Calendar Grid Container -->
-        <div class="flex flex-col gap-6 p-5 bg-white">
-            <div class="w-full flex flex-col">
+        <div class="flex flex-col gap-6 p-5 bg-white xl:flex-row xl:items-start">
+            <div class="w-full flex flex-col xl:flex-1 xl:min-w-0">
 
                 <!-- Week Days Header -->
                 <div x-show="grain !== 'jour'" class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
@@ -229,14 +229,56 @@
                 </div>
             </div>
 
-            <!-- Details Panel -->
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+            <!-- Details Panel : colonne de droite, la journée en un coup d'œil -->
+            <aside class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-xs xl:w-80 2xl:w-96 xl:flex-shrink-0 xl:self-start xl:sticky xl:top-0">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                     <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
-                    Détails du jour : <span class="capitalize font-semibold text-slate-800" x-text="selectedDayLabel"></span>
+                    Détails du jour
                 </h3>
+                <p class="mt-1 text-xs font-semibold capitalize text-slate-800" x-text="selectedDayLabel"></p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                {{-- Mouvements du jour : réalisé sur prévu. Un « 3/10 » se lit
+                     trois arrivées enregistrées sur dix attendues. Les compteurs
+                     ignorent la recherche, qui n'est qu'une loupe : la réception
+                     doit lire la journée entière, pas l'extrait affiché. --}}
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                        <div class="flex items-center gap-1.5 text-emerald-700">
+                            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider">Arrivées</span>
+                        </div>
+                        <p class="mt-1.5 font-heading text-lg font-semibold leading-none text-emerald-800">
+                            <span x-text="mouvements.arriveesFaites"></span><span class="text-emerald-600/60">/</span><span x-text="mouvements.arriveesPrevues"></span>
+                        </p>
+                        <div class="mt-2 h-1 rounded-full bg-emerald-100 overflow-hidden">
+                            <div class="h-full rounded-full bg-emerald-500 transition-all"
+                                 :style="'width:' + pourcentage(mouvements.arriveesFaites, mouvements.arriveesPrevues) + '%'"></div>
+                        </div>
+                        <p class="mt-1.5 text-[10px] text-emerald-700/70">check-in enregistrés</p>
+                    </div>
+
+                    <div class="rounded-xl border border-orange-100 bg-orange-50/60 p-3">
+                        <div class="flex items-center gap-1.5 text-orange-700">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider">Départs</span>
+                        </div>
+                        <p class="mt-1.5 font-heading text-lg font-semibold leading-none text-orange-800">
+                            <span x-text="mouvements.departsFaits"></span><span class="text-orange-600/60">/</span><span x-text="mouvements.departsPrevus"></span>
+                        </p>
+                        <div class="mt-2 h-1 rounded-full bg-orange-100 overflow-hidden">
+                            <div class="h-full rounded-full bg-orange-500 transition-all"
+                                 :style="'width:' + pourcentage(mouvements.departsFaits, mouvements.departsPrevus) + '%'"></div>
+                        </div>
+                        <p class="mt-1.5 text-[10px] text-orange-700/70">check-out enregistrés</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Séjours du jour</span>
+                    <span class="text-[10px] font-semibold text-slate-500" x-text="selectedEvents.length"></span>
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 gap-3 max-h-[26rem] overflow-y-auto pr-0.5">
                     <template x-for="booking in selectedEvents" :key="booking.id">
                         <a :href="booking.url"
                            :style="'--sejour:' + booking.color"
@@ -260,6 +302,21 @@
                                 <span class="font-medium" x-text="'Chambre ' + booking.room_number"></span>
                             </div>
 
+                            {{-- Ce que le séjour fait ce jour-là : arrivée, départ, ou simple nuitée. --}}
+                            <div class="mt-2 flex flex-wrap items-center gap-1.5"
+                                 x-show="booking.check_in === selectedIso || booking.check_out === selectedIso">
+                                <span x-show="booking.check_in === selectedIso"
+                                      class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 border border-emerald-200">
+                                    <i data-lucide="log-in" class="w-2.5 h-2.5"></i>
+                                    <span x-text="estArrive(booking) ? 'Arrivé' : 'Arrivée attendue'"></span>
+                                </span>
+                                <span x-show="booking.check_out === selectedIso"
+                                      class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[9px] font-bold text-orange-700 border border-orange-200">
+                                    <i data-lucide="log-out" class="w-2.5 h-2.5"></i>
+                                    <span x-text="estParti(booking) ? 'Parti' : 'Départ attendu'"></span>
+                                </span>
+                            </div>
+
                             <div class="text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1">
                                 <i data-lucide="clock" class="w-3 h-3"></i>
                                 <span x-text="'Du ' + formatShortDate(booking.check_in) + ' au ' + formatShortDate(booking.check_out)"></span>
@@ -268,13 +325,13 @@
                     </template>
 
                     <template x-if="selectedEvents.length === 0">
-                        <div class="col-span-full text-center py-8 text-slate-400 text-xs">
+                        <div class="text-center py-8 text-slate-400 text-xs">
                             <i data-lucide="calendar" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
                             Aucune réservation ce jour
                         </div>
                     </template>
                 </div>
-            </div>
+            </aside>
         </div>
     </div>
 </div>
@@ -485,6 +542,44 @@
 
             get selectedEvents() {
                 return this.getBookingsForDay(this.selectedIso);
+            },
+
+            /**
+             * Un séjour dont le client est effectivement entré. Le statut ne
+             * revient jamais en arrière : qui est déjà reparti était arrivé.
+             */
+            estArrive(booking) {
+                return ['checked_in', 'checked_out', 'completed'].includes(booking.status);
+            },
+
+            /** Un séjour dont le départ a été enregistré à la réception. */
+            estParti(booking) {
+                return ['checked_out', 'completed'].includes(booking.status);
+            },
+
+            /**
+             * Mouvements du jour sélectionné : réalisé sur prévu.
+             *
+             * On part de `events` et non des séjours affichés : la recherche
+             * est une loupe sur la grille, elle ne doit pas fausser le compte
+             * des arrivées et des départs de la journée.
+             */
+            get mouvements() {
+                const jour = this.selectedIso;
+                const arrivees = this.events.filter((booking) => booking.check_in === jour);
+                const departs  = this.events.filter((booking) => booking.check_out === jour);
+
+                return {
+                    arriveesFaites:  arrivees.filter((booking) => this.estArrive(booking)).length,
+                    arriveesPrevues: arrivees.length,
+                    departsFaits:    departs.filter((booking) => this.estParti(booking)).length,
+                    departsPrevus:   departs.length,
+                };
+            },
+
+            /** Part réalisée, pour la barre de progression. Aucun mouvement prévu : barre vide. */
+            pourcentage(fait, prevu) {
+                return prevu > 0 ? Math.round((fait / prevu) * 100) : 0;
             },
 
             /** Séjours distincts touchant la période affichée. */
