@@ -7,7 +7,7 @@
 {{-- En-tête --}}
 <div class="flex items-center justify-between mb-6">
     <div>
-        <a href="{{ route('analytics.index', ['period' => $period]) }}"
+        <a href="{{ route('analytics.index', ['period' => $period, 'year' => $year]) }}"
             class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour au tableau de bord
