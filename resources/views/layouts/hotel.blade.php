@@ -94,6 +94,10 @@
                             @endrole
 
                             @role('manager','reception')
+                                {{-- L'agenda est un écran à part entière : le calendrier
+                                     des séjours n'est plus une vue de la liste. --}}
+                                <x-sidebar-link route="agenda.index" icon="calendar-days">Agenda</x-sidebar-link>
+
                                 <li>
                                     <a href="{{ route('bookings.index') }}"
                                         class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all

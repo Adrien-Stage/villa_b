@@ -27,7 +27,6 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'active');
-        $viewMode = $request->get('view', 'list');
         $status = $request->filled('status') ? $request->status : 'all';
 
         $query = Booking::with(['customer', 'room.roomType']);
@@ -40,8 +39,6 @@ class BookingController extends Controller
                 'cancelled' => 'Annulées',
             ];
         } else {
-            // La vue calendrier montre le même ensemble que la liste : un agenda
-            // qui masquerait les demandes en attente ferait rater des arrivées.
             $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
             $statusFilters = [
                 'all'        => 'Toutes',
@@ -70,11 +67,6 @@ class BookingController extends Controller
             });
         }
 
-        $calendarBookings = null;
-        if ($tab === 'active' && $viewMode === 'calendar') {
-            $calendarBookings = $this->agendaBookings(clone $query);
-        }
-
         // Stats pour les badges
         $stats = [
             'all'          => Booking::count(),
@@ -98,10 +90,39 @@ class BookingController extends Controller
             ->first();
         $isCashRegisterOpen = $activeSession !== null;
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'viewMode', 'status', 'calendarBookings', 'isCashRegisterOpen'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen'));
     }
 
     // ===== AGENDA =====
+
+    /**
+     * Agenda des séjours : le calendrier, servi par sa propre entrée de menu.
+     *
+     * L'agenda couvre le même ensemble que l'onglet « Réservations » de la
+     * liste — séjours ni terminés ni annulés — car un calendrier qui
+     * masquerait les demandes en attente ferait rater des arrivées.
+     */
+    public function agenda(Request $request)
+    {
+        $query = Booking::with(['customer', 'room.roomType'])
+            ->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $statusFilters = [
+            'all'        => 'Toutes',
+            'pending'    => 'En attente',
+            'confirmed'  => 'Confirmées',
+            'checked_in' => 'En séjour',
+        ];
+
+        $status = $request->filled('status') ? $request->status : 'all';
+        $calendarBookings = $this->agendaBookings($query);
+
+        return view('bookings.agenda', compact('calendarBookings', 'statusFilters', 'status'));
+    }
 
     /**
      * Teintes de l'agenda, dans cet ordre.
