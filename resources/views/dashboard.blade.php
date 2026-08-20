@@ -49,9 +49,7 @@
             <a href="{{ route('customers.create') }}" class="flex items-center gap-2 px-5 py-3 bg-white border border-secondary/30 text-primary rounded-xl text-sm font-semibold hover:bg-accent/10 transition-all">
                 <i data-lucide="user-plus" class="w-4 h-4 text-primary/60"></i> Nouveau Client
             </a>
-            {{-- « tab=active » est explicite : le contrôleur ne construit
-                 l'agenda que sur cet onglet, l'archive n'a pas de calendrier. --}}
-            <a href="{{ route('bookings.index', ['tab' => 'active', 'view' => 'calendar']) }}" class="flex items-center gap-2 px-5 py-3 bg-white border border-secondary/30 text-primary rounded-xl text-sm font-semibold hover:bg-accent/10 transition-all">
+            <a href="{{ route('agenda.index') }}" class="flex items-center gap-2 px-5 py-3 bg-white border border-secondary/30 text-primary rounded-xl text-sm font-semibold hover:bg-accent/10 transition-all">
                 <i data-lucide="calendar-check" class="w-4 h-4 text-primary/60"></i> Planning
             </a>
         @endrole

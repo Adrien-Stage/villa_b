@@ -223,6 +223,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:manager,reception')
         ->name('rooms.updateStatus');
 
+    // --- AGENDA ---
+    // L'agenda a sa propre entrée de menu : le calendrier des séjours n'est
+    // plus une seconde vue de la liste des réservations.
+    Route::get('/agenda', [BookingController::class, 'agenda'])
+        ->middleware(['role:manager,reception', 'module.access:hebergement'])
+        ->name('agenda.index');
+
     // --- RÉSERVATIONS ---
     Route::prefix('bookings')->name('bookings.')->middleware(['role:manager,reception', 'module.access:hebergement'])->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
