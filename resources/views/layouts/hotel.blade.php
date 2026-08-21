@@ -37,7 +37,90 @@
             --color-text-on-light: {{ $currentTenant->settings['theme']['text_on_light'] ?? '#391F0E' }};
             --color-text-on-dark: {{ $currentTenant->settings['theme']['text_on_dark'] ?? '#CCAB87' }};
         }
+
+        /*
+         * Barre latérale réduite : il ne reste que les icônes, et l'écran
+         * principal récupère la largeur libérée — il est en flex-1 derrière
+         * une barre en flux, donc il s'élargit de lui-même.
+         *
+         * L'état ne concerne que le grand écran : en dessous, la barre est un
+         * tiroir superposé, que réduire n'aurait aucun sens.
+         */
+        #mobile-sidebar,
+        #mobile-sidebar .sidebar-libelle,
+        #mobile-sidebar .sidebar-identite {
+            transition: width 200ms ease, opacity 150ms ease;
+        }
+
+        @media (min-width: 1024px) {
+            /* !important : la largeur est posée par une classe utilitaire
+               (lg:w-48) qu'une règle d'auteur ne doit pas avoir à concurrencer
+               au jeu de la spécificité. */
+            html.sidebar-reduite #mobile-sidebar {
+                width: 3.75rem !important;
+            }
+
+            /* Tout ce qui n'est pas une icône s'efface. */
+            html.sidebar-reduite #mobile-sidebar .sidebar-libelle,
+            html.sidebar-reduite #mobile-sidebar .sidebar-groupe-titre,
+            html.sidebar-reduite #mobile-sidebar .sidebar-sous-menu,
+            html.sidebar-reduite #mobile-sidebar .sidebar-identite {
+                display: none;
+            }
+
+            /* Les icônes se recentrent dans la gouttière restante. */
+            html.sidebar-reduite #mobile-sidebar .sidebar-lien,
+            html.sidebar-reduite #mobile-sidebar .sidebar-pied {
+                justify-content: center;
+                padding-left: 0.25rem;
+                padding-right: 0.25rem;
+                gap: 0;
+            }
+
+            html.sidebar-reduite #mobile-sidebar nav,
+            html.sidebar-reduite #mobile-sidebar .sidebar-entete,
+            html.sidebar-reduite #mobile-sidebar .sidebar-bloc {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            html.sidebar-reduite #mobile-sidebar .sidebar-entete > div {
+                justify-content: center;
+                gap: 0;
+            }
+
+            /* Une pastille de non-lu reste visible, posée sur l'icône. */
+            html.sidebar-reduite #mobile-sidebar #sidebar-discussions-dot {
+                position: absolute;
+                top: 0.35rem;
+                right: 0.6rem;
+            }
+
+            html.sidebar-reduite #mobile-sidebar .sidebar-lien-discussions {
+                position: relative;
+            }
+
+            /* Les groupes se séparent par un filet plutôt que par leur titre. */
+            html.sidebar-reduite #mobile-sidebar nav > div + div {
+                border-top: 1px solid var(--color-surface-dark);
+                padding-top: 0.75rem;
+            }
+
+            html.sidebar-reduite #sidebar-bascule-ouvrir { display: inline-flex; }
+            html.sidebar-reduite #sidebar-bascule-fermer { display: none; }
+        }
+
+        #sidebar-bascule-ouvrir { display: none; }
     </style>
+    <script>
+        // Avant peinture : la barre latérale reprend la largeur choisie la
+        // dernière fois, sans clignotement au chargement de chaque page.
+        try {
+            if (localStorage.getItem('sidebar-reduite') === '1') {
+                document.documentElement.classList.add('sidebar-reduite');
+            }
+        } catch (e) { /* navigation privée : la barre s'ouvre en grand */ }
+    </script>
 </head>
 
 <body class="min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
@@ -46,7 +129,7 @@
 
     <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full">
         <div class="flex h-full w-full flex-col">
-            <div class="px-4 py-5 border-b border-surface-dark">
+            <div class="sidebar-entete px-4 py-5 border-b border-surface-dark">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                         @if($tenantLogo)
@@ -58,7 +141,7 @@
                             <span class="text-text-on-light font-heading font-bold text-sm">{{ $initials }}</span>
                         </div>
                     </div>
-                    <div>
+                    <div class="sidebar-identite">
                         <p class="text-white font-heading font-semibold text-sm leading-tight">{{ $tenantName }}</p>
                         <p class="text-text-on-dark text-xs font-medium">PMS v1.0</p>
                     </div>
@@ -67,7 +150,7 @@
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
                 <div>
-                    <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
+                    <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
                         <x-sidebar-link route="dashboard" icon="grid">Tableau de bord</x-sidebar-link>
                     </ul>
@@ -76,7 +159,7 @@
                 @role('manager')
                     @module('analytics')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="analytics.index" icon="bar-chart-2">Tour de contrôle</x-sidebar-link>
                         </ul>
@@ -86,7 +169,7 @@
 
                 @role('manager','reception','housekeeping_leader','housekeeping_staff','housekeeping')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                         <ul class="space-y-0.5">
                             {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
                             @role('manager','reception')
@@ -100,16 +183,17 @@
 
                                 <li>
                                     <a href="{{ route('bookings.index') }}"
-                                        class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
+                                        title="Réservations"
+                                        class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
                                         {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
                                             ? 'bg-surface-dark text-white'
                                             : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
                                         <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                                        Réservations
+                                        <span class="sidebar-libelle">Réservations</span>
                                     </a>
 
                                     @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*'))
-                                    <ul class="mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
+                                    <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
                                         <li>
                                             <a href="{{ route('bookings.index') }}"
                                                 class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
@@ -161,7 +245,7 @@
                 @role('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @role('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
@@ -189,11 +273,12 @@
                                     <a href="{{ route('portal.restaurant.menu', ['tenant' => $tenantSlug]) }}"
                                        target="_blank"
                                        rel="noopener"
-                                       class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-text-on-dark hover:bg-surface-dark hover:text-white">
+                                       title="Portail (QR)"
+                                       class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-text-on-dark hover:bg-surface-dark hover:text-white">
                                         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 6v-4h2v4h-2zm4 0v-2h2v2h-2zm-4-6v-2h2v2h-2zm4 2v-2h2v2h-2z"/>
                                         </svg>
-                                        Portail (QR)
+                                        <span class="sidebar-libelle">Portail (QR)</span>
                                     </a>
                                 </li>
                             @endif
@@ -204,7 +289,7 @@
 
                 @role('manager','reception','cashier')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
                             @role('manager')
@@ -217,7 +302,7 @@
                 @role('shop_manager','shop_cashier','manager')
                     @module('shop')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
                             @role('shop_manager','manager')
                                 <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
@@ -233,7 +318,7 @@
 
                 @role('econome','manager','admin')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.index" icon="warehouse">Tableau de bord</x-sidebar-link>
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
@@ -247,7 +332,7 @@
                 {{-- Lien de demande à l'économat, pour les responsables de département --}}
                 @role('reception','housekeeping_leader','restaurant_chief','shop_manager')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
                         </ul>
@@ -256,7 +341,7 @@
 
                 @role('accountant','manager','admin')
                     <div>
-                        <p class="text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
                             @module('ledger')
@@ -280,14 +365,15 @@
             </nav>
 
             @module('discussions')
-            <div class="px-3 pb-3">
+            <div class="sidebar-bloc px-3 pb-3">
                 @php $isDiscussionActive = request()->routeIs('discussions.*'); @endphp
                 <a id="sidebar-discussions-link"
                    href="{{ route('discussions.index') }}"
-                   class="flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'bg-surface-dark text-white' : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
+                   title="Discussions"
+                   class="sidebar-lien sidebar-lien-discussions flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'bg-surface-dark text-white' : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
                     <span class="flex items-center gap-2.5 min-w-0">
                         <i data-lucide="message-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                        <span class="truncate">Discussions</span>
+                        <span class="sidebar-libelle truncate">Discussions</span>
                     </span>
                     <span id="sidebar-discussions-dot"
                           class="h-2 w-2 rounded-full bg-secondary {{ !($hasUnreadDiscussions ?? false) ? 'hidden' : '' }}"></span>
@@ -295,15 +381,17 @@
             </div>
             @endmodule
 
-            <div class="px-3 py-4 border-t border-surface-dark">
-                <div class="flex items-center justify-between gap-2">
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
+            <div class="sidebar-bloc px-3 py-4 border-t border-surface-dark">
+                <div class="sidebar-pied flex items-center justify-between gap-2">
+                    <a href="{{ route('profile.edit') }}"
+                       title="{{ Auth::user()->name }}"
+                       class="sidebar-lien flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
                         <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                             <span class="text-text-on-light font-semibold text-xs">
                                 {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
                             </span>
                         </div>
-                        <div class="min-w-0">
+                        <div class="sidebar-libelle min-w-0">
                             <p class="text-white text-xs font-medium truncate">{{ \Illuminate\Support\Str::limit(Auth::user()->name, 13, '...') }}</p>
                             <p class="text-text-on-dark/60 text-[10px] capitalize truncate">{{ Auth::user()->role ?? 'Admin' }}</p>
                         </div>
@@ -328,6 +416,24 @@
                 <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary lg:hidden">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                {{-- Largeur de la barre latérale. Le bouton vit dans l'en-tête
+                     plutôt que dans la barre : réduite à 60 px, celle-ci n'a
+                     plus la place d'accueillir une commande atteignable. --}}
+                <button type="button" onclick="basculerSidebar()"
+                        aria-controls="mobile-sidebar"
+                        class="hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors lg:inline-flex">
+                    <svg id="sidebar-bascule-fermer" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <title>Réduire la barre latérale</title>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M17 10l-3 2 3 2" />
+                    </svg>
+                    <svg id="sidebar-bascule-ouvrir" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <title>Étirer la barre latérale</title>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M14 10l3 2-3 2" />
                     </svg>
                 </button>
                 <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
@@ -769,6 +875,18 @@
         document.getElementById('mobile-sidebar').classList.add('hidden');
         document.getElementById('mobile-sidebar-backdrop').classList.add('hidden');
         document.body.style.overflow = '';
+    };
+
+    /**
+     * Étire ou réduit la barre latérale. Le choix est mémorisé : personne
+     * n'a envie de la replier à chaque changement de page.
+     */
+    window.basculerSidebar = function() {
+        const reduite = document.documentElement.classList.toggle('sidebar-reduite');
+
+        try {
+            localStorage.setItem('sidebar-reduite', reduite ? '1' : '0');
+        } catch (e) { /* navigation privée : le choix ne tient que pour la page */ }
     };
 
     (function startDiscussionUnreadPolling() {
