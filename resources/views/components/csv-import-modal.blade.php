@@ -31,16 +31,16 @@
                     <p class="font-mono text-[11px] break-all">{{ $structure }}</p>
                     <ul class="mt-2 space-y-1 list-disc list-inside">
                         {{ $slot }}
-                        <li>Le fichier est en UTF-8 ; le modèle s'ouvre directement dans Excel.</li>
+                        <li>Le fichier peut être au format Excel (.xlsx, .xls) ou CSV UTF-8.</li>
                     </ul>
                     <a href="{{ $template }}" class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
                         <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
-                        Télécharger le modèle CSV
+                        Télécharger le modèle (Excel / CSV)
                     </a>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 mb-1.5">Fichier CSV *</label>
-                    <input type="file" name="csv_file" required accept=".csv,text/csv"
+                    <label class="block text-xs font-semibold text-primary/70 mb-1.5">Fichier Excel ou CSV *</label>
+                    <input type="file" name="csv_file" required accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                         class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
                 </div>
             </div>

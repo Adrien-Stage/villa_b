@@ -14,69 +14,53 @@ use Illuminate\Support\Facades\Auth;
 trait HandlesCsv
 {
     /**
+     * Émet un classeur Excel (.xlsx) stylisé aux couleurs et à l'identité de l'établissement.
+     */
+    protected function streamXlsx(string $filename, string $sheetTitle, array $headers, array $rows, ?\App\Models\Tenant $tenant = null)
+    {
+        $tenant ??= $this->tenantCourant();
+
+        return app(\App\Services\SpreadsheetService::class)->exportXlsx($filename, $sheetTitle, $headers, $rows, $tenant);
+    }
+
+    /**
+     * Établissement en cours : signe le document exporté et lui donne sa charte graphique.
+     */
+    protected function tenantCourant(): ?\App\Models\Tenant
+    {
+        $id = $this->csvTenantId();
+
+        return $id ? \App\Models\Tenant::find($id) : null;
+    }
+
+    /**
      * Émet un CSV téléchargeable. $rows est une liste de lignes (tableaux de
      * valeurs alignées sur $headers).
      */
     protected function streamCsv(string $filename, array $headers, array $rows)
     {
-        return response()->streamDownload(function () use ($headers, $rows) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 : accents corrects sous Excel
-            fputcsv($out, $headers, ';', '"', '\\');
-            foreach ($rows as $row) {
-                fputcsv($out, $row, ';', '"', '\\');
-            }
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return app(\App\Services\SpreadsheetService::class)->exportCsv($filename, $headers, $rows);
     }
 
     /**
-     * Parse le CSV en lignes associatives selon les en-têtes attendus. Tolère
-     * BOM UTF-8, délimiteur ; ou , et l'ordre exact des colonnes du modèle.
+     * Parse un fichier tableur (Excel XLSX, XLS ou CSV) en lignes associatives selon les en-têtes attendus.
+     *
+     * @return array{0: array<int, array<string, ?string>>, 1: ?string} [lignes, erreur]
+     */
+    protected function parseSpreadsheet(string $path, array $expectedHeaders): array
+    {
+        return app(\App\Services\SpreadsheetService::class)->parse($path, $expectedHeaders);
+    }
+
+    /**
+     * Parse le CSV ou Excel en lignes associatives selon les en-têtes attendus. Tolère
+     * BOM UTF-8, délimiteur ; ou , classeurs Excel et l'ordre des colonnes du modèle.
      *
      * @return array{0: array<int, array<string, ?string>>, 1: ?string} [lignes, erreur]
      */
     protected function parseCsv(string $path, array $expectedHeaders): array
     {
-        $handle = fopen($path, 'r');
-        if (!$handle) {
-            return [[], 'Impossible de lire le fichier envoyé.'];
-        }
-
-        $firstLine = (string) fgets($handle);
-        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine);
-        $delimiter = substr_count($firstLine, ';') >= substr_count($firstLine, ',') ? ';' : ',';
-
-        $headers = array_map(
-            fn ($h) => mb_strtolower(trim((string) $h)),
-            str_getcsv($firstLine, $delimiter, '"', '\\')
-        );
-
-        $missing = array_diff($expectedHeaders, $headers);
-        if ($missing) {
-            fclose($handle);
-            return [[], 'Colonnes manquantes dans le CSV : ' . implode(', ', $missing)
-                . '. Téléchargez le modèle pour obtenir la structure attendue.'];
-        }
-
-        $rows = [];
-        while (($data = fgetcsv($handle, 0, $delimiter, '"', '\\')) !== false) {
-            if (count($data) === 1 && trim((string) $data[0]) === '') {
-                continue; // ligne vide
-            }
-            $row = [];
-            foreach ($headers as $idx => $header) {
-                $row[$header] = $data[$idx] ?? null;
-            }
-            $rows[] = $row;
-        }
-        fclose($handle);
-
-        if (empty($rows)) {
-            return [[], 'Le fichier ne contient aucune ligne de données.'];
-        }
-
-        return [$rows, null];
+        return app(\App\Services\SpreadsheetService::class)->parse($path, $expectedHeaders);
     }
 
     /**

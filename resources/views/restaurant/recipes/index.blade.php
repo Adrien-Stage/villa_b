@@ -28,14 +28,14 @@
     <div class="flex items-center gap-2 shrink-0">
         <a href="{{ route('restaurant.recipes.export') }}"
            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
-           title="Exporter les fiches techniques en CSV">
+           title="Exporter les fiches techniques en Excel (.xlsx)">
             <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
-            <span>Exporter</span>
+            <span>Exporter (Excel)</span>
         </a>
         @if($canManage)
             <button type="button" onclick="document.getElementById('modal-import-recipes').classList.remove('hidden')"
                     class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
-                    title="Importer des fiches techniques depuis un CSV">
+                    title="Importer des fiches techniques depuis un fichier Excel ou CSV">
                 <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
                 <span>Importer</span>
             </button>
@@ -570,12 +570,12 @@
 @if($canManage)
     <x-csv-import-modal
         id="modal-import-recipes"
-        title="Importer des fiches techniques (CSV)"
+        title="Importer des fiches techniques (Excel / CSV)"
         :action="route('restaurant.recipes.import')"
         :template="route('restaurant.recipes.export', ['template' => 1])"
         structure="nom_fiche;type;plat_menu;article_produit;rendement;notes_fiche;ingredient;quantite;perte_pct;notes_ingredient"
         submit-label="Importer les fiches">
-        <li><strong>nom_fiche</strong> obligatoire (ex. <em>Ndolè aux crevettes</em> ou <em>Sauce ndolè</em>)</li>
+        <li><strong>nom_fiche</strong> obligatoire (ex. <em>Ndolé aux crevettes</em> ou <em>Sauce ndolè</em>)</li>
         <li><strong>type</strong> = <em>plat</em> ou <em>preparation</em>. Pour un plat, <strong>plat_menu</strong> doit correspondre à un plat de la carte existant.</li>
         <li><strong>ingredient</strong> doit correspondre au nom d'un article présent dans le garde-manger.</li>
     </x-csv-import-modal>

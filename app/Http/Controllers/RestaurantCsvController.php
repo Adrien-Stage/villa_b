@@ -248,11 +248,23 @@ class RestaurantCsvController extends Controller
     public function exportRecipes(Request $request)
     {
         if ($request->boolean('template')) {
-            return $this->streamCsv('modele_fiches_techniques_restaurant.csv', self::RECIPE_HEADERS, [
-                ['Ndolè aux crevettes', 'plat', 'Ndolè aux crevettes', '', '1', 'Servir chaud', 'Crevettes fraîches', '250', '10', 'décortiquées'],
-                ['Ndolè aux crevettes', 'plat', 'Ndolè aux crevettes', '', '1', 'Servir chaud', 'Feuilles de ndolè', '200', '0', 'lavées'],
-                ['Sauce ndolè', 'preparation', '', 'Sauce ndolè', '5000', 'Préparation en batch 5kg', 'Feuilles de ndolè', '2000', '5', 'hachées'],
-            ]);
+            $templateRows = [
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Sauce Ndole', '200', '0', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Viande de Boeuf', '125', '20', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Crevettes', '50', '0', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Plantain mûr', '2', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Feuilles de ndolé', '2000', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Arachide décortiquée', '1500', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Oignon', '400', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Huile', '400', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Crevettes séchées & épices', '100', '0', ''],
+            ];
+
+            if ($request->query('format') === 'csv') {
+                return $this->streamCsv('modele_fiches_techniques_restaurant.csv', self::RECIPE_HEADERS, $templateRows);
+            }
+
+            return $this->streamXlsx('modele_fiches_techniques_restaurant.xlsx', 'Fiches Techniques', self::RECIPE_HEADERS, $templateRows);
         }
 
         $recipes = RestaurantRecipe::with(['lines.item', 'menuItem', 'producedItem'])
@@ -291,31 +303,53 @@ class RestaurantCsvController extends Controller
             }
         }
 
-        return $this->streamCsv('fiches_techniques_restaurant_' . now()->format('Ymd_His') . '.csv', self::RECIPE_HEADERS, $rows);
+        $tenant = $this->tenantCourant();
+        $etablissement = $tenant?->slug ? \Illuminate\Support\Str::slug($tenant->slug) . '_' : '';
+        $nom = $etablissement . 'fiches_techniques_restaurant_' . now()->format('Ymd_His');
+
+        if ($request->query('format') === 'csv') {
+            return $this->streamCsv($nom . '.csv', self::RECIPE_HEADERS, $rows);
+        }
+
+        return $this->streamXlsx($nom . '.xlsx', 'Fiches Techniques', self::RECIPE_HEADERS, $rows, $tenant);
     }
 
     public function importRecipes(Request $request)
     {
-        $request->validate(['csv_file' => ['required', 'file', 'max:5120']]);
+        $request->validate([
+            'csv_file'   => ['nullable', 'file', 'max:10240'],
+            'file'       => ['nullable', 'file', 'max:10240'],
+            'excel_file' => ['nullable', 'file', 'max:10240'],
+        ]);
 
-        [$rows, $parseError] = $this->parseCsv($request->file('csv_file')->getRealPath(), self::RECIPE_HEADERS);
+        $uploaded = $request->file('csv_file') ?? $request->file('file') ?? $request->file('excel_file');
+        if (!$uploaded) {
+            return back()->with('error', 'Veuillez sélectionner un fichier à importer (Excel ou CSV).');
+        }
+
+        [$rows, $parseError] = $this->parseSpreadsheet($uploaded->getRealPath(), self::RECIPE_HEADERS);
         if ($parseError) {
             return back()->with('error', $parseError);
         }
 
-        $menuItemsByName  = RestaurantMenuItem::all()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
+        $menuItemsByName   = RestaurantMenuItem::all()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
         $pantryItemsByName = RestaurantPantryItem::all()->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
 
+        $recipesByName = [];
         $created = 0;
         $skipped = 0;
         $errors  = [];
 
+        // PASSE 1 : Création / mise à jour des fiches (en-têtes et articles de garde-manger pour les préparations)
         foreach ($rows as $i => $row) {
             $line = $i + 2;
 
             $recipeName = trim((string) ($row['nom_fiche'] ?? ''));
             if ($recipeName === '') {
-                $errors[] = "Ligne {$line} : nom_fiche obligatoire.";
+                continue;
+            }
+
+            if (isset($recipesByName[mb_strtolower($recipeName)])) {
                 continue;
             }
 
@@ -328,6 +362,9 @@ class RestaurantCsvController extends Controller
 
             if ($type === RestaurantRecipe::TYPE_DISH) {
                 $platName = trim((string) ($row['plat_menu'] ?? ''));
+                if ($platName === '') {
+                    $platName = $recipeName;
+                }
                 if ($platName !== '') {
                     $menuItem = $menuItemsByName->get(mb_strtolower($platName));
                     if (!$menuItem) {
@@ -338,11 +375,19 @@ class RestaurantCsvController extends Controller
                 }
             } else {
                 $prepItemName = trim((string) ($row['article_produit'] ?? ''));
+                if ($prepItemName === '') {
+                    $prepItemName = $recipeName;
+                }
                 if ($prepItemName !== '') {
                     $producedItem = $pantryItemsByName->get(mb_strtolower($prepItemName));
                     if (!$producedItem) {
-                        $errors[] = "Ligne {$line} : article de garde-manger « {$prepItemName} » introuvable.";
-                        continue;
+                        $producedItem = RestaurantPantryItem::create([
+                            'name'        => $prepItemName,
+                            'unit'        => 'g',
+                            'is_prepared' => true,
+                            'is_active'   => true,
+                        ]);
+                        $pantryItemsByName->put(mb_strtolower($prepItemName), $producedItem);
                     }
                     $producedItemId = $producedItem->id;
                 }
@@ -372,6 +417,24 @@ class RestaurantCsvController extends Controller
                     'notes'                   => $notesFiche,
                     'is_active'               => true,
                 ]);
+            }
+
+            $recipesByName[mb_strtolower($recipeName)] = $recipe;
+        }
+
+        // PASSE 2 : Création / mise à jour des ingrédients (lignes de fiche)
+        foreach ($rows as $i => $row) {
+            $line = $i + 2;
+
+            $recipeName = trim((string) ($row['nom_fiche'] ?? ''));
+            if ($recipeName === '') {
+                $errors[] = "Ligne {$line} : nom_fiche obligatoire.";
+                continue;
+            }
+
+            $recipe = $recipesByName[mb_strtolower($recipeName)] ?? null;
+            if (!$recipe) {
+                continue;
             }
 
             // Gestion de l'ingrédient (si renseigné)
@@ -417,7 +480,7 @@ class RestaurantCsvController extends Controller
         }
 
         AuditLog::record(Auth::id(), 'recipes_import',
-            "Import CSV des fiches techniques : {$created} ligne(s) traitée(s), " . count($errors) . ' erreur(s)',
+            "Import des fiches techniques : {$created} ligne(s) traitée(s), " . count($errors) . ' erreur(s)',
             'restaurant');
 
         return $this->csvImportRedirect('restaurant.recipes.index', [], $created, $skipped, $errors, 'ligne(s) de fiche technique traitée(s)');
