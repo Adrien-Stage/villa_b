@@ -5,8 +5,11 @@
 @endphp
 
 <li>
+    {{-- L'infobulle porte le nom de l'entrée : c'est elle qui renseigne
+         l'utilisateur quand la barre est réduite à ses icônes. --}}
     <a href="{{ $route !== '#' ? route($route) : '#' }}"
-       class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
+       title="{{ trim(strip_tags($slot)) }}"
+       class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
               {{ $isActive
                   ? 'bg-surface-dark text-white'
                   : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
@@ -65,6 +68,6 @@
             <i data-lucide="{{ $icon }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
         @endif
 
-        {{ $slot }}
+        <span class="sidebar-libelle">{{ $slot }}</span>
     </a>
 </li>
