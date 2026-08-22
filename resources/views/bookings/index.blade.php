@@ -42,7 +42,23 @@
        class="px-4 py-3 text-sm font-medium transition-colors {{ ($tab ?? 'active') === 'archive' ? 'border-b-2 border-primary text-primary' : 'text-primary/60 hover:text-primary' }}">
         Archive
     </a>
+    @role('reception', 'manager')
+    <a href="{{ route('bookings.drafts.index') }}"
+       class="px-4 py-3 text-sm font-medium transition-colors text-primary/60 hover:text-primary flex items-center gap-1.5">
+        <i data-lucide="file-clock" class="w-3.5 h-3.5"></i>
+        Brouillons
+        @php
+            $draftCount = \App\Models\BookingDraft::active()->where('created_by', auth()->id())->count();
+        @endphp
+        @if($draftCount > 0)
+            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                {{ $draftCount > 9 ? '9+' : $draftCount }}
+            </span>
+        @endif
+    </a>
+    @endrole
 </div>
+
 
 {{-- Badges stats --}}
 <div class="grid grid-cols-5 gap-3 mb-5">

@@ -258,8 +258,18 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations'));
+        $activeDraftsCount = \App\Models\BookingDraft::active()
+            ->where('created_by', Auth::id())
+            ->count();
+
+        $latestDraft = $activeDraftsCount > 0 ? \App\Models\BookingDraft::active()
+            ->where('created_by', Auth::id())
+            ->latest('last_activity_at')
+            ->first() : null;
+
+        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft'));
     }
+
 
     // ===== WIZARD ÉTAPE 2 : Choix chambre + dates =====
 
@@ -356,9 +366,18 @@ class BookingController extends Controller
             }
         }
 
+        // Sauvegarde du brouillon à l'étape 1
+        $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
+            'current_step' => 2,
+            'customer_id'  => $customer->id,
+            'booker_id'    => $bookerId,
+            'tenant_id'    => Auth::user()->tenant_id,
+        ]);
+
         return redirect()->route('bookings.create', [
             'customer_id' => $customer->id,
             'booker_id'   => $bookerId,
+            'draft_token' => $draft->token,
             'step'        => 2,
         ]);
     }
@@ -387,6 +406,21 @@ class BookingController extends Controller
         $totalPeople = $adults + $children;
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
         $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
+
+        // Sauvegarde du brouillon à l'étape 2
+        $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
+            'current_step'  => 3,
+            'customer_id'   => $customer->id,
+            'booker_id'     => $bookerId,
+            'check_in'      => $checkIn,
+            'check_out'     => $checkOut,
+            'check_in_time' => $checkInTime,
+            'adults'        => $adults,
+            'children'      => $children,
+            'source'        => $source,
+            'tenant_id'     => $tenantId,
+        ]);
+        $draftToken = $draft->token;
 
         $availabilityService = app(\App\Services\RoomAvailabilityService::class);
         $standardCheckOutTime = $availabilityService->checkOutTime();
@@ -454,12 +488,14 @@ class BookingController extends Controller
             'source',
             'availableRooms',
             'roomTypes',
-            'maxCapacityLimit'
+            'maxCapacityLimit',
+            'draftToken'
         ));
     }
 
     private function storeStep3(Request $request)
     {
+
         $validated = $request->validate([
             'customer_id'    => ['required', 'exists:customers,id'],
             'booker_id'      => ['nullable', 'exists:customers,id'],
@@ -545,9 +581,31 @@ class BookingController extends Controller
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
             'minDepositPercentage' => $minDepositPercentage,
-            'maxDiscountPercentage' => $maxDiscountPercentage
+            'maxDiscountPercentage' => $maxDiscountPercentage,
+            'draftToken' => $this->upsertDraftStep3($request, $validated),
         ]);
     }
+
+    /** Sauvegarde le brouillon à l'étape 3 (chambre sélectionnée). */
+    private function upsertDraftStep3(Request $request, array $validated): string
+    {
+        $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
+            'current_step'  => 4,
+            'customer_id'   => $validated['customer_id'],
+            'booker_id'     => $validated['booker_id'] ?? null,
+            'check_in'      => $validated['check_in'],
+            'check_out'     => $validated['check_out'],
+            'check_in_time' => $validated['check_in_time'] ?? '14:00',
+            'adults'        => $validated['adults_count'],
+            'children'      => $validated['children_count'] ?? 0,
+            'source'        => $validated['source'] ?? 'direct',
+            'room_id'       => $validated['room_id'],
+            'notes'         => $validated['notes'] ?? null,
+            'tenant_id'     => Auth::user()->tenant_id,
+        ]);
+        return $draft->token;
+    }
+
 
     private function storeBooking(Request $request)
     {
@@ -586,7 +644,9 @@ class BookingController extends Controller
             // La réception peut écarter la convention pour un séjour privé.
             'apply_partner_privileges' => ['nullable', 'boolean'],
             'room_package_id' => ['nullable', 'exists:room_packages,id'],
+            'draft_token'    => ['nullable', 'string', 'max:64'],
         ]);
+
 
         $room     = Room::with('roomType')->findOrFail($validated['room_id']);
         $checkIn  = \Carbon\Carbon::parse($validated['check_in']);
@@ -747,7 +807,15 @@ class BookingController extends Controller
             'tenant_id'       => $tenantId,
         ]);
 
+        // Clôture du brouillon si présent
+        if (!empty($validated['draft_token'] ?? $request->draft_token)) {
+            \App\Models\BookingDraft::where('token', $validated['draft_token'] ?? $request->draft_token)
+                ->where('created_by', Auth::id())
+                ->update(['status' => 'completed']);
+        }
+
         $needsApproval = $booking->status === BookingStatus::PENDING && $request->boolean('is_offerte');
+
 
         if ($needsApproval) {
             $this->notifier->toRoles(['manager'], new \App\Notifications\ComplimentaryBookingRequested($booking));

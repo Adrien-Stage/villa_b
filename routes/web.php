@@ -247,6 +247,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
         Route::get('/create',                  [BookingController::class, 'create'])->name('create');
         Route::post('/',                       [BookingController::class, 'store'])->name('store');
+
+        // --- BROUILLONS DE RÉSERVATION ---
+        Route::prefix('drafts')->name('drafts.')->group(function () {
+            Route::get('/',                    [\App\Http\Controllers\BookingDraftController::class, 'index'])->name('index');
+            Route::post('/save',               [\App\Http\Controllers\BookingDraftController::class, 'save'])->name('save');
+            Route::get('/{token}/resume',      [\App\Http\Controllers\BookingDraftController::class, 'resume'])->name('resume');
+            Route::delete('/{token}',          [\App\Http\Controllers\BookingDraftController::class, 'destroy'])->name('destroy');
+        });
+
         
         // Caisse Réception
         Route::get('/cash-register', [\App\Http\Controllers\Reception\CashRegisterController::class, 'index'])->name('cash_register.index');

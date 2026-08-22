@@ -35,6 +35,38 @@
         </div>
     </div>
 
+    {{-- Alerte Brouillons en cours --}}
+    @if(!$customer && ($activeDraftsCount ?? 0) > 0)
+        <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-4 mb-6 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="file-clock" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-amber-900">
+                        {{ $activeDraftsCount }} réservation{{ $activeDraftsCount > 1 ? 's' : '' }} en brouillon
+                    </p>
+                    <p class="text-[11px] text-amber-700 mt-0.5">
+                        Dernière session : {{ $latestDraft?->summary() ?: 'Brouillon en cours' }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                @if($latestDraft)
+                    <a href="{{ route('bookings.drafts.resume', $latestDraft->token) }}"
+                       class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1">
+                        <i data-lucide="play" class="w-3 h-3"></i>
+                        Reprendre
+                    </a>
+                @endif
+                <a href="{{ route('bookings.drafts.index') }}"
+                   class="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 text-xs font-medium rounded-lg hover:bg-amber-100 transition-colors">
+                    Voir tout
+                </a>
+            </div>
+        </div>
+    @endif
+
     {{-- Client déjà sélectionné --}}
     @if($customer)
         <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-5 flex items-center justify-between">
@@ -61,6 +93,7 @@
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
+                <input type="hidden" name="draft_token" value="{{ request('draft_token') }}">
                 @if($booker)
                     <input type="hidden" name="booker_id" value="{{ $booker->id }}">
                 @endif

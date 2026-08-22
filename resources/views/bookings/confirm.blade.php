@@ -83,6 +83,7 @@
                 <input type="hidden" name="children_count" value="{{ $childrenCount }}">
                 <input type="hidden" name="source" value="{{ $source }}">
                 <input type="hidden" name="notes" value="{{ $notes }}">
+                <input type="hidden" name="draft_token" value="{{ $draftToken ?? '' }}">
 
                 <div x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }})" class="space-y-6">
                     

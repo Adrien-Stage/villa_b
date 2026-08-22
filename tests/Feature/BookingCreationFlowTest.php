@@ -223,3 +223,92 @@ test('full booking flow preserves check_in_time and phone source to final databa
     $showResponse->assertSee('16:15');
     $showResponse->assertSee('phone');
 });
+
+test('draft is created during step 1 and step 2, can be resumed and is completed on booking store', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $user = User::factory()->create(['role' => 'manager']);
+
+    \App\Models\CashRegisterSession::create([
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
+    ]);
+
+    $customer = Customer::factory()->create();
+    $room = Room::where('number', '101')->first();
+
+    $this->actingAs($user);
+
+    // 1. Step 1: Select customer -> creates draft with current_step = 2
+    $step1Response = $this->post(route('bookings.store'), [
+        'step'        => '1',
+        'customer_id' => $customer->id,
+    ]);
+
+    $step1Response->assertRedirect();
+    $draft = \App\Models\BookingDraft::where('customer_id', $customer->id)->first();
+    expect($draft)->not->toBeNull();
+    expect($draft->current_step)->toBe(2);
+    expect($draft->status)->toBe('active');
+
+    // 2. Step 2: Choose dates and check_in_time -> updates draft with current_step = 3
+    $checkIn = now()->addDays(5)->format('Y-m-d');
+    $checkOut = now()->addDays(7)->format('Y-m-d');
+
+    $step2Response = $this->post(route('bookings.store'), [
+        'step'          => '2',
+        'customer_id'   => $customer->id,
+        'check_in'      => $checkIn,
+        'check_out'     => $checkOut,
+        'check_in_time' => '15:30',
+        'adults'        => 2,
+        'children'      => 1,
+        'source'        => 'phone',
+        'draft_token'   => $draft->token,
+    ]);
+
+    $step2Response->assertStatus(200);
+    $draft->refresh();
+    expect($draft->current_step)->toBe(3);
+    expect($draft->check_in_time)->toBe('15:30');
+    expect($draft->adults)->toBe(2);
+
+    // 3. Draft list view
+    $draftsListResponse = $this->get(route('bookings.drafts.index'));
+    $draftsListResponse->assertStatus(200);
+    $draftsListResponse->assertSee($customer->full_name);
+    $draftsListResponse->assertSee('Étape 3/4');
+
+    // 4. Resume view
+    $resumeResponse = $this->get(route('bookings.drafts.resume', $draft->token));
+    $resumeResponse->assertStatus(200);
+    $resumeResponse->assertSee($customer->full_name);
+    $resumeResponse->assertSee('15:30');
+
+    // 5. Final booking completion marks draft as completed
+    $finalResponse = $this->post(route('bookings.store'), [
+        'customer_id'    => $customer->id,
+        'room_id'        => $room->id,
+        'check_in'       => $checkIn,
+        'check_out'      => $checkOut,
+        'check_in_time'  => '15:30',
+        'adults_count'   => 2,
+        'children_count' => 1,
+        'source'         => 'phone',
+        'custom_price'   => '90000',
+        'payment_amount' => '30000',
+        'payment_method' => 'cash',
+        'draft_token'    => $draft->token,
+    ]);
+
+    $finalResponse->assertRedirect();
+    $draft->refresh();
+    expect($draft->status)->toBe('completed');
+});
+
