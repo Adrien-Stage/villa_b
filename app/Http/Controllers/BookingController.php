@@ -366,18 +366,21 @@ class BookingController extends Controller
     private function storeStep2(Request $request)
     {
         $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'booker_id'   => ['nullable', 'exists:customers,id'],
-            'check_in'    => ['required', 'date', 'after_or_equal:today'],
-            'check_out'   => ['required', 'date', 'after:check_in'],
-            'adults'      => ['required', 'integer', 'min:1'],
-            'source'      => ['nullable', 'string'],
+            'customer_id'   => ['required', 'exists:customers,id'],
+            'booker_id'     => ['nullable', 'exists:customers,id'],
+            'check_in'      => ['required', 'date', 'after_or_equal:today'],
+            'check_out'     => ['required', 'date', 'after:check_in'],
+            'check_in_time' => ['nullable', 'string', 'max:10'],
+            'adults'        => ['required', 'integer', 'min:1'],
+            'children'      => ['nullable', 'integer', 'min:0'],
+            'source'        => ['nullable', 'string'],
         ]);
 
         $customer    = Customer::findOrFail($request->customer_id);
         $bookerId    = $request->booker_id;
         $checkIn     = $request->check_in;
         $checkOut    = $request->check_out;
+        $checkInTime = $request->check_in_time ?? '14:00';
         $adults      = $request->adults;
         $children    = $request->children ?? 0;
         $source      = $request->source ?? 'direct';
@@ -399,6 +402,7 @@ class BookingController extends Controller
             'bookerId',
             'checkIn',
             'checkOut',
+            'checkInTime',
             'adults',
             'children',
             'source',
@@ -411,20 +415,22 @@ class BookingController extends Controller
     private function storeStep3(Request $request)
     {
         $validated = $request->validate([
-            'customer_id'  => ['required', 'exists:customers,id'],
-            'booker_id'    => ['nullable', 'exists:customers,id'],
-            'room_id'      => ['required', 'exists:rooms,id'],
-            'check_in'     => ['required', 'date'],
-            'check_out'    => ['required', 'date', 'after:check_in'],
-            'adults_count' => ['required', 'integer', 'min:1'],
+            'customer_id'    => ['required', 'exists:customers,id'],
+            'booker_id'      => ['nullable', 'exists:customers,id'],
+            'room_id'        => ['required', 'exists:rooms,id'],
+            'check_in'       => ['required', 'date'],
+            'check_out'      => ['required', 'date', 'after:check_in'],
+            'check_in_time'  => ['nullable', 'string', 'max:10'],
+            'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
-            'source'       => ['nullable', 'string'],
-            'notes'        => ['nullable', 'string'],
+            'source'         => ['nullable', 'string'],
+            'notes'          => ['nullable', 'string'],
         ]);
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
         $checkIn = \Carbon\Carbon::parse($validated['check_in']);
         $checkOut = \Carbon\Carbon::parse($validated['check_out']);
+        $checkInTime = $validated['check_in_time'] ?? '14:00';
         $nights = $checkIn->diffInDays($checkOut);
         
         // base_price est en centimes en BDD, on divise par 100 pour l'affichage (FCFA), avec surcharge éventuelle
@@ -484,6 +490,7 @@ class BookingController extends Controller
             'room' => $room,
             'checkIn' => $validated['check_in'],
             'checkOut' => $validated['check_out'],
+            'checkInTime' => $checkInTime,
             'nights' => $nights,
             'adultsCount' => $validated['adults_count'],
             'childrenCount' => $validated['children_count'] ?? 0,
@@ -514,20 +521,21 @@ class BookingController extends Controller
         $priceRule = $request->boolean('is_offerte') ? 'min:0' : 'min:1';
 
         $validated = $request->validate([
-            'customer_id'  => ['required', 'exists:customers,id'],
-            'booker_id'    => ['nullable', 'exists:customers,id'],
-            'room_id'      => ['required', 'exists:rooms,id'],
-            'check_in'     => ['required', 'date'],
-            'check_out'    => ['required', 'date', 'after:check_in'],
-            'adults_count' => ['required', 'integer', 'min:1'],
+            'customer_id'    => ['required', 'exists:customers,id'],
+            'booker_id'      => ['nullable', 'exists:customers,id'],
+            'room_id'        => ['required', 'exists:rooms,id'],
+            'check_in'       => ['required', 'date'],
+            'check_out'      => ['required', 'date', 'after:check_in'],
+            'check_in_time'  => ['nullable', 'string', 'max:10'],
+            'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
-            'source'       => ['nullable', 'string'],
-            'notes'        => ['nullable', 'string'],
-            'custom_price' => ['required', 'numeric', $priceRule],
+            'source'         => ['nullable', 'string'],
+            'notes'          => ['nullable', 'string'],
+            'custom_price'   => ['required', 'numeric', $priceRule],
             'payment_amount' => ['required', 'numeric', $priceRule],
             'payment_method' => ['required', 'string', 'in:orange_money,mtn_momo,cash'],
             'payment_reference' => ['nullable', 'string'],
-            'is_offerte'   => ['nullable', 'boolean'],
+            'is_offerte'     => ['nullable', 'boolean'],
             'offerte_reason' => [$request->boolean('is_offerte') ? 'required' : 'nullable', 'string', 'max:500'],
             // La réception peut écarter la convention pour un séjour privé.
             'apply_partner_privileges' => ['nullable', 'boolean'],
@@ -671,6 +679,7 @@ class BookingController extends Controller
             'room_package_id' => $roomPackage?->id,
             'status'          => $status,
             'check_in'        => $validated['check_in'],
+            'check_in_time'   => $validated['check_in_time'] ?? '14:00',
             'check_out'       => $validated['check_out'],
             'adults_count'    => $validated['adults_count'],
             'children_count'  => $validated['children_count'] ?? 0,
@@ -1326,6 +1335,7 @@ class BookingController extends Controller
             'room_id'        => ['required', 'exists:rooms,id'],
             'check_in'       => ['required', 'date'],
             'check_out'      => ['required', 'date', 'after:check_in'],
+            'check_in_time'  => ['nullable', 'string', 'max:10'],
             'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'source'         => ['nullable', 'string'],
@@ -1363,6 +1373,7 @@ class BookingController extends Controller
         $booking->update([
             'room_id'          => $room->id,
             'check_in'         => $validated['check_in'],
+            'check_in_time'    => $validated['check_in_time'] ?? $booking->check_in_time,
             'check_out'        => $validated['check_out'],
             'adults_count'     => $validated['adults_count'],
             'children_count'   => $validated['children_count'] ?? 0,

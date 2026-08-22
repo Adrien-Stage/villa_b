@@ -8,7 +8,7 @@
 
     {{-- En-tête --}}
     <div class="mb-6">
-        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
+        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'check_in_time' => $checkInTime, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour
@@ -47,7 +47,7 @@
             <div class="w-px h-4 bg-secondary/30"></div>
             <div class="flex items-center gap-2 text-sm text-primary">
                 <i data-lucide="calendar" class="w-4 h-4 text-primary/40"></i>
-                {{ \Carbon\Carbon::parse($checkIn)->locale('fr')->isoFormat('D MMM') }}
+                {{ \Carbon\Carbon::parse($checkIn)->locale('fr')->isoFormat('D MMM') }} @if(!empty($checkInTime))({{ $checkInTime }})@endif
                 → {{ \Carbon\Carbon::parse($checkOut)->locale('fr')->isoFormat('D MMM YYYY') }}
             </div>
             <div class="w-px h-4 bg-secondary/30"></div>
@@ -79,7 +79,7 @@
                 <p class="text-sm text-primary/50">Aucune chambre disponible pour cette période.</p>
             @endif
             <div class="mt-4">
-                <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
+                <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'check_in_time' => $checkInTime, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
                    class="inline-flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
                     <i data-lucide="arrow-left" class="w-3 h-3"></i>
                     Modifier les critères de recherche
@@ -179,6 +179,7 @@
                                 <input type="hidden" name="room_id" value="{{ $room->id }}">
                                 <input type="hidden" name="check_in" value="{{ $checkIn }}">
                                 <input type="hidden" name="check_out" value="{{ $checkOut }}">
+                                <input type="hidden" name="check_in_time" value="{{ $checkInTime }}">
                                 <input type="hidden" name="adults_count" value="{{ $adults }}">
                                 <input type="hidden" name="children_count" value="{{ $children }}">
                                 <input type="hidden" name="source" value="{{ $source }}">
@@ -207,7 +208,7 @@
     @endif
 
     <div class="mt-6 flex justify-start">
-        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
+        <a href="{{ route('bookings.create', ['customer_id' => $customer->id, 'booker_id' => $bookerId, 'check_in' => $checkIn, 'check_out' => $checkOut, 'check_in_time' => $checkInTime, 'adults' => $adults, 'children' => $children, 'source' => $source]) }}"
            class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             Précédent

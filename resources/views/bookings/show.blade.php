@@ -237,6 +237,9 @@
                     <dt class="text-xs text-primary/50">Arrivée</dt>
                     <dd class="text-xs font-medium text-primary">
                         {{ $booking->check_in->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                        @if(!empty($booking->check_in_time))
+                            ({{ $booking->check_in_time }})
+                        @endif
                     </dd>
                 </div>
                 <div class="flex justify-between">

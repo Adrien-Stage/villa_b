@@ -41,6 +41,7 @@ class Booking extends Model
 
         // Dates
         'check_in',
+        'check_in_time',
         'check_out',
         'actual_check_in',      // Heure réelle d'arrivée
         'actual_check_out',     // Heure réelle de départ
