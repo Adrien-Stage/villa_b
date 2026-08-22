@@ -26,10 +26,16 @@
         </p>
     </div>
     <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ route('restaurant.recipes.export', ['format' => 'csv']) }}"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           title="Exporter les fiches à plat, au seul format que l'import sait relire">
+            <i data-lucide="file-text" class="w-4 h-4 text-secondary"></i>
+            <span>CSV (ré-importable)</span>
+        </a>
         <a href="{{ route('restaurant.recipes.export') }}"
            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
-           title="Exporter les fiches techniques en Excel (.xlsx)">
-            <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
+           title="Classeur complet : carte & rentabilité, mercuriale, et une fiche par préparation et par plat">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-secondary"></i>
             <span>Exporter (Excel)</span>
         </a>
         @if($canManage)

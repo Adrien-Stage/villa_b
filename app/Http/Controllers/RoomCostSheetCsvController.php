@@ -149,6 +149,10 @@ class RoomCostSheetCsvController extends Controller
             // formules qui référencent une douzaine d'onglets.
             $writer->setPreCalculateFormulas(false);
             $writer->save('php://output');
+
+            // Les feuilles se référencent l'une l'autre : sans rompre ces
+            // liens, le classeur reste en mémoire après l'envoi.
+            $classeur->disconnectWorksheets();
         }, $nom . '_' . now()->format('Ymd_His') . '.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
