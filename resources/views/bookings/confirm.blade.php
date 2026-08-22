@@ -7,15 +7,28 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-primary font-heading">Finaliser la réservation</h1>
-            <p class="text-sm text-primary/60 mt-1">Vérifiez les détails et enregistrez l'acompte obligatoire.</p>
+            <p class="text-sm text-primary/60 mt-1">Étape 3 — Confirmation et paiement d'acompte</p>
         </div>
         
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">1</div>
-            <div class="w-8 h-px bg-primary/20"></div>
-            <div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">2</div>
-            <div class="w-8 h-px bg-primary/20"></div>
-            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-sm">3</div>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                </div>
+                <span class="text-xs font-medium text-primary/50">Client</span>
+            </div>
+            <div class="w-6 h-px bg-primary/20"></div>
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                </div>
+                <span class="text-xs font-medium text-primary/50">Chambre & dates</span>
+            </div>
+            <div class="w-6 h-px bg-primary/20"></div>
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold shadow-xs">3</div>
+                <span class="text-xs font-semibold text-primary">Confirmation</span>
+            </div>
         </div>
     </div>
 

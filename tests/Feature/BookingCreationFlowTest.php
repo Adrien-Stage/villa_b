@@ -312,3 +312,72 @@ test('draft is created during step 1 and step 2, can be resumed and is completed
     expect($draft->status)->toBe('completed');
 });
 
+test('draft continue route directly mounts and displays the exact target step (step 3 and step 4)', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $user = User::factory()->create(['role' => 'manager']);
+
+    \App\Models\CashRegisterSession::create([
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
+    ]);
+
+    $customer = Customer::factory()->create();
+    $room = Room::where('number', '101')->first();
+
+    $this->actingAs($user);
+
+    // 1. Create a draft at Step 3 (dates chosen, waiting for room selection)
+    $draftStep3 = \App\Models\BookingDraft::create([
+        'created_by'    => $user->id,
+        'customer_id'   => $customer->id,
+        'current_step'  => 3,
+        'check_in'      => now()->addDays(4)->format('Y-m-d'),
+        'check_out'     => now()->addDays(6)->format('Y-m-d'),
+        'check_in_time' => '14:00',
+        'adults'        => 2,
+        'children'      => 0,
+        'source'        => 'email',
+        'status'        => 'active',
+    ]);
+
+    // Resuming step 3 directly returns select-room view with available rooms
+    $responseStep3 = $this->get(route('bookings.drafts.continue', $draftStep3->token));
+    $responseStep3->assertStatus(200);
+    $responseStep3->assertViewIs('bookings.select-room');
+    $responseStep3->assertViewHas('checkInTime', '14:00');
+    $responseStep3->assertViewHas('source', 'email');
+    $responseStep3->assertSee('Chambre ' . $room->number);
+
+    // 2. Create a draft at Step 4 (room selected, waiting for confirmation & payment)
+    $draftStep4 = \App\Models\BookingDraft::create([
+        'created_by'    => $user->id,
+        'customer_id'   => $customer->id,
+        'room_id'       => $room->id,
+        'current_step'  => 4,
+        'check_in'      => now()->addDays(4)->format('Y-m-d'),
+        'check_out'     => now()->addDays(6)->format('Y-m-d'),
+        'check_in_time' => '14:00',
+        'adults'        => 2,
+        'children'      => 0,
+        'source'        => 'email',
+        'status'        => 'active',
+    ]);
+
+    // Resuming step 4 directly returns confirm view with room details and price calculation
+    $responseStep4 = $this->get(route('bookings.drafts.continue', $draftStep4->token));
+    $responseStep4->assertStatus(200);
+    $responseStep4->assertViewIs('bookings.confirm');
+    $responseStep4->assertViewHas('room');
+    $responseStep4->assertViewHas('pricePerNight');
+    $responseStep4->assertSee('Chambre ' . $room->number);
+    $responseStep4->assertSee('Finaliser la réservation');
+});
+
+
