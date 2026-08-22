@@ -301,7 +301,9 @@
         <input type="hidden" name="adults_count" :value="adults">
         <input type="hidden" name="children_count" :value="children">
         <input type="hidden" name="source" :value="source">
+        <input type="hidden" name="draft_token" value="{{ $draftToken ?? '' }}">
     </form>
+
 
     {{-- Modal interactif : Détection de conflit de rotation & Ajustement de l'heure d'arrivée --}}
     <div x-show="isModalOpen"

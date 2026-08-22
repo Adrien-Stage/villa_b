@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum BookingStatus: string
 {
+    case DRAFT      = 'draft';
     case PENDING    = 'pending';
     case CONFIRMED  = 'confirmed';
     case CHECKED_IN = 'checked_in';
@@ -15,6 +16,7 @@ enum BookingStatus: string
     public function label(): string
     {
         return match($this) {
+            self::DRAFT       => 'Brouillon',
             self::PENDING     => 'En attente',
             self::CONFIRMED   => 'Confirmée',
             self::CHECKED_IN  => 'En cours de séjour',
@@ -28,6 +30,7 @@ enum BookingStatus: string
     public function color(): string
     {
         return match($this) {
+            self::DRAFT       => 'bg-amber-100 text-amber-800',
             self::PENDING     => 'bg-yellow-100 text-yellow-800',
             self::CONFIRMED   => 'bg-blue-100 text-blue-800',
             self::CHECKED_IN  => 'bg-green-100 text-green-800',
