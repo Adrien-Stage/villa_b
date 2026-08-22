@@ -230,6 +230,7 @@ class SpreadsheetService
             $writer = new Xlsx($spreadsheet);
             $writer->setPreCalculateFormulas(false);
             $writer->save('php://output');
+            $spreadsheet->disconnectWorksheets();
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Cache-Control' => 'max-age=0',

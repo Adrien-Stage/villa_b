@@ -10,8 +10,10 @@ use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantRecipeLine;
+use App\Services\RestaurantRecipeWorkbook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Import / export CSV du restaurant : plats du menu, articles du
@@ -20,6 +22,10 @@ use Illuminate\Support\Facades\Auth;
 class RestaurantCsvController extends Controller
 {
     use HandlesCsv;
+
+    public function __construct(private RestaurantRecipeWorkbook $workbook)
+    {
+    }
 
     private const MENU_HEADERS   = ['categorie', 'nom', 'description', 'type', 'prix_fcfa', 'services', 'actif'];
     private const PANTRY_HEADERS = ['categorie', 'nom', 'unite', 'preparation', 'unite_achat', 'conversion_achat', 'cout_fcfa', 'stock_min', 'actif'];
@@ -267,10 +273,23 @@ class RestaurantCsvController extends Controller
             return $this->streamXlsx('modele_fiches_techniques_restaurant.xlsx', 'Fiches Techniques', self::RECIPE_HEADERS, $templateRows);
         }
 
-        $recipes = RestaurantRecipe::with(['lines.item', 'menuItem', 'producedItem'])
+        // « lines.item.recipe » : une ligne qui pointe une préparation doit
+        // pouvoir renvoyer vers l'onglet qui la fabrique.
+        $recipes = RestaurantRecipe::with([
+                'lines.item.category', 'lines.item.recipe',
+                'menuItem.category', 'producedItem',
+            ])
             ->orderBy('type')
             ->orderBy('name')
             ->get();
+
+        $tenant = $this->tenantCourant();
+        $etablissement = $tenant?->slug ? \Illuminate\Support\Str::slug($tenant->slug) . '_' : '';
+        $nom = $etablissement . 'fiches_techniques_restaurant_' . now()->format('Ymd_His');
+
+        if ($request->query('format') !== 'csv') {
+            return $this->exportRecipesXlsx($recipes, $tenant, $nom);
+        }
 
         $rows = [];
         foreach ($recipes as $recipe) {
@@ -303,15 +322,37 @@ class RestaurantCsvController extends Controller
             }
         }
 
-        $tenant = $this->tenantCourant();
-        $etablissement = $tenant?->slug ? \Illuminate\Support\Str::slug($tenant->slug) . '_' : '';
-        $nom = $etablissement . 'fiches_techniques_restaurant_' . now()->format('Ymd_His');
+        return $this->streamCsv($nom . '.csv', self::RECIPE_HEADERS, $rows);
+    }
 
-        if ($request->query('format') === 'csv') {
-            return $this->streamCsv($nom . '.csv', self::RECIPE_HEADERS, $rows);
-        }
+    /**
+     * Classeur Excel des fiches de cuisine : tableau de bord de la carte,
+     * mercuriale, puis une fiche par préparation de base et par plat — aux
+     * couleurs de l'établissement, comme les fiches de l'hébergement.
+     */
+    private function exportRecipesXlsx($recipes, ?\App\Models\Tenant $tenant, string $nom)
+    {
+        $pantry = RestaurantPantryItem::with('category')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
-        return $this->streamXlsx($nom . '.xlsx', 'Fiches Techniques', self::RECIPE_HEADERS, $rows, $tenant);
+        $classeur = $this->workbook->build($recipes, $pantry, $tenant);
+
+        return response()->streamDownload(function () use ($classeur) {
+            $writer = new Xlsx($classeur);
+            // Excel recalcule à l'ouverture : inutile d'évaluer ici des
+            // formules qui référencent une douzaine d'onglets.
+            $writer->setPreCalculateFormulas(false);
+            $writer->save('php://output');
+
+            // Les feuilles se référencent l'une l'autre : sans rompre ces
+            // liens, le classeur reste en mémoire après l'envoi.
+            $classeur->disconnectWorksheets();
+        }, $nom . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     public function importRecipes(Request $request)
