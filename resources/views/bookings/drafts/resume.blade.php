@@ -177,34 +177,13 @@
     {{-- Actions de reprise --}}
     <div class="flex flex-col sm:flex-row gap-3">
 
-        {{-- Bouton de reprise à l'étape courante --}}
-        @if($draft->current_step >= 2 && $draft->customer_id)
-            @php
-                $resumeParams = [
-                    'customer_id'   => $draft->customer_id,
-                    'booker_id'     => $draft->booker_id,
-                    'check_in'      => $draft->check_in?->format('Y-m-d'),
-                    'check_out'     => $draft->check_out?->format('Y-m-d'),
-                    'check_in_time' => $draft->check_in_time,
-                    'adults'        => $draft->adults,
-                    'children'      => $draft->children ?? 0,
-                    'source'        => $draft->source,
-                    'draft_token'   => $draft->token,
-                ];
-            @endphp
-            <a href="{{ route('bookings.create', $resumeParams) }}"
-               class="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
-                <i data-lucide="play" class="w-4 h-4"></i>
-                Reprendre à l'étape {{ $draft->current_step - 1 }}
-                <span class="text-xs font-normal text-white/70">— {{ $draft->stepLabel() }}</span>
-            </a>
-        @else
-            <a href="{{ route('bookings.create') }}"
-               class="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
-                <i data-lucide="play" class="w-4 h-4"></i>
-                Reprendre la réservation
-            </a>
-        @endif
+        {{-- Bouton de reprise directe à l'étape courante enregistrée --}}
+        <a href="{{ route('bookings.drafts.continue', $draft->token) }}"
+           class="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            Reprendre à l'étape {{ $draft->current_step }}
+            <span class="text-xs font-normal text-white/70">— {{ $draft->stepLabel() }}</span>
+        </a>
 
         {{-- Supprimer le brouillon --}}
         <form method="POST" action="{{ route('bookings.drafts.destroy', $draft->token) }}"

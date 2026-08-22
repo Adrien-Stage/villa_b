@@ -253,6 +253,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/',                    [\App\Http\Controllers\BookingDraftController::class, 'index'])->name('index');
             Route::post('/save',               [\App\Http\Controllers\BookingDraftController::class, 'save'])->name('save');
             Route::get('/{token}/resume',      [\App\Http\Controllers\BookingDraftController::class, 'resume'])->name('resume');
+            Route::get('/{token}/continue',    [\App\Http\Controllers\BookingDraftController::class, 'continue'])->name('continue');
             Route::delete('/{token}',          [\App\Http\Controllers\BookingDraftController::class, 'destroy'])->name('destroy');
         });
 
