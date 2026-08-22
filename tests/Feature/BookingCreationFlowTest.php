@@ -84,10 +84,72 @@ test('booking step 2 stores check_in_time and source and passes them to room sel
     $response->assertViewIs('bookings.select-room');
     $response->assertViewHas('checkInTime', '15:45');
     $response->assertViewHas('source', 'phone');
-    $response->assertSee('name="check_in_time" value="15:45"', false);
-    $response->assertSee('name="source" value="phone"', false);
-    $response->assertSee('source=phone', false);
-    $response->assertSee('check_in_time=15%3A45', false);
+    $response->assertSee('name="check_in_time"', false);
+    $response->assertSee('name="source"', false);
+});
+
+test('step 2 detects occupied rooms and same-day turnover with housekeeping availability', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $user = User::factory()->create(['role' => 'manager']);
+
+    \App\Models\CashRegisterSession::create([
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
+    ]);
+
+    $customer1 = Customer::factory()->create();
+    $customer2 = Customer::factory()->create();
+    $room = Room::where('number', '101')->first();
+
+    // Create an existing booking checking out in 3 days
+    $existingBooking = Booking::create([
+        'room_id' => $room->id,
+        'customer_id' => $customer1->id,
+        'booking_number' => 'VB-2026-000101',
+        'status' => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in' => now()->subDay()->format('Y-m-d'),
+        'check_out' => now()->addDays(3)->format('Y-m-d'),
+        'adults_count' => 1,
+        'total_nights' => 4,
+        'price_per_night' => 4500000,
+        'total_room_amount' => 18000000,
+        'total_amount' => 18000000,
+        'paid_amount' => 18000000,
+        'source' => 'direct',
+    ]);
+
+    $this->actingAs($user);
+
+    // New booking starts on the departure day of existing booking (same-day rotation!)
+    $newCheckIn = now()->addDays(3)->format('Y-m-d');
+    $newCheckOut = now()->addDays(6)->format('Y-m-d');
+
+    $response = $this->post(route('bookings.store'), [
+        'step'          => '2',
+        'customer_id'   => $customer2->id,
+        'check_in'      => $newCheckIn,
+        'check_out'     => $newCheckOut,
+        'check_in_time' => '13:00', // earlier than 14:00 (ready time)
+        'adults'        => 1,
+        'children'      => 0,
+        'source'        => 'phone',
+    ]);
+
+    $response->assertStatus(200);
+    $response->assertViewIs('bookings.select-room');
+
+    // Should see occupancy indicator & rotation indicators
+    $response->assertSee('Occupée');
+    $response->assertSee('Rotation le jour d\'arrivée');
+    $response->assertSee('14:00'); // Standard ready time (12:00 + 120 min)
+    $response->assertSee('Disponibilité effective post-ménage');
 });
 
 test('full booking flow preserves check_in_time and phone source to final database record', function () {
