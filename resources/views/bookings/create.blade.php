@@ -148,6 +148,44 @@
                     </div>
                 </div>
 
+                @php
+                    $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+                    $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+                    $defaultCheckInTime = $tenantSettings['reception']['check_in_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_IN_TIME;
+                    $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
+                @endphp
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
+                            Heure d'arrivée (Check-in) *
+                        </label>
+                        <input type="time" name="check_in_time"
+                               value="{{ old('check_in_time', request('check_in_time', $defaultCheckInTime)) }}"
+                               required
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        @error('check_in_time')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
+                            Origine de la réservation
+                        </label>
+                        <select name="source"
+                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <option value="direct" {{ old('source', request('source', 'direct')) === 'direct' ? 'selected' : '' }}>Direct</option>
+                            <option value="phone" {{ old('source', request('source')) === 'phone' ? 'selected' : '' }}>Téléphone</option>
+                            <option value="email" {{ old('source', request('source')) === 'email' ? 'selected' : '' }}>Email</option>
+                            <option value="walk_in" {{ old('source', request('source')) === 'walk_in' ? 'selected' : '' }}>Walk-in</option>
+                            <option value="ota_bookingcom" {{ old('source', request('source')) === 'ota_bookingcom' ? 'selected' : '' }}>Booking.com</option>
+                        </select>
+                        @error('source')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
@@ -167,29 +205,10 @@
                     </div>
                 </div>
 
-                @php
-                    $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
-                    $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
-                    $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
-                @endphp
-                <p class="text-[11px] text-primary/70 mb-4 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
+                <p class="text-[11px] text-primary/70 mb-5 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
                     <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 text-primary/50 flex-shrink-0"></i>
                     <span><strong>Politique de capacité :</strong> Si le nombre d'occupants dépasse la capacité de base d'une chambre (ex: 2 pers.), une surcharge de +{{ $surchargePercentage }}% est appliquée au prix de la chambre.</span>
                 </p>
-
-                <div class="mb-5">
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
-                        Origine
-                    </label>
-                    <select name="source"
-                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
-                        <option value="direct">Direct</option>
-                        <option value="phone">Téléphone</option>
-                        <option value="email">Email</option>
-                        <option value="walk_in">Walk-in</option>
-                        <option value="ota_bookingcom">Booking.com</option>
-                    </select>
-                </div>
 
                 <div class="flex gap-3">
                     <a href="{{ route('bookings.create') }}"

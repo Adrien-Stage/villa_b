@@ -30,8 +30,8 @@
         <form method="POST" action="{{ route('bookings.update', $booking) }}">
             @csrf @method('PUT')
 
-            {{-- Dates --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {{-- Dates et heure --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                         Arrivée *
@@ -39,6 +39,14 @@
                     <input type="date" name="check_in"
                            value="{{ old('check_in', $booking->check_in->format('Y-m-d')) }}"
                            required
+                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
+                        Heure d'arrivée
+                    </label>
+                    <input type="time" name="check_in_time"
+                           value="{{ old('check_in_time', $booking->check_in_time ?? '14:00') }}"
                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
                 </div>
                 <div>

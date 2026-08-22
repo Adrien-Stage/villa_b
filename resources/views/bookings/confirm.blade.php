@@ -44,13 +44,18 @@
                     
                     <div>
                         <p class="text-xs text-primary/50 uppercase tracking-wider font-semibold">Séjour</p>
-                        <p class="font-medium text-primary">Du {{ \Carbon\Carbon::parse($checkIn)->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($checkOut)->format('d/m/Y') }}</p>
+                        <p class="font-medium text-primary">Du {{ \Carbon\Carbon::parse($checkIn)->format('d/m/Y') }} @if(!empty($checkInTime))à {{ $checkInTime }}@endif au {{ \Carbon\Carbon::parse($checkOut)->format('d/m/Y') }}</p>
                         <p class="text-xs text-primary/70">{{ $nights }} nuit(s)</p>
                     </div>
                     
                     <div>
                         <p class="text-xs text-primary/50 uppercase tracking-wider font-semibold">Occupants</p>
                         <p class="font-medium text-primary">{{ $adultsCount }} Adulte(s), {{ $childrenCount }} Enfant(s)</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs text-primary/50 uppercase tracking-wider font-semibold">Origine</p>
+                        <p class="font-medium text-primary capitalize">{{ $source ?? 'direct' }}</p>
                     </div>
 
                     @if($bookerId)
@@ -73,6 +78,7 @@
                 <input type="hidden" name="room_id" value="{{ $room->id }}">
                 <input type="hidden" name="check_in" value="{{ $checkIn }}">
                 <input type="hidden" name="check_out" value="{{ $checkOut }}">
+                <input type="hidden" name="check_in_time" value="{{ $checkInTime }}">
                 <input type="hidden" name="adults_count" value="{{ $adultsCount }}">
                 <input type="hidden" name="children_count" value="{{ $childrenCount }}">
                 <input type="hidden" name="source" value="{{ $source }}">
