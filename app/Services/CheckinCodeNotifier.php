@@ -62,7 +62,7 @@ class CheckinCodeNotifier
      * plus cher que de tracer l'incident et de laisser la réception redonner le
      * code de vive voix.
      *
-     * @return array{type:string,label:string,name:?string,email:?string,phone:?string,sent:array<int,string>}
+     * @return array{type:string,label:string,name:?string,email:?string,phone:?string,sent:array<int,string>,error:?string}
      */
     public function send(Booking $booking, ?string $type): array
     {
@@ -78,6 +78,10 @@ class CheckinCodeNotifier
             'email' => $this->propre($destinataire?->email),
             'phone' => $this->propre($destinataire?->phone),
             'sent'  => [],
+            // Pourquoi ça n'est pas parti. Sans cette raison, l'écran ne peut
+            // qu'inventer une cause — et accuser une adresse manquante quand
+            // c'est le fournisseur qui a refusé le message.
+            'error' => null,
         ];
 
         if ($compte['email'] !== null) {
@@ -88,6 +92,8 @@ class CheckinCodeNotifier
                 Log::info("Code de check-in envoyé par courriel au {$compte['label']} ({$compte['email']}) "
                     . "pour la réservation #{$booking->booking_number}");
             } catch (\Throwable $e) {
+                $compte['error'] = $e->getMessage();
+
                 Log::error("Échec de l'envoi du code de check-in pour la réservation #{$booking->booking_number} : "
                     . $e->getMessage(), [
                         'exception'  => $e,
@@ -97,6 +103,8 @@ class CheckinCodeNotifier
                     ]);
             }
         } else {
+            $compte['error'] = "Aucune adresse courriel enregistrée pour le {$compte['label']}.";
+
             Log::warning("Aucune adresse courriel pour le {$compte['label']} "
                 . "de la réservation #{$booking->booking_number} : code non envoyé.");
         }

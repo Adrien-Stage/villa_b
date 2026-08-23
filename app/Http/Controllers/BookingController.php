@@ -404,9 +404,13 @@ class BookingController extends Controller
         $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
         $envoye = in_array('email', $envoi['sent'], true);
 
-        $message = $envoye
-            ? "Code de check-in envoyé au {$envoi['label']} ({$envoi['email']})."
-            : "Aucune adresse courriel pour le {$envoi['label']} : le code n'a pas pu être envoyé.";
+        // On rapporte ce qui s'est réellement passé : « aucune adresse » et
+        // « envoi refusé » appellent des corrections très différentes.
+        $message = match (true) {
+            $envoye                     => "Code de check-in envoyé au {$envoi['label']} ({$envoi['email']}).",
+            $envoi['email'] === null    => $envoi['error'] ?: "Aucune adresse courriel pour le {$envoi['label']}.",
+            default                     => "Envoi refusé pour le {$envoi['label']} ({$envoi['email']}) : " . ($envoi['error'] ?: 'raison inconnue'),
+        };
 
         if ($request->wantsJson()) {
             return response()->json([

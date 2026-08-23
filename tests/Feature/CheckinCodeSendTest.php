@@ -163,3 +163,21 @@ test('un message adressé au client le salue directement', function () {
     expect($html)->toContain('Bonjour Aminatou')
         ->and($html)->not->toContain('au nom de');
 });
+
+test('un envoi refusé par le fournisseur annonce la vraie raison', function () {
+    Mail::fake();
+    $booking = reservationAvecCode(CheckinCodeNotifier::TO_CUSTOMER);
+
+    // Le fournisseur rejette le message : l'adresse existe pourtant bien.
+    Mail::shouldReceive('to')->andThrow(new \RuntimeException(
+        'The gmail.com domain is not verified.'
+    ));
+
+    $reponse = test()->postJson(route('bookings.checkin_code.send', $booking))->assertStatus(422);
+
+    expect($reponse->json('message'))
+        ->toContain('Envoi refusé')
+        ->toContain('gmail.com domain is not verified')
+        // Le défaut d'origine : accuser une adresse manquante alors qu'elle existe.
+        ->not->toContain('Aucune adresse');
+});
