@@ -126,7 +126,7 @@ class SettingsController extends Controller
         $tab = $request->query('tab');
 
         if ($tab && $request->has('settings')) {
-            $tabData = $request->input('settings');
+            $tabData = $this->validatedTabData($request, $tab);
 
             // Fusionne avec les données existantes de cet onglet ou crée l'onglet
             $settings[$tab] = array_merge($settings[$tab] ?? [], $tabData);
@@ -139,5 +139,49 @@ class SettingsController extends Controller
         }
 
         return redirect()->route('settings.index', ['tab' => $tab])->with('success', 'Les paramètres ont été enregistrés avec succès.');
+    }
+
+    /**
+     * Données de l'onglet, vérifiées quand elles le méritent.
+     *
+     * Le stockage des réglages est volontairement libre — un onglet ajoute une
+     * clé sans toucher au contrôleur. Mais l'identité de courriel fait
+     * exception : une adresse mal formée ne se manifeste qu'au premier envoi,
+     * côté serveur de mail, et le client n'a jamais reçu son code de check-in.
+     *
+     * @return array<string, mixed>
+     */
+    private function validatedTabData(Request $request, string $tab): array
+    {
+        $data = (array) $request->input('settings');
+
+        if ($tab !== 'general') {
+            return $data;
+        }
+
+        if (!Auth::user()->hasRole('manager')) {
+            abort(403, "Seul un manager peut modifier l'identité d'expédition des courriels.");
+        }
+
+        $request->validate([
+            'settings.mail_from_address' => ['nullable', 'email:rfc', 'max:255'],
+            'settings.mail_from_name'    => ['nullable', 'string', 'max:120'],
+            'settings.mail_reply_to'     => ['nullable', 'email:rfc', 'max:255'],
+        ], [], [
+            'settings.mail_from_address' => "adresse d'expédition",
+            'settings.mail_from_name'    => "nom de l'expéditeur",
+            'settings.mail_reply_to'     => 'adresse de réponse',
+        ]);
+
+        // Un champ vidé doit rendre la main au repli (.env, nom de
+        // l'établissement) plutôt que d'enregistrer une chaîne vide, qui
+        // produirait un expéditeur sans adresse.
+        foreach (['mail_from_address', 'mail_from_name', 'mail_reply_to'] as $cle) {
+            if (array_key_exists($cle, $data) && trim((string) $data[$cle]) === '') {
+                $data[$cle] = null;
+            }
+        }
+
+        return $data;
     }
 }

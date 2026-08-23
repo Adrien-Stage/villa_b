@@ -626,7 +626,7 @@ test('complimentary bookings trigger in-app notifications correctly', function (
     $response4->assertJsonPath('total_unread', 0);
 });
 
-test('booking finalization sends check-in code email to customer and booker if present', function () {
+test('booking finalization sends the check-in code to the chosen recipient only', function () {
     \Illuminate\Support\Facades\Mail::fake();
 
     $this->seed([
@@ -659,18 +659,24 @@ test('booking finalization sends check-in code email to customer and booker if p
         'source' => 'direct',
         'custom_price' => '50000',
         'payment_amount' => '15000',
-        'payment_method' => 'cash'])->assertRedirect();
+        'payment_method' => 'cash',
+        'recipient_type' => 'booker'])->assertRedirect();
 
     $booking = Booking::orderBy('id', 'desc')->first();
     expect($booking)->not->toBeNull();
 
-    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\CheckinCodeMail::class, function ($mail) use ($customer) {
-        return $mail->hasTo('customer@example.com') && $mail->booking->checkin_code !== null;
+    // Le code part au mandataire désigné, et à lui seul : un code d'accès
+    // diffusé deux fois double la surface de fuite, et plus personne ne sait
+    // qui l'a réellement reçu.
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\CheckinCodeMail::class, function ($mail) {
+        return $mail->hasTo('booker@example.com') && $mail->booking->checkin_code !== null;
     });
 
-    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\CheckinCodeMail::class, function ($mail) use ($booker) {
-        return $mail->hasTo('booker@example.com');
+    \Illuminate\Support\Facades\Mail::assertNotSent(\App\Mail\CheckinCodeMail::class, function ($mail) {
+        return $mail->hasTo('customer@example.com');
     });
+
+    \Illuminate\Support\Facades\Mail::assertSentCount(1);
 });
 
 test('booking calculates price with capacity surcharge when occupants exceed base capacity', function () {

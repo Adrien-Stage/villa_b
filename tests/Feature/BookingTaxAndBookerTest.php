@@ -57,6 +57,8 @@ test('a user can create a booking with 0% VAT and correct net prices', function 
         'custom_price' => '90000', // 90000 FCFA total
         'payment_amount' => '30000', // 30000 FCFA deposit
         'payment_method' => 'cash',
+        // Une réservation par mandataire doit désigner qui reçoit le code.
+        'recipient_type' => 'customer',
         'payment_reference' => 'REF123']);
 
     // Check redirection or success status

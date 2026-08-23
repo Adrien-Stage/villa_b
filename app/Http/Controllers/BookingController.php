@@ -9,10 +9,12 @@ use App\Models\Customer;
 use App\Models\FolioItem;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Services\CheckinCodeNotifier;
 use App\Services\CheckOutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -607,9 +609,18 @@ class BookingController extends Controller
             ->values()
             ->all();
 
+        // Les deux interlocuteurs en entier, et non leurs seuls identifiants :
+        // le choix du destinataire du code doit montrer les coordonnées, sans
+        // quoi on choisit à l'aveugle entre deux noms.
+        $booker = !empty($validated['booker_id'])
+            ? Customer::find($validated['booker_id'])
+            : null;
+
         return view('bookings.confirm', [
             'customerId' => $validated['customer_id'],
             'bookerId' => $validated['booker_id'] ?? null,
+            'customer' => $customer,
+            'booker' => $booker,
             'partnerOrganization' => $partnerOrganization,
             'roomPackages' => $roomPackages,
             // Remise estimée sur le brut, pour l'afficher avant validation.
@@ -686,6 +697,15 @@ class BookingController extends Controller
             'payment_amount' => ['required', 'numeric', $priceRule],
             'payment_method' => ['required', 'string', 'in:orange_money,mtn_momo,cash'],
             'payment_reference' => ['nullable', 'string'],
+            // Le destinataire du code : exigé précisément quand le choix existe,
+            // c'est-à-dire en présence d'un mandataire. Une réservation prise en
+            // direct n'a qu'un interlocuteur, la question ne se pose pas.
+            'recipient_type' => [
+                $request->filled('booker_id') ? 'required' : 'nullable',
+                Rule::in($request->filled('booker_id')
+                    ? [CheckinCodeNotifier::TO_CUSTOMER, CheckinCodeNotifier::TO_BOOKER]
+                    : [CheckinCodeNotifier::TO_CUSTOMER]),
+            ],
             'is_offerte'     => ['nullable', 'boolean'],
             'offerte_reason' => [$request->boolean('is_offerte') ? 'required' : 'nullable', 'string', 'max:500'],
             // La réception peut écarter la convention pour un séjour privé.
@@ -985,33 +1005,23 @@ class BookingController extends Controller
             ]);
         }
 
-        // Envoi du mail de confirmation avec le code de check-in à 6 chiffres
-        try {
-            // Charger les relations nécessaires pour le template email
-            $booking->load(['customer', 'booker', 'room.roomType']);
-
-            // Envoyer au client final s'il a un e-mail
-            if ($booking->customer && !empty($booking->customer->email)) {
-                \Illuminate\Support\Facades\Mail::to($booking->customer->email)->send(new \App\Mail\CheckinCodeMail($booking));
-                \Illuminate\Support\Facades\Log::info("Mail de checkin envoyé au client {$booking->customer->email} pour la réservation #{$booking->booking_number}");
-            }
-
-            // Envoyer au mandataire s'il est présent et a un e-mail
-            if ($booking->booker && !empty($booking->booker->email)) {
-                \Illuminate\Support\Facades\Mail::to($booking->booker->email)->send(new \App\Mail\CheckinCodeMail($booking));
-                \Illuminate\Support\Facades\Log::info("Mail de checkin envoyé au mandataire {$booking->booker->email} pour la réservation #{$booking->booking_number}");
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur d'envoi du mail de checkin pour la réservation #{$booking->booking_number} : " . $e->getMessage(), [
-                'exception' => $e,
-                'from' => config('mail.from.address'),
-                'mailer' => config('mail.default'),
-            ]);
-        }
+        // Le code de check-in ne part qu'à l'interlocuteur désigné à la dernière
+        // étape. L'envoyer aux deux doublait la circulation d'un code d'accès et
+        // rendait impossible de savoir qui l'avait reçu.
+        $envoi = app(CheckinCodeNotifier::class)->send(
+            $booking,
+            $validated['recipient_type'] ?? CheckinCodeNotifier::TO_CUSTOMER
+        );
 
         $successMsg = $booking->status === BookingStatus::PENDING
             ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
             : "Réservation {$booking->booking_number} créée et acompte enregistré.";
+
+        // Où est parti le code : sans ce retour, la réception ne peut pas
+        // répondre au client qui appelle en disant n'avoir rien reçu.
+        $successMsg .= in_array('email', $envoi['sent'], true)
+            ? " Code de check-in envoyé au {$envoi['label']} ({$envoi['email']})."
+            : " Attention : aucun code n'a pu être envoyé au {$envoi['label']} — communiquez-le de vive voix.";
 
         return redirect()
             ->route('bookings.show', $booking)

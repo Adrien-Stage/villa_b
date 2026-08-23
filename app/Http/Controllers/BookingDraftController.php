@@ -363,6 +363,10 @@ class BookingDraftController extends Controller
         return view('bookings.confirm', [
             'customerId' => $customer->id,
             'bookerId' => $bookerId,
+            // Les personnes, pas seulement leurs identifiants : l'écran affiche
+            // les coordonnées pour choisir qui reçoit le code de check-in.
+            'customer' => $customer,
+            'booker' => $bookerId ? \App\Models\Customer::find($bookerId) : null,
             'partnerOrganization' => $partnerOrganization,
             'roomPackages' => $roomPackages,
             'partnerRoomDiscount' => $partnerOrganization

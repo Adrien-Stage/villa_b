@@ -23,6 +23,38 @@
 @endphp
 
 @section('content')
+@php
+    // Deux contrôleurs rendent cet écran ; un troisième viendra peut-être. Une
+    // variable oubliée doit dégrader l'affichage, pas casser la page au moment
+    // d'encaisser.
+    $customer = $customer ?? null;
+    $booker   = $booker ?? null;
+
+    // Destinataires possibles du code de check-in, coordonnées comprises : on
+    // choisit une personne, pas une étiquette.
+    $recipientOptions = [];
+
+    foreach (\App\Services\CheckinCodeNotifier::RECIPIENTS as $cle => $libelle) {
+        $personne = $cle === \App\Services\CheckinCodeNotifier::TO_BOOKER ? ($booker ?? null) : ($customer ?? null);
+
+        if (!$personne) {
+            continue;
+        }
+
+        $recipientOptions[$cle] = [
+            'label' => $libelle,
+            'name'  => $personne->full_name,
+            'email' => trim((string) $personne->email) ?: null,
+            'phone' => trim((string) $personne->phone) ?: null,
+        ];
+    }
+
+    // Par défaut, le mandataire quand il existe : c'est lui qui gère le dossier
+    // et qui a demandé la réservation.
+    $defaultRecipient = isset($recipientOptions[\App\Services\CheckinCodeNotifier::TO_BOOKER])
+        ? \App\Services\CheckinCodeNotifier::TO_BOOKER
+        : \App\Services\CheckinCodeNotifier::TO_CUSTOMER;
+@endphp
 <div class="max-w-6xl mx-auto pb-12">
 
     {{-- ── En-tête & fil d'étapes ──────────────────────────────────────────── --}}
@@ -428,6 +460,93 @@
                                             </span>
                                         </span>
                                     </label>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+
+                {{-- Destinataire du code de confirmation.
+                     Le code de check-in est un code d'accès : il ne part qu'à
+                     une seule personne. Le choix n'a de sens qu'en présence d'un
+                     mandataire — sinon il n'y a qu'un interlocuteur, et poser la
+                     question reviendrait à faire cliquer sur une évidence. --}}
+                <section class="bg-white rounded-2xl border border-secondary/20 shadow-sm overflow-hidden">
+                    <header class="px-5 py-3.5 border-b border-secondary/15 flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-accent/40 text-primary flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </span>
+                        <h2 class="font-heading font-semibold text-primary text-sm">Code de confirmation</h2>
+                    </header>
+
+                    <div class="p-5">
+                        @if($booker)
+                            <p class="text-xs text-primary/60 mb-3">
+                                Cette réservation passe par un mandataire. Choisissez qui reçoit le code
+                                de check-in — il ne sera envoyé qu'à cette personne.
+                            </p>
+
+                            <div class="space-y-2" x-data="{ destinataire: '{{ old('recipient_type', $defaultRecipient) }}' }">
+                                @foreach($recipientOptions as $valeur => $option)
+                                    <label class="flex items-start gap-3 border rounded-xl px-3.5 py-3 cursor-pointer transition-colors"
+                                           :class="destinataire === '{{ $valeur }}' ? 'border-secondary bg-accent/20 ring-1 ring-secondary/30' : 'border-secondary/25 hover:bg-accent/10'">
+                                        <input type="radio" name="recipient_type" value="{{ $valeur }}"
+                                               x-model="destinataire" required
+                                               class="mt-0.5 w-4 h-4 text-primary">
+                                        <span class="flex-1 min-w-0">
+                                            <span class="block text-sm font-medium text-primary">
+                                                {{ $option['label'] }}
+                                                <span class="text-primary/50 font-normal">— {{ $option['name'] }}</span>
+                                            </span>
+
+                                            @if($option['email'])
+                                                <span class="flex items-center gap-1.5 text-[11px] text-primary/60 mt-1">
+                                                    <i data-lucide="mail" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <span class="truncate">{{ $option['email'] }}</span>
+                                                </span>
+                                            @endif
+
+                                            @if($option['phone'])
+                                                <span class="flex items-center gap-1.5 text-[11px] text-primary/60 mt-0.5">
+                                                    <i data-lucide="phone" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <span class="truncate">{{ $option['phone'] }}</span>
+                                                </span>
+                                            @endif
+
+                                            @if(!$option['email'] && !$option['phone'])
+                                                <span class="flex items-center gap-1.5 text-[11px] text-amber-700 mt-1">
+                                                    <i data-lucide="alert-triangle" class="w-3 h-3 flex-shrink-0"></i>
+                                                    Aucune coordonnée enregistrée — le code devra être donné de vive voix.
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            @error('recipient_type')
+                                <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            {{-- Pas de mandataire : le destinataire est acquis, on le
+                                 rappelle sans faire choisir. --}}
+                            <input type="hidden" name="recipient_type" value="{{ $defaultRecipient }}">
+
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="user" class="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0"></i>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-primary">{{ $recipientOptions[$defaultRecipient]['name'] }}</p>
+                                    @if($recipientOptions[$defaultRecipient]['email'])
+                                        <p class="text-[11px] text-primary/60 mt-0.5 truncate">{{ $recipientOptions[$defaultRecipient]['email'] }}</p>
+                                    @endif
+                                    @if($recipientOptions[$defaultRecipient]['phone'])
+                                        <p class="text-[11px] text-primary/60 truncate">{{ $recipientOptions[$defaultRecipient]['phone'] }}</p>
+                                    @endif
+                                    @if(!$recipientOptions[$defaultRecipient]['email'] && !$recipientOptions[$defaultRecipient]['phone'])
+                                        <p class="text-[11px] text-amber-700 mt-0.5">
+                                            Aucune coordonnée enregistrée — le code devra être donné de vive voix.
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                         @endif
