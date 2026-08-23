@@ -93,7 +93,12 @@ test('la sélection déclenche le recalcul', function () {
 
     // Sans ce déclencheur sur les boutons radio, la formule serait bien dans
     // le bon périmètre mais rien ne rafraîchirait le total.
-    expect(substr_count($html, '@change="updateCalculations()"'))->toBeGreaterThanOrEqual(2);
+    // Le nom du gestionnaire importe peu : syncDeposit() recalcule, puis
+    // remonte l'acompte au minimum quand le total vient de bondir.
+    $declencheurs = substr_count($html, '@change="updateCalculations()"')
+        + substr_count($html, '@change="syncDeposit()"');
+
+    expect($declencheurs)->toBeGreaterThanOrEqual(2);
 });
 
 test('le détail du montant dû est affiché', function () {
