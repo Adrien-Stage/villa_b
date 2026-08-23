@@ -102,30 +102,51 @@
         </div>
     @else
         <div x-data="{ activeCategory: 'all' }">
-            {{-- Filtres par catégorie --}}
-            <div class="flex items-center gap-2 flex-wrap mb-6">
-                <button type="button" 
-                        @click="activeCategory = 'all'"
-                        :class="activeCategory === 'all' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
-                        class="px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
-                    Toutes les catégories
-                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white">
-                        {{ $availableRooms->flatten(1)->count() }}
-                    </span>
-                </button>
-                @foreach($roomTypes as $type)
-                    @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
-                    @if($rooms->isEmpty()) @continue @endif
+            {{-- Filtres par catégorie et actions rapides accordéon --}}
+            <div class="flex items-center justify-between gap-3 flex-wrap mb-5">
+                {{-- Boutons de filtre --}}
+                <div class="flex items-center gap-2 flex-wrap">
                     <button type="button" 
-                            @click="activeCategory = '{{ $type->id }}'"
-                            :class="activeCategory === '{{ $type->id }}' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
-                            class="px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
-                        {{ $type->name }}
-                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 group-hover:bg-slate-200 transition-colors">
-                            {{ $rooms->count() }}
+                            @click="activeCategory = 'all'; $dispatch('expand-all-categories')"
+                            :class="activeCategory === 'all' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
+                            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                        Toutes les catégories
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                              :class="activeCategory === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'">
+                            {{ $availableRooms->flatten(1)->count() }}
                         </span>
                     </button>
-                @endforeach
+                    @foreach($roomTypes as $type)
+                        @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
+                        @if($rooms->isEmpty()) @continue @endif
+                        <button type="button" 
+                                @click="activeCategory = '{{ $type->id }}'; $dispatch('expand-category-{{ $type->id }}')"
+                                :class="activeCategory === '{{ $type->id }}' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
+                                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                            {{ $type->name }}
+                            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                  :class="activeCategory === '{{ $type->id }}' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'">
+                                {{ $rooms->count() }}
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+
+                {{-- Actions rapides Déplier / Replier tout --}}
+                <div class="flex items-center gap-2 text-xs font-medium">
+                    <button type="button"
+                            @click="$dispatch('expand-all-categories')"
+                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70 hover:text-primary transition-colors flex items-center gap-1.5">
+                        <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i>
+                        Tout déplier
+                    </button>
+                    <button type="button"
+                            @click="$dispatch('collapse-all-categories')"
+                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70 hover:text-primary transition-colors flex items-center gap-1.5">
+                        <i data-lucide="chevrons-up" class="w-3.5 h-3.5"></i>
+                        Tout replier
+                    </button>
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -133,156 +154,194 @@
                     @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
                     @if($rooms->isEmpty()) @continue @endif
 
-                    <div x-show="activeCategory === 'all' || activeCategory === '{{ $type->id }}'"
+                    <div x-data="{ isOpen: true }"
+                         @expand-all-categories.window="isOpen = true"
+                         @collapse-all-categories.window="isOpen = false"
+                         @expand-category-{{ $type->id }}.window="isOpen = true"
+                         x-show="activeCategory === 'all' || activeCategory === '{{ $type->id }}'"
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 transform scale-[0.98]"
                          x-transition:enter-end="opacity-100 transform scale-100"
-                         class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    {{-- En-tête type --}}
-                    <div class="px-5 py-4 border-b border-secondary/10 flex items-center justify-between">
-                        <div>
-                            <h3 class="font-heading font-semibold text-primary">{{ $type->name }}</h3>
-                            <p class="text-xs text-primary/50 mt-0.5">
-                                {{ $type->max_capacity }} pers. max
-                                @if($type->size_sqm) · {{ $type->size_sqm }} m² @endif
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            @php
-                                $price = $type->getCalculatedPricePerNight($adults, $children) / 100;
-                            @endphp
-                            <span class="font-heading font-semibold text-primary text-base">
-                                {{ number_format($price, 0, ',', ' ') }} FCFA
-                            </span>
-                            <span class="text-xs text-primary/50">/nuit</span>
-                        </div>
-                    </div>
+                         class="bg-white rounded-xl shadow-sm border border-secondary/15 overflow-hidden transition-all duration-200">
+                        
+                        {{-- En-tête interactif de la catégorie (Accordéon) --}}
+                        <div @click="isOpen = !isOpen"
+                             class="px-5 py-4 flex items-center justify-between cursor-pointer select-none bg-white hover:bg-slate-50/80 transition-colors border-b border-transparent group"
+                             :class="isOpen ? 'border-secondary/10' : ''"
+                             role="button"
+                             :aria-expanded="isOpen">
+                            
+                            <div class="flex items-center gap-3.5">
+                                {{-- Chevron animé interactif --}}
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center text-primary/60 transition-all duration-300 flex-shrink-0"
+                                     :class="isOpen ? 'rotate-180 bg-primary/10 text-primary group-hover:bg-primary/20' : 'rotate-0'">
+                                    <i data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
+                                </div>
 
-                    {{-- Chambres disponibles --}}
-                    <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        @foreach($rooms as $room)
-                            @php
-                                $roomData = [
-                                    'id' => $room->id,
-                                    'number' => $room->number,
-                                    'floor' => $room->floor,
-                                    'viewType' => $room->view_type,
-                                    'typeName' => $type->name,
-                                    'isOccupied' => $room->is_currently_occupied,
-                                    'status' => $room->status->value,
-                                    'isBeingCleaned' => $room->is_being_cleaned,
-                                    'cleaningReadyTime' => $room->cleaning_ready_time,
-                                    'cleaningMinutesRemaining' => $room->cleaning_minutes_remaining,
-                                    'cleaningLabel' => $room->cleaning_label,
-                                    'currentCheckoutFormatted' => $room->current_checkout_formatted,
-                                    'currentCheckoutTime' => $room->current_checkout_time,
-                                    'currentReadyTime' => $room->current_ready_time,
-                                    'cleaningDelay' => $room->cleaning_delay_minutes,
-                                    'hasSameDayDeparture' => $room->has_same_day_departure,
-                                    'sameDayCheckoutTime' => $room->same_day_checkout_time,
-                                    'sameDayReadyTime' => $room->same_day_ready_time,
-                                    'hasCleaningConflict' => $room->has_cleaning_conflict,
-                                    'hasRotationConflict' => $room->has_rotation_conflict,
-                                    'hasAnyConflict' => $room->has_any_conflict,
-                                    'effectiveReadyTime' => $room->effective_ready_time,
-                                    'conflictType' => $room->conflict_type,
-                                ];
-                            @endphp
-                            <div class="border border-secondary/20 rounded-xl p-3.5 bg-white hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col justify-between group relative cursor-pointer"
-                                 @click="selectRoom(@js($roomData))">
-                                
                                 <div>
-                                    <div class="flex items-center justify-between gap-2 mb-1.5">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-heading font-bold text-primary text-base group-hover:text-secondary transition-colors">
-                                                Chambre {{ $room->number }}
-                                            </span>
-                                            @if($room->floor)
-                                                <span class="text-[11px] text-primary/50 font-normal">Ét. {{ $room->floor }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-heading font-semibold text-primary text-base group-hover:text-secondary transition-colors">
+                                            {{ $type->name }}
+                                        </h3>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                                            {{ $rooms->count() }} chambre{{ $rooms->count() > 1 ? 's' : '' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-primary/50 mt-0.5 flex items-center gap-2">
+                                        <span>{{ $type->max_capacity }} pers. max</span>
+                                        @if($type->size_sqm)
+                                            <span>&bull;</span>
+                                            <span>{{ $type->size_sqm }} m²</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 text-right">
+                                <div>
+                                    @php
+                                        $price = $type->getCalculatedPricePerNight($adults, $children) / 100;
+                                    @endphp
+                                    <span class="font-heading font-semibold text-primary text-base">
+                                        {{ number_format($price, 0, ',', ' ') }} FCFA
+                                    </span>
+                                    <span class="text-xs text-primary/50 block">/nuit</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Contenu dépliable fluide : Chambres disponibles --}}
+                        <div x-show="isOpen"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 -translate-y-2"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 -translate-y-2"
+                             class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50/40 border-t border-slate-100">
+                            @foreach($rooms as $room)
+                                @php
+                                    $roomData = [
+                                        'id' => $room->id,
+                                        'number' => $room->number,
+                                        'floor' => $room->floor,
+                                        'viewType' => $room->view_type,
+                                        'typeName' => $type->name,
+                                        'isOccupied' => $room->is_currently_occupied,
+                                        'status' => $room->status->value,
+                                        'isBeingCleaned' => $room->is_being_cleaned,
+                                        'cleaningReadyTime' => $room->cleaning_ready_time,
+                                        'cleaningMinutesRemaining' => $room->cleaning_minutes_remaining,
+                                        'cleaningLabel' => $room->cleaning_label,
+                                        'currentCheckoutFormatted' => $room->current_checkout_formatted,
+                                        'currentCheckoutTime' => $room->current_checkout_time,
+                                        'currentReadyTime' => $room->current_ready_time,
+                                        'cleaningDelay' => $room->cleaning_delay_minutes,
+                                        'hasSameDayDeparture' => $room->has_same_day_departure,
+                                        'sameDayCheckoutTime' => $room->same_day_checkout_time,
+                                        'sameDayReadyTime' => $room->same_day_ready_time,
+                                        'hasCleaningConflict' => $room->has_cleaning_conflict,
+                                        'hasRotationConflict' => $room->has_rotation_conflict,
+                                        'hasAnyConflict' => $room->has_any_conflict,
+                                        'effectiveReadyTime' => $room->effective_ready_time,
+                                        'conflictType' => $room->conflict_type,
+                                    ];
+                                @endphp
+                                <div class="border border-secondary/20 rounded-xl p-3.5 bg-white hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col justify-between group/card relative cursor-pointer"
+                                     @click="selectRoom(@js($roomData))">
+                                    
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-heading font-bold text-primary text-base group-hover/card:text-secondary transition-colors">
+                                                    Chambre {{ $room->number }}
+                                                </span>
+                                                @if($room->floor)
+                                                    <span class="text-[11px] text-primary/50 font-normal">Ét. {{ $room->floor }}</span>
+                                                @endif
+                                            </div>
+
+                                            {{-- Badge de statut actuel --}}
+                                            @if($room->is_currently_occupied)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    Occupée
+                                                </span>
+                                            @elseif($room->is_being_cleaned)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200"
+                                                      title="{{ $room->cleaning_label ?? 'Nettoyage en cours' }}">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                                    En nettoyage
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Disponible
+                                                </span>
                                             @endif
                                         </div>
 
-                                        {{-- Badge de statut actuel --}}
-                                        @if($room->is_currently_occupied)
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                Occupée
-                                            </span>
-                                        @elseif($room->is_being_cleaned)
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200"
-                                                  title="{{ $room->cleaning_label ?? 'Nettoyage en cours' }}">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-                                                En nettoyage
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                Disponible
-                                            </span>
+                                        @if($room->view_type)
+                                            <p class="text-xs text-primary/50 capitalize mb-2">Vue {{ $room->view_type }}</p>
+                                        @endif
+
+                                        {{-- 1. Détail si chambre actuellement en nettoyage --}}
+                                        @if($room->is_being_cleaned)
+                                            <div class="mt-2 p-2 rounded-lg {{ $room->has_cleaning_conflict ? 'bg-amber-50/95 border border-amber-200 text-amber-950' : 'bg-yellow-50/80 border border-yellow-200 text-yellow-950' }} text-[11px]">
+                                                <div class="flex items-center justify-between gap-1 font-semibold {{ $room->has_cleaning_conflict ? 'text-amber-800' : 'text-yellow-800' }} mb-0.5">
+                                                    <span class="flex items-center gap-1">
+                                                        <i data-lucide="{{ $room->has_cleaning_conflict ? 'alert-triangle' : 'sparkles' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                        <span>{{ $room->has_cleaning_conflict ? 'Nettoyage en cours (Conflit)' : 'Ménage en cours' }}</span>
+                                                    </span>
+                                                    <span class="font-mono text-xs font-bold">{{ $room->cleaning_ready_time }}</span>
+                                                </div>
+                                                <p class="text-[10px] leading-tight text-slate-600">
+                                                    Prête à <strong class="text-slate-800">{{ $room->cleaning_ready_time }}</strong> (durée : {{ $room->cleaning_delay_minutes }} min)
+                                                    @if($room->cleaning_minutes_remaining > 0)
+                                                        &bull; {{ $room->cleaning_label }}
+                                                    @endif
+                                                </p>
+                                            </div>
+                                        @endif
+
+                                        {{-- 2. Détail d'occupation en cours si occupée --}}
+                                        @if($room->is_currently_occupied && $room->current_checkout_formatted)
+                                            <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 space-y-0.5 bg-slate-50/70 rounded p-1.5">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-slate-500">Départ occupant :</span>
+                                                    <span class="font-medium text-slate-700">{{ $room->current_checkout_formatted }} à {{ $room->current_checkout_time }}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-slate-500">Prête post-ménage :</span>
+                                                    <span class="font-semibold text-slate-800">{{ $room->current_ready_time }} <span class="text-[9px] font-normal text-slate-400">(+{{ $room->cleaning_delay_minutes }}m)</span></span>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- 3. Indicateur de rotation le jour d'arrivée --}}
+                                        @if($room->has_same_day_departure)
+                                            <div class="mt-2 p-2 rounded-lg {{ $room->has_rotation_conflict ? 'bg-amber-50/90 border border-amber-200 text-amber-900' : 'bg-blue-50/70 border border-blue-200 text-blue-900' }} text-[11px]">
+                                                <div class="flex items-center gap-1.5 font-semibold {{ $room->has_rotation_conflict ? 'text-amber-800' : 'text-blue-800' }} mb-0.5">
+                                                    <i data-lucide="{{ $room->has_rotation_conflict ? 'alert-triangle' : 'refresh-cw' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                    <span>{{ $room->has_rotation_conflict ? 'Conflit de rotation' : 'Rotation le jour d\'arrivée' }}</span>
+                                                </div>
+                                                <p class="text-[10px] leading-tight text-slate-600">
+                                                    Départ précédent à {{ $room->same_day_checkout_time }} &bull; Prête à <strong class="text-slate-800">{{ $room->same_day_ready_time }}</strong> (+{{ $room->cleaning_delay_minutes }}m)
+                                                </p>
+                                            </div>
                                         @endif
                                     </div>
 
-                                    @if($room->view_type)
-                                        <p class="text-xs text-primary/50 capitalize mb-2">Vue {{ $room->view_type }}</p>
-                                    @endif
-
-                                    {{-- 1. Détail si chambre actuellement en nettoyage --}}
-                                    @if($room->is_being_cleaned)
-                                        <div class="mt-2 p-2 rounded-lg {{ $room->has_cleaning_conflict ? 'bg-amber-50/95 border border-amber-200 text-amber-950' : 'bg-yellow-50/80 border border-yellow-200 text-yellow-950' }} text-[11px]">
-                                            <div class="flex items-center justify-between gap-1 font-semibold {{ $room->has_cleaning_conflict ? 'text-amber-800' : 'text-yellow-800' }} mb-0.5">
-                                                <span class="flex items-center gap-1">
-                                                    <i data-lucide="{{ $room->has_cleaning_conflict ? 'alert-triangle' : 'sparkles' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                                                    <span>{{ $room->has_cleaning_conflict ? 'Nettoyage en cours (Conflit)' : 'Ménage en cours' }}</span>
-                                                </span>
-                                                <span class="font-mono text-xs font-bold">{{ $room->cleaning_ready_time }}</span>
-                                            </div>
-                                            <p class="text-[10px] leading-tight text-slate-600">
-                                                Prête à <strong class="text-slate-800">{{ $room->cleaning_ready_time }}</strong> (durée : {{ $room->cleaning_delay_minutes }} min)
-                                                @if($room->cleaning_minutes_remaining > 0)
-                                                    &bull; {{ $room->cleaning_label }}
-                                                @endif
-                                            </p>
-                                        </div>
-                                    @endif
-
-                                    {{-- 2. Détail d'occupation en cours si occupée --}}
-                                    @if($room->is_currently_occupied && $room->current_checkout_formatted)
-                                        <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 space-y-0.5 bg-slate-50/70 rounded p-1.5">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-slate-500">Départ occupant :</span>
-                                                <span class="font-medium text-slate-700">{{ $room->current_checkout_formatted }} à {{ $room->current_checkout_time }}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-slate-500">Prête post-ménage :</span>
-                                                <span class="font-semibold text-slate-800">{{ $room->current_ready_time }} <span class="text-[9px] font-normal text-slate-400">(+{{ $room->cleaning_delay_minutes }}m)</span></span>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    {{-- 3. Indicateur de rotation le jour d'arrivée --}}
-                                    @if($room->has_same_day_departure)
-                                        <div class="mt-2 p-2 rounded-lg {{ $room->has_rotation_conflict ? 'bg-amber-50/90 border border-amber-200 text-amber-900' : 'bg-blue-50/70 border border-blue-200 text-blue-900' }} text-[11px]">
-                                            <div class="flex items-center gap-1.5 font-semibold {{ $room->has_rotation_conflict ? 'text-amber-800' : 'text-blue-800' }} mb-0.5">
-                                                <i data-lucide="{{ $room->has_rotation_conflict ? 'alert-triangle' : 'refresh-cw' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                                                <span>{{ $room->has_rotation_conflict ? 'Conflit de rotation' : 'Rotation le jour d\'arrivée' }}</span>
-                                            </div>
-                                            <p class="text-[10px] leading-tight text-slate-600">
-                                                Départ précédent à {{ $room->same_day_checkout_time }} &bull; Prête à <strong class="text-slate-800">{{ $room->same_day_ready_time }}</strong> (+{{ $room->cleaning_delay_minutes }}m)
-                                            </p>
-                                        </div>
-                                    @endif
+                                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-primary font-medium group-hover/card:text-secondary">
+                                        <span>Sélectionner cette chambre</span>
+                                        <i data-lucide="arrow-right" class="w-4 h-4 text-primary/30 group-hover/card:text-secondary group-hover/card:translate-x-0.5 transition-all"></i>
+                                    </div>
                                 </div>
-
-                                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-primary font-medium group-hover:text-secondary">
-                                    <span>Sélectionner cette chambre</span>
-                                    <i data-lucide="arrow-right" class="w-4 h-4 text-primary/30 group-hover:text-secondary group-hover:translate-x-0.5 transition-all"></i>
-                                </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
-                </div>
-            @endforeach
-        </div>
+                @endforeach
+            </div>
         </div>
     @endif
 
