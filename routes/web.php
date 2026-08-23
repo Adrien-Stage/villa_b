@@ -271,6 +271,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
 
+        // Envoi du code de check-in : hors caisse, expédier un courriel
+        // n'engage aucun mouvement d'espèces.
+        Route::post('/{booking}/code-checkin', [BookingController::class, 'sendCheckinCode'])->name('checkin_code.send');
+
         // Actions métier : impossibles tant que la caisse n'est pas ouverte
         Route::middleware('caisse')->group(function () {
             Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');

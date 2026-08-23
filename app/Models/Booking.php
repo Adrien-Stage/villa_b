@@ -46,6 +46,7 @@ class Booking extends Model
         'actual_check_in',      // Heure réelle d'arrivée
         'actual_check_out',     // Heure réelle de départ
         'checkin_code',         // Code OTP pour la sécurité du check-in
+        'code_recipient',       // « customer » ou « booker » : à qui le code est adressé
         'checkin_attempts',     // Nombre de tentatives échouées
 
         // Personnes

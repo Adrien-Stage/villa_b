@@ -979,14 +979,56 @@
             <p class="text-green-100 text-sm mt-1">L'acompte a bien été enregistré.</p>
         </div>
         
-        <div class="p-8 text-center">
+        @php
+            // Destinataire retenu à la dernière étape : c'est lui que le bouton
+            // d'envoi vise, sans redemander à la réception.
+            $codeNotifier   = app(\App\Services\CheckinCodeNotifier::class);
+            $codeRecipient  = $codeNotifier->recipient($booking, $booking->code_recipient);
+            $codeRecipientLabel = \App\Services\CheckinCodeNotifier::RECIPIENTS[
+                $codeNotifier->resolvedType($booking, $booking->code_recipient)
+            ];
+            $codeRecipientEmail = trim((string) $codeRecipient?->email) ?: null;
+        @endphp
+
+        <div class="p-8 text-center" x-data="envoiCodeCheckin('{{ route('bookings.checkin_code.send', $booking) }}', '{{ csrf_token() }}')">
             <h3 class="text-sm font-semibold text-primary/70 uppercase tracking-wider mb-2">Code de sécurité Check-in</h3>
             <p class="text-xs text-primary/50 mb-6">Veuillez communiquer ce code unique au client ou au mandataire. Ce code sera exigé lors de la remise des clés.</p>
-            
-            <div class="bg-gray-100 rounded-xl p-4 mb-8 inline-block shadow-inner border border-gray-200">
+
+            <div class="bg-gray-100 rounded-xl p-4 mb-6 inline-block shadow-inner border border-gray-200">
                 <span class="text-5xl font-mono tracking-widest font-black text-primary">{{ session('checkin_code') }}</span>
             </div>
-            
+
+            {{-- Destinataire et envoi. Le bouton reste disponible après un premier
+                 envoi : un client qui dit n'avoir rien reçu doit pouvoir être
+                 relancé sans rouvrir le dossier. --}}
+            <div class="mb-6 rounded-xl border border-secondary/25 bg-accent/10 px-4 py-3 text-left">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/50">Destinataire du code</p>
+                <p class="text-sm font-medium text-primary mt-0.5">
+                    {{ $codeRecipientLabel }}
+                    <span class="text-primary/50 font-normal">— {{ $codeRecipient?->full_name ?? 'Inconnu' }}</span>
+                </p>
+                @if($codeRecipientEmail)
+                    <p class="text-xs text-primary/60 mt-0.5 truncate">{{ $codeRecipientEmail }}</p>
+                @else
+                    <p class="text-xs text-amber-700 mt-0.5">
+                        Aucune adresse enregistrée — communiquez le code de vive voix.
+                    </p>
+                @endif
+            </div>
+
+            @if($codeRecipientEmail)
+                <button type="button" @click="envoyer()" :disabled="envoi"
+                        class="w-full py-3 mb-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span x-text="envoi ? 'Envoi en cours…' : (dejaEnvoye ? 'Renvoyer le code par email' : 'Envoyer le code par email')"></span>
+                </button>
+
+                <p x-show="message" x-cloak style="display:none;"
+                   class="mb-3 text-xs rounded-lg px-3 py-2 text-left"
+                   :class="succes ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'"
+                   x-text="message"></p>
+            @endif
+
             <button onclick="document.getElementById('modal-success-code').remove()" class="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-md">
                 J'ai copié le code, fermer
             </button>
@@ -998,6 +1040,53 @@
 @push('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
+        /**
+         * Envoi du code de check-in depuis la fenêtre de confirmation.
+         *
+         * Le serveur décide seul du destinataire, à partir de la réservation :
+         * l'écran n'en transmet aucun, sinon un formulaire bricolé pourrait
+         * détourner un code d'accès vers une adresse arbitraire.
+         */
+        Alpine.data('envoiCodeCheckin', (url, csrfToken) => ({
+            envoi: false,
+            dejaEnvoye: false,
+            succes: false,
+            message: '',
+
+            async envoyer() {
+                if (this.envoi) return;
+
+                this.envoi = true;
+                this.message = '';
+
+                try {
+                    const reponse = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                    });
+
+                    const donnees = await reponse.json().catch(() => ({}));
+
+                    this.succes = reponse.ok && donnees.ok === true;
+                    this.message = donnees.message
+                        || (this.succes ? 'Code envoyé.' : "L'envoi a échoué. Réessayez, ou communiquez le code de vive voix.");
+
+                    if (this.succes) {
+                        this.dejaEnvoye = true;
+                    }
+                } catch (e) {
+                    this.succes = false;
+                    this.message = "Envoi impossible : vérifiez la connexion, puis réessayez.";
+                } finally {
+                    this.envoi = false;
+                }
+            },
+        }));
+
         // Formulaire d'ajout d'une prestation au folio : le type sélectionné
         // charge le catalogue correspondant (plats par service de repas,
         // prestations spa / activités / housekeeping…). La saisie libre reste

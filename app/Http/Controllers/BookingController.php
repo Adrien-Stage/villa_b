@@ -384,6 +384,42 @@ class BookingController extends Controller
         ]);
     }
 
+    /**
+     * Envoie (ou renvoie) le code de check-in au destinataire retenu.
+     *
+     * Appelée depuis la fenêtre qui suit la création, et à tout moment depuis le
+     * dossier : la réception garde la main quand un client dit n'avoir rien reçu,
+     * sans avoir à recréer la réservation ni à redemander qui contacter.
+     */
+    public function sendCheckinCode(Request $request, Booking $booking)
+    {
+        if (!$booking->checkin_code) {
+            $message = "Cette réservation n'a pas encore de code de check-in.";
+
+            return $request->wantsJson()
+                ? response()->json(['ok' => false, 'message' => $message], 422)
+                : back()->with('error', $message);
+        }
+
+        $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
+        $envoye = in_array('email', $envoi['sent'], true);
+
+        $message = $envoye
+            ? "Code de check-in envoyé au {$envoi['label']} ({$envoi['email']})."
+            : "Aucune adresse courriel pour le {$envoi['label']} : le code n'a pas pu être envoyé.";
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok'        => $envoye,
+                'message'   => $message,
+                'recipient' => $envoi['label'],
+                'email'     => $envoi['email'],
+            ], $envoye ? 200 : 422);
+        }
+
+        return back()->with($envoye ? 'success' : 'error', $message);
+    }
+
     private function storeStep2(Request $request)
     {
         $request->validate([
@@ -871,6 +907,9 @@ class BookingController extends Controller
             'notes'           => $notes,
             'created_by'      => Auth::id(),
             'checkin_code'    => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
+            // Mémorisé : la fenêtre de confirmation et les renvois ultérieurs
+            // doivent viser le même interlocuteur, sans redemander.
+            'code_recipient'  => $validated['recipient_type'] ?? CheckinCodeNotifier::TO_CUSTOMER,
             'tenant_id'       => $tenantId,
         ]);
 
@@ -1008,10 +1047,7 @@ class BookingController extends Controller
         // Le code de check-in ne part qu'à l'interlocuteur désigné à la dernière
         // étape. L'envoyer aux deux doublait la circulation d'un code d'accès et
         // rendait impossible de savoir qui l'avait reçu.
-        $envoi = app(CheckinCodeNotifier::class)->send(
-            $booking,
-            $validated['recipient_type'] ?? CheckinCodeNotifier::TO_CUSTOMER
-        );
+        $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
 
         $successMsg = $booking->status === BookingStatus::PENDING
             ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
