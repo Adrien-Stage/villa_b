@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Booking;
+use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -29,11 +30,10 @@ class CheckinCodeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address(
-                config('mail.from.address'),
-                config('mail.from.name'),
-            ),
-            subject: "Votre code de check-in - Villa Boutanga ({$this->booking->booking_number})",
+            from: MailIdentity::from(),
+            replyTo: MailIdentity::replyTo(),
+            subject: 'Votre code de check-in - ' . MailIdentity::establishment()
+                . " ({$this->booking->booking_number})",
         );
     }
 

@@ -199,6 +199,105 @@
                         </button>
                     </div>
                 </form>
+
+                {{-- Identité de courriel : sous quelle adresse l'établissement
+                     écrit à ses clients et à leurs mandataires. Le .env reste le
+                     filet, ces champs prennent la main dès qu'ils sont remplis. --}}
+                <div class="mt-8 pt-8 border-t border-secondary/20">
+                    <h2 class="text-lg font-semibold text-primary">Courriel adressé aux clients</h2>
+                    <p class="text-sm text-primary/60 mt-1 max-w-2xl">
+                        Adresse au nom de laquelle partent les messages envoyés aux clients et à leurs
+                        mandataires — code de check-in, confirmations. Laissez un champ vide pour
+                        retomber sur la configuration du serveur.
+                    </p>
+
+                    <form method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" class="mt-5">
+                        @csrf
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="mail_from_address" class="block text-xs font-medium text-primary/70 mb-1">
+                                    Adresse d'expédition
+                                </label>
+                                <input type="email" id="mail_from_address" name="settings[mail_from_address]"
+                                       value="{{ old('settings.mail_from_address', $tenantSettings['general']['mail_from_address'] ?? '') }}"
+                                       placeholder="{{ config('mail.from.address') }}"
+                                       class="w-full rounded-lg border @error('settings.mail_from_address') border-red-400 @else border-secondary/20 @enderror bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                @error('settings.mail_from_address')
+                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                @else
+                                    <p class="mt-1 text-[11px] text-primary/40">
+                                        Le domaine doit être autorisé chez le prestataire d'envoi, sinon les messages seront rejetés.
+                                    </p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="mail_from_name" class="block text-xs font-medium text-primary/70 mb-1">
+                                    Nom affiché de l'expéditeur
+                                </label>
+                                <input type="text" id="mail_from_name" name="settings[mail_from_name]"
+                                       value="{{ old('settings.mail_from_name', $tenantSettings['general']['mail_from_name'] ?? '') }}"
+                                       placeholder="{{ $tenant?->name ?? config('mail.from.name') }}"
+                                       maxlength="120"
+                                       class="w-full rounded-lg border @error('settings.mail_from_name') border-red-400 @else border-secondary/20 @enderror bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                @error('settings.mail_from_name')
+                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                @else
+                                    <p class="mt-1 text-[11px] text-primary/40">
+                                        Ce que le client lit dans sa boîte, avant même d'ouvrir le message.
+                                    </p>
+                                @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label for="mail_reply_to" class="block text-xs font-medium text-primary/70 mb-1">
+                                    Adresse de réponse
+                                </label>
+                                <input type="email" id="mail_reply_to" name="settings[mail_reply_to]"
+                                       value="{{ old('settings.mail_reply_to', $tenantSettings['general']['mail_reply_to'] ?? '') }}"
+                                       placeholder="{{ $tenant?->email ?? 'reservations@exemple.cm' }}"
+                                       class="w-full rounded-lg border @error('settings.mail_reply_to') border-red-400 @else border-secondary/20 @enderror bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                @error('settings.mail_reply_to')
+                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                @else
+                                    <p class="mt-1 text-[11px] text-primary/40">
+                                        Boîte réellement relevée par l'établissement. Sans elle, un client qui répond
+                                        à un message automatique écrit dans le vide.
+                                    </p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- Aperçu de ce que verra le destinataire, replis compris :
+                             un champ laissé vide ne doit pas laisser deviner ce qui
+                             partira réellement. --}}
+                        @php
+                            $apercuExpediteur = \App\Support\MailIdentity::from($tenant);
+                            $apercuReponse    = \App\Support\MailIdentity::replyTo($tenant);
+                        @endphp
+                        <div class="mt-5 rounded-xl border border-secondary/20 bg-gray-50 p-4">
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/50">Ce que verra le client</p>
+                            <p class="mt-1.5 text-sm text-primary">
+                                <span class="font-medium">{{ $apercuExpediteur->name }}</span>
+                                <span class="text-primary/50">&lt;{{ $apercuExpediteur->address }}&gt;</span>
+                            </p>
+                            <p class="mt-0.5 text-xs text-primary/50">
+                                @if(!empty($apercuReponse))
+                                    Réponses dirigées vers {{ $apercuReponse[0]->address }}
+                                @else
+                                    Les réponses reviendront sur l'adresse d'expédition
+                                @endif
+                            </p>
+                        </div>
+
+                        <div class="mt-4 flex justify-end">
+                            <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm cursor-pointer">
+                                Enregistrer l'adresse d'envoi
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         @endif
 
