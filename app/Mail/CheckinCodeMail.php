@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -17,11 +18,18 @@ class CheckinCodeMail extends Mailable
     public Booking $booking;
 
     /**
-     * Create a new message instance.
+     * Le destinataire réel du message.
+     *
+     * Il n'est pas toujours le client : une réservation tenue par un mandataire
+     * lui envoie le code. Saluer le client dans un message adressé à un tiers
+     * trahissait à la fois le ton et la confidentialité du dossier.
      */
-    public function __construct(Booking $booking)
+    public ?Customer $recipient;
+
+    public function __construct(Booking $booking, ?Customer $recipient = null)
     {
         $this->booking = $booking;
+        $this->recipient = $recipient ?? $booking->customer;
     }
 
     /**
@@ -44,6 +52,10 @@ class CheckinCodeMail extends Mailable
     {
         return new Content(
             view: 'emails.bookings.checkin-code',
+            with: [
+                'recipient' => $this->recipient,
+                'brand'     => MailIdentity::brand(),
+            ],
         );
     }
 

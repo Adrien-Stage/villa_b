@@ -82,7 +82,7 @@ class CheckinCodeNotifier
 
         if ($compte['email'] !== null) {
             try {
-                Mail::to($compte['email'])->send(new CheckinCodeMail($booking));
+                Mail::to($compte['email'])->send(new CheckinCodeMail($booking, $destinataire));
                 $compte['sent'][] = 'email';
 
                 Log::info("Code de check-in envoyé par courriel au {$compte['label']} ({$compte['email']}) "

@@ -72,6 +72,48 @@ class MailIdentity
         return $tenant?->name ?: config('app.name');
     }
 
+    /**
+     * Charte de l'établissement, telle que la reprend un courriel.
+     *
+     * Un message qui arrive aux couleurs d'un autre hôtel n'inspire rien de bon
+     * au client. Les teintes viennent du même thème que l'interface — le
+     * document et l'écran doivent se ressembler — avec les défauts de la charte
+     * d'origine quand rien n'est configuré.
+     *
+     * @return array{name:string,logo:?string,address:?string,phone:?string,email:?string,primary:string,secondary:string,accent:string}
+     */
+    public static function brand(?Tenant $tenant = null): array
+    {
+        $tenant ??= self::tenant();
+        $theme = is_array($tenant?->settings['theme'] ?? null) ? $tenant->settings['theme'] : [];
+
+        $logo = self::propre($tenant?->settings['logo'] ?? null);
+
+        return [
+            'name'      => self::establishment($tenant),
+            // URL absolue : une image relative ne s'affiche dans aucune messagerie.
+            'logo'      => $logo ? asset('storage/' . ltrim($logo, '/')) : null,
+            'address'   => self::propre($tenant?->address),
+            'phone'     => self::propre($tenant?->phone),
+            'email'     => self::propre($tenant?->email),
+            'primary'   => self::couleur($theme['primary'] ?? null, '#391F0E'),
+            'secondary' => self::couleur($theme['secondary'] ?? null, '#CCAB87'),
+            'accent'    => self::couleur($theme['accent'] ?? null, '#EED4A3'),
+        ];
+    }
+
+    /** Couleur hexadécimale sûre pour du style en ligne, repli compris. */
+    private static function couleur(?string $valeur, string $defaut): string
+    {
+        $propre = strtoupper(ltrim(trim((string) $valeur), '#'));
+
+        if (strlen($propre) === 3) {
+            $propre = $propre[0] . $propre[0] . $propre[1] . $propre[1] . $propre[2] . $propre[2];
+        }
+
+        return preg_match('/^[0-9A-F]{6}$/', $propre) ? '#' . $propre : $defaut;
+    }
+
     /** Vide le cache de requête — utile aux tests qui modifient les réglages. */
     public static function forget(): void
     {
