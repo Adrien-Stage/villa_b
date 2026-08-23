@@ -389,7 +389,7 @@ class BookingController extends Controller
             'booker_id'     => ['nullable', 'exists:customers,id'],
             'check_in'      => ['required', 'date', 'after_or_equal:today'],
             'check_out'     => ['required', 'date', 'after:check_in'],
-            'check_in_time' => ['nullable', 'string', 'max:10'],
+            'check_in_time' => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
             'adults'        => ['required', 'integer', 'min:1'],
             'children'      => ['nullable', 'integer', 'min:0'],
             'source'        => ['nullable', 'string'],
@@ -424,6 +424,7 @@ class BookingController extends Controller
 
         $availabilityService = app(\App\Services\RoomAvailabilityService::class);
         $standardCheckOutTime = $availabilityService->checkOutTime();
+        $isArrivalToday = \Carbon\Carbon::parse($checkIn)->isToday();
 
         // Chambres disponibles pour cette période avec capacité suffisante
         $candidateRooms = Room::availableBetween($checkIn, $checkOut)
@@ -452,26 +453,72 @@ class BookingController extends Controller
 
         foreach ($candidateRooms as $room) {
             $delay = $availabilityService->delayMinutesFor($room->roomType);
-            $readyTime = \Carbon\Carbon::parse($standardCheckOutTime)->addMinutes($delay)->format('H:i');
+            $sameDayReadyTime = \Carbon\Carbon::parse($standardCheckOutTime)->addMinutes($delay)->format('H:i');
 
-            // 1. Occupation actuelle (en temps réel)
+            // 1. Statut Housekeeping / Nettoyage actuel
+            $isBeingCleaned = in_array($room->status, [
+                \App\Enums\RoomStatus::DIRTY,
+                \App\Enums\RoomStatus::CLEANING,
+                \App\Enums\RoomStatus::CLEAN,
+            ], true);
+
+            $cleaningAvailableAt = $isBeingCleaned ? $availabilityService->availableAt($room) : null;
+            $cleaningReadyTime = $cleaningAvailableAt ? $cleaningAvailableAt->format('H:i') : $sameDayReadyTime;
+            $cleaningMinutesRemaining = $isBeingCleaned ? $availabilityService->minutesRemaining($room) : 0;
+            $cleaningLabel = $isBeingCleaned ? $availabilityService->label($room) : null;
+
+            // 2. Occupation actuelle (en temps réel)
             $currBooking = $currentBookings->get($room->id);
             $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED) || ($currBooking !== null);
             $room->current_checkout_date = $currBooking?->check_out?->format('Y-m-d');
             $room->current_checkout_formatted = $currBooking?->check_out?->locale('fr')->isoFormat('D MMM YYYY');
             $room->current_checkout_time = $standardCheckOutTime;
-            $room->current_ready_time = $readyTime;
-            $room->cleaning_delay_minutes = $delay;
+            $room->current_ready_time = $sameDayReadyTime;
 
-            // 2. Conflit de rotation : départ précédent le jour de l'arrivée demandée ($checkIn)
+            // 3. Départ du client précédent le jour de l'arrivée demandée ($checkIn)
             $sameDayBooking = $sameDayPriorBookings->get($room->id);
-            $room->has_same_day_departure = ($sameDayBooking !== null);
-            $room->same_day_prior_booking = $sameDayBooking;
-            $room->same_day_checkout_time = $standardCheckOutTime;
-            $room->same_day_ready_time = $readyTime;
-            
-            // Conflit si heure d'arrivée demandée < heure où le ménage est terminé
-            $room->has_rotation_conflict = $room->has_same_day_departure && ($checkInTime < $readyTime);
+            $hasSameDayDeparture = ($sameDayBooking !== null);
+
+            // 4. Détection des conflits d'horaires :
+            // Conflit A : Chambre en nettoyage en cours et arrivée prévue aujourd'hui avant la fin du ménage
+            $hasCleaningConflict = false;
+            if ($isArrivalToday && $isBeingCleaned && $cleaningAvailableAt) {
+                $requestedArrivalToday = today()->setTimeFromTimeString($checkInTime);
+                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday) || ($checkInTime < $cleaningReadyTime);
+            }
+
+            // Conflit B : Rotation le jour même (départ précédent) et heure d'arrivée avant fin du ménage
+            $hasRotationConflict = $hasSameDayDeparture && ($checkInTime < $sameDayReadyTime);
+
+            // Conflit global et heure effective garantie
+            $hasAnyConflict = $hasCleaningConflict || $hasRotationConflict;
+            $effectiveReadyTime = $hasCleaningConflict 
+                ? $cleaningReadyTime 
+                : ($hasSameDayDeparture ? $sameDayReadyTime : ($isBeingCleaned ? $cleaningReadyTime : $checkInTime));
+
+            $conflictType = match (true) {
+                $hasCleaningConflict => 'cleaning_in_progress',
+                $hasRotationConflict => 'same_day_rotation',
+                default              => null,
+            };
+
+            // Renseignement des propriétés pour la vue
+            $room->cleaning_delay_minutes     = $delay;
+            $room->is_being_cleaned           = $isBeingCleaned;
+            $room->cleaning_ready_time        = $cleaningReadyTime;
+            $room->cleaning_minutes_remaining = $cleaningMinutesRemaining;
+            $room->cleaning_label             = $cleaningLabel;
+
+            $room->has_same_day_departure     = $hasSameDayDeparture;
+            $room->same_day_prior_booking     = $sameDayBooking;
+            $room->same_day_checkout_time     = $standardCheckOutTime;
+            $room->same_day_ready_time        = $sameDayReadyTime;
+
+            $room->has_cleaning_conflict      = $hasCleaningConflict;
+            $room->has_rotation_conflict      = $hasRotationConflict;
+            $room->has_any_conflict           = $hasAnyConflict;
+            $room->effective_ready_time       = $effectiveReadyTime;
+            $room->conflict_type              = $conflictType;
         }
 
         $availableRooms = $candidateRooms->groupBy('room_type_id');
@@ -502,7 +549,7 @@ class BookingController extends Controller
             'room_id'        => ['required', 'exists:rooms,id'],
             'check_in'       => ['required', 'date'],
             'check_out'      => ['required', 'date', 'after:check_in'],
-            'check_in_time'  => ['nullable', 'string', 'max:10'],
+            'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
             'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'source'         => ['nullable', 'string'],
@@ -630,7 +677,7 @@ class BookingController extends Controller
             'room_id'        => ['required', 'exists:rooms,id'],
             'check_in'       => ['required', 'date'],
             'check_out'      => ['required', 'date', 'after:check_in'],
-            'check_in_time'  => ['nullable', 'string', 'max:10'],
+            'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
             'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'source'         => ['nullable', 'string'],

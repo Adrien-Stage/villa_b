@@ -199,6 +199,7 @@ class BookingDraftController extends Controller
 
         $availabilityService = app(\App\Services\RoomAvailabilityService::class);
         $standardCheckOutTime = $availabilityService->checkOutTime();
+        $isArrivalToday = \Carbon\Carbon::parse($checkIn)->isToday();
 
         $candidateRooms = Room::availableBetween($checkIn, $checkOut)
             ->with(['roomType', 'statusHistory'])
@@ -224,24 +225,68 @@ class BookingDraftController extends Controller
 
         foreach ($candidateRooms as $room) {
             $delay = $availabilityService->delayMinutesFor($room->roomType);
-            $readyTime = \Carbon\Carbon::parse($standardCheckOutTime)->addMinutes($delay)->format('H:i');
+            $sameDayReadyTime = \Carbon\Carbon::parse($standardCheckOutTime)->addMinutes($delay)->format('H:i');
 
-            // 1. Occupation actuelle (en temps réel)
+            // 1. Statut Housekeeping / Nettoyage actuel
+            $isBeingCleaned = in_array($room->status, [
+                \App\Enums\RoomStatus::DIRTY,
+                \App\Enums\RoomStatus::CLEANING,
+                \App\Enums\RoomStatus::CLEAN,
+            ], true);
+
+            $cleaningAvailableAt = $isBeingCleaned ? $availabilityService->availableAt($room) : null;
+            $cleaningReadyTime = $cleaningAvailableAt ? $cleaningAvailableAt->format('H:i') : $sameDayReadyTime;
+            $cleaningMinutesRemaining = $isBeingCleaned ? $availabilityService->minutesRemaining($room) : 0;
+            $cleaningLabel = $isBeingCleaned ? $availabilityService->label($room) : null;
+
+            // 2. Occupation actuelle (en temps réel)
             $currBooking = $currentBookings->get($room->id);
             $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED) || ($currBooking !== null);
             $room->current_checkout_date = $currBooking?->check_out?->format('Y-m-d');
             $room->current_checkout_formatted = $currBooking?->check_out?->locale('fr')->isoFormat('D MMM YYYY');
             $room->current_checkout_time = $standardCheckOutTime;
-            $room->current_ready_time = $readyTime;
-            $room->cleaning_delay_minutes = $delay;
+            $room->current_ready_time = $sameDayReadyTime;
 
-            // 2. Conflit de rotation : départ précédent le jour de l'arrivée demandée
+            // 3. Départ du client précédent le jour de l'arrivée demandée
             $sameDayBooking = $sameDayPriorBookings->get($room->id);
-            $room->has_same_day_departure = ($sameDayBooking !== null);
-            $room->same_day_prior_booking = $sameDayBooking;
-            $room->same_day_checkout_time = $standardCheckOutTime;
-            $room->same_day_ready_time = $readyTime;
-            $room->has_rotation_conflict = $room->has_same_day_departure && ($checkInTime < $readyTime);
+            $hasSameDayDeparture = ($sameDayBooking !== null);
+
+            // 4. Détection des conflits d'horaires :
+            $hasCleaningConflict = false;
+            if ($isArrivalToday && $isBeingCleaned && $cleaningAvailableAt) {
+                $requestedArrivalToday = today()->setTimeFromTimeString($checkInTime);
+                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday) || ($checkInTime < $cleaningReadyTime);
+            }
+
+            $hasRotationConflict = $hasSameDayDeparture && ($checkInTime < $sameDayReadyTime);
+
+            $hasAnyConflict = $hasCleaningConflict || $hasRotationConflict;
+            $effectiveReadyTime = $hasCleaningConflict 
+                ? $cleaningReadyTime 
+                : ($hasSameDayDeparture ? $sameDayReadyTime : ($isBeingCleaned ? $cleaningReadyTime : $checkInTime));
+
+            $conflictType = match (true) {
+                $hasCleaningConflict => 'cleaning_in_progress',
+                $hasRotationConflict => 'same_day_rotation',
+                default              => null,
+            };
+
+            $room->cleaning_delay_minutes     = $delay;
+            $room->is_being_cleaned           = $isBeingCleaned;
+            $room->cleaning_ready_time        = $cleaningReadyTime;
+            $room->cleaning_minutes_remaining = $cleaningMinutesRemaining;
+            $room->cleaning_label             = $cleaningLabel;
+
+            $room->has_same_day_departure     = $hasSameDayDeparture;
+            $room->same_day_prior_booking     = $sameDayBooking;
+            $room->same_day_checkout_time     = $standardCheckOutTime;
+            $room->same_day_ready_time        = $sameDayReadyTime;
+
+            $room->has_cleaning_conflict      = $hasCleaningConflict;
+            $room->has_rotation_conflict      = $hasRotationConflict;
+            $room->has_any_conflict           = $hasAnyConflict;
+            $room->effective_ready_time       = $effectiveReadyTime;
+            $room->conflict_type              = $conflictType;
         }
 
         $availableRooms = $candidateRooms->groupBy('room_type_id');
