@@ -294,7 +294,7 @@ class RoomAvailabilityService
         }
 
         $entry = $room->statusHistory()
-            ->where('to_status', RoomStatus::DIRTY->value)
+            ->whereIn('to_status', [RoomStatus::DIRTY->value, RoomStatus::CLEANING->value])
             ->latest('changed_at')
             ->first();
 
@@ -310,13 +310,18 @@ class RoomAvailabilityService
      */
     public function availableAt(Room $room): ?CarbonInterface
     {
-        $freedAt = $this->freedAt($room);
-
-        if (!$freedAt) {
+        if (!$this->isBeingPrepared($room)) {
             return null;
         }
 
-        return $freedAt->copy()->addMinutes($this->delayMinutesFor($room->roomType));
+        $freedAt = $this->freedAt($room);
+        $delay   = $this->delayMinutesFor($room->roomType);
+
+        if (!$freedAt) {
+            return now()->addMinutes($delay);
+        }
+
+        return $freedAt->copy()->addMinutes($delay);
     }
 
     /**

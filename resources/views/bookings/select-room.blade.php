@@ -149,36 +149,14 @@
                         </div>
                         <div class="text-right">
                             @php
-                                $totalPeople = $adults + ($children ?? 0);
-                                $isSurcharged = $totalPeople > $type->base_capacity;
-                                $pricePerNight = $type->getCalculatedPricePerNight($adults, $children ?? 0) / 100;
+                                $price = $type->getCalculatedPricePerNight($adults, $children) / 100;
                             @endphp
-                            <p class="text-lg font-heading font-semibold text-primary">
-                                {{ number_format($pricePerNight, 0, ',', ' ') }}
-                                <span class="text-xs font-normal text-primary/50">FCFA/nuit</span>
-                            </p>
-                            @if($isSurcharged)
-                                <span class="inline-block text-[9px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/50 px-1.5 py-0.5 rounded-full mt-0.5">
-                                    + Surcharge occupants (capacité > {{ $type->base_capacity }} pers.)
-                                </span>
-                            @endif
-                            <p class="text-xs text-primary/50 mt-1">
-                                Total : {{ number_format($pricePerNight * $nights, 0, ',', ' ') }} FCFA
-                            </p>
+                            <span class="font-heading font-semibold text-primary text-base">
+                                {{ number_format($price, 0, ',', ' ') }} FCFA
+                            </span>
+                            <span class="text-xs text-primary/50">/nuit</span>
                         </div>
                     </div>
-
-                    {{-- Équipements --}}
-                    @if($type->amenities)
-                        <div class="px-5 py-2 border-b border-secondary/10 flex items-center gap-2 flex-wrap">
-                            @foreach($type->amenities as $amenity)
-                                <span class="flex items-center gap-1 text-xs text-primary/50">
-                                    <i data-lucide="check" class="w-3 h-3 text-green-500"></i>
-                                    {{ $amenity }}
-                                </span>
-                            @endforeach
-                        </div>
-                    @endif
 
                     {{-- Chambres disponibles --}}
                     <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -192,6 +170,10 @@
                                     'typeName' => $type->name,
                                     'isOccupied' => $room->is_currently_occupied,
                                     'status' => $room->status->value,
+                                    'isBeingCleaned' => $room->is_being_cleaned,
+                                    'cleaningReadyTime' => $room->cleaning_ready_time,
+                                    'cleaningMinutesRemaining' => $room->cleaning_minutes_remaining,
+                                    'cleaningLabel' => $room->cleaning_label,
                                     'currentCheckoutFormatted' => $room->current_checkout_formatted,
                                     'currentCheckoutTime' => $room->current_checkout_time,
                                     'currentReadyTime' => $room->current_ready_time,
@@ -199,7 +181,11 @@
                                     'hasSameDayDeparture' => $room->has_same_day_departure,
                                     'sameDayCheckoutTime' => $room->same_day_checkout_time,
                                     'sameDayReadyTime' => $room->same_day_ready_time,
-                                    'hasConflict' => $room->has_rotation_conflict,
+                                    'hasCleaningConflict' => $room->has_cleaning_conflict,
+                                    'hasRotationConflict' => $room->has_rotation_conflict,
+                                    'hasAnyConflict' => $room->has_any_conflict,
+                                    'effectiveReadyTime' => $room->effective_ready_time,
+                                    'conflictType' => $room->conflict_type,
                                 ];
                             @endphp
                             <div class="border border-secondary/20 rounded-xl p-3.5 bg-white hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col justify-between group relative cursor-pointer"
@@ -222,10 +208,11 @@
                                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                                 Occupée
                                             </span>
-                                        @elseif(in_array($room->status->value, ['dirty', 'cleaning']))
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                En ménage
+                                        @elseif($room->is_being_cleaned)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200"
+                                                  title="{{ $room->cleaning_label ?? 'Nettoyage en cours' }}">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                                En nettoyage
                                             </span>
                                         @else
                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -239,7 +226,26 @@
                                         <p class="text-xs text-primary/50 capitalize mb-2">Vue {{ $room->view_type }}</p>
                                     @endif
 
-                                    {{-- Détail d'occupation en cours si occupée --}}
+                                    {{-- 1. Détail si chambre actuellement en nettoyage --}}
+                                    @if($room->is_being_cleaned)
+                                        <div class="mt-2 p-2 rounded-lg {{ $room->has_cleaning_conflict ? 'bg-amber-50/95 border border-amber-200 text-amber-950' : 'bg-yellow-50/80 border border-yellow-200 text-yellow-950' }} text-[11px]">
+                                            <div class="flex items-center justify-between gap-1 font-semibold {{ $room->has_cleaning_conflict ? 'text-amber-800' : 'text-yellow-800' }} mb-0.5">
+                                                <span class="flex items-center gap-1">
+                                                    <i data-lucide="{{ $room->has_cleaning_conflict ? 'alert-triangle' : 'sparkles' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                    <span>{{ $room->has_cleaning_conflict ? 'Nettoyage en cours (Conflit)' : 'Ménage en cours' }}</span>
+                                                </span>
+                                                <span class="font-mono text-xs font-bold">{{ $room->cleaning_ready_time }}</span>
+                                            </div>
+                                            <p class="text-[10px] leading-tight text-slate-600">
+                                                Prête à <strong class="text-slate-800">{{ $room->cleaning_ready_time }}</strong> (durée : {{ $room->cleaning_delay_minutes }} min)
+                                                @if($room->cleaning_minutes_remaining > 0)
+                                                    &bull; {{ $room->cleaning_label }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                    @endif
+
+                                    {{-- 2. Détail d'occupation en cours si occupée --}}
                                     @if($room->is_currently_occupied && $room->current_checkout_formatted)
                                         <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 space-y-0.5 bg-slate-50/70 rounded p-1.5">
                                             <div class="flex items-center justify-between">
@@ -253,7 +259,7 @@
                                         </div>
                                     @endif
 
-                                    {{-- Indicateur de rotation le jour d'arrivée --}}
+                                    {{-- 3. Indicateur de rotation le jour d'arrivée --}}
                                     @if($room->has_same_day_departure)
                                         <div class="mt-2 p-2 rounded-lg {{ $room->has_rotation_conflict ? 'bg-amber-50/90 border border-amber-200 text-amber-900' : 'bg-blue-50/70 border border-blue-200 text-blue-900' }} text-[11px]">
                                             <div class="flex items-center gap-1.5 font-semibold {{ $room->has_rotation_conflict ? 'text-amber-800' : 'text-blue-800' }} mb-0.5">
@@ -261,7 +267,7 @@
                                                 <span>{{ $room->has_rotation_conflict ? 'Conflit de rotation' : 'Rotation le jour d\'arrivée' }}</span>
                                             </div>
                                             <p class="text-[10px] leading-tight text-slate-600">
-                                                Départ client précédent à {{ $room->same_day_checkout_time }} &bull; Prête à <strong class="text-slate-800">{{ $room->same_day_ready_time }}</strong> (ménage +{{ $room->cleaning_delay_minutes }}m)
+                                                Départ précédent à {{ $room->same_day_checkout_time }} &bull; Prête à <strong class="text-slate-800">{{ $room->same_day_ready_time }}</strong> (+{{ $room->cleaning_delay_minutes }}m)
                                             </p>
                                         </div>
                                     @endif
@@ -305,7 +311,7 @@
     </form>
 
 
-    {{-- Modal interactif : Détection de conflit de rotation & Ajustement de l'heure d'arrivée --}}
+    {{-- Modal interactif : Détection de conflit Housekeeping / Rotation & Ajustement de l'heure de check-in --}}
     <div x-show="isModalOpen"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
@@ -330,11 +336,11 @@
             <div class="px-6 py-4 border-b border-secondary/10 flex items-center justify-between bg-slate-50/50">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <i data-lucide="clock" class="w-4 h-4"></i>
                     </div>
                     <div>
-                        <h3 class="font-heading font-semibold text-primary text-base">
-                            Rotation le jour d'arrivée
+                        <h3 class="font-heading font-semibold text-primary text-base"
+                            x-text="getModalTitle()">
                         </h3>
                         <p class="text-xs text-primary/50" x-show="selectedRoom">
                             Chambre <span class="font-bold text-primary" x-text="selectedRoom ? selectedRoom.number : ''"></span> &bull; <span x-text="selectedRoom ? selectedRoom.typeName : ''"></span>
@@ -349,23 +355,37 @@
             {{-- Corps du modal --}}
             <div class="p-6 space-y-5">
                 
-                {{-- Bloc Alerte Rotation --}}
+                {{-- Bloc Explicatif & Alerte --}}
                 <div class="p-4 rounded-xl border leading-relaxed text-xs space-y-2"
                      :class="isTimeConflicting() ? 'bg-amber-50/90 border-amber-200/90 text-amber-950' : 'bg-blue-50/70 border-blue-200 text-blue-950'">
                     <div class="flex items-center gap-2 font-semibold" :class="isTimeConflicting() ? 'text-amber-800' : 'text-blue-800'">
                         <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
-                        <span>Disponibilité effective post-ménage</span>
+                        <span x-text="isTimeConflicting() ? 'Avertissement : Conflit d\'horaire avec le ménage' : 'Disponibilité post-ménage'"></span>
                     </div>
-                    <p>
-                        Le client précédent quitte cette chambre le <strong x-text="checkInDateFormatted"></strong> à <strong x-text="selectedRoom ? selectedRoom.sameDayCheckoutTime : ''"></strong>.
-                    </p>
+
+                    {{-- Explication selon le type de situation --}}
+                    <template x-if="selectedRoom && selectedRoom.conflictType === 'cleaning_in_progress'">
+                        <p>
+                            Cette chambre est actuellement <strong>en cours de nettoyage</strong> par l'équipe housekeeping.
+                        </p>
+                    </template>
+
+                    <template x-if="selectedRoom && selectedRoom.conflictType === 'same_day_rotation'">
+                        <p>
+                            Le client précédent quitte cette chambre le <strong x-text="checkInDateFormatted"></strong> à <strong x-text="selectedRoom.sameDayCheckoutTime"></strong>.
+                        </p>
+                    </template>
+
                     <div class="pt-1 flex items-center justify-between text-[11px] border-t" :class="isTimeConflicting() ? 'border-amber-200' : 'border-blue-200'">
                         <span>Délai de ménage (housekeeping) :</span>
                         <span class="font-semibold">+<span x-text="selectedRoom ? selectedRoom.cleaningDelay : 120"></span> minutes</span>
                     </div>
+
                     <div class="flex items-center justify-between text-xs font-bold pt-0.5">
-                        <span>Chambre prête à partir de :</span>
-                        <span class="text-sm px-2 py-0.5 rounded bg-white border font-mono" :class="isTimeConflicting() ? 'border-amber-300 text-amber-900' : 'border-blue-300 text-blue-900'" x-text="selectedRoom ? selectedRoom.sameDayReadyTime : ''"></span>
+                        <span>Chambre disponible et prête à partir de :</span>
+                        <span class="text-sm px-2 py-0.5 rounded bg-white border font-mono font-bold" 
+                              :class="isTimeConflicting() ? 'border-amber-300 text-amber-900' : 'border-blue-300 text-blue-900'" 
+                              x-text="selectedRoom ? selectedRoom.effectiveReadyTime : ''"></span>
                     </div>
                 </div>
 
@@ -373,10 +393,10 @@
                 <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-3">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                            Heure d'arrivée (Check-in) du nouveau client *
+                            Heure d'arrivée (Check-in) du client *
                         </label>
                         <p class="text-[11px] text-slate-500 mb-2">
-                            Ajustez l'horaire prévu pour garantir que le ménage sera terminé avant l'arrivée.
+                            Ajustez l'horaire prévu pour garantir que le ménage sera terminé avant l'arrivée du client.
                         </p>
                         <div class="flex items-center gap-2">
                             <input type="time"
@@ -388,7 +408,7 @@
                                     @click="adjustToReadyTime()"
                                     class="px-3 py-2 bg-secondary/15 hover:bg-secondary/25 text-primary text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
                                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                                Régler sur <span x-text="selectedRoom ? selectedRoom.sameDayReadyTime : ''"></span>
+                                Régler sur <span x-text="selectedRoom ? selectedRoom.effectiveReadyTime : ''"></span>
                             </button>
                         </div>
                     </div>
@@ -398,7 +418,7 @@
                         <div class="flex items-start gap-1.5 text-xs text-red-600 font-medium">
                             <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
                             <span>
-                                Attention : L'heure sélectionnée (<span x-text="checkInTime"></span>) est antérieure à la fin du ménage (<span x-text="selectedRoom ? selectedRoom.sameDayReadyTime : ''"></span>). Le client risque de devoir patienter.
+                                Attention : L'heure saisie (<span x-text="checkInTime"></span>) est antérieure à la fin du ménage (<span x-text="selectedRoom ? selectedRoom.effectiveReadyTime : ''"></span>). Le client risque de devoir patienter.
                             </span>
                         </div>
                     </template>
@@ -460,7 +480,8 @@ document.addEventListener('alpine:init', () => {
 
         selectRoom(room) {
             this.selectedRoom = room;
-            if (room.hasSameDayDeparture) {
+            // Ouvrir le modal d'ajustement si conflit ou ménage en cours / rotation
+            if (room.hasAnyConflict || room.hasSameDayDeparture || room.isBeingCleaned) {
                 this.isModalOpen = true;
                 if (window.lucide) {
                     this.$nextTick(() => window.lucide.createIcons());
@@ -470,14 +491,25 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        getModalTitle() {
+            if (!this.selectedRoom) return 'Ajustement du Check-in';
+            if (this.selectedRoom.conflictType === 'cleaning_in_progress') {
+                return 'Ménage en cours sur cette chambre';
+            }
+            if (this.selectedRoom.conflictType === 'same_day_rotation') {
+                return 'Rotation le jour d\'arrivée';
+            }
+            return 'Disponibilité & Heure d\'arrivée';
+        },
+
         isTimeConflicting() {
-            if (!this.selectedRoom || !this.selectedRoom.sameDayReadyTime) return false;
-            return this.checkInTime < this.selectedRoom.sameDayReadyTime;
+            if (!this.selectedRoom || !this.selectedRoom.effectiveReadyTime) return false;
+            return this.checkInTime < this.selectedRoom.effectiveReadyTime;
         },
 
         adjustToReadyTime() {
-            if (this.selectedRoom && this.selectedRoom.sameDayReadyTime) {
-                this.checkInTime = this.selectedRoom.sameDayReadyTime;
+            if (this.selectedRoom && this.selectedRoom.effectiveReadyTime) {
+                this.checkInTime = this.selectedRoom.effectiveReadyTime;
             }
         },
 

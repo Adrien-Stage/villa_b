@@ -380,4 +380,58 @@ test('draft continue route directly mounts and displays the exact target step (s
     $responseStep4->assertSee('Finaliser la réservation');
 });
 
+test('step 2 calculates exact ready time for room in cleaning status and detects check-in conflict', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $user = User::factory()->create(['role' => 'manager']);
+
+    \App\Models\CashRegisterSession::create([
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'opening_amount' => 5000000,
+        'opened_at' => now(),
+    ]);
+
+    $customer = Customer::factory()->create();
+    $room = Room::where('number', '101')->first();
+
+    // Set room to CLEANING status with status history entry
+    $room->update(['status' => \App\Enums\RoomStatus::CLEANING]);
+    \App\Models\RoomStatusHistory::create([
+        'room_id'     => $room->id,
+        'from_status' => \App\Enums\RoomStatus::DIRTY->value,
+        'to_status'   => \App\Enums\RoomStatus::CLEANING->value,
+        'changed_by'  => $user->id,
+        'changed_at'  => today()->setTime(11, 0), // cleaned started at 11:00
+    ]);
+
+    $this->actingAs($user);
+
+    // Arrival is today with requested check_in_time at 12:00 (before 11:00 + 120min = 13:00)
+    $today = today()->format('Y-m-d');
+    $tomorrow = today()->addDay()->format('Y-m-d');
+
+    $response = $this->post(route('bookings.store'), [
+        'step'          => '2',
+        'customer_id'   => $customer->id,
+        'check_in'      => $today,
+        'check_out'     => $tomorrow,
+        'check_in_time' => '12:00',
+        'adults'        => 1,
+        'children'      => 0,
+        'source'        => 'direct',
+    ]);
+
+    $response->assertStatus(200);
+    $response->assertViewIs('bookings.select-room');
+    $response->assertSee('En nettoyage');
+    $response->assertSee('13:00'); // 11:00 + 120m delay = 13:00
+    $response->assertSee('Nettoyage en cours');
+});
+
+
 
