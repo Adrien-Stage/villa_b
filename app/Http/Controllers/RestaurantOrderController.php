@@ -157,11 +157,14 @@ class RestaurantOrderController extends Controller
                 'created_by' => Auth::id(),
                 'assigned_server_id' => Auth::id(),
                 'table_number' => trim((string) $validated['table_number']),
-                'customer_name' => $validated['customer_name'] ? trim((string) $validated['customer_name']) : null,
-                'customer_phone' => $validated['customer_phone'] ? trim((string) $validated['customer_phone']) : null,
+                // Champs facultatifs : absents de la requête, ils sont absents
+                // du tableau validé — les lire directement casserait la prise de
+                // commande dès qu'un écran ne les envoie pas.
+                'customer_name' => trim((string) ($validated['customer_name'] ?? '')) ?: null,
+                'customer_phone' => trim((string) ($validated['customer_phone'] ?? '')) ?: null,
                 'status' => 'confirmed',
                 'total_amount' => $total,
-                'notes' => $validated['notes'] ? trim((string) $validated['notes']) : null,
+                'notes' => trim((string) ($validated['notes'] ?? '')) ?: null,
                 'placed_at' => now(),
                 'assigned_at' => now(),
                 'sent_to_kitchen_at' => now(),

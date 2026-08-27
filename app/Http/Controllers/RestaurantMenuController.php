@@ -20,6 +20,12 @@ class RestaurantMenuController extends Controller
     {
         $user = Auth::user();
 
+        // Le serveur en salle ne vient pas administrer la carte : il vient y
+        // prendre une commande. Même route, écran adapté au geste du métier.
+        if ($user->hasAnyRole(['restaurant_staff']) && !$user->hasAnyRole(['restaurant_chief', 'manager'])) {
+            return $this->priseDeCommande();
+        }
+
         $categories = RestaurantMenuCategory::query()
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -64,6 +70,38 @@ class RestaurantMenuController extends Controller
             'items' => $items,
             'canManage' => $canManage,
             'itemTypes' => self::ITEM_TYPES,
+            'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
+        ]);
+    }
+
+    /**
+     * Écran de prise de commande en salle : la carte du jour en vignettes,
+     * un panier, et l'envoi en cuisine dans le même geste.
+     *
+     * Seuls les articles actifs sortent, et les catégories vides sont
+     * écartées : sur une tablette, un filtre qui ne renvoie rien est une
+     * fausse piste au milieu du service.
+     */
+    private function priseDeCommande(): View
+    {
+        $items = RestaurantMenuItem::query()
+            ->with('category')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $categories = RestaurantMenuCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($categorie) => $items->contains('restaurant_menu_category_id', $categorie->id))
+            ->values();
+
+        return view('restaurant.menus.service', [
+            'items' => $items,
+            'categories' => $categories,
             'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
         ]);
     }

@@ -337,11 +337,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff,restaurant_cook', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
-        Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
-        Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
+    });
+
+    // Gestion du restaurant : coûts, stocks et inventaires. La salle en est
+    // écartée — masquer le lien sans fermer l'URL n'aurait rien masqué.
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_cook', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+        Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
+        Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
         Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
         Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
@@ -369,7 +374,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_chief,restaurant_staff', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
-        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->name('pantry.movements.store');
+        // Le serveur n'ouvre plus le garde-manger : il n'a plus à en sortir
+        // des mouvements de stock.
+        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->middleware('role:restaurant_chief')->name('pantry.movements.store');
 
         Route::middleware('role:restaurant_chief')->group(function () {
             Route::post('/menus/categories', [RestaurantMenuController::class, 'storeCategory'])->name('menus.categories.store');

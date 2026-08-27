@@ -256,7 +256,14 @@
                             @endrole
 
                             @role('manager','restaurant_chief','restaurant_staff')
+                                {{-- Pour le serveur, « Menus » est l'écran de prise de
+                                     commande ; pour le chef, la carte à administrer. --}}
                                 <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
+                            @endrole
+
+                            {{-- Coûts, stocks et inventaires relèvent de la gestion :
+                                 la salle n'a pas à les voir. --}}
+                            @role('manager','restaurant_chief')
                                 <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
