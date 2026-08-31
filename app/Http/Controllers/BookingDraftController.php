@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
  */
 class BookingDraftController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     // ── Liste des brouillons ──────────────────────────────────────────────────
 
     /**
@@ -32,7 +34,8 @@ class BookingDraftController extends Controller
             ->where('created_by', Auth::id())
             ->with(['customer', 'room.roomType'])
             ->latest('last_activity_at')
-            ->get();
+            ->paginate(self::PAR_PAGE)
+            ->withQueryString();
 
         return view('bookings.drafts.index', compact('drafts'));
     }
