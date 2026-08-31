@@ -306,12 +306,14 @@
                             <div class="mt-2 flex flex-wrap items-center gap-1.5"
                                  x-show="booking.check_in === selectedIso || booking.check_out === selectedIso">
                                 <span x-show="booking.check_in === selectedIso"
-                                      class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 border border-emerald-200">
+                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border"
+                                      :class="badgeArrivee(booking)">
                                     <i data-lucide="log-in" class="w-2.5 h-2.5"></i>
                                     <span x-text="estArrive(booking) ? 'Arrivé' : 'Arrivée attendue'"></span>
                                 </span>
                                 <span x-show="booking.check_out === selectedIso"
-                                      class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[9px] font-bold text-orange-700 border border-orange-200">
+                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border"
+                                      :class="badgeDepart(booking)">
                                     <i data-lucide="log-out" class="w-2.5 h-2.5"></i>
                                     <span x-text="estParti(booking) ? 'Parti' : 'Départ attendu'"></span>
                                 </span>
@@ -543,7 +545,7 @@
             },
 
             get selectedEvents() {
-                return this.getBookingsForDay(this.selectedIso);
+                return this.trierParMouvement(this.getBookingsForDay(this.selectedIso));
             },
 
             /**
@@ -557,6 +559,58 @@
             /** Un séjour dont le départ a été enregistré à la réception. */
             estParti(booking) {
                 return ['checked_out', 'completed'].includes(booking.status);
+            },
+
+            /**
+             * Le rang d'un séjour dans la liste du jour.
+             *
+             * L'ordre suit ce que la réception a réellement à faire : ce qui
+             * l'attend d'abord, ce qui est déjà réglé ensuite. Trié par numéro
+             * de réservation, une arrivée à préparer se serait perdue entre
+             * deux séjours sans action.
+             *
+             * Un séjour qui arrive et repart le même jour compte comme une
+             * arrivée tant que le client n'est pas entré : c'est le premier
+             * geste attendu.
+             */
+            rangMouvement(booking) {
+                const arriveCeJour = booking.check_in === this.selectedIso;
+                const partCeJour   = booking.check_out === this.selectedIso;
+
+                if (arriveCeJour && !this.estArrive(booking)) return 0; // arrivée attendue
+                if (partCeJour   && !this.estParti(booking))  return 1; // départ attendu
+                if (arriveCeJour)                             return 2; // arrivé
+                if (partCeJour)                               return 3; // parti
+                return 4;                                               // séjour en cours
+            },
+
+            /** Trie sans modifier la liste d'origine, puis par chambre à rang égal. */
+            trierParMouvement(bookings) {
+                return [...bookings].sort((a, b) => {
+                    const ecart = this.rangMouvement(a) - this.rangMouvement(b);
+                    if (ecart !== 0) return ecart;
+
+                    return String(a.room_number).localeCompare(String(b.room_number), 'fr', { numeric: true });
+                });
+            },
+
+            /**
+             * Teinte du badge d'arrivée. Une couleur par état, et non une seule
+             * pour « arrivée » : attendue et faite demandent des gestes
+             * opposés, les confondre obligeait à lire le libellé pour trier
+             * l'écran du regard.
+             */
+            badgeArrivee(booking) {
+                return this.estArrive(booking)
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-sky-50 text-sky-700 border-sky-200';
+            },
+
+            /** Teinte du badge de départ, sur le même principe. */
+            badgeDepart(booking) {
+                return this.estParti(booking)
+                    ? 'bg-slate-100 text-slate-600 border-slate-300'
+                    : 'bg-orange-50 text-orange-700 border-orange-200';
             },
 
             /**
