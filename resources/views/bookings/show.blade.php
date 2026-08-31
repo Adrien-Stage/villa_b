@@ -13,7 +13,6 @@
             Retour aux réservations
         </a>
         <div class="flex items-center gap-3">
-            @include('bookings.partials.detail-nav')
             <h1 class="font-heading text-2xl font-semibold text-primary font-mono">
                 {{ $booking->booking_number }}
             </h1>
@@ -37,6 +36,10 @@
                 Réservation en ligne
             </span>
             @endif
+
+            {{-- Après les badges : contre la barre latérale, le panneau du
+                 sélecteur s'ouvrait par-dessus celle-ci. --}}
+            <x-record-nav :navigation="$navigation" :current="$booking" />
         </div>
     </div>
 
