@@ -87,7 +87,7 @@ class CustomerController extends Controller
         // Même résolution que partout ailleurs (BookingController, imports CSV) :
         // sans tenant_id, la fiche n'apparaîtrait dans aucune liste filtrée.
         $validated['tenant_id'] = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         $customer = Customer::create($validated);
 

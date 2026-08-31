@@ -195,7 +195,7 @@ class HousekeepingController extends Controller
         ]);
 
         $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? Tenant::current()?->id;
 
         $memberIds = collect($validated['member_ids'])->map(fn ($id) => (int) $id);
 

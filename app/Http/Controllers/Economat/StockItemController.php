@@ -134,6 +134,6 @@ class StockItemController extends Controller
     private function tenantId(): ?int
     {
         return auth()->user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
     }
 }

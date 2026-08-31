@@ -84,7 +84,7 @@ class StockRequisitionController extends Controller
                 'purpose'      => $validated['purpose'] ?? null,
                 'requested_by' => Auth::id(),
                 'tenant_id'    => Auth::user()->tenant_id
-                    ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id'),
+                    ?? \App\Models\Tenant::current()?->id,
             ]);
 
             foreach ($validated['lines'] as $line) {

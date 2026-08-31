@@ -124,7 +124,7 @@ class RoomPackageController extends Controller
             'is_active'     => $request->boolean('is_active', true),
 
             'tenant_id' => auth()->user()->tenant_id
-                ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id'),
+                ?? \App\Models\Tenant::current()?->id,
         ];
     }
 

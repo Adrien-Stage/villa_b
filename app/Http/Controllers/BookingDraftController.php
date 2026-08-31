@@ -330,7 +330,7 @@ class BookingDraftController extends Controller
         $pricePerNight = $room->roomType->getCalculatedPricePerNight($adultsCount, $childrenCount) / 100;
         $totalRoomAmount = $nights * $pricePerNight;
 
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;

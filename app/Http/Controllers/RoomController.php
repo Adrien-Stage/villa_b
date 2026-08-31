@@ -75,7 +75,7 @@ class RoomController extends Controller
         ]);
 
         $validated['tenant_id'] = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         unset($validated['images']);
         $room = Room::create($validated);
@@ -231,7 +231,7 @@ class RoomController extends Controller
         $validated['base_price'] = $validated['base_price'] * 100;
 
         $validated['tenant_id'] = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         RoomType::create($validated);
 

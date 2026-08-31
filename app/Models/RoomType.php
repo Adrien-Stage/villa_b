@@ -71,7 +71,7 @@ class RoomType extends Model
      */
     public function getCalculatedPricePerNight(int $adults, int $children = 0, ?int $tenantId = null): int
     {
-        $tenantId = $tenantId ?? $this->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = $tenantId ?? $this->tenant_id ?? \App\Models\Tenant::current()?->id;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
 

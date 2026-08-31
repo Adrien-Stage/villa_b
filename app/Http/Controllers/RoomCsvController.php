@@ -290,7 +290,7 @@ class RoomCsvController extends Controller
     private function tenantId(): ?int
     {
         return Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
     }
 
     private function importRedirect(string $tab, int $created, int $skipped, array $errors, string $successSuffix)
