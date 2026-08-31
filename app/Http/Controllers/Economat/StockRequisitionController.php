@@ -24,6 +24,8 @@ use Illuminate\View\View;
  */
 class StockRequisitionController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     public function __construct(private Notifier $notifier)
     {
     }
@@ -39,7 +41,7 @@ class StockRequisitionController extends Controller
             $query->where('requested_by', Auth::id());
         }
 
-        $requisitions = $query->get();
+        $requisitions = $query->paginate(self::PAR_PAGE)->withQueryString();
 
         return view('economat.requisitions.index', [
             'requisitions' => $requisitions,

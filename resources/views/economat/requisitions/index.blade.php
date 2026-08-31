@@ -57,6 +57,7 @@
                     </tbody>
                 </table>
             </div>
+            <div class="mt-4">{{ $requisitions->links() }}</div>
         @endif
     </div>
 </div>

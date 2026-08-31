@@ -58,7 +58,7 @@ class RestaurantOrderController extends Controller
             $query->where('table_number', 'ilike', "%{$table}%");
         }
 
-        $orders = $query->paginate(20)->withQueryString();
+        $orders = $query->paginate(15)->withQueryString();
 
         $categories = RestaurantMenuCategory::query()
             ->where('is_active', true)

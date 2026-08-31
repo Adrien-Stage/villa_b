@@ -56,7 +56,7 @@ class RestaurantPantryController extends Controller
             $itemsQuery->whereColumn('current_stock', '<=', 'min_stock');
         }
 
-        $items = $itemsQuery->paginate(20)->withQueryString();
+        $items = $itemsQuery->paginate(15)->withQueryString();
 
         $recentMovements = RestaurantPantryMovement::query()
             ->with(['item', 'recordedBy'])

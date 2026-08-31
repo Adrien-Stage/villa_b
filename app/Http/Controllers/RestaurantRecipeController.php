@@ -22,6 +22,8 @@ use RuntimeException;
  */
 class RestaurantRecipeController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     public function __construct(private readonly RestaurantStockService $stock)
     {
     }
@@ -34,8 +36,18 @@ class RestaurantRecipeController extends Controller
             ->orderBy('name')
             ->get();
 
-        $dishes = $recipes->where('type', RestaurantRecipe::TYPE_DISH);
-        $preparations = $recipes->where('type', RestaurantRecipe::TYPE_PREP);
+        // Deux tableaux distincts à l'écran, donc deux paginations : feuilleter
+        // les plats ne doit pas déplacer la liste des préparations.
+        $dishes = $this->paginateCollection(
+            $recipes->where('type', RestaurantRecipe::TYPE_DISH)->values(),
+            $request,
+            'plats_page'
+        );
+        $preparations = $this->paginateCollection(
+            $recipes->where('type', RestaurantRecipe::TYPE_PREP)->values(),
+            $request,
+            'preparations_page'
+        );
 
         // Plats du menu qui n'ont pas encore de fiche : leur vente ne décrémente rien.
         $unfichedItems = RestaurantMenuItem::query()

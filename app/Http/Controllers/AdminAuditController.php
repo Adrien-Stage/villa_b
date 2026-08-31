@@ -45,7 +45,7 @@ class AdminAuditController extends Controller
             $logsQuery->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $logsQuery->paginate(20, ['*'], 'logs_page')->withQueryString();
+        $logs = $logsQuery->paginate(15, ['*'], 'logs_page')->withQueryString();
 
         // Users Query with search
         $usersQuery = User::with(['roles']);
@@ -59,7 +59,7 @@ class AdminAuditController extends Controller
             });
         }
 
-        $users = $usersQuery->orderBy('name')->paginate(10, ['*'], 'users_page')->withQueryString();
+        $users = $usersQuery->orderBy('name')->paginate(15, ['*'], 'users_page')->withQueryString();
 
         // Fetch helper lists for filters
         $tenants = Tenant::orderBy('name')->get();

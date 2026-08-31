@@ -37,7 +37,7 @@ class RestaurantBillingController extends Controller
             $query->where('table_number', 'ilike', "%{$table}%");
         }
 
-        $orders = $query->paginate(20)->withQueryString();
+        $orders = $query->paginate(15)->withQueryString();
 
         return view('restaurant.billing.index', [
             'orders' => $orders,

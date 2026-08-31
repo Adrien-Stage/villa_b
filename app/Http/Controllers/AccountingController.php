@@ -18,6 +18,8 @@ use Illuminate\View\View;
  */
 class AccountingController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     private const EXPENSE_METHODS = ['cash', 'bank_transfer', 'orange_money', 'mtn_momo', 'check', 'other'];
 
     public function __construct(private readonly AccountingService $accounting)
@@ -84,14 +86,20 @@ class AccountingController extends Controller
     {
         $period = $this->period($request);
 
-        $expenses = Expense::query()
-            ->inPeriod($period['from'], $period['to'])
+        $requete = Expense::query()
+            ->inPeriod($period['from'], $period['to']);
+
+        // Le total porte sur la période entière, pas sur la page affichée : le
+        // tirer du paginateur donnerait le cumul des quinze lignes visibles et
+        // afficherait un montant faux dès la seconde page.
+        $total = (int) (clone $requete)->sum('amount');
+
+        $expenses = $requete
             ->with('recordedBy:id,name')
             ->orderByDesc('occurred_at')
             ->orderByDesc('id')
-            ->get();
-
-        $total = (int) $expenses->sum('amount');
+            ->paginate(self::PAR_PAGE)
+            ->withQueryString();
 
         return view('accounting.expenses', [
             'period' => $period,

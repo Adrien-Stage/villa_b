@@ -17,6 +17,8 @@ use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     /** Direction et comptabilité suivent l'engagement puis la dette fournisseur. */
     private const WATCHERS = ['manager', 'admin', 'accountant'];
 
@@ -29,7 +31,8 @@ class PurchaseOrderController extends Controller
         $orders = PurchaseOrder::with('supplier')
             ->withCount('lines')
             ->latest()
-            ->get();
+            ->paginate(self::PAR_PAGE)
+            ->withQueryString();
 
         return view('economat.orders.index', compact('orders'));
     }

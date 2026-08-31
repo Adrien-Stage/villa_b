@@ -57,7 +57,7 @@ class BookingController extends Controller
         ];
 
         $bookings = $this->orderedForBrowsing($query)
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;

@@ -11,11 +11,14 @@ use Illuminate\View\View;
 
 class SupplierController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     public function index(): View
     {
         $suppliers = Supplier::withCount('stockItems', 'purchaseOrders')
             ->orderBy('name')
-            ->get();
+            ->paginate(self::PAR_PAGE)
+            ->withQueryString();
 
         return view('economat.suppliers.index', compact('suppliers'));
     }

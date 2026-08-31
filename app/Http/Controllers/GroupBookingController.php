@@ -54,7 +54,7 @@ class GroupBookingController extends Controller
             'in_house' => GroupBooking::where('status', 'in_house')->count(),
         ];
 
-        $groups = $query->orderBy('start_date', 'desc')->paginate(20)->withQueryString();
+        $groups = $query->orderBy('start_date', 'desc')->paginate(15)->withQueryString();
 
         $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())

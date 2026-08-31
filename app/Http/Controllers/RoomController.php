@@ -33,7 +33,7 @@ class RoomController extends Controller
             });
         }
 
-        $rooms = $roomsQuery->paginate(20)->withQueryString();
+        $rooms = $roomsQuery->paginate(15)->withQueryString();
 
         // Compteurs pour tous les statuts
         $counts = [
