@@ -7,12 +7,13 @@
 {{-- En-tête --}}
 <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
-        <a href="{{ route('bookings.index') }}"
+        <a href="{{ route('bookings.index', $navigation['context']) }}"
             class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour aux réservations
         </a>
         <div class="flex items-center gap-3">
+            @include('bookings.partials.detail-nav')
             <h1 class="font-heading text-2xl font-semibold text-primary font-mono">
                 {{ $booking->booking_number }}
             </h1>

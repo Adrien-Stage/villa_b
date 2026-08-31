@@ -31,31 +31,70 @@ class BookingController extends Controller
         $tab = $request->get('tab', 'active');
         $status = $request->filled('status') ? $request->status : 'all';
 
-        $query = Booking::with(['customer', 'room.roomType']);
+        $query = $this->filteredBookings($request)->with(['customer', 'room.roomType']);
 
-        if ($tab === 'archive') {
-            $query->whereIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
-            $statusFilters = [
+        $statusFilters = $tab === 'archive'
+            ? [
                 'all'       => 'Toutes',
                 'completed' => 'Terminées',
                 'cancelled' => 'Annulées',
-            ];
-        } else {
-            $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
-            $statusFilters = [
+            ]
+            : [
                 'all'        => 'Toutes',
                 'pending'    => 'En attente',
                 'confirmed'  => 'Confirmées',
                 'checked_in' => 'En séjour',
             ];
+
+        // Stats pour les badges
+        $stats = [
+            'all'          => Booking::count(),
+            'pending'      => Booking::where('status', BookingStatus::PENDING)->count(),
+            'confirmed'    => Booking::where('status', BookingStatus::CONFIRMED)->count(),
+            'checked_in'   => Booking::where('status', BookingStatus::CHECKED_IN)->count(),
+            'departing'    => Booking::departingToday()->count(),
+            'arriving'     => Booking::arrivingToday()->count(),
+        ];
+
+        $bookings = $this->orderedForBrowsing($query)
+            ->paginate(20)
+            ->withQueryString();
+
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
+            
+            ->where('module', 'reception')
+            ->whereNull('closed_at')
+            ->first();
+        $isCashRegisterOpen = $activeSession !== null;
+
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen'));
+    }
+
+    // ===== PARCOURS DE LA LISTE =====
+
+    /**
+     * Les réservations correspondant aux filtres de l'écran de liste.
+     *
+     * Partagé entre la liste et la navigation du détail : ce sont les mêmes
+     * critères, et ils doivent le rester. Deux copies divergeraient au premier
+     * filtre ajouté, et « suivant » enverrait alors sur une réservation absente
+     * de la liste d'où l'on vient.
+     */
+    private function filteredBookings(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Booking::query();
+
+        if ($request->get('tab', 'active') === 'archive') {
+            $query->whereIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
+        } else {
+            $query->whereNotIn('status', [BookingStatus::COMPLETED, BookingStatus::CANCELLED]);
         }
 
-        // Filtre statut
-        if ($request->filled('status') && $status !== 'all') {
-            $query->where('status', $status);
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
         }
 
-        // Recherche
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -69,30 +108,85 @@ class BookingController extends Controller
             });
         }
 
-        // Stats pour les badges
-        $stats = [
-            'all'          => Booking::count(),
-            'pending'      => Booking::where('status', BookingStatus::PENDING)->count(),
-            'confirmed'    => Booking::where('status', BookingStatus::CONFIRMED)->count(),
-            'checked_in'   => Booking::where('status', BookingStatus::CHECKED_IN)->count(),
-            'departing'    => Booking::departingToday()->count(),
-            'arriving'     => Booking::arrivingToday()->count(),
-        ];
+        return $query;
+    }
 
-        $bookings = $query
-            ->orderBy('check_in', 'desc')
-            ->paginate(20)
-            ->withQueryString();
+    /**
+     * L'ordre de parcours, identique à la liste.
+     *
+     * `check_in` seul ne suffit pas : plusieurs réservations partagent la même
+     * date d'arrivée, et PostgreSQL est libre de les rendre dans n'importe quel
+     * ordre. Sans départage, « suivant » puis « précédent » pouvaient ne pas
+     * revenir sur la même fiche. L'`id` tranche.
+     */
+    private function orderedForBrowsing(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->orderBy('check_in', 'desc')->orderBy('id', 'desc');
+    }
 
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
+    /**
+     * De quoi passer d'une fiche à la suivante sans repasser par la liste.
+     *
+     * Renvoie les voisines immédiates, la position dans la liste filtrée, et
+     * une fenêtre de fiches autour de la courante pour le sélecteur rapide.
+     * La fenêtre est centrée : sur une liste de plusieurs centaines, charger
+     * les cent premières laisserait la fiche courante hors de son propre
+     * sélecteur.
+     *
+     * @return array{prev:?Booking,next:?Booking,position:int,total:int,siblings:\Illuminate\Support\Collection,context:array<string,string>}
+     */
+    private function bookingNavigation(Booking $booking, Request $request): array
+    {
+        // Les filtres voyagent avec les liens : sans eux, quitter une fiche
+        // ouverte depuis « Archives » ramènerait dans les réservations actives.
+        $context = array_filter([
+            'tab'    => $request->get('tab'),
+            'status' => $request->get('status'),
+            'search' => $request->get('search'),
+        ], fn($v) => $v !== null && $v !== '');
+
+        $date = $booking->check_in;
+        $id   = $booking->id;
+
+        // « Avant » au sens de l'ordre d'affichage : arrivée plus récente, ou
+        // même date et id supérieur.
+        $avant = fn($q) => $q->where(function ($w) use ($date, $id) {
+            $w->where('check_in', '>', $date)
+                ->orWhere(fn($e) => $e->where('check_in', $date)->where('id', '>', $id));
+        });
+
+        $apres = fn($q) => $q->where(function ($w) use ($date, $id) {
+            $w->where('check_in', '<', $date)
+                ->orWhere(fn($e) => $e->where('check_in', $date)->where('id', '<', $id));
+        });
+
+        $prev = $avant($this->filteredBookings($request))
+            ->orderBy('check_in', 'asc')->orderBy('id', 'asc')
             ->first();
-        $isCashRegisterOpen = $activeSession !== null;
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen'));
+        $next = $apres($this->filteredBookings($request))
+            ->orderBy('check_in', 'desc')->orderBy('id', 'desc')
+            ->first();
+
+        $rang  = $avant($this->filteredBookings($request))->count();
+        $total = $this->filteredBookings($request)->count();
+
+        // Fenêtre centrée sur la fiche courante pour le sélecteur rapide.
+        $fenetre = 25;
+        $debut   = max(0, $rang - (int) floor($fenetre / 2));
+
+        $siblings = $this->orderedForBrowsing(
+            $this->filteredBookings($request)->with('customer')
+        )->skip($debut)->take($fenetre)->get();
+
+        return [
+            'prev'     => $prev,
+            'next'     => $next,
+            'position' => $rang + 1,
+            'total'    => $total,
+            'siblings' => $siblings,
+            'context'  => $context,
+        ];
     }
 
     // ===== AGENDA =====
@@ -1071,7 +1165,7 @@ class BookingController extends Controller
 
     // ===== DÉTAIL =====
 
-    public function show(Booking $booking)
+    public function show(Booking $booking, Request $request)
     {
         $booking->load([
             'customer',
@@ -1081,6 +1175,10 @@ class BookingController extends Controller
             'payments',
             'folioItems',
         ]);
+
+        // Passer d'une fiche à l'autre sans repasser par la liste : les filtres
+        // de l'écran d'où l'on vient sont conservés dans l'URL.
+        $navigation = $this->bookingNavigation($booking, $request);
 
         // Aucune action n'est possible tant que la caisse de l'utilisateur
         // n'est pas ouverte — la vue masque tous les contrôles d'action et
@@ -1099,6 +1197,7 @@ class BookingController extends Controller
             'isCashRegisterOpen' => $isCashRegisterOpen,
             'folioCatalog' => $this->folioCatalog($partnerOrganization),
             'partnerOrganization' => $partnerOrganization,
+            'navigation' => $navigation,
         ]);
     }
 
