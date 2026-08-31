@@ -36,7 +36,7 @@ class SupplierInvoiceController extends Controller
             ->when($request->boolean('retenues'), fn ($q) => $q->withheld())
             ->orderByDesc('invoice_date')
             ->orderByDesc('id')
-            ->paginate(25)
+            ->paginate(15)
             ->withQueryString();
 
         $fournisseurs = Supplier::active()->orderBy('name')->get();

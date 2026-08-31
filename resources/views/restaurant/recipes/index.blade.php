@@ -225,6 +225,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $dishes->links() }}</div>
     @endif
 </section>
 
@@ -341,6 +342,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $preparations->links() }}</div>
     @endif
 </section>
 

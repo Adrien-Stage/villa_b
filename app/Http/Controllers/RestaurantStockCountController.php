@@ -30,7 +30,7 @@ class RestaurantStockCountController extends Controller
             ->with(['openedBy', 'closedBy'])
             ->withCount('lines')
             ->latest('id')
-            ->paginate(20);
+            ->paginate(15);
 
         $openCount = RestaurantStockCount::query()
             ->where('status', RestaurantStockCount::STATUS_DRAFT)

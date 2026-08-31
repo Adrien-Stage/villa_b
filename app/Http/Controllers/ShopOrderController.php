@@ -43,7 +43,7 @@ class ShopOrderController extends Controller
             $query->where('payment_status', $status);
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->paginate(20);
+        $orders = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return view('shop.orders.index', [
             'orders' => $orders,

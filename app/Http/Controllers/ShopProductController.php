@@ -35,7 +35,7 @@ class ShopProductController extends Controller
         }
 
         $view = $request->input('view', 'list');
-        $products = $query->orderBy('name')->paginate(20)->withQueryString();
+        $products = $query->orderBy('name')->paginate(15)->withQueryString();
         $categories = ShopCategory::query()
             ->orderBy('sort_order')
             ->get();

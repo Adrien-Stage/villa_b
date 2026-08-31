@@ -14,6 +14,8 @@ use Illuminate\View\View;
 
 class StockItemController extends Controller
 {
+    use \App\Http\Controllers\Concerns\PaginatesLists;
+
     public function index(Request $request): View
     {
         $query = StockItem::with('category', 'supplier');
@@ -23,7 +25,7 @@ class StockItemController extends Controller
             $query->belowThreshold();
         }
 
-        $items = $query->orderBy('name')->get();
+        $items = $query->orderBy('name')->paginate(self::PAR_PAGE)->withQueryString();
 
         $categories = StockCategory::orderBy('sort_order')->orderBy('name')->get();
         $suppliers  = Supplier::active()->orderBy('name')->get();

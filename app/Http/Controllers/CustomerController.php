@@ -41,7 +41,7 @@ class CustomerController extends Controller
         $customers = $query
             ->withCount('bookings')
             ->orderBy('last_name')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return view('customers.index', compact('customers', 'stats'));

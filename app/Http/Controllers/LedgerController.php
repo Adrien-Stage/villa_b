@@ -190,7 +190,7 @@ class LedgerController extends Controller
 
         $historique = \App\Models\NightAudit::with('closedBy')
             ->orderByDesc('audit_date')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return view('accounting.ledger.night-audit', compact('apercu', 'enAttente', 'historique', 'jour'));
