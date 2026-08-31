@@ -1,36 +1,62 @@
 {{--
-    Navigation entre fiches de réservation.
+    Navigation entre fiches d'une même liste.
 
     Permet d'enchaîner les dossiers sans repasser par la liste : la réception
-    traite rarement une réservation isolée, elle parcourt une journée d'arrivées.
-    Les filtres de la liste voyagent dans l'URL ($context), sinon « suivant »
-    sortirait du sous-ensemble que l'utilisateur consultait.
---}}
-@php
-    $ctx      = $navigation['context'];
-    $prev     = $navigation['prev'];
-    $next     = $navigation['next'];
-    $siblings = $navigation['siblings'];
+    traite rarement une fiche isolée, elle parcourt une journée d'arrivées.
+    Les filtres de la liste voyagent dans l'URL ($navigation['context']), sinon
+    « suivant » sortirait du sous-ensemble que l'utilisateur consultait.
 
-    $lien = fn($b) => route('bookings.show', array_merge([$b], $ctx));
+    Volontairement générique — rien ici ne connaît les réservations : les routes
+    et les libellés sont des paramètres, pour que les groupes, les clients ou
+    tout autre écran de détail puissent réutiliser le même parcours.
+
+    Usage :
+        <x-record-nav :navigation="$navigation" :current="$booking" />
+
+    Le tableau $navigation est celui que renvoie le contrôleur :
+    prev, next, position, total, siblings, context.
+--}}
+@props([
+    'navigation',
+    'current',
+    'showRoute' => 'bookings.show',
+    'listRoute' => 'bookings.index',
+    'label'     => 'Réservation',
+    'numberKey' => 'booking_number',
+    'dateKey'   => 'check_in',
+])
+
+@php
+    $ctx      = $navigation['context'] ?? [];
+    $prev     = $navigation['prev'] ?? null;
+    $next     = $navigation['next'] ?? null;
+    $siblings = $navigation['siblings'] ?? collect();
+
+    $lien = fn($m) => route($showRoute, array_merge([$m], $ctx));
+
+    // Le nom affiché sous le numéro : le client quand la fiche en porte un.
+    $nomDe = function ($m) {
+        $c = $m->customer ?? null;
+        return $c?->full_name ?: null;
+    };
 @endphp
 
 {{-- Maj + flèches, et non Alt + flèches : Alt + ← / → sont les raccourcis
      Précédent / Suivant du navigateur, que l'on ne détourne pas. --}}
 <div class="flex items-center gap-1 rounded-lg border border-secondary/20 bg-white p-1"
-     x-data="bookingSwitcher()"
+     x-data="recordNav()"
      @keydown.window="raccourci($event)">
 
     {{-- Précédent --}}
     @if($prev)
         <a href="{{ $lien($prev) }}" x-ref="prev"
-           title="Réservation précédente — {{ $prev->booking_number }} (Maj + ←)"
+           title="{{ $label }} précédente — {{ $prev->{$numberKey} }} (Maj + ←)"
            class="flex items-center justify-center w-8 h-8 rounded-md text-primary/60 hover:bg-secondary/10 hover:text-primary transition-colors">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
         </a>
     @else
         <span class="flex items-center justify-center w-8 h-8 rounded-md text-primary/20 cursor-not-allowed"
-              title="Première réservation de la liste">
+              title="Première fiche de la liste">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
         </span>
     @endif
@@ -48,14 +74,14 @@
             <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5"></i>
         </button>
 
-        {{-- Pas de x-transition ici : la transition par défaut laissait le
-             panneau en opacité 0 après un clic rapide, panneau ouvert mais
-             invisible. Le reste de l'application ouvre ses listes de la même
-             manière, sans animation. --}}
-        {{-- Ancré à gauche sur petit écran : aligné à droite, le panneau sortait
-             de l'écran par la gauche, le bouton étant lui-même près du bord. --}}
+        {{-- z-50 comme les autres menus déroulants du gabarit : la barre
+             latérale est en z-40, un panneau en dessous passe derrière elle.
+             Pas de x-transition : la transition par défaut laissait le panneau
+             ouvert mais en opacité 0 après un clic rapide.
+             Largeur bornée au viewport : à 320 px fixes, le panneau sortait de
+             l'écran sur mobile, le bouton étant collé au bord droit. --}}
         <div x-show="open" style="display:none;"
-             class="absolute left-0 sm:left-auto sm:right-0 z-30 mt-1 w-72 sm:w-80 rounded-lg border border-secondary/20 bg-white shadow-lg">
+             class="absolute right-0 z-50 mt-1 w-[min(20rem,calc(100vw-5rem))] rounded-lg border border-secondary/20 bg-white shadow-lg">
             <div class="p-2 border-b border-secondary/10">
                 <input type="text" x-model="search" x-ref="search" autocomplete="off"
                        placeholder="Filtrer (n° ou client)…"
@@ -63,30 +89,32 @@
             </div>
             <ul class="max-h-72 overflow-auto py-1">
                 @foreach($siblings as $s)
-                    <li data-libelle="{{ Str::lower($s->booking_number . ' ' . optional($s->customer)->full_name) }}"
+                    <li data-libelle="{{ Str::lower($s->{$numberKey} . ' ' . $nomDe($s)) }}"
                         x-show="matches($el)">
                         <a href="{{ $lien($s) }}"
                            class="flex items-center justify-between gap-3 px-3 py-2 text-xs hover:bg-secondary/10 transition-colors
-                                  {{ $s->id === $booking->id ? 'bg-secondary/15' : '' }}">
+                                  {{ $s->id === $current->id ? 'bg-secondary/15' : '' }}">
                             <span class="min-w-0">
-                                <span class="block font-mono font-medium text-primary">{{ $s->booking_number }}</span>
-                                <span class="block truncate text-primary/50">
-                                    {{ optional($s->customer)->full_name ?: 'Client inconnu' }}
+                                <span class="block font-mono font-medium text-primary">{{ $s->{$numberKey} }}</span>
+                                @if($nomDe($s))
+                                    <span class="block truncate text-primary/50">{{ $nomDe($s) }}</span>
+                                @endif
+                            </span>
+                            @if($dateKey && $s->{$dateKey})
+                                <span class="shrink-0 text-primary/40 font-mono">
+                                    {{ $s->{$dateKey}->format('d/m') }}
                                 </span>
-                            </span>
-                            <span class="shrink-0 text-primary/40 font-mono">
-                                {{ $s->check_in?->format('d/m') }}
-                            </span>
+                            @endif
                         </a>
                     </li>
                 @endforeach
                 <li x-show="!hasResults()" style="display:none;"
                     class="px-3 py-3 text-xs text-primary/40 text-center">
-                    Aucune réservation dans cette sélection.
+                    Aucun résultat dans cette sélection.
                 </li>
             </ul>
             <div class="px-3 py-2 border-t border-secondary/10">
-                <a href="{{ route('bookings.index', $ctx) }}"
+                <a href="{{ route($listRoute, $ctx) }}"
                    class="text-xs text-primary/60 hover:text-primary transition-colors">
                     Voir la liste complète →
                 </a>
@@ -97,21 +125,22 @@
     {{-- Suivant --}}
     @if($next)
         <a href="{{ $lien($next) }}" x-ref="next"
-           title="Réservation suivante — {{ $next->booking_number }} (Maj + →)"
+           title="{{ $label }} suivante — {{ $next->{$numberKey} }} (Maj + →)"
            class="flex items-center justify-center w-8 h-8 rounded-md text-primary/60 hover:bg-secondary/10 hover:text-primary transition-colors">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </a>
     @else
         <span class="flex items-center justify-center w-8 h-8 rounded-md text-primary/20 cursor-not-allowed"
-              title="Dernière réservation de la liste">
+              title="Dernière fiche de la liste">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </span>
     @endif
 </div>
 
+@once
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('bookingSwitcher', () => ({
+    Alpine.data('recordNav', () => ({
         open: false,
         search: '',
 
@@ -162,3 +191,4 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
+@endonce
