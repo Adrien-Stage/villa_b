@@ -11,7 +11,7 @@ class ShopSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::where('slug', 'villa-boutanga')->first();
+        $tenant = Tenant::where('slug', 'wetchah-app')->first();
 
         if (!$tenant) {
             return;

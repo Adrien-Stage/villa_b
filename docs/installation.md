@@ -77,8 +77,8 @@ DB_DATABASE=wetchah
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 
-APP_NAME="Villa Boutanga"
-TENANT_SLUG=villa-boutanga
+APP_NAME="Wetchah App"
+TENANT_SLUG=wetchah-app
 TENANT_CURRENCY=XAF
 TENANT_MODULES=["restaurant","shop","housekeeping","accounting","analytics","discussions"]
 ```
@@ -93,7 +93,7 @@ développement : le réduire permet de tester l'application telle que la verrait
 php artisan migrate --seed
 ```
 
-`DatabaseSeeder` installe le jeu de démonstration **Villa Boutanga** : rôles, tenant,
+`DatabaseSeeder` installe un jeu de démonstration **neutre** : rôles, tenant,
 utilisateurs, types et chambres, équipes de ménage, clients, réservations, boutique.
 
 > Ce seeder est **réservé au développement**. En production, c'est
@@ -106,16 +106,16 @@ Mot de passe `password` pour tous, sauf le premier (`admin`) :
 
 | Compte | Rôle |
 |---|---|
-| `admin@villaboutanga.cm` | `admin` *(mot de passe : `admin`)* |
-| `manager@villaboutanga.cm` | `manager` |
-| `reception@villaboutanga.cm` | `reception` |
-| `housekeeping.leader@villaboutanga.cm` | `housekeeping_leader` |
-| `restaurant.chief@villaboutanga.cm` | `restaurant_chief` |
-| `restaurant.staff@villaboutanga.cm` | `restaurant_staff` |
-| `restaurant.cook@villaboutanga.cm` | `restaurant_cook` |
-| `restaurant.cashier@villaboutanga.cm` | `cashier` |
-| `shop.manager@villaboutanga.cm` | `shop_manager` |
-| `shop.cashier@villaboutanga.cm` | `shop_cashier` |
+| `admin@wetchah-app.test` | `admin` *(mot de passe : `admin`)* |
+| `manager@wetchah-app.test` | `manager` |
+| `reception@wetchah-app.test` | `reception` |
+| `housekeeping.leader@wetchah-app.test` | `housekeeping_leader` |
+| `restaurant.chief@wetchah-app.test` | `restaurant_chief` |
+| `restaurant.staff@wetchah-app.test` | `restaurant_staff` |
+| `restaurant.cook@wetchah-app.test` | `restaurant_cook` |
+| `restaurant.cashier@wetchah-app.test` | `cashier` |
+| `shop.manager@wetchah-app.test` | `shop_manager` |
+| `shop.cashier@wetchah-app.test` | `shop_cashier` |
 
 Se connecter avec plusieurs profils est le meilleur moyen de comprendre le
 cloisonnement des rôles — chacun voit une application sensiblement différente.

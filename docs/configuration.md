@@ -83,8 +83,18 @@ Sans clé, `/ai-chat` répond une erreur explicite.
 
 ### Messagerie
 
-`MAIL_MAILER=resend` avec `RESEND_API_KEY`. Utilisée pour les codes d'arrivée client
-et l'envoi des bons de commande aux fournisseurs.
+`MAIL_MAILER=failover` avec `RESEND_API_KEY` et les variables SMTP (`MAIL_HOST`,
+`MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SCHEME`). Utilisée pour les codes
+d'arrivée client et l'envoi des bons de commande aux fournisseurs.
+
+Resend est tenté en premier ; s'il refuse le message (domaine destinataire non pris en
+charge, quota, panne...), Laravel relaie aussitôt via le SMTP configuré — voir le mailer
+`failover` dans `config/mail.php`. Aucun code applicatif à changer pour en profiter : les
+deux mailers partagent le même `MAIL_FROM_ADDRESS`.
+
+> Sans identifiants SMTP renseignés, le relais échoue silencieusement lui aussi : l'envoi
+> du code reste non bloquant pour la réservation (voir `CheckinCodeNotifier`), mais aucun
+> mail ne part réellement tant que les deux mailers ne sont pas correctement configurés.
 
 ### Sessions, cache, files d'attente
 

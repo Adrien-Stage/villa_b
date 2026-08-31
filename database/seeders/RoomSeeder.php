@@ -11,7 +11,7 @@ class RoomSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenantId = Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Tenant::where('slug', 'wetchah-app')->value('id');
 
         if (!$tenantId) {
             return;

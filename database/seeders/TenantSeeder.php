@@ -10,12 +10,12 @@ class TenantSeeder extends Seeder
     public function run(): void
     {
         Tenant::updateOrCreate(
-            ['slug' => 'villa-boutanga'],
+            ['slug' => 'wetchah-app'],
             [
-                'name' => 'Villa Boutanga',
-                'address' => 'Bangoulap, Ouest Cameroun',
-                'phone' => '+237 699 000 000',
-                'email' => 'contact@villaboutanga.cm',
+                'name' => 'Wetchah App',
+                'address' => 'Adresse de démonstration',
+                'phone' => '+000 000 000 000',
+                'email' => 'contact@wetchah-app.test',
                 'currency' => 'XAF',
                 'settings' => [
                     'checkin_time' => '14:00',

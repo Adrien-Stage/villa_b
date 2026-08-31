@@ -11,16 +11,16 @@ class HousekeepingTeamSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::where('slug', 'villa-boutanga')->first();
+        $tenant = Tenant::where('slug', 'wetchah-app')->first();
 
         if (!$tenant) {
             return;
         }
 
-        $leader = User::where('email', 'housekeeping.leader@villaboutanga.cm')->first();
-        $staffA = User::where('email', 'housekeeping.staff1@villaboutanga.cm')->first();
-        $staffB = User::where('email', 'housekeeping.staff2@villaboutanga.cm')->first();
-        $staffC = User::where('email', 'housekeeping.staff3@villaboutanga.cm')->first();
+        $leader = User::where('email', 'housekeeping.leader@wetchah-app.test')->first();
+        $staffA = User::where('email', 'housekeeping.staff1@wetchah-app.test')->first();
+        $staffB = User::where('email', 'housekeeping.staff2@wetchah-app.test')->first();
+        $staffC = User::where('email', 'housekeeping.staff3@wetchah-app.test')->first();
 
         if (!$leader || !$staffA || !$staffB || !$staffC) {
             return;
