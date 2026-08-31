@@ -139,7 +139,7 @@ class CheckOutService
         $invoice = Invoice::create([
             'booking_id'     => $booking->id,
             'customer_id'    => $booking->customer_id,
-            'invoice_number' => $this->generateInvoiceNumber($booking->tenant_id),
+            'invoice_number' => $this->generateInvoiceNumber(),
             'invoice_date'   => now(),
             'subtotal'       => $booking->total_room_amount + $booking->extras_amount - $booking->discount_amount,
             'tax_amount'     => $booking->tax_amount,
@@ -185,15 +185,20 @@ class CheckOutService
     }
 
     /**
-     * Génère un numéro de facture séquentiel par tenant et par année
+     * Génère un numéro de facture séquentiel par année.
      * Format : F-2026-000001
+     *
+     * Aucun établissement n'est passé en paramètre : une base ne contient qu'un
+     * seul établissement, la séquence est donc déjà propre à lui. La signature
+     * en attendait un — hérité d'un modèle où toutes les filiales partageaient
+     * une base — et exigeait un entier là où `bookings.tenant_id` vaut toujours
+     * NULL. Tout check-out échouait donc en erreur 500 au moment de facturer.
      */
-    private function generateInvoiceNumber(int $tenantId): string
+    private function generateInvoiceNumber(): string
     {
         $year = now()->year;
 
         $lastInvoice = Invoice::withoutGlobalScopes()
-            
             ->whereYear('invoice_date', $year)
             ->orderBy('id', 'desc')
             ->first();
