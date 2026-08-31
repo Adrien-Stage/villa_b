@@ -144,7 +144,10 @@
                 ];
                 $sc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
             @endphp
-            <a href="{{ route('bookings.show', $booking) }}"
+            {{-- Les filtres courants suivent dans l'URL : la fiche ouverte sait
+                 alors dans quelle sélection elle se trouve, et ses flèches
+                 « précédent / suivant » parcourent cette même sélection. --}}
+            <a href="{{ route('bookings.show', array_merge([$booking], request()->only('tab', 'status', 'search'))) }}"
                class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
 
                 <div class="col-span-2">
