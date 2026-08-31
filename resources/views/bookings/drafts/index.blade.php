@@ -119,6 +119,8 @@
                 </div>
             @endforeach
         </div>
+
+        <div class="mt-4">{{ $drafts->links() }}</div>
     @endif
 
 </div>
