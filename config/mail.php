@@ -81,9 +81,11 @@ return [
 
         'failover' => [
             'transport' => 'failover',
+            // Resend d'abord ; s'il refuse ou échoue (domaine non pris en
+            // charge, quota, panne...), le message repart aussitôt en SMTP.
             'mailers' => [
+                'resend',
                 'smtp',
-                'log',
             ],
             'retry_after' => 60,
         ],

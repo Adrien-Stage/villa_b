@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::where('slug', 'villa-boutanga')->first();
+        $tenant = Tenant::where('slug', 'wetchah-app')->first();
 
         if (!$tenant) {
             return;
@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
         ])->get()->keyBy('slug');
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@villaboutanga.cm'],
+            ['email' => 'admin@wetchah-app.test'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('admin'),
@@ -44,7 +44,7 @@ class UserSeeder extends Seeder
         $roles->get('admin')?->users()->syncWithoutDetaching([$admin->id]);
 
         $manager = User::firstOrCreate(
-            ['email' => 'manager@villaboutanga.cm'],
+            ['email' => 'manager@wetchah-app.test'],
             [
                 'name' => 'Jean-Pierre Kamga',
                 'password' => Hash::make('password'),
@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
         $roles->get('manager')?->users()->syncWithoutDetaching([$manager->id]);
 
         $reception = User::firstOrCreate(
-            ['email' => 'reception@villaboutanga.cm'],
+            ['email' => 'reception@wetchah-app.test'],
             [
                 'name' => 'Marie Tchoupo',
                 'password' => Hash::make('password'),
@@ -66,7 +66,7 @@ class UserSeeder extends Seeder
         $roles->get('reception')?->users()->syncWithoutDetaching([$reception->id]);
 
         $housekeepingLeader = User::firstOrCreate(
-            ['email' => 'housekeeping.leader@villaboutanga.cm'],
+            ['email' => 'housekeeping.leader@wetchah-app.test'],
             [
                 'name' => 'Paul Nguemo',
                 'password' => Hash::make('password'),
@@ -77,7 +77,7 @@ class UserSeeder extends Seeder
         $roles->get('housekeeping_leader')?->users()->syncWithoutDetaching([$housekeepingLeader->id]);
 
         $restaurantChief = User::firstOrCreate(
-            ['email' => 'restaurant.chief@villaboutanga.cm'],
+            ['email' => 'restaurant.chief@wetchah-app.test'],
             [
                 'name' => 'Chef Restaurant',
                 'password' => Hash::make('password'),
@@ -88,7 +88,7 @@ class UserSeeder extends Seeder
         $roles->get('restaurant_chief')?->users()->syncWithoutDetaching([$restaurantChief->id]);
 
         $restaurantStaff = User::firstOrCreate(
-            ['email' => 'restaurant.staff@villaboutanga.cm'],
+            ['email' => 'restaurant.staff@wetchah-app.test'],
             [
                 'name' => 'Serveur Restaurant',
                 'password' => Hash::make('password'),
@@ -99,7 +99,7 @@ class UserSeeder extends Seeder
         $roles->get('restaurant_staff')?->users()->syncWithoutDetaching([$restaurantStaff->id]);
 
         $restaurantCook = User::firstOrCreate(
-            ['email' => 'restaurant.cook@villaboutanga.cm'],
+            ['email' => 'restaurant.cook@wetchah-app.test'],
             [
                 'name' => 'Cuisinier Restaurant',
                 'password' => Hash::make('password'),
@@ -110,7 +110,7 @@ class UserSeeder extends Seeder
         $roles->get('restaurant_cook')?->users()->syncWithoutDetaching([$restaurantCook->id]);
 
         $restaurantCashier = User::firstOrCreate(
-            ['email' => 'restaurant.cashier@villaboutanga.cm'],
+            ['email' => 'restaurant.cashier@wetchah-app.test'],
             [
                 'name' => 'Caissier Restaurant',
                 'password' => Hash::make('password'),
@@ -121,7 +121,7 @@ class UserSeeder extends Seeder
         $roles->get('cashier')?->users()->syncWithoutDetaching([$restaurantCashier->id]);
 
         $shopManager = User::firstOrCreate(
-            ['email' => 'shop.manager@villaboutanga.cm'],
+            ['email' => 'shop.manager@wetchah-app.test'],
             [
                 'name' => 'Gérant Boutique',
                 'password' => Hash::make('password'),
@@ -132,7 +132,7 @@ class UserSeeder extends Seeder
         $roles->get('shop_manager')?->users()->syncWithoutDetaching([$shopManager->id]);
 
         $shopCashier = User::firstOrCreate(
-            ['email' => 'shop.cashier@villaboutanga.cm'],
+            ['email' => 'shop.cashier@wetchah-app.test'],
             [
                 'name' => 'Caissier Boutique',
                 'password' => Hash::make('password'),
@@ -145,15 +145,15 @@ class UserSeeder extends Seeder
         $staffMembers = [
             [
                 'name' => 'Aline Ndzi',
-                'email' => 'housekeeping.staff1@villaboutanga.cm',
+                'email' => 'housekeeping.staff1@wetchah-app.test',
             ],
             [
                 'name' => 'Brice Ndzié',
-                'email' => 'housekeeping.staff2@villaboutanga.cm',
+                'email' => 'housekeeping.staff2@wetchah-app.test',
             ],
             [
                 'name' => 'Cynthia Fokou',
-                'email' => 'housekeeping.staff3@villaboutanga.cm',
+                'email' => 'housekeeping.staff3@wetchah-app.test',
             ],
         ];
 
