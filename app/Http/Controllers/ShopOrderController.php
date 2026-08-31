@@ -26,7 +26,7 @@ class ShopOrderController extends Controller
 
     public function index(Request $request): View
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
         $query = ShopOrder::query()
             ->with(['items', 'customer', 'booking', 'createdBy']);
 
@@ -52,7 +52,7 @@ class ShopOrderController extends Controller
 
     public function create(): View|\Illuminate\Http\RedirectResponse
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
         
         // Verifier s'il y a une caisse ouverte !
         $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
@@ -91,7 +91,7 @@ class ShopOrderController extends Controller
 
     public function store(Request $request)
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
 
         $validated = $request->validate([
             'customer_name' => 'nullable|string|max:255',

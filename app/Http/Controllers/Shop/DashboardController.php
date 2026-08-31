@@ -13,7 +13,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $tenantId = auth()->user()->tenant->id;
+        // `$user->tenant` est toujours null (colonne tenant_id non renseignée) :
+        // le déréférencer produisait une erreur 500 à l'ouverture du tableau
+        // de bord boutique.
+        $tenantId = \App\Models\Tenant::current()?->id;
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
 

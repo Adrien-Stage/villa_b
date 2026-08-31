@@ -84,7 +84,7 @@ trait HandlesCsv
     protected function csvTenantId(): ?int
     {
         return Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
     }
 
     /**

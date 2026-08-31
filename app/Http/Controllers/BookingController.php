@@ -60,7 +60,7 @@ class BookingController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
             ->where('module', 'reception')
@@ -319,7 +319,7 @@ class BookingController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
             ->where('module', 'reception')
@@ -402,7 +402,7 @@ class BookingController extends Controller
 
     private function storeStep1(Request $request)
     {
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
 
         // 1. GESTION DU CLIENT FINAL (Celui qui séjourne)
         if ($request->filled('new_customer')) {
@@ -540,7 +540,7 @@ class BookingController extends Controller
         $children    = $request->children ?? 0;
         $source      = $request->source ?? 'direct';
         $totalPeople = $adults + $children;
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
 
         // Sauvegarde du brouillon à l'étape 2
@@ -703,7 +703,7 @@ class BookingController extends Controller
         $totalRoomAmount = $nights * $pricePerNight;
 
         // Récupérer le pourcentage d'acompte minimum depuis les paramètres du Tenant
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
@@ -802,7 +802,7 @@ class BookingController extends Controller
     private function storeBooking(Request $request)
     {
         $tenantId = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
@@ -966,7 +966,7 @@ class BookingController extends Controller
         $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         $status = BookingStatus::CONFIRMED;
         if ($request->boolean('is_offerte') && Auth::user()->hasRole('reception')) {
@@ -1448,7 +1448,7 @@ class BookingController extends Controller
         ]);
 
         $tenantId = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         $isComplimentary = $validated['is_complimentary'] ?? false;
         $notes           = $validated['notes'] ?? null;
@@ -1541,7 +1541,7 @@ class BookingController extends Controller
         ]);
 
         $tenantId = Auth::user()->tenant_id
-            ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? \App\Models\Tenant::current()?->id;
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             

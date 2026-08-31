@@ -56,7 +56,7 @@ class GroupBookingController extends Controller
 
         $groups = $query->orderBy('start_date', 'desc')->paginate(20)->withQueryString();
 
-        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
             ->where('module', 'reception')
@@ -71,7 +71,7 @@ class GroupBookingController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
             ->where('module', 'reception')
@@ -91,7 +91,7 @@ class GroupBookingController extends Controller
     public function store(Request $request)
     {
         $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? Tenant::current()?->id;
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             
@@ -238,7 +238,7 @@ class GroupBookingController extends Controller
 
     public function addRoom(Request $request, GroupBooking $groupBooking)
     {
-        $tenantId = Auth::user()->tenant_id ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
         
         if ($request->filled('new_customer')) {
             $customerRules = [
@@ -288,7 +288,7 @@ class GroupBookingController extends Controller
         }
 
         $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? Tenant::current()?->id;
         $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
         $totalRoomAmount = $nights * $pricePerNight;
         $totalAmount = $totalRoomAmount;
@@ -471,7 +471,7 @@ class GroupBookingController extends Controller
         }
 
         $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? Tenant::current()?->id;
 
         $isComplimentary = $validated['is_complimentary'] ?? false;
         $bookings = $groupBooking->bookings()
@@ -560,7 +560,7 @@ class GroupBookingController extends Controller
     public function addGroupPayment(Request $request, GroupBooking $groupBooking)
     {
         $tenantId = Auth::user()->tenant_id
-            ?? Tenant::where('slug', 'villa-boutanga')->value('id');
+            ?? Tenant::current()?->id;
 
         $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
             

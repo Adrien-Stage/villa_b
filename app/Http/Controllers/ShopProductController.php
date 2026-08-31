@@ -13,7 +13,7 @@ class ShopProductController extends Controller
 {
     public function index(Request $request): View
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
         $query = ShopProduct::query()
             ->with('category');
 
@@ -49,7 +49,7 @@ class ShopProductController extends Controller
 
     public function create(): View
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
         $categories = ShopCategory::query()
             ->orderBy('sort_order')
             ->get();
@@ -64,7 +64,7 @@ class ShopProductController extends Controller
 
     public function store(Request $request)
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
 
         // Auto-générer le SKU si vide
         if (!$request->filled('sku')) {
@@ -108,7 +108,7 @@ class ShopProductController extends Controller
 
     public function edit(ShopProduct $product): View
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
 
         $categories = ShopCategory::query()
             ->orderBy('sort_order')
@@ -125,7 +125,7 @@ class ShopProductController extends Controller
 
     public function update(Request $request, ShopProduct $product)
     {
-        $tenant = auth()->user()->tenant;
+        $tenant = \App\Models\Tenant::current();
 
         $validated = $request->validate([
             'shop_category_id' => 'required|exists:shop_categories,id',

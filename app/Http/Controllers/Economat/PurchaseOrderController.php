@@ -63,7 +63,7 @@ class PurchaseOrderController extends Controller
                 'notes'       => $validated['notes'] ?? null,
                 'created_by'  => auth()->id(),
                 'tenant_id'   => auth()->user()->tenant_id
-                    ?? \App\Models\Tenant::where('slug', 'villa-boutanga')->value('id'),
+                    ?? \App\Models\Tenant::current()?->id,
             ]);
 
             foreach ($validated['lines'] as $line) {

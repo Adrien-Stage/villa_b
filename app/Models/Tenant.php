@@ -39,6 +39,26 @@ class Tenant extends Model
     ];
 
     /**
+     * L'établissement de cette instance.
+     *
+     * Une base ne contient qu'un établissement : il n'y a donc rien à choisir.
+     * Passer par les colonnes `tenant_id` ne fonctionne pas — héritées d'un
+     * modèle où toutes les filiales partageaient une base, elles ne sont jamais
+     * renseignées, et `$user->tenant` ou `$booking->tenant` valent toujours
+     * null. Les déréférencer produisait des erreurs 500 en cascade.
+     *
+     * Volontairement non mémoïsé. Un cache statique paraissait gratuit — la
+     * table n'a qu'une ligne — mais il survit à la requête : en test il rendait
+     * un établissement détruit entre-temps, et dans un worker de file il
+     * servirait indéfiniment une raison sociale périmée. Une lecture sur clé
+     * primaire d'une table à une ligne ne justifie pas ce risque.
+     */
+    public static function current(): ?self
+    {
+        return static::query()->first();
+    }
+
+    /**
      * Les utilisateurs de cet établissement
      * Relation : Un tenant a plusieurs users
      */
