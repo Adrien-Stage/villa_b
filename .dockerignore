@@ -11,6 +11,10 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+# Disques factices créés par Storage::fake() pendant les tests. Écrits par
+# l'utilisateur du conteneur, ils deviennent illisibles depuis l'hôte et font
+# échouer l'envoi du contexte de build.
+storage/framework/testing
 *.md
 *.log
 .phpunit.cache

@@ -34,6 +34,10 @@ Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 
 // jamais jusqu'à Laravel, l'icône étant générée à la volée. Le type est de toute
 // façon annoncé par l'en-tête Content-Type et par le champ « type » du manifeste.
 Route::get('/pwa/icon/{size}', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')->name('pwa.icon');
+// Chemin historique demandé d'office par les navigateurs, les marque-pages et
+// les aperçus de lien — et référencé comme icône par les notifications push.
+// Il servait un fichier vide de 0 octet hérité du squelette Laravel.
+Route::get('/favicon.ico', [App\Http\Controllers\PwaController::class, 'favicon'])->name('pwa.favicon');
 Route::get('/offline', [App\Http\Controllers\PwaController::class, 'offline'])->name('pwa.offline');
 
 // ===== AUTH ROUTES (Breeze) =====

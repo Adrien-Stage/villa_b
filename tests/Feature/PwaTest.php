@@ -215,3 +215,36 @@ test('l’icône reprend le logo importé et change avec lui', function () {
         ->and($centre['green'])->toBeLessThan(80);
 });
 
+test('GD décode tous les formats de logo acceptés à l’import', function () {
+    // Le formulaire Paramètres → Général accepte png, jpg, jpeg et gif. Un
+    // format accepté que GD ne sait pas décoder produit le pire des bugs :
+    // le logo s'affiche partout dans l'application — le navigateur le décode —
+    // mais le favicon retombe en silence sur les initiales.
+    $types = imagetypes();
+
+    expect((bool) ($types & IMG_PNG))->toBeTrue('GD sans support PNG')
+        ->and((bool) ($types & IMG_GIF))->toBeTrue('GD sans support GIF')
+        ->and((bool) ($types & IMG_JPG))->toBeTrue(
+            'GD sans support JPEG : reconstruire l\'image avec '
+            . 'docker-php-ext-configure gd --with-jpeg'
+        );
+});
+
+test('/favicon.ico sert l’icône de l’établissement', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+
+    // Ce chemin servait un fichier vide de 0 octet hérité du squelette Laravel.
+    // Les navigateurs le réclament d'office et les notifications push le
+    // désignent comme icône : il doit porter la marque de l'établissement.
+    $reponse = $this->get('/favicon.ico')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/png');
+
+    expect(strlen($reponse->getContent()))->toBeGreaterThan(0);
+
+    $icone = imagecreatefromstring($reponse->getContent());
+    expect($icone)->not->toBeFalse();
+    expect(imagesx($icone))->toBe(32);
+    imagedestroy($icone);
+});
+
