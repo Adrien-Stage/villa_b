@@ -7,6 +7,7 @@ use App\Support\TenantModules;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -79,6 +80,18 @@ class PwaController extends Controller
             'Content-Type'  => 'image/png',
             'Cache-Control' => 'public, max-age=86400',
         ]);
+    }
+
+    /**
+     * Icône du chemin historique /favicon.ico.
+     *
+     * Les navigateurs le réclament d'office, et les notifications push le
+     * désignent comme icône. On y sert le PNG 32 px : tous les navigateurs
+     * actuels acceptent un PNG sous ce nom, et l'ICO n'apporterait rien.
+     */
+    public function favicon()
+    {
+        return $this->icon(32);
     }
 
     /** Page affichée quand la navigation échoue faute de réseau. */
@@ -198,20 +211,62 @@ class PwaController extends Controller
         return $png;
     }
 
-    /** Charge le logo du tenant depuis le storage public, si lisible. */
+    /**
+     * Charge le logo du tenant depuis le storage public, si lisible.
+     *
+     * Un échec ici est invisible pour l'utilisateur : l'icône retombe sur les
+     * initiales alors que le logo s'affiche correctement partout ailleurs dans
+     * l'application (le navigateur, lui, décode tous les formats). On journalise
+     * donc la cause — le plus souvent un GD compilé sans le format en question.
+     */
     private function loadLogo(?string $logoPath): ?\GdImage
     {
-        if (!$logoPath || !Storage::disk('public')->exists($logoPath)) {
+        if (!$logoPath) {
+            return null;
+        }
+
+        if (!Storage::disk('public')->exists($logoPath)) {
+            Log::warning('PWA : logo introuvable sur le disque public.', ['path' => $logoPath]);
+
             return null;
         }
 
         try {
             $image = @imagecreatefromstring(Storage::disk('public')->get($logoPath));
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::warning('PWA : lecture du logo impossible.', [
+                'path'  => $logoPath,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
 
-        return $image ?: null;
+        if (!$image) {
+            Log::warning('PWA : logo non décodable par GD, repli sur les initiales.', [
+                'path'             => $logoPath,
+                'formats_gd'       => self::supportedFormats(),
+                'piste_probable'   => 'GD compilé sans le support de ce format '
+                    . '(docker-php-ext-configure gd --with-jpeg --with-webp).',
+            ]);
+
+            return null;
+        }
+
+        return $image;
+    }
+
+    /** Formats que GD sait décoder sur cette installation. */
+    private static function supportedFormats(): array
+    {
+        $types = imagetypes();
+
+        return array_keys(array_filter([
+            'png'  => (bool) ($types & IMG_PNG),
+            'jpeg' => (bool) ($types & IMG_JPG),
+            'gif'  => (bool) ($types & IMG_GIF),
+            'webp' => (bool) ($types & IMG_WEBP),
+        ]));
     }
 
     /** Repli sans logo : les initiales de l'établissement, centrées. */
