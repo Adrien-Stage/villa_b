@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Route;
 
 // ==========================================
 // API PUBLIQUE — consommée par le site vitrine (template_site)
+// et applications tierces.
 // Lecture seule, aucune authentification : pas de données sensibles,
 // uniquement du contenu destiné à être affiché publiquement.
+// Conditionnée par l'activation du module 'api' (TENANT_MODULES).
 // ==========================================
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware('module:api')->group(function () {
     Route::get('/ping', PublicPingController::class)->name('api.ping');
     Route::get('/rooms', [PublicRoomController::class, 'rooms'])->name('api.rooms.index');
     Route::get('/rooms/{room}', [PublicRoomController::class, 'roomShow'])->name('api.rooms.show');
@@ -30,11 +32,13 @@ Route::prefix('v1')->group(function () {
 });
 
 // ==========================================
-// API REPORTING BUSINESS — consommée par la console business de pms.
-// Données financières sensibles : jamais publiques, protégées par un jeton
-// de service (Authorization: Bearer REPORTING_SECRET). Lecture seule.
+// API REPORTING BUSINESS & GRC — consommée par la console business de l'ERP
+// et le module de contrôle de gestion (Wetchah_GRC).
+// Données financières et d'audit protégées par un jeton
+// de service (Authorization: Bearer REPORTING_SECRET).
+// Conditionnée par l'activation du module 'api' (TENANT_MODULES).
 // ==========================================
-Route::prefix('reporting')->middleware('reporting.token')->group(function () {
+Route::prefix('reporting')->middleware(['module:api', 'reporting.token'])->group(function () {
     Route::get('/summary',    [ReportingController::class, 'summary'])->name('api.reporting.summary');
     Route::get('/revenue',    [ReportingController::class, 'revenue'])->name('api.reporting.revenue');
     Route::get('/cash-audit', [ReportingController::class, 'cashAudit'])->name('api.reporting.cash-audit');
