@@ -15,6 +15,18 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->beforeEach(function () {
+        // TenantModules met en cache la liste des modules actifs dans une
+        // propriété statique, que dix fichiers de tests écrasent par réflexion
+        // pour activer ce dont ils ont besoin. Un seul la remettait à zéro :
+        // le reste fuitait sur les tests suivants, et le résultat d'un fichier
+        // dépendait de ceux exécutés avant lui.
+        //
+        // On repart donc d'une ardoise vierge avant chaque test. Un test qui a
+        // besoin d'un module l'active explicitement — c'est aussi ce que fait
+        // l'établissement en production.
+        activerModules([]);
+    })
     ->in('Feature');
 
 /*
@@ -46,4 +58,19 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Active exactement ces modules métier pour le test en cours.
+ *
+ * TenantModules lit normalement la variable d'environnement TENANT_MODULES,
+ * injectée par l'ERP au provisioning, et met le résultat en cache statique.
+ * En test, on écrit directement dans ce cache : c'est le seul moyen de faire
+ * varier la configuration d'un établissement d'un cas à l'autre.
+ */
+function activerModules(array $modules): void
+{
+    $cache = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
+    $cache->setAccessible(true);
+    $cache->setValue(null, $modules);
 }
