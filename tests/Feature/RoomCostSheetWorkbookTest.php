@@ -176,7 +176,10 @@ test("l'onglet des coûts unitaires reprend le barème appliqué", function () {
 test("le classeur porte l'identité de l'établissement", function () {
     $this->actingAs(classeurManager());
 
-    $tenant = Tenant::where('slug', 'villa-boutanga')->first();
+    // Le jeu initial a changé de slug une fois : on prend l'établissement en
+    // place plutôt qu'un identifiant écrit en dur, qui renvoyait null et
+    // faisait échouer le test sur un appel de méthode sur null.
+    $tenant = Tenant::firstOrFail();
     $tenant->update([
         'name' => 'Hôtel Les Palmiers',
         'address' => 'Kribi, Cameroun',

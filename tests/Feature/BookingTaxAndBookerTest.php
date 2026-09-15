@@ -144,12 +144,17 @@ test('a booking details view fallback to client himself if no booker is present'
 });
 
 test('a shop cashier can create a shop order with 0% VAT', function () {
+    // La boutique est un module activable : sans lui, la route répond 403.
+    // Ce test passait auparavant parce qu'il héritait de la configuration
+    // laissée par un autre fichier, ou du .env de la machine.
+    activerModules(['shop']);
+
     // Seed database
     $this->seed([
         \Database\Seeders\TenantSeeder::class,
         \Database\Seeders\ShopSeeder::class]);
 
-    $tenant = Tenant::where('slug', 'villa-boutanga')->first();
+    $tenant = Tenant::firstOrFail();
 
     // Create user with shop_cashier role
     $user = User::factory()->create([
