@@ -83,7 +83,6 @@
         <div>
             <form action="{{ route('bookings.cash_register.close.store') }}" method="POST">
                 @csrf
-                <input type="hidden" name="theoretical_closing_amount" value="{{ $theoretical_amount }}">
                 
                 <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 sticky top-6">
                     <h2 class="text-lg font-heading font-semibold text-primary mb-6 border-b border-secondary/10 pb-2">Comptage de la caisse</h2>

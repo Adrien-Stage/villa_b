@@ -70,25 +70,17 @@ class CashRegisterController extends Controller
             ->whereNull('closed_at')
             ->firstOrFail();
 
-        // Theoretical closing calculation
-        // 1. Initial Amount
-        $theoretical = $session->opening_amount;
-
-        // 2. Add cash orders
+        // Le détail nourrit l'écran ; le total, lui, vient de la même méthode
+        // que celle utilisée à l'enregistrement de la clôture.
         $cashOrdersTotal = $session->shopOrders()
             ->where('payment_method', 'cash')
             ->where('payment_status', 'paid')
             ->sum('total_amount');
-            
-        $theoretical += $cashOrdersTotal;
-
-        // 3. Subtract disbursements
         $disbursementsTotal = $session->disbursements()->sum('amount');
-        $theoretical -= $disbursementsTotal;
 
         return view('shop.cash_register.close', [
             'session' => $session,
-            'theoretical_amount' => $theoretical,
+            'theoretical_amount' => $session->theoreticalBalance(),
             'cash_orders_total' => $cashOrdersTotal,
             'disbursements_total' => $disbursementsTotal,
             'disbursements' => $session->disbursements
@@ -105,12 +97,14 @@ class CashRegisterController extends Controller
 
         $request->validate([
             'actual_closing_amount' => 'required|numeric|min:0',
-            'theoretical_closing_amount' => 'required|integer',
             'closing_notes' => 'nullable|string',
         ]);
 
-        $actualAmountCents = $request->actual_closing_amount * 100;
-        $theoreticalAmountCents = $request->theoretical_closing_amount;
+        // Le comptage physique est déclaré par l'agent ; le solde théorique
+        // est recalculé ici et jamais accepté depuis la requête — c'est lui
+        // qui met l'écart en évidence.
+        $actualAmountCents = (int) round($request->actual_closing_amount * 100);
+        $theoreticalAmountCents = $session->theoreticalBalance();
         $discrepancy = $actualAmountCents - $theoreticalAmountCents;
 
         $session->update([

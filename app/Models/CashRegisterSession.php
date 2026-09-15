@@ -25,6 +25,34 @@ class CashRegisterSession extends Model
         'closed_at' => 'datetime',
     ];
 
+    /**
+     * Solde théorique du tiroir, en centimes : fond initial, plus les
+     * encaissements en espèces de la session, moins les décaissements.
+     *
+     * Calculé ici et nulle part ailleurs. L'écart de caisse est la pièce
+     * qui met en cause une personne : le terme auquel on compare son
+     * comptage ne peut pas venir du formulaire qu'elle envoie, sinon il
+     * suffit de déclarer un théorique égal au comptage pour afficher un
+     * écart nul. L'écran de clôture et l'enregistrement de la clôture
+     * appellent donc la même méthode.
+     */
+    public function theoreticalBalance(): int
+    {
+        $total = (int) $this->opening_amount;
+
+        $total += $this->module === 'shop'
+            ? (int) $this->shopOrders()
+                ->where('payment_method', 'cash')
+                ->where('payment_status', 'paid')
+                ->sum('total_amount')
+            : (int) $this->payments()
+                ->where('method', 'cash')
+                ->where('status', 'completed')
+                ->sum('amount');
+
+        return $total - (int) $this->disbursements()->sum('amount');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

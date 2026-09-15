@@ -70,26 +70,17 @@ class CashRegisterController extends Controller
             ->whereNull('closed_at')
             ->firstOrFail();
 
-        // Calcul du solde théorique
-        // 1. Fond initial
-        $theoretical = $session->opening_amount;
-
-        // 2. Ajout des encaissements en espèces (cash) complétés
+        // Le détail nourrit l'écran ; le total, lui, vient de la même méthode
+        // que celle utilisée à l'enregistrement de la clôture.
         $cashPaymentsTotal = $session->payments()
             ->where('method', 'cash')
             ->where('status', 'completed')
-            // Optionnel : ne comptabiliser que les montants positifs d'encaissement et déduire les négatifs de remboursement
             ->sum('amount');
-            
-        $theoretical += $cashPaymentsTotal;
-
-        // 3. Déduction des décaissements (sorties de caisse)
         $disbursementsTotal = $session->disbursements()->sum('amount');
-        $theoretical -= $disbursementsTotal;
 
         return view('bookings.cash_register.close', [
             'session' => $session,
-            'theoretical_amount' => $theoretical,
+            'theoretical_amount' => $session->theoreticalBalance(),
             'cash_payments_total' => $cashPaymentsTotal,
             'disbursements_total' => $disbursementsTotal,
             'disbursements' => $session->disbursements
@@ -106,12 +97,14 @@ class CashRegisterController extends Controller
 
         $request->validate([
             'actual_closing_amount' => 'required|numeric|min:0',
-            'theoretical_closing_amount' => 'required|integer',
             'closing_notes' => 'nullable|string',
         ]);
 
-        $actualAmountCents = $request->actual_closing_amount * 100;
-        $theoreticalAmountCents = $request->theoretical_closing_amount;
+        // Le comptage physique est déclaré par l'agent ; le solde théorique
+        // est recalculé ici et jamais accepté depuis la requête — c'est lui
+        // qui met l'écart en évidence.
+        $actualAmountCents = (int) round($request->actual_closing_amount * 100);
+        $theoreticalAmountCents = $session->theoreticalBalance();
         $discrepancy = $actualAmountCents - $theoreticalAmountCents;
 
         $session->update([
