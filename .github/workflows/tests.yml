@@ -1,0 +1,52 @@
+name: Tests
+
+# Jusqu'ici, le seul workflow du dépôt construisait et publiait l'image sans
+# jamais exécuter un test : une régression comptable pouvait atteindre le
+# registre, puis les établissements, sans que rien ne la signale.
+#
+# La suite est désormais au vert et build-image.yml l'appelle avant de
+# publier : une image dont les tests échouent n'atteint plus le registre.
+on:
+  # main est déjà couvert par build-image.yml, qui appelle ce workflow :
+  # l'exclure ici évite de faire tourner la suite deux fois.
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  pest:
+    name: Suite Pest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # La suite tourne sur SQLite en mémoire (voir phpunit.xml) : aucun
+      # service de base de données n'est nécessaire, et aucune base réelle
+      # ne peut être touchée.
+      - name: Run tests
+        run: php artisan test

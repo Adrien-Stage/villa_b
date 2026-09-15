@@ -130,6 +130,11 @@ test('le message au client part sous l\'adresse réglée', function () {
     $this->actingAs(mailManager());
     $this->seed([\Database\Seeders\RoomTypeSeeder::class, \Database\Seeders\RoomSeeder::class]);
 
+    // L'objet reprend le nom de l'établissement : le fixer ici rend le
+    // scénario cohérent avec l'adresse d'expédition configurée, plutôt que de
+    // dépendre du nom que porte le jeu initial — il a déjà changé une fois.
+    \App\Models\Tenant::firstOrFail()->update(['name' => 'Villa Boutanga']);
+
     enregistreIdentite([
         'mail_from_address' => 'reservations@villaboutanga.cm',
         'mail_from_name'    => 'Villa Boutanga — Réservations',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\CashRegisterSession;
 use App\Models\CashRegisterDisbursement;
+use App\Support\CashClosurePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,27 +69,20 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
-        // Theoretical closing calculation
-        // 1. Initial Amount
-        $theoretical = $session->opening_amount;
-
-        // 2. Add cash orders
+        // Le détail nourrit l'écran ; le total, lui, vient de la même méthode
+        // que celle utilisée à l'enregistrement de la clôture.
         $cashOrdersTotal = $session->shopOrders()
             ->where('payment_method', 'cash')
             ->where('payment_status', 'paid')
             ->sum('total_amount');
-            
-        $theoretical += $cashOrdersTotal;
-
-        // 3. Subtract disbursements
         $disbursementsTotal = $session->disbursements()->sum('amount');
-        $theoretical -= $disbursementsTotal;
 
         return view('shop.cash_register.close', [
             'session' => $session,
-            'theoretical_amount' => $theoretical,
+            'theoretical_amount' => $session->theoreticalBalance(),
             'cash_orders_total' => $cashOrdersTotal,
             'disbursements_total' => $disbursementsTotal,
             'disbursements' => $session->disbursements
@@ -101,25 +95,42 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
         $request->validate([
             'actual_closing_amount' => 'required|numeric|min:0',
-            'theoretical_closing_amount' => 'required|integer',
             'closing_notes' => 'nullable|string',
         ]);
 
-        $actualAmountCents = $request->actual_closing_amount * 100;
-        $theoreticalAmountCents = $request->theoretical_closing_amount;
+        // Le comptage physique est déclaré par l'agent ; le solde théorique
+        // est recalculé ici et jamais accepté depuis la requête — c'est lui
+        // qui met l'écart en évidence.
+        $actualAmountCents = (int) round($request->actual_closing_amount * 100);
+        $theoreticalAmountCents = $session->theoreticalBalance();
         $discrepancy = $actualAmountCents - $theoreticalAmountCents;
 
+        // Comptage contradictoire : quand l'établissement l'exige, le comptage
+        // est déclaré mais la caisse n'est pas close. Elle cesse d'encaisser
+        // et attend la contresignature d'un tiers, seule à constater l'écart.
+        $aContresigner = CashClosurePolicy::requiresWitness('shop');
+
         $session->update([
-            'closed_at' => now(),
+            'status' => $aContresigner ? CashClosurePolicy::STATUS_PENDING_REVIEW : 'closed',
+            'closed_at' => $aContresigner ? null : now(),
             'theoretical_closing_amount' => $theoreticalAmountCents,
             'actual_closing_amount' => $actualAmountCents,
             'discrepancy_amount' => $discrepancy,
             'closing_notes' => $request->closing_notes,
         ]);
+
+        if ($aContresigner) {
+            return redirect()->route('shop.orders.index')->with(
+                'success',
+                'Comptage enregistré. La caisse sera close après contrôle par '
+                . CashClosurePolicy::witnessLabel() . '.'
+            );
+        }
 
         return redirect()->route('shop.orders.index')->with('success', 'Caisse fermée avec succès.');
     }
@@ -130,6 +141,7 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
         $request->validate([

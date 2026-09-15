@@ -173,6 +173,13 @@ test('un séjour annulé ne bloque plus les dates', function () {
 // ── Même règle sur les deux surfaces ──────────────────────────────────────────
 
 test('le site refuse la période occupée et accepte celle d\'après', function () {
+    // Le canal direct passe par l'API publique, que l'ERP conditionne au
+    // module « api » — il l'active d'office avec le site vitrine.
+    activerModules(['api']);
+    // Les dates du scénario sont écrites en clair pour rester lisibles : on
+    // fige le jour de référence avant elles, sinon le test cesse de vouloir
+    // dire quelque chose le jour où le calendrier les rattrape.
+    $this->travelTo('2026-09-01 08:00:00');
     dateTenant(
         ['cleaning_delay_minutes' => 120],
         ['check_out_time' => '12:00', 'check_in_time' => '14:00']
@@ -200,6 +207,7 @@ test('le site refuse la période occupée et accepte celle d\'après', function 
 });
 
 test('le site expose les périodes prises pour griser le calendrier', function () {
+    activerModules(['api']);
     dateTenant();
     $room = dateRoom(RoomStatus::OCCUPIED);
     occupy($room, today()->addDays(5)->toDateString(), today()->addDays(9)->toDateString());
@@ -237,6 +245,9 @@ test('une chambre en maintenance n\'est réservable à aucune date', function ()
 });
 
 test('la chambre occupée annonce sa date de libération en français', function () {
+    // Sans jour de référence figé, ce test s'éteint le 15 septembre 2026 :
+    // un séjour qui s'achève aujourd'hui libère la chambre le jour même.
+    $this->travelTo('2026-09-14 09:00:00');
     dateTenant();
     $room = dateRoom(RoomStatus::OCCUPIED);
     occupy($room, today()->subDay()->toDateString(), '2026-09-15');

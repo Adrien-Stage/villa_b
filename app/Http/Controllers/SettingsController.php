@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\CashClosurePolicy;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -154,6 +156,30 @@ class SettingsController extends Controller
     private function validatedTabData(Request $request, string $tab): array
     {
         $data = (array) $request->input('settings');
+
+        // Politique de clôture : elle décide qui contrôle qui, donc elle ne
+        // relève que du manager. Sans cette validation, une valeur inconnue
+        // ferait silencieusement retomber la règle sur « aucun ».
+        if ($tab === 'caisse') {
+            if (!Auth::user()->hasRole('manager')) {
+                abort(403, 'Seul un manager peut définir la politique de clôture des caisses.');
+            }
+
+            $request->validate([
+                'settings.closure_witness'   => ['required', Rule::in(CashClosurePolicy::WITNESS_CHOICES)],
+                'settings.closure_witness_modules'   => ['nullable', 'array'],
+                'settings.closure_witness_modules.*' => [Rule::in(CashClosurePolicy::MODULES)],
+            ], [], [
+                'settings.closure_witness'         => 'contrôle du comptage',
+                'settings.closure_witness_modules' => 'caisses concernées',
+            ]);
+
+            // Aucune case cochée : le tableau disparaît du formulaire, et sans
+            // ce repli la règle s'appliquerait de nouveau à toutes les caisses.
+            $data['closure_witness_modules'] = array_values((array) ($data['closure_witness_modules'] ?? []));
+
+            return $data;
+        }
 
         if ($tab !== 'general') {
             return $data;

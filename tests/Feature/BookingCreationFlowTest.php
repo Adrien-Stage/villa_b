@@ -88,8 +88,16 @@ test('booking step 2 stores check_in_time and source and passes them to room sel
     $response->assertSee('name="source"', false);
 });
 
-test('step 2 detects occupied rooms and same-day turnover with housekeeping availability', function () {
-    $this->seed([
+/**
+ * Une chambre occupée qui se libère dans trois jours, et un second client qui
+ * veut arriver ce jour-là. Le scénario sert aux deux tests de rotation : seule
+ * l'heure d'arrivée demandée les distingue.
+ *
+ * @return array{0: User, 1: Customer, 2: string, 3: string}
+ */
+function rotationLeJourDuDepart(): array
+{
+    test()->seed([
         \Database\Seeders\TenantSeeder::class,
         \Database\Seeders\RoomTypeSeeder::class,
         \Database\Seeders\RoomSeeder::class,
@@ -108,8 +116,7 @@ test('step 2 detects occupied rooms and same-day turnover with housekeeping avai
     $customer2 = Customer::factory()->create();
     $room = Room::where('number', '101')->first();
 
-    // Create an existing booking checking out in 3 days
-    $existingBooking = Booking::create([
+    Booking::create([
         'room_id' => $room->id,
         'customer_id' => $customer1->id,
         'booking_number' => 'VB-2026-000101',
@@ -125,11 +132,18 @@ test('step 2 detects occupied rooms and same-day turnover with housekeeping avai
         'source' => 'direct',
     ]);
 
-    $this->actingAs($user);
+    test()->actingAs($user);
 
-    // New booking starts on the departure day of existing booking (same-day rotation!)
-    $newCheckIn = now()->addDays(3)->format('Y-m-d');
-    $newCheckOut = now()->addDays(6)->format('Y-m-d');
+    return [
+        $user,
+        $customer2,
+        now()->addDays(3)->format('Y-m-d'),
+        now()->addDays(6)->format('Y-m-d'),
+    ];
+}
+
+test('step 2 detects occupied rooms and same-day turnover with housekeeping availability', function () {
+    [$user, $customer2, $newCheckIn, $newCheckOut] = rotationLeJourDuDepart();
 
     $response = $this->post(route('bookings.store'), [
         'step'          => '2',
@@ -147,9 +161,36 @@ test('step 2 detects occupied rooms and same-day turnover with housekeeping avai
 
     // Should see occupancy indicator & rotation indicators
     $response->assertSee('Occupée');
+    // Arrivée demandée à 13 h alors que la chambre n'est prête qu'à 14 h :
+    // l'écran doit alerter, pas se contenter d'annoncer une rotation.
+    $response->assertSee('Conflit de rotation');
+    // L'écran annonce l'heure de départ du précédent client et celle à
+    // laquelle la chambre sera prête. Le libellé « Disponibilité effective
+    // post-ménage » qu'attendait ce test n'existe plus dans la vue — il était
+    // masqué par l'échec de l'assertion précédente.
+    $response->assertSee('Départ précédent à');
+    $response->assertSee('14:00'); // heure de remise en vente (12:00 + 120 min)
+});
+
+test('une arrivée après la fin du ménage est une rotation, pas un conflit', function () {
+    [$user, $customer2, $newCheckIn, $newCheckOut] = rotationLeJourDuDepart();
+
+    // Même journée, mais le client arrive à 15 h : la chambre est prête
+    // depuis une heure. L'écran doit l'annoncer sans alerter.
+    $response = $this->post(route('bookings.store'), [
+        'step'          => '2',
+        'customer_id'   => $customer2->id,
+        'check_in'      => $newCheckIn,
+        'check_out'     => $newCheckOut,
+        'check_in_time' => '15:00',
+        'adults'        => 1,
+        'children'      => 0,
+        'source'        => 'phone',
+    ]);
+
+    $response->assertStatus(200);
     $response->assertSee('Rotation le jour d\'arrivée');
-    $response->assertSee('14:00'); // Standard ready time (12:00 + 120 min)
-    $response->assertSee('Disponibilité effective post-ménage');
+    $response->assertDontSee('Conflit de rotation');
 });
 
 test('full booking flow preserves check_in_time and phone source to final database record', function () {

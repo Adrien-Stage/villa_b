@@ -98,8 +98,11 @@ test('admin can toggle user status and reset password', function () {
     $staff->refresh();
     expect($staff->is_active)->toBeFalse();
 
-    $log = AuditLog::latest('id')->first();
-    expect($log->event_type)->toBe('user_management');
+    // On cible l'événement attendu plutôt que la dernière ligne du journal :
+    // le middleware de suivi d'activité en écrit une après la réponse, et
+    // c'est elle que « latest » ramenait.
+    $log = AuditLog::where('event_type', 'user_management')->latest('id')->first();
+    expect($log)->not->toBeNull();
     expect($log->action)->toContain('désactivé');
 
     // Force password reset
@@ -107,8 +110,8 @@ test('admin can toggle user status and reset password', function () {
     $response->assertRedirect();
     $response->assertSessionHas('temp_password_info');
 
-    $log = AuditLog::latest('id')->first();
-    expect($log->event_type)->toBe('user_management');
+    $log = AuditLog::where('event_type', 'user_management')->latest('id')->first();
+    expect($log)->not->toBeNull();
     expect($log->action)->toContain('réinitialisé');
 });
 

@@ -40,44 +40,28 @@ test('receptionist and manager can access index and open form, but shop cashier 
     $this->get(route('bookings.cash_register.index'), ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(403);
 });
 
-test('only manager can access close form and close caisse', function () {
+test('sans politique de contrôle, celui qui ouvre la caisse la ferme', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    $tenant = Tenant::first();
 
     $receptionist = User::factory()->create(['role' => 'reception']);
-    $manager = User::factory()->create(['role' => 'manager']);
-
-    // Open receptionist's session
     $session = CashRegisterSession::create([
         'user_id' => $receptionist->id,
         'module' => 'reception',
         'opening_amount' => 100000,
         'opened_at' => now()]);
 
-    // Receptionist tries to close -> 403
+    // Aucun réglage : l'établissement n'exige pas de comptage contradictoire.
     $this->actingAs($receptionist);
-    $this->get(route('bookings.cash_register.close'), ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(403);
-    $this->post(route('bookings.cash_register.close.store'), [], ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(403);
-
-    // Manager session closure
-    $managerSession = CashRegisterSession::create([
-        'user_id' => $manager->id,
-        'module' => 'reception',
-        'opening_amount' => 100000,
-        'opened_at' => now()]);
-
-    $this->actingAs($manager);
     $this->get(route('bookings.cash_register.close'))->assertStatus(200);
-    
-    $response = $this->post(route('bookings.cash_register.close.store'), [
+
+    $this->post(route('bookings.cash_register.close.store'), [
         'actual_closing_amount' => '1500',
-        'theoretical_closing_amount' => 100000,
-        'closing_notes' => 'Clôture de test']);
-    $response->assertRedirect();
-    
-    $managerSession->refresh();
-    expect($managerSession->closed_at)->not->toBeNull();
-    expect($managerSession->actual_closing_amount)->toBe(150000);
+        'closing_notes' => 'Clôture de test'])->assertRedirect();
+
+    $session->refresh();
+    expect($session->closed_at)->not->toBeNull()
+        ->and($session->status)->toBe('closed')
+        ->and($session->actual_closing_amount)->toBe(150000);
 });
 
 test('redirects to open form if caisse is closed for booking creation', function () {

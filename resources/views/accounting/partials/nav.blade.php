@@ -8,6 +8,12 @@
         'accounting.cash'             => ['Caisse', 'calculator'],
         'accounting.income_statement' => ['Compte de résultat', 'scale'],
     ];
+    // L'onglet de contrôle n'a de sens que si l'établissement exige un
+    // comptage contradictoire : sinon les caisses se closent sans passer par
+    // cette file, et l'écran resterait vide en permanence.
+    if (\App\Support\CashClosurePolicy::witness() !== \App\Support\CashClosurePolicy::WITNESS_NONE) {
+        $tabs['accounting.cash_reviews'] = ['Contrôle des comptages', 'shield-check'];
+    }
     $month = $period['month'] ?? request('month');
 @endphp
 <nav class="flex flex-wrap gap-1.5 mb-6 border-b border-secondary/15 pb-3">

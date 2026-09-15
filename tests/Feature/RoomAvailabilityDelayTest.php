@@ -157,6 +157,9 @@ test('une chambre en maintenance est visible mais pas vendable', function () {
 // ── Exposition au site vitrine ────────────────────────────────────────────────
 
 test('le site voit la chambre en remise en état avec son échéance', function () {
+    // Le canal direct passe par l'API publique, que l'ERP conditionne au
+    // module « api » — il l'active d'office avec le site vitrine.
+    activerModules(['api']);
     $suite = suiteType();
     delayTenant(['cleaning_delay_by_type' => [$suite->id => 120]]);
 
@@ -174,6 +177,7 @@ test('le site voit la chambre en remise en état avec son échéance', function 
 });
 
 test('le site affiche les chambres occupées mais pas celles en maintenance', function () {
+    activerModules(['api']);
     delayTenant();
     $suite = suiteType();
 
@@ -195,6 +199,7 @@ test('le site affiche les chambres occupées mais pas celles en maintenance', fu
 });
 
 test('une chambre en remise en état reste réservable depuis le site', function () {
+    activerModules(['api']);
     $suite = suiteType();
     delayTenant(['cleaning_delay_by_type' => [$suite->id => 120]]);
     $room = delayRoom($suite, RoomStatus::DIRTY, now()->subMinutes(10)->toDateTimeString());

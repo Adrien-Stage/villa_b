@@ -301,6 +301,60 @@
             </div>
         @endif
 
+        {{-- Politique de clôture des caisses : réservée au manager, car elle
+             décide qui contrôle qui. Posté sous la clé « caisse », lue par
+             App\Support\CashClosurePolicy. --}}
+        @if($tab === 'hebergement' && $user->hasRole('manager'))
+            @php
+                $caisse = $tenantSettings['caisse'] ?? [];
+                $temoin = $caisse['closure_witness'] ?? \App\Support\CashClosurePolicy::WITNESS_NONE;
+                $modulesSoumis = $caisse['closure_witness_modules'] ?? \App\Support\CashClosurePolicy::MODULES;
+            @endphp
+            <form method="POST" action="{{ route('settings.update', ['tab' => 'caisse']) }}" class="max-w-3xl mb-10">
+                @csrf
+
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-primary">Clôture des caisses</h2>
+                    <button type="submit" class="shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        Enregistrer
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-secondary/20 p-5 shadow-sm">
+                    <p class="text-xs text-primary/60 leading-relaxed mb-4">
+                        Par défaut, l'agent qui a ouvert la caisse la compte et la ferme seul.
+                        Exiger un comptage contradictoire fait contresigner le comptage par un tiers :
+                        la caisse cesse d'encaisser dès la déclaration, et n'est close qu'une fois contrôlée.
+                        Le déclarant ne peut jamais se contrôler lui-même, quel que soit son rôle.
+                    </p>
+
+                    <label for="closure_witness" class="block text-sm font-medium text-primary mb-1.5">
+                        Comptage contrôlé par
+                    </label>
+                    <select name="settings[closure_witness]" id="closure_witness"
+                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary focus:border-primary focus:outline-none">
+                        <option value="aucun" @selected($temoin === 'aucun')>Personne — l'agent ferme sa propre caisse</option>
+                        <option value="manager" @selected($temoin === 'manager')>Un responsable d'établissement</option>
+                        <option value="comptabilite" @selected($temoin === 'comptabilite')>La comptabilité</option>
+                    </select>
+
+                    <fieldset class="mt-5">
+                        <legend class="text-sm font-medium text-primary mb-1.5">Caisses concernées</legend>
+                        <div class="flex flex-wrap gap-4">
+                            @foreach(['reception' => 'Réception', 'shop' => 'Boutique'] as $code => $libelle)
+                                <label class="inline-flex items-center gap-2 text-sm text-primary/80">
+                                    <input type="checkbox" name="settings[closure_witness_modules][]" value="{{ $code }}"
+                                           @checked(in_array($code, (array) $modulesSoumis, true))
+                                           class="rounded border-secondary/40 text-primary focus:ring-primary">
+                                    {{ $libelle }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                </div>
+            </form>
+        @endif
+
         {{-- ONGLET: HÉBERGEMENT (Réception & Manager) --}}
         {{-- Section 1 de l'onglet Hébergement : horaires et règles de séjour.
              Le formulaire poste sur ?tab=reception pour que ces valeurs restent
