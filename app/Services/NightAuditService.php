@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\Booking;
 use App\Models\CashRegisterSession;
 use App\Models\JournalEntryLine;
 use App\Models\NightAudit;
@@ -87,6 +88,7 @@ class NightAuditService
             //    grand livre, seule source qui fasse foi.
             $revenus = $this->revenus($jour);
             $caisses = $this->caisses($jour);
+            $gratuites = $this->gratuites($jour);
 
             // 3. Figer.
             return NightAudit::create([
@@ -97,6 +99,8 @@ class NightAuditService
                 'revenue_restaurant'    => $revenus['restaurant'],
                 'revenue_shop'          => $revenus['shop'],
                 'revenue_total'         => $revenus['total'],
+                'complimentary_count'   => $gratuites['count'],
+                'complimentary_value'   => $gratuites['value'],
                 'cash_collected'        => $this->tresorerie($jour),
                 'cash_discrepancy'      => $caisses['discrepancy'],
                 'registers_closed'      => $caisses['closed'],
@@ -178,6 +182,26 @@ class NightAuditService
      *
      * @return array{closed:int, open:int, discrepancy:int}
      */
+    /**
+     * Séjours offerts validés dans la journée, et leur valeur au tarif publié.
+     *
+     * On compte à la date de validation, non à celle du séjour : c'est
+     * l'approbation qui abandonne la recette, et c'est ce jour-là qu'elle doit
+     * peser dans le constat de clôture.
+     */
+    private function gratuites(CarbonInterface $date): array
+    {
+        $accordees = Booking::query()
+            ->where('is_complimentary', true)
+            ->whereBetween('approved_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
+            ->get(['complimentary_value']);
+
+        return [
+            'count' => $accordees->count(),
+            'value' => (int) $accordees->sum('complimentary_value'),
+        ];
+    }
+
     private function caisses(CarbonInterface $date): array
     {
         $debut = $date->copy()->startOfDay();

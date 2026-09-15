@@ -968,15 +968,25 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
 
+        $isComplimentary = $request->boolean('is_offerte');
+
         $status = BookingStatus::CONFIRMED;
-        if ($request->boolean('is_offerte') && Auth::user()->hasRole('reception')) {
+        if ($isComplimentary && Auth::user()->hasRole('reception')) {
             $status = BookingStatus::PENDING;
         }
 
         $notes = $validated['notes'] ?? null;
-        if ($request->boolean('is_offerte')) {
+        if ($isComplimentary) {
             $notes = trim("Offerte - Motif : " . ($validated['offerte_reason'] ?? 'Non spécifié') . ($notes ? "\n" . $notes : ''));
         }
+
+        // Manque à gagner : le séjour étant facturé zéro, sa valeur au tarif
+        // publié du type de chambre est la seule trace de ce que l'offre coûte
+        // à l'établissement. Sans elle, une gratuité pèse comptablement autant
+        // qu'une chambre vide.
+        $complimentaryValue = $isComplimentary
+            ? (int) ($room->roomType->base_price ?? 0) * $nights
+            : 0;
 
         $booking = Booking::create([
             'room_id'         => $room->id,
@@ -985,6 +995,9 @@ class BookingController extends Controller
             'partner_organization_id' => $partnerOrganization?->id,
             'room_package_id' => $roomPackage?->id,
             'status'          => $status,
+            'is_complimentary'     => $isComplimentary,
+            'complimentary_reason' => $isComplimentary ? ($validated['offerte_reason'] ?? null) : null,
+            'complimentary_value'  => $complimentaryValue,
             'check_in'        => $validated['check_in'],
             'check_in_time'   => $validated['check_in_time'] ?? '14:00',
             'check_out'       => $validated['check_out'],
@@ -1417,8 +1430,40 @@ class BookingController extends Controller
         }
 
         $booking->update([
-            'status' => BookingStatus::CONFIRMED,
+            'status'      => BookingStatus::CONFIRMED,
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
         ]);
+
+        // Une gratuité est une recette abandonnée : elle doit laisser une trace
+        // que personne ne peut réécrire depuis l'écran de modification du
+        // séjour, et qui porte les éléments qu'un contrôleur de gestion vient
+        // chercher — qui a décidé, pour qui, et pour quel montant.
+        $client = $booking->customer;
+        \App\Models\AuditLog::record(
+            Auth::id(),
+            'complimentary_booking',
+            sprintf(
+                'Séjour offert validé : %s — %s, chambre %s, %d nuitée(s), valeur %s FCFA. Motif : %s',
+                $booking->booking_number,
+                $client?->full_name ?? 'client inconnu',
+                $booking->room?->number ?? '—',
+                (int) $booking->total_nights,
+                number_format($booking->complimentary_value / 100, 0, ',', ' '),
+                $booking->complimentary_reason ?: 'non précisé'
+            ),
+            'bookings',
+            [
+                'booking_id'    => $booking->id,
+                'customer_id'   => $booking->customer_id,
+                'customer_type' => $booking->partner_organization_id ? 'entreprise' : 'particulier',
+                'partner_organization_id' => $booking->partner_organization_id,
+                'nights'        => (int) $booking->total_nights,
+                'value_cents'   => (int) $booking->complimentary_value,
+                'reason'        => $booking->complimentary_reason,
+                'requested_by'  => $booking->created_by,
+            ]
+        );
 
         $this->notifier->send(
             \App\Models\User::find($booking->created_by),

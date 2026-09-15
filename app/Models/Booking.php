@@ -39,6 +39,11 @@ class Booking extends Model
         'booking_number',       // Numéro unique affiché (VB-2025-0001)
         'status',
 
+        // Gratuité : fait comptable à part entière, pas une mention libre
+        'is_complimentary',
+        'complimentary_reason',
+        'complimentary_value',  // Manque à gagner : valeur du séjour au tarif applicable
+
         // Dates
         'check_in',
         'check_in_time',
@@ -77,11 +82,16 @@ class Booking extends Model
         'created_by',
         'checked_in_by',
         'checked_out_by',
+        'approved_by',          // Qui a validé la gratuité
+        'approved_at',
         'tenant_id',
     ];
 
     protected $casts = [
         'status' => BookingStatus::class,
+        'is_complimentary' => 'boolean',
+        'complimentary_value' => 'integer',
+        'approved_at' => 'datetime',
         'check_in' => 'date',
         'check_out' => 'date',
         'actual_check_in' => 'datetime',
