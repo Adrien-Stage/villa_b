@@ -287,12 +287,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // n'engage aucun mouvement d'espèces.
         Route::post('/{booking}/code-checkin', [BookingController::class, 'sendCheckinCode'])->name('checkin_code.send');
 
+        // Validation d'un séjour offert : aucun argent ne circule, et la
+        // traçabilité ne vient pas du verrou de caisse mais de l'écriture au
+        // journal d'audit que pose approve() — approbateur, client, valeur du
+        // manque à gagner. Exiger une caisse ouverte bloquait l'arbitrage du
+        // manager au moment même où on le sollicite, et le faisait en
+        // redirigeant en silence : l'approbation semblait aboutir sans l'avoir
+        // fait.
+        Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
+
         // Actions métier : impossibles tant que la caisse n'est pas ouverte
         Route::middleware('caisse')->group(function () {
             Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');
             Route::post('/{booking}/checkin',      [BookingController::class, 'checkIn'])->name('checkIn');
             Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
-            Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
             Route::post('/{booking}/confirm',      [BookingController::class, 'confirm'])->name('confirm');
             Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
             Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.add');
