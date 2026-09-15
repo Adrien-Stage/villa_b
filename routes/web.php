@@ -468,6 +468,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [$c, 'index'])->name('index');
         Route::get('/journal', [$c, 'journal'])->name('journal');
         Route::get('/compte-de-resultat', [$c, 'incomeStatement'])->name('income_statement');
+
+        // Comptage contradictoire : file des caisses comptées attendant la
+        // contresignature d'un tiers. Le contrôleur vérifie lui-même que
+        // l'utilisateur est habilité selon la politique de l'établissement,
+        // et qu'il n'est pas le déclarant.
+        $rev = App\Http\Controllers\CashClosureReviewController::class;
+
+        Route::get('/controles-caisse', [$rev, 'index'])->name('cash_reviews');
+        Route::post('/controles-caisse/{session}', [$rev, 'store'])->whereNumber('session')->name('cash_reviews.store');
         Route::get('/creances', [$c, 'receivables'])->name('receivables');
         Route::get('/caisse', [$c, 'cash'])->name('cash');
 

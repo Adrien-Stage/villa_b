@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CashClosurePolicy;
 use Illuminate\Database\Eloquent\Model;
 
 class CashRegisterSession extends Model
@@ -18,12 +19,26 @@ class CashRegisterSession extends Model
         'discrepancy_amount',
         'notes',
         'closing_notes',
+        'witness_id',
+        'witnessed_at',
+        'witness_notes',
     ];
 
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
+        'witnessed_at' => 'datetime',
     ];
+
+    /**
+     * Caisse comptée, en attente du contrôle d'un tiers. Elle n'encaisse plus
+     * et n'est pas close : l'écart n'est pas encore constaté.
+     */
+    public function isPendingReview(): bool
+    {
+        return $this->status === CashClosurePolicy::STATUS_PENDING_REVIEW
+            && $this->closed_at === null;
+    }
 
     /**
      * Solde théorique du tiroir, en centimes : fond initial, plus les
@@ -56,6 +71,11 @@ class CashRegisterSession extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function witness()
+    {
+        return $this->belongsTo(User::class, 'witness_id');
     }
 
     public function tenant()

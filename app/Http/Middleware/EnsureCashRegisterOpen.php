@@ -17,9 +17,13 @@ class EnsureCashRegisterOpen
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Une caisse déjà comptée, en attente de contresignature, n'est plus
+        // close mais n'encaisse plus : le comptage déclaré cesserait sinon de
+        // correspondre au contenu du tiroir.
         $open = CashRegisterSession::where('user_id', Auth::id())
             ->where('module', 'reception')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->exists();
 
         if (!$open) {

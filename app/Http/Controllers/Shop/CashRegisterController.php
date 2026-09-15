@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\CashRegisterSession;
 use App\Models\CashRegisterDisbursement;
+use App\Support\CashClosurePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,6 +69,7 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
         // Le détail nourrit l'écran ; le total, lui, vient de la même méthode
@@ -93,6 +95,7 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
         $request->validate([
@@ -107,13 +110,27 @@ class CashRegisterController extends Controller
         $theoreticalAmountCents = $session->theoreticalBalance();
         $discrepancy = $actualAmountCents - $theoreticalAmountCents;
 
+        // Comptage contradictoire : quand l'établissement l'exige, le comptage
+        // est déclaré mais la caisse n'est pas close. Elle cesse d'encaisser
+        // et attend la contresignature d'un tiers, seule à constater l'écart.
+        $aContresigner = CashClosurePolicy::requiresWitness('shop');
+
         $session->update([
-            'closed_at' => now(),
+            'status' => $aContresigner ? CashClosurePolicy::STATUS_PENDING_REVIEW : 'closed',
+            'closed_at' => $aContresigner ? null : now(),
             'theoretical_closing_amount' => $theoreticalAmountCents,
             'actual_closing_amount' => $actualAmountCents,
             'discrepancy_amount' => $discrepancy,
             'closing_notes' => $request->closing_notes,
         ]);
+
+        if ($aContresigner) {
+            return redirect()->route('shop.orders.index')->with(
+                'success',
+                'Comptage enregistré. La caisse sera close après contrôle par '
+                . CashClosurePolicy::witnessLabel() . '.'
+            );
+        }
 
         return redirect()->route('shop.orders.index')->with('success', 'Caisse fermée avec succès.');
     }
@@ -124,6 +141,7 @@ class CashRegisterController extends Controller
             
             ->where('module', 'shop')
             ->whereNull('closed_at')
+            ->where('status', 'open')
             ->firstOrFail();
 
         $request->validate([
