@@ -16,6 +16,18 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->beforeEach(function () {
+        // Les vues appellent @vite pour leurs feuilles de style et scripts.
+        // Hors d'un serveur de développement, Laravel va chercher le manifeste
+        // produit par « npm run build » — absent d'un dépôt fraîchement cloné,
+        // puisque public/build et public/hot sont tous deux ignorés par git.
+        // Chaque test rendant une vue échouait alors en 500.
+        //
+        // withoutVite() substitue une implémentation neutre : les tests du
+        // back-end cessent de dépendre d'une compilation d'assets. Celle-ci
+        // reste vérifiée là où elle compte — le Dockerfile exécute
+        // « npm run build », et une compilation cassée fait échouer l'image.
+        $this->withoutVite();
+
         // TenantModules met en cache la liste des modules actifs dans une
         // propriété statique, que dix fichiers de tests écrasent par réflexion
         // pour activer ce dont ils ont besoin. Un seul la remettait à zéro :
