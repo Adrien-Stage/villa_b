@@ -4,20 +4,13 @@ name: Tests
 # jamais exécuter un test : une régression comptable pouvait atteindre le
 # registre, puis les établissements, sans que rien ne la signale.
 #
-# Ce workflow ne bloque pas encore la publication : la suite comporte des
-# échecs connus (voir plus bas). Une fois au vert, ajouter dans
-# build-image.yml :
-#
-#   jobs:
-#     tests:
-#       uses: ./.github/workflows/tests.yml
-#     build-and-push:
-#       needs: tests
-#
-# C'est cette barrière qui donne sa valeur à la suite ; l'exécuter sans elle
-# ne fait que rendre la dette visible.
+# La suite est désormais au vert et build-image.yml l'appelle avant de
+# publier : une image dont les tests échouent n'atteint plus le registre.
 on:
+  # main est déjà couvert par build-image.yml, qui appelle ce workflow :
+  # l'exclure ici évite de faire tourner la suite deux fois.
   push:
+    branches-ignore: [main]
   pull_request:
   workflow_call:
   workflow_dispatch:
