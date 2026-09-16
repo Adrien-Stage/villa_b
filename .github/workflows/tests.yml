@@ -7,13 +7,20 @@ name: Tests
 # La suite est désormais au vert et build-image.yml l'appelle avant de
 # publier : une image dont les tests échouent n'atteint plus le registre.
 on:
-  # main est déjà couvert par build-image.yml, qui appelle ce workflow :
-  # l'exclure ici évite de faire tourner la suite deux fois.
-  push:
-    branches-ignore: [main]
+  # Pas de déclencheur « push » : pousser une branche dont la demande de
+  # fusion est déjà ouverte lançait deux fois la même suite sur le même
+  # commit. La demande de fusion couvre l'avant-fusion, build-image.yml
+  # couvre main.
   pull_request:
-  workflow_call:
+  workflow_call:      # appelé par build-image.yml, qui refuse de publier si ceci échoue
   workflow_dispatch:
+
+# Trois poussées d'affilée n'ont qu'un dernier état utile : les précédentes
+# sont abandonnées au lieu de faire la queue. Jamais sur main, où la
+# publication d'image ne doit pas pouvoir être interrompue.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   pest:
@@ -27,7 +34,10 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          # Même version que l'image de production (php:8.4-fpm) : tester
+          # sur une autre reviendrait à valider un environnement que
+          # personne n'exécute.
+          php-version: '8.4'
           coverage: none
 
       - name: Cache Composer packages
