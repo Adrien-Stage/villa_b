@@ -23,16 +23,32 @@ class EnsureModuleWriteAccess
     {
         $user = Auth::user();
 
-        // La lecture est toujours autorisée à qui a franchi le contrôle de rôle.
-        if (!$user || !in_array($request->method(), self::WRITE_METHODS, true)) {
+        if (!$user) {
             return $next($request);
         }
 
-        // La direction (admin, manager) n'est jamais restreinte.
-        if ($user->hasAnyRole(['admin', 'manager'])) {
+        // 1. Contrôle d'accès global au module (aucun accès si 'none' ou hors département sans rôle)
+        if (!$user->hasModuleAccess($module)) {
+            $message = "Accès refusé : vous n'avez pas l'autorisation d'accéder au module '{$module}'.";
+
+            if ($request->expectsJson()
+                || $request->header('X-Requested-With') === 'XMLHttpRequest'
+                || $request->header('X-Expect-Popup') === 'true') {
+                return response()->json(['access_denied' => true, 'message' => $message], 403);
+            }
+
+            return back()->with([
+                'access_denied_popup'   => true,
+                'access_denied_message' => $message,
+            ])->withErrors(['module_access' => $message]);
+        }
+
+        // 2. La lecture seule laisse consulter (GET / HEAD)
+        if (!in_array($request->method(), self::WRITE_METHODS, true)) {
             return $next($request);
         }
 
+        // 3. Contrôle des droits d'écriture
         if (!$user->canWrite($module)) {
             $message = 'Vous avez un accès en lecture seule sur ce module : action non autorisée.';
 

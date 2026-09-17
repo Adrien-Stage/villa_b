@@ -37,11 +37,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        // ← AJOUTÉ : Liaison à l'établissement
-        'role',           // ← AJOUTÉ : RBAC
+        'role',
+        'department_id',
         'phone',
-        'is_active',      // ← AJOUTÉ : Désactivation sans suppression
-        'last_login_at',  // ← AJOUTÉ : Audit (section 4.1.2)
+        'is_active',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -57,8 +57,21 @@ class User extends Authenticatable
     ];
 
     /**
-     * Relation : L'utilisateur appartient à un établissement
+     * Relation : Département de rattachement organisationnel de l'employé
      */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Relation : Surcharges granulaires de permissions par module (write, read, none)
+     */
+    public function modulePermissions(): HasMany
+    {
+        return $this->hasMany(UserModulePermission::class);
+    }
+
     /**
      * Relation : L'utilisateur peut avoir plusieurs rôles (RBAC étendu)
      */
@@ -69,38 +82,139 @@ class User extends Authenticatable
     }
 
     /**
-     * Niveau d'accès explicite de l'utilisateur sur un module métier, d'après
-     * ses rôles : 'write', 'read', ou null s'il n'a aucun rôle rattaché à ce
-     * module (donc aucune restriction de niveau à appliquer).
-     *
-     * Un niveau pivot vide (comptes créés avant cette fonctionnalité) vaut
-     * 'write' : la lecture seule est une restriction qu'on active volontairement.
+     * Retourne la permission explicite surchargée pour ce module ('write', 'read', 'none', ou null).
+     */
+    public function explicitModulePermission(string $module): ?string
+    {
+        $aliases = [
+            'boutique'   => 'shop',
+            'accounting' => 'ledger',
+        ];
+        $canonical = $aliases[$module] ?? $module;
+
+        $override = $this->modulePermissions
+            ->first(fn ($p) => in_array($p->module_key, [$module, $canonical], true));
+
+        if ($override && in_array($override->access_level, ['write', 'read', 'none'], true)) {
+            return $override->access_level;
+        }
+
+        return null;
+    }
+
+    /**
+     * Détermine si l'utilisateur a accès au module.
+     * Ordre d'évaluation :
+     * 1. Surcharge explicite dans user_module_permissions ('none' => false, 'write'/'read' => true).
+     * 2. Héritage des modules par défaut du département de rattachement.
+     * 3. Fallback direction : admin / manager ont accès à tout par défaut (sauf si 'none' explicite).
+     * 4. Fallback rôles pivot (table pivot roles).
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        $explicit = $this->explicitModulePermission($module);
+        if ($explicit === 'none') {
+            return false;
+        }
+        if ($explicit === 'write' || $explicit === 'read') {
+            return true;
+        }
+
+        // 2. Héritage département
+        if ($this->department_id && $this->department) {
+            $aliases = ['boutique' => 'shop', 'accounting' => 'ledger'];
+            $canonical = $aliases[$module] ?? $module;
+
+            if ($this->department->hasModule($module) || $this->department->hasModule($canonical)) {
+                return true;
+            }
+        }
+
+        // 3. Admin et Manager ont accès par défaut aux modules non explicitement refusés
+        if ($this->hasAnyRole(['admin', 'manager'])) {
+            return true;
+        }
+
+        // 4. Fallback vers rôles métier historiques
+        return $this->canAccessModule($module);
+    }
+
+    /**
+     * Niveau d'accès effectif de l'utilisateur sur un module métier :
+     * 'write', 'read', 'none', ou null.
      */
     public function moduleLevel(string $module): ?string
     {
+        $explicit = $this->explicitModulePermission($module);
+        if ($explicit !== null) {
+            return $explicit;
+        }
+
+        // Héritage département
+        if ($this->department_id && $this->department) {
+            $aliases = ['boutique' => 'shop', 'accounting' => 'ledger'];
+            $canonical = $aliases[$module] ?? $module;
+            $deptLevel = $this->department->moduleDefaultLevel($module) ?: $this->department->moduleDefaultLevel($canonical);
+            if ($deptLevel) {
+                return $deptLevel;
+            }
+        }
+
+        // Fallback rôles pivot
         $levels = $this->roles->where('module', $module)
             ->map(fn ($role) => $role->pivot->level ?: 'write');
 
         if ($levels->isEmpty()) {
-            return null; // aucun rôle pivot sur ce module → pas de restriction
+            return null; // aucun rôle pivot sur ce module
         }
 
         return $levels->contains('write') ? 'write' : 'read';
     }
 
     /**
-     * L'utilisateur peut-il écrire (agir) dans ce module ? On ne bloque que
-     * lorsqu'un niveau « lecture seule » explicite est posé ; l'absence de
-     * marqueur (comptes hérités, mono-rôle) reste en écriture.
+     * L'utilisateur peut-il écrire (agir) dans ce module ?
      */
     public function canWrite(string $module): bool
     {
+        $explicit = $this->explicitModulePermission($module);
+        if ($explicit === 'write') {
+            return true;
+        }
+        if ($explicit === 'read' || $explicit === 'none') {
+            return false;
+        }
+
+        // Admin et Manager écrivent partout sauf restriction explicite posée
+        if ($this->hasAnyRole(['admin', 'manager'])) {
+            return true;
+        }
+
+        // Héritage département
+        if ($this->department_id && $this->department) {
+            $aliases = ['boutique' => 'shop', 'accounting' => 'ledger'];
+            $canonical = $aliases[$module] ?? $module;
+            $deptLevel = $this->department->moduleDefaultLevel($module) ?: $this->department->moduleDefaultLevel($canonical);
+            if ($deptLevel) {
+                return $deptLevel === 'write';
+            }
+        }
+
         return $this->moduleLevel($module) !== 'read';
     }
 
-    /** L'utilisateur a-t-il un rôle explicitement rattaché à ce module ? */
+    /**
+     * L'utilisateur a-t-il un accès (lecture ou écriture) à ce module ?
+     */
     public function canAccessModule(string $module): bool
     {
+        if ($this->explicitModulePermission($module) === 'none') {
+            return false;
+        }
+
         return $this->moduleLevel($module) !== null;
     }
 

@@ -39,8 +39,29 @@ class EnsureRoleAccess
         }
         $authorizedRoles = array_map('trim', $authorizedRoles);
 
-        // Vérifier si l'utilisateur a l'un des rôles autorisés
-        if (!$user->hasAnyRole($authorizedRoles)) {
+        // Vérifier si l'utilisateur a l'un des rôles autorisés (direct ou via son département)
+        $hasRole = $user->hasAnyRole($authorizedRoles);
+
+        if (!$hasRole && $user->department_id && $user->department) {
+            $deptRoles = match ($user->department->slug) {
+                'direction_generale'       => ['manager', 'admin'],
+                'reception_front_office'   => ['reception', 'cashier'],
+                'housekeeping_hebergement' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff'],
+                'restauration_fb'          => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'],
+                'comptabilite_finance'     => ['accountant', 'cashier', 'controller'],
+                'boutique_commerce'        => ['shop_manager', 'shop_cashier'],
+                'ressources_humaines'      => ['manager'],
+                'informatique_it'          => ['admin'],
+                'qualite_controle'         => ['controller', 'manager'],
+                default                    => [],
+            };
+
+            if (!empty(array_intersect($authorizedRoles, $deptRoles))) {
+                $hasRole = true;
+            }
+        }
+
+        if (!$hasRole) {
             // Log l'accès refusé pour audit dans la base de données
             \App\Models\AuditLog::record(
                 $user->id,

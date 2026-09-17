@@ -173,61 +173,65 @@
                         <ul class="space-y-0.5">
                             {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
                             @role('manager','reception')
-                                <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                                @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
+                                    <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                                @endif
                             @endrole
 
                             @role('manager','reception')
-                                {{-- L'agenda est un écran à part entière : le calendrier
-                                     des séjours n'est plus une vue de la liste. --}}
-                                <x-sidebar-link route="agenda.index" icon="calendar-days">Agenda</x-sidebar-link>
-                                <x-sidebar-link route="reception.pos.index" icon="shopping-cart">POS Réception</x-sidebar-link>
+                                @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
+                                    {{-- L'agenda est un écran à part entière : le calendrier
+                                         des séjours n'est plus une vue de la liste. --}}
+                                    <x-sidebar-link route="agenda.index" icon="calendar-days">Agenda</x-sidebar-link>
+                                    <x-sidebar-link route="reception.pos.index" icon="shopping-cart">POS Réception</x-sidebar-link>
 
-                                <li>
-                                    <a href="{{ route('bookings.index') }}"
-                                        title="Réservations"
-                                        class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
-                                        {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
-                                            ? 'bg-surface-dark text-white'
-                                            : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
-                                        <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                                        <span class="sidebar-libelle">Réservations</span>
-                                    </a>
+                                    <li>
+                                        <a href="{{ route('bookings.index') }}"
+                                            title="Réservations"
+                                            class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
+                                            {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
+                                                ? 'bg-surface-dark text-white'
+                                                : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
+                                            <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                            <span class="sidebar-libelle">Réservations</span>
+                                        </a>
 
-                                    @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*'))
-                                    <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
-                                        <li>
-                                            <a href="{{ route('bookings.index') }}"
-                                                class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*')
-                                                    ? 'text-white'
-                                                    : 'text-text-on-dark hover:text-white' }}">
-                                                <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
-                                                Individuelles
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{{ route('groups.index') }}"
-                                                class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                {{ request()->routeIs('groups.*')
-                                                    ? 'text-white'
-                                                    : 'text-text-on-dark hover:text-white' }}">
-                                                <i data-lucide="users" class="w-3 h-3 flex-shrink-0"></i>
-                                                Groupes
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{{ route('bookings.cash_register.index') }}"
-                                                class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                {{ request()->routeIs('bookings.cash_register.*')
-                                                    ? 'text-white'
-                                                    : 'text-text-on-dark hover:text-white' }}">
-                                                <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0"></i>
-                                                Compta Réception
-                                            </a>
-                                        </li>
-                                    </ul>
-                                    @endif
-                                </li>
+                                        @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*'))
+                                        <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
+                                            <li>
+                                                <a href="{{ route('bookings.index') }}"
+                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                    {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*')
+                                                        ? 'text-white'
+                                                        : 'text-text-on-dark hover:text-white' }}">
+                                                    <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
+                                                    Individuelles
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{{ route('groups.index') }}"
+                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                    {{ request()->routeIs('groups.*')
+                                                        ? 'text-white'
+                                                        : 'text-text-on-dark hover:text-white' }}">
+                                                    <i data-lucide="users" class="w-3 h-3 flex-shrink-0"></i>
+                                                    Groupes
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{{ route('bookings.cash_register.index') }}"
+                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                    {{ request()->routeIs('bookings.cash_register.*')
+                                                        ? 'text-white'
+                                                        : 'text-text-on-dark hover:text-white' }}">
+                                                    <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0"></i>
+                                                    Compta Réception
+                                                </a>
+                                            </li>
+                                        </ul>
+                                        @endif
+                                    </li>
+                                @endif
                             @endrole
 
                             @role('manager','housekeeping_leader','housekeeping_staff','housekeeping')
@@ -299,9 +303,13 @@
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
-                            <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
+                            @if(!auth()->check() || auth()->user()->hasModuleAccess('clients'))
+                                <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
+                            @endif
                             @role('manager')
-                                <x-sidebar-link route="users.index" icon="user-cog">Utilisateurs</x-sidebar-link>
+                                @if(!auth()->check() || auth()->user()->hasModuleAccess('utilisateurs'))
+                                    <x-sidebar-link route="users.index" icon="user-cog">Utilisateurs</x-sidebar-link>
+                                @endif
                             @endrole
                         </ul>
                     </div>
@@ -351,7 +359,9 @@
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
-                            <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
+                            @if(!auth()->check() || auth()->user()->hasModuleAccess('comptabilite'))
+                                <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
+                            @endif
                             @module('ledger')
                                 <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
                             @endmodule
@@ -366,7 +376,9 @@
                 @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
                     <div class="mt-4 pt-4 border-t border-surface-dark">
                         <ul class="space-y-0.5">
-                            <x-sidebar-link route="settings.index" icon="settings">Paramètres</x-sidebar-link>
+                            @if(!auth()->check() || auth()->user()->hasModuleAccess('parametres'))
+                                <x-sidebar-link route="settings.index" icon="settings">Paramètres</x-sidebar-link>
+                            @endif
                         </ul>
                     </div>
                 @endrole
