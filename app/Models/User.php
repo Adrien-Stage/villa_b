@@ -37,11 +37,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        // ← AJOUTÉ : Liaison à l'établissement
-        'role',           // ← AJOUTÉ : RBAC
+        'role',
+        'department_id',
         'phone',
-        'is_active',      // ← AJOUTÉ : Désactivation sans suppression
-        'last_login_at',  // ← AJOUTÉ : Audit (section 4.1.2)
+        'is_active',
+        'last_login_at',
+    ];
+
+    protected $attributes = [
+        'is_active' => true,
     ];
 
     protected $hidden = [
@@ -57,8 +61,21 @@ class User extends Authenticatable
     ];
 
     /**
-     * Relation : L'utilisateur appartient à un établissement
+     * Relation : Département de rattachement organisationnel de l'employé
      */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Relation : Surcharges granulaires de permissions par module (write, read, none)
+     */
+    public function modulePermissions(): HasMany
+    {
+        return $this->hasMany(UserModulePermission::class);
+    }
+
     /**
      * Relation : L'utilisateur peut avoir plusieurs rôles (RBAC étendu)
      */
@@ -69,39 +86,174 @@ class User extends Authenticatable
     }
 
     /**
-     * Niveau d'accès explicite de l'utilisateur sur un module métier, d'après
-     * ses rôles : 'write', 'read', ou null s'il n'a aucun rôle rattaché à ce
-     * module (donc aucune restriction de niveau à appliquer).
-     *
-     * Un niveau pivot vide (comptes créés avant cette fonctionnalité) vaut
-     * 'write' : la lecture seule est une restriction qu'on active volontairement.
+     * Mappage des modules et de leurs alias dans l'application.
      */
-    public function moduleLevel(string $module): ?string
+    public static function moduleAliases(string $module): array
     {
-        $levels = $this->roles->where('module', $module)
-            ->map(fn ($role) => $role->pivot->level ?: 'write');
+        $map = [
+            'boutique'     => ['boutique', 'shop'],
+            'shop'         => ['shop', 'boutique'],
+            'comptabilite' => ['comptabilite', 'accounting', 'ledger'],
+            'accounting'   => ['accounting', 'comptabilite', 'ledger'],
+            'ledger'       => ['ledger', 'comptabilite', 'accounting'],
+            'hebergement'  => ['hebergement', 'reservations', 'clients'],
+            'reservations' => ['reservations', 'hebergement', 'clients'],
+            'clients'      => ['clients', 'hebergement', 'reservations'],
+        ];
 
-        if ($levels->isEmpty()) {
-            return null; // aucun rôle pivot sur ce module → pas de restriction
-        }
-
-        return $levels->contains('write') ? 'write' : 'read';
+        return $map[$module] ?? [$module];
     }
 
     /**
-     * L'utilisateur peut-il écrire (agir) dans ce module ? On ne bloque que
-     * lorsqu'un niveau « lecture seule » explicite est posé ; l'absence de
-     * marqueur (comptes hérités, mono-rôle) reste en écriture.
+     * Matrice des modules par défaut pour les rôles métiers historiques.
+     */
+    protected static array $legacyRoleModules = [
+        'admin'               => ['*'],
+        'manager'             => ['*'],
+        'reception'           => ['hebergement', 'reservations', 'clients', 'website', 'discussions', 'ai', 'comptabilite'],
+        'cashier'             => ['hebergement', 'reservations', 'restaurant', 'boutique', 'shop', 'comptabilite', 'accounting', 'ledger', 'discussions'],
+        'housekeeping'        => ['housekeeping', 'hebergement', 'economat', 'discussions'],
+        'housekeeping_leader' => ['housekeeping', 'hebergement', 'economat', 'discussions'],
+        'housekeeping_staff'  => ['housekeeping', 'hebergement', 'discussions'],
+        'restaurant_chief'    => ['restaurant', 'portail', 'economat', 'discussions'],
+        'restaurant_staff'    => ['restaurant', 'portail', 'discussions'],
+        'restaurant_cook'     => ['restaurant', 'discussions'],
+        'shop_manager'        => ['boutique', 'shop', 'economat', 'discussions'],
+        'shop_cashier'        => ['boutique', 'shop', 'discussions'],
+        'econome'             => ['economat', 'comptabilite', 'discussions'],
+        'accountant'          => ['comptabilite', 'ledger', 'accounting', 'economat', 'analytics', 'grc', 'discussions'],
+        'controller'          => ['comptabilite', 'ledger', 'accounting', 'analytics', 'grc', 'discussions'],
+        'customer_guest'      => ['portail'],
+    ];
+
+    /**
+     * Retourne les modules autorisés pour un slug de rôle donné.
+     */
+    public static function defaultModulesForRole(string $role): array
+    {
+        if (isset(self::$legacyRoleModules[$role])) {
+            return self::$legacyRoleModules[$role];
+        }
+
+        try {
+            $roleRecord = Role::where('slug', $role)->first();
+            if ($roleRecord && $roleRecord->module) {
+                return self::moduleAliases($roleRecord->module);
+            }
+        } catch (\Throwable) {
+            // Ignorer si la table n'est pas encore migrée
+        }
+
+        return [];
+    }
+
+    /**
+     * Retourne la permission explicite surchargée pour ce module ('write', 'read', 'none', ou null).
+     */
+    public function explicitModulePermission(string $module): ?string
+    {
+        $aliases = self::moduleAliases($module);
+
+        $override = $this->modulePermissions
+            ->first(fn ($p) => in_array($p->module_key, $aliases, true));
+
+        if ($override && in_array($override->access_level, ['write', 'read', 'none'], true)) {
+            return $override->access_level;
+        }
+
+        return null;
+    }
+
+    /**
+     * Détermine si l'utilisateur a accès au module.
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        return $this->canAccessModule($module);
+    }
+
+    /**
+     * Niveau d'accès effectif de l'utilisateur sur un module métier :
+     * 'write', 'read', 'none', ou null.
+     */
+    public function moduleLevel(string $module): ?string
+    {
+        if ($this->is_active === false) {
+            return 'none';
+        }
+
+        // 1. Surcharge explicite utilisateur
+        $explicit = $this->explicitModulePermission($module);
+        if ($explicit !== null) {
+            return $explicit;
+        }
+
+        $aliases = self::moduleAliases($module);
+
+        // 2. Rôles pivot assignés (table pivot role_user)
+        $hasPivotRoles = $this->relationLoaded('roles') ? $this->roles->isNotEmpty() : ($this->exists && $this->roles()->exists());
+        if ($hasPivotRoles) {
+            $matchingPivot = $this->roles->filter(function ($role) use ($aliases) {
+                return in_array($role->module, $aliases, true)
+                    || !empty(array_intersect(self::defaultModulesForRole($role->slug), $aliases));
+            });
+
+            if ($matchingPivot->isNotEmpty()) {
+                $levels = $matchingPivot->map(fn ($r) => $r->pivot->level ?: 'write');
+                return $levels->contains('write') ? 'write' : 'read';
+            }
+        }
+
+        // 3. Direction (admin / manager ont accès à tout en écriture par défaut)
+        if ($this->hasAnyRole(['admin', 'manager']) || in_array($this->role, ['admin', 'manager'], true)) {
+            return 'write';
+        }
+
+        // 4. Héritage département
+        if ($this->department_id && $this->department) {
+            foreach ($aliases as $alias) {
+                $deptLevel = $this->department->moduleDefaultLevel($alias);
+                if ($deptLevel) {
+                    return $deptLevel;
+                }
+            }
+        }
+
+        // 5. Rôle historique (colonne users.role)
+        if ($this->role) {
+            $allowed = self::defaultModulesForRole($this->role);
+            if (in_array('*', $allowed, true) || !empty(array_intersect($allowed, $aliases))) {
+                return 'write';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * L'utilisateur peut-il écrire (agir) dans ce module ?
      */
     public function canWrite(string $module): bool
     {
-        return $this->moduleLevel($module) !== 'read';
+        if ($this->is_active === false) {
+            return false;
+        }
+
+        return $this->moduleLevel($module) === 'write';
     }
 
-    /** L'utilisateur a-t-il un rôle explicitement rattaché à ce module ? */
+    /**
+     * L'utilisateur a-t-il un accès (lecture ou écriture) à ce module ?
+     */
     public function canAccessModule(string $module): bool
     {
-        return $this->moduleLevel($module) !== null;
+        if ($this->is_active === false) {
+            return false;
+        }
+
+        $level = $this->moduleLevel($module);
+
+        return $level !== null && $level !== 'none';
     }
 
     /**
@@ -140,12 +292,16 @@ class User extends Authenticatable
      */
     public function hasRole(string $role): bool
     {
-        // Vérifier d'abord la nouvelle relation roles
-        if ($this->roles()->where('slug', $role)->exists()) {
+        // 1. Vérifier si la relation est déjà chargée
+        if ($this->relationLoaded('roles')) {
+            if ($this->roles->contains('slug', $role)) {
+                return true;
+            }
+        } elseif ($this->exists && $this->roles()->where('slug', $role)->exists()) {
             return true;
         }
 
-        // Fallback vers l'ancienne colonne role pour compatibilité
+        // 2. Fallback vers l'ancienne colonne role pour compatibilité
         return $this->role === $role;
     }
 
@@ -154,13 +310,17 @@ class User extends Authenticatable
      */
     public function hasAnyRole(array $roles): bool
     {
-        // Vérifier d'abord la nouvelle relation roles
-        if ($this->roles()->whereIn('slug', $roles)->exists()) {
+        // 1. Vérifier si la relation est déjà chargée
+        if ($this->relationLoaded('roles')) {
+            if ($this->roles->whereIn('slug', $roles)->isNotEmpty()) {
+                return true;
+            }
+        } elseif ($this->exists && $this->roles()->whereIn('slug', $roles)->exists()) {
             return true;
         }
 
-        // Fallback vers l'ancienne colonne role pour compatibilité
-        return in_array($this->role, $roles);
+        // 2. Fallback vers l'ancienne colonne role pour compatibilité
+        return in_array($this->role, $roles, true);
     }
 
     /**
