@@ -1,16 +1,19 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\TenantModules;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 function seedRolesAndModules(): void
 {
-    test()->seed(\Database\Seeders\RoleSeeder::class);
+    test()->seed(RoleSeeder::class);
     // Active les modules dont dépendent les routes testées.
-    $prop = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
+    $prop = new ReflectionProperty(TenantModules::class, 'enabled');
     $prop->setAccessible(true);
     $prop->setValue(null, ['restaurant', 'shop', 'housekeeping']);
 }
@@ -39,10 +42,10 @@ test('un utilisateur est créé avec plusieurs modules et des niveaux distincts'
     $this->actingAs(User::factory()->create(['role' => 'manager']));
 
     $this->post(route('users.store'), [
-        'name'     => 'Poly Valent',
-        'email'    => 'poly@example.com',
-        'roles'    => ['reception', 'restaurant_staff', 'shop_cashier'],
-        'levels'   => ['reception' => 'write', 'restaurant_staff' => 'read', 'shop_cashier' => 'read'],
+        'name' => 'Poly Valent',
+        'email' => 'poly@example.com',
+        'roles' => ['reception', 'restaurant_staff', 'shop_cashier'],
+        'levels' => ['reception' => 'write', 'restaurant_staff' => 'read', 'shop_cashier' => 'read'],
         'password' => 'motdepasse1',
         'password_confirmation' => 'motdepasse1',
         'is_active' => 1,
@@ -105,4 +108,73 @@ test('le manager n’est jamais restreint par le niveau de module', function () 
     expect($manager->hasAnyRole(['manager']))->toBeTrue();
     // Le middleware exempte explicitement la direction : accès restaurant en écriture.
     $this->actingAs($manager)->get(route('restaurant.menus.index'))->assertOk();
+});
+
+test('un utilisateur peut être affecté à un département lors de sa création', function () {
+    seedRolesAndModules();
+    $dept = Department::create([
+        'name' => 'Réception Test',
+        'code' => 'REC',
+        'slug' => 'reception_test',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs(User::factory()->create(['role' => 'manager']));
+
+    $this->post(route('users.store'), [
+        'name' => 'Paul Mbarga',
+        'email' => 'paul.mbarga@example.com',
+        'department_id' => $dept->id,
+        'roles' => ['reception'],
+        'levels' => ['reception' => 'write'],
+        'password' => 'motdepasse1',
+        'password_confirmation' => 'motdepasse1',
+        'is_active' => 1,
+    ])->assertRedirect();
+
+    $user = User::where('email', 'paul.mbarga@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->department_id)->toBe($dept->id)
+        ->and($user->department->name)->toBe('Réception Test');
+});
+
+test('un employé existant peut être réaffecté à un département', function () {
+    seedRolesAndModules();
+    $dept = Department::create([
+        'name' => 'Housekeeping Test',
+        'code' => 'HSK',
+        'slug' => 'housekeeping_test',
+        'is_active' => true,
+    ]);
+
+    $staff = User::factory()->create(['role' => 'reception', 'department_id' => null]);
+    $this->actingAs(User::factory()->create(['role' => 'manager']));
+
+    $this->put(route('users.update', $staff), [
+        'name' => $staff->name,
+        'email' => $staff->email,
+        'department_id' => $dept->id,
+        'roles' => ['reception'],
+        'levels' => ['reception' => 'write'],
+        'is_active' => 1,
+    ])->assertRedirect();
+
+    expect($staff->fresh()->department_id)->toBe($dept->id);
+});
+
+test('le filtre par département restreint la liste des employés affichés', function () {
+    seedRolesAndModules();
+    $deptA = Department::create(['name' => 'Département A', 'code' => 'DA', 'slug' => 'dept_a', 'is_active' => true]);
+    $deptB = Department::create(['name' => 'Département B', 'code' => 'DB', 'slug' => 'dept_b', 'is_active' => true]);
+
+    $userA = User::factory()->create(['name' => 'Employé A', 'role' => 'reception', 'department_id' => $deptA->id]);
+    $userB = User::factory()->create(['name' => 'Employé B', 'role' => 'reception', 'department_id' => $deptB->id]);
+
+    $manager = User::factory()->create(['role' => 'manager']);
+    $this->actingAs($manager);
+
+    $reponse = $this->get(route('users.index', ['department_id' => $deptA->id]));
+    $reponse->assertOk()
+        ->assertSee('Employé A')
+        ->assertDontSee('Employé B');
 });

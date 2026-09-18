@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -19,7 +21,7 @@ class UserManagementController extends Controller
      * is_assignable). Tout rôle ajouté au référentiel apparaît automatiquement
      * dans le formulaire — plus de liste codée en dur.
      *
-     * @return \Illuminate\Support\Collection<int, Role>
+     * @return Collection<int, Role>
      */
     private function assignableRoles()
     {
@@ -34,10 +36,31 @@ class UserManagementController extends Controller
         // Regroupées par module pour l'affichage en cartes du formulaire.
         $rolesByModule = $assignableRoles->groupBy('module');
 
+        $departments = Department::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+
+        $deptMap = [];
+        foreach ($departments as $dept) {
+            $defaultMods = $dept->defaultModules();
+            $matchingRoles = [];
+            $roleLevels = [];
+            foreach ($assignableRoles as $role) {
+                if (isset($defaultMods[$role->module])) {
+                    $matchingRoles[] = $role->slug;
+                    $roleLevels[$role->slug] = $defaultMods[$role->module];
+                }
+            }
+            $deptMap[$dept->id] = [
+                'name' => $dept->name,
+                'code' => $dept->code,
+                'roles' => $matchingRoles,
+                'levels' => $roleLevels,
+            ];
+        }
+
         $query = User::query()
             ->where('id', '!=', $manager->id)
             ->whereNotIn('role', ['admin', 'manager'])
-            ->with('roles');
+            ->with(['roles', 'department']);
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -46,6 +69,10 @@ class UserManagementController extends Controller
                     ->orWhere('email', 'ilike', "%{$search}%")
                     ->orWhere('phone', 'ilike', "%{$search}%");
             });
+        }
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
         }
 
         if ($request->filled('role')) {
@@ -58,19 +85,21 @@ class UserManagementController extends Controller
         }
 
         $stats = [
-            'total'    => User::whereNotIn('role', ['admin', 'manager'])->count(),
-            'active'   => User::whereNotIn('role', ['admin', 'manager'])->where('is_active', true)->count(),
+            'total' => User::whereNotIn('role', ['admin', 'manager'])->count(),
+            'active' => User::whereNotIn('role', ['admin', 'manager'])->where('is_active', true)->count(),
             'inactive' => User::whereNotIn('role', ['admin', 'manager'])->where('is_active', false)->count(),
         ];
 
         $staffUsers = $query->latest('id')->paginate(15)->withQueryString();
 
         return view('users.index', [
-            'staffUsers'      => $staffUsers,
-            'roles'           => $assignableRoles,
-            'rolesByModule'   => $rolesByModule,
-            'moduleLabels'    => Role::MODULES,
-            'stats'           => $stats,
+            'staffUsers' => $staffUsers,
+            'departments' => $departments,
+            'deptMap' => $deptMap,
+            'roles' => $assignableRoles,
+            'rolesByModule' => $rolesByModule,
+            'moduleLabels' => Role::MODULES,
+            'stats' => $stats,
         ]);
     }
 
@@ -82,20 +111,21 @@ class UserManagementController extends Controller
         [$roleSlugs, $levels] = $this->extractRoles($validated);
 
         $user = User::create([
-            'name'      => $validated['name'],
-            'email'     => strtolower($validated['email']),
-            'phone'     => $validated['phone'] ?? null,
+            'name' => $validated['name'],
+            'email' => strtolower($validated['email']),
+            'phone' => $validated['phone'] ?? null,
+            'department_id' => $validated['department_id'] ?? null,
             // La colonne role garde le rôle principal (1er sélectionné), pour
             // les consommateurs mono-rôle ; l'accès complet vit dans le pivot.
-            'role'      => $roleSlugs[0],
+            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active', true),
-            'password'  => Hash::make($validated['password']),
+            'password' => Hash::make($validated['password']),
         ]);
 
         $this->syncUserRoles($user, $roleSlugs, $levels);
 
         AuditLog::record($manager->id, 'user_management',
-            "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : " . implode(', ', $roleSlugs),
+            "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
             'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs]);
 
         return redirect()
@@ -111,14 +141,15 @@ class UserManagementController extends Controller
         [$roleSlugs, $levels] = $this->extractRoles($validated);
 
         $payload = [
-            'name'      => $validated['name'],
-            'email'     => strtolower($validated['email']),
-            'phone'     => $validated['phone'] ?? null,
-            'role'      => $roleSlugs[0],
+            'name' => $validated['name'],
+            'email' => strtolower($validated['email']),
+            'phone' => $validated['phone'] ?? null,
+            'department_id' => $validated['department_id'] ?? null,
+            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active'),
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $payload['password'] = Hash::make($validated['password']);
         }
 
@@ -126,7 +157,7 @@ class UserManagementController extends Controller
         $this->syncUserRoles($user, $roleSlugs, $levels);
 
         AuditLog::record(Auth::id(), 'user_management',
-            "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : " . implode(', ', $roleSlugs),
+            "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
             'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs]);
 
         return redirect()
@@ -138,7 +169,7 @@ class UserManagementController extends Controller
     {
         $this->ensureManageableByCurrentManager($user);
 
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
         $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
 
         AuditLog::record(Auth::id(), 'user_management',
@@ -157,19 +188,20 @@ class UserManagementController extends Controller
         $assignableSlugs = $this->assignableRoles()->pluck('slug')->all();
 
         return $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
-            'phone'      => ['nullable', 'string', 'max:30'],
-            'roles'      => ['required', 'array', 'min:1'],
-            'roles.*'    => [Rule::in($assignableSlugs)],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => [Rule::in($assignableSlugs)],
             // Niveau par rôle : lecture ou lecture/écriture.
-            'levels'     => ['nullable', 'array'],
-            'levels.*'   => [Rule::in(['read', 'write'])],
-            'password'   => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
-            'is_active'  => ['nullable', 'boolean'],
+            'levels' => ['nullable', 'array'],
+            'levels.*' => [Rule::in(['read', 'write'])],
+            'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
+            'is_active' => ['nullable', 'boolean'],
         ], [
             'roles.required' => 'Sélectionnez au moins un rôle.',
-            'roles.*.in'     => 'Un des rôles sélectionnés n\'est pas autorisé.',
+            'roles.*.in' => 'Un des rôles sélectionnés n\'est pas autorisé.',
         ]);
     }
 
@@ -178,7 +210,7 @@ class UserManagementController extends Controller
      */
     private function extractRoles(array $validated): array
     {
-        $slugs  = array_values(array_unique($validated['roles']));
+        $slugs = array_values(array_unique($validated['roles']));
         $levels = $validated['levels'] ?? [];
 
         return [$slugs, $levels];
@@ -204,7 +236,7 @@ class UserManagementController extends Controller
     private function ensureManageableByCurrentManager(User $user): void
     {
         if (in_array($user->role, ['admin', 'manager'], true)) {
-            abort(403, "Ce profil ne peut pas être géré par un manager.");
+            abort(403, 'Ce profil ne peut pas être géré par un manager.');
         }
     }
 
