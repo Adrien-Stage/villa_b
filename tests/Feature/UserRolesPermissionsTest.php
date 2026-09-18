@@ -178,3 +178,26 @@ test('le filtre par département restreint la liste des employés affichés', fu
         ->assertSee('Employé A')
         ->assertDontSee('Employé B');
 });
+
+test('la résolution des rôles d’un département pré-sélectionne tous les rôles pour la Direction et les rôles métiers pour les autres départements', function () {
+    seedRolesAndModules();
+    \App\Support\RoleCatalog::sync();
+
+    $assignableRoles = Role::assignable()->get();
+
+    $deptDir = Department::where('code', 'DIR')->first() ?: Department::create(['name' => 'Direction Générale', 'code' => 'DIR', 'slug' => 'direction_generale', 'is_active' => true]);
+    $resDir = $deptDir->resolveMatchingRoles($assignableRoles);
+    expect($resDir['roles'])->toHaveCount($assignableRoles->count())
+        ->and($resDir['levels'])->toHaveKey('reception', 'write')
+        ->and($resDir['levels'])->toHaveKey('restaurant_chief', 'write');
+
+    $deptRec = Department::where('code', 'REC')->first() ?: Department::create(['name' => 'Réception', 'code' => 'REC', 'slug' => 'reception_front_office', 'is_active' => true]);
+    $resRec = $deptRec->resolveMatchingRoles($assignableRoles);
+    expect($resRec['roles'])->toContain('reception', 'cashier')
+        ->and($resRec['roles'])->not->toContain('restaurant_chief');
+
+    $deptBtq = Department::where('code', 'BTQ')->first() ?: Department::create(['name' => 'Boutique', 'code' => 'BTQ', 'slug' => 'boutique_commerce', 'is_active' => true]);
+    $resBtq = $deptBtq->resolveMatchingRoles($assignableRoles);
+    expect($resBtq['roles'])->toContain('shop_manager', 'shop_cashier');
+});
+

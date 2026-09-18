@@ -464,6 +464,10 @@ if (searchInput) {
 window.openCreateModal = function() {
     document.getElementById('create-user-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    const deptSelect = document.getElementById('create-user-dept-select');
+    if (deptSelect && deptSelect.value) {
+        window.onUserDepartmentSelect(deptSelect.value, 'create');
+    }
 };
 
 window.closeCreateModal = function() {

@@ -67,4 +67,94 @@ class Department extends Model
             ->where('module_key', $module)
             ->value('default_level');
     }
+
+    /**
+     * Résout la liste des rôles assignables et leurs niveaux d'accès par défaut ('write' ou 'read')
+     * pour la pré-sélection automatique et dynamique dans les formulaires de création / édition.
+     *
+     * @param \Illuminate\Support\Collection<int, Role> $assignableRoles
+     * @return array{roles: string[], levels: array<string, string>}
+     */
+    public function resolveMatchingRoles($assignableRoles): array
+    {
+        $defaultMods = $this->defaultModules();
+        $code = strtoupper((string) ($this->code ?? ''));
+        $slug = (string) ($this->slug ?? '');
+
+        // 1. Direction Générale : accès complet à l'ensemble des rôles & modules
+        if ($code === 'DIR' || $slug === 'direction_generale' || isset($defaultMods['*'])) {
+            $allSlugs = $assignableRoles->pluck('slug')->all();
+            return [
+                'roles'  => $allSlugs,
+                'levels' => array_fill_keys($allSlugs, 'write'),
+            ];
+        }
+
+        // 2. Périmètre métier canonique strict pour les 8 départements standards
+        $canonicalRoles = [
+            'REC' => ['reception', 'cashier'],
+            'HSK' => ['housekeeping_leader', 'housekeeping_staff'],
+            'FNB' => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook'],
+            'BTQ' => ['shop_manager', 'shop_cashier'],
+            'FIN' => ['accountant', 'cashier'],
+            'RH'  => ['rh_manager'],
+            'IT'  => ['it_support'],
+            'QLT' => ['quality_auditor'],
+        ];
+
+        if (isset($canonicalRoles[$code])) {
+            $matching = [];
+            $levels = [];
+            foreach ($canonicalRoles[$code] as $rSlug) {
+                if ($assignableRoles->contains('slug', $rSlug)) {
+                    $matching[] = $rSlug;
+                    $levels[$rSlug] = 'write';
+                }
+            }
+            if (!empty($matching)) {
+                return ['roles' => $matching, 'levels' => $levels];
+            }
+        }
+
+        // 3. Fallback dynamique pour départements sur-mesure créés dans l'ERP
+        $moduleToRoleSlugs = [
+            'hebergement'  => ['reception', 'cashier'],
+            'reservations' => ['reception', 'cashier'],
+            'clients'      => ['reception', 'cashier'],
+            'housekeeping' => ['housekeeping_leader', 'housekeeping_staff'],
+            'restaurant'   => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook'],
+            'boutique'     => ['shop_manager', 'shop_cashier'],
+            'shop'         => ['shop_manager', 'shop_cashier'],
+            'economat'     => ['econome'],
+            'comptabilite' => ['accountant'],
+            'ledger'       => ['accountant'],
+            'accounting'   => ['accountant'],
+            'rh'           => ['rh_manager'],
+            'utilisateurs' => ['rh_manager'],
+            'it'           => ['it_support'],
+            'parametres'   => ['it_support'],
+            'qualite'      => ['quality_auditor'],
+            'grc'          => ['quality_auditor'],
+        ];
+
+        $matchingRoles = [];
+        $roleLevels = [];
+
+        foreach ($defaultMods as $modKey => $level) {
+            $lvl = in_array($level, ['write', 'read'], true) ? $level : 'write';
+            if (isset($moduleToRoleSlugs[$modKey])) {
+                foreach ($moduleToRoleSlugs[$modKey] as $rSlug) {
+                    if ($assignableRoles->contains('slug', $rSlug) && !in_array($rSlug, $matchingRoles, true)) {
+                        $matchingRoles[] = $rSlug;
+                        $roleLevels[$rSlug] = $lvl;
+                    }
+                }
+            }
+        }
+
+        return [
+            'roles'  => array_values(array_unique($matchingRoles)),
+            'levels' => $roleLevels,
+        ];
+    }
 }
