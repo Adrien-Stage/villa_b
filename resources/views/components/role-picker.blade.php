@@ -3,6 +3,7 @@
     'moduleLabels' => [],
     'selected' => [],       // slugs déjà cochés (édition)
     'levels' => [],         // slug => 'read'|'write' (édition)
+    'context' => 'default', // 'create' ou 'edit_{$id}'
 ])
 
 {{--
@@ -25,7 +26,20 @@
                         $isChecked = in_array($role->slug, (array) $selected, true);
                         $lvl = $levels[$role->slug] ?? 'write';
                     @endphp
-                    <div x-data="{ checked: @js($isChecked), level: @js($lvl) }"
+                    <div x-data="{
+                             checked: @js($isChecked),
+                             level: @js($lvl),
+                             roleSlug: @js($role->slug),
+                             context: @js($context)
+                         }"
+                         @department-selected.window="
+                             if ((!$event.detail.context || $event.detail.context === context) && $event.detail.roles !== undefined) {
+                                 checked = $event.detail.roles.includes(roleSlug);
+                                 if (checked && $event.detail.levels && $event.detail.levels[roleSlug]) {
+                                     level = $event.detail.levels[roleSlug];
+                                 }
+                             }
+                         "
                          @click="checked = !checked"
                          :class="checked ? 'border-primary bg-accent/20' : 'border-secondary/20 hover:bg-accent/5'"
                          class="cursor-pointer rounded-xl border p-3 transition-colors select-none">
