@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\PointOfSale;
-use Illuminate\Support\Carbon;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -36,7 +36,7 @@ class RevenueJournal
      *     total: int
      * }
      */
-    public function forPeriod(Carbon $debut, Carbon $fin): array
+    public function forPeriod(DateTimeInterface $debut, DateTimeInterface $fin): array
     {
         $points = PointOfSale::orderBy('sort_order')->get()->keyBy('id');
         $brut   = [];
