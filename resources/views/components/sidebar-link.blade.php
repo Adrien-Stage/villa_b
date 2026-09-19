@@ -2,7 +2,24 @@
 
 @php
     $isActive = request()->routeIs($route) || request()->routeIs($route . '.*');
+
+    // Le lien pose lui-même la question que pose sa route.
+    //
+    // La barre latérale était gardée par la directive de rôle : un droit
+    // accordé depuis la matrice ouvrait la page sans jamais faire apparaître
+    // son entrée de menu.
+    // L'accès n'existait donc que pour qui connaissait l'URL — et un droit
+    // retiré laissait le lien en place, menant à un refus.
+    //
+    // Un droit absent du catalogue n'est pas un refus : on ne masque pas ce
+    // sur quoi on ne sait rien.
+    $droit    = \App\Support\PermissionCatalog::permissionForRoute($route);
+    $inconnu  = \App\Support\PermissionCatalog::roles($droit) === [];
+    $autorise = $inconnu
+        || app(\App\Services\PermissionResolver::class)->allows(auth()->user(), $droit);
 @endphp
+
+@if($autorise)
 
 <li>
     {{-- L'infobulle porte le nom de l'entrée : c'est elle qui renseigne
@@ -71,3 +88,4 @@
         <span class="sidebar-libelle">{{ $slot }}</span>
     </a>
 </li>
+@endif

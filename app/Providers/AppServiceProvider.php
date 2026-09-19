@@ -88,6 +88,30 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // @role('manager') ... @endrole
+        // @droit('economat.items.voir') ... @enddroit
+        //
+        // Pose à la vue exactement la question que pose la route. Les liens de
+        // la barre latérale étaient gardés par la directive de rôle : un droit
+        // accordé depuis
+        // la matrice ouvrait la page sans jamais faire apparaître son entrée de
+        // menu, et l'accès n'existait donc que pour qui connaissait l'URL.
+        Blade::directive('droit', function ($expression) {
+            return "<?php if(app(\\App\\Services\\PermissionResolver::class)->allows(auth()->user(), {$expression})): ?>";
+        });
+        Blade::directive('enddroit', function () {
+            return '<?php endif; ?>';
+        });
+
+        // @undroit('a', 'b') ... @endundroit — au moins l'un des droits cités.
+        // Un groupe de menu s'ouvre dès que l'une de ses entrées est permise.
+        Blade::directive('undroit', function ($expression) {
+            return "<?php \$__resolveur = app(\\App\\Services\\PermissionResolver::class);"
+                 . " if(collect([{$expression}])->contains(fn (\$d) => \$__resolveur->allows(auth()->user(), \$d))): ?>";
+        });
+        Blade::directive('endundroit', function () {
+            return '<?php endif; ?>';
+        });
+
         Blade::directive('role', function ($expression) {
             return "<?php if(auth()->check() && auth()->user()->hasAnyRole([{$expression}])): ?>";
         });
