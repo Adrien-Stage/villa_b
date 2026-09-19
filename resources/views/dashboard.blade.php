@@ -341,6 +341,29 @@
             </div>
         @endif
 
+        @if(!empty($panels['economat_alerts']) && count($panels['economat_alerts']) > 0)
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-orange-200">
+                <div class="flex items-center px-5 py-3 border-b border-orange-100 bg-orange-50/50">
+                    <h2 class="font-heading font-semibold text-orange-800 text-xs flex items-center gap-2">
+                        <i data-lucide="warehouse" class="w-3.5 h-3.5 text-orange-600"></i>
+                        À réapprovisionner (Économat)
+                    </h2>
+                </div>
+                <div class="divide-y divide-orange-100/50">
+                    @foreach($panels['economat_alerts'] as $article)
+                        <a href="{{ route('economat.items.index') }}" class="flex items-center justify-between p-3 hover:bg-orange-50/40 transition-colors">
+                            <p class="font-medium text-gray-900 text-xs">{{ $article->name }}</p>
+                            @if($article->isOutOfStock())
+                                <span class="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 uppercase">Rupture</span>
+                            @else
+                                <span class="text-[9px] font-bold bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded border border-orange-200 uppercase">Reste {{ rtrim(rtrim(number_format((float) $article->current_stock, 2, ',', ' '), '0'), ',') }} {{ $article->unit }}</span>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @if(!empty($panels['shop_low_stock']) && count($panels['shop_low_stock']) > 0)
             <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-orange-200">
                 <div class="flex items-center px-5 py-3 border-b border-orange-100 bg-orange-50/50">

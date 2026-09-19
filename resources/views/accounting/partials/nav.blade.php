@@ -1,7 +1,7 @@
 {{-- Onglets internes du module comptabilité. --}}
 @php
     $tabs = [
-        'accounting.index'            => ['Tableau de bord', 'layout-dashboard'],
+        'accounting.index'            => ['Vue d\'ensemble', 'layout-dashboard'],
         'accounting.journal'          => ['Recettes & dépenses', 'book-open'],
         'accounting.expenses'         => ['Dépenses', 'receipt'],
         'accounting.receivables'      => ['Créances', 'hand-coins'],
