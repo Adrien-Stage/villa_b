@@ -40,8 +40,8 @@ class CashClosurePolicy
 
     /** Rôles habilités à contresigner, selon le témoin exigé. */
     private const ROLES_BY_WITNESS = [
-        self::WITNESS_MANAGER    => ['manager', 'admin'],
-        self::WITNESS_ACCOUNTANT => ['accountant', 'manager', 'admin'],
+        self::WITNESS_MANAGER    => ['manager'],
+        self::WITNESS_ACCOUNTANT => ['accountant', 'manager'],
     ];
 
     /** Statut d'une caisse comptée mais pas encore contrôlée. */

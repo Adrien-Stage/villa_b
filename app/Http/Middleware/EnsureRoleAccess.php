@@ -39,97 +39,107 @@ class EnsureRoleAccess
         }
         $authorizedRoles = array_map('trim', $authorizedRoles);
 
-        // Vérifier si l'utilisateur a l'un des rôles autorisés (direct ou via son département)
+        // Seuls les rôles réellement détenus ouvrent l'accès.
+        //
+        // Le département en conférait aussi, silencieusement : rattacher un
+        // réceptionniste à « Direction Générale » lui donnait manager et admin,
+        // donc la gestion des utilisateurs et la comptabilité, sans que
+        // personne ne lui ait accordé ces rôles. Mesuré avant retrait : la même
+        // personne passait de 302 à 200 sur /users et /accounting par le seul
+        // effet de son rattachement.
+        //
+        // Le département restreint désormais les données, il n'accorde plus de
+        // droits. La commande « roles:audit-departements » liste les comptes
+        // qui dépendaient de cet octroi, pour que les rôles leur soient donnés
+        // explicitement plutôt que déduits.
         $hasRole = $user->hasAnyRole($authorizedRoles);
 
-        if (!$hasRole && $user->department_id && $user->department) {
-            $deptRoles = match ($user->department->slug) {
-                'direction_generale'       => ['manager', 'admin'],
-                'reception_front_office'   => ['reception', 'cashier'],
-                'housekeeping_hebergement' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff'],
-                'restauration_fb'          => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'],
-                'comptabilite_finance'     => ['accountant', 'cashier', 'controller'],
-                'boutique_commerce'        => ['shop_manager', 'shop_cashier'],
-                'ressources_humaines'      => ['manager'],
-                'informatique_it'          => ['admin'],
-                'qualite_controle'         => ['controller', 'manager'],
-                default                    => [],
-            };
-
-            if (!empty(array_intersect($authorizedRoles, $deptRoles))) {
-                $hasRole = true;
-            }
-        }
-
         if (!$hasRole) {
-            // Log l'accès refusé pour audit dans la base de données
-            \App\Models\AuditLog::record(
-                $user->id,
-                'access_denied',
-                'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles) . ' (URL: ' . $request->getPathInfo() . ')',
-                'security',
-                ['url' => $request->fullUrl(), 'required_roles' => $authorizedRoles]
-            );
-
-            // Messages d'erreur personnalisés par contexte
-            $customMessages = [
-                'admin' => 'Accès réservé à l\'administration.',
-                'manager' => 'Seul un manager peut effectuer cette action.',
-                'reception' => 'Réservé au personnel de réception.',
-                'housekeeping_leader' => 'Réservé aux chefs d\'équipe housekeeping.',
-                'housekeeping_staff' => 'Réservé au personnel housekeeping.',
-                'housekeeping' => 'Réservé au personnel housekeeping.',
-                'accountant' => 'Accès réservé à la comptabilité.',
-                'cashier' => 'Accès réservé aux caissiers.',
-                'econome' => 'Accès réservé à l\'économat.',
-            ];
-
-            $message = 'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles);
-
-            // Essayer de trouver un message plus spécifique
-            foreach ($authorizedRoles as $role) {
-                if (isset($customMessages[$role])) {
-                    $message = $customMessages[$role];
-                    break;
-                }
-            }
-
-            // Pour les requêtes AJAX ou qui attendent un popup
-            if ($request->expectsJson() ||
-                $request->header('X-Requested-With') === 'XMLHttpRequest' ||
-                $request->header('X-Expect-Popup') === 'true') {
-
-                return response()->json([
-                    'access_denied' => true,
-                    'message' => $message,
-                    'required_roles' => $authorizedRoles
-                ], 403);
-            }
-
-            // Log l'accès refusé pour audit
-            \Log::warning('RBAC Access Denied', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'user_role' => $user->role,
-                'required_roles' => $authorizedRoles,
-                'url' => $request->fullUrl(),
-                'ip' => $request->ip(),
-            ]);
-
-            $fallbackUrl = url()->previous();
-            $currentUrl = $request->fullUrl();
-
-            if (empty($fallbackUrl) || $fallbackUrl === $currentUrl) {
-                $fallbackUrl = route('dashboard');
-            }
-
-            return redirect($fallbackUrl)->with([
-                'access_denied_popup' => true,
-                'access_denied_message' => $message,
-            ]);
+            return $this->refuser($request, $authorizedRoles);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Réponse de refus : trace, message, et format attendu par l'appelant.
+     *
+     * Extraite pour qu'EnsurePermission la réutilise. La garde par droit décide
+     * autrement — elle consulte le catalogue et les surcharges — mais refuse
+     * exactement de la même façon : même entrée au journal d'audit, même
+     * message, même 403 JSON ou même redirection.
+     *
+     * @param  list<string>  $authorizedRoles  rôles qui auraient ouvert l'accès
+     */
+    public function refuser(Request $request, array $authorizedRoles): Response
+    {
+        $user = Auth::user();
+
+        // Log l'accès refusé pour audit dans la base de données
+        \App\Models\AuditLog::record(
+            $user->id,
+            'access_denied',
+            'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles) . ' (URL: ' . $request->getPathInfo() . ')',
+            'security',
+            ['url' => $request->fullUrl(), 'required_roles' => $authorizedRoles]
+        );
+
+        // Messages d'erreur personnalisés par contexte
+        $customMessages = [
+            'admin' => 'Accès réservé à l\'administration.',
+            'manager' => 'Seul un manager peut effectuer cette action.',
+            'reception' => 'Réservé au personnel de réception.',
+            'housekeeping_leader' => 'Réservé aux chefs d\'équipe housekeeping.',
+            'housekeeping_staff' => 'Réservé au personnel housekeeping.',
+            'housekeeping' => 'Réservé au personnel housekeeping.',
+            'accountant' => 'Accès réservé à la comptabilité.',
+            'cashier' => 'Accès réservé aux caissiers.',
+            'econome' => 'Accès réservé à l\'économat.',
+        ];
+
+        $message = 'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles);
+
+        // Essayer de trouver un message plus spécifique
+        foreach ($authorizedRoles as $role) {
+            if (isset($customMessages[$role])) {
+                $message = $customMessages[$role];
+                break;
+            }
+        }
+
+        // Pour les requêtes AJAX ou qui attendent un popup
+        if ($request->expectsJson() ||
+            $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+            $request->header('X-Expect-Popup') === 'true') {
+
+            return response()->json([
+                'access_denied' => true,
+                'message' => $message,
+                'required_roles' => $authorizedRoles
+            ], 403);
+        }
+
+        // Log l'accès refusé pour audit
+        \Log::warning('RBAC Access Denied', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_role' => $user->role,
+            'required_roles' => $authorizedRoles,
+            'url' => $request->fullUrl(),
+            'ip' => $request->ip(),
+        ]);
+
+        $fallbackUrl = url()->previous();
+        $currentUrl = $request->fullUrl();
+
+        if (empty($fallbackUrl) || $fallbackUrl === $currentUrl) {
+            $fallbackUrl = route('dashboard');
+        }
+
+        return redirect($fallbackUrl)->with([
+            'access_denied_popup' => true,
+            'access_denied_message' => $message,
+        ]);
     }
 
     /**

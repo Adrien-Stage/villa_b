@@ -38,6 +38,14 @@ Route::prefix('v1')->middleware('module:api')->group(function () {
 // de service (Authorization: Bearer REPORTING_SECRET).
 // Conditionnée par l'activation du module 'api' (TENANT_MODULES).
 // ==========================================
+// Matrice des droits : lue et écrite par la console d'orchestration, qui
+// pilote les rôles ; les dérogations nominatives accordées sur place lui
+// restent étrangères.
+Route::prefix('permissions')->middleware(['module:api', 'reporting.token'])->group(function () {
+    Route::get('/matrice',  [\App\Http\Controllers\Api\PermissionMatrixController::class, 'show'])->name('api.permissions.matrice');
+    Route::put('/matrice',  [\App\Http\Controllers\Api\PermissionMatrixController::class, 'update'])->name('api.permissions.matrice.update');
+});
+
 Route::prefix('reporting')->middleware(['module:api', 'reporting.token'])->group(function () {
     Route::get('/summary',    [ReportingController::class, 'summary'])->name('api.reporting.summary');
     Route::get('/revenue',    [ReportingController::class, 'revenue'])->name('api.reporting.revenue');

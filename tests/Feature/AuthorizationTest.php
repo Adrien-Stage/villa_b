@@ -91,7 +91,9 @@ test('roles are seeded correctly', function () {
     $this->seed(\Database\Seeders\RoleSeeder::class);
 
     // Les rôles dont le reste de la suite dépend nommément.
-    foreach (['admin', 'manager', 'reception', 'accountant', 'econome'] as $slug) {
+    // « admin » n'y figure plus : la console de supervision ne se gère pas
+    // par un rôle d'établissement.
+    foreach (['manager', 'reception', 'accountant', 'econome'] as $slug) {
         expect(Role::where('slug', $slug)->exists())->toBeTrue("Rôle absent du seeder : {$slug}");
     }
 

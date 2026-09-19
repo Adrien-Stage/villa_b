@@ -1,0 +1,1017 @@
+{
+ "accounting.cash": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.cash_reviews": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.cash_reviews.store": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.expenses": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.expenses.destroy": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.expenses.store": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.expenses.update": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.income_statement": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.index": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.journal": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.accounts": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.aged": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.analytic": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.analytic.margins": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.analytic.mirror": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.auxiliary": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.auxiliary.ledger": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.balance": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.entry": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.entry.reverse": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.general": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.index": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.journals": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.night_audit": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.night_audit.run": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.opening": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.opening.store": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.periods": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.periods.lock": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.reconcile": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.reconcile.auto": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.reconcile.undo": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.suppliers": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.suppliers.create": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.suppliers.show": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.suppliers.store": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.withholding": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.ledger.years.open": [
+  "accountant",
+  "manager"
+ ],
+ "accounting.receivables": [
+  "accountant",
+  "manager"
+ ],
+ "agenda.index": [
+  "manager",
+  "reception"
+ ],
+ "analytics.index": [
+  "manager"
+ ],
+ "analytics.print": [
+  "manager"
+ ],
+ "bookings.approve": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cancel": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.close": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.close.store": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.disbursements.store": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.index": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.open": [
+  "manager",
+  "reception"
+ ],
+ "bookings.cash_register.open.store": [
+  "manager",
+  "reception"
+ ],
+ "bookings.checkIn": [
+  "manager",
+  "reception"
+ ],
+ "bookings.checkOut": [
+  "manager",
+  "reception"
+ ],
+ "bookings.checkin_code.send": [
+  "manager",
+  "reception"
+ ],
+ "bookings.confirm": [
+  "manager",
+  "reception"
+ ],
+ "bookings.create": [
+  "manager",
+  "reception"
+ ],
+ "bookings.drafts.continue": [
+  "manager",
+  "reception"
+ ],
+ "bookings.drafts.destroy": [
+  "manager",
+  "reception"
+ ],
+ "bookings.drafts.index": [
+  "manager",
+  "reception"
+ ],
+ "bookings.drafts.resume": [
+  "manager",
+  "reception"
+ ],
+ "bookings.drafts.save": [
+  "manager",
+  "reception"
+ ],
+ "bookings.edit": [
+  "manager",
+  "reception"
+ ],
+ "bookings.folio.add": [
+  "manager",
+  "reception"
+ ],
+ "bookings.folio.remove": [
+  "manager",
+  "reception"
+ ],
+ "bookings.index": [
+  "manager",
+  "reception"
+ ],
+ "bookings.payment.add": [
+  "manager",
+  "reception"
+ ],
+ "bookings.show": [
+  "manager",
+  "reception"
+ ],
+ "bookings.store": [
+  "manager",
+  "reception"
+ ],
+ "bookings.update": [
+  "manager",
+  "reception"
+ ],
+ "customers.create": [
+  "manager",
+  "reception"
+ ],
+ "customers.edit": [
+  "manager",
+  "reception"
+ ],
+ "customers.export": [
+  "manager",
+  "reception"
+ ],
+ "customers.import": [
+  "manager",
+  "reception"
+ ],
+ "customers.index": [
+  "cashier",
+  "manager",
+  "reception"
+ ],
+ "customers.show": [
+  "cashier",
+  "manager",
+  "reception"
+ ],
+ "customers.store": [
+  "manager",
+  "reception"
+ ],
+ "customers.update": [
+  "manager",
+  "reception"
+ ],
+ "economat.index": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.adjust": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.destroy": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.export": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.import": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.index": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.show": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.store": [
+  "econome",
+  "manager"
+ ],
+ "economat.items.update": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.cancel": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.create": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.index": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.receive": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.send": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.show": [
+  "econome",
+  "manager"
+ ],
+ "economat.orders.store": [
+  "econome",
+  "manager"
+ ],
+ "economat.requisitions.approve": [
+  "econome",
+  "manager"
+ ],
+ "economat.requisitions.cancel": [
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.requisitions.create": [
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.requisitions.deliver": [
+  "econome",
+  "manager"
+ ],
+ "economat.requisitions.index": [
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.requisitions.reject": [
+  "econome",
+  "manager"
+ ],
+ "economat.requisitions.show": [
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.requisitions.store": [
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.suppliers.destroy": [
+  "econome",
+  "manager"
+ ],
+ "economat.suppliers.index": [
+  "econome",
+  "manager"
+ ],
+ "economat.suppliers.store": [
+  "econome",
+  "manager"
+ ],
+ "economat.suppliers.update": [
+  "econome",
+  "manager"
+ ],
+ "groups.addRoom": [
+  "manager"
+ ],
+ "groups.cancel": [
+  "manager"
+ ],
+ "groups.checkInAll": [
+  "manager",
+  "reception"
+ ],
+ "groups.checkOutAll": [
+  "manager",
+  "reception"
+ ],
+ "groups.create": [
+  "manager"
+ ],
+ "groups.edit": [
+  "manager"
+ ],
+ "groups.folio.add": [
+  "manager",
+  "reception"
+ ],
+ "groups.index": [
+  "manager",
+  "reception"
+ ],
+ "groups.invoice": [
+  "manager",
+  "reception"
+ ],
+ "groups.payment.add": [
+  "manager",
+  "reception"
+ ],
+ "groups.removeRoom": [
+  "manager"
+ ],
+ "groups.show": [
+  "manager",
+  "reception"
+ ],
+ "groups.store": [
+  "manager"
+ ],
+ "groups.update": [
+  "manager"
+ ],
+ "housekeeping.assignments.store": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.available": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.clean": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.index": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.inspect": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.issue": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.ready": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.reject": [
+  "housekeeping",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager"
+ ],
+ "housekeeping.teams.store": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "invoices.show": [
+  "cashier",
+  "manager",
+  "reception"
+ ],
+ "reception.pos.history": [
+  "manager",
+  "reception"
+ ],
+ "reception.pos.index": [
+  "manager",
+  "reception"
+ ],
+ "reception.pos.receipt": [
+  "manager",
+  "reception"
+ ],
+ "reception.pos.sales.store": [
+  "manager",
+  "reception"
+ ],
+ "restaurant.billing.index": [
+  "cashier",
+  "manager",
+  "restaurant_chief"
+ ],
+ "restaurant.billing.paid": [
+  "cashier",
+  "restaurant_chief"
+ ],
+ "restaurant.billing.receipt": [
+  "cashier",
+  "manager",
+  "restaurant_chief"
+ ],
+ "restaurant.billing.show": [
+  "cashier",
+  "manager",
+  "restaurant_chief"
+ ],
+ "restaurant.billing.unpaid": [
+  "cashier",
+  "restaurant_chief"
+ ],
+ "restaurant.kitchen.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.menus.categories.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.categories.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.categories.update": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.export": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.menus.import": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.menus.items.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.items.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.menus.items.update": [
+  "restaurant_chief"
+ ],
+ "restaurant.orders.claim": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.preparing": [
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.orders.ready": [
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.orders.reassign": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.send_to_kitchen": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.served": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.show": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.status": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.orders.store": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.pantry.categories.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.categories.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.categories.update": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.export": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.pantry.import": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.pantry.items.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.items.receive": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.items.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.items.update": [
+  "restaurant_chief"
+ ],
+ "restaurant.pantry.movements.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.recipes.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.recipes.export": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.recipes.import": [
+  "restaurant_chief"
+ ],
+ "restaurant.recipes.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.recipes.produce": [
+  "restaurant_chief"
+ ],
+ "restaurant.recipes.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.recipes.update": [
+  "restaurant_chief"
+ ],
+ "restaurant.shifts.close": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.shifts.open": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
+ "restaurant.stock_counts.close": [
+  "restaurant_chief"
+ ],
+ "restaurant.stock_counts.destroy": [
+  "restaurant_chief"
+ ],
+ "restaurant.stock_counts.index": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.stock_counts.show": [
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.stock_counts.store": [
+  "restaurant_chief"
+ ],
+ "restaurant.stock_counts.update": [
+  "restaurant_chief"
+ ],
+ "rooms.cost_sheets.assumptions": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.export": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.import": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.index": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.items.destroy": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.items.store": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.items.update": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.show": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.cost_sheets.starter": [
+  "accountant",
+  "manager"
+ ],
+ "rooms.destroy": [
+  "manager",
+  "reception"
+ ],
+ "rooms.export": [
+  "manager",
+  "reception"
+ ],
+ "rooms.images.destroy": [
+  "manager",
+  "reception"
+ ],
+ "rooms.import": [
+  "manager",
+  "reception"
+ ],
+ "rooms.index": [
+  "manager",
+  "reception"
+ ],
+ "rooms.show": [
+  "manager",
+  "reception"
+ ],
+ "rooms.store": [
+  "manager",
+  "reception"
+ ],
+ "rooms.types.destroy": [
+  "manager",
+  "reception"
+ ],
+ "rooms.types.export": [
+  "manager",
+  "reception"
+ ],
+ "rooms.types.import": [
+  "manager",
+  "reception"
+ ],
+ "rooms.types.store": [
+  "manager",
+  "reception"
+ ],
+ "rooms.types.update": [
+  "manager",
+  "reception"
+ ],
+ "rooms.update": [
+  "manager",
+  "reception"
+ ],
+ "rooms.updateStatus": [
+  "manager",
+  "reception"
+ ],
+ "settings.export": [
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "settings.import": [
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "settings.index": [
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "settings.packages.destroy": [
+  "manager"
+ ],
+ "settings.packages.export": [
+  "manager"
+ ],
+ "settings.packages.import": [
+  "manager"
+ ],
+ "settings.packages.store": [
+  "manager"
+ ],
+ "settings.packages.update": [
+  "manager"
+ ],
+ "settings.partners.destroy": [
+  "manager"
+ ],
+ "settings.partners.export": [
+  "manager"
+ ],
+ "settings.partners.import": [
+  "manager"
+ ],
+ "settings.partners.store": [
+  "manager"
+ ],
+ "settings.partners.update": [
+  "manager"
+ ],
+ "settings.services.destroy": [
+  "manager"
+ ],
+ "settings.services.export": [
+  "manager"
+ ],
+ "settings.services.import": [
+  "manager"
+ ],
+ "settings.services.store": [
+  "manager"
+ ],
+ "settings.services.update": [
+  "manager"
+ ],
+ "settings.update": [
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "shop.cash_register.close": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.cash_register.close.store": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.cash_register.disbursements.store": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.cash_register.index": [
+  "manager",
+  "shop_manager"
+ ],
+ "shop.cash_register.open": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.cash_register.open.store": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.create": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.index": [
+  "manager",
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.paid": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.receipt": [
+  "manager",
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.refund": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.show": [
+  "manager",
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.orders.store": [
+  "shop_cashier",
+  "shop_manager"
+ ],
+ "shop.products.create": [
+  "shop_manager"
+ ],
+ "shop.products.destroy": [
+  "shop_manager"
+ ],
+ "shop.products.edit": [
+  "shop_manager"
+ ],
+ "shop.products.export": [
+  "manager",
+  "shop_manager"
+ ],
+ "shop.products.import": [
+  "shop_manager"
+ ],
+ "shop.products.index": [
+  "manager",
+  "shop_manager"
+ ],
+ "shop.products.store": [
+  "shop_manager"
+ ],
+ "shop.products.update": [
+  "shop_manager"
+ ],
+ "test-popup": [
+  "manager"
+ ],
+ "users.index": [
+  "manager"
+ ],
+ "users.store": [
+  "manager"
+ ],
+ "users.toggleStatus": [
+  "manager"
+ ],
+ "users.update": [
+  "manager"
+ ]
+}

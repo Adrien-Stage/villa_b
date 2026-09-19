@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\DutySegregation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -103,6 +104,10 @@ class UserManagementController extends Controller
         $validated = $this->validatePayload($request);
         [$roleSlugs, $levels] = $this->extractRoles($validated);
 
+        if ($refus = $this->refuserCumulIncompatible($request, $roleSlugs)) {
+            return $refus;
+        }
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
@@ -132,6 +137,10 @@ class UserManagementController extends Controller
 
         $validated = $this->validatePayload($request, $user);
         [$roleSlugs, $levels] = $this->extractRoles($validated);
+
+        if ($refus = $this->refuserCumulIncompatible($request, $roleSlugs)) {
+            return $refus;
+        }
 
         $payload = [
             'name' => $validated['name'],
@@ -192,10 +201,66 @@ class UserManagementController extends Controller
             'levels.*' => [Rule::in(['read', 'write'])],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
+            // Dérogation à la séparation des tâches : un établissement de six
+            // personnes ne peut pas toujours séparer quatre fonctions. Elle se
+            // demande explicitement et se motive.
+            'derogation' => ['nullable', 'boolean'],
+            'derogation_motif' => ['nullable', 'string', 'max:255', 'required_if:derogation,1'],
         ], [
             'roles.required' => 'Sélectionnez au moins un rôle.',
             'roles.*.in' => 'Un des rôles sélectionnés n\'est pas autorisé.',
+            'derogation_motif.required_if' => 'Indiquez pourquoi ce cumul est accordé malgré tout.',
         ]);
+    }
+
+    /**
+     * Refuse un cumul de rôles qui casse la séparation des tâches, sauf
+     * dérogation motivée.
+     *
+     * Quatre fonctions doivent rester dans des mains différentes : autoriser,
+     * détenir, enregistrer, contrôler. Qui en cumule deux sur un même cycle
+     * peut commettre un acte et le dissimuler. Le cas relevé sur un compte
+     * réel : économe, comptable et auditeur qualité sur une seule personne,
+     * soit la détention du stock, sa comptabilisation et le contrôle des deux.
+     *
+     * Le refus n'est pas absolu. Un établissement de six personnes ne peut pas
+     * séparer quatre fonctions : la dérogation existe, elle se demande
+     * explicitement, elle exige un motif, et elle est tracée.
+     */
+    private function refuserCumulIncompatible(Request $request, array $roleSlugs): ?RedirectResponse
+    {
+        $conflits = DutySegregation::conflictsFor($roleSlugs);
+
+        if ($conflits === []) {
+            return null;
+        }
+
+        if ($request->boolean('derogation')) {
+            AuditLog::record(
+                Auth::id(),
+                'duty_segregation_override',
+                'Dérogation à la séparation des tâches — cumul : '
+                    . implode(' ; ', array_map(
+                        static fn (array $c): string => implode(' × ', $c['roles']),
+                        $conflits
+                    ))
+                    . ' — motif : ' . $request->string('derogation_motif'),
+                'security',
+                ['roles' => $roleSlugs, 'conflits' => $conflits]
+            );
+
+            return null;
+        }
+
+        $messages = array_map(
+            static fn (array $c): string => implode(' × ', $c['roles']) . ' — ' . $c['motif'],
+            $conflits
+        );
+
+        return redirect()->back()
+            ->withInput()
+            ->withErrors(['roles' => $messages])
+            ->with('duty_segregation_conflits', $messages);
     }
 
     /**

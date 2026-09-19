@@ -22,7 +22,7 @@ class ProfileController extends Controller
             ['label' => 'Acces chambres', 'allowed' => $user->canManageRooms()],
             ['label' => 'Acces reservations', 'allowed' => $user->canManageBookings()],
             ['label' => 'Acces donnees financieres', 'allowed' => $user->canAccessFinancialData()],
-            ['label' => 'Gestion staff', 'allowed' => $user->hasAnyRole(['manager', 'admin'])],
+            ['label' => 'Gestion staff', 'allowed' => $user->hasAnyRole(['manager'])],
             ['label' => 'Actions housekeeping', 'allowed' => $user->hasAnyRole(['housekeeping_leader', 'housekeeping_staff', 'housekeeping', 'manager'])],
         ];
 

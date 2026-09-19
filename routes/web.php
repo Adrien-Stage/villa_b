@@ -91,19 +91,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- PARAMETRES ---
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])
         ->name('settings.index')
-        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+        ->middleware('permission');
     Route::post('/settings', [App\Http\Controllers\SettingsController::class, 'update'])
         ->name('settings.update')
-        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+        ->middleware('permission');
     Route::get('/settings/export/{tab}', [App\Http\Controllers\SettingsCsvController::class, 'exportSettings'])
         ->name('settings.export')
-        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+        ->middleware('permission');
     Route::post('/settings/import/{tab}', [App\Http\Controllers\SettingsCsvController::class, 'importSettings'])
         ->name('settings.import')
-        ->middleware('role:manager,reception,housekeeping_leader,restaurant_chief,shop_manager');
+        ->middleware('permission');
 
     // Catalogue des prestations (onglet "Prestations" des paramètres)
-    Route::middleware('role:manager')->group(function () {
+    Route::middleware('permission')->group(function () {
         Route::post('/settings/services', [App\Http\Controllers\ServiceCatalogController::class, 'store'])
             ->name('settings.services.store');
         Route::put('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'update'])
@@ -195,32 +195,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- CHAMBRES ---
     // Chambres : géré par manager/réception. Le housekeeping change les statuts
     // depuis son propre module, plus depuis cette rubrique.
-    Route::prefix('rooms')->name('rooms.')->middleware(['role:manager,reception', 'module.access:hebergement'])->group(function () {
+    Route::prefix('rooms')->name('rooms.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
-        Route::post('/',               [RoomController::class, 'store'])->middleware('role:manager,reception')->name('store');
+        Route::post('/',               [RoomController::class, 'store'])->middleware('permission')->name('store');
 
         // Import / export CSV — déclarés avant /{room} pour ne pas être
         // capturés par le binding de modèle (sinon "export" = id de chambre)
-        Route::get('/export',         [\App\Http\Controllers\RoomCsvController::class, 'exportRooms'])->middleware('role:manager,reception')->name('export');
-        Route::post('/import',        [\App\Http\Controllers\RoomCsvController::class, 'importRooms'])->middleware('role:manager,reception')->name('import');
-        Route::get('/types/export',   [\App\Http\Controllers\RoomCsvController::class, 'exportTypes'])->middleware('role:manager,reception')->name('types.export');
-        Route::post('/types/import',  [\App\Http\Controllers\RoomCsvController::class, 'importTypes'])->middleware('role:manager,reception')->name('types.import');
+        Route::get('/export',         [\App\Http\Controllers\RoomCsvController::class, 'exportRooms'])->middleware('permission')->name('export');
+        Route::post('/import',        [\App\Http\Controllers\RoomCsvController::class, 'importRooms'])->middleware('permission')->name('import');
+        Route::get('/types/export',   [\App\Http\Controllers\RoomCsvController::class, 'exportTypes'])->middleware('permission')->name('types.export');
+        Route::post('/types/import',  [\App\Http\Controllers\RoomCsvController::class, 'importTypes'])->middleware('permission')->name('types.import');
 
         Route::get('/{room}',          [RoomController::class, 'show'])->name('show');
-        Route::put('/{room}',          [RoomController::class, 'update'])->middleware('role:manager,reception')->name('update');
-        Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('role:manager,reception')->name('destroy');
-        Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('role:manager,reception')->name('images.destroy');
+        Route::put('/{room}',          [RoomController::class, 'update'])->middleware('permission')->name('update');
+        Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('permission')->name('destroy');
+        Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('permission')->name('images.destroy');
 
         // Types de chambres - seulement manager
-        Route::post('/types/store',         [RoomController::class, 'storeType'])->middleware('role:manager,reception')->name('types.store');
-        Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('role:manager,reception')->name('types.update');
-        Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('role:manager,reception')->name('types.destroy');
+        Route::post('/types/store',         [RoomController::class, 'storeType'])->middleware('permission')->name('types.store');
+        Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('permission')->name('types.update');
+        Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('permission')->name('types.destroy');
     });
 
     // --- FICHES TECHNIQUES DES CHAMBRES (marge sur une chambre louée) ---
     // Donnée de gestion : réservée au manager et au comptable. Préfixe hors du
     // groupe « rooms » pour ne pas heurter sa route rooms/{room}.
-    Route::prefix('hebergement/fiches-techniques')->name('rooms.cost_sheets.')->middleware('role:manager,accountant')->group(function () {
+    Route::prefix('hebergement/fiches-techniques')->name('rooms.cost_sheets.')->middleware('permission')->group(function () {
         $c = App\Http\Controllers\RoomCostSheetController::class;
 
         Route::get('/', [$c, 'index'])->name('index');
@@ -236,18 +236,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')->name('items.destroy');
     });
     Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
-        ->middleware('role:manager,reception')
+        ->middleware('permission')
         ->name('rooms.updateStatus');
 
     // --- AGENDA ---
     // L'agenda a sa propre entrée de menu : le calendrier des séjours n'est
     // plus une seconde vue de la liste des réservations.
     Route::get('/agenda', [BookingController::class, 'agenda'])
-        ->middleware(['role:manager,reception', 'module.access:hebergement'])
+        ->middleware(['permission', 'module.access:hebergement'])
         ->name('agenda.index');
 
     // --- MODE POS RÉCEPTION ---
-    Route::prefix('reception/pos')->name('reception.pos.')->middleware(['role:manager,reception', 'module.access:hebergement'])->group(function () {
+    Route::prefix('reception/pos')->name('reception.pos.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'index'])->name('index');
         Route::post('/sales', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'store'])->name('sales.store');
         Route::get('/sales/{sale}/receipt', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'receipt'])->name('receipt');
@@ -255,7 +255,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- RÉSERVATIONS ---
-    Route::prefix('bookings')->name('bookings.')->middleware(['role:manager,reception', 'module.access:hebergement'])->group(function () {
+    Route::prefix('bookings')->name('bookings.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
         Route::get('/create',                  [BookingController::class, 'create'])->name('create');
         Route::post('/',                       [BookingController::class, 'store'])->name('store');
@@ -303,47 +303,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
             Route::post('/{booking}/confirm',      [BookingController::class, 'confirm'])->name('confirm');
             Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
-            Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.add');
-            Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('role:reception,manager,restaurant_chief,cashier')->name('folio.remove');
-            Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('role:reception,manager,cashier')->name('payment.add');
+            Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('permission')->name('folio.add');
+            Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('permission')->name('folio.remove');
+            Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('permission')->name('payment.add');
         });
     });
 
-    Route::prefix('groups')->name('groups.')->middleware(['role:manager,reception', 'module.access:hebergement'])->group(function () {
+    Route::prefix('groups')->name('groups.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
         Route::get('/',                          [GroupBookingController::class, 'index'])->name('index');
-        Route::get('/create',                    [GroupBookingController::class, 'create'])->middleware('role:manager')->name('create');
-        Route::post('/',                         [GroupBookingController::class, 'store'])->middleware('role:manager')->name('store');
+        Route::get('/create',                    [GroupBookingController::class, 'create'])->middleware('permission')->name('create');
+        Route::post('/',                         [GroupBookingController::class, 'store'])->middleware('permission')->name('store');
         Route::get('/{groupBooking}',            [GroupBookingController::class, 'show'])->name('show');
-        Route::post('/{groupBooking}/room',      [GroupBookingController::class, 'addRoom'])->middleware('role:manager')->name('addRoom');
-        Route::delete('/{groupBooking}/room/{booking}', [GroupBookingController::class, 'removeRoom'])->middleware('role:manager')->name('removeRoom');
+        Route::post('/{groupBooking}/room',      [GroupBookingController::class, 'addRoom'])->middleware('permission')->name('addRoom');
+        Route::delete('/{groupBooking}/room/{booking}', [GroupBookingController::class, 'removeRoom'])->middleware('permission')->name('removeRoom');
         Route::post('/{groupBooking}/checkin',   [GroupBookingController::class, 'checkInAll'])->name('checkInAll');
         Route::post('/{groupBooking}/checkout',  [GroupBookingController::class, 'checkOutAll'])->name('checkOutAll');
         Route::post('/{groupBooking}/folio', [GroupBookingController::class, 'addGroupFolioItem'])->name('folio.add');
-        Route::post('/{groupBooking}/payment', [GroupBookingController::class, 'addGroupPayment'])->middleware('role:manager,reception,cashier')->name('payment.add');
-        Route::get('/{groupBooking}/invoice', [GroupBookingController::class, 'invoice'])->middleware('role:cashier,manager,reception')->name('invoice');
-        Route::get('/{groupBooking}/edit',   [GroupBookingController::class, 'edit'])->middleware('role:manager')->name('edit');
-        Route::put('/{groupBooking}',        [GroupBookingController::class, 'update'])->middleware('role:manager')->name('update');
-        Route::post('/{groupBooking}/cancel', [GroupBookingController::class, 'cancel'])->middleware('role:manager')->name('cancel');
+        Route::post('/{groupBooking}/payment', [GroupBookingController::class, 'addGroupPayment'])->middleware('permission')->name('payment.add');
+        Route::get('/{groupBooking}/invoice', [GroupBookingController::class, 'invoice'])->middleware('permission')->name('invoice');
+        Route::get('/{groupBooking}/edit',   [GroupBookingController::class, 'edit'])->middleware('permission')->name('edit');
+        Route::put('/{groupBooking}',        [GroupBookingController::class, 'update'])->middleware('permission')->name('update');
+        Route::post('/{groupBooking}/cancel', [GroupBookingController::class, 'cancel'])->middleware('permission')->name('cancel');
     });
 
     // --- CLIENTS ---
-    Route::prefix('customers')->name('customers.')->middleware(['role:manager,reception,cashier', 'module.access:hebergement'])->group(function () {
+    Route::prefix('customers')->name('customers.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
         Route::get('/',               [CustomerController::class, 'index'])->name('index');
         // Import / export CSV — déclarés avant /{customer} pour ne pas être capturés par le binding.
-        Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])->middleware('role:reception,manager')->name('export');
-        Route::post('/import',        [App\Http\Controllers\CustomerCsvController::class, 'import'])->middleware('role:reception,manager')->name('import');
-        Route::get('/create',         [CustomerController::class, 'create'])->middleware('role:reception,manager')->name('create');
-        Route::post('/',              [CustomerController::class, 'store'])->middleware('role:reception,manager')->name('store');
+        Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])->middleware('permission')->name('export');
+        Route::post('/import',        [App\Http\Controllers\CustomerCsvController::class, 'import'])->middleware('permission')->name('import');
+        Route::get('/create',         [CustomerController::class, 'create'])->middleware('permission')->name('create');
+        Route::post('/',              [CustomerController::class, 'store'])->middleware('permission')->name('store');
         Route::get('/{customer}',     [CustomerController::class, 'show'])->name('show');
-        Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->middleware('role:reception,manager')->name('edit');
-        Route::put('/{customer}',     [CustomerController::class, 'update'])->middleware('role:reception,manager')->name('update');
+        Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->middleware('permission')->name('edit');
+        Route::put('/{customer}',     [CustomerController::class, 'update'])->middleware('permission')->name('update');
     });
 
     // --- HOUSEKEEPING ---
-    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['role:housekeeping_leader,housekeeping_staff,housekeeping,manager', 'module:housekeeping', 'module.access:housekeeping'])->group(function () {
+    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping', 'module.access:housekeeping'])->group(function () {
         Route::get('/',                    [HousekeepingController::class, 'index'])->name('index');
-        Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('role:housekeeping_leader,manager')->name('teams.store');
-        Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('role:housekeeping_leader,manager')->name('assignments.store');
+        Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('permission')->name('teams.store');
+        Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('permission')->name('assignments.store');
         Route::post('/{room}/clean',       [HousekeepingController::class, 'markCleaning'])->name('clean');
         Route::post('/{room}/ready',       [HousekeepingController::class, 'markReady'])->name('ready');
         Route::post('/{room}/inspect',     [HousekeepingController::class, 'markInspected'])->name('inspect');
@@ -354,7 +354,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (menus) ---
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_staff,restaurant_cook', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
@@ -364,7 +364,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Gestion du restaurant : coûts, stocks et inventaires. La salle en est
     // écartée — masquer le lien sans fermer l'URL n'aurait rien masqué.
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,restaurant_cook', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
         Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
@@ -374,13 +374,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_cook,restaurant_chief', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])->whereNumber('order')->name('orders.preparing');
         Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')->name('orders.ready');
     });
 
     // Salle : prise de service, transmission en cuisine, service (serveur + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_staff,restaurant_chief', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])->name('shifts.open');
         Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])->name('shifts.close');
 
@@ -391,14 +391,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Écriture RESTAURANT — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_chief,restaurant_staff', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
         // Le serveur n'ouvre plus le garde-manger : il n'a plus à en sortir
         // des mouvements de stock.
-        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->middleware('role:restaurant_chief')->name('pantry.movements.store');
+        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->middleware('permission')->name('pantry.movements.store');
 
-        Route::middleware('role:restaurant_chief')->group(function () {
+        Route::middleware('permission')->group(function () {
             Route::post('/menus/categories', [RestaurantMenuController::class, 'storeCategory'])->name('menus.categories.store');
             Route::put('/menus/categories/{category}', [RestaurantMenuController::class, 'updateCategory'])->name('menus.categories.update');
             Route::delete('/menus/categories/{category}', [RestaurantMenuController::class, 'destroyCategory'])->name('menus.categories.destroy');
@@ -437,24 +437,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (facturation interne) ---
     // Lecture (manager peut consulter)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:manager,restaurant_chief,cashier', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
         Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
     });
 
     // Écriture facturation — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['role:restaurant_chief,cashier', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
         Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
     });
 
-    Route::prefix('invoices')->name('invoices.')->middleware('role:manager,reception,cashier')->group(function () {
+    Route::prefix('invoices')->name('invoices.')->middleware('permission')->group(function () {
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
     });
 
     // --- UTILISATEURS (staff) ---
-    Route::prefix('users')->name('users.')->middleware('role:manager')->group(function () {
+    Route::prefix('users')->name('users.')->middleware('permission')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
@@ -462,7 +462,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- COMPTABILITÉ (comptabilité de caisse : hébergement + resto + boutique) ---
-    Route::prefix('accounting')->name('accounting.')->middleware('role:accountant,manager,admin')->group(function () {
+    Route::prefix('accounting')->name('accounting.')->middleware('permission')->group(function () {
         $c = App\Http\Controllers\AccountingController::class;
 
         Route::get('/', [$c, 'index'])->name('index');
@@ -551,7 +551,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $eco = 'App\\Http\\Controllers\\Economat\\';
 
         // Gestion du magasin : réservée à l'économe (et manager/admin).
-        Route::middleware(['role:econome,manager,admin', 'module.access:economat'])->group(function () use ($eco) {
+        Route::middleware(['permission', 'module.access:economat'])->group(function () use ($eco) {
             Route::get('/', [$eco . 'EconomatController', 'index'])->name('index');
 
             // Articles
@@ -588,7 +588,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Demandes : ouvertes aussi aux responsables de département qui
         // sollicitent l'économat. Le contrôleur cloisonne à leurs propres demandes.
-        Route::middleware('role:econome,manager,admin,reception,housekeeping_leader,restaurant_chief,shop_manager')->group(function () use ($eco) {
+        Route::middleware('permission')->group(function () use ($eco) {
             Route::get('/demandes', [$eco . 'StockRequisitionController', 'index'])->name('requisitions.index');
             Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
             Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
@@ -599,17 +599,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- SHOP ---
     // Lecture seule pour le manager (GET uniquement)
-    Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier,manager', 'module:shop', 'module.access:boutique'])->group(function () {
-        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('role:shop_manager,manager')->name('cash_register.index');
-        Route::get('/products', [ShopProductController::class, 'index'])->middleware('role:shop_manager,manager')->name('products.index');
-        Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])->middleware('role:shop_manager,manager')->name('products.export');
+    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop', 'module.access:boutique'])->group(function () {
+        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('permission')->name('cash_register.index');
+        Route::get('/products', [ShopProductController::class, 'index'])->middleware('permission')->name('products.index');
+        Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])->middleware('permission')->name('products.export');
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->whereNumber('order')->name('orders.receipt');
         Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
     });
 
     // Écriture SHOP — manager totalement exclu
-    Route::prefix('shop')->name('shop.')->middleware(['role:shop_manager,shop_cashier', 'module:shop', 'module.access:boutique'])->group(function () {
+    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop', 'module.access:boutique'])->group(function () {
         // Caisse — ouverture : shop_manager + shop_cashier
         Route::get('/cash-register/open', [CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
@@ -628,7 +628,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/orders/{order}/refund', [ShopOrderController::class, 'refund'])->whereNumber('order')->name('orders.refund');
 
         // Articles — shop_manager uniquement
-        Route::middleware('role:shop_manager')->group(function () {
+        Route::middleware('permission')->group(function () {
             Route::get('/products/create', [ShopProductController::class, 'create'])->name('products.create');
             Route::post('/products', [ShopProductController::class, 'store'])->name('products.store');
             Route::post('/products-import', [App\Http\Controllers\ShopProductCsvController::class, 'import'])->name('products.import');
@@ -643,7 +643,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/test-popup', function () {
         return response()->json(['access_denied' => true, 'message' => 'Ceci est un test du popup d\'accès refusé']);
-    })->middleware('role:admin')->name('test-popup');
+    })->middleware('permission')->name('test-popup');
 
     // Statut de la liaison avec le site vitrine (badge du header)
     Route::get('/site-sync/status', [\App\Http\Controllers\SiteSyncController::class, 'status'])->name('site-sync.status');
@@ -652,7 +652,7 @@ Route::middleware(['auth'])->group(function () {
 // ==========================================
 // ANALYTICS (Manager uniquement)
 // ==========================================
-Route::middleware(['auth', 'role:manager', 'module:analytics'])->prefix('analytics')->name('analytics.')->group(function () {
+Route::middleware(['auth', 'permission', 'module:analytics'])->prefix('analytics')->name('analytics.')->group(function () {
     Route::get('/', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
     Route::get('/print', [\App\Http\Controllers\AnalyticsController::class, 'print'])->name('print');
 });

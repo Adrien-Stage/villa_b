@@ -35,6 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // RBAC Middleware aliases
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRoleAccess::class,
+            // Garde par droit module.action, résolu depuis le nom de la route.
+            'permission' => \App\Http\Middleware\EnsurePermission::class,
             'admin' => \App\Http\Middleware\AdminOnly::class,
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
             'module.access' => \App\Http\Middleware\EnsureModuleWriteAccess::class,

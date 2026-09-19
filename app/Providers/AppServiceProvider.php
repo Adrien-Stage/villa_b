@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Instance unique par requête : le résolveur mémorise les surcharges
+        // d'un utilisateur pour ne pas les relire à chaque route parcourue.
+        $this->app->singleton(\App\Services\PermissionResolver::class);
+
         // Injection de dépendance automatique
         $this->app->bind(LoyaltyService::class);
         $this->app->bind(CheckOutService::class);
