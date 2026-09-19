@@ -90,14 +90,20 @@ test('roles are seeded correctly', function () {
     // Seeder les rôles pour ce test
     $this->seed(\Database\Seeders\RoleSeeder::class);
 
-    // Vérifier que les rôles existent
-    expect(Role::where('slug', 'admin')->exists())->toBeTrue();
-    expect(Role::where('slug', 'manager')->exists())->toBeTrue();
-    expect(Role::where('slug', 'reception')->exists())->toBeTrue();
-    expect(Role::where('slug', 'accountant')->exists())->toBeTrue();
-    expect(Role::where('slug', 'econome')->exists())->toBeTrue();
-    // 14 rôles depuis l'ajout de l'économe (module économat/inventaire).
-    expect(Role::count())->toBe(14);
+    // Les rôles dont le reste de la suite dépend nommément.
+    foreach (['admin', 'manager', 'reception', 'accountant', 'econome'] as $slug) {
+        expect(Role::where('slug', $slug)->exists())->toBeTrue("Rôle absent du seeder : {$slug}");
+    }
+
+    // Le compte était figé à 14 et se périmait à chaque rôle ajouté au
+    // catalogue — trois l'ont été depuis (rh_manager, it_support,
+    // quality_auditor), et la suite est restée rouge sans que le code soit
+    // en cause. On compare désormais au catalogue lui-même : l'assertion
+    // garde tout son sens — le seeder reflète-t-il sa source ? — sans
+    // pouvoir se démoder.
+    $attendus = collect(\App\Support\RoleCatalog::all())->pluck('slug')->sort()->values()->all();
+
+    expect(Role::pluck('slug')->sort()->values()->all())->toBe($attendus);
 });
 
 test('room routes are protected by RBAC middleware', function () {

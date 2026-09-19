@@ -99,6 +99,12 @@ class User extends Authenticatable
             'hebergement'  => ['hebergement', 'reservations', 'clients'],
             'reservations' => ['reservations', 'hebergement', 'clients'],
             'clients'      => ['clients', 'hebergement', 'reservations'],
+            'rh'           => ['rh', 'utilisateurs'],
+            'utilisateurs' => ['utilisateurs', 'rh'],
+            'it'           => ['it', 'parametres', 'api', 'pwa'],
+            'parametres'   => ['parametres', 'it'],
+            'qualite'      => ['qualite', 'grc'],
+            'grc'          => ['grc', 'qualite'],
         ];
 
         return $map[$module] ?? [$module];
@@ -123,6 +129,9 @@ class User extends Authenticatable
         'econome'             => ['economat', 'comptabilite', 'discussions'],
         'accountant'          => ['comptabilite', 'ledger', 'accounting', 'economat', 'analytics', 'grc', 'discussions'],
         'controller'          => ['comptabilite', 'ledger', 'accounting', 'analytics', 'grc', 'discussions'],
+        'rh_manager'          => ['utilisateurs', 'grc', 'discussions'],
+        'it_support'          => ['parametres', 'api', 'pwa', 'ai', 'website', 'discussions'],
+        'quality_auditor'     => ['grc', 'clients', 'housekeeping', 'restaurant', 'discussions'],
         'customer_guest'      => ['portail'],
     ];
 

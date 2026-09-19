@@ -120,6 +120,30 @@ class RoleCatalog
                 'description' => 'Service comptabilité et rapports financiers',
                 'module' => 'comptabilite', 'icon' => 'wallet', 'sort_order' => 60, 'is_assignable' => true,
             ],
+
+            // ── Ressources Humaines ──
+            [
+                'name' => 'Responsable RH',
+                'slug' => 'rh_manager',
+                'description' => 'Gestion du personnel, contrats et plannings',
+                'module' => 'rh', 'icon' => 'users', 'sort_order' => 70, 'is_assignable' => true,
+            ],
+
+            // ── Informatique & Support IT ──
+            [
+                'name' => 'Technicien IT',
+                'slug' => 'it_support',
+                'description' => 'Support informatique, réseau, matériel et PMS',
+                'module' => 'it', 'icon' => 'laptop', 'sort_order' => 80, 'is_assignable' => true,
+            ],
+
+            // ── Qualité & Contrôle ──
+            [
+                'name' => 'Contrôleur Qualité & Audit',
+                'slug' => 'quality_auditor',
+                'description' => 'Audit des normes d’hygiène, qualité et conformité',
+                'module' => 'qualite', 'icon' => 'award', 'sort_order' => 90, 'is_assignable' => true,
+            ],
         ];
     }
 

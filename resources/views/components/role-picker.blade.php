@@ -41,16 +41,16 @@
                              }
                          "
                          @click="checked = !checked"
-                         :class="checked ? 'border-primary bg-accent/20' : 'border-secondary/20 hover:bg-accent/5'"
-                         class="cursor-pointer rounded-xl border p-3 transition-colors select-none">
+                         :class="checked ? 'border-primary bg-accent/20 ring-1 ring-primary/20 shadow-sm' : 'border-secondary/20 hover:bg-accent/5'"
+                         class="cursor-pointer rounded-xl border p-3 transition-all select-none">
 
-                        <input type="checkbox" name="roles[]" value="{{ $role->slug }}" x-model="checked" class="sr-only">
+                        <input type="checkbox" name="roles[]" value="{{ $role->slug }}" :checked="checked" class="sr-only">
                         <template x-if="checked">
                             <input type="hidden" name="levels[{{ $role->slug }}]" :value="level">
                         </template>
 
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                                  :class="checked ? 'bg-primary text-white' : 'bg-accent/30 text-primary/60'">
                                 <i data-lucide="{{ $role->iconName() }}" class="w-4 h-4"></i>
                             </div>
@@ -58,9 +58,11 @@
                                 <p class="text-sm font-medium text-primary truncate">{{ $role->name }}</p>
                                 <p class="text-[11px] text-primary/40 line-clamp-1">{{ $role->description }}</p>
                             </div>
-                            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0"
-                                 :class="checked ? 'bg-primary border-primary' : 'border-secondary/40'">
-                                <i data-lucide="check" class="w-3 h-3 text-white" x-show="checked" x-cloak></i>
+                            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors"
+                                 :class="checked ? 'bg-primary border-primary text-white' : 'border-secondary/40 text-transparent'">
+                                <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" x-show="checked">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
                             </div>
                         </div>
 

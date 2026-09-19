@@ -9,6 +9,8 @@ use App\Models\Customer;
 use App\Models\HousekeepingAssignment;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantPantryItem;
+use App\Models\StockItem;
+use App\Models\StockRequisition;
 use App\Models\Room;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +29,7 @@ class DashboardController extends Controller
         $isRestaurant = $user->hasAnyRole(['restaurant_chief', 'restaurant_staff']);
         $isFinance = $user->hasAnyRole(['cashier', 'accountant']);
         $isShop = $user->hasAnyRole(['shop_manager', 'shop_cashier']);
+        $isEconome = $user->hasAnyRole(['econome']);
 
         $cards = [];
         $panels = [];
@@ -311,6 +314,49 @@ class DashboardController extends Controller
                     ->whereNull('closed_at')
                     ->exists();
             }
+        }
+
+        // ===== ECONOMAT =====
+        // L'économe n'avait aucun bloc : son tableau de bord se réduisait à la
+        // carte « Bienvenue », vide de tout contenu. C'est ce vide qui
+        // justifiait un second « Tableau de bord » dans la barre latérale —
+        // le seul écran qui lui parlait vraiment.
+        if (($isEconome || $isManager) && Schema::hasTable('stock_items')) {
+            $articles  = StockItem::active()->get();
+            $rupture   = $articles->filter->isOutOfStock()->count();
+            $sousSeuil = $articles->filter->isBelowThreshold()->count();
+
+            $cards[] = [
+                'label'    => 'Articles sous seuil',
+                'value'    => $sousSeuil,
+                'subtitle' => $rupture > 0 ? "dont {$rupture} en rupture" : 'aucune rupture',
+                'icon'     => 'package-minus',
+                'href'     => route('economat.items.index'),
+            ];
+
+            $cards[] = [
+                'label'    => 'Valeur du stock',
+                'value'    => number_format($articles->sum(fn (StockItem $i) => $i->stockValue()) / 100, 0, ',', ' ') . ' FCFA',
+                'subtitle' => $articles->count() . ' article(s) actifs',
+                'icon'     => 'warehouse',
+                'href'     => route('economat.index'),
+            ];
+
+            if (Schema::hasTable('stock_requisitions')) {
+                $cards[] = [
+                    'label'    => 'Demandes en attente',
+                    'value'    => StockRequisition::pending()->count(),
+                    'subtitle' => 'à servir',
+                    'icon'     => 'inbox',
+                    'href'     => route('economat.requisitions.index'),
+                ];
+            }
+
+            // Ce que l'économe doit traiter en premier : le réapprovisionnement.
+            $panels['economat_alerts'] = StockItem::active()->belowThreshold()
+                ->orderBy('current_stock')
+                ->take(5)
+                ->get();
         }
 
         if (empty($cards)) {

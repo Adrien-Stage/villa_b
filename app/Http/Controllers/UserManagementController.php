@@ -40,20 +40,13 @@ class UserManagementController extends Controller
 
         $deptMap = [];
         foreach ($departments as $dept) {
-            $defaultMods = $dept->defaultModules();
-            $matchingRoles = [];
-            $roleLevels = [];
-            foreach ($assignableRoles as $role) {
-                if (isset($defaultMods[$role->module])) {
-                    $matchingRoles[] = $role->slug;
-                    $roleLevels[$role->slug] = $defaultMods[$role->module];
-                }
-            }
+            $resolved = $dept->resolveMatchingRoles($assignableRoles);
             $deptMap[$dept->id] = [
-                'name' => $dept->name,
-                'code' => $dept->code,
-                'roles' => $matchingRoles,
-                'levels' => $roleLevels,
+                'id'     => $dept->id,
+                'name'   => $dept->name,
+                'code'   => $dept->code,
+                'roles'  => $resolved['roles'],
+                'levels' => $resolved['levels'],
             ];
         }
 

@@ -18,6 +18,9 @@ class Role extends Model
         'comptabilite' => 'Comptabilité',
         'direction'    => 'Direction',
         'portail'      => 'Portail client',
+        'rh'           => 'Ressources Humaines',
+        'it'           => 'Informatique & Support',
+        'qualite'      => 'Qualité & Contrôle',
     ];
 
     protected $fillable = [

@@ -1,7 +1,7 @@
 {{-- Onglets de la comptabilité générale. --}}
 @php
     $ledgerTabs = [
-        'accounting.ledger.index'    => ['Tableau de bord', 'layout-dashboard'],
+        'accounting.ledger.index'    => ['Vue d\'ensemble', 'layout-dashboard'],
         'accounting.ledger.balance'  => ['Balance', 'scale'],
         'accounting.ledger.general'  => ['Grand livre', 'book-open'],
         'accounting.ledger.auxiliary' => ['Tiers', 'users'],
