@@ -340,20 +340,19 @@
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
-                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Demandes</x-sidebar-link>
+                            @php
+                                // Le libellé dit l'étendue : qui ne consulte que
+                                // ses propres demandes ne lit pas « Demandes ».
+                                $porteeDemandes = app(\App\Services\PermissionResolver::class)
+                                    ->scopeFor(auth()->user(), 'economat.requisitions.voir');
+                            @endphp
+                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">
+                                {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Demandes' }}
+                            </x-sidebar-link>
                         </ul>
                     </div>
                 @endundroit
 
-                {{-- Lien de demande à l'économat, pour les responsables de département --}}
-                @undroit('economat.requisitions.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
-                        </ul>
-                    </div>
-                @endundroit
 
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>

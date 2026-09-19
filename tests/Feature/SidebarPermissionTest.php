@@ -99,3 +99,33 @@ test("les rôles d'origine gardent exactement leur menu", function (string $role
 test("le tableau de bord reste visible pour tous", function (string $role) {
     expect(liens(User::factory()->create(['role' => $role])))->toContain('Tableau de bord');
 })->with(['manager', 'accountant', 'econome', 'reception', 'housekeeping_staff']);
+
+test("l'économat n'apparaît qu'une fois, même avec plusieurs droits", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+
+    accorder('accountant', 'economat.voir');
+    accorder('accountant', 'economat.requisitions.voir');
+
+    $html = $this->actingAs($comptable)->get('/dashboard')->getContent();
+    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
+
+    // Deux rubriques « Économat » menaient toutes deux à la même route : les
+    // deux entrées se surlignaient ensemble, et le menu mentait sur sa structure.
+    expect(substr_count($nav[0], '>Économat<'))->toBe(1);
+});
+
+test("le libellé des demandes dit l'étendue", function () {
+    $chef = User::factory()->create(['role' => 'restaurant_chief']);
+
+    // Étendue par défaut : il voit les demandes du service.
+    expect(liens($chef))->toContain('Demandes')->not->toContain('Mes demandes');
+
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'restaurant_chief',
+        'permission' => 'economat.requisitions.voir', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'scope' => \App\Support\PermissionScope::PROPRE, 'reason' => 'Chacun ses demandes.',
+    ]);
+    app(PermissionResolver::class)->forget();
+
+    expect(liens($chef))->toContain('Mes demandes');
+});
