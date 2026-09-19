@@ -25,6 +25,13 @@ class DutySegregation
     public const CONTROLE_INDEPENDANT = 'quality_auditor';
 
     /**
+     * Contrôleur de gestion : il voit tous les services et n'écrit nulle part.
+     * Sa vue d'ensemble n'a de valeur que s'il ne participe pas aux opérations
+     * qu'il surveille.
+     */
+    public const CONTROLE_DE_GESTION = 'controller';
+
+    /**
      * Rôle dont l'accès technique contourne les contrôles applicatifs. Il doit
      * rester nu de tout rôle métier.
      */
@@ -92,7 +99,7 @@ class DutySegregation
 
         // Règle générale plutôt que couple à couple : le contrôle indépendant
         // et l'accès technique sont incompatibles avec *tout* rôle opérationnel.
-        foreach ([self::CONTROLE_INDEPENDANT, self::ACCES_TECHNIQUE] as $transverse) {
+        foreach ([self::CONTROLE_INDEPENDANT, self::CONTROLE_DE_GESTION, self::ACCES_TECHNIQUE] as $transverse) {
             if (!in_array($transverse, $roles, true)) {
                 continue;
             }
@@ -100,9 +107,11 @@ class DutySegregation
             foreach (array_intersect(self::OPERATIONNELS, $roles) as $operationnel) {
                 $conflits[] = [
                     'roles' => [$transverse, $operationnel],
-                    'motif' => $transverse === self::CONTROLE_INDEPENDANT
-                        ? "Un contrôle exercé sur son propre travail n'est plus un contrôle."
-                        : "L'accès technique contourne les contrôles applicatifs : il doit rester nu de tout rôle métier.",
+                    'motif' => match ($transverse) {
+                        self::CONTROLE_INDEPENDANT => "Un contrôle exercé sur son propre travail n'est plus un contrôle.",
+                        self::CONTROLE_DE_GESTION  => "Le contrôle de gestion voit tous les services : il perd sa vue d'ensemble s'il participe à l'un d'eux.",
+                        default                    => "L'accès technique contourne les contrôles applicatifs : il doit rester nu de tout rôle métier.",
+                    },
                 ];
             }
         }

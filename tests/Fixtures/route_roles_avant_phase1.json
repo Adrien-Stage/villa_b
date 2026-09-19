@@ -33,6 +33,7 @@
  ],
  "accounting.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.journal": [
@@ -85,6 +86,7 @@
  ],
  "accounting.ledger.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.ledger.journals": [
@@ -137,6 +139,7 @@
  ],
  "accounting.ledger.suppliers.show": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.ledger.suppliers.store": [
@@ -156,13 +159,16 @@
   "manager"
  ],
  "agenda.index": [
+  "controller",
   "manager",
   "reception"
  ],
  "analytics.index": [
+  "controller",
   "manager"
  ],
  "analytics.print": [
+  "controller",
   "manager"
  ],
  "bookings.approve": [
@@ -186,6 +192,7 @@
   "reception"
  ],
  "bookings.cash_register.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -226,6 +233,7 @@
   "reception"
  ],
  "bookings.drafts.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -250,6 +258,7 @@
   "reception"
  ],
  "bookings.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -258,6 +267,7 @@
   "reception"
  ],
  "bookings.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -278,6 +288,7 @@
   "reception"
  ],
  "customers.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -287,11 +298,13 @@
  ],
  "customers.index": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
  "customers.show": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
@@ -304,6 +317,7 @@
   "reception"
  ],
  "economat.index": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -316,6 +330,7 @@
   "manager"
  ],
  "economat.items.export": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -324,10 +339,12 @@
   "manager"
  ],
  "economat.items.index": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.items.show": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -348,6 +365,7 @@
   "manager"
  ],
  "economat.orders.index": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -360,6 +378,7 @@
   "manager"
  ],
  "economat.orders.show": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -392,6 +411,7 @@
   "manager"
  ],
  "economat.requisitions.index": [
+  "controller",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -404,6 +424,7 @@
   "manager"
  ],
  "economat.requisitions.show": [
+  "controller",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -424,6 +445,7 @@
   "manager"
  ],
  "economat.suppliers.index": [
+  "controller",
   "econome",
   "manager"
  ],
@@ -460,6 +482,7 @@
   "reception"
  ],
  "groups.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -475,6 +498,7 @@
   "manager"
  ],
  "groups.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -501,6 +525,7 @@
   "manager"
  ],
  "housekeeping.index": [
+  "controller",
   "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
@@ -536,6 +561,7 @@
  ],
  "invoices.show": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
@@ -544,6 +570,7 @@
   "reception"
  ],
  "reception.pos.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -557,6 +584,7 @@
  ],
  "restaurant.billing.index": [
   "cashier",
+  "controller",
   "manager",
   "restaurant_chief"
  ],
@@ -571,6 +599,7 @@
  ],
  "restaurant.billing.show": [
   "cashier",
+  "controller",
   "manager",
   "restaurant_chief"
  ],
@@ -579,6 +608,7 @@
   "restaurant_chief"
  ],
  "restaurant.kitchen.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -594,6 +624,7 @@
   "restaurant_chief"
  ],
  "restaurant.menus.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -603,6 +634,7 @@
   "restaurant_chief"
  ],
  "restaurant.menus.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -622,6 +654,7 @@
   "restaurant_staff"
  ],
  "restaurant.orders.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -648,6 +681,7 @@
   "restaurant_staff"
  ],
  "restaurant.orders.show": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -671,6 +705,7 @@
   "restaurant_chief"
  ],
  "restaurant.pantry.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -679,6 +714,7 @@
   "restaurant_chief"
  ],
  "restaurant.pantry.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -702,6 +738,7 @@
   "restaurant_chief"
  ],
  "restaurant.recipes.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -710,6 +747,7 @@
   "restaurant_chief"
  ],
  "restaurant.recipes.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -738,11 +776,13 @@
   "restaurant_chief"
  ],
  "restaurant.stock_counts.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.stock_counts.show": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -759,6 +799,7 @@
  ],
  "rooms.cost_sheets.export": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.import": [
@@ -767,6 +808,7 @@
  ],
  "rooms.cost_sheets.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.items.destroy": [
@@ -783,6 +825,7 @@
  ],
  "rooms.cost_sheets.show": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.starter": [
@@ -794,6 +837,7 @@
   "reception"
  ],
  "rooms.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -806,10 +850,12 @@
   "reception"
  ],
  "rooms.index": [
+  "controller",
   "manager",
   "reception"
  ],
  "rooms.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -822,6 +868,7 @@
   "reception"
  ],
  "rooms.types.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -846,6 +893,7 @@
   "reception"
  ],
  "settings.export": [
+  "controller",
   "housekeeping_leader",
   "manager",
   "reception",
@@ -860,6 +908,7 @@
   "shop_manager"
  ],
  "settings.index": [
+  "controller",
   "housekeeping_leader",
   "manager",
   "reception",
@@ -870,6 +919,7 @@
   "manager"
  ],
  "settings.packages.export": [
+  "controller",
   "manager"
  ],
  "settings.packages.import": [
@@ -885,6 +935,7 @@
   "manager"
  ],
  "settings.partners.export": [
+  "controller",
   "manager"
  ],
  "settings.partners.import": [
@@ -900,6 +951,7 @@
   "manager"
  ],
  "settings.services.export": [
+  "controller",
   "manager"
  ],
  "settings.services.import": [
@@ -931,6 +983,7 @@
   "shop_manager"
  ],
  "shop.cash_register.index": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -947,6 +1000,7 @@
   "shop_manager"
  ],
  "shop.orders.index": [
+  "controller",
   "manager",
   "shop_cashier",
   "shop_manager"
@@ -965,6 +1019,7 @@
   "shop_manager"
  ],
  "shop.orders.show": [
+  "controller",
   "manager",
   "shop_cashier",
   "shop_manager"
@@ -983,6 +1038,7 @@
   "shop_manager"
  ],
  "shop.products.export": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -990,6 +1046,7 @@
   "shop_manager"
  ],
  "shop.products.index": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -1000,9 +1057,11 @@
   "shop_manager"
  ],
  "test-popup": [
+  "controller",
   "manager"
  ],
  "users.index": [
+  "controller",
   "manager"
  ],
  "users.store": [
