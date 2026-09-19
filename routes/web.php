@@ -591,6 +591,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // sollicitent l'économat. Le contrôleur cloisonne à leurs propres demandes.
         Route::middleware('permission')->group(function () use ($eco) {
             Route::get('/demandes', [$eco . 'StockRequisitionController', 'index'])->name('requisitions.index');
+            // Impression et export : mêmes filtres que l'écran, même garde.
+            Route::get('/demandes/export', [$eco . 'StockRequisitionController', 'export'])->name('requisitions.export');
             Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
             Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
             Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');

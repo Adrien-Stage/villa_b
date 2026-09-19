@@ -16,9 +16,11 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Bons de commande</h1>
             <p class="text-sm text-primary/60 mt-0.5">Commandes aux fournisseurs et suivi des réceptions.</p>
         </div>
+        @droit('economat.orders.creer')
         <a href="{{ route('economat.orders.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nouveau bon
-        </a>
+                <i data-lucide="plus" class="w-4 h-4"></i> Nouveau bon
+            </a>
+        @enddroit
     </div>
 
     @include('economat.partials.flash')

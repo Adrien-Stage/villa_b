@@ -149,6 +149,28 @@
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+            @php
+                // Où loge l'entrée « demandes » ? Un seul endroit la porte.
+                //
+                // Qui gère l'économat la trouve dans la rubrique Économat, avec
+                // le reste du magasin. Qui ne fait qu'y adresser des demandes la
+                // trouve dans sa propre section — le comptable sollicite le
+                // magasin comme n'importe quel service, mais il ne le tient pas.
+                //
+                // Les deux cas s'excluent : la même route inscrite dans deux
+                // rubriques les surlignait toutes les deux, et le menu mentait
+                // sur sa structure.
+                $droits = app(\App\Services\PermissionResolver::class);
+                $utilisateur = auth()->user();
+
+                $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
+                $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
+                                  || $droits->allows($utilisateur, 'economat.orders.voir');
+                $tientLesLivres = $droits->allows($utilisateur, 'accounting.voir');
+
+                $demandesEnComptabilite = $peutDemander && $tientLesLivres && !$gereEconomat;
+            @endphp
+
                 <div>
                     <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
@@ -340,20 +362,21 @@
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
-                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Demandes</x-sidebar-link>
+                            @unless($demandesEnComptabilite)
+                                @php
+                                    // Le libellé dit l'étendue : qui ne consulte
+                                    // que ses propres demandes ne lit pas
+                                    // « Demandes ».
+                                    $porteeDemandes = $droits->scopeFor(auth()->user(), 'economat.requisitions.voir');
+                                @endphp
+                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">
+                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Demandes' }}
+                                </x-sidebar-link>
+                            @endunless
                         </ul>
                     </div>
                 @endundroit
 
-                {{-- Lien de demande à l'économat, pour les responsables de département --}}
-                @undroit('economat.requisitions.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
-                        </ul>
-                    </div>
-                @endundroit
 
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>
@@ -365,7 +388,17 @@
                             @module('ledger')
                                 <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
                             @endmodule
-                            {{-- Le manager voit déjà les fiches techniques dans la section Hôtel. --}}
+                            @if($demandesEnComptabilite)
+                                {{-- Le comptable sollicite le magasin comme un
+                                     service, sans le tenir : sa demande part
+                                     d'ici, non de la rubrique Économat. --}}
+                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
+                            @endif
+
+                            {{-- Fiche technique : prix de revient d'une nuitée et
+                                 marge par type de chambre. C'est de la
+                                 comptabilité analytique, d'où sa place ici. Le
+                                 manager la voit déjà dans la section Hôtel. --}}
                             @role('accountant','admin')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
                             @endrole

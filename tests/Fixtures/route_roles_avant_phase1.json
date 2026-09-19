@@ -387,6 +387,15 @@
  "economat.requisitions.deliver": [
   "econome"
  ],
+ "economat.requisitions.export": [
+  "controller",
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
  "economat.requisitions.index": [
   "controller",
   "econome",

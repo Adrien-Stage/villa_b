@@ -394,6 +394,8 @@ class PermissionCatalog
             'economat.requisitions.deliver' => ['econome'],
             'economat.requisitions.reject' => ['econome'],
             'economat.requisitions.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            // Extraire une liste n'est pas la consulter : droit distinct.
+            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'economat.suppliers.creer' => ['econome'],
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],

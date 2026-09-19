@@ -18,16 +18,28 @@
                 {{ $isKeeper ? 'Validez et livrez les demandes de matériel des départements.' : 'Sollicitez des articles auprès du magasin central.' }}
             </p>
         </div>
-        <a href="{{ route('economat.requisitions.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle demande
-        </a>
+        <div class="flex items-center gap-2">
+            @droit('economat.requisitions.export')
+                <x-barre-export route="economat.requisitions.export" />
+            @enddroit
+
+            @droit('economat.requisitions.creer')
+                <a href="{{ route('economat.requisitions.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle demande
+                </a>
+            @enddroit
+        </div>
     </div>
 
     @include('economat.partials.flash')
 
+    @include('economat.requisitions.partials.filtres')
+
     <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
         @if($requisitions->isEmpty())
-            <p class="px-5 py-12 text-center text-sm text-primary/40">Aucune demande.</p>
+            <p class="px-5 py-12 text-center text-sm text-primary/40">
+                {{ $filtres ? 'Aucune demande ne correspond à ces critères.' : 'Aucune demande.' }}
+            </p>
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">

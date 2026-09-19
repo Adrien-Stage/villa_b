@@ -99,3 +99,65 @@ test("les rôles d'origine gardent exactement leur menu", function (string $role
 test("le tableau de bord reste visible pour tous", function (string $role) {
     expect(liens(User::factory()->create(['role' => $role])))->toContain('Tableau de bord');
 })->with(['manager', 'accountant', 'econome', 'reception', 'housekeeping_staff']);
+
+test("l'économat n'apparaît qu'une fois, même avec plusieurs droits", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+
+    accorder('accountant', 'economat.voir');
+    accorder('accountant', 'economat.requisitions.voir');
+
+    $html = $this->actingAs($comptable)->get('/dashboard')->getContent();
+    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
+
+    // Deux rubriques « Économat » menaient toutes deux à la même route : les
+    // deux entrées se surlignaient ensemble, et le menu mentait sur sa structure.
+    expect(substr_count($nav[0], '>Économat<'))->toBe(1);
+});
+
+test("le libellé des demandes dit l'étendue", function () {
+    $chef = User::factory()->create(['role' => 'restaurant_chief']);
+
+    // Étendue par défaut : il voit les demandes du service.
+    expect(liens($chef))->toContain('Demandes')->not->toContain('Mes demandes');
+
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'restaurant_chief',
+        'permission' => 'economat.requisitions.voir', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'scope' => \App\Support\PermissionScope::PROPRE, 'reason' => 'Chacun ses demandes.',
+    ]);
+    app(PermissionResolver::class)->forget();
+
+    expect(liens($chef))->toContain('Mes demandes');
+});
+
+test("le comptable adresse ses demandes depuis sa propre section", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+
+    accorder('accountant', 'economat.requisitions.voir');
+
+    // Une seule entrée : la même route inscrite dans deux rubriques les
+    // surlignerait toutes les deux.
+    expect(array_count_values(liens($comptable))['Mes demandes'] ?? 0)->toBe(1);
+
+    $html = $this->actingAs($comptable)->get('/dashboard')->getContent();
+    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
+
+    // Et sous Comptabilité, non sous Économat.
+    expect(mb_strpos($nav[0], 'Mes demandes'))->toBeGreaterThan(mb_strpos($nav[0], '>Comptabilité<'));
+});
+
+test("qui tient le magasin garde ses demandes dans la rubrique Économat", function () {
+    $econome = User::factory()->create(['role' => 'econome']);
+
+    $html = $this->actingAs($econome)->get('/dashboard')->getContent();
+    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
+
+    expect(array_count_values(liens($econome))['Demandes'] ?? 0)->toBe(1)
+        ->and(mb_strpos($nav[0], 'Demandes'))->toBeGreaterThan(mb_strpos($nav[0], '>Économat<'));
+});
+
+test("un responsable de service qui ne tient pas les livres garde l'entrée sous Économat", function () {
+    // Il n'a pas de section à lui : la lui retirer de l'Économat le priverait
+    // de tout accès à ses demandes.
+    expect(liens(User::factory()->create(['role' => 'restaurant_chief'])))->toContain('Demandes');
+});
