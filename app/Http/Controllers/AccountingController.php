@@ -80,6 +80,24 @@ class AccountingController extends Controller
         return view('accounting.cash', compact('period', 'caisse'));
     }
 
+    /**
+     * Journal des encaissements : ce qui est entré, par point de vente et par
+     * mode de règlement.
+     *
+     * C'est le document que l'établissement édite chaque jour. Il n'existait
+     * pas : les recettes vivaient dans quatre tables sans rien pour les
+     * réunir, et aucune ne savait de quel point de vente elle venait.
+     */
+    public function revenueJournal(Request $request, \App\Services\RevenueJournal $journal): View
+    {
+        $period = $this->period($request);
+
+        return view('accounting.revenue-journal', [
+            'period'  => $period,
+            'journal' => $journal->forPeriod($period['from'], $period['to']),
+        ]);
+    }
+
     // ── Dépenses ─────────────────────────────────────────────────────────────
 
     public function expenses(Request $request): View

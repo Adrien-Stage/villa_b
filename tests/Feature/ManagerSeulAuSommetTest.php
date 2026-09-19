@@ -48,7 +48,9 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
 
     foreach (PermissionCatalog::all() as $droit => $roles) {
         $module  = explode('.', $droit)[0];
-        $lecture = str_ends_with($droit, '.voir') || str_ends_with($droit, '.export');
+        // La qualité de lecture est déclarée, non devinée : « claim » écrit
+        // sans le dire, « revenue_journal » lit sans porter de verbe.
+        $lecture = PermissionCatalog::estLecture($droit);
 
         // Le contreseing des comptages reste au manager : acte de contrôle,
         // non écriture comptable.
@@ -69,7 +71,7 @@ test("le manager consulte tout ce qu'il n'écrit plus", function () {
     foreach (['restaurant', 'shop', 'economat', 'accounting'] as $module) {
         foreach (PermissionCatalog::all() as $droit => $roles) {
             if (str_starts_with($droit, $module . '.')
-                && str_ends_with($droit, '.voir')
+                && PermissionCatalog::estLecture($droit)
                 && !in_array('manager', $roles, true)) {
                 $manquants[] = $droit;
             }

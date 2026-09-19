@@ -12,7 +12,8 @@
   "manager"
  ],
  "accounting.expenses": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.expenses.destroy": [
   "accountant"
@@ -24,7 +25,8 @@
   "accountant"
  ],
  "accounting.income_statement": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.index": [
   "accountant",
@@ -32,40 +34,50 @@
   "manager"
  ],
  "accounting.journal": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.accounts": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.aged": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.analytic": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.analytic.margins": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.analytic.mirror": [
   "accountant"
  ],
  "accounting.ledger.auxiliary": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.auxiliary.ledger": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.balance": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.entry": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.entry.reverse": [
   "accountant"
  ],
  "accounting.ledger.general": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.index": [
   "accountant",
@@ -73,22 +85,26 @@
   "manager"
  ],
  "accounting.ledger.journals": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.night_audit": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.night_audit.run": [
   "accountant"
  ],
  "accounting.ledger.opening": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.opening.store": [
   "accountant"
  ],
  "accounting.ledger.periods": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.periods.lock": [
   "accountant"
@@ -103,7 +119,8 @@
   "accountant"
  ],
  "accounting.ledger.suppliers": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.suppliers.create": [
   "accountant"
@@ -117,13 +134,20 @@
   "accountant"
  ],
  "accounting.ledger.withholding": [
-  "accountant"
+  "accountant",
+  "manager"
  ],
  "accounting.ledger.years.open": [
   "accountant"
  ],
  "accounting.receivables": [
-  "accountant"
+  "accountant",
+  "manager"
+ ],
+ "accounting.revenue_journal": [
+  "accountant",
+  "controller",
+  "manager"
  ],
  "agenda.index": [
   "controller",
@@ -542,6 +566,7 @@
  ],
  "restaurant.billing.receipt": [
   "cashier",
+  "manager",
   "restaurant_chief"
  ],
  "restaurant.billing.show": [
@@ -918,6 +943,7 @@
   "shop_manager"
  ],
  "shop.cash_register.close": [
+  "manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -935,6 +961,7 @@
   "shop_manager"
  ],
  "shop.cash_register.open": [
+  "manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -957,6 +984,7 @@
   "shop_manager"
  ],
  "shop.orders.receipt": [
+  "manager",
   "shop_cashier",
   "shop_manager"
  ],

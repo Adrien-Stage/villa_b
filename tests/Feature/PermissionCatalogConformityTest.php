@@ -115,3 +115,37 @@ test("il décrit le cumul de rôles qui pose problème aujourd'hui", function ()
     // Et l'économe, lui, crée les articles — la fonction à retirer au comptable.
     expect(PermissionCatalog::roles('economat.items.creer'))->toContain('econome');
 });
+
+test("les droits déclarés en écriture sont ceux servis par une route qui écrit", function () {
+    $ecrituresReelles = [];
+
+    foreach (Route::getRoutes() as $route) {
+        $nom = $route->getName();
+
+        if ($nom === null || !routeGardee($route)) {
+            continue;
+        }
+
+        if (array_diff($route->methods(), ['GET', 'HEAD']) !== []) {
+            $ecrituresReelles[] = PermissionCatalog::permissionForRoute($nom);
+        }
+    }
+
+    $ecrituresReelles = array_values(array_unique($ecrituresReelles));
+    sort($ecrituresReelles);
+
+    $declarees = PermissionCatalog::ecritures();
+    sort($declarees);
+
+    // Lire cette qualité dans le nom ne marche pas : « claim » écrit sans le
+    // dire, « revenue_journal » lit sans porter de verbe. La déclaration doit
+    // donc suivre la table de routage, comme le reste du catalogue.
+    expect($declarees)->toBe($ecrituresReelles);
+});
+
+test('un droit servi en GET et en POST compte comme une écriture', function () {
+    // C'est le pouvoir le plus large qu'il confère qui décide.
+    expect(PermissionCatalog::estLecture('economat.items.creer'))->toBeFalse()
+        ->and(PermissionCatalog::estLecture('accounting.revenue_journal'))->toBeTrue()
+        ->and(PermissionCatalog::estLecture('restaurant.orders.claim'))->toBeFalse();
+});

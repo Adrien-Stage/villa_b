@@ -6,6 +6,7 @@
         'accounting.expenses'         => ['Dépenses', 'receipt'],
         'accounting.receivables'      => ['Créances', 'hand-coins'],
         'accounting.cash'             => ['Caisse', 'calculator'],
+        'accounting.revenue_journal'  => ['Journal des encaissements', 'landmark'],
         'accounting.income_statement' => ['Compte de résultat', 'scale'],
     ];
     // L'onglet de contrôle n'a de sens que si l'établissement exige un

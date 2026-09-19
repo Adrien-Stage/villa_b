@@ -72,7 +72,7 @@ test('le contrôleur de gestion voit tout et n\'écrit rien', function () {
 
     $ecritures = array_values(array_filter(
         $droits,
-        fn (string $d) => !str_ends_with($d, '.voir') && !str_ends_with($d, '.export')
+        fn (string $d) => !\App\Support\PermissionCatalog::estLecture($d)
     ));
 
     // Sa valeur tient à ce qu'il ne participe pas aux opérations qu'il surveille.

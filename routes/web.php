@@ -479,6 +479,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/controles-caisse/{session}', [$rev, 'store'])->whereNumber('session')->name('cash_reviews.store');
         Route::get('/creances', [$c, 'receivables'])->name('receivables');
         Route::get('/caisse', [$c, 'cash'])->name('cash');
+        Route::get('/journal-encaissements', [$c, 'revenueJournal'])->name('revenue_journal');
 
         Route::get('/depenses', [$c, 'expenses'])->name('expenses');
         Route::post('/depenses', [$c, 'storeExpense'])->name('expenses.store');
