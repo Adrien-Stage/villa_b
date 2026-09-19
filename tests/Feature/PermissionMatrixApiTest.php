@@ -119,3 +119,31 @@ test("l'écart posé par la console agit immédiatement", function () {
 
     expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.creer'))->toBeFalse();
 });
+
+test("la portée fait l'aller-retour", function () {
+    $this->putJson('/api/permissions/matrice', [
+        'ecarts' => [[
+            'role' => 'controller', 'permission' => 'users.voir',
+            'effect' => 'allow', 'scope' => 'departement', 'reason' => 'Cloisonnement par service.',
+        ]],
+    ], entete())->assertOk();
+
+    $lu = $this->getJson('/api/permissions/matrice', entete())->json('ecarts.0');
+
+    expect($lu['scope'])->toBe('departement');
+    expect(app(PermissionResolver::class)->scopeFor(
+        User::factory()->create(['role' => 'controller']),
+        'users.voir'
+    ))->toBe('departement');
+});
+
+test('une portée inconnue est rejetée', function () {
+    $this->putJson('/api/permissions/matrice', [
+        'ecarts' => [['role' => 'controller', 'permission' => 'users.voir', 'effect' => 'allow', 'scope' => 'planete']],
+    ], entete())->assertStatus(422);
+});
+
+test('les portées possibles sont annoncées', function () {
+    expect(collect($this->getJson('/api/permissions/matrice', entete())->json('portees'))->pluck('valeur')->all())
+        ->toBe(['propre', 'departement', 'etablissement']);
+});

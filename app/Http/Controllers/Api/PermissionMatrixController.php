@@ -28,7 +28,7 @@ class PermissionMatrixController extends Controller
     {
         $ecarts = PermissionGrant::query()
             ->orderBy('subject_type')->orderBy('subject_id')->orderBy('permission')
-            ->get(['subject_type', 'subject_id', 'permission', 'effect', 'reason']);
+            ->get(['subject_type', 'subject_id', 'permission', 'effect', 'scope', 'reason']);
 
         return response()->json([
             'catalogue'          => PermissionCatalog::all(),
@@ -44,6 +44,10 @@ class PermissionMatrixController extends Controller
             ),
             'ecarts'             => $ecarts,
             'incompatibilites'   => DutySegregation::incompatibilities(),
+            'portees'            => array_map(
+                static fn (string $p): array => ['valeur' => $p, 'libelle' => \App\Support\PermissionScope::libelle($p)],
+                \App\Support\PermissionScope::ORDRE
+            ),
         ]);
     }
 
@@ -64,6 +68,8 @@ class PermissionMatrixController extends Controller
             'ecarts.*.role'       => ['required', 'string', 'max:64'],
             'ecarts.*.permission' => ['required', 'string', 'max:128'],
             'ecarts.*.effect'     => ['required', 'in:allow,deny'],
+            // Étendue des données. Absente : tout l'établissement, comme avant.
+            'ecarts.*.scope'      => ['nullable', 'in:propre,departement,etablissement'],
             'ecarts.*.reason'     => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -90,6 +96,7 @@ class PermissionMatrixController extends Controller
                     'subject_id'   => $ecart['role'],
                     'permission'   => $ecart['permission'],
                     'effect'       => $ecart['effect'],
+                    'scope'        => $ecart['scope'] ?? null,
                     'reason'       => $ecart['reason'] ?? null,
                 ]);
             }
