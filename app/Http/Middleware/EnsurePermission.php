@@ -2,31 +2,33 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\PermissionResolver;
 use App\Support\PermissionCatalog;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Garde une route par le droit module.action qu'elle porte, et non par une
  * liste de rôles écrite sur place.
  *
- * Jusqu'ici chaque route nommait ses rôles : « role:econome,manager,admin ».
+ * Jusqu'ici chaque route nommait ses rôles : « role:econome,manager ».
  * Changer qui accède à quoi exigeait donc de modifier le code, et personne ne
- * pouvait voir l'ensemble. Le droit, lui, se déduit du nom de la route, et les
- * rôles qui le détiennent vivent au catalogue — un seul endroit, bientôt
- * éditable depuis l'ERP.
+ * pouvait voir l'ensemble. Le droit, lui, se déduit du nom de la route ; les
+ * rôles qui le détiennent viennent du catalogue, que les surcharges en base
+ * corrigent établissement par établissement.
  *
- * Ce middleware ne décide rien lui-même : il résout le droit, puis délègue à
- * EnsureRoleAccess, qui garde la responsabilité du refus — journal d'audit,
- * message selon le rôle attendu, réponse JSON ou redirection. Le comportement
- * reste donc identique à la ligne près, ce que prouve
- * PermissionCatalogConformityTest.
+ * La décision revient à PermissionResolver. Le refus reste rendu par
+ * EnsureRoleAccess : même entrée au journal d'audit, même message, même
+ * format de réponse qu'avant la bascule.
  */
 class EnsurePermission
 {
-    public function __construct(private readonly EnsureRoleAccess $roleAccess)
-    {
+    public function __construct(
+        private readonly EnsureRoleAccess $roleAccess,
+        private readonly PermissionResolver $resolver,
+    ) {
     }
 
     public function handle(Request $request, Closure $next): Response
@@ -47,6 +49,18 @@ class EnsurePermission
             abort(403, "Droit « {$permission} » absent du catalogue.");
         }
 
-        return $this->roleAccess->handle($request, $next, ...$roles);
+        if (!Auth::check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
+            return redirect()->guest(route('login'));
+        }
+
+        if ($this->resolver->allows(Auth::user(), $permission)) {
+            return $next($request);
+        }
+
+        return $this->roleAccess->refuser($request, $roles);
     }
 }
