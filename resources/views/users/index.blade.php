@@ -343,6 +343,8 @@
                        :selected="old('roles', [])" :levels="old('levels', [])" context="create" />
     </div>
 
+    @include('users.partials.derogation')
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="text-xs text-primary/60">Mot de passe</label>
@@ -412,6 +414,8 @@
                            :selected="old('roles', $staffRoleSlugs)" :levels="old('levels', $staffLevels)"
                            :context="'edit_' . $staff->id" />
         </div>
+
+        @include('users.partials.derogation')
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
