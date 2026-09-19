@@ -16,54 +16,59 @@
 use App\Support\PermissionCatalog;
 use Illuminate\Support\Facades\Route;
 
-/** Rôles exigés par les middlewares d'une route, ou null si aucun. */
-function rolesDeLaRoute(\Illuminate\Routing\Route $route): ?array
+/** La route est-elle gardée par un droit ? */
+function routeGardee(\Illuminate\Routing\Route $route): bool
 {
-    $roles = [];
-
     foreach ($route->gatherMiddleware() as $middleware) {
-        if (is_string($middleware) && str_starts_with($middleware, 'role:')) {
-            $roles = array_merge($roles, explode(',', substr($middleware, 5)));
+        // « permission » depuis la phase 1 ; « role: » n'existe plus dans
+        // routes/web.php, mais on le reconnaît encore pour qu'une route
+        // oubliée lors de la bascule soit signalée, non ignorée.
+        if (is_string($middleware) && ($middleware === 'permission' || str_starts_with($middleware, 'role:'))) {
+            return true;
         }
     }
 
-    if ($roles === []) {
-        return null;
-    }
-
-    $roles = array_values(array_unique($roles));
-    sort($roles);
-
-    return $roles;
+    return false;
 }
 
-test('chaque route gardée par un rôle figure au catalogue, avec les mêmes rôles', function () {
+test('chaque route gardée porte un droit que le catalogue déclare', function () {
     $ecarts = [];
+    $gardees = 0;
 
     foreach (Route::getRoutes() as $route) {
         $nom = $route->getName();
-        if ($nom === null) {
-            continue;
-        }
 
-        $attendus = rolesDeLaRoute($route);
-        if ($attendus === null) {
+        if ($nom === null || !routeGardee($route)) {
             continue;   // route publique ou seulement authentifiée : hors catalogue
         }
 
-        $droit   = PermissionCatalog::permissionForRoute($nom);
-        $declares = PermissionCatalog::roles($droit);
-        sort($declares);
+        $gardees++;
+        $droit = PermissionCatalog::permissionForRoute($nom);
 
-        if ($declares === []) {
-            $ecarts[] = "{$nom} → droit « {$droit} » absent du catalogue";
-        } elseif ($declares !== $attendus) {
-            $ecarts[] = "{$droit} : catalogue [" . implode(',', $declares)
-                . "] ≠ routes [" . implode(',', $attendus) . ']';
+        if (PermissionCatalog::roles($droit) === []) {
+            $ecarts[] = "{$nom} : droit « {$droit} » absent du catalogue";
         }
     }
 
-    expect($ecarts)->toBe([], "Catalogue et routes divergent :\n  " . implode("\n  ", $ecarts));
+    expect($ecarts)->toBe([], "Routes sans droit déclaré :\n  " . implode("\n  ", $ecarts));
+
+    // Sans ce garde-fou, retirer toutes les gardes ferait passer le test :
+    // il ne resterait rien à comparer.
+    expect($gardees)->toBeGreaterThan(200);
+});
+
+test('une route sans nom ne peut pas être gardée', function () {
+    // EnsurePermission déduit le droit du nom de la route. Une route gardée
+    // sans nom serait refusée à tout le monde, silencieusement.
+    $anonymes = [];
+
+    foreach (Route::getRoutes() as $route) {
+        if ($route->getName() === null && routeGardee($route)) {
+            $anonymes[] = $route->uri();
+        }
+    }
+
+    expect($anonymes)->toBe([]);
 });
 
 test('le catalogue ne déclare aucun droit sans route correspondante', function () {
@@ -71,7 +76,7 @@ test('le catalogue ne déclare aucun droit sans route correspondante', function 
 
     foreach (Route::getRoutes() as $route) {
         $nom = $route->getName();
-        if ($nom !== null && rolesDeLaRoute($route) !== null) {
+        if ($nom !== null && routeGardee($route)) {
             $droitsDesRoutes[] = PermissionCatalog::permissionForRoute($nom);
         }
     }

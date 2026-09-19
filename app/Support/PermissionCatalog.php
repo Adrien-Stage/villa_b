@@ -20,8 +20,13 @@ namespace App\Support;
  *
  * Convention de nommage : le nom de route, dont le dernier segment est
  * normalisé en verbe métier (voir / creer / modifier / supprimer). Les actions
- * propres au métier — approve, deliver, receive, adjust — gardent leur nom :
- * ce sont elles qui portent la séparation des tâches.
+ * propres au métier — approve, deliver, receive, adjust, export, import —
+ * gardent leur nom : ce sont elles qui portent la séparation des tâches.
+ *
+ * Les rôles d'un droit sont l'INTERSECTION des middlewares « role: » qui
+ * gardaient la route, car ils s'empilaient : 54 routes en portaient deux, un
+ * groupe large et une garde interne étroite, et chacun devait passer. Les
+ * réunir aurait ouvert aux commis ce que le chef seul pouvait faire.
  */
 class PermissionCatalog
 {
@@ -30,12 +35,15 @@ class PermissionCatalog
      * une action métier et se conserve tel quel.
      */
     private const VERBES = [
-        'index' => 'voir',   'show'   => 'voir',     'export' => 'voir',
-        'list'  => 'voir',   'search' => 'voir',     'data'   => 'voir',
-        'print' => 'voir',
-        'create' => 'creer', 'store'  => 'creer',    'import' => 'creer',
+        'index' => 'voir',   'show'   => 'voir',   'list'  => 'voir',
+        'search' => 'voir',  'data'   => 'voir',   'print' => 'voir',
+        'create' => 'creer', 'store'  => 'creer',
         'edit'   => 'modifier', 'update' => 'modifier', 'patch' => 'modifier',
         'destroy' => 'supprimer', 'delete' => 'supprimer',
+        // « export » et « import » gardent leur nom : extraire une liste de
+        // clients n'est pas la consulter, et une importation en masse n'est
+        // pas une création. Les fondre dans voir/creer alignerait leurs droits
+        // sur les plus larges des deux.
     ];
 
     /**
@@ -70,13 +78,14 @@ class PermissionCatalog
             'restaurant.billing.unpaid' => ['cashier', 'restaurant_chief'],
             'restaurant.billing.voir' => ['cashier', 'manager', 'restaurant_chief'],
             'restaurant.kitchen.voir' => ['manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
-            'restaurant.menus.categories.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.categories.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.categories.supprimer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.items.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.items.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.menus.items.supprimer' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.menus.categories.creer' => ['restaurant_chief'],
+            'restaurant.menus.categories.modifier' => ['restaurant_chief'],
+            'restaurant.menus.categories.supprimer' => ['restaurant_chief'],
+            'restaurant.menus.export' => ['manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.menus.import' => ['restaurant_chief'],
+            'restaurant.menus.items.creer' => ['restaurant_chief'],
+            'restaurant.menus.items.modifier' => ['restaurant_chief'],
+            'restaurant.menus.items.supprimer' => ['restaurant_chief'],
             'restaurant.menus.voir' => ['manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.orders.claim' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.creer' => ['restaurant_chief', 'restaurant_staff'],
@@ -87,27 +96,30 @@ class PermissionCatalog
             'restaurant.orders.served' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.status' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.voir' => ['manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
-            'restaurant.pantry.categories.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.categories.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.categories.supprimer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.items.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.items.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.items.receive' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.items.supprimer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.pantry.movements.creer' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.pantry.categories.creer' => ['restaurant_chief'],
+            'restaurant.pantry.categories.modifier' => ['restaurant_chief'],
+            'restaurant.pantry.categories.supprimer' => ['restaurant_chief'],
+            'restaurant.pantry.export' => ['manager', 'restaurant_chief', 'restaurant_cook'],
+            'restaurant.pantry.import' => ['restaurant_chief'],
+            'restaurant.pantry.items.creer' => ['restaurant_chief'],
+            'restaurant.pantry.items.modifier' => ['restaurant_chief'],
+            'restaurant.pantry.items.receive' => ['restaurant_chief'],
+            'restaurant.pantry.items.supprimer' => ['restaurant_chief'],
+            'restaurant.pantry.movements.creer' => ['restaurant_chief'],
             'restaurant.pantry.voir' => ['manager', 'restaurant_chief', 'restaurant_cook'],
-            'restaurant.recipes.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.recipes.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.recipes.produce' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.recipes.supprimer' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.recipes.creer' => ['restaurant_chief'],
+            'restaurant.recipes.export' => ['manager', 'restaurant_chief', 'restaurant_cook'],
+            'restaurant.recipes.import' => ['restaurant_chief'],
+            'restaurant.recipes.modifier' => ['restaurant_chief'],
+            'restaurant.recipes.produce' => ['restaurant_chief'],
+            'restaurant.recipes.supprimer' => ['restaurant_chief'],
             'restaurant.recipes.voir' => ['manager', 'restaurant_chief', 'restaurant_cook'],
             'restaurant.shifts.close' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.shifts.open' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.stock_counts.close' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.stock_counts.creer' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.stock_counts.modifier' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.stock_counts.supprimer' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.stock_counts.close' => ['restaurant_chief'],
+            'restaurant.stock_counts.creer' => ['restaurant_chief'],
+            'restaurant.stock_counts.modifier' => ['restaurant_chief'],
+            'restaurant.stock_counts.supprimer' => ['restaurant_chief'],
             'restaurant.stock_counts.voir' => ['manager', 'restaurant_chief', 'restaurant_cook'],
 
             // ── Comptabilité ──
@@ -169,15 +181,17 @@ class PermissionCatalog
             'bookings.drafts.save' => ['manager', 'reception'],
             'bookings.drafts.supprimer' => ['manager', 'reception'],
             'bookings.drafts.voir' => ['manager', 'reception'],
-            'bookings.folio.add' => ['cashier', 'manager', 'reception', 'restaurant_chief'],
-            'bookings.folio.remove' => ['cashier', 'manager', 'reception', 'restaurant_chief'],
+            'bookings.folio.add' => ['manager', 'reception'],
+            'bookings.folio.remove' => ['manager', 'reception'],
             'bookings.modifier' => ['manager', 'reception'],
-            'bookings.payment.add' => ['cashier', 'manager', 'reception'],
+            'bookings.payment.add' => ['manager', 'reception'],
             'bookings.voir' => ['manager', 'reception'],
 
             // ── Économat ──
             'economat.items.adjust' => ['admin', 'econome', 'manager'],
             'economat.items.creer' => ['admin', 'econome', 'manager'],
+            'economat.items.export' => ['admin', 'econome', 'manager'],
+            'economat.items.import' => ['admin', 'econome', 'manager'],
             'economat.items.modifier' => ['admin', 'econome', 'manager'],
             'economat.items.supprimer' => ['admin', 'econome', 'manager'],
             'economat.items.voir' => ['admin', 'econome', 'manager'],
@@ -200,38 +214,46 @@ class PermissionCatalog
 
             // ── Chambres ──
             'rooms.cost_sheets.assumptions' => ['accountant', 'manager'],
-            'rooms.cost_sheets.creer' => ['accountant', 'manager'],
+            'rooms.cost_sheets.export' => ['accountant', 'manager'],
+            'rooms.cost_sheets.import' => ['accountant', 'manager'],
             'rooms.cost_sheets.items.creer' => ['accountant', 'manager'],
             'rooms.cost_sheets.items.modifier' => ['accountant', 'manager'],
             'rooms.cost_sheets.items.supprimer' => ['accountant', 'manager'],
             'rooms.cost_sheets.starter' => ['accountant', 'manager'],
             'rooms.cost_sheets.voir' => ['accountant', 'manager'],
             'rooms.creer' => ['manager', 'reception'],
+            'rooms.export' => ['manager', 'reception'],
             'rooms.images.supprimer' => ['manager', 'reception'],
+            'rooms.import' => ['manager', 'reception'],
             'rooms.modifier' => ['manager', 'reception'],
             'rooms.supprimer' => ['manager', 'reception'],
             'rooms.types.creer' => ['manager', 'reception'],
+            'rooms.types.export' => ['manager', 'reception'],
+            'rooms.types.import' => ['manager', 'reception'],
             'rooms.types.modifier' => ['manager', 'reception'],
             'rooms.types.supprimer' => ['manager', 'reception'],
-            'rooms.types.voir' => ['manager', 'reception'],
             'rooms.updateStatus' => ['manager', 'reception'],
             'rooms.voir' => ['manager', 'reception'],
 
             // ── Paramètres ──
-            'settings.creer' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'settings.export' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'settings.import' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'settings.modifier' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'settings.packages.creer' => ['manager'],
+            'settings.packages.export' => ['manager'],
+            'settings.packages.import' => ['manager'],
             'settings.packages.modifier' => ['manager'],
             'settings.packages.supprimer' => ['manager'],
-            'settings.packages.voir' => ['manager'],
             'settings.partners.creer' => ['manager'],
+            'settings.partners.export' => ['manager'],
+            'settings.partners.import' => ['manager'],
             'settings.partners.modifier' => ['manager'],
             'settings.partners.supprimer' => ['manager'],
-            'settings.partners.voir' => ['manager'],
             'settings.services.creer' => ['manager'],
+            'settings.services.export' => ['manager'],
+            'settings.services.import' => ['manager'],
             'settings.services.modifier' => ['manager'],
             'settings.services.supprimer' => ['manager'],
-            'settings.services.voir' => ['manager'],
             'settings.voir' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
 
             // ── Boutique ──
@@ -240,40 +262,49 @@ class PermissionCatalog
             'shop.cash_register.disbursements.creer' => ['shop_cashier', 'shop_manager'],
             'shop.cash_register.open' => ['shop_cashier', 'shop_manager'],
             'shop.cash_register.open.creer' => ['shop_cashier', 'shop_manager'],
-            'shop.cash_register.voir' => ['manager', 'shop_cashier', 'shop_manager'],
+            'shop.cash_register.voir' => ['manager', 'shop_manager'],
             'shop.orders.creer' => ['shop_cashier', 'shop_manager'],
             'shop.orders.paid' => ['shop_cashier', 'shop_manager'],
             'shop.orders.receipt' => ['manager', 'shop_cashier', 'shop_manager'],
             'shop.orders.refund' => ['shop_cashier', 'shop_manager'],
             'shop.orders.voir' => ['manager', 'shop_cashier', 'shop_manager'],
-            'shop.products.creer' => ['shop_cashier', 'shop_manager'],
-            'shop.products.modifier' => ['shop_cashier', 'shop_manager'],
-            'shop.products.supprimer' => ['shop_cashier', 'shop_manager'],
-            'shop.products.voir' => ['manager', 'shop_cashier', 'shop_manager'],
+            'shop.products.creer' => ['shop_manager'],
+            'shop.products.export' => ['manager', 'shop_manager'],
+            'shop.products.import' => ['shop_manager'],
+            'shop.products.modifier' => ['shop_manager'],
+            'shop.products.supprimer' => ['shop_manager'],
+            'shop.products.voir' => ['manager', 'shop_manager'],
 
             // ── Groupes ──
-            'groups.addRoom' => ['manager', 'reception'],
-            'groups.cancel' => ['manager', 'reception'],
+            'groups.addRoom' => ['manager'],
+            'groups.cancel' => ['manager'],
             'groups.checkInAll' => ['manager', 'reception'],
             'groups.checkOutAll' => ['manager', 'reception'],
-            'groups.creer' => ['manager', 'reception'],
+            'groups.creer' => ['manager'],
             'groups.folio.add' => ['manager', 'reception'],
-            'groups.invoice' => ['cashier', 'manager', 'reception'],
-            'groups.modifier' => ['manager', 'reception'],
-            'groups.payment.add' => ['cashier', 'manager', 'reception'],
-            'groups.removeRoom' => ['manager', 'reception'],
+            'groups.invoice' => ['manager', 'reception'],
+            'groups.modifier' => ['manager'],
+            'groups.payment.add' => ['manager', 'reception'],
+            'groups.removeRoom' => ['manager'],
             'groups.voir' => ['manager', 'reception'],
 
             // ── Housekeeping ──
-            'housekeeping.assignments.creer' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.assignments.creer' => ['housekeeping_leader', 'manager'],
             'housekeeping.available' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.clean' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.inspect' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.issue' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.ready' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.reject' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.teams.creer' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.teams.creer' => ['housekeeping_leader', 'manager'],
             'housekeeping.voir' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+
+            // ── Clients ──
+            'customers.creer' => ['manager', 'reception'],
+            'customers.export' => ['manager', 'reception'],
+            'customers.import' => ['manager', 'reception'],
+            'customers.modifier' => ['manager', 'reception'],
+            'customers.voir' => ['cashier', 'manager', 'reception'],
 
             // ── Réception ──
             'reception.pos.history' => ['manager', 'reception'],
@@ -286,11 +317,6 @@ class PermissionCatalog
             'users.modifier' => ['manager'],
             'users.toggleStatus' => ['manager'],
             'users.voir' => ['manager'],
-
-            // ── Clients ──
-            'customers.creer' => ['cashier', 'manager', 'reception'],
-            'customers.modifier' => ['cashier', 'manager', 'reception'],
-            'customers.voir' => ['cashier', 'manager', 'reception'],
 
             // ── Agenda ──
             'agenda.voir' => ['manager', 'reception'],

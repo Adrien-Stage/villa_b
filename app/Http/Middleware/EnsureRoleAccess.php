@@ -43,18 +43,10 @@ class EnsureRoleAccess
         $hasRole = $user->hasAnyRole($authorizedRoles);
 
         if (!$hasRole && $user->department_id && $user->department) {
-            $deptRoles = match ($user->department->slug) {
-                'direction_generale'       => ['manager', 'admin'],
-                'reception_front_office'   => ['reception', 'cashier'],
-                'housekeeping_hebergement' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff'],
-                'restauration_fb'          => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'],
-                'comptabilite_finance'     => ['accountant', 'cashier', 'controller'],
-                'boutique_commerce'        => ['shop_manager', 'shop_cashier'],
-                'ressources_humaines'      => ['manager'],
-                'informatique_it'          => ['admin'],
-                'qualite_controle'         => ['controller', 'manager'],
-                default                    => [],
-            };
+            // Carte déplacée dans App\Support\DepartmentRoles : elle est une
+            // voie d'octroi à part entière et doit être lisible depuis
+            // l'extérieur de ce middleware.
+            $deptRoles = \App\Support\DepartmentRoles::for($user->department->slug);
 
             if (!empty(array_intersect($authorizedRoles, $deptRoles))) {
                 $hasRole = true;
