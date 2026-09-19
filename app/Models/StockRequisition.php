@@ -123,6 +123,23 @@ class StockRequisition extends Model
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED], true);
     }
 
+    /**
+     * Libellés exposés en attributs, pour que les vues et les documents y
+     * accèdent par leur clé — « department_label » — sans appeler de méthode.
+     * Ils délèguent aux méthodes existantes : un seul endroit décide du texte.
+     */
+    // Forme héritée volontairement : la forme moderne exigerait une méthode
+    // nommée departmentLabel(), déjà prise par la méthode publique ci-dessous.
+    public function getDepartmentLabelAttribute(): string
+    {
+        return $this->departmentLabel();
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->statusLabel();
+    }
+
     public function departmentLabel(): string
     {
         return self::DEPARTMENTS[$this->department] ?? $this->department;
