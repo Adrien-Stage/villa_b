@@ -156,7 +156,7 @@
                     </ul>
                 </div>
 
-                @role('manager')
+                @undroit('analytics.voir')
                     @module('analytics')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
@@ -165,9 +165,9 @@
                         </ul>
                     </div>
                     @endmodule
-                @endrole
+                @endundroit
 
-                @role('manager','reception','housekeeping_leader','housekeeping_staff','housekeeping')
+                @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                         <ul class="space-y-0.5">
@@ -245,7 +245,7 @@
                             @endrole
                         </ul>
                     </div>
-                @endrole
+                @endundroit
 
                 @role('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
@@ -332,7 +332,7 @@
                     @endmodule
                 @endrole
 
-                @role('econome','manager','admin')
+                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
@@ -343,19 +343,19 @@
                             <x-sidebar-link route="economat.requisitions.index" icon="inbox">Demandes</x-sidebar-link>
                         </ul>
                     </div>
-                @endrole
+                @endundroit
 
                 {{-- Lien de demande à l'économat, pour les responsables de département --}}
-                @role('reception','housekeeping_leader','restaurant_chief','shop_manager')
+                @undroit('economat.requisitions.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
                         </ul>
                     </div>
-                @endrole
+                @endundroit
 
-                @role('accountant','manager','admin')
+                @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
@@ -371,7 +371,7 @@
                             @endrole
                         </ul>
                     </div>
-                @endrole
+                @endundroit
 
                 @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
                     <div class="mt-4 pt-4 border-t border-surface-dark">
