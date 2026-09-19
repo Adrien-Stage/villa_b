@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PermissionGrant;
 use App\Models\User;
 use App\Support\PermissionCatalog;
+use App\Support\PermissionScope;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\Schema;
  */
 class PermissionResolver
 {
-    /** @var array<int, array<string, string>> Surcharges par utilisateur, mémorisées le temps de la requête. */
+    /** @var array<int, array<string, array{effect: string, scope: ?string}>> Surcharges par utilisateur, mémorisées le temps de la requête. */
     private array $cache = [];
 
     public function allows(?User $user, string $permission): bool
@@ -36,13 +37,13 @@ class PermissionResolver
             return false;
         }
 
-        $surcharges = $this->surchargesPour($user);
+        $surcharge = $this->surchargesPour($user)[$permission] ?? null;
 
-        if (($surcharges[$permission] ?? null) === PermissionGrant::EFFET_DENY) {
+        if (($surcharge['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
             return false;
         }
 
-        if (($surcharges[$permission] ?? null) === PermissionGrant::EFFET_ALLOW) {
+        if (($surcharge['effect'] ?? null) === PermissionGrant::EFFET_ALLOW) {
             return true;
         }
 
@@ -54,8 +55,24 @@ class PermissionResolver
     {
         return array_keys(array_filter(
             $this->surchargesPour($user),
-            static fn (string $effet): bool => $effet === PermissionGrant::EFFET_DENY
+            static fn (array $s): bool => $s['effect'] === PermissionGrant::EFFET_DENY
         ));
+    }
+
+    /**
+     * Étendue des données que ce droit laisse voir à cette personne.
+     *
+     * Sans portée déclarée : tout l'établissement, comme avant. Plusieurs
+     * portées héritées de plusieurs rôles se résolvent par la plus étroite —
+     * une restriction ne se lève pas en ajoutant un rôle.
+     */
+    public function scopeFor(?User $user, string $permission): string
+    {
+        if ($user === null) {
+            return PermissionScope::PROPRE;
+        }
+
+        return $this->surchargesPour($user)[$permission]['scope'] ?? PermissionScope::DEFAUT;
     }
 
     /** Vide la mémoire : à appeler après avoir modifié des surcharges. */
@@ -99,24 +116,29 @@ class PermissionResolver
             $lignes = PermissionGrant::query()
                 ->where('subject_type', PermissionGrant::SUJET_ROLE)
                 ->whereIn('subject_id', $roles)
-                ->get(['permission', 'effect']);
+                ->get(['permission', 'effect', 'scope']);
 
             foreach ($lignes as $ligne) {
-                if (($effets[$ligne->permission] ?? null) === PermissionGrant::EFFET_DENY) {
-                    continue;   // un refus déjà posé par un autre rôle ne se lève pas
-                }
+                $connu = $effets[$ligne->permission] ?? null;
 
-                $effets[$ligne->permission] = $ligne->effect;
+                // Un refus déjà posé par un autre rôle ne se lève pas ; la
+                // portée, elle, se resserre toujours vers la plus étroite.
+                $effets[$ligne->permission] = [
+                    'effect' => ($connu['effect'] ?? null) === PermissionGrant::EFFET_DENY
+                        ? PermissionGrant::EFFET_DENY
+                        : $ligne->effect,
+                    'scope'  => PermissionScope::laPlusEtroite($connu['scope'] ?? null, $ligne->scope),
+                ];
             }
         }
 
         $nominatives = PermissionGrant::query()
             ->where('subject_type', PermissionGrant::SUJET_USER)
             ->where('subject_id', (string) $user->id)
-            ->get(['permission', 'effect']);
+            ->get(['permission', 'effect', 'scope']);
 
         foreach ($nominatives as $ligne) {
-            $effets[$ligne->permission] = $ligne->effect;
+            $effets[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
         }
 
         return $this->cache[$user->id] = $effets;

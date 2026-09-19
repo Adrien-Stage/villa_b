@@ -19,7 +19,7 @@ class PermissionGrant extends Model
     public const EFFET_DENY  = 'deny';
 
     protected $fillable = [
-        'subject_type', 'subject_id', 'permission', 'effect', 'granted_by', 'reason',
+        'subject_type', 'subject_id', 'permission', 'effect', 'scope', 'granted_by', 'reason',
     ];
 
     public function grantedBy(): BelongsTo

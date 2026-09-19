@@ -54,6 +54,12 @@ class UserManagementController extends Controller
         $query = User::query()
             ->where('id', '!=', $manager->id)
             ->whereNotIn('role', ['admin', 'manager'])
+            // Le département borne la liste quand la matrice le demande : un
+            // chef de service n'a pas à consulter le dossier de ceux qu'il
+            // n'encadre pas.
+            ->tap(fn ($q) => \App\Support\DepartmentScoping::apply(
+                $q, Auth::user(), 'users.voir', 'department_id', 'id'
+            ))
             ->with(['roles', 'department']);
 
         if ($request->filled('search')) {

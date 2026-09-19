@@ -62,3 +62,24 @@ test('les rôles cités existent tous au catalogue', function () {
 test('un rôle seul ne viole jamais la règle', function (string $slug) {
     expect(DutySegregation::isCompatible([$slug]))->toBeTrue();
 })->with(array_column(RoleCatalog::all(), 'slug'));
+
+test('le contrôle de gestion ne se cumule à aucun rôle opérationnel', function (string $operationnel) {
+    expect(DutySegregation::isCompatible(['controller', $operationnel]))->toBeFalse();
+})->with(['econome', 'accountant', 'cashier', 'reception', 'restaurant_chief']);
+
+test('le contrôleur de gestion voit tout et n\'écrit rien', function () {
+    $droits = \App\Support\PermissionCatalog::forRole('controller');
+
+    $ecritures = array_values(array_filter(
+        $droits,
+        fn (string $d) => !str_ends_with($d, '.voir') && !str_ends_with($d, '.export')
+    ));
+
+    // Sa valeur tient à ce qu'il ne participe pas aux opérations qu'il surveille.
+    expect($ecritures)->toBe([])
+        ->and(count($droits))->toBeGreaterThan(40);
+});
+
+test('le contrôleur voit la comptabilité, l\'économat et les opérations', function (string $droit) {
+    expect(\App\Support\PermissionCatalog::roles($droit))->toContain('controller');
+})->with(['accounting.voir', 'economat.voir', 'rooms.voir', 'bookings.voir', 'restaurant.orders.voir']);

@@ -114,6 +114,12 @@ class RoleCatalog
 
             // ── Comptabilité ──
             [
+                'name' => 'Contrôleur de gestion',
+                'slug' => 'controller',
+                'description' => 'Contrôle et audit interne — vue sur tous les services, aucune écriture',
+                'module' => 'comptabilite', 'icon' => 'shield-check', 'sort_order' => 41, 'is_assignable' => true,
+            ],
+            [
                 'name' => 'Comptable',
                 'slug' => 'accountant',
                 'description' => 'Service comptabilité et rapports financiers',

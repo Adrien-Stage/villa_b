@@ -12,157 +12,130 @@
   "manager"
  ],
  "accounting.expenses": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.destroy": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.update": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.income_statement": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.journal": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.accounts": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.aged": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic.margins": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic.mirror": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.auxiliary": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.auxiliary.ledger": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.balance": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.entry": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.entry.reverse": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.general": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.ledger.journals": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.night_audit": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.night_audit.run": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.opening": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.opening.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.periods": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.periods.lock": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile.auto": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile.undo": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers.create": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers.show": [
   "accountant",
+  "controller",
   "manager"
  ],
  "accounting.ledger.suppliers.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.withholding": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.years.open": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.receivables": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "agenda.index": [
+  "controller",
   "manager",
   "reception"
  ],
  "analytics.index": [
+  "controller",
   "manager"
  ],
  "analytics.print": [
+  "controller",
   "manager"
  ],
  "bookings.approve": [
@@ -186,6 +159,7 @@
   "reception"
  ],
  "bookings.cash_register.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -226,6 +200,7 @@
   "reception"
  ],
  "bookings.drafts.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -250,6 +225,7 @@
   "reception"
  ],
  "bookings.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -258,6 +234,7 @@
   "reception"
  ],
  "bookings.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -278,6 +255,7 @@
   "reception"
  ],
  "customers.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -287,11 +265,13 @@
  ],
  "customers.index": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
  "customers.show": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
@@ -304,77 +284,71 @@
   "reception"
  ],
  "economat.index": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.items.adjust": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.destroy": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.export": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.items.import": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.index": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.items.show": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.items.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.update": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.cancel": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.create": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.index": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.orders.receive": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.send": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.show": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.orders.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.approve": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.cancel": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
@@ -382,16 +356,15 @@
  "economat.requisitions.create": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
  ],
  "economat.requisitions.deliver": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.index": [
+  "controller",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -400,10 +373,10 @@
   "shop_manager"
  ],
  "economat.requisitions.reject": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.show": [
+  "controller",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -414,26 +387,23 @@
  "economat.requisitions.store": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
  ],
  "economat.suppliers.destroy": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.suppliers.index": [
+  "controller",
   "econome",
   "manager"
  ],
  "economat.suppliers.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.suppliers.update": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "groups.addRoom": [
   "manager"
@@ -460,6 +430,7 @@
   "reception"
  ],
  "groups.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -475,6 +446,7 @@
   "manager"
  ],
  "groups.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -501,6 +473,7 @@
   "manager"
  ],
  "housekeeping.index": [
+  "controller",
   "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
@@ -536,6 +509,7 @@
  ],
  "invoices.show": [
   "cashier",
+  "controller",
   "manager",
   "reception"
  ],
@@ -544,6 +518,7 @@
   "reception"
  ],
  "reception.pos.index": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -557,6 +532,7 @@
  ],
  "restaurant.billing.index": [
   "cashier",
+  "controller",
   "manager",
   "restaurant_chief"
  ],
@@ -566,11 +542,11 @@
  ],
  "restaurant.billing.receipt": [
   "cashier",
-  "manager",
   "restaurant_chief"
  ],
  "restaurant.billing.show": [
   "cashier",
+  "controller",
   "manager",
   "restaurant_chief"
  ],
@@ -579,6 +555,7 @@
   "restaurant_chief"
  ],
  "restaurant.kitchen.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -594,6 +571,7 @@
   "restaurant_chief"
  ],
  "restaurant.menus.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -603,6 +581,7 @@
   "restaurant_chief"
  ],
  "restaurant.menus.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -622,6 +601,7 @@
   "restaurant_staff"
  ],
  "restaurant.orders.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -648,6 +628,7 @@
   "restaurant_staff"
  ],
  "restaurant.orders.show": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook",
@@ -671,6 +652,7 @@
   "restaurant_chief"
  ],
  "restaurant.pantry.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -679,6 +661,7 @@
   "restaurant_chief"
  ],
  "restaurant.pantry.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -702,6 +685,7 @@
   "restaurant_chief"
  ],
  "restaurant.recipes.export": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -710,6 +694,7 @@
   "restaurant_chief"
  ],
  "restaurant.recipes.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -738,11 +723,13 @@
   "restaurant_chief"
  ],
  "restaurant.stock_counts.index": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.stock_counts.show": [
+  "controller",
   "manager",
   "restaurant_chief",
   "restaurant_cook"
@@ -759,6 +746,7 @@
  ],
  "rooms.cost_sheets.export": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.import": [
@@ -767,6 +755,7 @@
  ],
  "rooms.cost_sheets.index": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.items.destroy": [
@@ -783,6 +772,7 @@
  ],
  "rooms.cost_sheets.show": [
   "accountant",
+  "controller",
   "manager"
  ],
  "rooms.cost_sheets.starter": [
@@ -794,6 +784,7 @@
   "reception"
  ],
  "rooms.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -806,10 +797,12 @@
   "reception"
  ],
  "rooms.index": [
+  "controller",
   "manager",
   "reception"
  ],
  "rooms.show": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -822,6 +815,7 @@
   "reception"
  ],
  "rooms.types.export": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -846,6 +840,7 @@
   "reception"
  ],
  "settings.export": [
+  "controller",
   "housekeeping_leader",
   "manager",
   "reception",
@@ -860,6 +855,7 @@
   "shop_manager"
  ],
  "settings.index": [
+  "controller",
   "housekeeping_leader",
   "manager",
   "reception",
@@ -870,6 +866,7 @@
   "manager"
  ],
  "settings.packages.export": [
+  "controller",
   "manager"
  ],
  "settings.packages.import": [
@@ -885,6 +882,7 @@
   "manager"
  ],
  "settings.partners.export": [
+  "controller",
   "manager"
  ],
  "settings.partners.import": [
@@ -900,6 +898,7 @@
   "manager"
  ],
  "settings.services.export": [
+  "controller",
   "manager"
  ],
  "settings.services.import": [
@@ -931,6 +930,7 @@
   "shop_manager"
  ],
  "shop.cash_register.index": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -947,6 +947,7 @@
   "shop_manager"
  ],
  "shop.orders.index": [
+  "controller",
   "manager",
   "shop_cashier",
   "shop_manager"
@@ -956,7 +957,6 @@
   "shop_manager"
  ],
  "shop.orders.receipt": [
-  "manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -965,6 +965,7 @@
   "shop_manager"
  ],
  "shop.orders.show": [
+  "controller",
   "manager",
   "shop_cashier",
   "shop_manager"
@@ -983,6 +984,7 @@
   "shop_manager"
  ],
  "shop.products.export": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -990,6 +992,7 @@
   "shop_manager"
  ],
  "shop.products.index": [
+  "controller",
   "manager",
   "shop_manager"
  ],
@@ -1000,9 +1003,11 @@
   "shop_manager"
  ],
  "test-popup": [
+  "controller",
   "manager"
  ],
  "users.index": [
+  "controller",
   "manager"
  ],
  "users.store": [
