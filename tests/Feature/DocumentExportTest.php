@@ -201,3 +201,26 @@ test("l'export est journalisé", function () {
 
     $this->assertDatabaseHas('audit_logs', ['event_type' => 'export', 'module' => 'economat']);
 });
+
+test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", function () {
+    activerModules(['economat']);
+
+    // L'économe le crée.
+    $this->actingAs(User::factory()->create(['role' => 'econome']))
+        ->get(route('economat.orders.index'))
+        ->assertSee('Nouveau bon');
+
+    // Le comptable consulte l'économat sans y commander : un bouton qui mène
+    // à un refus est pire qu'un bouton absent.
+    \App\Models\PermissionGrant::create([
+        'subject_type' => 'role', 'subject_id' => 'accountant',
+        'permission' => 'economat.orders.voir', 'effect' => 'allow',
+        'reason' => 'Rapprochement des factures fournisseurs.',
+    ]);
+    app(\App\Services\PermissionResolver::class)->forget();
+
+    $this->actingAs(User::factory()->create(['role' => 'accountant']))
+        ->get(route('economat.orders.index'))
+        ->assertOk()
+        ->assertDontSee('Nouveau bon');
+});
