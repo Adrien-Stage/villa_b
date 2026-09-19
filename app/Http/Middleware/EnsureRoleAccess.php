@@ -39,19 +39,20 @@ class EnsureRoleAccess
         }
         $authorizedRoles = array_map('trim', $authorizedRoles);
 
-        // Vérifier si l'utilisateur a l'un des rôles autorisés (direct ou via son département)
+        // Seuls les rôles réellement détenus ouvrent l'accès.
+        //
+        // Le département en conférait aussi, silencieusement : rattacher un
+        // réceptionniste à « Direction Générale » lui donnait manager et admin,
+        // donc la gestion des utilisateurs et la comptabilité, sans que
+        // personne ne lui ait accordé ces rôles. Mesuré avant retrait : la même
+        // personne passait de 302 à 200 sur /users et /accounting par le seul
+        // effet de son rattachement.
+        //
+        // Le département restreint désormais les données, il n'accorde plus de
+        // droits. La commande « roles:audit-departements » liste les comptes
+        // qui dépendaient de cet octroi, pour que les rôles leur soient donnés
+        // explicitement plutôt que déduits.
         $hasRole = $user->hasAnyRole($authorizedRoles);
-
-        if (!$hasRole && $user->department_id && $user->department) {
-            // Carte déplacée dans App\Support\DepartmentRoles : elle est une
-            // voie d'octroi à part entière et doit être lisible depuis
-            // l'extérieur de ce middleware.
-            $deptRoles = \App\Support\DepartmentRoles::for($user->department->slug);
-
-            if (!empty(array_intersect($authorizedRoles, $deptRoles))) {
-                $hasRole = true;
-            }
-        }
 
         if (!$hasRole) {
             // Log l'accès refusé pour audit dans la base de données
