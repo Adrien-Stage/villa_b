@@ -411,6 +411,7 @@ class PermissionCatalog
             'rooms.cost_sheets.items.supprimer' => ['accountant', 'manager'],
             'rooms.cost_sheets.starter' => ['accountant', 'manager'],
             'rooms.cost_sheets.voir' => ['accountant', 'controller', 'manager'],
+            'rooms.cost_sheets.document' => ['accountant', 'controller', 'manager'],
             'rooms.creer' => ['manager', 'reception'],
             'rooms.export' => ['controller', 'manager', 'reception'],
             'rooms.images.supprimer' => ['manager', 'reception'],

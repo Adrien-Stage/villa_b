@@ -4,10 +4,62 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto">
-    <div class="mb-6">
-        <h1 class="text-xl font-heading font-semibold text-primary">Fiches techniques des chambres</h1>
-        <p class="text-sm text-primary/60 mt-0.5">Marge sur une chambre louée : coût variable par nuitée comparé au prix pratiqué.</p>
+    @php
+        // Consolidation : ce qu'on lit d'abord, avant d'ouvrir une fiche.
+        // La marge globale se pondère par le prix, non par le nombre de types :
+        // faire la moyenne des pourcentages donnerait autant de poids à une
+        // suite qu'à une chambre standard.
+        $renseignees = $rows->filter(fn ($r) => $r['summary']['is_configured']);
+        $prixCumule  = $renseignees->sum(fn ($r) => $r['summary']['reference_price']);
+        $coutCumule  = $renseignees->sum(fn ($r) => $r['summary']['variable_cost']);
+        $margeCumulee = $prixCumule - $coutCumule;
+        $margeGlobale = $prixCumule > 0 ? round($margeCumulee * 100 / $prixCumule) : null;
+        $aRemplir     = $rows->count() - $renseignees->count();
+
+        $fcfa = fn ($centimes) => number_format(((int) $centimes) / 100, 0, ',', ' ');
+        $teinte = fn ($pct) => $pct === null ? 'text-primary/40'
+            : ($pct >= 60 ? 'text-green-700' : ($pct >= 40 ? 'text-amber-600' : 'text-red-600'));
+    @endphp
+
+    <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-heading font-semibold text-primary">Marges par type de chambre</h1>
+            <p class="text-sm text-primary/60 mt-0.5">
+                Vue consolidée. Ouvrez une fiche pour le détail de ses postes de coût.
+            </p>
+        </div>
+
+        @droit('rooms.cost_sheets.voir')
+            <x-barre-export route="rooms.cost_sheets.document" />
+        @enddroit
     </div>
+
+    @if($renseignees->isNotEmpty())
+        <div class="mb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-white border border-secondary/20 rounded-xl px-4 py-3">
+                <p class="text-[10px] uppercase tracking-wider text-primary/40">Marge globale</p>
+                <p class="text-2xl font-heading font-bold {{ $teinte($margeGlobale) }} mt-0.5">{{ $margeGlobale }}%</p>
+                <p class="text-[10px] text-primary/40">pondérée par le prix</p>
+            </div>
+            <div class="bg-white border border-secondary/20 rounded-xl px-4 py-3">
+                <p class="text-[10px] uppercase tracking-wider text-primary/40">Prix cumulé / nuit</p>
+                <p class="text-lg font-semibold text-primary mt-1">{{ $fcfa($prixCumule) }}</p>
+            </div>
+            <div class="bg-white border border-secondary/20 rounded-xl px-4 py-3">
+                <p class="text-[10px] uppercase tracking-wider text-primary/40">Coût cumulé</p>
+                <p class="text-lg font-semibold text-red-600 mt-1">{{ $fcfa($coutCumule) }}</p>
+            </div>
+            <div class="bg-white border border-secondary/20 rounded-xl px-4 py-3 {{ $aRemplir > 0 ? 'border-amber-300 bg-amber-50/40' : '' }}">
+                <p class="text-[10px] uppercase tracking-wider text-primary/40">Fiches</p>
+                <p class="text-lg font-semibold text-primary mt-1">{{ $renseignees->count() }} / {{ $rows->count() }}</p>
+                @if($aRemplir > 0)
+                    {{-- Une marge globale calculée sur la moitié des types
+                         n'est pas la marge de l'hôtel : on le dit. --}}
+                    <p class="text-[10px] font-medium text-amber-700">{{ $aRemplir }} à remplir</p>
+                @endif
+            </div>
+        </div>
+    @endif
 
     @include('economat.partials.flash')
 
@@ -62,75 +114,97 @@
                 </div>
             </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @foreach($rows as $row)
-                @php
-                    $type = $row['type'];
-                    $s = $row['summary'];
-                    $pct = $s['contribution_pct'];
-                    // Couleur de marge : sain > 60 %, à surveiller 40-60 %, faible < 40 %.
-                    $tone = $pct === null ? 'slate' : ($pct >= 60 ? 'green' : ($pct >= 40 ? 'amber' : 'red'));
-                    $toneClasses = [
-                        'green' => 'text-green-700', 'amber' => 'text-amber-600',
-                        'red' => 'text-red-600', 'slate' => 'text-primary/40',
-                    ][$tone];
-                @endphp
-                {{-- La carte n'est plus un lien d'un bloc : une case à cocher à
-                     l'intérieur d'un <a> déclencherait la navigation au clic.
-                     Seul le titre porte le lien, la case reste indépendante. --}}
-                <div class="bg-white border rounded-xl p-5 transition-colors"
-                     :class="selection.includes({{ $type->id }}) ? 'border-primary/40 ring-1 ring-primary/20' : 'border-secondary/20 hover:border-secondary/40'">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-start gap-3 min-w-0">
-                            <input type="checkbox" name="types[]" value="{{ $type->id }}" x-model.number="selection"
-                                   class="mt-0.5 w-4 h-4 rounded border-secondary/40 text-primary shrink-0 cursor-pointer"
-                                   aria-label="Sélectionner la fiche {{ $type->name }}">
-                            <div class="min-w-0">
-                                <a href="{{ route('rooms.cost_sheets.show', $type) }}"
-                                   class="text-sm font-semibold text-primary hover:text-secondary transition-colors">
-                                    {{ $type->name }}
-                                </a>
-                                <p class="text-[11px] text-primary/40">
-                                    {{ $s['is_configured'] ? $s['line_count'] . ' poste(s) de coût' : 'fiche à remplir' }}
-                                </p>
-                            </div>
-                        </div>
-                        @if($s['is_configured'])
-                            <span class="text-lg font-bold {{ $toneClasses }}">{{ $pct }}%</span>
-                        @else
-                            {{-- Sans coût saisi, aucun pourcentage : afficher 100 % serait mensonger. --}}
-                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                                <i data-lucide="alert-circle" class="w-3 h-3"></i> À configurer
-                            </span>
-                        @endif
-                    </div>
+        {{-- Tableau plutôt que cartes : on vient ici pour comparer les types
+             entre eux, et des cartes côte à côte se comparent mal. Les lignes
+             sont triées par marge croissante — ce qu'on cherche d'abord, c'est
+             la chambre qui rapporte le moins. --}}
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-accent/20">
+                        <tr>
+                            <th class="w-10 px-4 py-3"></th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type de chambre</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Prix / nuit</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Coût variable</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Marge</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">%</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Postes</th>
+                            <th class="px-4 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-secondary/10">
+                        @foreach($rows->sortBy(fn ($r) => $r['summary']['contribution_pct'] ?? -1) as $row)
+                            @php
+                                $type = $row['type'];
+                                $s    = $row['summary'];
+                                $pct  = $s['contribution_pct'];
+                            @endphp
+                            <tr class="hover:bg-accent/10 transition-colors">
+                                <td class="px-4 py-2.5">
+                                    <input type="checkbox" name="types[]" value="{{ $type->id }}" x-model.number="selection"
+                                           class="w-4 h-4 rounded border-secondary/40 text-primary cursor-pointer"
+                                           aria-label="Sélectionner la fiche {{ $type->name }}">
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
+                                       class="font-medium text-primary hover:text-secondary transition-colors">{{ $type->name }}</a>
+                                    @unless($s['is_configured'])
+                                        <span class="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            <i data-lucide="alert-circle" class="w-3 h-3"></i> à remplir
+                                        </span>
+                                    @endunless
+                                </td>
+                                <td class="px-4 py-2.5 text-right tabular-nums text-primary/80">
+                                    {{ $fcfa($s['reference_price']) }}
+                                    @if($s['reference_is_realized'])
+                                        {{-- Prix réellement pratiqué, non tarif affiché : la marge
+                                             calculée sur un tarif jamais appliqué serait fictive. --}}
+                                        <span class="text-[10px] text-primary/40" title="Prix moyen réellement pratiqué">réel</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2.5 text-right tabular-nums {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }}">
+                                    {{ $s['is_configured'] ? $fcfa($s['variable_cost']) : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right tabular-nums font-semibold {{ $s['is_configured'] ? $teinte($pct) : 'text-primary/30' }}">
+                                    {{ $s['is_configured'] ? $fcfa($s['contribution_margin']) : '—' }}
+                                </td>
+                                <td class="px-4 py-2.5 text-right">
+                                    @if($s['is_configured'])
+                                        <span class="font-bold {{ $teinte($pct) }}">{{ $pct }}%</span>
+                                    @else
+                                        {{-- Sans coût saisi, aucun pourcentage : 100 % serait mensonger. --}}
+                                        <span class="text-primary/30">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2.5 text-right tabular-nums text-primary/50">{{ $s['line_count'] ?: '—' }}</td>
+                                <td class="px-4 py-2.5 text-right">
+                                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
+                                       class="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary hover:text-primary transition-colors">
+                                        Fiche <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
 
-                    <div class="grid grid-cols-3 gap-3 mt-4 text-center">
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Prix / nuit</p>
-                            <p class="text-sm font-semibold text-primary mt-0.5">{{ number_format($s['reference_price'] / 100, 0, ',', ' ') }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Coût</p>
-                            <p class="text-sm font-semibold {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }} mt-0.5">
-                                {{ $s['is_configured'] ? number_format($s['variable_cost'] / 100, 0, ',', ' ') : '—' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider text-primary/40">Reste</p>
-                            <p class="text-sm font-semibold {{ $s['is_configured'] ? $toneClasses : 'text-primary/30' }} mt-0.5">
-                                {{ $s['is_configured'] ? number_format($s['contribution_margin'] / 100, 0, ',', ' ') : '—' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
-                       class="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-secondary hover:text-primary transition-colors">
-                        Ouvrir la fiche
-                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                    </a>
-                </div>
-            @endforeach
+                    @if($renseignees->isNotEmpty())
+                        <tfoot class="bg-accent/20">
+                            <tr class="font-semibold text-primary">
+                                <td></td>
+                                <td class="px-4 py-3 text-[11px] uppercase tracking-wider">
+                                    Ensemble — {{ $renseignees->count() }} fiche(s) renseignée(s)
+                                </td>
+                                <td class="px-4 py-3 text-right tabular-nums">{{ $fcfa($prixCumule) }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums text-red-700">{{ $fcfa($coutCumule) }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums {{ $teinte($margeGlobale) }}">{{ $fcfa($margeCumulee) }}</td>
+                                <td class="px-4 py-3 text-right {{ $teinte($margeGlobale) }}">{{ $margeGlobale }}%</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    @endif
+                </table>
+            </div>
         </div>
         </form>
 

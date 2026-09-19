@@ -778,6 +778,11 @@
   "accountant",
   "manager"
  ],
+ "rooms.cost_sheets.document": [
+  "accountant",
+  "controller",
+  "manager"
+ ],
  "rooms.cost_sheets.export": [
   "accountant",
   "controller",

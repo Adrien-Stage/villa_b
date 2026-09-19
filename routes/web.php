@@ -227,6 +227,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Déclaré avant /{roomType} par prudence, même si la contrainte
         // numérique protège déjà : l'ordre reste lisible pour la suite.
         Route::get('/export', [App\Http\Controllers\RoomCostSheetCsvController::class, 'export'])->name('export');
+        // Document consolidé — impression, PDF, tableur, traitement de texte.
+        // Distinct du classeur ci-dessus, qui sert à remplir les fiches et se
+        // réimporte : celui-ci se lit et se classe.
+        Route::get('/document', [$c, 'document'])->name('document');
         Route::post('/import', [App\Http\Controllers\RoomCostSheetCsvController::class, 'import'])->name('import');
         Route::get('/{roomType}', [$c, 'show'])->whereNumber('roomType')->name('show');
         Route::put('/{roomType}/hypotheses', [$c, 'updateAssumptions'])->whereNumber('roomType')->name('assumptions');
