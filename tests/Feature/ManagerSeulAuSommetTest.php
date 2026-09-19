@@ -37,23 +37,54 @@ test('aucun département ne confère admin', function () {
     }
 });
 
-test("le manager est au sommet partout, sauf dans les deux points de vente", function () {
-    $sansManager = array_keys(array_filter(
-        PermissionCatalog::all(),
-        fn (array $roles) => !in_array('manager', $roles, true)
-    ));
+test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
+    // Écriture : hébergement, statistiques, administration. Ailleurs, il
+    // consulte : restauration, boutique, économat et comptabilité ont leurs
+    // responsables, et le directeur qui saisirait à leur place brouillerait
+    // la responsabilité de chacun.
+    $lectureSeule = ['restaurant', 'shop', 'economat', 'accounting'];
 
-    // 49 droits lui échappent, tous sous restaurant. et shop. : gestes de
-    // service réservés au chef de salle et au responsable boutique — prendre
-    // une commande, l'envoyer en cuisine, ouvrir ou fermer la caisse du point
-    // de vente. « admin » ne les détenait pas davantage : ce partage est
-    // antérieur au présent changement, et reste à trancher.
-    $horsPointDeVente = array_values(array_filter(
-        $sansManager,
-        fn (string $droit) => !str_starts_with($droit, 'restaurant.') && !str_starts_with($droit, 'shop.')
-    ));
+    $ecrituresIndues = [];
 
-    expect($horsPointDeVente)->toBe([]);
+    foreach (PermissionCatalog::all() as $droit => $roles) {
+        $module  = explode('.', $droit)[0];
+        $lecture = str_ends_with($droit, '.voir') || str_ends_with($droit, '.export');
+
+        // Le contreseing des comptages reste au manager : acte de contrôle,
+        // non écriture comptable.
+        if (in_array($module, $lectureSeule, true)
+            && !$lecture
+            && in_array('manager', $roles, true)
+            && !str_starts_with($droit, 'accounting.cash')) {
+            $ecrituresIndues[] = $droit;
+        }
+    }
+
+    expect($ecrituresIndues)->toBe([]);
+});
+
+test("le manager consulte tout ce qu'il n'écrit plus", function () {
+    $manquants = [];
+
+    foreach (['restaurant', 'shop', 'economat', 'accounting'] as $module) {
+        foreach (PermissionCatalog::all() as $droit => $roles) {
+            if (str_starts_with($droit, $module . '.')
+                && str_ends_with($droit, '.voir')
+                && !in_array('manager', $roles, true)) {
+                $manquants[] = $droit;
+            }
+        }
+    }
+
+    // Lecture seule veut dire lecture : le priver des deux le rendrait aveugle
+    // sur les services dont il répond.
+    expect($manquants)->toBe([]);
+});
+
+test("le manager reste témoin du comptage de caisse", function () {
+    // CashClosurePolicy le désigne nommément : l'en priver supprimerait le
+    // contrôle au lieu de le déplacer.
+    expect(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('manager');
 });
 
 test("tout droit autrefois tenu par admin est tenu par manager", function () {

@@ -49,7 +49,7 @@ test('la lecture rend le gabarit, les écarts et les incompatibilités', functio
     // plutôt que de passer par la notation pointée.
     $catalogue = $reponse->json('catalogue');
 
-    expect($catalogue['economat.items.creer'])->toBe(['econome', 'manager'])
+    expect($catalogue['economat.items.creer'])->toBe(['econome'])
         ->and($reponse->json('ecarts.0.permission'))->toBe('economat.items.creer')
         ->and($reponse->json('ecarts.0.effect'))->toBe('deny')
         ->and($reponse->json('incompatibilites'))->not->toBeEmpty()

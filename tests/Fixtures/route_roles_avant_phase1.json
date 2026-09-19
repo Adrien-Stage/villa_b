@@ -12,24 +12,19 @@
   "manager"
  ],
  "accounting.expenses": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.destroy": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses.update": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.income_statement": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.index": [
   "accountant",
@@ -37,52 +32,40 @@
   "manager"
  ],
  "accounting.journal": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.accounts": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.aged": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic.margins": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.analytic.mirror": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.auxiliary": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.auxiliary.ledger": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.balance": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.entry": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.entry.reverse": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.general": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.index": [
   "accountant",
@@ -90,52 +73,40 @@
   "manager"
  ],
  "accounting.ledger.journals": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.night_audit": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.night_audit.run": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.opening": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.opening.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.periods": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.periods.lock": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile.auto": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.reconcile.undo": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers.create": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.suppliers.show": [
   "accountant",
@@ -143,20 +114,16 @@
   "manager"
  ],
  "accounting.ledger.suppliers.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.withholding": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.ledger.years.open": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.receivables": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "agenda.index": [
   "controller",
@@ -322,12 +289,10 @@
   "manager"
  ],
  "economat.items.adjust": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.destroy": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.export": [
   "controller",
@@ -335,8 +300,7 @@
   "manager"
  ],
  "economat.items.import": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.index": [
   "controller",
@@ -349,20 +313,16 @@
   "manager"
  ],
  "economat.items.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.items.update": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.cancel": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.create": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.index": [
   "controller",
@@ -370,12 +330,10 @@
   "manager"
  ],
  "economat.orders.receive": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.send": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.orders.show": [
   "controller",
@@ -383,17 +341,14 @@
   "manager"
  ],
  "economat.orders.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.approve": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.cancel": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
@@ -401,14 +356,12 @@
  "economat.requisitions.create": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
  ],
  "economat.requisitions.deliver": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.index": [
   "controller",
@@ -420,8 +373,7 @@
   "shop_manager"
  ],
  "economat.requisitions.reject": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.requisitions.show": [
   "controller",
@@ -435,14 +387,12 @@
  "economat.requisitions.store": [
   "econome",
   "housekeeping_leader",
-  "manager",
   "reception",
   "restaurant_chief",
   "shop_manager"
  ],
  "economat.suppliers.destroy": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.suppliers.index": [
   "controller",
@@ -450,12 +400,10 @@
   "manager"
  ],
  "economat.suppliers.store": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "economat.suppliers.update": [
-  "econome",
-  "manager"
+  "econome"
  ],
  "groups.addRoom": [
   "manager"
@@ -594,7 +542,6 @@
  ],
  "restaurant.billing.receipt": [
   "cashier",
-  "manager",
   "restaurant_chief"
  ],
  "restaurant.billing.show": [
@@ -1010,7 +957,6 @@
   "shop_manager"
  ],
  "shop.orders.receipt": [
-  "manager",
   "shop_cashier",
   "shop_manager"
  ],
