@@ -1,197 +1,158 @@
 {
  "accounting.cash": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.cash_reviews": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.cash_reviews.store": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.expenses": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.expenses.destroy": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.expenses.store": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.expenses.update": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.income_statement": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.index": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.journal": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.accounts": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.aged": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.analytic": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.analytic.margins": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.analytic.mirror": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.auxiliary": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.auxiliary.ledger": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.balance": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.entry": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.entry.reverse": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.general": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.index": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.journals": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.night_audit": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.night_audit.run": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.opening": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.opening.store": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.periods": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.periods.lock": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.reconcile": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.reconcile.auto": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.reconcile.undo": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.suppliers": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.suppliers.create": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.suppliers.show": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.suppliers.store": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.withholding": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.ledger.years.open": [
   "accountant",
-  "admin",
   "manager"
  ],
  "accounting.receivables": [
   "accountant",
-  "admin",
   "manager"
  ],
  "agenda.index": [
@@ -343,92 +304,74 @@
   "reception"
  ],
  "economat.index": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.adjust": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.destroy": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.export": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.import": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.index": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.show": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.store": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.items.update": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.cancel": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.create": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.index": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.receive": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.send": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.show": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.orders.store": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.requisitions.approve": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.requisitions.cancel": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -437,7 +380,6 @@
   "shop_manager"
  ],
  "economat.requisitions.create": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -446,12 +388,10 @@
   "shop_manager"
  ],
  "economat.requisitions.deliver": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.requisitions.index": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -460,12 +400,10 @@
   "shop_manager"
  ],
  "economat.requisitions.reject": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.requisitions.show": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -474,7 +412,6 @@
   "shop_manager"
  ],
  "economat.requisitions.store": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "manager",
@@ -483,22 +420,18 @@
   "shop_manager"
  ],
  "economat.suppliers.destroy": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.suppliers.index": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.suppliers.store": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.suppliers.update": [
-  "admin",
   "econome",
   "manager"
  ],
@@ -1067,7 +1000,7 @@
   "shop_manager"
  ],
  "test-popup": [
-  "admin"
+  "manager"
  ],
  "users.index": [
   "manager"

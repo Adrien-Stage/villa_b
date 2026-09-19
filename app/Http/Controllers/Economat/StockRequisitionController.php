@@ -191,7 +191,7 @@ class StockRequisitionController extends Controller
     /** L'économe et le manager gèrent le magasin (valident, livrent). */
     private function isStoreKeeper(): bool
     {
-        return Auth::user()->hasAnyRole(['econome', 'manager', 'admin']);
+        return Auth::user()->hasAnyRole(['econome', 'manager']);
     }
 
     private function authorizeKeeper(): void

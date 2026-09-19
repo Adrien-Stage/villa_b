@@ -24,12 +24,11 @@ class RoleCatalog
     {
         return [
             // ── Rôles privilégiés : non assignables depuis la rubrique staff ──
-            [
-                'name' => 'Admin',
-                'slug' => 'admin',
-                'description' => 'Administrateur global - accès complet à tous les hôtels',
-                'module' => 'direction', 'icon' => 'shield', 'sort_order' => 1, 'is_assignable' => false,
-            ],
+            // « admin » ne figure plus ici : ce n'est pas un rôle
+            // d'établissement. C'est l'identité de la console de supervision,
+            // portée par la colonne users.role et gardée par AdminOnly, en
+            // dehors de la matrice des droits. Le seul rôle qui détient tout
+            // dans un établissement est « manager ».
             [
                 'name' => 'Manager',
                 'slug' => 'manager',

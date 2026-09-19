@@ -61,7 +61,7 @@ test("un département n'a aucun effet sur l'accès, quel qu'il soit", function (
 test("la carte historique reste disponible pour l'audit", function () {
     // DepartmentRoles n'est plus consultée par le middleware, mais la commande
     // roles:audit-departements en a besoin pour dire qui perd quoi.
-    expect(DepartmentRoles::for('direction_generale'))->toBe(['manager', 'admin'])
+    expect(DepartmentRoles::for('direction_generale'))->toBe(['manager'])
         ->and(DepartmentRoles::for('departement_inconnu'))->toBe([]);
 });
 

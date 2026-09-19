@@ -67,5 +67,5 @@ test("le département confère toujours ses rôles implicites", function () {
 
 test("les rôles qui détiennent un droit sont ceux que le catalogue déclare", function () {
     expect(PermissionCatalog::roles('economat.items.creer'))
-        ->toBe(['admin', 'econome', 'manager']);
+        ->toBe(['econome', 'manager']);
 });

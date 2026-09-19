@@ -20,7 +20,7 @@ class PurchaseOrderController extends Controller
     use \App\Http\Controllers\Concerns\PaginatesLists;
 
     /** Direction et comptabilité suivent l'engagement puis la dette fournisseur. */
-    private const WATCHERS = ['manager', 'admin', 'accountant'];
+    private const WATCHERS = ['manager', 'accountant'];
 
     public function __construct(private Notifier $notifier)
     {

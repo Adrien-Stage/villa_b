@@ -51,7 +51,9 @@ test('un rôle existant est mis à jour, pas dupliqué', function () {
 test('les rôles privilégiés ne sont jamais assignables', function () {
     RoleCatalog::sync();
 
-    foreach (['admin', 'manager', 'customer_guest'] as $slug) {
+    // « admin » ne fait plus partie du référentiel : c'est l'identité de la
+    // console de supervision, pas un rôle d'établissement.
+    foreach (['manager', 'customer_guest'] as $slug) {
         expect(Role::where('slug', $slug)->first()->is_assignable)->toBeFalse();
     }
 });
