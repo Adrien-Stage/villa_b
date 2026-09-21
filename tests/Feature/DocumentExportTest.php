@@ -212,7 +212,17 @@ test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", functi
 
     // Le comptable adresse une demande interne à l'économat depuis sa section
     // Comptabilité ; il ne crée pas de bon fournisseur.
+    //
+    // Refusé par redirection, non par 403 : EnsureRoleAccess renvoie un
+    // navigateur vers la page précédente et ne réserve le 403 qu'aux requêtes
+    // qui attendent du JSON. Attendre un 403 ici testerait la forme du refus
+    // plutôt que le refus lui-même.
     $this->actingAs(User::factory()->create(['role' => 'accountant']))
         ->get(route('economat.orders.index'))
+        ->assertRedirect();
+
+    // Et la même demande en JSON reçoit bien un 403.
+    $this->actingAs(User::factory()->create(['role' => 'accountant']))
+        ->getJson(route('economat.orders.index'))
         ->assertForbidden();
 });
