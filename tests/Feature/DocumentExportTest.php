@@ -210,10 +210,9 @@ test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", functi
         ->get(route('economat.orders.index'))
         ->assertSee('Nouveau bon');
 
-    // Le comptable passe désormais ses bons de commande fournisseur depuis
-    // son espace comptabilité.
+    // Le comptable adresse une demande interne à l'économat depuis sa section
+    // Comptabilité ; il ne crée pas de bon fournisseur.
     $this->actingAs(User::factory()->create(['role' => 'accountant']))
         ->get(route('economat.orders.index'))
-        ->assertOk()
-        ->assertSee('Nouveau bon');
+        ->assertForbidden();
 });

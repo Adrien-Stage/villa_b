@@ -398,11 +398,11 @@
                             @module('ledger')
                                 <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
                             @endmodule
-                            @if($estComptable && $droits->allows($utilisateur, 'economat.orders.voir'))
-                                {{-- Le comptable ne demande pas du matériel au magasin :
-                                     il passe un bon de commande fournisseur depuis la
-                                     comptabilité, avec une piste d'action dédiée. --}}
-                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @if($demandesEnComptabilite)
+                                {{-- Le comptable sollicite le magasin comme un
+                                     service, sans le tenir : sa demande part
+                                     d'ici, non de la rubrique Économat. --}}
+                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
                             @endif
 
                             {{-- Fiche technique : prix de revient d'une nuitée et

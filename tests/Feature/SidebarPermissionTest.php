@@ -138,16 +138,15 @@ test("le libellé des demandes dit l'étendue", function () {
     expect(liens($chef))->toContain('Mes demandes');
 });
 
-test("le comptable voit le bon de commande, pas la demande interne", function () {
+test("le comptable adresse ses demandes depuis sa propre section", function () {
     $comptable = User::factory()->create(['role' => 'accountant']);
 
     $html = $this->actingAs($comptable)->get('/dashboard')->getContent();
     preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
 
-    expect(liens($comptable))->not->toContain('Mes demandes')
-        ->and(liens($comptable))->toContain('Bons de commande');
+    expect(array_count_values(liens($comptable))['Mes demandes'] ?? 0)->toBe(1);
 
-    expect(mb_strpos($nav[0], 'Bons de commande'))->toBeGreaterThan(mb_strpos($nav[0], '>Comptabilité<'));
+    expect(mb_strpos($nav[0], 'Mes demandes'))->toBeGreaterThan(mb_strpos($nav[0], '>Comptabilité<'));
 });
 
 test("qui tient le magasin garde ses demandes dans la rubrique Économat", function () {
