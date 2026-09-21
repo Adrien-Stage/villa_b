@@ -38,6 +38,7 @@ jobs:
           # sur une autre reviendrait à valider un environnement que
           # personne n'exécute.
           php-version: '8.4'
+          extensions: zip
           coverage: none
 
       - name: Cache Composer packages
