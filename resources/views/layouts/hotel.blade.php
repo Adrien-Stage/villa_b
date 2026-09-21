@@ -162,6 +162,7 @@
                 // sur sa structure.
                 $droits = app(\App\Services\PermissionResolver::class);
                 $utilisateur = auth()->user();
+                $estComptable = auth()->check() && auth()->user()->role === 'accountant';
 
                 $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
                 $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
@@ -169,6 +170,11 @@
                 $tientLesLivres = $droits->allows($utilisateur, 'accounting.voir');
 
                 $demandesEnComptabilite = $peutDemander && $tientLesLivres && !$gereEconomat;
+                $afficheEconomat = !$estComptable
+                    || $droits->allows($utilisateur, 'economat.voir')
+                    || $droits->allows($utilisateur, 'economat.items.voir')
+                    || $droits->allows($utilisateur, 'economat.suppliers.voir')
+                    || $droits->allows($utilisateur, 'economat.requisitions.voir');
             @endphp
 
                 <div>
@@ -189,9 +195,6 @@
                     @endmodule
                 @endundroit
 
-                @php
-                    $estComptable = auth()->check() && auth()->user()->role === 'accountant';
-                @endphp
                 @unless($estComptable)
                     @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
                         <div>
@@ -359,6 +362,7 @@
                     @endmodule
                 @endrole
 
+                @if($afficheEconomat)
                 @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
@@ -381,6 +385,7 @@
                         </ul>
                     </div>
                 @endundroit
+                @endif
 
 
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
@@ -393,11 +398,11 @@
                             @module('ledger')
                                 <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
                             @endmodule
-                            @if($demandesEnComptabilite)
-                                {{-- Le comptable sollicite le magasin comme un
-                                     service, sans le tenir : sa demande part
-                                     d'ici, non de la rubrique Économat. --}}
-                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
+                            @if($estComptable && $droits->allows($utilisateur, 'economat.orders.voir'))
+                                {{-- Le comptable ne demande pas du matériel au magasin :
+                                     il passe un bon de commande fournisseur depuis la
+                                     comptabilité, avec une piste d'action dédiée. --}}
+                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
                             @endif
 
                             {{-- Fiche technique : prix de revient d'une nuitée et
