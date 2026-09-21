@@ -346,9 +346,11 @@
   "econome"
  ],
  "economat.orders.create": [
-  "econome"
+    "accountant",
+    "econome"
  ],
  "economat.orders.index": [
+    "accountant",
   "controller",
   "econome",
   "manager"
@@ -360,12 +362,14 @@
   "econome"
  ],
  "economat.orders.show": [
+    "accountant",
   "controller",
   "econome",
   "manager"
  ],
  "economat.orders.store": [
-  "econome"
+    "accountant",
+    "econome"
  ],
  "economat.requisitions.approve": [
   "econome"

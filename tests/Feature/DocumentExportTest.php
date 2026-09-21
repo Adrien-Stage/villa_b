@@ -210,17 +210,10 @@ test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", functi
         ->get(route('economat.orders.index'))
         ->assertSee('Nouveau bon');
 
-    // Le comptable consulte l'économat sans y commander : un bouton qui mène
-    // à un refus est pire qu'un bouton absent.
-    \App\Models\PermissionGrant::create([
-        'subject_type' => 'role', 'subject_id' => 'accountant',
-        'permission' => 'economat.orders.voir', 'effect' => 'allow',
-        'reason' => 'Rapprochement des factures fournisseurs.',
-    ]);
-    app(\App\Services\PermissionResolver::class)->forget();
-
+    // Le comptable passe désormais ses bons de commande fournisseur depuis
+    // son espace comptabilité.
     $this->actingAs(User::factory()->create(['role' => 'accountant']))
         ->get(route('economat.orders.index'))
         ->assertOk()
-        ->assertDontSee('Nouveau bon');
+        ->assertSee('Nouveau bon');
 });
