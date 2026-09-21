@@ -87,6 +87,14 @@ test("un droit retiré fait disparaître son entrée", function () {
     expect(liens($econome))->not->toContain('Articles');
 });
 
+test("le libellé Hôtel disparaît pour le comptable", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+
+    $html = $this->actingAs($comptable)->get('/dashboard')->getContent();
+
+    expect($html)->not->toContain('>Hôtel<');
+});
+
 test("les rôles d'origine gardent exactement leur menu", function (string $role, string $attendu) {
     expect(liens(User::factory()->create(['role' => $role])))->toContain($attendu);
 })->with([

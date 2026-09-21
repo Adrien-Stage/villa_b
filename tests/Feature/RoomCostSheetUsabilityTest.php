@@ -45,10 +45,12 @@ test('la page annonce clairement une fiche à remplir et propose un démarrage',
         ->assertSee('Démarrer avec les postes courants')
         ->assertDontSee('100%');
 
-    // La liste ne doit pas non plus afficher de pourcentage inventé.
+    // La vue consolidée signale la fiche vide et n'invente pas de pourcentage.
+    // Le libellé a suivi le bandeau de tête, qui compte les fiches « à remplir ».
     test()->get(route('rooms.cost_sheets.index'))
         ->assertOk()
-        ->assertSee('À configurer');
+        ->assertSee('à remplir')
+        ->assertDontSee('100%');
 });
 
 test('le démarrage rapide crée les postes courants prêts à ajuster', function () {

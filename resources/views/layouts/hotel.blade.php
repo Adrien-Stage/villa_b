@@ -189,16 +189,20 @@
                     @endmodule
                 @endundroit
 
-                @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
-                        <ul class="space-y-0.5">
-                            {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
-                            @role('manager','reception')
-                                @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
-                                    <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
-                                @endif
-                            @endrole
+                @php
+                    $estComptable = auth()->check() && auth()->user()->role === 'accountant';
+                @endphp
+                @unless($estComptable)
+                    @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
+                        <div>
+                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
+                            <ul class="space-y-0.5">
+                                {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
+                                @role('manager','reception')
+                                    @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
+                                        <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                                    @endif
+                                @endrole
 
                             @role('manager','reception')
                                 @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
@@ -264,10 +268,11 @@
 
                             @role('manager')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                            @endrole
-                        </ul>
-                    </div>
-                @endundroit
+                                @endrole
+                            </ul>
+                        </div>
+                    @endundroit
+                @endunless
 
                 @role('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')

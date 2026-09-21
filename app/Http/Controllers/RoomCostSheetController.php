@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\RoomCostItem;
 use App\Models\RoomCostSheet;
 use App\Models\RoomType;
 use App\Models\StockItem;
+use App\Services\DocumentExporter;
 use App\Services\RoomCostingService;
+use App\Support\Document\Colonne;
+use App\Support\Document\Document;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -31,6 +36,67 @@ class RoomCostSheetController extends Controller
             ]);
 
         return view('rooms.cost_sheets.index', compact('rows'));
+    }
+
+    /**
+     * Vue consolidée en document : une ligne par type, la marge de chacun.
+     *
+     * C'est ce que le comptable classe et transmet ; la fiche détaillée ne
+     * s'ouvre qu'au besoin, pour comprendre d'où vient un coût.
+     */
+    public function document(Request $request, DocumentExporter $exporteur)
+    {
+        $format = (string) $request->query('format', DocumentExporter::FORMAT_IMPRESSION);
+
+        abort_unless(DocumentExporter::formatValide($format), 404);
+
+        $lignes = RoomType::where('is_active', true)->orderBy('name')->get()
+            ->map(function (RoomType $type) {
+                $resume = $this->costing->summaryFor($type);
+
+                return [
+                    'type'    => $type->name,
+                    // Une fiche non renseignée n'affiche pas de zéro : un coût
+                    // nul et un coût inconnu ne se lisent pas pareil.
+                    'prix'    => $resume['reference_price'],
+                    'cout'    => $resume['is_configured'] ? $resume['variable_cost'] : null,
+                    'marge'   => $resume['is_configured'] ? $resume['contribution_margin'] : null,
+                    'pct'     => $resume['is_configured'] ? $resume['contribution_pct'] . ' %' : 'à remplir',
+                    'postes'  => $resume['line_count'],
+                ];
+            })
+            // Le moins rentable d'abord : c'est ce qu'on cherche en ouvrant le
+            // document.
+            ->sortBy(fn (array $l) => $l['marge'] ?? PHP_INT_MIN)
+            ->values();
+
+        $renseignees = $lignes->filter(fn (array $l) => $l['marge'] !== null);
+
+        AuditLog::record(Auth::id(), 'export', 'Export des marges par type de chambre (' . $format . ')',
+            'comptabilite', ['format' => $format]);
+
+        $document = Document::intitule('Marges par type de chambre')
+            ->sousTitre('Marge de contribution : prix pratiqué moins coût variable par nuitée')
+            ->colonnes([
+                Colonne::texte('type', 'Type de chambre'),
+                Colonne::montant('prix', 'Prix / nuit'),
+                Colonne::montant('cout', 'Coût variable'),
+                Colonne::montant('marge', 'Marge'),
+                Colonne::texte('pct', '%'),
+                Colonne::nombre('postes', 'Postes'),
+            ])
+            ->lignes($lignes)
+            ->totaux([
+                'prix'  => $renseignees->sum('prix'),
+                'cout'  => $renseignees->sum('cout'),
+                'marge' => $renseignees->sum('marge'),
+            ])
+            ->note($renseignees->count() < $lignes->count()
+                ? ($lignes->count() - $renseignees->count()) . ' fiche(s) restent à remplir : les totaux '
+                  . 'ne portent que sur les ' . $renseignees->count() . ' renseignée(s).'
+                : 'La marge de contribution ne couvre pas les charges fixes de l\'établissement.');
+
+        return $exporteur->rendre($document, $format);
     }
 
     /** Fiche détaillée d'un type de chambre. */
