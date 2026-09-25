@@ -474,5 +474,136 @@ test('step 2 calculates exact ready time for room in cleaning status and detects
     $response->assertSee('Nettoyage en cours');
 });
 
+test('booking number generation ignores non-standard formats and increments sequence correctly without duplicates', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $customer = Customer::factory()->create();
+    $room = Room::first();
+
+    // Create an initial booking with standard number
+    Booking::create([
+        'booking_number' => sprintf('VB-%d-000001', now()->year),
+        'customer_id'    => $customer->id,
+        'room_id'        => $room->id,
+        'status'         => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in'       => now()->addDays(10),
+        'check_out'      => now()->addDays(12),
+        'adults_count'   => 1,
+        'total_nights'   => 2,
+        'price_per_night'=> 10000,
+        'total_room_amount' => 20000,
+        'total_amount'   => 20000,
+        'balance_due'    => 20000,
+    ]);
+
+    // Create a demo booking with a higher ID and non-standard number format
+    Booking::create([
+        'booking_number' => 'DEMO-0020',
+        'customer_id'    => $customer->id,
+        'room_id'        => $room->id,
+        'status'         => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in'       => now()->addDays(15),
+        'check_out'      => now()->addDays(17),
+        'adults_count'   => 1,
+        'total_nights'   => 2,
+        'price_per_night'=> 10000,
+        'total_room_amount' => 20000,
+        'total_amount'   => 20000,
+        'balance_due'    => 20000,
+    ]);
+
+    // Next generated booking number must be VB-YYYY-000002, NOT VB-YYYY-000001
+    $expected = sprintf('VB-%d-000002', now()->year);
+    expect(Booking::generateBookingNumber())->toBe($expected);
+
+    // Creating a new booking through model auto-boot must use VB-YYYY-000002 without collision
+    $bNew = Booking::create([
+        'customer_id'    => $customer->id,
+        'room_id'        => $room->id,
+        'status'         => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in'       => now()->addDays(20),
+        'check_out'      => now()->addDays(22),
+        'adults_count'   => 1,
+        'total_nights'   => 2,
+        'price_per_night'=> 10000,
+        'total_room_amount' => 20000,
+        'total_amount'   => 20000,
+        'balance_due'    => 20000,
+    ]);
+    expect($bNew->booking_number)->toBe($expected);
+});
+
+test('group booking addRoom succeeds when existing standard and demo bookings are present', function () {
+    $this->seed([
+        \Database\Seeders\TenantSeeder::class,
+        \Database\Seeders\RoomTypeSeeder::class,
+        \Database\Seeders\RoomSeeder::class,
+    ]);
+
+    $user = User::factory()->create(['role' => 'manager']);
+    $this->actingAs($user);
+
+    $customer = Customer::factory()->create();
+    $room1 = Room::where('number', '101')->first();
+    $room2 = Room::where('number', '102')->first();
+
+    // Create an initial booking with standard number VB-YYYY-000001
+    Booking::create([
+        'booking_number' => sprintf('VB-%d-000001', now()->year),
+        'customer_id'    => $customer->id,
+        'room_id'        => $room1->id,
+        'status'         => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in'       => now()->addDays(1),
+        'check_out'      => now()->addDays(3),
+        'adults_count'   => 1,
+        'total_nights'   => 2,
+        'price_per_night'=> 10000,
+        'total_room_amount' => 20000,
+        'total_amount'   => 20000,
+        'balance_due'    => 20000,
+    ]);
+
+    // Create demo booking with DEMO-0020
+    Booking::create([
+        'booking_number' => 'DEMO-0020',
+        'customer_id'    => $customer->id,
+        'room_id'        => $room1->id,
+        'status'         => \App\Enums\BookingStatus::CONFIRMED,
+        'check_in'       => now()->addDays(4),
+        'check_out'      => now()->addDays(6),
+        'adults_count'   => 1,
+        'total_nights'   => 2,
+        'price_per_night'=> 10000,
+        'total_room_amount' => 20000,
+        'total_amount'   => 20000,
+        'balance_due'    => 20000,
+    ]);
+
+    $group = \App\Models\GroupBooking::create([
+        'group_name'          => 'Test Group',
+        'contact_customer_id' => $customer->id,
+        'start_date'          => now()->addDays(10)->format('Y-m-d'),
+        'end_date'            => now()->addDays(13)->format('Y-m-d'),
+        'status'              => 'pending',
+    ]);
+
+    $response = $this->post(route('groups.addRoom', $group), [
+        'customer_id'  => $customer->id,
+        'room_id'      => $room2->id,
+        'adults_count' => 1,
+    ]);
+
+    $response->assertRedirect(route('groups.show', $group));
+    $response->assertSessionHas('success');
+
+    $addedBooking = Booking::where('group_booking_id', $group->id)->first();
+    expect($addedBooking)->not->toBeNull();
+    expect($addedBooking->booking_number)->toBe(sprintf('VB-%d-000002', now()->year));
+});
+
 
 

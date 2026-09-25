@@ -123,19 +123,30 @@ class Booking extends Model
     }
 
     /**
-     * Génère un numéro unique : VB-2025-000001
+     * Génère un numéro unique : VB-2026-000001
      */
     public static function generateBookingNumber(): string
     {
         $prefix = 'VB';
         $year = now()->year;
-        $lastBooking = self::whereYear('created_at', $year)
-            ->orderBy('id', 'desc')
+        $pattern = sprintf('%s-%d-%%', $prefix, $year);
+
+        $lastBooking = self::withoutGlobalScopes()
+            ->where('booking_number', 'like', $pattern)
+            ->orderBy('booking_number', 'desc')
             ->first();
 
-        $sequence = $lastBooking ? (int)substr($lastBooking->booking_number, -6) + 1 : 1;
+        $sequence = 1;
+        if ($lastBooking && preg_match('/-(\d+)$/', $lastBooking->booking_number, $matches)) {
+            $sequence = ((int) $matches[1]) + 1;
+        }
 
-        return sprintf('%s-%d-%06d', $prefix, $year, $sequence);
+        do {
+            $number = sprintf('%s-%d-%06d', $prefix, $year, $sequence);
+            $sequence++;
+        } while (self::withoutGlobalScopes()->where('booking_number', $number)->exists());
+
+        return $number;
     }
 
     // RELATIONS

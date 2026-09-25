@@ -62,6 +62,41 @@ class GroupBooking extends Model
         'rooming_list_sent_at' => 'datetime',
     ];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($groupBooking) {
+            if (empty($groupBooking->group_code)) {
+                $groupBooking->group_code = self::generateGroupCode();
+            }
+        });
+    }
+
+    public static function generateGroupCode(): string
+    {
+        $prefix = 'GRP';
+        $year = now()->year;
+        $pattern = sprintf('%s-%d-%%', $prefix, $year);
+
+        $lastGroup = self::withoutGlobalScopes()
+            ->where('group_code', 'like', $pattern)
+            ->orderBy('group_code', 'desc')
+            ->first();
+
+        $sequence = 1;
+        if ($lastGroup && preg_match('/-(\d+)$/', $lastGroup->group_code, $matches)) {
+            $sequence = ((int) $matches[1]) + 1;
+        }
+
+        do {
+            $code = sprintf('%s-%d-%04d', $prefix, $year, $sequence);
+            $sequence++;
+        } while (self::withoutGlobalScopes()->where('group_code', $code)->exists());
+
+        return $code;
+    }
+
     /**
      * Le client contact principal
      */
