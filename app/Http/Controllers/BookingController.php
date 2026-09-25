@@ -1192,7 +1192,9 @@ class BookingController extends Controller
             'creator',
         ]);
 
-        return view('bookings.summary', compact('booking'));
+        $tenant = $booking->tenant ?? \App\Models\Tenant::current() ?? \App\Models\Tenant::first();
+
+        return view('bookings.summary', compact('booking', 'tenant'));
     }
 
     // ===== DÉTAIL =====
