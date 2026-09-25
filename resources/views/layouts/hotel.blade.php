@@ -17,7 +17,7 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-full lg:overflow-hidden">
 
 <head>
     <meta charset="utf-8">
@@ -108,6 +108,11 @@
 
             html.sidebar-reduite #sidebar-bascule-ouvrir { display: inline-flex; }
             html.sidebar-reduite #sidebar-bascule-fermer { display: none; }
+
+            html, body {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
         }
 
         #sidebar-bascule-ouvrir { display: none; }
@@ -123,7 +128,7 @@
     </script>
 </head>
 
-<body class="min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
+<body class="h-full min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
 
     <div id="mobile-sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden" onclick="closeMobileSidebar()"></div>
 
@@ -398,11 +403,11 @@
                             @module('ledger')
                                 <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
                             @endmodule
-                            @if($estComptable && $droits->allows($utilisateur, 'economat.orders.voir'))
-                                {{-- Le comptable ne demande pas du matériel au magasin :
-                                     il passe un bon de commande fournisseur depuis la
-                                     comptabilité, avec une piste d'action dédiée. --}}
-                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @if($demandesEnComptabilite)
+                                {{-- Le comptable sollicite le magasin comme un
+                                     service, sans le tenir : sa demande part
+                                     d'ici, non de la rubrique Économat. --}}
+                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
                             @endif
 
                             {{-- Fiche technique : prix de revient d'une nuitée et
@@ -473,7 +478,7 @@
         </div>
     </aside>
 
-    <div class="flex min-h-screen flex-1 flex-col lg:overflow-hidden">
+    <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
         <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-3">
                 <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary lg:hidden">

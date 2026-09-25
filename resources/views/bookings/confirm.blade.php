@@ -628,7 +628,7 @@
                                 <p class="block text-[10px] font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Moyen de paiement *</p>
                                 <div class="grid grid-cols-3 gap-2">
                                     @foreach($moyensPaiement as $valeur => [$libelle, $icone])
-                                        <label class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border cursor-pointer transition-colors text-center"
+                                        <label class="relative flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border cursor-pointer transition-colors text-center"
                                                :class="paymentMethod === '{{ $valeur }}' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-secondary/25 hover:bg-accent/10'">
                                             <input type="radio" name="payment_method" value="{{ $valeur }}" x-model="paymentMethod" class="sr-only">
                                             <i data-lucide="{{ $icone }}" class="w-4 h-4 text-primary/60"></i>

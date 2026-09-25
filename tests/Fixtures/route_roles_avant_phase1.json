@@ -346,11 +346,9 @@
   "econome"
  ],
  "economat.orders.create": [
-    "accountant",
     "econome"
  ],
  "economat.orders.index": [
-    "accountant",
   "controller",
   "econome",
   "manager"
@@ -362,13 +360,11 @@
   "econome"
  ],
  "economat.orders.show": [
-    "accountant",
   "controller",
   "econome",
   "manager"
  ],
  "economat.orders.store": [
-    "accountant",
     "econome"
  ],
  "economat.requisitions.approve": [
@@ -382,6 +378,7 @@
   "shop_manager"
  ],
  "economat.requisitions.create": [
+  "accountant",
   "econome",
   "housekeeping_leader",
   "reception",
@@ -401,6 +398,7 @@
   "shop_manager"
  ],
  "economat.requisitions.index": [
+  "accountant",
   "controller",
   "econome",
   "housekeeping_leader",
@@ -413,6 +411,7 @@
   "econome"
  ],
  "economat.requisitions.show": [
+  "accountant",
   "controller",
   "econome",
   "housekeeping_leader",
@@ -422,6 +421,7 @@
   "shop_manager"
  ],
  "economat.requisitions.store": [
+  "accountant",
   "econome",
   "housekeeping_leader",
   "reception",

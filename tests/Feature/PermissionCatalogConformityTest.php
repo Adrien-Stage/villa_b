@@ -105,12 +105,12 @@ test("le catalogue couvre les modules attendus", function () {
 
 test("il décrit le cumul de rôles qui pose problème aujourd'hui", function () {
     // marina@test.com porte econome + accountant + quality_auditor.
-    // Le comptable passe les bons de commande fournisseur, mais ne gère pas
-    // les articles, les fournisseurs ni les demandes internes.
+    // Le comptable adresse des demandes internes, mais ne gère pas le magasin
+    // et ne passe pas de bons de commande fournisseur.
     $droitsComptable = PermissionCatalog::forRole('accountant');
     $economat = array_values(array_filter($droitsComptable, fn ($d) => str_starts_with($d, 'economat.')));
 
-    expect($economat)->toBe(['economat.orders.creer', 'economat.orders.voir']);
+    expect($economat)->toBe(['economat.requisitions.creer', 'economat.requisitions.voir']);
 
     // Et l'économe, lui, crée les articles — la fonction à retirer au comptable.
     expect(PermissionCatalog::roles('economat.items.creer'))->toContain('econome');

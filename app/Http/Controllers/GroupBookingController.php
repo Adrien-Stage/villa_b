@@ -139,13 +139,7 @@ class GroupBookingController extends Controller
             }
         }
 
-        // Génère le code groupe : GRP-2026-0001
-        $lastGroup = GroupBooking::withoutGlobalScopes()
-            
-            ->whereYear('created_at', now()->year)
-            ->orderBy('id', 'desc')->first();
-        $seq = $lastGroup ? (int) substr($lastGroup->group_code, -4) + 1 : 1;
-        $groupCode = sprintf('GRP-%d-%04d', now()->year, $seq);
+        $groupCode = GroupBooking::generateGroupCode();
 
         // Convertir en centimes pour la base de données
         $depositAmount = $request->filled('deposit_amount') ? (int) $request->deposit_amount * 100 : 0;

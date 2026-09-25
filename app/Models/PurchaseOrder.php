@@ -64,11 +64,26 @@ class PurchaseOrder extends Model
 
     public static function generateNumber(): string
     {
+        $prefix = 'BC';
         $year = now()->year;
-        $last = self::whereYear('created_at', $year)->orderBy('id', 'desc')->first();
-        $seq  = $last ? (int) substr($last->number, -4) + 1 : 1;
+        $pattern = sprintf('%s-%d-%%', $prefix, $year);
 
-        return sprintf('BC-%d-%04d', $year, $seq);
+        $last = self::withoutGlobalScopes()
+            ->where('number', 'like', $pattern)
+            ->orderBy('number', 'desc')
+            ->first();
+
+        $seq = 1;
+        if ($last && preg_match('/-(\d+)$/', $last->number, $matches)) {
+            $seq = ((int) $matches[1]) + 1;
+        }
+
+        do {
+            $number = sprintf('%s-%d-%04d', $prefix, $year, $seq);
+            $seq++;
+        } while (self::withoutGlobalScopes()->where('number', $number)->exists());
+
+        return $number;
     }
 
     // ── Relations ────────────────────────────────────────────────────────────
