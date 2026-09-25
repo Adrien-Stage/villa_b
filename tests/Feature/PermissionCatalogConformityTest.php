@@ -17,18 +17,20 @@ use App\Support\PermissionCatalog;
 use Illuminate\Support\Facades\Route;
 
 /** La route est-elle gardée par un droit ? */
-function routeGardee(\Illuminate\Routing\Route $route): bool
-{
-    foreach ($route->gatherMiddleware() as $middleware) {
-        // « permission » depuis la phase 1 ; « role: » n'existe plus dans
-        // routes/web.php, mais on le reconnaît encore pour qu'une route
-        // oubliée lors de la bascule soit signalée, non ignorée.
-        if (is_string($middleware) && ($middleware === 'permission' || str_starts_with($middleware, 'role:'))) {
-            return true;
+if (!function_exists('routeGardee')) {
+    function routeGardee(\Illuminate\Routing\Route $route): bool
+    {
+        foreach ($route->gatherMiddleware() as $middleware) {
+            // « permission » depuis la phase 1 ; « role: » n'existe plus dans
+            // routes/web.php, mais on le reconnaît encore pour qu'une route
+            // oubliée lors de la bascule soit signalée, non ignorée.
+            if (is_string($middleware) && ($middleware === 'permission' || str_starts_with($middleware, 'role:'))) {
+                return true;
+            }
         }
-    }
 
-    return false;
+        return false;
+    }
 }
 
 test('chaque route gardée porte un droit que le catalogue déclare', function () {

@@ -262,6 +262,11 @@
   "manager",
   "reception"
  ],
+ "bookings.summary": [
+  "controller",
+  "manager",
+  "reception"
+ ],
  "bookings.store": [
   "manager",
   "reception"
