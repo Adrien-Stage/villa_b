@@ -76,6 +76,25 @@ class Payment extends Model
         return $this->belongsTo(CashRegisterSession::class);
     }
 
+    public function processedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function methodLabel(): string
+    {
+        $methods = [
+            'orange_money'   => 'Orange Money',
+            'mtn_momo'       => 'MTN MoMo',
+            'cash'           => 'Espèces',
+            'stripe'         => 'Carte bancaire (Stripe)',
+            'bank_transfer'  => 'Virement bancaire',
+            'check'          => 'Chèque',
+        ];
+
+        return $methods[$this->method] ?? ucfirst(str_replace('_', ' ', $this->method ?? 'inconnu'));
+    }
+
     /**
      * Helper : Montant formaté
      */

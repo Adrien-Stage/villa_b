@@ -285,6 +285,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
+        Route::get('/{booking}/summary',       [BookingController::class, 'summary'])->name('summary');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
 
         // Envoi du code de check-in : hors caisse, expédier un courriel

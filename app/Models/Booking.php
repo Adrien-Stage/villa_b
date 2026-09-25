@@ -210,6 +210,26 @@ class Booking extends Model
         return $this->hasMany(RestaurantNote::class); // Section 4.10.1
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function sourceLabel(): string
+    {
+        $sourceLabels = [
+            'direct'         => 'Direct',
+            'phone'          => 'Téléphone',
+            'email'          => 'Email',
+            'walk_in'        => 'Walk-in',
+            'ota_bookingcom' => 'Booking.com',
+            'website'        => 'Site web',
+            'group'          => 'Groupe',
+        ];
+
+        return $sourceLabels[$this->source] ?? ucfirst(str_replace('_', ' ', $this->source ?? 'direct'));
+    }
+
     // SCOPES UTILES
 
     public function scopeArrivingToday($query)

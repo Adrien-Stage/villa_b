@@ -1171,9 +1171,28 @@ class BookingController extends Controller
             : " Attention : aucun code n'a pu être envoyé au {$envoi['label']} — communiquez-le de vive voix.";
 
         return redirect()
-            ->route('bookings.show', $booking)
+            ->route('bookings.summary', $booking)
             ->with('success', $successMsg)
             ->with('checkin_code', $booking->checkin_code);
+    }
+
+    // ===== RÉCAPITULATIF APRÈS CONFIRMATION =====
+
+    public function summary(Booking $booking)
+    {
+        $booking->load([
+            'customer.partnerOrganization',
+            'booker',
+            'room.roomType',
+            'roomPackage',
+            'partnerOrganization',
+            'payments.processedBy',
+            'payments.cashRegisterSession',
+            'folioItems',
+            'creator',
+        ]);
+
+        return view('bookings.summary', compact('booking'));
     }
 
     // ===== DÉTAIL =====
