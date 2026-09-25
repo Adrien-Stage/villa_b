@@ -22,6 +22,19 @@
 
 use App\Support\PermissionCatalog;
 
+if (!function_exists('routeGardee')) {
+    function routeGardee(\Illuminate\Routing\Route $route): bool
+    {
+        foreach ($route->gatherMiddleware() as $middleware) {
+            if (is_string($middleware) && ($middleware === 'permission' || str_starts_with($middleware, 'role:'))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 test('chaque route accorde exactement les rôles de la référence', function () {
     $reference = json_decode(
         file_get_contents(base_path('tests/Fixtures/route_roles_avant_phase1.json')),
