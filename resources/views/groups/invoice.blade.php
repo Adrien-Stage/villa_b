@@ -222,21 +222,7 @@
 <style>
 @page {
     size: A4 portrait;
-    margin: 10mm 14mm 15mm 14mm;
-
-    @top-left { content: none; }
-    @top-center { content: none; }
-    @top-right { content: none; }
-
-    @bottom-left { content: ""; }
-    @bottom-center { content: ""; }
-    @bottom-right {
-        content: "Page " counter(page);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        font-size: 8.5pt;
-        color: #78716c;
-        font-weight: 500;
-    }
+    margin: 0mm !important;
 }
 
 @media print {

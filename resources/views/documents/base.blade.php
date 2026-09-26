@@ -22,17 +22,7 @@
     <title>{{ $document->titre }}</title>
     <style>
         @page {
-            margin: 12mm 12mm 16mm;
-            @top-left { content: none; }
-            @top-center { content: none; }
-            @top-right { content: none; }
-            @bottom-left { content: ""; }
-            @bottom-center { content: ""; }
-            @bottom-right {
-                content: "Page " counter(page);
-                font-size: 8.5px;
-                color: #8a7461;
-            }
+            margin: {{ $pourPdf ? '12mm 12mm 16mm' : '0mm !important' }};
         }
 
         * { font-family: DejaVu Sans, Arial, sans-serif; box-sizing: border-box; }
