@@ -121,9 +121,25 @@
          * RÈGLES GLOBALES D'IMPRESSION PROFESSIONNELLE (STANDARDS HÔTELIERS)
          * ═════════════════════════════════════════════════════════════════════ */
         @page {
-            /* Élimine les en-têtes et pieds de page par défaut du navigateur (URL, titre, date, pagination auto) */
+            /* Standard A4 avec marges d'impression professionnelles */
             size: auto;
-            margin: 0mm;
+            margin: 10mm 14mm 15mm 14mm;
+
+            /* Supprime les en-têtes auto du navigateur (URL, titre de page) */
+            @top-left { content: none; }
+            @top-center { content: none; }
+            @top-right { content: none; }
+
+            /* Pagination en pied de page pour documents multi-pages */
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
+            @bottom-right {
+                content: "Page " counter(page);
+                font-family: 'Inter', system-ui, -apple-system, sans-serif;
+                font-size: 8.5pt;
+                color: #78716c;
+                font-weight: 500;
+            }
         }
 
         @media print {
@@ -139,6 +155,12 @@
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+            }
+
+            /* Suppression de l'affichage textuel automatique des URL après les liens */
+            a[href]::after,
+            a[href]:after {
+                content: none !important;
             }
 
             /* 2. Suppression stricte de tous les éléments d'interface utilisateur */
