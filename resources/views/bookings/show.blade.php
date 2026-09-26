@@ -537,7 +537,7 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
                 <h2 class="font-heading font-semibold text-primary text-sm">Paiements</h2>
-                @if(in_array($booking->status->value, ['confirmed', 'checked_in']) && $booking->balance_due > 0 && $isCashRegisterOpen)
+                @if($booking->status->value === 'checked_in' && $booking->balance_due > 0 && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-payment').classList.remove('hidden')"
                     class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -718,6 +718,7 @@
     </div>
 </div>
 
+@if($booking->status->value === 'checked_in' && $booking->balance_due > 0 && $isCashRegisterOpen)
 {{-- Modal : Paiement --}}
 <div id="modal-payment" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
@@ -788,6 +789,7 @@
         </form>
     </div>
 </div>
+@endif
 
 {{-- Modal : Check-in direct — relevé de la pièce d'identité à l'arrivée --}}
 @if($booking->status->value === 'confirmed' && !$booking->checkin_code)
