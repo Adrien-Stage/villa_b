@@ -58,18 +58,28 @@
 
 {{-- Messages flash --}}
 @if(session('success'))
-<div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">
-    {{ session('success') }}
+<div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+    <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+    <span>{{ session('success') }}</span>
 </div>
 @endif
-@if($errors->has('delete'))
+@if($errors->any())
 <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-    {{ $errors->first('delete') }}
+    <div class="font-semibold mb-1 flex items-center gap-1.5">
+        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+        <span>Veuillez corriger les informations suivantes :</span>
+    </div>
+    <ul class="list-disc list-inside text-xs space-y-0.5 ml-1">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
 </div>
 @endif
 @if(session('error'))
-<div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-    {{ session('error') }}
+<div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center gap-2">
+    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+    <span>{{ session('error') }}</span>
 </div>
 @endif
 @if(session('import_errors') && count(session('import_errors')))
@@ -492,7 +502,10 @@
 </style>
 
 {{-- Modal : Créer chambre --}}
-<div id="modal-create-room" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+@php
+    $hasRoomCreateErrors = $errors->has('number') || $errors->has('room_type_id') || $errors->has('floor') || $errors->has('view_type');
+@endphp
+<div id="modal-create-room" class="{{ $hasRoomCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouvelle chambre</h3>
@@ -506,37 +519,43 @@
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="modal-label">Type de chambre *</label>
-                <select name="room_type_id" required class="modal-input">
+                <select name="room_type_id" required class="modal-input @error('room_type_id') border-red-500 @enderror">
                     <option value="">Sélectionner...</option>
                     @foreach($roomTypes as $type)
-                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    <option value="{{ $type->id }}" {{ old('room_type_id') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                     @endforeach
                 </select>
+                @error('room_type_id')
+                    <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                @enderror
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Numéro *</label>
-                    <input type="text" name="number" placeholder="101" required class="modal-input">
+                    <input type="text" name="number" value="{{ old('number') }}" placeholder="101" required class="modal-input @error('number') border-red-500 @enderror">
+                    @error('number')
+                        <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="modal-label">Étage</label>
-                    <input type="text" name="floor" placeholder="1" class="modal-input">
+                    <input type="text" name="floor" value="{{ old('floor') }}" placeholder="1" class="modal-input">
                 </div>
             </div>
             <div>
                 <label class="modal-label">Vue</label>
                 <select name="view_type" class="modal-input">
                     <option value="">Aucune</option>
-                    <option value="garden">Garden</option>
-                    <option value="pool">Pool</option>
-                    <option value="heritage">Heritage</option>
-                    <option value="courtyard">Courtyard</option>
-                    <option value="city">City</option>
+                    <option value="garden" {{ old('view_type') == 'garden' ? 'selected' : '' }}>Garden</option>
+                    <option value="pool" {{ old('view_type') == 'pool' ? 'selected' : '' }}>Pool</option>
+                    <option value="heritage" {{ old('view_type') == 'heritage' ? 'selected' : '' }}>Heritage</option>
+                    <option value="courtyard" {{ old('view_type') == 'courtyard' ? 'selected' : '' }}>Courtyard</option>
+                    <option value="city" {{ old('view_type') == 'city' ? 'selected' : '' }}>City</option>
                 </select>
             </div>
             <div>
                 <label class="modal-label">Notes internes</label>
-                <textarea name="notes" rows="2" placeholder="Notes optionnelles..." class="modal-input resize-none"></textarea>
+                <textarea name="notes" rows="2" placeholder="Notes optionnelles..." class="modal-input resize-none">{{ old('notes') }}</textarea>
             </div>
             <div x-data="multiImagePreview()">
                 <label class="modal-label">Photos (max 4)</label>
@@ -640,7 +659,10 @@
 </div>
 
 {{-- Modal : Créer type --}}
-<div id="modal-create-type" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+@php
+    $hasTypeCreateErrors = $errors->has('code') || $errors->has('name') || $errors->has('base_price') || $errors->has('base_capacity') || $errors->has('max_capacity');
+@endphp
+<div id="modal-create-type" class="{{ $hasTypeCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouveau type de chambre</h3>
@@ -655,35 +677,44 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
-                    <input type="text" id="create-type-name" name="name" placeholder="Standard" required class="modal-input">
+                    <input type="text" id="create-type-name" name="name" value="{{ old('name') }}" placeholder="Standard" required class="modal-input @error('name') border-red-500 @enderror">
+                    @error('name')
+                        <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="modal-label">Code *</label>
-                    <input type="text" id="create-type-code" name="code" placeholder="STD" required class="modal-input">
+                    <input type="text" id="create-type-code" name="code" value="{{ old('code') }}" placeholder="STD" required class="modal-input uppercase @error('code') border-red-500 @enderror">
+                    @error('code')
+                        <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <div>
                 <label class="modal-label">Description</label>
-                <textarea name="description" rows="2" class="modal-input resize-none"></textarea>
+                <textarea name="description" rows="2" class="modal-input resize-none">{{ old('description') }}</textarea>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Capacité base *</label>
-                    <input type="number" name="base_capacity" value="2" min="1" required class="modal-input">
+                    <input type="number" name="base_capacity" value="{{ old('base_capacity', 2) }}" min="1" required class="modal-input">
                 </div>
                 <div>
                     <label class="modal-label">Capacité max *</label>
-                    <input type="number" name="max_capacity" value="3" min="1" required class="modal-input">
+                    <input type="number" name="max_capacity" value="{{ old('max_capacity', 3) }}" min="1" required class="modal-input">
                 </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Prix / nuit (FCFA) *</label>
-                    <input type="number" name="base_price" placeholder="45000" min="0" required class="modal-input">
+                    <input type="number" name="base_price" value="{{ old('base_price') }}" placeholder="45000" min="0" required class="modal-input @error('base_price') border-red-500 @enderror">
+                    @error('base_price')
+                        <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="modal-label">Surface (m²)</label>
-                    <input type="number" name="size_sqm" placeholder="25" min="0" class="modal-input">
+                    <input type="number" name="size_sqm" value="{{ old('size_sqm') }}" placeholder="25" min="0" class="modal-input">
                 </div>
             </div>
             <div class="space-y-3 pt-2 border-t border-secondary/15">
