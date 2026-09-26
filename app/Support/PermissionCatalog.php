@@ -87,6 +87,7 @@ class PermissionCatalog
         'accounting.ledger.years.open',
         'bookings.approve',
         'bookings.cancel',
+        'bookings.cancellation_receipt',
         'bookings.cash_register.close.creer',
         'bookings.cash_register.disbursements.creer',
         'bookings.cash_register.open.creer',
@@ -193,6 +194,10 @@ class PermissionCatalog
         'rooms.types.modifier',
         'rooms.types.supprimer',
         'rooms.updateStatus',
+        'settings.cancellation_policies.creer',
+        'settings.cancellation_policies.default',
+        'settings.cancellation_policies.modifier',
+        'settings.cancellation_policies.supprimer',
         'settings.import',
         'settings.modifier',
         'settings.packages.creer',
@@ -357,6 +362,7 @@ class PermissionCatalog
             // ── Réservations ──
             'bookings.approve' => ['manager', 'reception'],
             'bookings.cancel' => ['manager', 'reception'],
+            'bookings.cancellation_receipt' => ['controller', 'manager', 'reception'],
             'bookings.cash_register.close' => ['manager', 'reception'],
             'bookings.cash_register.close.creer' => ['manager', 'reception'],
             'bookings.cash_register.disbursements.creer' => ['manager', 'reception'],
@@ -431,6 +437,10 @@ class PermissionCatalog
             'rooms.voir' => ['controller', 'manager', 'reception'],
 
             // ── Paramètres ──
+            'settings.cancellation_policies.creer' => ['manager'],
+            'settings.cancellation_policies.default' => ['manager'],
+            'settings.cancellation_policies.modifier' => ['manager'],
+            'settings.cancellation_policies.supprimer' => ['manager'],
             'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'settings.import' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'settings.modifier' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],

@@ -602,9 +602,28 @@
                         </div>
                     </div>
 
-                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <h3 class="text-sm font-semibold text-primary mb-2">Politique d'annulation</h3>
-                        <textarea name="settings[cancellation_policy]" rows="3" placeholder="Saisissez les règles d'annulation..." class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">{{ $tenantSettings['reception']['cancellation_policy'] ?? '' }}</textarea>
+                    <div class="p-4 bg-primary/5 rounded-xl border border-secondary/25">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="shield-alert" class="w-4 h-4 text-primary"></i>
+                                <h3 class="text-sm font-semibold text-primary">Politique d'annulation par défaut</h3>
+                            </div>
+                            @php $defaultPol = $cancellationPolicies->firstWhere('is_default', true) ?? $cancellationPolicies->first(); @endphp
+                            @if($defaultPol)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    <i data-lucide="star" class="w-3 h-3 text-amber-600"></i>
+                                    {{ $defaultPol->name }}
+                                </span>
+                            @endif
+                        </div>
+                        @if($defaultPol)
+                            <p class="text-xs text-primary/70 mb-2 leading-relaxed">
+                                {{ $defaultPol->summaryText() }}
+                            </p>
+                        @endif
+                        <p class="text-[11px] text-primary/50">
+                            La configuration détaillée des politiques d'annulation (délais, type de pénalité et calculs OPERA PMS) s'effectue dans la section ci-dessous.
+                        </p>
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end">
@@ -1507,6 +1526,250 @@
                         </form>
                     </div>
                 </div>
+            <hr class="border-secondary/15 my-10">
+
+            @php
+                $policiesPayloads = $cancellationPolicies->mapWithKeys(fn ($p) => [$p->id => [
+                    'id'                      => $p->id,
+                    'code'                    => $p->code,
+                    'name'                    => $p->name,
+                    'description'             => $p->description,
+                    'penalty_type'            => $p->penalty_type,
+                    'penalty_value'           => $p->penalty_type === 'fixed_amount' ? (int) ($p->penalty_value / 100) : $p->penalty_value,
+                    'free_cancel_days_before' => (int) $p->free_cancel_days_before,
+                    'free_cancel_time'        => $p->free_cancel_time,
+                    'is_default'              => (bool) $p->is_default,
+                    'is_active'               => (bool) $p->is_active,
+                ]])->all();
+            @endphp
+
+            <div x-data="cancellationPoliciesEditor(@js($policiesPayloads))" class="mb-10">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-lg font-semibold text-primary">Politiques d'annulation</h2>
+                            <span class="px-2 py-0.5 text-[11px] font-semibold bg-primary/10 text-primary rounded-full">
+                                Standard OPERA PMS
+                            </span>
+                        </div>
+                        <p class="text-xs text-primary/60 mt-0.5 max-w-2xl">
+                            Règles d'annulation opposables, délais sans frais et calcul automatique des pénalités financières.
+                        </p>
+                    </div>
+                    <button type="button" @click="openCreate()"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Nouvelle politique</span>
+                    </button>
+                </div>
+
+                {{-- Liste des politiques --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($cancellationPolicies as $policy)
+                        <div class="border border-secondary/20 rounded-xl overflow-hidden {{ $policy->is_active ? 'bg-white' : 'bg-gray-50/70 opacity-60' }} shadow-sm flex flex-col justify-between">
+                            <div class="p-5">
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-heading font-semibold text-primary text-sm">{{ $policy->name }}</h3>
+                                            @if($policy->is_default)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                    <i data-lucide="star" class="w-3 h-3 text-amber-600"></i>
+                                                    Par défaut
+                                                </span>
+                                            @endif
+                                            @unless($policy->is_active)
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-700">Archivée</span>
+                                            @endunless
+                                        </div>
+                                        <span class="font-mono text-[11px] text-primary/40 uppercase tracking-wider">{{ $policy->code }}</span>
+                                    </div>
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg
+                                        @if($policy->penalty_type === 'non_refundable') bg-red-100 text-red-800
+                                        @elseif($policy->penalty_type === 'free') bg-green-100 text-green-800
+                                        @else bg-blue-100 text-blue-800 @endif">
+                                        {{ $policy->penaltyTypeLabel() }}
+                                    </span>
+                                </div>
+
+                                <p class="text-xs text-primary/70 mb-4 leading-relaxed">
+                                    {{ $policy->summaryText() }}
+                                </p>
+
+                                <div class="grid grid-cols-2 gap-2 text-[11px] bg-secondary/5 rounded-lg p-2.5 border border-secondary/15">
+                                    <div>
+                                        <span class="text-primary/50 block">Délai sans frais :</span>
+                                        <span class="font-semibold text-primary">
+                                            @if($policy->free_cancel_days_before == 0)
+                                                Jour même à {{ $policy->free_cancel_time }}
+                                            @else
+                                                J-{{ $policy->free_cancel_days_before }} à {{ $policy->free_cancel_time }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="text-primary/50 block">Pénalité encourue :</span>
+                                        <span class="font-semibold text-primary">
+                                            @if($policy->penalty_type === 'first_night') 1 nuitée
+                                            @elseif($policy->penalty_type === 'percentage') {{ $policy->penalty_value }} % du total
+                                            @elseif($policy->penalty_type === 'fixed_amount') {{ number_format($policy->penalty_value / 100, 0, ',', ' ') }} FCFA
+                                            @elseif($policy->penalty_type === 'non_refundable') 100 % (Aucun remb.)
+                                            @else Gratuit
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="px-5 py-3 bg-gray-50/80 border-t border-secondary/10 flex items-center justify-between gap-2">
+                                <div>
+                                    @if(!$policy->is_default && $policy->is_active)
+                                        <form method="POST" action="{{ route('settings.cancellation_policies.default', $policy) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-xs font-semibold text-primary hover:text-surface-dark transition-colors inline-flex items-center gap-1">
+                                                <i data-lucide="check" class="w-3.5 h-3.5 text-secondary"></i>
+                                                Définir par défaut
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="openEdit({{ $policy->id }})"
+                                        class="px-2.5 py-1 text-xs text-primary/70 hover:text-primary font-medium transition-colors hover:bg-secondary/10 rounded">
+                                        Modifier
+                                    </button>
+                                    @if(!$policy->is_default)
+                                        <form method="POST" action="{{ route('settings.cancellation_policies.destroy', $policy) }}"
+                                            onsubmit="return confirm('Confirmer la suppression ou l\'archivage de cette politique ?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="px-2.5 py-1 text-xs text-red-600 hover:text-red-800 font-medium transition-colors hover:bg-red-50 rounded">
+                                                Supprimer
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Modal Création / Édition --}}
+                <div x-show="open" x-cloak
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
+                    @keydown.escape.window="open = false">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-secondary/20 flex flex-col max-h-[90vh]"
+                        @click.outside="open = false">
+                        <div class="px-6 py-4 border-b border-secondary/20 flex items-center justify-between bg-primary/5">
+                            <div>
+                                <h3 class="font-heading font-semibold text-primary" x-text="editing ? 'Modifier la politique d\'annulation' : 'Nouvelle politique d\'annulation'"></h3>
+                                <p class="text-[11px] text-primary/50">Paramètres et calculs conformes aux règles hôtelières.</p>
+                            </div>
+                            <button type="button" @click="open = false" class="text-primary/40 hover:text-primary transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form method="POST" :action="formAction" class="p-6 space-y-4 overflow-y-auto">
+                            @csrf
+                            <template x-if="editing">
+                                <input type="hidden" name="_method" value="PUT">
+                            </template>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Code unique *</label>
+                                    <input type="text" name="code" x-model="form.code" required maxlength="50"
+                                        placeholder="Ex: FLEX_48H"
+                                        class="w-full text-xs font-mono uppercase px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Libellé de la politique *</label>
+                                    <input type="text" name="name" x-model="form.name" required maxlength="255"
+                                        placeholder="Ex: Flexible jusqu'à 48h avant l'arrivée"
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Type de pénalité *</label>
+                                    <select name="penalty_type" x-model="form.penalty_type" required
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                        <option value="first_night">1ère nuitée facturée</option>
+                                        <option value="non_refundable">Non remboursable (100% de frais)</option>
+                                        <option value="percentage">Pourcentage du séjour</option>
+                                        <option value="fixed_amount">Montant forfaitaire fixe</option>
+                                        <option value="free">Sans frais (100% remboursé)</option>
+                                    </select>
+                                </div>
+
+                                <div x-show="form.penalty_type === 'percentage'">
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Pourcentage (%) *</label>
+                                    <input type="number" name="penalty_value" x-model="form.penalty_value" min="1" max="100"
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary"
+                                        placeholder="Ex: 50">
+                                </div>
+
+                                <div x-show="form.penalty_type === 'fixed_amount'">
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Montant forfaitaire (FCFA) *</label>
+                                    <input type="number" name="penalty_value" x-model="form.penalty_value" min="100" step="100"
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary"
+                                        placeholder="Ex: 25000">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-secondary/5 p-3 rounded-lg border border-secondary/20">
+                                <div>
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Délai sans frais (jours avant arrivée)</label>
+                                    <input type="number" name="free_cancel_days_before" x-model="form.free_cancel_days_before" min="0" max="365" required
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                    <span class="text-[10px] text-primary/40">0 = Annulable le jour même jusqu'à l'heure limite</span>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-primary/70 mb-1">Heure limite le jour J-N</label>
+                                    <input type="time" name="free_cancel_time" x-model="form.free_cancel_time" required
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                    <span class="text-[10px] text-primary/40">Exemple: 18:00</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-primary/70 mb-1">Description / Notes contractuelles</label>
+                                <textarea name="description" x-model="form.description" rows="2" maxlength="1000"
+                                    placeholder="Conditions complémentaires affichées au client..."
+                                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary"></textarea>
+                            </div>
+
+                            <div class="space-y-2 pt-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="is_default" value="1" x-model="form.is_default"
+                                        class="rounded border-secondary/30 text-primary focus:ring-primary">
+                                    <span class="text-xs text-primary/80 font-medium">Définir comme politique par défaut de l'établissement</span>
+                                </label>
+
+                                <template x-if="editing">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="is_active" value="1" x-model="form.is_active"
+                                            class="rounded border-secondary/30 text-primary focus:ring-primary">
+                                        <span class="text-xs text-primary/80 font-medium">Politique active</span>
+                                    </label>
+                                </template>
+                            </div>
+
+                            <div class="pt-4 border-t border-secondary/20 flex justify-end gap-3">
+                                <button type="button" @click="open = false"
+                                    class="px-4 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+                                    Annuler
+                                </button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                                    <span x-text="editing ? 'Enregistrer les modifications' : 'Créer la politique'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
             </div>
         @endif
 
@@ -2198,6 +2461,55 @@
                 this.autoCode = false;
                 this.editing = true;
                 this.formAction = `${baseUrl}/${organization.id}`;
+                this.open = true;
+            },
+        };
+    }
+
+    function cancellationPoliciesEditor(policies) {
+        const storeUrl = @js(route('settings.cancellation_policies.store'));
+        const baseUrl = @js(url('/settings/cancellation-policies'));
+
+        return {
+            policies,
+            open: false,
+            editing: false,
+            formAction: storeUrl,
+            form: {},
+
+            blank() {
+                return {
+                    id: null,
+                    code: '',
+                    name: '',
+                    description: '',
+                    penalty_type: 'first_night',
+                    penalty_value: '',
+                    free_cancel_days_before: 2,
+                    free_cancel_time: '18:00',
+                    is_default: false,
+                    is_active: true,
+                };
+            },
+
+            openCreate() {
+                this.form = this.blank();
+                this.editing = false;
+                this.formAction = storeUrl;
+                this.open = true;
+            },
+
+            openEdit(id) {
+                const p = this.policies[id];
+                if (!p) return;
+                this.form = {
+                    ...this.blank(),
+                    ...p,
+                    description: p.description ?? '',
+                    penalty_value: p.penalty_value ?? '',
+                };
+                this.editing = true;
+                this.formAction = `${baseUrl}/${id}`;
                 this.open = true;
             },
         };

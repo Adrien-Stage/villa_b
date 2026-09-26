@@ -140,6 +140,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.packages.export');
         Route::post('/settings/packages-import', [App\Http\Controllers\SettingsCsvController::class, 'importPackages'])
             ->name('settings.packages.import');
+
+        // Politiques d'annulation (onglet "Hébergement" des paramètres).
+        Route::post('/settings/cancellation-policies', [App\Http\Controllers\CancellationPolicyController::class, 'store'])
+            ->name('settings.cancellation_policies.store');
+        Route::put('/settings/cancellation-policies/{cancellationPolicy}', [App\Http\Controllers\CancellationPolicyController::class, 'update'])
+            ->name('settings.cancellation_policies.update');
+        Route::delete('/settings/cancellation-policies/{cancellationPolicy}', [App\Http\Controllers\CancellationPolicyController::class, 'destroy'])
+            ->name('settings.cancellation_policies.destroy');
+        Route::post('/settings/cancellation-policies/{cancellationPolicy}/default', [App\Http\Controllers\CancellationPolicyController::class, 'setDefault'])
+            ->name('settings.cancellation_policies.default');
     });
 
     // --- ASSISTANT IA (Kuété) ---
@@ -300,6 +310,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // redirigeant en silence : l'approbation semblait aboutir sans l'avoir
         // fait.
         Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
+        Route::get('/{booking}/cancellation-receipt', [BookingController::class, 'cancellationReceipt'])->name('cancellation_receipt');
 
         // Actions métier : impossibles tant que la caisse n'est pas ouverte
         Route::middleware('caisse')->group(function () {
