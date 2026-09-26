@@ -77,7 +77,7 @@ class DashboardController extends Controller
                 ->sum('amount_paid');
 
             $panels['restaurant_latest_orders'] = RestaurantCustomerOrder::query()
-                ->with(['items.menuItem', 'customer'])
+                ->with(['items.menuItem'])
                 ->latest('id')
                 ->take(6)
                 ->get();
