@@ -622,7 +622,7 @@
                             </p>
                         @endif
                         <p class="text-[11px] text-primary/50">
-                            La configuration détaillée des politiques d'annulation (délais, type de pénalité et calculs OPERA PMS) s'effectue dans la section ci-dessous.
+                            La configuration détaillée des politiques d'annulation (délais, type de pénalité et calculs automatiques) s'effectue dans la section ci-dessous.
                         </p>
                     </div>
                 </div>
@@ -1549,7 +1549,7 @@
                         <div class="flex items-center gap-2">
                             <h2 class="text-lg font-semibold text-primary">Politiques d'annulation</h2>
                             <span class="px-2 py-0.5 text-[11px] font-semibold bg-primary/10 text-primary rounded-full">
-                                Standard OPERA PMS
+                                Standard hôtelier
                             </span>
                         </div>
                         <p class="text-xs text-primary/60 mt-0.5 max-w-2xl">

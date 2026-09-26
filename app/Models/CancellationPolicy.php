@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * CancellationPolicy : Politique d'annulation d'un séjour hôtelier
  *
- * Selon les standards OPERA PMS, définit :
+ * Selon les standards hôteliers, définit :
  * - Le type de pénalité (première nuit, pourcentage, montant fixe, non-remboursable, gratuit)
  * - La valeur de la pénalité le cas échéant
  * - Le délai d'annulation gratuite (jours avant arrivée et heure limite)
