@@ -30,5 +30,10 @@ class RestaurantCustomerOrderItem extends Model
     {
         return $this->belongsTo(RestaurantCustomerOrder::class, 'restaurant_customer_order_id');
     }
+
+    public function menuItem(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantMenuItem::class, 'menu_item_id');
+    }
 }
 
