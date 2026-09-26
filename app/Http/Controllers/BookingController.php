@@ -1806,6 +1806,10 @@ class BookingController extends Controller
 
     public function addPayment(Request $request, Booking $booking)
     {
+        if ($booking->status !== BookingStatus::CHECKED_IN) {
+            return back()->withErrors(['payment' => "L'encaissement d'un paiement n'est possible que lorsque le client est en séjour."]);
+        }
+
         $validated = $request->validate([
             'amount'  => ['required', 'integer', 'min:1'],
             'method'  => ['required', 'string', 'in:cash,stripe,orange_money,mtn_momo,bank_transfer'],

@@ -150,6 +150,24 @@ test('payments and calculations work when caisse is open', function () {
     expect($payment1->amount)->toBe(1500000); // 15 000 FCFA
     expect($payment1->method)->toBe('cash');
 
+    // Cannot add payment while booking is confirmed (guest not checked in)
+    $this->post(route('bookings.payment.add', $booking), [
+        'amount' => '10000',
+        'method' => 'mtn_momo'])->assertSessionHasErrors('payment');
+
+    // On detail page, "Encaisser" button is not available when confirmed
+    $this->get(route('bookings.show', $booking))
+        ->assertOk()
+        ->assertDontSee("document.getElementById('modal-payment').classList.remove('hidden')", false);
+
+    // Guest checks in (client en séjour)
+    $booking->update(['status' => \App\Enums\BookingStatus::CHECKED_IN]);
+
+    // On detail page, "Encaisser" button is now available
+    $this->get(route('bookings.show', $booking))
+        ->assertOk()
+        ->assertSee("document.getElementById('modal-payment').classList.remove('hidden')", false);
+
     // 3. Add non-cash payment (MTN MoMo) of 10 000 FCFA
     $this->post(route('bookings.payment.add', $booking), [
         'amount' => '10000',
