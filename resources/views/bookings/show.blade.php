@@ -866,7 +866,7 @@
 </div>
 @endif
 
-{{-- Modal : Annulation de Réservation (OPERA PMS) --}}
+{{-- Modal : Annulation de Réservation --}}
 @if($booking->isEditable())
 @role('reception', 'manager')
 <div id="modal-cancel-booking" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"

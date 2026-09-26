@@ -154,7 +154,7 @@ class CancellationPolicyService
     }
 
     /**
-     * Traite l'annulation d'une réservation de manière atomique et conforme OPERA
+     * Traite l'annulation d'une réservation de manière atomique et conforme aux standards hôteliers
      */
     public function processCancellation(
         Booking $booking,
