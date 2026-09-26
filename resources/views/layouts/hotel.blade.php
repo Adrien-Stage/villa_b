@@ -121,25 +121,9 @@
          * RÈGLES GLOBALES D'IMPRESSION PROFESSIONNELLE (STANDARDS HÔTELIERS)
          * ═════════════════════════════════════════════════════════════════════ */
         @page {
-            /* Standard A4 avec marges d'impression professionnelles */
+            /* Supprime totalement et définitivement les en-têtes et pieds de page injectés par le navigateur (URL, titre, pagination) */
             size: auto;
-            margin: 10mm 14mm 15mm 14mm;
-
-            /* Supprime les en-têtes auto du navigateur (URL, titre de page) */
-            @top-left { content: none; }
-            @top-center { content: none; }
-            @top-right { content: none; }
-
-            /* Pagination en pied de page pour documents multi-pages */
-            @bottom-left { content: ""; }
-            @bottom-center { content: ""; }
-            @bottom-right {
-                content: "Page " counter(page);
-                font-family: 'Inter', system-ui, -apple-system, sans-serif;
-                font-size: 8.5pt;
-                color: #78716c;
-                font-weight: 500;
-            }
+            margin: 0mm !important;
         }
 
         @media print {
