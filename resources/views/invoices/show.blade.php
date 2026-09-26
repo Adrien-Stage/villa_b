@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête --}}
-<div class="flex items-center justify-between mb-6">
+<div class="no-print print:hidden flex items-center justify-between mb-6">
     <div>
         <a href="{{ route('bookings.show', $invoice->booking) }}"
             class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
@@ -177,25 +177,34 @@
 
 {{-- Style impression --}}
 <style>
-    @media print {
+    @page {
+        size: A4 portrait;
+        margin: 0mm;
+    }
 
-        /* Cache tout sauf la facture */
-        body * {
-            visibility: hidden;
+    @media print {
+        html, body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
         }
 
-        #invoice-print,
-        #invoice-print * {
-            visibility: visible;
+        .no-print, header, aside, nav, button {
+            display: none !important;
         }
 
         #invoice-print {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+            margin: 0 auto !important;
+            padding: 10mm 14mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
             box-shadow: none !important;
             border-radius: 0 !important;
+            border: none !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
         }
     }
 </style>

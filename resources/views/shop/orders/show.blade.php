@@ -287,11 +287,33 @@
 </div>
 
 <style>
+    @page {
+        size: A4 portrait;
+        margin: 0mm;
+    }
+
     @media print {
-        body {
+        html, body {
             background-color: white !important;
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        .no-print, header, aside, nav, button {
+            display: none !important;
+        }
+
+        #invoice-print {
+            margin: 0 auto !important;
+            padding: 10mm 14mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            border: none !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
         }
     }
 </style>

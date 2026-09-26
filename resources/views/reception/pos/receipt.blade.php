@@ -7,10 +7,23 @@
     <title>Reçu POS Réception #{{ $sale->sale_number }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
+        @page {
+            size: auto;
+            margin: 0mm;
+        }
+
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; padding: 0 !important; }
-            #receipt-print { border: none !important; box-shadow: none !important; max-width: 100% !important; }
+            .no-print, header, aside, nav, button { display: none !important; }
+            html, body { background: white !important; padding: 0 !important; margin: 0 !important; height: auto !important; }
+            #receipt-print {
+                border: none !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 8mm 12mm !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
         }
     </style>
 </head>

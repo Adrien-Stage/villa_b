@@ -116,6 +116,93 @@
         }
 
         #sidebar-bascule-ouvrir { display: none; }
+
+        /* ═════════════════════════════════════════════════════════════════════
+         * RÈGLES GLOBALES D'IMPRESSION PROFESSIONNELLE (STANDARDS HÔTELIERS)
+         * ═════════════════════════════════════════════════════════════════════ */
+        @page {
+            /* Élimine les en-têtes et pieds de page par défaut du navigateur (URL, titre, date, pagination auto) */
+            size: auto;
+            margin: 0mm;
+        }
+
+        @media print {
+            /* 1. Reset d'environnement : libération du viewport et suppression des fonds d'écran */
+            html, body {
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #1a1a1a !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 2. Suppression stricte de tous les éléments d'interface utilisateur */
+            header,
+            aside,
+            nav,
+            #mobile-sidebar,
+            #mobile-sidebar-backdrop,
+            .no-print,
+            [data-no-print],
+            [class*="print:hidden"],
+            button,
+            #enable-push-btn,
+            #ai-assistant-wrapper,
+            #ai-chat-window,
+            #system-toast-container,
+            #pwa-install-banner,
+            #caisse-logout-modal,
+            .crisp-client,
+            #crisp-chatbox,
+            .fixed,
+            .sticky,
+            [role="dialog"],
+            [role="alertdialog"],
+            .z-30, .z-40, .z-50 {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* 3. Déblocage du flux vertical pour impression fidèle */
+            .lg\:flex,
+            .flex-1,
+            .overflow-hidden,
+            .overflow-y-auto,
+            .h-full,
+            .min-h-screen,
+            .h-screen {
+                display: block !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                overflow: visible !important;
+                flex: none !important;
+            }
+
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* 4. Anti-coupure des blocs d'information */
+            .print-break-avoid,
+            .page-break-avoid,
+            tr,
+            table,
+            blockquote {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
     </style>
     <script>
         // Avant peinture : la barre latérale reprend la largeur choisie la
@@ -130,9 +217,9 @@
 
 <body class="h-full min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
 
-    <div id="mobile-sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden" onclick="closeMobileSidebar()"></div>
+    <div id="mobile-sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden print:hidden" onclick="closeMobileSidebar()"></div>
 
-    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full">
+    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full print:hidden">
         <div class="flex h-full w-full flex-col">
             <div class="sidebar-entete px-4 py-5 border-b border-surface-dark">
                 <div class="flex items-center gap-3">
@@ -480,7 +567,7 @@
     </aside>
 
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
-        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0">
+        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0 print:hidden">
             <div class="flex items-center gap-3">
                 <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary lg:hidden">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

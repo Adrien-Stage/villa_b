@@ -1,4 +1,4 @@
-<div id="ai-assistant-wrapper" class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
+<div id="ai-assistant-wrapper" class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end print:hidden no-print">
     
     <!-- Fenêtre de Chat (Masquée par défaut) -->
     <div id="ai-chat-window" class="hidden mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-secondary/20 overflow-hidden flex-col origin-bottom-right transition-all duration-300 transform scale-95 opacity-0">

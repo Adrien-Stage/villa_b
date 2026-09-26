@@ -61,3 +61,17 @@
         background-color: var(--color-primary);
     }
 }
+
+/* Utilitaires d'impression professionnels */
+@layer utilities {
+    .no-print {
+        @media print {
+            display: none !important;
+        }
+    }
+
+    .print-avoid-break {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+}

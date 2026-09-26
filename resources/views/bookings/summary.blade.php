@@ -1203,6 +1203,11 @@
      STYLES D'IMPRESSION STRICTS (Facture A4 Propre)
      ═════════════════════════════════════════════════════════════════════ --}}
 <style>
+@page {
+    size: A4 portrait;
+    margin: 0mm;
+}
+
 @media print {
     /* Masquer tous les composants de l'application et de l'écran */
     html, body {
