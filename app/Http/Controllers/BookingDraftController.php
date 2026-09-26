@@ -57,6 +57,8 @@ class BookingDraftController extends Controller
             'check_in_time'  => ['nullable', 'string', 'max:10'],
             'adults'         => ['nullable', 'integer', 'min:1'],
             'children'       => ['nullable', 'integer', 'min:0'],
+            'children_ages'  => ['nullable', 'array'],
+            'children_ages.*'=> ['nullable', 'string', 'max:20'],
             'source'         => ['nullable', 'string', 'max:30'],
             'room_id'        => ['nullable', 'exists:rooms,id'],
             'notes'          => ['nullable', 'string'],
@@ -74,6 +76,7 @@ class BookingDraftController extends Controller
             'check_in_time' => $validated['check_in_time'] ?? null,
             'adults'        => $validated['adults'] ?? null,
             'children'      => $validated['children'] ?? 0,
+            'children_ages' => $validated['children_ages'] ?? null,
             'source'        => $validated['source'] ?? 'direct',
             'room_id'       => $validated['room_id'] ?? null,
             'notes'         => $validated['notes'] ?? null,
@@ -168,6 +171,7 @@ class BookingDraftController extends Controller
                 'check_in_time' => $draft->check_in_time ?? '14:00',
                 'adults'        => $draft->adults ?? 1,
                 'children'      => $draft->children ?? 0,
+                'children_ages' => $draft->children_ages ?? [],
                 'source'        => $draft->source ?? 'direct',
                 'draft_token'   => $draft->token,
             ]);
@@ -195,6 +199,7 @@ class BookingDraftController extends Controller
         $checkInTime = $draft->check_in_time ?? '14:00';
         $adults      = $draft->adults ?? 1;
         $children    = $draft->children ?? 0;
+        $childrenAges = $draft->children_ages ?? [];
         $source      = $draft->source ?? 'direct';
         $totalPeople = $adults + $children;
         $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
@@ -303,6 +308,7 @@ class BookingDraftController extends Controller
             'checkInTime',
             'adults',
             'children',
+            'childrenAges',
             'source',
             'availableRooms',
             'roomTypes',
@@ -326,6 +332,7 @@ class BookingDraftController extends Controller
         $nights      = $checkIn->diffInDays($checkOut);
         $adultsCount = $draft->adults ?? 1;
         $childrenCount = $draft->children ?? 0;
+        $childrenAges = $draft->children_ages ?? [];
         $source      = $draft->source ?? 'direct';
         $notes       = $draft->notes ?? '';
         $draftToken  = $draft->token;
@@ -337,6 +344,14 @@ class BookingDraftController extends Controller
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
+
+        $breakfastService = app(\App\Services\BreakfastPricingService::class);
+        $breakfastCalculation = $breakfastService->calculateBreakfast(
+            $nights,
+            (int) $adultsCount,
+            $childrenAges,
+            $tenantId
+        );
 
         $partnerOrganization = $customer->partnerOrganization;
         if ($partnerOrganization && !$partnerOrganization->isValidOn($checkIn)) {
@@ -382,6 +397,8 @@ class BookingDraftController extends Controller
             'nights' => $nights,
             'adultsCount' => $adultsCount,
             'childrenCount' => $childrenCount,
+            'childrenAges' => $childrenAges,
+            'breakfastCalculation' => $breakfastCalculation,
             'source' => $source,
             'notes' => $notes,
             'pricePerNight' => $pricePerNight,

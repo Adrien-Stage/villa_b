@@ -105,9 +105,19 @@
         </div>
 
         {{-- Étape 2 : Dates et personnes --}}
+        @php
+            $breakfastService = app(\App\Services\BreakfastPricingService::class);
+            $currentTenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::first()?->id;
+            $ageBrackets = $ageBrackets ?? $breakfastService->getAgeBrackets($currentTenantId);
+            $initialChildrenCount = (int) old('children', request('children', 0));
+            $initialChildrenAges = old('children_ages', request('children_ages', []));
+            if (!is_array($initialChildrenAges)) {
+                $initialChildrenAges = [];
+            }
+        @endphp
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h2 class="font-heading font-semibold text-primary mb-5">Dates et personnes</h2>
-            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}')">
+            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}', {{ $initialChildrenCount }}, @js($initialChildrenAges), @js($ageBrackets))">
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
@@ -250,9 +260,69 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Enfants
                         </label>
-                        <input type="number" name="children" value="{{ old('children', request('children', 0)) }}"
-                               min="0"
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="children" x-model.number="childrenCount" @input="syncChildrenSlots()"
+                                   min="0" max="10"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" @click="incrementChildren()"
+                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary font-bold text-sm flex items-center justify-center transition"
+                                        title="Ajouter un enfant">+</button>
+                                <button type="button" @click="decrementChildren()"
+                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary font-bold text-sm flex items-center justify-center transition"
+                                        title="Retirer un enfant" :disabled="childrenCount <= 0">−</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Sélecteurs dynamiques pour l'intervalle d'âge des enfants --}}
+                <div x-show="childrenCount > 0" style="display: none;" class="mb-5 p-4 bg-slate-50 border border-secondary/20 rounded-xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-primary">
+                                Tranches d'âge des enfants
+                            </h4>
+                            <p class="text-[11px] text-primary/60">
+                                L'âge influence le prix du petit-déjeuner prévu pour la chambre.
+                            </p>
+                        </div>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-secondary/20 text-primary"
+                              x-text="childrenCount + ' enfant' + (childrenCount > 1 ? 's' : '')"></span>
+                    </div>
+
+                    <div class="space-y-2.5">
+                        <template x-for="(ageId, index) in childrenAges" :key="index">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white border border-secondary/20 rounded-lg shadow-xs">
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="w-6 h-6 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center"
+                                          x-text="index + 1"></span>
+                                    <span class="text-xs font-semibold text-primary" x-text="'Enfant ' + (index + 1)"></span>
+                                </div>
+
+                                <div class="flex-1 w-full sm:max-w-md">
+                                    <select :name="'children_ages[]'" x-model="childrenAges[index]" required
+                                            class="w-full px-3 py-1.5 text-xs font-medium border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                        <option value="">Sélectionner la tranche d'âge...</option>
+                                        <template x-for="bracket in ageBrackets" :key="bracket.id">
+                                            <option :value="bracket.id"
+                                                    :selected="childrenAges[index] === bracket.id"
+                                                    x-text="bracket.label + ' — Petit-déjeuner : ' + (bracket.price > 0 ? (new Intl.NumberFormat('fr-FR').format(bracket.price) + ' FCFA/j') : 'Gratuit')">
+                                            </option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="pt-2 border-t border-secondary/15 flex items-center justify-between text-xs text-primary/80">
+                        <span class="font-medium flex items-center gap-1.5">
+                            <i data-lucide="utensils" class="w-3.5 h-3.5 text-secondary"></i>
+                            Petit-déjeuner enfants estimé :
+                        </span>
+                        <span class="font-bold text-primary tabular-nums"
+                              x-text="new Intl.NumberFormat('fr-FR').format(calculateEstimatedChildrenBreakfast()) + ' FCFA / jour'"></span>
                     </div>
                 </div>
 
@@ -432,7 +502,7 @@
 @push('scripts')
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('bookingCalendar', (initialCheckIn = '', initialCheckOut = '') => {
+    Alpine.data('bookingCalendar', (initialCheckIn = '', initialCheckOut = '', initialChildren = 0, initialChildrenAges = [], ageBrackets = []) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -443,6 +513,9 @@ document.addEventListener('alpine:init', () => {
             checkInDate: initialCheckIn ? new Date(initialCheckIn) : null,
             checkOutDate: initialCheckOut ? new Date(initialCheckOut) : null,
             hoverDate: null,
+            childrenCount: parseInt(initialChildren) || 0,
+            childrenAges: Array.isArray(initialChildrenAges) ? [...initialChildrenAges] : [],
+            ageBrackets: Array.isArray(ageBrackets) ? ageBrackets : [],
             monthNames: [
                 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -453,6 +526,49 @@ document.addEventListener('alpine:init', () => {
                     this.currentMonth = this.checkInDate.getMonth();
                     this.currentYear = this.checkInDate.getFullYear();
                 }
+                this.syncChildrenSlots();
+            },
+
+            incrementChildren() {
+                this.childrenCount++;
+                this.syncChildrenSlots();
+            },
+
+            decrementChildren() {
+                if (this.childrenCount > 0) {
+                    this.childrenCount--;
+                    this.syncChildrenSlots();
+                }
+            },
+
+            syncChildrenSlots() {
+                let count = parseInt(this.childrenCount) || 0;
+                if (count < 0) count = 0;
+                this.childrenCount = count;
+
+                while (this.childrenAges.length < count) {
+                    // Tranche par défaut : 2ème tranche (ex: enfant 2-10 ans) si disponible, sinon 1ère
+                    const defaultBracket = (this.ageBrackets.length > 1) ? this.ageBrackets[1].id : (this.ageBrackets[0]?.id || '');
+                    this.childrenAges.push(defaultBracket);
+                }
+                if (this.childrenAges.length > count) {
+                    this.childrenAges = this.childrenAges.slice(0, count);
+                }
+                if (window.lucide) {
+                    this.$nextTick(() => window.lucide.createIcons());
+                }
+            },
+
+            calculateEstimatedChildrenBreakfast() {
+                let total = 0;
+                const bracketMap = {};
+                this.ageBrackets.forEach(b => { bracketMap[b.id] = b.price; });
+                this.childrenAges.forEach(id => {
+                    if (bracketMap[id] !== undefined) {
+                        total += bracketMap[id];
+                    }
+                });
+                return total;
             },
 
             get monthLabel() {

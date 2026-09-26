@@ -10,6 +10,13 @@
     $codeRecipientEmail = trim((string) $codeRecipient?->email) ?: null;
     $checkinCode = $booking->checkin_code ?? session('checkin_code');
     $tenant = $tenant ?? (Auth::user()?->tenant ?? \App\Models\Tenant::first());
+    $formatFcfa = function ($amount) {
+        $val = (int) $amount;
+        if ($val >= 1000000 && $val % 100 === 0) {
+            $val = (int) round($val / 100);
+        }
+        return number_format($val, 0, ',', ' ');
+    };
 @endphp
 
 @section('content')
@@ -150,6 +157,12 @@
                                 {{ $booking->adults_count }} adulte{{ $booking->adults_count > 1 ? 's' : '' }}
                                 @if($booking->children_count > 0)
                                     , {{ $booking->children_count }} enfant{{ $booking->children_count > 1 ? 's' : '' }}
+                                    @php
+                                        $summaryChildren = !empty($booking->children_ages) ? app(\App\Services\BreakfastPricingService::class)->formatChildrenSummary($booking->children_ages) : '';
+                                    @endphp
+                                    @if($summaryChildren)
+                                        <span class="text-primary/60 font-normal">({{ $summaryChildren }})</span>
+                                    @endif
                                 @endif
                             </p>
                         </div>
@@ -287,6 +300,18 @@
                                 <div class="flex justify-between py-1 border-b border-secondary/10">
                                     <span class="text-primary/70">Formule / Prestations associées</span>
                                     <span class="font-semibold text-primary">+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                                </div>
+                            @endif
+
+                            @if($booking->extras_amount > 0)
+                                <div class="flex justify-between py-1 border-b border-secondary/10">
+                                    <span class="text-primary/70">
+                                        Petits-déjeuners inclus
+                                        @if(!empty($booking->children_ages) && $booking->children_count > 0)
+                                            <span class="text-primary/50 text-[11px]">({{ $booking->adults_count }} ad. + {{ $booking->children_count }} enf.)</span>
+                                        @endif
+                                    </span>
+                                    <span class="font-semibold text-primary">+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
                                 </div>
                             @endif
 
@@ -593,6 +618,12 @@
                     · {{ $booking->adults_count }} adulte{{ $booking->adults_count > 1 ? 's' : '' }}
                     @if($booking->children_count > 0)
                         , {{ $booking->children_count }} enfant{{ $booking->children_count > 1 ? 's' : '' }}
+                        @php
+                            $pChildrenSummary = !empty($booking->children_ages) ? app(\App\Services\BreakfastPricingService::class)->formatChildrenSummary($booking->children_ages) : '';
+                        @endphp
+                        @if($pChildrenSummary)
+                            <span>({{ $pChildrenSummary }})</span>
+                        @endif
                     @endif
                 </p>
                 @if(!empty($booking->check_in_time))
@@ -650,6 +681,23 @@
                 </div>
             @endif
 
+            {{-- Ligne 2 bis : Petits-déjeuners éventuels --}}
+            @if($booking->extras_amount > 0)
+                <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                    <div class="col-span-7">
+                        <p class="text-sm font-medium text-primary">Petits-déjeuners inclus</p>
+                        <p class="text-xs text-primary/40">{{ $booking->total_nights }} nuit(s) · {{ $booking->adults_count }} adulte(s) @if($booking->children_count > 0) + {{ $booking->children_count }} enfant(s) @endif</p>
+                    </div>
+                    <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
+                    <div class="col-span-2 text-xs text-primary/70 text-right">
+                        {{ $formatFcfa($booking->extras_amount) }} F
+                    </div>
+                    <div class="col-span-2 text-sm font-semibold text-primary text-right">
+                        {{ $formatFcfa($booking->extras_amount) }} F
+                    </div>
+                </div>
+            @endif
+
             {{-- Ligne 3 : Taxe de séjour éventuelle --}}
             @if($booking->tax_amount > 0)
                 <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
@@ -694,6 +742,12 @@
                     <div class="flex justify-between text-xs text-primary/60">
                         <span>Formule</span>
                         <span>+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                    </div>
+                @endif
+                @if($booking->extras_amount > 0)
+                    <div class="flex justify-between text-xs text-primary/60">
+                        <span>Petits-déjeuners</span>
+                        <span>+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
                     </div>
                 @endif
                 @if($booking->discount_amount > 0)
@@ -847,7 +901,18 @@
                             <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Détails du séjour</p>
                             <p class="text-xs text-primary/80 font-medium">Chambre {{ $booking->room->number }} — {{ $booking->room->roomType->name }}</p>
                             <p class="text-xs text-primary/70">Du {{ $booking->check_in->locale('fr')->isoFormat('D MMM YYYY') }} au {{ $booking->check_out->locale('fr')->isoFormat('D MMM YYYY') }}</p>
-                            <p class="text-xs text-primary/70">{{ $booking->total_nights }} nuit(s) · {{ $booking->adults_count }} adulte(s)</p>
+                            <p class="text-xs text-primary/70">
+                                {{ $booking->total_nights }} nuit(s) · {{ $booking->adults_count }} adulte(s)
+                                @if($booking->children_count > 0)
+                                    , {{ $booking->children_count }} enfant(s)
+                                    @php
+                                        $mChildrenSummary = !empty($booking->children_ages) ? app(\App\Services\BreakfastPricingService::class)->formatChildrenSummary($booking->children_ages) : '';
+                                    @endphp
+                                    @if($mChildrenSummary)
+                                        <span>({{ $mChildrenSummary }})</span>
+                                    @endif
+                                @endif
+                            </p>
                             @if(!empty($booking->check_in_time))
                                 <p class="text-xs text-primary/70">Arrivée prévue : {{ $booking->check_in_time }}</p>
                             @endif
@@ -882,6 +947,18 @@
                             </div>
                         @endif
 
+                        @if($booking->extras_amount > 0)
+                            <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                                <div class="col-span-7">
+                                    <p class="text-sm font-medium text-primary">Petits-déjeuners inclus</p>
+                                    <p class="text-xs text-primary/40">{{ $booking->total_nights }} nuit(s) · {{ $booking->adults_count }} adulte(s) @if($booking->children_count > 0) + {{ $booking->children_count }} enfant(s) @endif</p>
+                                </div>
+                                <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
+                                <div class="col-span-2 text-xs text-primary/70 text-right">{{ $formatFcfa($booking->extras_amount) }} F</div>
+                                <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ $formatFcfa($booking->extras_amount) }} F</div>
+                            </div>
+                        @endif
+
                         @if($booking->discount_amount > 0)
                             <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs text-emerald-700">
                                 <div class="col-span-7">Remise commerciale</div>
@@ -898,6 +975,12 @@
                                 <span>Total séjour (TTC)</span>
                                 <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
                             </div>
+                            @if($booking->extras_amount > 0)
+                                <div class="flex justify-between text-xs text-primary/60">
+                                    <span>Petits-déjeuners</span>
+                                    <span>+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-xs font-semibold text-emerald-700">
                                 <span>Acompte versé</span>
                                 <span>{{ number_format($booking->paid_amount, 0, ',', ' ') }} FCFA</span>

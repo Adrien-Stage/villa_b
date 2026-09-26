@@ -57,6 +57,7 @@ class Booking extends Model
         // Personnes
         'adults_count',
         'children_count',
+        'children_ages',
 
         // Tarification
         'total_nights',
@@ -90,6 +91,7 @@ class Booking extends Model
     protected $casts = [
         'status' => BookingStatus::class,
         'is_complimentary' => 'boolean',
+        'children_ages' => 'array',
         'complimentary_value' => 'integer',
         'approved_at' => 'datetime',
         'check_in' => 'date',
