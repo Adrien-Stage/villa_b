@@ -6,9 +6,11 @@ use App\Enums\RoomStatus;
 use App\Models\Room;
 use App\Models\RoomImage;
 use App\Models\RoomType;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RoomController extends Controller
 {
@@ -66,19 +68,36 @@ class RoomController extends Controller
     {
         $validated = $request->validate([
             'room_type_id' => ['required', 'exists:room_types,id'],
-            'number'       => ['required', 'string', 'max:20'],
+            'number'       => ['required', 'string', 'max:20', Rule::unique('rooms', 'number')],
             'floor'        => ['nullable', 'string', 'max:10'],
             'view_type'    => ['nullable', 'string', 'max:50'],
             'notes'        => ['nullable', 'string'],
             'images'       => ['nullable', 'array', 'max:4'],
             'images.*'     => ['image', 'mimes:jpeg,jpg,png,webp', 'max:3072'],
+        ], [
+            'number.unique'        => 'Le numéro de chambre :input est déjà utilisé.',
+            'number.required'      => 'Le numéro de chambre est obligatoire.',
+            'room_type_id.required'=> 'Le type de chambre est obligatoire.',
+            'room_type_id.exists'  => 'Le type de chambre sélectionné est invalide.',
         ]);
 
         $validated['tenant_id'] = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
 
         unset($validated['images']);
-        $room = Room::create($validated);
+
+        try {
+            $room = Room::create($validated);
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->withErrors([
+                'number' => "Le numéro de chambre {$request->number} est déjà utilisé."
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->withErrors([
+                'general' => 'Une erreur inattendue est survenue lors de la création de la chambre.'
+            ]);
+        }
 
         // Upload images
         if ($request->hasFile('images')) {
@@ -100,16 +119,33 @@ class RoomController extends Controller
     {
         $validated = $request->validate([
             'room_type_id' => ['required', 'exists:room_types,id'],
-            'number'       => ['required', 'string', 'max:20'],
+            'number'       => ['required', 'string', 'max:20', Rule::unique('rooms', 'number')->ignore($room->id)],
             'floor'        => ['nullable', 'string', 'max:10'],
             'view_type'    => ['nullable', 'string', 'max:50'],
             'notes'        => ['nullable', 'string'],
             'images'       => ['nullable', 'array', 'max:4'],
             'images.*'     => ['image', 'mimes:jpeg,jpg,png,webp', 'max:3072'],
+        ], [
+            'number.unique'        => 'Le numéro de chambre :input est déjà utilisé.',
+            'number.required'      => 'Le numéro de chambre est obligatoire.',
+            'room_type_id.required'=> 'Le type de chambre est obligatoire.',
+            'room_type_id.exists'  => 'Le type de chambre sélectionné est invalide.',
         ]);
 
         unset($validated['images']);
-        $room->update($validated);
+
+        try {
+            $room->update($validated);
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->withErrors([
+                'number' => "Le numéro de chambre {$request->number} est déjà utilisé."
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->withErrors([
+                'general' => 'Une erreur inattendue est survenue lors de la mise à jour de la chambre.'
+            ]);
+        }
 
         // Upload nouvelles images (on vérifie qu'on ne dépasse pas 4 au total)
         if ($request->hasFile('images')) {
@@ -218,16 +254,21 @@ class RoomController extends Controller
     public function storeType(Request $request)
     {
         $validated = $request->validate([
-            'name'             => ['required', 'string', 'max:100'],
-            'code'             => ['required', 'string', 'max:50'],
-            'description'      => ['nullable', 'string'],
-            'base_capacity'    => ['required', 'integer', 'min:1'],
-            'max_capacity'     => ['required', 'integer', 'min:1'],
-            'base_price'       => ['required', 'integer', 'min:0'],
-            'size_sqm'         => ['nullable', 'integer'],
+            'name'               => ['required', 'string', 'max:100'],
+            'code'               => ['required', 'string', 'max:50', Rule::unique('room_types', 'code')],
+            'description'        => ['nullable', 'string'],
+            'base_capacity'      => ['required', 'integer', 'min:1'],
+            'max_capacity'       => ['required', 'integer', 'min:1'],
+            'base_price'         => ['required', 'integer', 'min:0'],
+            'size_sqm'           => ['nullable', 'integer'],
             'includes_breakfast' => ['nullable', 'boolean'],
             'allows_extra_bed'   => ['nullable', 'boolean'],
             'extra_bed_price'    => ['nullable', 'integer', 'min:0'],
+        ], [
+            'code.unique'        => 'Le code de type :input est déjà utilisé.',
+            'name.required'      => 'Le nom du type de chambre est obligatoire.',
+            'code.required'      => 'Le code du type de chambre est obligatoire.',
+            'base_price.required'=> 'Le tarif de base est obligatoire.',
         ]);
 
         // base_price : l'utilisateur saisit en FCFA, on stocke en centimes
@@ -239,7 +280,18 @@ class RoomController extends Controller
         $validated['tenant_id'] = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
 
-        RoomType::create($validated);
+        try {
+            RoomType::create($validated);
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->withErrors([
+                'code' => "Le code {$request->code} est déjà utilisé pour un autre type de chambre."
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->withErrors([
+                'general' => 'Une erreur inattendue est survenue lors de la création du type de chambre.'
+            ]);
+        }
 
         return redirect()->route('rooms.index', ['tab' => 'types'])
             ->with('success', 'Type de chambre créé.');
@@ -248,16 +300,21 @@ class RoomController extends Controller
     public function updateType(Request $request, RoomType $roomType)
     {
         $validated = $request->validate([
-            'name'             => ['required', 'string', 'max:100'],
-            'code'             => ['required', 'string', 'max:50'],
-            'description'      => ['nullable', 'string'],
-            'base_capacity'    => ['required', 'integer', 'min:1'],
-            'max_capacity'     => ['required', 'integer', 'min:1'],
-            'base_price'       => ['required', 'integer', 'min:0'],
-            'size_sqm'         => ['nullable', 'integer'],
+            'name'               => ['required', 'string', 'max:100'],
+            'code'               => ['required', 'string', 'max:50', Rule::unique('room_types', 'code')->ignore($roomType->id)],
+            'description'        => ['nullable', 'string'],
+            'base_capacity'      => ['required', 'integer', 'min:1'],
+            'max_capacity'       => ['required', 'integer', 'min:1'],
+            'base_price'         => ['required', 'integer', 'min:0'],
+            'size_sqm'           => ['nullable', 'integer'],
             'includes_breakfast' => ['nullable', 'boolean'],
             'allows_extra_bed'   => ['nullable', 'boolean'],
             'extra_bed_price'    => ['nullable', 'integer', 'min:0'],
+        ], [
+            'code.unique'        => 'Le code de type :input est déjà utilisé.',
+            'name.required'      => 'Le nom du type de chambre est obligatoire.',
+            'code.required'      => 'Le code du type de chambre est obligatoire.',
+            'base_price.required'=> 'Le tarif de base est obligatoire.',
         ]);
 
         $validated['base_price'] = $validated['base_price'] * 100;
@@ -265,7 +322,18 @@ class RoomController extends Controller
         $validated['allows_extra_bed']   = $request->boolean('allows_extra_bed');
         $validated['extra_bed_price']    = $request->filled('extra_bed_price') ? ((int) $request->input('extra_bed_price')) * 100 : null;
 
-        $roomType->update($validated);
+        try {
+            $roomType->update($validated);
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->withErrors([
+                'code' => "Le code {$request->code} est déjà utilisé pour un autre type de chambre."
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->withErrors([
+                'general' => 'Une erreur inattendue est survenue lors de la mise à jour du type de chambre.'
+            ]);
+        }
 
         return redirect()->route('rooms.index', ['tab' => 'types'])
             ->with('success', 'Type mis à jour.');
