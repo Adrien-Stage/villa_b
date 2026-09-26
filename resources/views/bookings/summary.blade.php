@@ -192,6 +192,18 @@
                                 <span class="text-primary/60">Formule sélectionnée :</span>
                                 <span class="font-semibold text-primary">{{ $booking->roomPackage?->name ?? 'Hébergement seul (Standard)' }}</span>
                             </div>
+                            @if($booking->has_extra_bed)
+                                <div class="flex items-center justify-between text-xs text-primary/80 pt-1.5 border-t border-secondary/10">
+                                    <span class="flex items-center gap-1.5"><i data-lucide="bed" class="w-4 h-4 text-blue-600"></i> Lit d'appoint :</span>
+                                    <span class="font-semibold text-primary">{{ $booking->extra_bed_count }} lit(s) supplémentaire(s) (+ {{ $formatFcfa($booking->extra_bed_amount) }} FCFA)</span>
+                                </div>
+                            @endif
+                            @if($booking->prepaid_breakfast_children)
+                                <div class="flex items-center justify-between text-xs text-primary/80 pt-1.5 border-t border-secondary/10">
+                                    <span class="flex items-center gap-1.5"><i data-lucide="coffee" class="w-4 h-4 text-amber-600"></i> Petits-déjeuners enfants :</span>
+                                    <span class="font-semibold text-primary">Prépayés (+ {{ $formatFcfa($booking->prepaid_breakfast_amount) }} FCFA)</span>
+                                </div>
+                            @endif
                             @if($booking->notes)
                                 <div class="bg-accent/10 rounded-xl p-3 border border-secondary/15 text-xs text-primary/80">
                                     <span class="font-semibold text-primary block mb-0.5">Notes & demandes particulières :</span>
@@ -312,6 +324,24 @@
                                         @endif
                                     </span>
                                     <span class="font-semibold text-primary">+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
+                                </div>
+                            @endif
+
+                            @if($booking->has_extra_bed && $booking->extra_bed_amount > 0)
+                                <div class="flex justify-between py-1 border-b border-secondary/10">
+                                    <span class="text-primary/70">
+                                        Lit(s) d'appoint ({{ $booking->extra_bed_count }} lit(s) × {{ $booking->total_nights }} nuit(s))
+                                    </span>
+                                    <span class="font-semibold text-primary">+ {{ $formatFcfa($booking->extra_bed_amount) }} FCFA</span>
+                                </div>
+                            @endif
+
+                            @if($booking->prepaid_breakfast_children && $booking->prepaid_breakfast_amount > 0)
+                                <div class="flex justify-between py-1 border-b border-secondary/10">
+                                    <span class="text-primary/70">
+                                        Petits-déjeuners enfants prépayés ({{ $booking->children_count }} enf. × {{ $booking->total_nights }} nuit(s))
+                                    </span>
+                                    <span class="font-semibold text-primary">+ {{ $formatFcfa($booking->prepaid_breakfast_amount) }} FCFA</span>
                                 </div>
                             @endif
 
@@ -698,6 +728,38 @@
                 </div>
             @endif
 
+            @if($booking->has_extra_bed && $booking->extra_bed_amount > 0)
+                <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                    <div class="col-span-7">
+                        <p class="text-sm font-medium text-primary">Lit(s) d'appoint</p>
+                        <p class="text-xs text-primary/40">{{ $booking->extra_bed_count }} lit(s) × {{ $booking->total_nights }} nuit(s)</p>
+                    </div>
+                    <div class="col-span-1 text-xs text-primary/70 text-center">{{ $booking->extra_bed_count * $booking->total_nights }}</div>
+                    <div class="col-span-2 text-xs text-primary/70 text-right">
+                        {{ $formatFcfa($booking->extra_bed_amount / max(1, ($booking->extra_bed_count * $booking->total_nights))) }} F
+                    </div>
+                    <div class="col-span-2 text-sm font-semibold text-primary text-right">
+                        {{ $formatFcfa($booking->extra_bed_amount) }} F
+                    </div>
+                </div>
+            @endif
+
+            @if($booking->prepaid_breakfast_children && $booking->prepaid_breakfast_amount > 0)
+                <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                    <div class="col-span-7">
+                        <p class="text-sm font-medium text-primary">Petits-déjeuners enfants prépayés</p>
+                        <p class="text-xs text-primary/40">{{ $booking->total_nights }} nuit(s) · {{ $booking->children_count }} enfant(s)</p>
+                    </div>
+                    <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
+                    <div class="col-span-2 text-xs text-primary/70 text-right">
+                        {{ $formatFcfa($booking->prepaid_breakfast_amount) }} F
+                    </div>
+                    <div class="col-span-2 text-sm font-semibold text-primary text-right">
+                        {{ $formatFcfa($booking->prepaid_breakfast_amount) }} F
+                    </div>
+                </div>
+            @endif
+
             {{-- Ligne 3 : Taxe de séjour éventuelle --}}
             @if($booking->tax_amount > 0)
                 <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
@@ -748,6 +810,18 @@
                     <div class="flex justify-between text-xs text-primary/60">
                         <span>Petits-déjeuners</span>
                         <span>+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
+                    </div>
+                @endif
+                @if($booking->has_extra_bed && $booking->extra_bed_amount > 0)
+                    <div class="flex justify-between text-xs text-primary/60">
+                        <span>Lit(s) d'appoint</span>
+                        <span>+ {{ $formatFcfa($booking->extra_bed_amount) }} FCFA</span>
+                    </div>
+                @endif
+                @if($booking->prepaid_breakfast_children && $booking->prepaid_breakfast_amount > 0)
+                    <div class="flex justify-between text-xs text-primary/60">
+                        <span>PDJ enfants prépayés</span>
+                        <span>+ {{ $formatFcfa($booking->prepaid_breakfast_amount) }} FCFA</span>
                     </div>
                 @endif
                 @if($booking->discount_amount > 0)
@@ -959,6 +1033,30 @@
                             </div>
                         @endif
 
+                        @if($booking->has_extra_bed && $booking->extra_bed_amount > 0)
+                            <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                                <div class="col-span-7">
+                                    <p class="text-sm font-medium text-primary">Lit(s) d'appoint</p>
+                                    <p class="text-xs text-primary/40">{{ $booking->extra_bed_count }} lit(s) × {{ $booking->total_nights }} nuit(s)</p>
+                                </div>
+                                <div class="col-span-1 text-xs text-primary/70 text-center">{{ $booking->extra_bed_count * $booking->total_nights }}</div>
+                                <div class="col-span-2 text-xs text-primary/70 text-right">{{ $formatFcfa($booking->extra_bed_amount / max(1, ($booking->extra_bed_count * $booking->total_nights))) }} F</div>
+                                <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ $formatFcfa($booking->extra_bed_amount) }} F</div>
+                            </div>
+                        @endif
+
+                        @if($booking->prepaid_breakfast_children && $booking->prepaid_breakfast_amount > 0)
+                            <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs">
+                                <div class="col-span-7">
+                                    <p class="text-sm font-medium text-primary">Petits-déjeuners enfants prépayés</p>
+                                    <p class="text-xs text-primary/40">{{ $booking->total_nights }} nuit(s) · {{ $booking->children_count }} enfant(s)</p>
+                                </div>
+                                <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
+                                <div class="col-span-2 text-xs text-primary/70 text-right">{{ $formatFcfa($booking->prepaid_breakfast_amount) }} F</div>
+                                <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ $formatFcfa($booking->prepaid_breakfast_amount) }} F</div>
+                            </div>
+                        @endif
+
                         @if($booking->discount_amount > 0)
                             <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs text-emerald-700">
                                 <div class="col-span-7">Remise commerciale</div>
@@ -972,15 +1070,43 @@
                     <div class="px-8 py-5 border-t border-secondary/20 bg-accent/10">
                         <div class="ml-auto w-72 space-y-2">
                             <div class="flex justify-between text-xs text-primary/60">
-                                <span>Total séjour (TTC)</span>
-                                <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
+                                <span>Hébergement brut</span>
+                                <span>{{ number_format($booking->total_room_amount, 0, ',', ' ') }} FCFA</span>
                             </div>
+                            @if($booking->package_amount > 0)
+                                <div class="flex justify-between text-xs text-primary/60">
+                                    <span>Formule</span>
+                                    <span>+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                                </div>
+                            @endif
                             @if($booking->extras_amount > 0)
                                 <div class="flex justify-between text-xs text-primary/60">
                                     <span>Petits-déjeuners</span>
                                     <span>+ {{ $formatFcfa($booking->extras_amount) }} FCFA</span>
                                 </div>
                             @endif
+                            @if($booking->has_extra_bed && $booking->extra_bed_amount > 0)
+                                <div class="flex justify-between text-xs text-primary/60">
+                                    <span>Lit(s) d'appoint</span>
+                                    <span>+ {{ $formatFcfa($booking->extra_bed_amount) }} FCFA</span>
+                                </div>
+                            @endif
+                            @if($booking->prepaid_breakfast_children && $booking->prepaid_breakfast_amount > 0)
+                                <div class="flex justify-between text-xs text-primary/60">
+                                    <span>PDJ enfants prépayés</span>
+                                    <span>+ {{ $formatFcfa($booking->prepaid_breakfast_amount) }} FCFA</span>
+                                </div>
+                            @endif
+                            @if($booking->discount_amount > 0)
+                                <div class="flex justify-between text-xs text-emerald-700">
+                                    <span>Remise</span>
+                                    <span>- {{ number_format($booking->discount_amount, 0, ',', ' ') }} FCFA</span>
+                                </div>
+                            @endif
+                            <div class="flex justify-between text-sm font-bold text-primary pt-2 border-t border-secondary/20">
+                                <span>Total séjour (TTC)</span>
+                                <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
+                            </div>
                             <div class="flex justify-between text-xs font-semibold text-emerald-700">
                                 <span>Acompte versé</span>
                                 <span>{{ number_format($booking->paid_amount, 0, ',', ' ') }} FCFA</span>

@@ -58,6 +58,11 @@ class Booking extends Model
         'adults_count',
         'children_count',
         'children_ages',
+        'has_extra_bed',
+        'extra_bed_count',
+        'extra_bed_amount',
+        'prepaid_breakfast_children',
+        'prepaid_breakfast_amount',
 
         // Tarification
         'total_nights',
@@ -92,6 +97,11 @@ class Booking extends Model
         'status' => BookingStatus::class,
         'is_complimentary' => 'boolean',
         'children_ages' => 'array',
+        'has_extra_bed' => 'boolean',
+        'extra_bed_count' => 'integer',
+        'extra_bed_amount' => 'integer',
+        'prepaid_breakfast_children' => 'boolean',
+        'prepaid_breakfast_amount' => 'integer',
         'complimentary_value' => 'integer',
         'approved_at' => 'datetime',
         'check_in' => 'date',
@@ -210,6 +220,11 @@ class Booking extends Model
     public function restaurantNotes(): HasMany
     {
         return $this->hasMany(RestaurantNote::class); // Section 4.10.1
+    }
+
+    public function breakfastEntitlements(): HasMany
+    {
+        return $this->hasMany(BreakfastEntitlement::class);
     }
 
     public function creator(): BelongsTo

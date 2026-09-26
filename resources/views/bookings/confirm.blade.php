@@ -99,7 +99,7 @@
          affiche des montants vivants, il doit donc partager le périmètre Alpine
          des champs de droite qui les font varier. --}}
     <form method="POST" action="{{ route('bookings.store') }}"
-          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }}, @js($breakfastCalculation ?? null))">
+          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }}, @js($breakfastCalculation ?? null), {{ (int) ($extraBedAmount ?? 0) }}, {{ (int) ($prepaidBreakfastAmount ?? 0) }}, {{ (int) ($extraBedCount ?? 0) }})">
         @csrf
         <input type="hidden" name="step" value="4">
         <input type="hidden" name="customer_id" value="{{ $customerId }}">
@@ -115,6 +115,11 @@
                 <input type="hidden" name="children_ages[]" value="{{ $ageBracket }}">
             @endforeach
         @endif
+        <input type="hidden" name="has_extra_bed" value="{{ !empty($hasExtraBed) ? 1 : 0 }}">
+        <input type="hidden" name="extra_bed_count" value="{{ $extraBedCount ?? 0 }}">
+        <input type="hidden" name="extra_bed_amount" value="{{ $extraBedAmount ?? 0 }}">
+        <input type="hidden" name="prepaid_breakfast_children" value="{{ !empty($prepaidBreakfastChildren) ? 1 : 0 }}">
+        <input type="hidden" name="prepaid_breakfast_amount" value="{{ $prepaidBreakfastAmount ?? 0 }}">
         <input type="hidden" name="include_breakfast" :value="includeBreakfast ? 1 : 0">
         <input type="hidden" name="breakfast_amount" :value="includeBreakfast ? breakfastStayTotal : 0">
         <input type="hidden" name="source" value="{{ $source }}">
@@ -174,6 +179,30 @@
                                 @endif
                             </div>
                         </div>
+
+                        @if(!empty($hasExtraBed))
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="bed" class="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0"></i>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] text-primary/50 uppercase tracking-wider font-semibold">Lit d'appoint</p>
+                                    <p class="text-sm font-medium text-primary">
+                                        {{ $extraBedCount }} lit(s) supplémentaire(s) ({{ number_format($extraBedAmount, 0, ',', ' ') }} FCFA)
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!empty($prepaidBreakfastChildren))
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="coffee" class="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0"></i>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] text-primary/50 uppercase tracking-wider font-semibold">Petits-déjeuners enfants</p>
+                                    <p class="text-sm font-medium text-primary">
+                                        Prépayés pour le séjour ({{ number_format($prepaidBreakfastAmount, 0, ',', ' ') }} FCFA)
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="flex items-start gap-3">
                             <i data-lucide="route" class="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0"></i>
@@ -304,6 +333,20 @@
                                     Petits-déjeuners (<span x-text="nights"></span> nuit<span x-show="nights > 1">s</span>)
                                 </span>
                                 <span class="font-medium text-primary tabular-nums flex-shrink-0" x-text="'+ ' + formatMoney(breakfastStayTotal) + ' FCFA'"></span>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3" x-show="extraBedAmount > 0" style="display:none;">
+                                <span class="text-primary/60 min-w-0 truncate">
+                                    Lit d'appoint (<span x-text="extraBedCount"></span> × <span x-text="nights"></span> nuit<span x-show="nights > 1">s</span>)
+                                </span>
+                                <span class="font-medium text-primary tabular-nums flex-shrink-0" x-text="'+ ' + formatMoney(extraBedAmount) + ' FCFA'"></span>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3" x-show="!includeBreakfast && prepaidBreakfastAmount > 0" style="display:none;">
+                                <span class="text-primary/60 min-w-0 truncate">
+                                    PDJ enfants prépayés (<span x-text="nights"></span> nuit<span x-show="nights > 1">s</span>)
+                                </span>
+                                <span class="font-medium text-primary tabular-nums flex-shrink-0" x-text="'+ ' + formatMoney(prepaidBreakfastAmount) + ' FCFA'"></span>
                             </div>
 
                             <div class="flex items-center justify-between gap-3" x-show="packageDiscount > 0" style="display:none;">
@@ -747,7 +790,7 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist, packs, partnerDiscount, nights, breakfastData) => ({
+        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist, packs, partnerDiscount, nights, breakfastData, initialExtraBedAmount = 0, initialPrepaidBreakfastAmount = 0, initialExtraBedCount = 0) => ({
             baseTotal: baseTotal,
             customPrice: baseTotal,
             minPercentage: minPct,
@@ -774,6 +817,11 @@
             applyPartner: true,
             partnerDiscount: partnerDiscount || 0,
             selectedPackageName: '',
+
+            // Lit d'appoint & Petits-déjeuners enfants prépayés
+            extraBedAmount: initialExtraBedAmount || 0,
+            prepaidBreakfastAmount: initialPrepaidBreakfastAmount || 0,
+            extraBedCount: initialExtraBedCount || 0,
 
             // Petits-déjeuners
             breakfastData: breakfastData || null,
@@ -826,8 +874,10 @@
                 this.partnerDiscount = (this.isOfferte || !this.applyPartner) ? 0 : this.partnerDiscountBase;
 
                 const remises = this.isOfferte ? 0 : (this.partnerDiscount + this.packageDiscount);
-                const breakfastAmt = (!this.isOfferte && this.includeBreakfast) ? this.breakfastStayTotal : 0;
-                this.netTotal = this.isOfferte ? 0 : Math.max(0, prix + this.packageAmount + breakfastAmt - remises);
+                const extraBedAmt = this.isOfferte ? 0 : (parseInt(this.extraBedAmount) || 0);
+                const prepaidBfAmt = this.isOfferte ? 0 : (parseInt(this.prepaidBreakfastAmount) || 0);
+                const breakfastAmt = (!this.isOfferte && this.includeBreakfast) ? this.breakfastStayTotal : prepaidBfAmt;
+                this.netTotal = this.isOfferte ? 0 : Math.max(0, prix + this.packageAmount + extraBedAmt + breakfastAmt - remises);
 
                 if (this.isOfferte) {
                     this.minDeposit = 0;

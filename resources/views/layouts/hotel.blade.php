@@ -288,6 +288,7 @@
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @role('manager','restaurant_chief','restaurant_staff')
+                                <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
                             @endrole
 

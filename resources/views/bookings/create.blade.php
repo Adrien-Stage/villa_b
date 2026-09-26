@@ -114,10 +114,14 @@
             if (!is_array($initialChildrenAges)) {
                 $initialChildrenAges = [];
             }
+            $defaultExtraBedPrice = $breakfastService->getDefaultExtraBedPrice($currentTenantId);
+            $initialHasExtraBed = (bool) old('has_extra_bed', request('has_extra_bed', false));
+            $initialExtraBedCount = (int) old('extra_bed_count', request('extra_bed_count', 1));
+            $initialPrepaidChildren = (bool) old('prepaid_breakfast_children', request('prepaid_breakfast_children', false));
         @endphp
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h2 class="font-heading font-semibold text-primary mb-5">Dates et personnes</h2>
-            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}', {{ $initialChildrenCount }}, @js($initialChildrenAges), @js($ageBrackets))">
+            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}', {{ $initialChildrenCount }}, @js($initialChildrenAges), @js($ageBrackets), {{ $defaultExtraBedPrice }}, {{ $initialHasExtraBed ? 'true' : 'false' }}, {{ $initialExtraBedCount }}, {{ $initialPrepaidChildren ? 'true' : 'false' }})">
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
@@ -129,6 +133,11 @@
                 {{-- Hidden Inputs for Laravel validation & submission --}}
                 <input type="hidden" name="check_in" :value="checkInDate ? formatDbDate(checkInDate) : ''" required>
                 <input type="hidden" name="check_out" :value="checkOutDate ? formatDbDate(checkOutDate) : ''" required>
+                <input type="hidden" name="has_extra_bed" :value="hasExtraBed ? 1 : 0">
+                <input type="hidden" name="extra_bed_count" :value="hasExtraBed ? extraBedCount : 0">
+                <input type="hidden" name="extra_bed_amount" :value="extraBedStayTotal">
+                <input type="hidden" name="prepaid_breakfast_children" :value="prepaidBreakfastChildren ? 1 : 0">
+                <input type="hidden" name="prepaid_breakfast_amount" :value="prepaidBreakfastChildren ? childrenBreakfastStayTotal : 0">
 
                 {{-- Visual range indicators --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -324,6 +333,57 @@
                         <span class="font-bold text-primary tabular-nums"
                               x-text="new Intl.NumberFormat('fr-FR').format(calculateEstimatedChildrenBreakfast()) + ' FCFA / jour'"></span>
                     </div>
+
+                    {{-- Option Prépaiement des petits-déjeuners des enfants pour le séjour --}}
+                    <div class="pt-3 border-t border-secondary/15 space-y-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-semibold text-primary">Prépayer les petits-déjeuners des enfants pour le séjour</p>
+                                <p class="text-[11px] text-primary/60">
+                                    <span x-show="prepaidBreakfastChildren">Inclus d'office chaque matin au restaurant pour les enfants (<span x-text="childrenCount"></span> enfant<span x-show="childrenCount > 1">s</span>).</span>
+                                    <span x-show="!prepaidBreakfastChildren">Facturé sur place au restaurant ou sur le folio de la chambre à chaque consommation.</span>
+                                </p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input type="checkbox" x-model="prepaidBreakfastChildren" class="sr-only peer">
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+                        <div x-show="prepaidBreakfastChildren" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
+                            <span class="font-medium">Montant ajouté à la réservation :</span>
+                            <span class="font-bold tabular-nums" x-text="new Intl.NumberFormat('fr-FR').format(childrenBreakfastStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Option Lit supplémentaire / Lit d'appoint --}}
+                <div class="mb-5 p-4 bg-slate-50 border border-secondary/20 rounded-xl space-y-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                                <i data-lucide="bed" class="w-4 h-4"></i>
+                            </span>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Lit supplémentaire / Lit d'appoint</h4>
+                                <p class="text-[11px] text-primary/60">Ajouter un lit d'appoint dans la chambre pour un occupant additionnel.</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" x-model="hasExtraBed" class="sr-only peer">
+                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+
+                    <div x-show="hasExtraBed" style="display:none;" class="pt-3 border-t border-secondary/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-medium text-primary">Nombre de lits d'appoint :</label>
+                            <input type="number" x-model.number="extraBedCount" min="1" max="3" class="w-16 px-2 py-1 text-xs border border-secondary/30 rounded-lg text-center font-bold">
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold text-primary" x-text="new Intl.NumberFormat('fr-FR').format(extraBedPricePerNight) + ' FCFA / nuit'"></span>
+                            <p class="text-[10px] text-primary/60" x-text="'Total séjour : ' + new Intl.NumberFormat('fr-FR').format(extraBedStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></p>
+                        </div>
+                    </div>
                 </div>
 
                 <p class="text-[11px] text-primary/70 mb-5 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
@@ -502,7 +562,7 @@
 @push('scripts')
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('bookingCalendar', (initialCheckIn = '', initialCheckOut = '', initialChildren = 0, initialChildrenAges = [], ageBrackets = []) => {
+    Alpine.data('bookingCalendar', (initialCheckIn = '', initialCheckOut = '', initialChildren = 0, initialChildrenAges = [], ageBrackets = [], defaultExtraBedPrice = 10000, initialHasExtraBed = false, initialExtraBedCount = 1, initialPrepaidChildren = false) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -516,6 +576,31 @@ document.addEventListener('alpine:init', () => {
             childrenCount: parseInt(initialChildren) || 0,
             childrenAges: Array.isArray(initialChildrenAges) ? [...initialChildrenAges] : [],
             ageBrackets: Array.isArray(ageBrackets) ? ageBrackets : [],
+            extraBedPricePerNight: parseInt(defaultExtraBedPrice) || 10000,
+            hasExtraBed: Boolean(initialHasExtraBed),
+            extraBedCount: parseInt(initialExtraBedCount) || 1,
+            prepaidBreakfastChildren: Boolean(initialPrepaidChildren),
+
+            get totalNights() {
+                if (!this.checkInDate || !this.checkOutDate) return 1;
+                const diffTime = Math.abs(this.checkOutDate - this.checkInDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return Math.max(1, diffDays);
+            },
+
+            get extraBedStayTotal() {
+                if (!this.hasExtraBed) return 0;
+                return this.extraBedCount * this.extraBedPricePerNight * this.totalNights;
+            },
+
+            get childrenBreakfastDailyTotal() {
+                return this.calculateEstimatedChildrenBreakfast();
+            },
+
+            get childrenBreakfastStayTotal() {
+                return this.childrenBreakfastDailyTotal * this.totalNights;
+            },
+
             monthNames: [
                 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
