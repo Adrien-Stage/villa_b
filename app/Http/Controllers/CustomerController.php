@@ -96,16 +96,23 @@ class CustomerController extends Controller
             ->with('success', 'Le client a été créé avec succès.');
     }
 
-    public function show(Customer $customer)
+    public function show(Customer $customer, Request $request, \App\Services\CustomerInvoiceService $invoiceService)
     {
         $customer->load([
-            'bookings' => fn($q) => $q->with('room.roomType')
-                                      ->orderBy('check_in', 'desc')
-                                      ->limit(10),
-            'loyaltyTransactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(10),
+            'bookings' => fn($q) => $q->with(['room.roomType', 'invoice'])
+                                      ->orderBy('check_in', 'desc'),
+            'loyaltyTransactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(15),
+            'partnerOrganization',
         ]);
 
-        return view('customers.show', compact('customer'));
+        $currentTab = $request->input('tab', 'bookings');
+        if ($request->hasAny(['start_date', 'end_date', 'period', 'service', 'status', 'search', 'page'])) {
+            $currentTab = 'invoices';
+        }
+
+        $billingData = $invoiceService->getBillingHistory($customer, $request->all());
+
+        return view('customers.show', compact('customer', 'currentTab', 'billingData'));
     }
 
     public function edit(Customer $customer)

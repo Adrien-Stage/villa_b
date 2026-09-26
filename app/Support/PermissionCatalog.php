@@ -267,9 +267,9 @@ class PermissionCatalog
         return [
             // ── Restauration ──
             'restaurant.billing.paid' => ['cashier', 'restaurant_chief'],
-            'restaurant.billing.receipt' => ['cashier', 'manager', 'restaurant_chief'],
+            'restaurant.billing.receipt' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
             'restaurant.billing.unpaid' => ['cashier', 'restaurant_chief'],
-            'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief'],
+            'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
             'restaurant.breakfast.serve' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.breakfast.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.kitchen.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
@@ -470,9 +470,9 @@ class PermissionCatalog
             'shop.cash_register.voir' => ['controller', 'manager', 'shop_manager'],
             'shop.orders.creer' => ['shop_cashier', 'shop_manager'],
             'shop.orders.paid' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.receipt' => ['manager', 'shop_cashier', 'shop_manager'],
+            'shop.orders.receipt' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.orders.refund' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.voir' => ['controller', 'manager', 'shop_cashier', 'shop_manager'],
+            'shop.orders.voir' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.products.creer' => ['shop_manager'],
             'shop.products.export' => ['controller', 'manager', 'shop_manager'],
             'shop.products.import' => ['shop_manager'],
