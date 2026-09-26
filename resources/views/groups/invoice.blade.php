@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- En-tête page --}}
-<div class="flex items-center justify-between mb-6">
+<div class="no-print print:hidden flex items-center justify-between mb-6">
     <div>
         <a href="{{ route('groups.show', $groupBooking) }}"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
@@ -220,18 +220,49 @@
 </div>
 
 <style>
+@page {
+    size: A4 portrait;
+    margin: 10mm 14mm 15mm 14mm;
+
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+
+    @bottom-left { content: ""; }
+    @bottom-center { content: ""; }
+    @bottom-right {
+        content: "Page " counter(page);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: 8.5pt;
+        color: #78716c;
+        font-weight: 500;
+    }
+}
+
 @media print {
-    body * { visibility: hidden; }
-    #invoice-print, #invoice-print * { visibility: visible; }
+    html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .no-print, header, aside, nav, button {
+        display: none !important;
+    }
+
     #invoice-print {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%;
+        margin: 0 auto !important;
+        padding: 10mm 14mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        max-width: 100% !important;
+        border: none !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
     }
-    .no-print { display: none !important; }
 }
 </style>
 

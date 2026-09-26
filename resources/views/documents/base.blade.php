@@ -21,7 +21,19 @@
     <meta charset="utf-8">
     <title>{{ $document->titre }}</title>
     <style>
-        @page { margin: 14mm 12mm 18mm; }
+        @page {
+            margin: 12mm 12mm 16mm;
+            @top-left { content: none; }
+            @top-center { content: none; }
+            @top-right { content: none; }
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
+            @bottom-right {
+                content: "Page " counter(page);
+                font-size: 8.5px;
+                color: #8a7461;
+            }
+        }
 
         * { font-family: DejaVu Sans, Arial, sans-serif; box-sizing: border-box; }
         body { margin: 0; color: #2b1a10; font-size: 11px; }
