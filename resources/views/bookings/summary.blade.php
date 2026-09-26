@@ -99,12 +99,12 @@
                     <button type="button" @click="showInvoicePreview = true"
                             class="px-4 py-2 bg-accent/20 hover:bg-accent/40 text-primary rounded-xl font-medium text-xs flex items-center gap-2 transition-all shadow-sm border border-secondary/25">
                         <i data-lucide="file-text" class="w-4 h-4"></i>
-                        Aperçu facture
+                        Aperçu du récapitulatif
                     </button>
                     <button type="button" onclick="window.print()"
                             class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center gap-2 transition-all shadow-sm">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        Imprimer la facture
+                        Imprimer le récapitulatif
                     </button>
                     <a href="{{ route('bookings.show', $booking) }}"
                        class="px-4 py-2 bg-primary hover:bg-surface-dark text-white rounded-xl font-medium text-xs flex items-center gap-2 transition-all shadow-sm">
@@ -452,13 +452,13 @@
                     <button type="button" onclick="window.print()"
                             class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        Imprimer la facture (Format A4)
+                        Imprimer le récapitulatif
                     </button>
 
                     <button type="button" @click="showInvoicePreview = true"
                             class="w-full py-2.5 bg-accent/25 hover:bg-accent/40 text-primary text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
                         <i data-lucide="file-text" class="w-4 h-4"></i>
-                        Aperçu de la facture client
+                        Aperçu du récapitulatif
                     </button>
 
                     <a href="{{ route('bookings.show', $booking) }}"
@@ -529,7 +529,7 @@
                     <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 {{ $booking->status->color() }}">
                         {{ $booking->status->label() }}
                     </span>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-primary/40">Facture de réservation</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-primary/40">Récapitulatif de réservation</p>
                     <p class="font-heading text-lg font-bold text-primary">{{ $booking->booking_number }}</p>
                     <p class="text-xs text-primary/50">
                         Émise le {{ $booking->created_at->locale('fr')->isoFormat('D MMMM YYYY') }}
@@ -548,7 +548,7 @@
         {{-- Infos client + séjour (2 colonnes) --}}
         <div class="px-8 py-5 border-b border-secondary/15 grid grid-cols-2 gap-6 bg-accent/5">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Facturé à</p>
+                <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Réservé pour</p>
                 <p class="text-sm font-bold text-primary">{{ $booking->customer->full_name }}</p>
                 @if($booking->customer->email)
                     <p class="text-xs text-primary/60">{{ $booking->customer->email }}</p>
@@ -729,9 +729,12 @@
             </div>
         </div>
 
-        {{-- Mentions légales --}}
+        {{-- Note d'information --}}
         <div class="px-8 py-4 border-t border-secondary/10 bg-accent/5">
             <p class="text-xs text-primary/60 text-center font-medium">
+                Ce document récapitule votre réservation et confirme le versement de l'acompte.
+            </p>
+            <p class="text-xs text-primary/50 text-center mt-0.5">
                 Le code unique de sécurité Check-in <strong class="text-primary font-mono text-sm">{{ $checkinCode }}</strong> sera exigé lors de la remise des clés.
             </p>
             <p class="text-[11px] text-primary/40 text-center mt-1">
@@ -750,7 +753,7 @@
             <div class="p-4 border-b border-secondary/15 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                 <div class="flex items-center gap-2">
                     <i data-lucide="file-text" class="w-5 h-5 text-primary"></i>
-                    <h3 class="font-heading font-semibold text-primary text-base">Aperçu de la facture client</h3>
+                    <h3 class="font-heading font-semibold text-primary text-base">Aperçu du récapitulatif de réservation</h3>
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="window.print()"
@@ -804,7 +807,7 @@
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 {{ $booking->status->color() }}">
                                     {{ $booking->status->label() }}
                                 </span>
-                                <p class="text-xs font-semibold uppercase tracking-wider text-primary/40">Facture de réservation</p>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-primary/40">Récapitulatif de réservation</p>
                                 <p class="font-heading text-lg font-bold text-primary">{{ $booking->booking_number }}</p>
                                 <p class="text-xs text-primary/50">
                                     Émise le {{ $booking->created_at->locale('fr')->isoFormat('D MMMM YYYY') }}
@@ -822,7 +825,7 @@
 
                     <div class="px-8 py-5 border-b border-secondary/15 grid grid-cols-2 gap-6 bg-accent/5">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Facturé à</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Réservé pour</p>
                             <p class="text-sm font-bold text-primary">{{ $booking->customer->full_name }}</p>
                             @if($booking->customer->email)
                                 <p class="text-xs text-primary/60">{{ $booking->customer->email }}</p>
@@ -905,6 +908,19 @@
                                 <span>{{ number_format($booking->balance_due, 0, ',', ' ') }} FCFA</span>
                             </div>
                         </div>
+                    </div>
+
+                    {{-- Note d'information --}}
+                    <div class="px-8 py-4 border-t border-secondary/10 bg-accent/5">
+                        <p class="text-xs text-primary/60 text-center font-medium">
+                            Ce document récapitule votre réservation et confirme le versement de l'acompte.
+                        </p>
+                        <p class="text-xs text-primary/50 text-center mt-0.5">
+                            Le code unique de sécurité Check-in <strong class="text-primary font-mono text-sm">{{ $checkinCode }}</strong> sera exigé lors de la remise des clés.
+                        </p>
+                        <p class="text-[11px] text-primary/40 text-center mt-1">
+                            {{ $tenant?->name ?? 'Établissement' }} · {{ $tenant?->address ?? '' }} · Merci de votre confiance
+                        </p>
                     </div>
                 </div>
             </div>
