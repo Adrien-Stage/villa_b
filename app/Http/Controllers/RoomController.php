@@ -218,17 +218,23 @@ class RoomController extends Controller
     public function storeType(Request $request)
     {
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:100'],
-            'code'          => ['required', 'string', 'max:50'],
-            'description'   => ['nullable', 'string'],
-            'base_capacity' => ['required', 'integer', 'min:1'],
-            'max_capacity'  => ['required', 'integer', 'min:1'],
-            'base_price'    => ['required', 'integer', 'min:0'],
-            'size_sqm'      => ['nullable', 'integer'],
+            'name'             => ['required', 'string', 'max:100'],
+            'code'             => ['required', 'string', 'max:50'],
+            'description'      => ['nullable', 'string'],
+            'base_capacity'    => ['required', 'integer', 'min:1'],
+            'max_capacity'     => ['required', 'integer', 'min:1'],
+            'base_price'       => ['required', 'integer', 'min:0'],
+            'size_sqm'         => ['nullable', 'integer'],
+            'includes_breakfast' => ['nullable', 'boolean'],
+            'allows_extra_bed'   => ['nullable', 'boolean'],
+            'extra_bed_price'    => ['nullable', 'integer', 'min:0'],
         ]);
 
         // base_price : l'utilisateur saisit en FCFA, on stocke en centimes
         $validated['base_price'] = $validated['base_price'] * 100;
+        $validated['includes_breakfast'] = $request->boolean('includes_breakfast', true);
+        $validated['allows_extra_bed']   = $request->boolean('allows_extra_bed', true);
+        $validated['extra_bed_price']    = $request->filled('extra_bed_price') ? ((int) $request->input('extra_bed_price')) * 100 : null;
 
         $validated['tenant_id'] = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
@@ -242,16 +248,22 @@ class RoomController extends Controller
     public function updateType(Request $request, RoomType $roomType)
     {
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:100'],
-            'code'          => ['required', 'string', 'max:50'],
-            'description'   => ['nullable', 'string'],
-            'base_capacity' => ['required', 'integer', 'min:1'],
-            'max_capacity'  => ['required', 'integer', 'min:1'],
-            'base_price'    => ['required', 'integer', 'min:0'],
-            'size_sqm'      => ['nullable', 'integer'],
+            'name'             => ['required', 'string', 'max:100'],
+            'code'             => ['required', 'string', 'max:50'],
+            'description'      => ['nullable', 'string'],
+            'base_capacity'    => ['required', 'integer', 'min:1'],
+            'max_capacity'     => ['required', 'integer', 'min:1'],
+            'base_price'       => ['required', 'integer', 'min:0'],
+            'size_sqm'         => ['nullable', 'integer'],
+            'includes_breakfast' => ['nullable', 'boolean'],
+            'allows_extra_bed'   => ['nullable', 'boolean'],
+            'extra_bed_price'    => ['nullable', 'integer', 'min:0'],
         ]);
 
         $validated['base_price'] = $validated['base_price'] * 100;
+        $validated['includes_breakfast'] = $request->boolean('includes_breakfast');
+        $validated['allows_extra_bed']   = $request->boolean('allows_extra_bed');
+        $validated['extra_bed_price']    = $request->filled('extra_bed_price') ? ((int) $request->input('extra_bed_price')) * 100 : null;
 
         $roomType->update($validated);
 

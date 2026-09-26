@@ -439,6 +439,8 @@
                         $breakfastSettings = $tenantSettings['reception']['breakfast'] ?? $tenantSettings['hebergement']['breakfast'] ?? [];
                         $adultBreakfastPrice = $breakfastSettings['adult_price'] ?? \App\Services\BreakfastPricingService::DEFAULT_ADULT_PRICE;
                         $ageBrackets = $breakfastService->getAgeBrackets($tenant?->id);
+                        $serviceHours = $breakfastService->getServiceHours($tenant?->id);
+                        $defaultExtraBedPrice = $breakfastService->getDefaultExtraBedPrice($tenant?->id);
                     @endphp
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20"
                          x-data="{
@@ -462,9 +464,37 @@
                                  }
                              }
                          }">
-                        <div class="mb-3">
-                            <h3 class="text-sm font-semibold text-primary mb-1">Petits-déjeuners & Tranches d'âge des enfants</h3>
-                            <p class="text-xs text-primary/60">Configurez le tarif standard adulte et le prix du petit-déjeuner prévu pour une chambre selon l'âge de l'enfant.</p>
+                        <div class="mb-4">
+                            <h3 class="text-sm font-semibold text-primary mb-1">Petits-déjeuners & Lit supplémentaire</h3>
+                            <p class="text-xs text-primary/60">Configurez les horaires de service, le tarif adulte, les tranches d'âge des enfants et le tarif général du lit d'appoint.</p>
+                        </div>
+
+                        {{-- Horaires de service et lit d'appoint --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 pb-4 border-b border-secondary/15">
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Début du service PDJ</label>
+                                <input type="time" name="settings[breakfast][service_start_time]"
+                                       value="{{ $serviceHours['start'] }}" required
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2">
+                                <p class="text-[10px] text-primary/50 mt-1">Ex: 06:30</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Fin du service PDJ</label>
+                                <input type="time" name="settings[breakfast][service_end_time]"
+                                       value="{{ $serviceHours['end'] }}" required
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2">
+                                <p class="text-[10px] text-primary/50 mt-1">Ex: 10:30</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-primary/70 mb-1">Lit d'appoint (FCFA / nuit)</label>
+                                <div class="relative">
+                                    <input type="number" name="settings[default_extra_bed_price]"
+                                           value="{{ $defaultExtraBedPrice }}" min="0" step="500" required
+                                           class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2 pr-14">
+                                    <span class="absolute right-3 top-2 text-xs text-primary/40 font-medium">FCFA</span>
+                                </div>
+                                <p class="text-[10px] text-primary/50 mt-1">Tarif appliqué par défaut</p>
+                            </div>
                         </div>
 
                         {{-- Tarif adulte standard --}}

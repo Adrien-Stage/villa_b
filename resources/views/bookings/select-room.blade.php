@@ -21,10 +21,18 @@
 
     {{-- En-tête --}}
     @php
-        $childrenAgesQuery = !empty($childrenAges) ? '&' . http_build_query(['children_ages' => $childrenAges]) : '';
+        $extraParams = [
+            'has_extra_bed' => !empty($hasExtraBed) ? 1 : 0,
+            'extra_bed_count' => $extraBedCount ?? 1,
+            'prepaid_breakfast_children' => !empty($prepaidBreakfastChildren) ? 1 : 0,
+        ];
+        if (!empty($childrenAges)) {
+            $extraParams['children_ages'] = $childrenAges;
+        }
+        $extraQuery = '&' . http_build_query($extraParams);
     @endphp
     <div class="mb-6">
-        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
+        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $extraQuery }}'"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour
@@ -101,7 +109,7 @@
                 <p class="text-sm text-primary/50">Aucune chambre disponible pour cette période.</p>
             @endif
             <div class="mt-4">
-                <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
+                <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $extraQuery }}'"
                    class="inline-flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
                     <i data-lucide="arrow-left" class="w-3 h-3"></i>
                     Modifier les critères de recherche
@@ -195,11 +203,26 @@
                                             {{ $rooms->count() }} chambre{{ $rooms->count() > 1 ? 's' : '' }}
                                         </span>
                                     </div>
-                                    <p class="text-xs text-primary/50 mt-0.5 flex items-center gap-2">
+                                    <p class="text-xs text-primary/50 mt-0.5 flex items-center gap-2 flex-wrap">
                                         <span>{{ $type->max_capacity }} pers. max</span>
                                         @if($type->size_sqm)
                                             <span>&bull;</span>
                                             <span>{{ $type->size_sqm }} m²</span>
+                                        @endif
+                                        @if($type->includes_breakfast)
+                                            <span>&bull;</span>
+                                            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                                                <i data-lucide="coffee" class="w-3 h-3"></i> PDJ inclus ({{ $type->base_capacity }} adulte{{ $type->base_capacity > 1 ? 's' : '' }})
+                                            </span>
+                                        @else
+                                            <span>&bull;</span>
+                                            <span class="text-[10px] text-primary/50">Chambre seule</span>
+                                        @endif
+                                        @if($type->allows_extra_bed)
+                                            <span>&bull;</span>
+                                            <span class="inline-flex items-center gap-1 font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 text-[10px]" title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
+                                                <i data-lucide="bed" class="w-3 h-3"></i> Lit d'appoint compatible
+                                            </span>
                                         @endif
                                     </p>
                                 </div>
@@ -354,7 +377,7 @@
     @endif
 
     <div class="mt-6 flex justify-start">
-        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
+        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $extraQuery }}'"
            class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             Précédent
@@ -378,6 +401,11 @@
                 <input type="hidden" name="children_ages[]" value="{{ $ageBracket }}">
             @endforeach
         @endif
+        <input type="hidden" name="has_extra_bed" value="{{ !empty($hasExtraBed) ? 1 : 0 }}">
+        <input type="hidden" name="extra_bed_count" value="{{ $extraBedCount ?? 0 }}">
+        <input type="hidden" name="extra_bed_amount" value="{{ $extraBedAmount ?? 0 }}">
+        <input type="hidden" name="prepaid_breakfast_children" value="{{ !empty($prepaidBreakfastChildren) ? 1 : 0 }}">
+        <input type="hidden" name="prepaid_breakfast_amount" value="{{ $prepaidBreakfastAmount ?? 0 }}">
         <input type="hidden" name="source" :value="source">
         <input type="hidden" name="draft_token" value="{{ $draftToken ?? '' }}">
     </form>

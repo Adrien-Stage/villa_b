@@ -532,6 +532,11 @@ class BookingController extends Controller
             'children'        => ['nullable', 'integer', 'min:0'],
             'children_ages'   => ['nullable', 'array'],
             'children_ages.*' => ['nullable', 'string'],
+            'has_extra_bed'   => ['nullable', 'boolean'],
+            'extra_bed_count' => ['nullable', 'integer', 'min:0'],
+            'extra_bed_amount' => ['nullable', 'integer', 'min:0'],
+            'prepaid_breakfast_children' => ['nullable', 'boolean'],
+            'prepaid_breakfast_amount' => ['nullable', 'integer', 'min:0'],
             'source'          => ['nullable', 'string'],
         ]);
 
@@ -546,6 +551,12 @@ class BookingController extends Controller
         $totalPeople = $adults + $children;
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
+
+        $hasExtraBed = $request->boolean('has_extra_bed');
+        $extraBedCount = $hasExtraBed ? max(1, (int) ($request->extra_bed_count ?? 1)) : 0;
+        $extraBedAmount = $hasExtraBed ? ((int) ($request->extra_bed_amount ?? 0)) * 100 : 0;
+        $prepaidBreakfastChildren = $request->boolean('prepaid_breakfast_children');
+        $prepaidBreakfastAmount = $prepaidBreakfastChildren ? ((int) ($request->prepaid_breakfast_amount ?? 0)) * 100 : 0;
 
         $childrenAges = (array) ($request->children_ages ?? []);
         if ($children > 0 && count($childrenAges) < $children) {
@@ -568,6 +579,11 @@ class BookingController extends Controller
             'adults'        => $adults,
             'children'      => $children,
             'children_ages' => $childrenAges,
+            'has_extra_bed' => $hasExtraBed,
+            'extra_bed_count' => $extraBedCount,
+            'extra_bed_amount' => $extraBedAmount,
+            'prepaid_breakfast_children' => $prepaidBreakfastChildren,
+            'prepaid_breakfast_amount' => $prepaidBreakfastAmount,
             'source'        => $source,
             'tenant_id'     => $tenantId,
         ]);
@@ -684,6 +700,11 @@ class BookingController extends Controller
             'adults',
             'children',
             'childrenAges',
+            'hasExtraBed',
+            'extraBedCount',
+            'extraBedAmount',
+            'prepaidBreakfastChildren',
+            'prepaidBreakfastAmount',
             'source',
             'availableRooms',
             'roomTypes',
@@ -706,6 +727,11 @@ class BookingController extends Controller
             'children_count'  => ['nullable', 'integer', 'min:0'],
             'children_ages'   => ['nullable', 'array'],
             'children_ages.*' => ['nullable', 'string'],
+            'has_extra_bed'   => ['nullable', 'boolean'],
+            'extra_bed_count' => ['nullable', 'integer', 'min:0'],
+            'extra_bed_amount' => ['nullable', 'numeric', 'min:0'],
+            'prepaid_breakfast_children' => ['nullable', 'boolean'],
+            'prepaid_breakfast_amount' => ['nullable', 'numeric', 'min:0'],
             'source'          => ['nullable', 'string'],
             'notes'           => ['nullable', 'string'],
         ]);
@@ -745,6 +771,17 @@ class BookingController extends Controller
             $childrenAges,
             $tenantId
         );
+
+        // Lit supplémentaire (Extra Bed)
+        $hasExtraBed = $request->boolean('has_extra_bed') && (bool) $room->roomType->allows_extra_bed;
+        $extraBedCount = $hasExtraBed ? max(1, (int) ($request->extra_bed_count ?? 1)) : 0;
+        $extraBedPriceCentimes = $room->roomType->getExtraBedPrice($tenantId);
+        $extraBedPricePerNight = (int) ($extraBedPriceCentimes / 100);
+        $extraBedAmount = $hasExtraBed ? ($nights * $extraBedCount * $extraBedPricePerNight) : 0;
+
+        // Petits-déjeuners enfants prépayés
+        $prepaidBreakfastChildren = $request->boolean('prepaid_breakfast_children') && ($childrenCount > 0);
+        $prepaidBreakfastAmount = $prepaidBreakfastChildren ? (int) ($breakfastCalculation['children_stay_total']) : 0;
 
         // Convention du client, si elle est en cours de validité à l'arrivée.
         // La réception peut la retirer pour ce séjour (déplacement privé) via
@@ -810,18 +847,24 @@ class BookingController extends Controller
             'childrenCount' => $childrenCount,
             'childrenAges' => $childrenAges,
             'breakfastCalculation' => $breakfastCalculation,
+            'hasExtraBed' => $hasExtraBed,
+            'extraBedCount' => $extraBedCount,
+            'extraBedPricePerNight' => $extraBedPricePerNight,
+            'extraBedAmount' => $extraBedAmount,
+            'prepaidBreakfastChildren' => $prepaidBreakfastChildren,
+            'prepaidBreakfastAmount' => $prepaidBreakfastAmount,
             'source' => $validated['source'] ?? 'direct',
             'notes' => $validated['notes'] ?? '',
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
             'minDepositPercentage' => $minDepositPercentage,
             'maxDiscountPercentage' => $maxDiscountPercentage,
-            'draftToken' => $this->upsertDraftStep3($request, $validated),
+            'draftToken' => $this->upsertDraftStep3($request, $validated, $hasExtraBed, $extraBedCount, $extraBedAmount * 100, $prepaidBreakfastChildren, $prepaidBreakfastAmount * 100),
         ]);
     }
 
     /** Sauvegarde le brouillon à l'étape 3 (chambre sélectionnée). */
-    private function upsertDraftStep3(Request $request, array $validated): string
+    private function upsertDraftStep3(Request $request, array $validated, bool $hasExtraBed = false, int $extraBedCount = 0, int $extraBedAmountCentimes = 0, bool $prepaidBreakfastChildren = false, int $prepaidBreakfastAmountCentimes = 0): string
     {
         $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
             'current_step'  => 4,
@@ -833,6 +876,11 @@ class BookingController extends Controller
             'adults'        => $validated['adults_count'],
             'children'      => $validated['children_count'] ?? 0,
             'children_ages' => $validated['children_ages'] ?? [],
+            'has_extra_bed' => $hasExtraBed,
+            'extra_bed_count' => $extraBedCount,
+            'extra_bed_amount' => $extraBedAmountCentimes,
+            'prepaid_breakfast_children' => $prepaidBreakfastChildren,
+            'prepaid_breakfast_amount' => $prepaidBreakfastAmountCentimes,
             'source'        => $validated['source'] ?? 'direct',
             'room_id'       => $validated['room_id'],
             'notes'         => $validated['notes'] ?? null,
@@ -872,6 +920,11 @@ class BookingController extends Controller
             'children_ages.*' => ['nullable', 'string'],
             'include_breakfast' => ['nullable', 'boolean'],
             'breakfast_amount'  => ['nullable', 'numeric', 'min:0'],
+            'has_extra_bed'   => ['nullable', 'boolean'],
+            'extra_bed_count' => ['nullable', 'integer', 'min:0'],
+            'extra_bed_amount' => ['nullable', 'numeric', 'min:0'],
+            'prepaid_breakfast_children' => ['nullable', 'boolean'],
+            'prepaid_breakfast_amount' => ['nullable', 'numeric', 'min:0'],
             'source'         => ['nullable', 'string'],
             'notes'          => ['nullable', 'string'],
             'custom_price'   => ['required', 'numeric', $priceRule],
@@ -928,10 +981,25 @@ class BookingController extends Controller
             $tenantId
         );
 
+        // Lit supplémentaire (Extra Bed)
+        $hasExtraBed = $request->boolean('has_extra_bed') && (bool) $room->roomType->allows_extra_bed;
+        $extraBedCount = $hasExtraBed ? max(1, (int) ($request->extra_bed_count ?? 1)) : 0;
+        $extraBedPriceCentimes = $room->roomType->getExtraBedPrice($tenantId);
+        $extraBedAmountCentimes = $hasExtraBed ? ($nights * $extraBedCount * $extraBedPriceCentimes) : 0;
+
+        // Petits-déjeuners enfants prépayés
+        $prepaidBreakfastChildren = $request->boolean('prepaid_breakfast_children') && ($childrenCount > 0);
+        $prepaidBreakfastAmountCentimes = $prepaidBreakfastChildren ? ((int) ($breakfastCalculation['children_stay_total'] * 100)) : 0;
+
         $breakfastAmount = 0; // centimes
         if ($request->boolean('include_breakfast') && !$request->boolean('is_offerte')) {
             $breakfastAmount = (int) ($breakfastCalculation['stay_total'] * 100);
+        } elseif ($prepaidBreakfastChildren && !$request->boolean('is_offerte')) {
+            $breakfastAmount = $prepaidBreakfastAmountCentimes;
         }
+
+        $extraBedFinalAmount = !$request->boolean('is_offerte') ? $extraBedAmountCentimes : 0;
+        $extrasAmount = $breakfastAmount + $extraBedFinalAmount;
 
         // 1. Si réceptionniste, valider que custom_price correspond à une remise autorisée
         if (Auth::user()->hasRole('reception') && !$request->boolean('is_offerte')) {
@@ -1009,7 +1077,7 @@ class BookingController extends Controller
         // sur le brut ferait payer au client une part qu'il ne doit pas.
         if (!$request->boolean('is_offerte')) {
             $netPrice   = max(0, (float) $validated['custom_price']
-                                 + ($packageAmount + $breakfastAmount) / 100
+                                 + ($packageAmount + $extrasAmount) / 100
                                  - ($partnerDiscount + $packageDiscount) / 100);
             $minDeposit = ceil($netPrice * ($minDepositPercentage / 100));
             if ($validated['payment_amount'] < $minDeposit) {
@@ -1030,7 +1098,7 @@ class BookingController extends Controller
         // l'arrondi du prix par nuitée peut faire varier le brut de quelques
         // centimes par rapport au montant sur lequel elles ont été calculées.
         $totalDiscount = min($partnerDiscount + $packageDiscount, $totalRoomAmount);
-        $totalAmount = $totalRoomAmount + $packageAmount + $breakfastAmount - $totalDiscount;
+        $totalAmount = $totalRoomAmount + $packageAmount + $extrasAmount - $totalDiscount;
         // La TVA est EXTRAITE du total, jamais ajoutée : le client paie le
         // même montant qu'avant sa mise en service, seule la décomposition
         // apparaît désormais sur la facture.
@@ -1076,10 +1144,15 @@ class BookingController extends Controller
             'adults_count'    => $validated['adults_count'],
             'children_count'  => $childrenCount,
             'children_ages'   => $childrenAges,
+            'has_extra_bed'   => $hasExtraBed,
+            'extra_bed_count' => $extraBedCount,
+            'extra_bed_amount' => $extraBedFinalAmount,
+            'prepaid_breakfast_children' => $prepaidBreakfastChildren,
+            'prepaid_breakfast_amount' => $prepaidBreakfastAmountCentimes,
             'total_nights'    => $nights,
             'price_per_night' => $pricePerNight,
             'total_room_amount' => $totalRoomAmount,
-            'extras_amount'   => $breakfastAmount,
+            'extras_amount'   => $extrasAmount,
             'package_amount'  => $packageAmount,
             'tax_amount'      => $taxAmount,
             'discount_amount' => $totalDiscount,
@@ -1154,6 +1227,24 @@ class BookingController extends Controller
             'recorded_by'  => Auth::id(),
         ]);
 
+        // Ligne folio pour lit d'appoint si présent
+        if ($extraBedFinalAmount > 0) {
+            FolioItem::create([
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_OTHER,
+                'description'  => "Lit d'appoint ({$extraBedCount} lit" . ($extraBedCount > 1 ? 's' : '') . " × {$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                'quantity'     => $extraBedCount * $nights,
+                'unit_price'   => $extraBedPriceCentimes,
+                'total_price'  => $extraBedFinalAmount,
+                'is_complimentary' => false,
+                'earns_points' => true,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => "Lit d'appoint dans la chambre {$room->number}",
+            ]);
+        }
+
         // Ligne folio de la formule retenue, détaillant ce qu'elle comprend.
         if ($packageAmount > 0 && $roomPackage) {
             $contents = $roomPackage->contentLabels();
@@ -1177,25 +1268,45 @@ class BookingController extends Controller
 
         // Ligne folio pour les petits-déjeuners inclus
         if ($breakfastAmount > 0) {
-            $notesDesc = !empty($breakfastCalculation['summary_label'])
-                ? "Occupants : {$validated['adults_count']} adulte(s) + enfants ({$breakfastCalculation['summary_label']})"
-                : "Occupants : {$validated['adults_count']} adulte(s)";
+            if ($request->boolean('include_breakfast')) {
+                $notesDesc = !empty($breakfastCalculation['summary_label'])
+                    ? "Occupants : {$validated['adults_count']} adulte(s) + enfants ({$breakfastCalculation['summary_label']})"
+                    : "Occupants : {$validated['adults_count']} adulte(s)";
 
-            FolioItem::create([
-                'booking_id'   => $booking->id,
-                'customer_id'  => $booking->customer_id,
-                'type'         => FolioItem::TYPE_RESTAURANT,
-                'description'  => "Petits-déjeuners ({$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
-                'quantity'     => 1,
-                'unit_price'   => $breakfastAmount,
-                'total_price'  => $breakfastAmount,
-                'is_complimentary' => false,
-                'earns_points' => true,
-                'occurred_at'  => now(),
-                'recorded_by'  => Auth::id(),
-                'notes'        => $notesDesc,
-            ]);
+                FolioItem::create([
+                    'booking_id'   => $booking->id,
+                    'customer_id'  => $booking->customer_id,
+                    'type'         => FolioItem::TYPE_RESTAURANT,
+                    'description'  => "Petits-déjeuners ({$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                    'quantity'     => 1,
+                    'unit_price'   => $breakfastAmount,
+                    'total_price'  => $breakfastAmount,
+                    'is_complimentary' => false,
+                    'earns_points' => true,
+                    'occurred_at'  => now(),
+                    'recorded_by'  => Auth::id(),
+                    'notes'        => $notesDesc,
+                ]);
+            } elseif ($prepaidBreakfastChildren) {
+                FolioItem::create([
+                    'booking_id'   => $booking->id,
+                    'customer_id'  => $booking->customer_id,
+                    'type'         => FolioItem::TYPE_RESTAURANT,
+                    'description'  => "Petits-déjeuners enfants prépayés ({$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                    'quantity'     => 1,
+                    'unit_price'   => $prepaidBreakfastAmountCentimes,
+                    'total_price'  => $prepaidBreakfastAmountCentimes,
+                    'is_complimentary' => false,
+                    'earns_points' => true,
+                    'occurred_at'  => now(),
+                    'recorded_by'  => Auth::id(),
+                    'notes'        => !empty($breakfastCalculation['summary_label']) ? "Enfants : {$breakfastCalculation['summary_label']}" : "Petits-déjeuners enfants",
+                ]);
+            }
         }
+
+        // Génération automatique des droits de petit-déjeuner au restaurant
+        app(\App\Services\BreakfastPricingService::class)->generateEntitlementsForBooking($booking);
 
         // Lignes folio des remises (en négatif), une par origine : le dossier
         // montre le brut et chaque geste consenti plutôt qu'un net opaque.

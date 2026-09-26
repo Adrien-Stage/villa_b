@@ -398,7 +398,25 @@
 
     @foreach($roomTypes as $type)
     <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
-        <div class="col-span-3 font-medium text-sm text-primary">{{ $type->name }}</div>
+        <div class="col-span-3">
+            <div class="font-medium text-sm text-primary">{{ $type->name }}</div>
+            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                @if($type->includes_breakfast)
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <i data-lucide="coffee" class="w-3 h-3"></i> PDJ inclus
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-500">
+                        Chambre seule
+                    </span>
+                @endif
+                @if($type->allows_extra_bed)
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200" title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
+                        <i data-lucide="bed" class="w-3 h-3"></i> Lit d'appoint
+                    </span>
+                @endif
+            </div>
+        </div>
         <div class="col-span-4 text-sm text-primary/50">{{ $type->description ?? '—' }}</div>
         <div class="col-span-2 text-sm text-primary/70">{{ $type->base_capacity }} pers.</div>
         <div class="col-span-2 text-sm text-primary/70">{{ $type->rooms_count }}</div>
@@ -413,6 +431,9 @@
                 data-max-cap="{{ $type->max_capacity }}"
                 data-price="{{ $type->base_price / 100 }}"
                 data-sqm="{{ $type->size_sqm ?? 0 }}"
+                data-includes-breakfast="{{ $type->includes_breakfast ? '1' : '0' }}"
+                data-allows-extra-bed="{{ $type->allows_extra_bed ? '1' : '0' }}"
+                data-extra-bed-price="{{ $type->extra_bed_price ? $type->extra_bed_price / 100 : '' }}"
                 onclick="openEditType(this)"
                 class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
@@ -665,6 +686,24 @@
                     <input type="number" name="size_sqm" placeholder="25" min="0" class="modal-input">
                 </div>
             </div>
+            <div class="space-y-3 pt-2 border-t border-secondary/15">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="create-type-breakfast" name="includes_breakfast" value="1" checked class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <label for="create-type-breakfast" class="text-xs font-medium text-primary cursor-pointer">
+                        ☕ Petit-déjeuner inclus par défaut dans la chambre
+                    </label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="create-type-extrabed" name="allows_extra_bed" value="1" checked class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <label for="create-type-extrabed" class="text-xs font-medium text-primary cursor-pointer">
+                        🛏️ Autoriser l'ajout d'un lit supplémentaire / d'appoint
+                    </label>
+                </div>
+                <div>
+                    <label class="modal-label">Tarif spécifique lit d'appoint (FCFA/nuit - optionnel)</label>
+                    <input type="number" name="extra_bed_price" placeholder="Laisser vide pour tarif général (10 000 FCFA)" min="0" class="modal-input">
+                </div>
+            </div>
             </div>
             <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-create-type').classList.add('hidden')"
@@ -726,6 +765,24 @@
                     <input type="number" id="edit-type-sqm" name="size_sqm" min="0" class="modal-input">
                 </div>
             </div>
+            <div class="space-y-3 pt-2 border-t border-secondary/15">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="edit-type-breakfast" name="includes_breakfast" value="1" class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <label for="edit-type-breakfast" class="text-xs font-medium text-primary cursor-pointer">
+                        ☕ Petit-déjeuner inclus par défaut dans la chambre
+                    </label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="edit-type-extrabed" name="allows_extra_bed" value="1" class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <label for="edit-type-extrabed" class="text-xs font-medium text-primary cursor-pointer">
+                        🛏️ Autoriser l'ajout d'un lit supplémentaire / d'appoint
+                    </label>
+                </div>
+                <div>
+                    <label class="modal-label">Tarif spécifique lit d'appoint (FCFA/nuit - optionnel)</label>
+                    <input type="number" id="edit-type-extra-bed-price" name="extra_bed_price" placeholder="Laisser vide pour tarif général (10 000 FCFA)" min="0" class="modal-input">
+                </div>
+            </div>
             </div>
             <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-edit-type').classList.add('hidden')"
@@ -761,6 +818,9 @@
         document.getElementById('edit-type-max-cap').value = btn.dataset.maxCap;
         document.getElementById('edit-type-price').value = btn.dataset.price;
         document.getElementById('edit-type-sqm').value = btn.dataset.sqm || '';
+        document.getElementById('edit-type-breakfast').checked = btn.dataset.includesBreakfast === '1';
+        document.getElementById('edit-type-extrabed').checked = btn.dataset.allowsExtraBed === '1';
+        document.getElementById('edit-type-extra-bed-price').value = btn.dataset.extraBedPrice || '';
         document.getElementById('modal-edit-type').classList.remove('hidden');
     }
 

@@ -29,6 +29,9 @@ class RoomType extends Model
         'photos',
         'size_sqm',
         'bed_configuration',
+        'includes_breakfast',
+        'allows_extra_bed',
+        'extra_bed_price',
         'is_active',
         'tenant_id',
     ];
@@ -37,6 +40,9 @@ class RoomType extends Model
         'amenities' => 'array',
         'photos' => 'array',
         'base_price' => 'integer', // Stocker en centimes pour éviter les floats
+        'includes_breakfast' => 'boolean',
+        'allows_extra_bed' => 'boolean',
+        'extra_bed_price' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -83,5 +89,23 @@ class RoomType extends Model
         }
 
         return $this->base_price;
+    }
+
+    /**
+     * Retourne le prix du lit supplémentaire par nuitée en centimes.
+     */
+    public function getExtraBedPrice(?int $tenantId = null): int
+    {
+        if ($this->extra_bed_price !== null && $this->extra_bed_price > 0) {
+            return (int) $this->extra_bed_price;
+        }
+
+        $tenantId = $tenantId ?? $this->tenant_id ?? \App\Models\Tenant::current()?->id;
+        $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
+        $defaultFcfa = $tenantSettings['hebergement']['default_extra_bed_price'] 
+            ?? $tenantSettings['reception']['default_extra_bed_price'] 
+            ?? 10000;
+
+        return ((int) $defaultFcfa) * 100;
     }
 }

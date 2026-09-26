@@ -37,6 +37,11 @@ class BookingDraft extends Model
         'adults',
         'children',
         'children_ages',
+        'has_extra_bed',
+        'extra_bed_count',
+        'extra_bed_amount',
+        'prepaid_breakfast_children',
+        'prepaid_breakfast_amount',
         'source',
         // Étape 3
         'room_id',
@@ -55,6 +60,11 @@ class BookingDraft extends Model
         'adults'            => 'integer',
         'children'          => 'integer',
         'children_ages'     => 'array',
+        'has_extra_bed'     => 'boolean',
+        'extra_bed_count'   => 'integer',
+        'extra_bed_amount'  => 'integer',
+        'prepaid_breakfast_children' => 'boolean',
+        'prepaid_breakfast_amount'  => 'integer',
         'current_step'      => 'integer',
     ];
 

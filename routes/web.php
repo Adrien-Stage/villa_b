@@ -362,6 +362,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
+        Route::get('/breakfast', [App\Http\Controllers\RestaurantBreakfastController::class, 'index'])->name('breakfast.index');
+        Route::post('/breakfast/{entitlement}/serve', [App\Http\Controllers\RestaurantBreakfastController::class, 'serve'])->whereNumber('entitlement')->name('breakfast.serve');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');

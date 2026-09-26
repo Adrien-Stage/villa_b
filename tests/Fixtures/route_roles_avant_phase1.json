@@ -597,6 +597,17 @@
   "cashier",
   "restaurant_chief"
  ],
+ "restaurant.breakfast.index": [
+  "controller",
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.breakfast.serve": [
+  "restaurant_chief",
+  "restaurant_staff"
+ ],
  "restaurant.kitchen.index": [
   "controller",
   "manager",

@@ -59,6 +59,11 @@ class BookingDraftController extends Controller
             'children'       => ['nullable', 'integer', 'min:0'],
             'children_ages'  => ['nullable', 'array'],
             'children_ages.*'=> ['nullable', 'string', 'max:20'],
+            'has_extra_bed'  => ['nullable', 'boolean'],
+            'extra_bed_count'=> ['nullable', 'integer', 'min:0'],
+            'extra_bed_amount'=> ['nullable', 'integer', 'min:0'],
+            'prepaid_breakfast_children' => ['nullable', 'boolean'],
+            'prepaid_breakfast_amount'   => ['nullable', 'integer', 'min:0'],
             'source'         => ['nullable', 'string', 'max:30'],
             'room_id'        => ['nullable', 'exists:rooms,id'],
             'notes'          => ['nullable', 'string'],
@@ -77,6 +82,11 @@ class BookingDraftController extends Controller
             'adults'        => $validated['adults'] ?? null,
             'children'      => $validated['children'] ?? 0,
             'children_ages' => $validated['children_ages'] ?? null,
+            'has_extra_bed' => $request->boolean('has_extra_bed'),
+            'extra_bed_count' => $validated['extra_bed_count'] ?? 0,
+            'extra_bed_amount' => $validated['extra_bed_amount'] ?? 0,
+            'prepaid_breakfast_children' => $request->boolean('prepaid_breakfast_children'),
+            'prepaid_breakfast_amount' => $validated['prepaid_breakfast_amount'] ?? 0,
             'source'        => $validated['source'] ?? 'direct',
             'room_id'       => $validated['room_id'] ?? null,
             'notes'         => $validated['notes'] ?? null,
@@ -172,6 +182,9 @@ class BookingDraftController extends Controller
                 'adults'        => $draft->adults ?? 1,
                 'children'      => $draft->children ?? 0,
                 'children_ages' => $draft->children_ages ?? [],
+                'has_extra_bed' => $draft->has_extra_bed ? 1 : 0,
+                'extra_bed_count' => $draft->extra_bed_count ?? 1,
+                'prepaid_breakfast_children' => $draft->prepaid_breakfast_children ? 1 : 0,
                 'source'        => $draft->source ?? 'direct',
                 'draft_token'   => $draft->token,
             ]);
@@ -300,6 +313,12 @@ class BookingDraftController extends Controller
         $availableRooms = $candidateRooms->groupBy('room_type_id');
         $roomTypes = RoomType::whereIn('id', $availableRooms->keys())->get();
 
+        $hasExtraBed = (bool) $draft->has_extra_bed;
+        $extraBedCount = (int) ($draft->extra_bed_count ?? 0);
+        $extraBedAmount = (int) ($draft->extra_bed_amount ?? 0);
+        $prepaidBreakfastChildren = (bool) $draft->prepaid_breakfast_children;
+        $prepaidBreakfastAmount = (int) ($draft->prepaid_breakfast_amount ?? 0);
+
         return view('bookings.select-room', compact(
             'customer',
             'bookerId',
@@ -309,6 +328,11 @@ class BookingDraftController extends Controller
             'adults',
             'children',
             'childrenAges',
+            'hasExtraBed',
+            'extraBedCount',
+            'extraBedAmount',
+            'prepaidBreakfastChildren',
+            'prepaidBreakfastAmount',
             'source',
             'availableRooms',
             'roomTypes',
@@ -378,6 +402,17 @@ class BookingDraftController extends Controller
             ->values()
             ->all();
 
+        // Lit supplémentaire (Extra Bed)
+        $hasExtraBed = (bool) $draft->has_extra_bed && (bool) $room->roomType->allows_extra_bed;
+        $extraBedCount = $hasExtraBed ? max(1, (int) ($draft->extra_bed_count ?? 1)) : 0;
+        $extraBedPriceCentimes = $room->roomType->getExtraBedPrice($tenantId);
+        $extraBedPricePerNight = (int) ($extraBedPriceCentimes / 100);
+        $extraBedAmount = $hasExtraBed ? ($nights * $extraBedCount * $extraBedPricePerNight) : 0;
+
+        // Petits-déjeuners enfants prépayés
+        $prepaidBreakfastChildren = (bool) $draft->prepaid_breakfast_children && ($childrenCount > 0);
+        $prepaidBreakfastAmount = $prepaidBreakfastChildren ? (int) ($breakfastCalculation['children_stay_total']) : 0;
+
         return view('bookings.confirm', [
             'customerId' => $customer->id,
             'bookerId' => $bookerId,
@@ -399,6 +434,12 @@ class BookingDraftController extends Controller
             'childrenCount' => $childrenCount,
             'childrenAges' => $childrenAges,
             'breakfastCalculation' => $breakfastCalculation,
+            'hasExtraBed' => $hasExtraBed,
+            'extraBedCount' => $extraBedCount,
+            'extraBedPricePerNight' => $extraBedPricePerNight,
+            'extraBedAmount' => $extraBedAmount,
+            'prepaidBreakfastChildren' => $prepaidBreakfastChildren,
+            'prepaidBreakfastAmount' => $prepaidBreakfastAmount,
             'source' => $source,
             'notes' => $notes,
             'pricePerNight' => $pricePerNight,
