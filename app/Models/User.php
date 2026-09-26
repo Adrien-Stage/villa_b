@@ -116,7 +116,7 @@ class User extends Authenticatable
     protected static array $legacyRoleModules = [
         'admin'               => ['*'],
         'manager'             => ['*'],
-        'reception'           => ['hebergement', 'reservations', 'clients', 'website', 'discussions', 'ai', 'comptabilite'],
+        'reception'           => ['hebergement', 'reservations', 'clients', 'website', 'discussions', 'ai', 'comptabilite', 'restaurant', 'boutique', 'shop'],
         'cashier'             => ['hebergement', 'reservations', 'restaurant', 'boutique', 'shop', 'comptabilite', 'accounting', 'ledger', 'discussions'],
         'housekeeping'        => ['housekeeping', 'hebergement', 'economat', 'discussions'],
         'housekeeping_leader' => ['housekeeping', 'hebergement', 'economat', 'discussions'],
