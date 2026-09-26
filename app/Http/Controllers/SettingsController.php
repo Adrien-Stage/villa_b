@@ -79,6 +79,10 @@ class SettingsController extends Controller
         $roomTypes         = \App\Models\RoomType::orderBy('name')->get();
         $mealServices      = \App\Models\RestaurantMenuItem::MEAL_SERVICES;
         $packPricingModes  = \App\Models\RoomPackage::PRICING_MODES;
+        $cancellationPolicies = \App\Models\CancellationPolicy::query()
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get();
 
         return view('settings.index', compact(
             'tab',
@@ -93,7 +97,8 @@ class SettingsController extends Controller
             'roomPackages',
             'roomTypes',
             'mealServices',
-            'packPricingModes'
+            'packPricingModes',
+            'cancellationPolicies'
         ));
     }
 

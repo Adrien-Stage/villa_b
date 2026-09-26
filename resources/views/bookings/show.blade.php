@@ -115,17 +115,22 @@
         @endrole
         @endif
 
+        @if($booking->status->value === 'cancelled')
+        <a href="{{ route('bookings.cancellation_receipt', $booking) }}"
+            class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors shadow-sm">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            Attestation d'annulation
+        </a>
+        @endif
+
         @if(in_array($booking->status->value, ['pending', 'confirmed']))
         @role('reception', 'manager')
-        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" class="expect-popup">
-            @csrf
-            <button type="submit"
-                onclick="return confirm('Annuler cette réservation ?')"
-                class="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
-                <i data-lucide="x" class="w-4 h-4"></i>
-                Annuler
-            </button>
-        </form>
+        <button type="button"
+            onclick="document.getElementById('modal-cancel-booking').classList.remove('hidden')"
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+            <i data-lucide="x" class="w-4 h-4"></i>
+            Annuler
+        </button>
         @endrole
         @endif
 
@@ -173,6 +178,76 @@
             <li>{{ $error }}</li>
         @endforeach
     </ul>
+</div>
+@endif
+
+@if($booking->status->value === 'cancelled')
+<div class="mb-6 p-5 bg-red-50/70 border border-red-200 rounded-xl">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <div class="p-2 bg-red-100 rounded-lg text-red-700 mt-0.5">
+                <i data-lucide="x-circle" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-red-900">RÉSERVATION ANNULÉE</span>
+                    @if($booking->cancellation)
+                        <span class="font-mono text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold">
+                            {{ $booking->cancellation->cancellation_number }}
+                        </span>
+                    @endif
+                </div>
+                <p class="text-xs text-red-800 mt-1">
+                    @if($booking->cancellation)
+                        Annulée le {{ $booking->cancellation->cancelled_at?->locale('fr')->isoFormat('D MMMM YYYY à HH:mm') }}
+                        par <span class="font-semibold">{{ $booking->cancellation->cancelledBy?->name ?? 'Opérateur' }}</span>.
+                        Motif : <span class="font-medium">{{ $booking->cancellation->reasonLabel() }}</span>.
+                    @else
+                        Cette réservation a été annulée.
+                    @endif
+                </p>
+                @if($booking->cancellation?->reason_description)
+                    <p class="text-xs text-red-700/80 italic mt-0.5">« {{ $booking->cancellation->reason_description }} »</p>
+                @endif
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ route('bookings.cancellation_receipt', $booking) }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-300 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Imprimer l'attestation</span>
+            </a>
+        </div>
+    </div>
+
+    @if($booking->cancellation)
+    <div class="mt-4 pt-3 border-t border-red-200/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div>
+            <span class="text-red-700/70 block text-[11px]">Pénalité retenue :</span>
+            <span class="font-bold text-red-900">{{ number_format($booking->cancellation->deposit_retained / 100, 0, ',', ' ') }} FCFA</span>
+            @if($booking->cancellation->penalty_waived)
+                <span class="block text-[10px] text-emerald-700 font-semibold">(Exonérée)</span>
+            @endif
+        </div>
+        <div>
+            <span class="text-red-700/70 block text-[11px]">Montant restitué :</span>
+            <span class="font-bold text-emerald-700">{{ number_format($booking->cancellation->refund_amount / 100, 0, ',', ' ') }} FCFA</span>
+        </div>
+        <div>
+            <span class="text-red-700/70 block text-[11px]">Règlement retour :</span>
+            <span class="font-medium text-red-900">{{ $booking->cancellation->refundMethodLabel() }}</span>
+        </div>
+        <div>
+            <span class="text-red-700/70 block text-[11px]">Statut restitution :</span>
+            <span class="font-medium capitalize text-red-900">
+                @if($booking->cancellation->refund_status === 'completed') <span class="text-emerald-700 font-bold">Effectué</span>
+                @elseif($booking->cancellation->refund_status === 'pending') <span class="text-amber-700 font-bold">En attente</span>
+                @else Aucun @endif
+            </span>
+        </div>
+    </div>
+    @endif
 </div>
 @endif
 
@@ -789,6 +864,159 @@
         </form>
     </div>
 </div>
+@endif
+
+{{-- Modal : Annulation de Réservation (OPERA PMS) --}}
+@if($booking->isEditable())
+@role('reception', 'manager')
+<div id="modal-cancel-booking" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[92vh] overflow-hidden border border-secondary/20">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0 bg-red-50/50">
+            <div>
+                <h3 class="font-heading font-semibold text-primary text-base">Annuler la réservation</h3>
+                <p class="text-xs text-primary/50">Réservation {{ $booking->booking_number }} — {{ $booking->customer?->full_name }}</p>
+            </div>
+            <button type="button" onclick="document.getElementById('modal-cancel-booking').classList.add('hidden')"
+                class="text-primary/40 hover:text-primary transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" class="flex flex-col flex-1 min-h-0">
+            @csrf
+            <div class="px-6 py-5 space-y-4 overflow-y-auto flex-1 text-xs">
+                
+                {{-- Alerte sur la situation de la politique d'annulation --}}
+                @if($cancellationCalc)
+                    @if($cancellationCalc['is_free_cancellation'])
+                        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 flex items-start gap-2.5">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold block">Annulation gratuite sans frais</span>
+                                <p class="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                                    Conformément à la politique <strong>{{ $cancellationCalc['policy_name'] }}</strong>, cette annulation intervient avant la date limite ({{ $cancellationCalc['free_cancel_until']?->locale('fr')->isoFormat('D MMM YYYY à HH:mm') ?? 'sans frais' }}).
+                                    Aucune pénalité ne sera retenue.
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold block">Annulation tardive avec pénalité</span>
+                                <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                    Délai sans frais dépassé (échu le {{ $cancellationCalc['free_cancel_until']?->locale('fr')->isoFormat('D MMM YYYY à HH:mm') }}).
+                                    Pénalité calculée : <strong>{{ number_format($cancellationCalc['penalty_amount'] / 100, 0, ',', ' ') }} FCFA</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Décompte financier --}}
+                    <div class="bg-gray-50 rounded-xl border border-secondary/15 p-3.5 space-y-2">
+                        <div class="flex justify-between text-primary/70">
+                            <span>Montant initial du séjour :</span>
+                            <span class="font-medium text-primary">{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between text-primary/70">
+                            <span>Total déjà perçu (acompte) :</span>
+                            <span class="font-semibold text-primary">{{ number_format($cancellationCalc['deposit_paid'] / 100, 0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between font-semibold pt-1 border-t border-secondary/10">
+                            <span class="text-red-700">Pénalité à retenir :</span>
+                            <span class="text-red-700">{{ number_format($cancellationCalc['deposit_retained'] / 100, 0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-emerald-800 text-sm pt-1 border-t border-secondary/10">
+                            <span>Montant à restituer au client :</span>
+                            <span>{{ number_format($cancellationCalc['refund_amount'] / 100, 0, ',', ' ') }} FCFA</span>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Motif d'annulation obligatoire --}}
+                <div>
+                    <label class="block font-semibold text-primary/70 mb-1">
+                        Motif de l'annulation *
+                    </label>
+                    <select name="reason_code" required
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary bg-white">
+                        @foreach(\App\Models\BookingCancellation::REASONS as $code => $label)
+                            <option value="{{ $code }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Précisions complémentaires --}}
+                <div>
+                    <label class="block font-semibold text-primary/70 mb-1">
+                        Commentaire / Précisions sur l'annulation
+                    </label>
+                    <textarea name="reason_description" rows="2" maxlength="1000"
+                        placeholder="Ex: Le client a demandé le report de son vol à la semaine prochaine..."
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary"></textarea>
+                </div>
+
+                {{-- Mode de restitution de l'acompte si remboursement dû --}}
+                @if($cancellationCalc && $cancellationCalc['refund_amount'] > 0)
+                    <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-200">
+                        <label class="block font-bold text-emerald-900 mb-1.5">
+                            Remboursement des {{ number_format($cancellationCalc['refund_amount'] / 100, 0, ',', ' ') }} FCFA :
+                        </label>
+                        <select name="refund_method" required
+                            class="w-full px-3 py-2 text-xs border border-emerald-300 rounded-lg text-primary outline-none focus:border-primary bg-white">
+                            @if($isCashRegisterOpen)
+                                <option value="cash">Rembourser immédiatement en espèces (Caisse réception)</option>
+                            @endif
+                            <option value="orange_money">Orange Money (À exécuter)</option>
+                            <option value="mtn_momo">MTN MoMo (À exécuter)</option>
+                            <option value="bank_transfer">Virement bancaire (À exécuter)</option>
+                            <option value="credit_note">Avoir / Crédit pour un prochain séjour</option>
+                        </select>
+                        @unless($isCashRegisterOpen)
+                            <p class="text-[10px] text-amber-700 mt-1">
+                                Caisse de réception fermée : pour rembourser immédiatement en espèces, ouvrez votre caisse.
+                            </p>
+                        @endunless
+                    </div>
+                @else
+                    <input type="hidden" name="refund_method" value="none">
+                @endif
+
+                {{-- Dérogation managériale si pénalité applicable --}}
+                @if($cancellationCalc && $cancellationCalc['penalty_amount'] > 0 && Auth::user()->hasRole('manager'))
+                    <div class="p-3 bg-primary/5 rounded-xl border border-secondary/25"
+                         x-data="{ waived: false }">
+                        <label class="flex items-center gap-2 cursor-pointer font-semibold text-primary">
+                            <input type="checkbox" name="waive_penalty" value="1" x-model="waived"
+                                class="rounded border-secondary/30 text-primary focus:ring-primary">
+                            <span>Exonérer les frais (Dérogation managériale / Geste commercial)</span>
+                        </label>
+                        <div x-show="waived" x-cloak class="mt-2.5">
+                            <label class="block text-[11px] font-semibold text-primary/70 mb-1">Motif de la dérogation *</label>
+                            <input type="text" name="waive_reason" placeholder="Ex: Client VIP régulier, accord DG"
+                                class="w-full px-3 py-1.5 text-xs border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                <button type="button" onclick="document.getElementById('modal-cancel-booking').classList.add('hidden')"
+                    class="px-4 py-2 text-xs text-primary/60 hover:text-primary transition-colors font-medium">
+                    Conserver la réservation
+                </button>
+                <button type="submit"
+                    class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm inline-flex items-center gap-1.5">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    Confirmer l'annulation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endrole
 @endif
 
 {{-- Modal : Check-in direct — relevé de la pièce d'identité à l'arrivée --}}

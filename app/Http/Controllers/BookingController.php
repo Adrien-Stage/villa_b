@@ -21,7 +21,8 @@ class BookingController extends Controller
     public function __construct(
         private CheckOutService $checkOutService,
         private \App\Services\Notifier $notifier,
-        private \App\Services\TaxationService $taxation
+        private \App\Services\TaxationService $taxation,
+        private \App\Services\CancellationPolicyService $cancellationPolicyService
     ) {}
 
     // ===== LISTE =====
@@ -1414,7 +1415,16 @@ class BookingController extends Controller
             'guests',
             'payments',
             'folioItems',
+            'cancellation.cancelledBy',
+            'cancellation.waivedBy',
+            'cancellation.payment',
+            'cancellationPolicy',
         ]);
+
+        $cancellationCalc = null;
+        if ($booking->isEditable()) {
+            $cancellationCalc = $this->cancellationPolicyService->calculateCancellation($booking);
+        }
 
         // Passer d'une fiche à l'autre sans repasser par la liste : les filtres
         // de l'écran d'où l'on vient sont conservés dans l'URL.
@@ -1433,11 +1443,12 @@ class BookingController extends Controller
         $partnerOrganization = $booking->partnerOrganization;
 
         return view('bookings.show', [
-            'booking' => $booking,
-            'isCashRegisterOpen' => $isCashRegisterOpen,
-            'folioCatalog' => $this->folioCatalog($partnerOrganization),
-            'partnerOrganization' => $partnerOrganization,
-            'navigation' => $navigation,
+            'booking'              => $booking,
+            'isCashRegisterOpen'   => $isCashRegisterOpen,
+            'cancellationCalc'     => $cancellationCalc,
+            'folioCatalog'         => $this->folioCatalog($partnerOrganization),
+            'partnerOrganization'  => $partnerOrganization,
+            'navigation'           => $navigation,
         ]);
     }
 
@@ -1637,17 +1648,53 @@ class BookingController extends Controller
             return back()->withErrors(['cancel' => 'Cette réservation ne peut plus être annulée.']);
         }
 
-        $booking->update(['status' => BookingStatus::CANCELLED]);
+        $validated = $request->validate([
+            'reason_code'        => ['nullable', 'string'],
+            'reason_description' => ['nullable', 'string', 'max:1000'],
+            'refund_method'      => ['nullable', 'string', 'in:cash,orange_money,mtn_momo,bank_transfer,credit_note,none'],
+            'waive_penalty'      => ['nullable', 'boolean'],
+            'waive_reason'       => ['nullable', 'string', 'max:255'],
+        ]);
 
-        \App\Models\AuditLog::record(
-            Auth::id(),
-            'sensitive_action',
-            "Annulation de la réservation #{$booking->booking_number} pour {$booking->customer->full_name}",
-            'bookings',
-            ['booking_id' => $booking->id, 'booking_number' => $booking->booking_number]
-        );
+        $validated['reason_code'] = $validated['reason_code'] ?? 'guest_request';
 
-        return back()->with('success', 'Réservation annulée.');
+        try {
+            $cancellation = $this->cancellationPolicyService->processCancellation($booking, $validated, Auth::user());
+
+            return redirect()
+                ->route('bookings.show', $booking)
+                ->with('success', "Réservation annulée avec succès sous la référence {$cancellation->cancellation_number}.");
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['cancel' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            return back()->withErrors(['cancel' => "Erreur lors de l'annulation : " . $e->getMessage()]);
+        }
+    }
+
+    public function cancellationReceipt(Booking $booking)
+    {
+        if ($booking->status !== BookingStatus::CANCELLED) {
+            return redirect()
+                ->route('bookings.show', $booking)
+                ->withErrors(['cancel' => "Cette réservation n'est pas annulée."]);
+        }
+
+        $booking->load([
+            'customer',
+            'booker',
+            'room.roomType',
+            'cancellation.cancelledBy',
+            'cancellation.payment',
+            'cancellationPolicy',
+        ]);
+
+        $tenant = \App\Models\Tenant::first();
+
+        return view('bookings.cancellation_receipt', [
+            'booking'      => $booking,
+            'cancellation' => $booking->cancellation,
+            'tenant'       => $tenant,
+        ]);
     }
 
     public function approve(Booking $booking)

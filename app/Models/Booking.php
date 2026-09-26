@@ -64,6 +64,11 @@ class Booking extends Model
         'prepaid_breakfast_children',
         'prepaid_breakfast_amount',
 
+        // Politique d'annulation
+        'cancellation_policy_id',
+        'cancellation_policy_snapshot',
+        'free_cancel_until',
+
         // Tarification
         'total_nights',
         'price_per_night',      // Prix appliqué (peut différer du tarif base)
@@ -113,6 +118,8 @@ class Booking extends Model
         'extras_amount' => 'integer',
         'package_amount' => 'integer',
         'tax_amount' => 'integer',
+        'cancellation_policy_snapshot' => 'array',
+        'free_cancel_until' => 'datetime',
         'discount_amount' => 'integer',
         'total_amount' => 'integer',
         'deposit_amount' => 'integer',
@@ -130,6 +137,19 @@ class Booking extends Model
         static::creating(function ($booking) {
             if (empty($booking->booking_number)) {
                 $booking->booking_number = self::generateBookingNumber();
+            }
+
+            if (empty($booking->cancellation_policy_id) && class_exists(CancellationPolicy::class)) {
+                $defaultPolicy = CancellationPolicy::getDefault();
+                if ($defaultPolicy) {
+                    $booking->cancellation_policy_id = $defaultPolicy->id;
+                    if (empty($booking->cancellation_policy_snapshot)) {
+                        $booking->cancellation_policy_snapshot = $defaultPolicy->toSnapshot();
+                    }
+                    if (empty($booking->free_cancel_until) && $booking->check_in) {
+                        $booking->free_cancel_until = $defaultPolicy->calculateFreeCancelUntil($booking->check_in);
+                    }
+                }
             }
         });
     }
@@ -225,6 +245,16 @@ class Booking extends Model
     public function breakfastEntitlements(): HasMany
     {
         return $this->hasMany(BreakfastEntitlement::class);
+    }
+
+    public function cancellationPolicy(): BelongsTo
+    {
+        return $this->belongsTo(CancellationPolicy::class);
+    }
+
+    public function cancellation(): HasOne
+    {
+        return $this->hasOne(BookingCancellation::class);
     }
 
     public function creator(): BelongsTo

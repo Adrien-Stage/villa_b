@@ -28,6 +28,7 @@ class FolioItem extends Model
     const TYPE_LAUNDRY    = 'laundry';
     const TYPE_DISCOUNT   = 'discount';
     const TYPE_PAYMENT    = 'payment';
+    const TYPE_PENALTY    = 'penalty';
     const TYPE_OTHER      = 'other';
 
     protected $fillable = [
