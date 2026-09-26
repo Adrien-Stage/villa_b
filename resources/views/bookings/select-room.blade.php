@@ -20,8 +20,11 @@
 })">
 
     {{-- En-tête --}}
+    @php
+        $childrenAgesQuery = !empty($childrenAges) ? '&' . http_build_query(['children_ages' => $childrenAges]) : '';
+    @endphp
     <div class="mb-6">
-        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source)"
+        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
            class="text-xs text-primary/50 hover:text-primary transition-colors flex items-center gap-1 mb-2">
             <i data-lucide="arrow-left" class="w-3 h-3"></i>
             Retour
@@ -67,8 +70,13 @@
             <div class="w-px h-4 bg-secondary/30"></div>
             <div class="flex items-center gap-2 text-sm text-primary">
                 <i data-lucide="users" class="w-4 h-4 text-primary/40"></i>
-                {{ $adults }} adulte{{ $adults > 1 ? 's' : '' }}
-                @if($children > 0), {{ $children }} enfant{{ $children > 1 ? 's' : '' }}@endif
+                <span>{{ $adults }} adulte{{ $adults > 1 ? 's' : '' }}</span>
+                @if($children > 0)
+                    @php
+                        $childrenSummary = !empty($childrenAges) ? app(\App\Services\BreakfastPricingService::class)->formatChildrenSummary($childrenAges) : '';
+                    @endphp
+                    <span class="text-primary/70">, {{ $children }} enfant{{ $children > 1 ? 's' : '' }}{{ $childrenSummary ? ' (' . $childrenSummary . ')' : '' }}</span>
+                @endif
             </div>
         </div>
         @php
@@ -93,7 +101,7 @@
                 <p class="text-sm text-primary/50">Aucune chambre disponible pour cette période.</p>
             @endif
             <div class="mt-4">
-                <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source)"
+                <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
                    class="inline-flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
                     <i data-lucide="arrow-left" class="w-3 h-3"></i>
                     Modifier les critères de recherche
@@ -346,7 +354,7 @@
     @endif
 
     <div class="mt-6 flex justify-start">
-        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source)"
+        <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $childrenAgesQuery }}'"
            class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             Précédent
@@ -365,6 +373,11 @@
         <input type="hidden" name="check_in_time" :value="checkInTime">
         <input type="hidden" name="adults_count" :value="adults">
         <input type="hidden" name="children_count" :value="children">
+        @if(!empty($childrenAges) && is_array($childrenAges))
+            @foreach($childrenAges as $ageBracket)
+                <input type="hidden" name="children_ages[]" value="{{ $ageBracket }}">
+            @endforeach
+        @endif
         <input type="hidden" name="source" :value="source">
         <input type="hidden" name="draft_token" value="{{ $draftToken ?? '' }}">
     </form>

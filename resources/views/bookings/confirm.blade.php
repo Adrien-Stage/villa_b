@@ -99,7 +99,7 @@
          affiche des montants vivants, il doit donc partager le périmètre Alpine
          des champs de droite qui les font varier. --}}
     <form method="POST" action="{{ route('bookings.store') }}"
-          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }})">
+          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }}, @js($breakfastCalculation ?? null))">
         @csrf
         <input type="hidden" name="step" value="4">
         <input type="hidden" name="customer_id" value="{{ $customerId }}">
@@ -110,6 +110,13 @@
         <input type="hidden" name="check_in_time" value="{{ $checkInTime }}">
         <input type="hidden" name="adults_count" value="{{ $adultsCount }}">
         <input type="hidden" name="children_count" value="{{ $childrenCount }}">
+        @if(!empty($childrenAges) && is_array($childrenAges))
+            @foreach($childrenAges as $ageBracket)
+                <input type="hidden" name="children_ages[]" value="{{ $ageBracket }}">
+            @endforeach
+        @endif
+        <input type="hidden" name="include_breakfast" :value="includeBreakfast ? 1 : 0">
+        <input type="hidden" name="breakfast_amount" :value="includeBreakfast ? breakfastStayTotal : 0">
         <input type="hidden" name="source" value="{{ $source }}">
         <input type="hidden" name="notes" value="{{ $notes }}">
         <input type="hidden" name="draft_token" value="{{ $draftToken ?? '' }}">
@@ -162,6 +169,9 @@
                                 <p class="text-sm font-medium text-primary">
                                     {{ $adultsCount }} adulte{{ $adultsCount > 1 ? 's' : '' }}@if($childrenCount > 0), {{ $childrenCount }} enfant{{ $childrenCount > 1 ? 's' : '' }}@endif
                                 </p>
+                                @if(!empty($breakfastCalculation['summary_label']))
+                                    <p class="text-[11px] text-primary/60 mt-0.5">Enfants : {{ $breakfastCalculation['summary_label'] }}</p>
+                                @endif
                             </div>
                         </div>
 
@@ -287,6 +297,13 @@
                                     Formule <span class="text-primary/40" x-text="selectedPackageName"></span>
                                 </span>
                                 <span class="font-medium text-primary tabular-nums flex-shrink-0" x-text="'+ ' + formatMoney(packageAmount) + ' FCFA'"></span>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3" x-show="includeBreakfast && breakfastStayTotal > 0" style="display:none;">
+                                <span class="text-primary/60 min-w-0 truncate">
+                                    Petits-déjeuners (<span x-text="nights"></span> nuit<span x-show="nights > 1">s</span>)
+                                </span>
+                                <span class="font-medium text-primary tabular-nums flex-shrink-0" x-text="'+ ' + formatMoney(breakfastStayTotal) + ' FCFA'"></span>
                             </div>
 
                             <div class="flex items-center justify-between gap-3" x-show="packageDiscount > 0" style="display:none;">
@@ -459,6 +476,51 @@
                                                 Décochez si ce séjour est privé et ne relève pas de la convention.
                                             </span>
                                         </span>
+                                    </label>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Petits-déjeuners : calculés selon les occupants et les tranches d'âge des enfants --}}
+                        @if(!empty($breakfastCalculation))
+                            <div class="pt-4 border-t border-secondary/15">
+                                <div class="p-3.5 rounded-xl border border-secondary/25 bg-accent/20">
+                                    <label class="flex items-start gap-2.5 cursor-pointer">
+                                        <input type="checkbox" x-model="includeBreakfast" @change="syncDeposit()"
+                                               class="mt-0.5 rounded border-secondary/30 text-primary focus:ring-primary h-4 w-4">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-baseline justify-between gap-3">
+                                                <span class="block text-sm font-medium text-primary">
+                                                    <i data-lucide="coffee" class="w-3.5 h-3.5 inline -mt-0.5 text-amber-700"></i>
+                                                    Inclure les petits-déjeuners pour le séjour
+                                                </span>
+                                                <span class="text-sm font-bold text-primary shrink-0 tabular-nums"
+                                                      x-text="'+ ' + formatMoney(breakfastStayTotal) + ' FCFA'"></span>
+                                            </div>
+                                            <p class="text-xs text-primary/60 mt-0.5">
+                                                {{ $nights }} nuit{{ $nights > 1 ? 's' : '' }} × <span class="font-semibold text-primary" x-text="formatMoney(breakfastDailyTotal) + ' FCFA / jour'"></span>
+                                            </p>
+
+                                            {{-- Détail des occupants et tranches d'âge --}}
+                                            <div class="mt-2.5 pt-2.5 border-t border-secondary/15 space-y-1.5 text-xs">
+                                                <div class="flex items-center justify-between text-primary/70">
+                                                    <span>{{ $breakfastCalculation['adults_count'] }} adulte{{ $breakfastCalculation['adults_count'] > 1 ? 's' : '' }} ({{ number_format($breakfastCalculation['adult_unit_price'], 0, ',', ' ') }} FCFA / pers / jour)</span>
+                                                    <span class="font-semibold text-primary tabular-nums">{{ number_format($breakfastCalculation['adult_daily_total'], 0, ',', ' ') }} FCFA / j</span>
+                                                </div>
+
+                                                @if(!empty($breakfastCalculation['children_breakdown']))
+                                                    @foreach($breakfastCalculation['children_breakdown'] as $bKey => $bData)
+                                                        <div class="flex items-center justify-between text-primary/70">
+                                                            <span class="flex items-center gap-1.5">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                                <span>{{ $bData['count'] }} enfant{{ $bData['count'] > 1 ? 's' : '' }} · {{ $bData['label'] }} ({{ number_format($bData['unit_price'], 0, ',', ' ') }} FCFA)</span>
+                                                            </span>
+                                                            <span class="font-semibold text-primary tabular-nums">{{ number_format($bData['total_price'], 0, ',', ' ') }} FCFA / j</span>
+                                                        </div>
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
@@ -685,7 +747,7 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist, packs, partnerDiscount, nights) => ({
+        Alpine.data('paymentCalc', (baseTotal, minPct, isReceptionist, packs, partnerDiscount, nights, breakfastData) => ({
             baseTotal: baseTotal,
             customPrice: baseTotal,
             minPercentage: minPct,
@@ -712,6 +774,13 @@
             applyPartner: true,
             partnerDiscount: partnerDiscount || 0,
             selectedPackageName: '',
+
+            // Petits-déjeuners
+            breakfastData: breakfastData || null,
+            includeBreakfast: false,
+            breakfastDailyTotal: breakfastData ? (breakfastData.daily_total || 0) : 0,
+            breakfastStayTotal: breakfastData ? (breakfastData.stay_total || 0) : 0,
+
             netTotal: baseTotal,
 
             init() {
@@ -757,7 +826,8 @@
                 this.partnerDiscount = (this.isOfferte || !this.applyPartner) ? 0 : this.partnerDiscountBase;
 
                 const remises = this.isOfferte ? 0 : (this.partnerDiscount + this.packageDiscount);
-                this.netTotal = this.isOfferte ? 0 : Math.max(0, prix + this.packageAmount - remises);
+                const breakfastAmt = (!this.isOfferte && this.includeBreakfast) ? this.breakfastStayTotal : 0;
+                this.netTotal = this.isOfferte ? 0 : Math.max(0, prix + this.packageAmount + breakfastAmt - remises);
 
                 if (this.isOfferte) {
                     this.minDeposit = 0;

@@ -363,7 +363,9 @@ class BookingController extends Controller
             ->latest('last_activity_at')
             ->first() : null;
 
-        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft'));
+        $ageBrackets = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId);
+
+        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft', 'ageBrackets'));
     }
 
 
@@ -521,14 +523,16 @@ class BookingController extends Controller
     private function storeStep2(Request $request)
     {
         $request->validate([
-            'customer_id'   => ['required', 'exists:customers,id'],
-            'booker_id'     => ['nullable', 'exists:customers,id'],
-            'check_in'      => ['required', 'date', 'after_or_equal:today'],
-            'check_out'     => ['required', 'date', 'after:check_in'],
-            'check_in_time' => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
-            'adults'        => ['required', 'integer', 'min:1'],
-            'children'      => ['nullable', 'integer', 'min:0'],
-            'source'        => ['nullable', 'string'],
+            'customer_id'     => ['required', 'exists:customers,id'],
+            'booker_id'       => ['nullable', 'exists:customers,id'],
+            'check_in'        => ['required', 'date', 'after_or_equal:today'],
+            'check_out'       => ['required', 'date', 'after:check_in'],
+            'check_in_time'   => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
+            'adults'          => ['required', 'integer', 'min:1'],
+            'children'        => ['nullable', 'integer', 'min:0'],
+            'children_ages'   => ['nullable', 'array'],
+            'children_ages.*' => ['nullable', 'string'],
+            'source'          => ['nullable', 'string'],
         ]);
 
         $customer    = Customer::findOrFail($request->customer_id);
@@ -536,12 +540,22 @@ class BookingController extends Controller
         $checkIn     = $request->check_in;
         $checkOut    = $request->check_out;
         $checkInTime = $request->check_in_time ?? '14:00';
-        $adults      = $request->adults;
-        $children    = $request->children ?? 0;
+        $adults      = (int) $request->adults;
+        $children    = (int) ($request->children ?? 0);
         $source      = $request->source ?? 'direct';
         $totalPeople = $adults + $children;
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $maxCapacityLimit = RoomType::max('max_capacity') ?? 4;
+
+        $childrenAges = (array) ($request->children_ages ?? []);
+        if ($children > 0 && count($childrenAges) < $children) {
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            while (count($childrenAges) < $children) {
+                $childrenAges[] = $defaultBracket;
+            }
+        } elseif ($children === 0) {
+            $childrenAges = [];
+        }
 
         // Sauvegarde du brouillon à l'étape 2
         $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
@@ -553,6 +567,7 @@ class BookingController extends Controller
             'check_in_time' => $checkInTime,
             'adults'        => $adults,
             'children'      => $children,
+            'children_ages' => $childrenAges,
             'source'        => $source,
             'tenant_id'     => $tenantId,
         ]);
@@ -668,6 +683,7 @@ class BookingController extends Controller
             'checkInTime',
             'adults',
             'children',
+            'childrenAges',
             'source',
             'availableRooms',
             'roomTypes',
@@ -680,16 +696,18 @@ class BookingController extends Controller
     {
 
         $validated = $request->validate([
-            'customer_id'    => ['required', 'exists:customers,id'],
-            'booker_id'      => ['nullable', 'exists:customers,id'],
-            'room_id'        => ['required', 'exists:rooms,id'],
-            'check_in'       => ['required', 'date'],
-            'check_out'      => ['required', 'date', 'after:check_in'],
-            'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
-            'adults_count'   => ['required', 'integer', 'min:1'],
-            'children_count' => ['nullable', 'integer', 'min:0'],
-            'source'         => ['nullable', 'string'],
-            'notes'          => ['nullable', 'string'],
+            'customer_id'     => ['required', 'exists:customers,id'],
+            'booker_id'       => ['nullable', 'exists:customers,id'],
+            'room_id'         => ['required', 'exists:rooms,id'],
+            'check_in'        => ['required', 'date'],
+            'check_out'       => ['required', 'date', 'after:check_in'],
+            'check_in_time'   => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
+            'adults_count'    => ['required', 'integer', 'min:1'],
+            'children_count'  => ['nullable', 'integer', 'min:0'],
+            'children_ages'   => ['nullable', 'array'],
+            'children_ages.*' => ['nullable', 'string'],
+            'source'          => ['nullable', 'string'],
+            'notes'           => ['nullable', 'string'],
         ]);
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -707,6 +725,26 @@ class BookingController extends Controller
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
+
+        // Calcul du petit-déjeuner prévu selon le nombre d'adultes et l'âge de chaque enfant
+        $childrenCount = (int) ($validated['children_count'] ?? 0);
+        $childrenAges = (array) ($validated['children_ages'] ?? $request->children_ages ?? []);
+        if ($childrenCount > 0 && count($childrenAges) < $childrenCount) {
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            while (count($childrenAges) < $childrenCount) {
+                $childrenAges[] = $defaultBracket;
+            }
+        } elseif ($childrenCount === 0) {
+            $childrenAges = [];
+        }
+
+        $breakfastService = app(\App\Services\BreakfastPricingService::class);
+        $breakfastCalculation = $breakfastService->calculateBreakfast(
+            $nights,
+            (int) $validated['adults_count'],
+            $childrenAges,
+            $tenantId
+        );
 
         // Convention du client, si elle est en cours de validité à l'arrivée.
         // La réception peut la retirer pour ce séjour (déplacement privé) via
@@ -750,6 +788,8 @@ class BookingController extends Controller
             ? Customer::find($validated['booker_id'])
             : null;
 
+        $validated['children_ages'] = $childrenAges;
+
         return view('bookings.confirm', [
             'customerId' => $validated['customer_id'],
             'bookerId' => $validated['booker_id'] ?? null,
@@ -767,7 +807,9 @@ class BookingController extends Controller
             'checkInTime' => $checkInTime,
             'nights' => $nights,
             'adultsCount' => $validated['adults_count'],
-            'childrenCount' => $validated['children_count'] ?? 0,
+            'childrenCount' => $childrenCount,
+            'childrenAges' => $childrenAges,
+            'breakfastCalculation' => $breakfastCalculation,
             'source' => $validated['source'] ?? 'direct',
             'notes' => $validated['notes'] ?? '',
             'pricePerNight' => $pricePerNight,
@@ -790,6 +832,7 @@ class BookingController extends Controller
             'check_in_time' => $validated['check_in_time'] ?? '14:00',
             'adults'        => $validated['adults_count'],
             'children'      => $validated['children_count'] ?? 0,
+            'children_ages' => $validated['children_ages'] ?? [],
             'source'        => $validated['source'] ?? 'direct',
             'room_id'       => $validated['room_id'],
             'notes'         => $validated['notes'] ?? null,
@@ -825,6 +868,10 @@ class BookingController extends Controller
             'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
             'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
+            'children_ages'   => ['nullable', 'array'],
+            'children_ages.*' => ['nullable', 'string'],
+            'include_breakfast' => ['nullable', 'boolean'],
+            'breakfast_amount'  => ['nullable', 'numeric', 'min:0'],
             'source'         => ['nullable', 'string'],
             'notes'          => ['nullable', 'string'],
             'custom_price'   => ['required', 'numeric', $priceRule],
@@ -860,6 +907,31 @@ class BookingController extends Controller
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
+
+        // Calcul et valorisation des petits-déjeuners selon les tranches d'âge des enfants
+        $childrenCount = (int) ($validated['children_count'] ?? 0);
+        $childrenAges  = (array) ($validated['children_ages'] ?? $request->children_ages ?? []);
+        if ($childrenCount > 0 && count($childrenAges) < $childrenCount) {
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            while (count($childrenAges) < $childrenCount) {
+                $childrenAges[] = $defaultBracket;
+            }
+        } elseif ($childrenCount === 0) {
+            $childrenAges = [];
+        }
+
+        $breakfastService = app(\App\Services\BreakfastPricingService::class);
+        $breakfastCalculation = $breakfastService->calculateBreakfast(
+            $nights,
+            (int) $validated['adults_count'],
+            $childrenAges,
+            $tenantId
+        );
+
+        $breakfastAmount = 0; // centimes
+        if ($request->boolean('include_breakfast') && !$request->boolean('is_offerte')) {
+            $breakfastAmount = (int) ($breakfastCalculation['stay_total'] * 100);
+        }
 
         // 1. Si réceptionniste, valider que custom_price correspond à une remise autorisée
         if (Auth::user()->hasRole('reception') && !$request->boolean('is_offerte')) {
@@ -933,11 +1005,11 @@ class BookingController extends Controller
         }
 
         // 2. Si non offert, valider le dépôt minimum. Il porte sur le montant
-        // réellement dû — formule comprise, remises déduites : exiger l'acompte
+        // réellement dû — formule et extras compris, remises déduites : exiger l'acompte
         // sur le brut ferait payer au client une part qu'il ne doit pas.
         if (!$request->boolean('is_offerte')) {
             $netPrice   = max(0, (float) $validated['custom_price']
-                                 + $packageAmount / 100
+                                 + ($packageAmount + $breakfastAmount) / 100
                                  - ($partnerDiscount + $packageDiscount) / 100);
             $minDeposit = ceil($netPrice * ($minDepositPercentage / 100));
             if ($validated['payment_amount'] < $minDeposit) {
@@ -958,7 +1030,7 @@ class BookingController extends Controller
         // l'arrondi du prix par nuitée peut faire varier le brut de quelques
         // centimes par rapport au montant sur lequel elles ont été calculées.
         $totalDiscount = min($partnerDiscount + $packageDiscount, $totalRoomAmount);
-        $totalAmount = $totalRoomAmount + $packageAmount - $totalDiscount;
+        $totalAmount = $totalRoomAmount + $packageAmount + $breakfastAmount - $totalDiscount;
         // La TVA est EXTRAITE du total, jamais ajoutée : le client paie le
         // même montant qu'avant sa mise en service, seule la décomposition
         // apparaît désormais sur la facture.
@@ -1002,11 +1074,12 @@ class BookingController extends Controller
             'check_in_time'   => $validated['check_in_time'] ?? '14:00',
             'check_out'       => $validated['check_out'],
             'adults_count'    => $validated['adults_count'],
-            'children_count'  => $validated['children_count'] ?? 0,
+            'children_count'  => $childrenCount,
+            'children_ages'   => $childrenAges,
             'total_nights'    => $nights,
             'price_per_night' => $pricePerNight,
             'total_room_amount' => $totalRoomAmount,
-            'extras_amount'   => 0,
+            'extras_amount'   => $breakfastAmount,
             'package_amount'  => $packageAmount,
             'tax_amount'      => $taxAmount,
             'discount_amount' => $totalDiscount,
@@ -1099,6 +1172,28 @@ class BookingController extends Controller
                 'recorded_by'  => Auth::id(),
                 'notes'        => $roomPackage->pricingModeLabel()
                     . (empty($contents) ? '' : ' — ' . implode(' · ', $contents)),
+            ]);
+        }
+
+        // Ligne folio pour les petits-déjeuners inclus
+        if ($breakfastAmount > 0) {
+            $notesDesc = !empty($breakfastCalculation['summary_label'])
+                ? "Occupants : {$validated['adults_count']} adulte(s) + enfants ({$breakfastCalculation['summary_label']})"
+                : "Occupants : {$validated['adults_count']} adulte(s)";
+
+            FolioItem::create([
+                'booking_id'   => $booking->id,
+                'customer_id'  => $booking->customer_id,
+                'type'         => FolioItem::TYPE_RESTAURANT,
+                'description'  => "Petits-déjeuners ({$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                'quantity'     => 1,
+                'unit_price'   => $breakfastAmount,
+                'total_price'  => $breakfastAmount,
+                'is_complimentary' => false,
+                'earns_points' => true,
+                'occurred_at'  => now(),
+                'recorded_by'  => Auth::id(),
+                'notes'        => $notesDesc,
             ]);
         }
 

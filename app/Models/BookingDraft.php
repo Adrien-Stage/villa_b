@@ -36,6 +36,7 @@ class BookingDraft extends Model
         'check_in_time',
         'adults',
         'children',
+        'children_ages',
         'source',
         // Étape 3
         'room_id',
@@ -53,6 +54,7 @@ class BookingDraft extends Model
         'last_activity_at'  => 'datetime',
         'adults'            => 'integer',
         'children'          => 'integer',
+        'children_ages'     => 'array',
         'current_step'      => 'integer',
     ];
 

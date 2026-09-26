@@ -171,5 +171,5 @@ test('le composant reçoit les formules, la remise partenaire et les nuitées', 
 
     // La signature doit porter les trois : sans les nuitées, une remise « au
     // montant par nuitée » serait comptée une seule fois.
-    expect($html)->toMatch('/paymentCalc\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,\s*2\)/');
+    expect($html)->toMatch('/paymentCalc\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,\s*2(?:,|\))/');
 });

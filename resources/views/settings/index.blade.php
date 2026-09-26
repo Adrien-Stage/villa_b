@@ -433,6 +433,116 @@
                         </div>
                     </div>
 
+                    {{-- Section Petits-déjeuners & Tranches d'âge enfants --}}
+                    @php
+                        $breakfastService = app(\App\Services\BreakfastPricingService::class);
+                        $breakfastSettings = $tenantSettings['reception']['breakfast'] ?? $tenantSettings['hebergement']['breakfast'] ?? [];
+                        $adultBreakfastPrice = $breakfastSettings['adult_price'] ?? \App\Services\BreakfastPricingService::DEFAULT_ADULT_PRICE;
+                        $ageBrackets = $breakfastService->getAgeBrackets($tenant?->id);
+                    @endphp
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20"
+                         x-data="{
+                             brackets: @js($ageBrackets),
+                             addBracket() {
+                                 const nextId = 'custom_' + Date.now();
+                                 this.brackets.push({
+                                     id: nextId,
+                                     label: 'Nouvelle tranche',
+                                     min_age: 0,
+                                     max_age: 15,
+                                     price: 2500
+                                 });
+                                 if (window.lucide) {
+                                     this.$nextTick(() => window.lucide.createIcons());
+                                 }
+                             },
+                             removeBracket(index) {
+                                 if (this.brackets.length > 1) {
+                                     this.brackets.splice(index, 1);
+                                 }
+                             }
+                         }">
+                        <div class="mb-3">
+                            <h3 class="text-sm font-semibold text-primary mb-1">Petits-déjeuners & Tranches d'âge des enfants</h3>
+                            <p class="text-xs text-primary/60">Configurez le tarif standard adulte et le prix du petit-déjeuner prévu pour une chambre selon l'âge de l'enfant.</p>
+                        </div>
+
+                        {{-- Tarif adulte standard --}}
+                        <div class="mb-4 pb-4 border-b border-secondary/15">
+                            <label class="block text-xs font-medium text-primary/70 mb-1">
+                                Tarif standard petit-déjeuner adulte (par personne et par jour)
+                            </label>
+                            <div class="relative max-w-xs">
+                                <input type="number" name="settings[breakfast][adult_price]"
+                                       value="{{ $adultBreakfastPrice }}" min="0" step="500" required
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-14">
+                                <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
+                            </div>
+                        </div>
+
+                        {{-- Grille des tranches d'âge enfants --}}
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold text-primary/80">
+                                    Grille tarifaire des enfants selon l'intervalle d'âge
+                                </label>
+                                <button type="button" @click="addBracket()"
+                                        class="px-2.5 py-1 bg-white border border-secondary/30 rounded-lg text-primary text-xs font-medium hover:bg-slate-100 transition flex items-center gap-1 shadow-xs">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    Ajouter une tranche
+                                </button>
+                            </div>
+
+                            <div class="space-y-2">
+                                <template x-for="(b, index) in brackets" :key="b.id || index">
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 shadow-xs">
+                                        <input type="hidden" :name="`settings[breakfast][age_brackets][${index}][id]`" :value="b.id">
+
+                                        <div class="flex-1 min-w-[140px]">
+                                            <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Libellé de la tranche</label>
+                                            <input type="text" :name="`settings[breakfast][age_brackets][${index}][label]`" x-model="b.label"
+                                                   required placeholder="Ex: Enfant (2 à 10 ans)"
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none">
+                                        </div>
+
+                                        <div class="w-20">
+                                            <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Âge min</label>
+                                            <input type="number" :name="`settings[breakfast][age_brackets][${index}][min_age]`" x-model="b.min_age"
+                                                   min="0" max="18"
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-center">
+                                        </div>
+
+                                        <div class="w-20">
+                                            <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Âge max</label>
+                                            <input type="number" :name="`settings[breakfast][age_brackets][${index}][max_age]`" x-model="b.max_age"
+                                                   min="0" max="18"
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-center">
+                                        </div>
+
+                                        <div class="w-32">
+                                            <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Prix (FCFA/jour)</label>
+                                            <input type="number" :name="`settings[breakfast][age_brackets][${index}][price]`" x-model="b.price"
+                                                   min="0" step="100" required
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-right font-medium">
+                                        </div>
+
+                                        <div class="sm:pt-4">
+                                            <button type="button" @click="removeBracket(index)"
+                                                    :disabled="brackets.length <= 1"
+                                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    title="Supprimer cette tranche">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <p class="text-[10px] text-primary/50 mt-2">
+                                Ce barème est proposé lors du choix du nombre d'enfants dans le parcours de réservation pour ajuster le tarif du petit-déjeuner.
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                             <div>
