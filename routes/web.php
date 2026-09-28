@@ -389,6 +389,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
         Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
         Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+        Route::get('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'index'])->name('waste.index');
+        Route::get('/waste/create', [App\Http\Controllers\RestaurantWasteController::class, 'create'])->name('waste.create');
+        Route::get('/waste/{waste}', [App\Http\Controllers\RestaurantWasteController::class, 'show'])->whereNumber('waste')->name('waste.show');
+        Route::get('/waste/{waste}/print', [App\Http\Controllers\RestaurantWasteController::class, 'print'])->whereNumber('waste')->name('waste.print');
+        Route::get('/consumption', [App\Http\Controllers\RestaurantConsumptionController::class, 'index'])->name('consumption.index');
     });
 
     // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
@@ -450,6 +455,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
             Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
             Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
+
+            // Déclaration de pertes & gaspillage
+            Route::post('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'store'])->name('waste.store');
         });
     });
 

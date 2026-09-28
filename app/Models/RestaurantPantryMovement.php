@@ -51,6 +51,7 @@ class RestaurantPantryMovement extends Model
         'restaurant_customer_order_id',
         'restaurant_recipe_id',
         'stock_requisition_id',
+        'restaurant_waste_log_id',
         'reason',
         'notes',
         'recorded_by',
@@ -83,6 +84,11 @@ class RestaurantPantryMovement extends Model
     public function stockRequisition(): BelongsTo
     {
         return $this->belongsTo(StockRequisition::class, 'stock_requisition_id');
+    }
+
+    public function wasteLog(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantWasteLog::class, 'restaurant_waste_log_id');
     }
 
     public function recordedBy(): BelongsTo

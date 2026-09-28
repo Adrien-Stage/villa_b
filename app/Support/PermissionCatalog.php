@@ -188,6 +188,7 @@ class PermissionCatalog
         'restaurant.stock_counts.creer',
         'restaurant.stock_counts.modifier',
         'restaurant.stock_counts.supprimer',
+        'restaurant.waste.creer',
         'rooms.cost_sheets.assumptions',
         'rooms.cost_sheets.import',
         'rooms.cost_sheets.items.creer',
@@ -326,6 +327,9 @@ class PermissionCatalog
             'restaurant.stock_counts.modifier' => ['restaurant_chief'],
             'restaurant.stock_counts.supprimer' => ['restaurant_chief'],
             'restaurant.stock_counts.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook'],
+            'restaurant.consumption.voir' => ['controller', 'manager', 'restaurant_chief'],
+            'restaurant.waste.creer' => ['restaurant_chief', 'restaurant_cook'],
+            'restaurant.waste.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
 
             // ── Comptabilité ──
             'accounting.cash' => ['accountant', 'manager'],

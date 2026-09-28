@@ -405,6 +405,14 @@
                                 <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
                             @endrole
 
+                            @role('manager','restaurant_chief','restaurant_cook')
+                                <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
+                            @endrole
+
+                            @role('manager','restaurant_chief')
+                                <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
+                            @endrole
+
                             @role('manager','restaurant_chief','cashier')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
                             @endrole
