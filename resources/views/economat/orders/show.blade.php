@@ -3,49 +3,89 @@
 @section('title', $order->number . ' — Bon de commande')
 
 @section('content')
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+@font-face {
+    font-family: 'Qwigley';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('{{ asset('fonts/qwigley/qwigley-regular.ttf') }}') format('truetype');
+}
+.font-signature {
+    font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+}
+</style>
 @php
     $statusStyles = [
-        'draft' => 'bg-gray-100 text-gray-600', 'sent' => 'bg-blue-50 text-blue-700',
-        'partially_received' => 'bg-amber-50 text-amber-700', 'received' => 'bg-green-50 text-green-700',
-        'cancelled' => 'bg-red-50 text-red-700',
+        'draft' => 'bg-gray-100 text-gray-600 border-gray-200',
+        'sent' => 'bg-blue-50 text-blue-700 border-blue-200',
+        'partially_received' => 'bg-amber-50 text-amber-700 border-amber-200',
+        'received' => 'bg-green-50 text-green-700 border-green-200',
+        'cancelled' => 'bg-red-50 text-red-700 border-red-200',
     ];
 @endphp
-<div class="max-w-4xl mx-auto">
-    <a href="{{ route('economat.orders.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux bons
-    </a>
+<div class="max-w-4xl mx-auto space-y-5">
+    <div class="flex items-center justify-between">
+        <a href="{{ route('economat.orders.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la liste des bons de commande
+        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('economat.orders.print', $order) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer le Bon officiel (PDF / Papier)
+            </a>
+        </div>
+    </div>
 
     @include('economat.partials.flash')
 
-    <div class="bg-white border border-secondary/20 rounded-xl p-6 mb-4">
-        <div class="flex items-start justify-between gap-4">
+    {{-- En-tête du bon & Statut --}}
+    <div class="bg-white border border-secondary/20 rounded-xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-                <h1 class="text-xl font-heading font-semibold text-primary font-mono">{{ $order->number }}</h1>
-                <p class="text-sm text-primary/60 mt-1">
-                    {{ $order->supplier->name }}
-                    @if($order->supplier->email) · {{ $order->supplier->email }}@endif
-                </p>
-                <p class="text-xs text-primary/40 mt-0.5">
-                    Créé le {{ $order->created_at->format('d/m/Y') }} par {{ $order->createdBy?->name ?? '—' }}
-                    @if($order->expected_at) · Livraison souhaitée : {{ $order->expected_at->format('d/m/Y') }}@endif
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-heading font-bold text-primary font-mono tracking-tight">{{ $order->number }}</h1>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-700 border-gray-200' }}">
+                        {{ $order->statusLabel() }}
+                    </span>
+                </div>
+                <p class="text-xs text-primary/50 mt-1">
+                    Émis le <span class="font-medium text-primary/70">{{ $order->created_at->format('d/m/Y à H:i') }}</span>
+                    par <span class="font-medium text-primary/80">{{ $order->createdBy?->name ?? 'Économe' }}</span>
+                    @if($order->expected_at)
+                        · Date limite souhaitée de livraison : <span class="font-medium text-primary/80">{{ $order->expected_at->format('d/m/Y') }}</span>
+                    @endif
                 </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold {{ $statusStyles[$order->status] ?? 'bg-gray-100' }}">{{ $order->statusLabel() }}</span>
+
+            <div class="text-right sm:border-l sm:border-secondary/15 sm:pl-6">
+                <div class="text-xs uppercase tracking-wider text-primary/50 font-semibold">Montant total engagé</div>
+                <div class="text-2xl font-mono font-bold text-primary mt-0.5">
+                    {{ number_format($order->total_amount / 100, 0, ',', ' ') }} <span class="text-sm font-sans font-normal text-primary/60">FCFA</span>
+                </div>
+            </div>
         </div>
 
+        {{-- Alerte d'envoi ou confirmation --}}
         @if($order->status === 'sent' && $order->send_error)
-            <p class="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                L'email n'a pas pu être envoyé : {{ $order->send_error }}. Vous pouvez renvoyer le bon.
-            </p>
+            <div class="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+                <div>
+                    <strong>Échec de distribution par email :</strong> {{ $order->send_error }}. Vous pouvez réitérer l'envoi ou imprimer directement le document.
+                </div>
+            </div>
         @elseif($order->sent_at)
-            <p class="mt-3 text-xs text-primary/50">Envoyé le {{ $order->sent_at->format('d/m/Y H:i') }} à {{ $order->sent_to_email }}.</p>
+            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                <span>Transmis avec succès au fournisseur par email le {{ $order->sent_at->format('d/m/Y à H:i') }} à <strong>{{ $order->sent_to_email }}</strong>.</span>
+            </div>
         @endif
 
-        {{-- Actions selon le statut --}}
-        <div class="flex flex-wrap items-center justify-between gap-2 mt-4 pt-4 border-t border-secondary/20">
+        {{-- Actions opérationnelles --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-secondary/15">
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('economat.orders.print', $order) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                    <i data-lucide="printer" class="w-4 h-4"></i> Imprimer le Bon (BC)
+                    <i data-lucide="printer" class="w-4 h-4"></i> Imprimer
                 </a>
 
                 @if($order->canBeReceived())
@@ -59,7 +99,7 @@
                 @if($order->canBeSent())
                     <form method="POST" action="{{ route('economat.orders.send', $order) }}">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                             <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
                         </button>
                     </form>
@@ -73,12 +113,80 @@
                 @endif
 
                 @if($order->canBeCancelled())
-                    <form method="POST" action="{{ route('economat.orders.cancel', $order) }}" onsubmit="return confirm('Annuler ce bon ?');">
+                    <form method="POST" action="{{ route('economat.orders.cancel', $order) }}" onsubmit="return confirm('Êtes-vous certain de vouloir annuler ce bon de commande ?');">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50">Annuler le bon</button>
+                        <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i> Annuler
+                        </button>
                     </form>
                 @endif
             </div>
+        </div>
+    </div>
+
+    {{-- Cartes jumelées : Informations Fournisseur & Signature Numérique Émetteur --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{-- Carte Fournisseur Unique --}}
+        <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-secondary/10">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4 text-primary/70"></i>
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Fournisseur Attitré</h2>
+                </div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                    <i data-lucide="lock" class="w-3 h-3"></i> Bon mono-fournisseur
+                </span>
+            </div>
+            <div class="space-y-2">
+                <div class="text-base font-bold text-primary">{{ $order->supplier->name }}</div>
+                @if($order->supplier->code)
+                    <div class="text-xs text-primary/50 font-mono">Code : {{ $order->supplier->code }}</div>
+                @endif
+                <div class="text-xs text-primary/70 flex items-center gap-2 pt-1">
+                    <i data-lucide="mail" class="w-3.5 h-3.5 text-primary/40"></i>
+                    <span>{{ $order->supplier->email ?? 'Aucun email renseigné' }}</span>
+                </div>
+                <div class="text-xs text-primary/70 flex items-center gap-2">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-primary/40"></i>
+                    <span>{{ $order->supplier->phone ?? 'Aucun téléphone renseigné' }}</span>
+                </div>
+                @if($order->supplier->address)
+                    <div class="text-xs text-primary/60 flex items-start gap-2">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-primary/40 mt-0.5"></i>
+                        <span>{{ $order->supplier->address }}</span>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Carte Signature Numérique Officielle --}}
+        <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-secondary/10">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="pen-tool" class="w-4 h-4 text-emerald-700"></i>
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Signature Émetteur</h2>
+                </div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+                    <i data-lucide="shield-check" class="w-3 h-3"></i> Certifiée
+                </span>
+            </div>
+
+            <div class="bg-gray-50/70 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto">
+                <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider mb-1">Signature manuscrite certifiée</div>
+                <div class="font-signature text-4xl text-primary font-normal leading-tight py-1 select-none">
+                    {{ $order->issuerSignature() ?? ($order->createdBy?->name ?? 'Économe') }}
+                </div>
+                <div class="text-[11px] text-primary/70 font-medium">
+                    {{ $order->createdBy?->name ?? 'Économe' }}
+                </div>
+                <div class="text-[10px] text-primary/40 mt-0.5">
+                    Émis numériquement le {{ $order->created_at->format('d/m/Y') }}
+                </div>
+            </div>
+
+            <p class="text-[11px] text-primary/50 mt-3 italic">
+                Ce bon de commande engage le réapprovisionnement de l'économat sous la responsabilité de l'émetteur authentifié.
+            </p>
         </div>
     </div>
 
@@ -97,6 +205,7 @@
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Commandé</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Déjà reçu</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">P.U.</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Total</th>
                             @if($order->canBeReceived())
                                 <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Reçu maintenant</th>
                             @endif
@@ -105,10 +214,22 @@
                     <tbody class="divide-y divide-secondary/10">
                         @foreach($order->lines as $line)
                             <tr>
-                                <td class="px-5 py-3 text-primary">{{ $line->item?->name ?? '—' }} <span class="text-primary/40 text-xs">({{ $line->item?->unit }})</span></td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ number_format($line->unit_price / 100, 0, ',', ' ') }}</td>
+                                <td class="px-5 py-3 text-primary">
+                                    <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
+                                    <div class="text-[11px] text-primary/40 flex items-center gap-1.5 mt-0.5">
+                                        @if($line->item?->code)
+                                            <span class="font-mono">{{ $line->item->code }}</span> ·
+                                        @endif
+                                        <span class="inline-block px-1.5 py-0.2 bg-gray-100 rounded text-[10px]">{{ $line->item?->unit ?? 'unité' }}</span>
+                                        @if($line->item?->category)
+                                            · <span>{{ $line->item->category->name }}</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
+                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
+                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ number_format($line->unit_price / 100, 0, ',', ' ') }} F</td>
+                                <td class="px-5 py-3 text-right font-medium text-primary font-mono">{{ number_format($line->total() / 100, 0, ',', ' ') }} F</td>
                                 @if($order->canBeReceived())
                                     <td class="px-5 py-3 text-right">
                                         @if($line->outstanding() > 0)
@@ -116,7 +237,7 @@
                                                 placeholder="{{ rtrim(rtrim(number_format($line->outstanding(), 3, ',', ' '), '0'), ',') }}"
                                                 class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
                                         @else
-                                            <span class="text-green-600 text-xs">Soldé</span>
+                                            <span class="text-green-600 text-xs font-semibold">Soldé</span>
                                         @endif
                                     </td>
                                 @endif
@@ -125,8 +246,8 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-gray-50">
-                            <td colspan="{{ $order->canBeReceived() ? 4 : 3 }}" class="px-5 py-3 text-right font-semibold text-primary">Total</td>
-                            <td class="px-5 py-3 text-right font-bold text-primary">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} F</td>
+                            <td colspan="{{ $order->canBeReceived() ? 5 : 4 }}" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
+                            <td class="px-5 py-3 text-right font-bold text-primary font-mono text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
                         </tr>
                     </tfoot>
                 </table>

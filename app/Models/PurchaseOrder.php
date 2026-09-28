@@ -36,6 +36,7 @@ class PurchaseOrder extends Model
         'number', 'supplier_id', 'purchase_request_id', 'status', 'expected_at', 'sent_at', 'received_at',
         'sent_to_email', 'send_error', 'total_amount', 'notes',
         'created_by', 'received_by', 'tenant_id',
+        'issuer_signature',
     ];
 
     protected $casts = [
@@ -58,6 +59,14 @@ class PurchaseOrder extends Model
             // fonctionnent sans refresh après création.
             if (empty($order->status)) {
                 $order->status = self::STATUS_DRAFT;
+            }
+            if (empty($order->issuer_signature)) {
+                $user = auth()->user() ?? ($order->created_by ? User::find($order->created_by) : null);
+                if ($user) {
+                    $order->issuer_signature = method_exists($user, 'signatureName')
+                        ? $user->signatureName()
+                        : User::extractSignatureName($user->name);
+                }
             }
         });
     }
@@ -201,5 +210,23 @@ class PurchaseOrder extends Model
                             : ($anyReceived ? self::STATUS_PARTIALLY_RECEIVED : $this->status),
             'received_at' => $fullyReceived ? now() : $this->received_at,
         ]);
+    }
+
+    /**
+     * Nom extrait pour la signature automatique manuscrite de l'émetteur.
+     */
+    public function issuerSignature(): ?string
+    {
+        if (!empty($this->issuer_signature)) {
+            return $this->issuer_signature;
+        }
+
+        if ($this->createdBy) {
+            return method_exists($this->createdBy, 'signatureName')
+                ? $this->createdBy->signatureName()
+                : User::extractSignatureName($this->createdBy->name);
+        }
+
+        return null;
     }
 }

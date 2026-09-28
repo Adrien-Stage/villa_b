@@ -414,6 +414,7 @@ class PermissionCatalog
             'economat.items.voir' => ['controller', 'econome', 'manager'],
             'economat.orders.cancel' => ['econome'],
             'economat.orders.creer' => ['econome'],
+            'economat.orders.export' => ['controller', 'econome', 'manager'],
             'economat.orders.receive' => ['econome'],
             'economat.orders.send' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager'],

@@ -41,4 +41,10 @@ class PurchaseOrderLine extends Model
     {
         return (int) round((float) $this->quantity_ordered * $this->unit_price);
     }
+
+    /** Alias de lineTotal() en centimes FCFA. */
+    public function total(): int
+    {
+        return $this->lineTotal();
+    }
 }

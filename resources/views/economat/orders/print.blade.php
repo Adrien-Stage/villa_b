@@ -226,11 +226,39 @@
             margin-bottom: 8px;
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+
+        @font-face {
+            font-family: 'Qwigley';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('/fonts/Qwigley-Regular.woff2') format('woff2'),
+                 url('/fonts/Qwigley-Regular.ttf') format('truetype');
+        }
+
+        .sig-handwritten {
+            font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+            font-size: 32px;
+            line-height: 1;
+            color: #1e3a8a;
+            display: inline-block;
+            transform: rotate(-3deg);
+            padding-left: 6px;
+            margin: 4px 0 2px 0;
+        }
+
+        .sig-meta {
+            font-size: 7.5px;
+            color: #64748b;
+            font-family: DejaVu Sans, monospace;
+        }
+
         .signature-mention {
             font-size: 8px;
             color: #64748b;
             font-style: italic;
-            margin-bottom: 45px;
+            margin-bottom: 4px;
         }
 
         .signature-line {
@@ -376,13 +404,21 @@
         <tr>
             <td>
                 <div class="signature-title">L'Économe / Responsable des Achats</div>
-                <div class="signature-mention">« Bon pour commande »</div>
-                <div class="signature-line">{{ $order->createdBy?->name ?? 'L\'Économe' }}</div>
+                <div class="signature-mention">« Bon pour commande & engagement »</div>
+                <div style="margin-top: 4px; font-weight: bold; color: #0f172a; font-size: 9.5px;">
+                    Nom : {{ $order->createdBy?->name ?? 'L\'Économe' }}
+                </div>
+                <div style="margin-top: 4px;">
+                    <span class="sig-handwritten">{{ $order->issuerSignature() }}</span>
+                </div>
+                <div class="sig-meta">
+                    ✓ Émis et signé numériquement le {{ $order->created_at->format('d/m/Y à H:i') }}
+                </div>
             </td>
             <td>
                 <div class="signature-title">La Direction Générale / Contrôle</div>
                 <div class="signature-mention">« Bon pour accord financier et engagement »</div>
-                <div class="signature-line">Visa & Cachet :</div>
+                <div class="signature-line" style="margin-top: 35px;">Nom & Visa : ....................................</div>
             </td>
         </tr>
     </table>

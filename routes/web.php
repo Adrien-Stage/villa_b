@@ -600,6 +600,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Bons de commande
             Route::get('/bons', [$eco . 'PurchaseOrderController', 'index'])->name('orders.index');
+            Route::get('/bons/export', [$eco . 'PurchaseOrderController', 'export'])->name('orders.export');
             Route::get('/bons/nouveau', [$eco . 'PurchaseOrderController', 'create'])->name('orders.create');
             Route::post('/bons', [$eco . 'PurchaseOrderController', 'store'])->name('orders.store');
             Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
