@@ -484,7 +484,7 @@
                             @enddroit
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
                             @droit('economat.receipts.voir')
-                                <x-sidebar-link route="economat.receipts.index" icon="package-check">Réceptions (BL)</x-sidebar-link>
+                                <x-sidebar-link route="economat.receipts.index" icon="package-check">Bons d'entrée (BR)</x-sidebar-link>
                             @enddroit
                             @droit('economat.stock_counts.voir')
                                 <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>

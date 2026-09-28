@@ -36,6 +36,7 @@ class GoodsReceipt extends Model
         'total_amount',
         'notes',
         'received_by',
+        'receiver_signature',
         'tenant_id',
     ];
 
@@ -57,6 +58,10 @@ class GoodsReceipt extends Model
             }
             if (empty($receipt->received_at)) {
                 $receipt->received_at = now();
+            }
+            if (empty($receipt->receiver_signature) && \Illuminate\Support\Facades\Auth::check()) {
+                $user = \Illuminate\Support\Facades\Auth::user();
+                $receipt->receiver_signature = $user->signatureName();
             }
         });
     }
@@ -114,6 +119,11 @@ class GoodsReceipt extends Model
         return self::STATUSES[$this->status] ?? $this->status;
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->statusLabel();
+    }
+
     public function hasRejections(): bool
     {
         return $this->lines->contains(fn (GoodsReceiptLine $l) => (float) $l->quantity_rejected > 0);
@@ -133,5 +143,14 @@ class GoodsReceipt extends Model
     {
         $total = $this->lines()->sum('total_cost');
         $this->update(['total_amount' => (int) $total]);
+    }
+
+    /**
+     * Nom du signataire économe pour l'affichage de la signature manuscrite Qwigley.
+     */
+    public function receiverSignature(): ?string
+    {
+        return $this->receiver_signature
+            ?: ($this->receivedBy ? $this->receivedBy->signatureName() : null);
     }
 }

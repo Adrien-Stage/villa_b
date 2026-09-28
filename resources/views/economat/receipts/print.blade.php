@@ -233,10 +233,25 @@
             margin-bottom: 40px;
         }
 
-        .signature-line {
-            font-size: 8.5px;
-            font-weight: 600;
-            color: #0f172a;
+        @import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+
+        @font-face {
+            font-family: 'Qwigley';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('{{ asset('fonts/qwigley/qwigley-regular.ttf') }}') format('truetype');
+        }
+
+        .sig-handwritten {
+            font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+            font-size: 32px;
+            line-height: 1;
+            color: #1e3a8a;
+            display: inline-block;
+            transform: rotate(-3deg);
+            padding-left: 6px;
+            margin: 4px 0 2px 0;
         }
 
         @media print {
@@ -290,8 +305,8 @@
     </table>
 
     <div class="doc-title-block">
-        <h1 class="doc-title">Bordereau Officiel de Réception de Marchandises (BR)</h1>
-        <div class="doc-subtitle">Contrôle contradictoire de livraison physique · Entrée en magasin central</div>
+        <h1 class="doc-title">Bon d'Entrée en Stock — Bordereau Officiel de Réception (BR)</h1>
+        <div class="doc-subtitle">Contrôle contradictoire de livraison physique et intégration des marchandises au magasin</div>
     </div>
 
     <table class="meta-grid">
@@ -387,9 +402,17 @@
                 <div class="signature-line">Nom & Signature :</div>
             </td>
             <td>
-                <div class="signature-title">Le Magasinier / Économe</div>
-                <div class="signature-mention">« Marchandises admises en stock »</div>
-                <div class="signature-line">{{ $receipt->receivedBy?->name ?? 'Magasinier' }}</div>
+                <div class="signature-title">L'Économe / Magasinier Réceptionnaire</div>
+                <div class="signature-mention">« Marchandises admises en stock — Bon d'entrée validé »</div>
+                <div style="margin-top: 4px; font-weight: bold; color: #0f172a; font-size: 9.5px;">
+                    Nom : {{ $receipt->receivedBy?->name ?? 'L\'Économe' }}
+                </div>
+                <div style="margin-top: 4px;">
+                    <span class="sig-handwritten">{{ $receipt->receiverSignature() }}</span>
+                </div>
+                <div style="font-size: 8px; color: #64748b; margin-top: 4px;">
+                    ✓ Réceptionné et signé numériquement le {{ $receipt->received_at->format('d/m/Y à H:i') }}
+                </div>
             </td>
             <td>
                 <div class="signature-title">Contrôle de Gestion / Direction</div>

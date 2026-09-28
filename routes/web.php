@@ -611,6 +611,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Bons de réception (Goods Receipts)
             Route::get('/receptions', [$eco . 'GoodsReceiptController', 'index'])->name('receipts.index');
+            Route::get('/receptions/export', [$eco . 'GoodsReceiptController', 'export'])->name('receipts.export');
             Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')->name('receipts.create');
             Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')->name('receipts.store');
             Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');

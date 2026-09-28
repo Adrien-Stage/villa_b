@@ -3,15 +3,29 @@
 @section('title', 'Réceptionner le bon ' . $order->number . ' — Économat')
 
 @section('content')
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+@font-face {
+    font-family: 'Qwigley';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('{{ asset('fonts/qwigley/qwigley-regular.ttf') }}') format('truetype');
+}
+.font-signature {
+    font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+}
+</style>
+
 <div class="max-w-5xl mx-auto space-y-6" x-data="goodsReceiptForm()">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.orders.show', $order) }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </a>
         <div>
-            <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Réception contradictoire de marchandises</span>
-            <h1 class="text-xl font-heading font-semibold text-primary">Bon de commande {{ $order->number }}</h1>
-            <p class="text-sm text-primary/60 mt-0.5">Fournisseur : <strong>{{ $order->supplier?->name }}</strong></p>
+            <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Établissement du Bon d'Entrée en Stock (BR)</span>
+            <h1 class="text-xl font-heading font-semibold text-primary">Réception de livraison — Commande {{ $order->number }}</h1>
+            <p class="text-sm text-primary/60 mt-0.5">Fournisseur attitré : <strong>{{ $order->supplier?->name }}</strong></p>
         </div>
     </div>
 
@@ -138,13 +152,35 @@
             </div>
         </div>
 
+        {{-- Engagement & Signature Numérique Automatique --}}
+        <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider text-primary">Engagement & Signature Numérique</span>
+                </div>
+                <p class="text-xs text-primary/60">
+                    En validant, vous certifiez l'exactitude du pointage. Les marchandises acceptées intègrent immédiatement les stocks et valorisent le CUMP.
+                </p>
+            </div>
+            <div class="px-5 py-2.5 bg-gray-50 border border-dashed border-secondary/30 rounded-xl text-center shrink-0 min-w-[200px]">
+                <div class="text-[10px] uppercase font-semibold text-primary/40 tracking-wider">Signature Économe</div>
+                <div class="font-signature text-3xl text-primary leading-tight py-0.5 select-none">
+                    {{ auth()->user()->signatureName() }}
+                </div>
+                <div class="text-[11px] text-primary/60 font-medium">
+                    {{ auth()->user()->name }}
+                </div>
+            </div>
+        </div>
+
         {{-- Actions --}}
         <div class="flex items-center justify-between pt-2">
-            <a href="{{ route('economat.orders.show', $order) }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">
+            <a href="{{ route('economat.orders.show', $order) }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                 Annuler
             </a>
-            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                <i data-lucide="package-check" class="w-4 h-4"></i> Valider la réception & Entrer en stock
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                <i data-lucide="package-check" class="w-4 h-4"></i> Valider et Signer le Bon d'Entrée
             </button>
         </div>
     </form>

@@ -46,6 +46,7 @@ class GoodsReceiptService
                 'status'               => GoodsReceipt::STATUS_RECEIVED,
                 'notes'                => $data['notes'] ?? null,
                 'received_by'          => $user->id,
+                'receiver_signature'   => $user->signatureName(),
                 'tenant_id'            => $user->tenant_id ?? \App\Models\Tenant::current()?->id,
             ]);
 

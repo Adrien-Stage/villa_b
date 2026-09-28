@@ -427,6 +427,7 @@ class PermissionCatalog
             'economat.receipts.cancel' => ['econome', 'manager'],
             'economat.receipts.creer' => ['econome'],
             'economat.receipts.voir' => ['controller', 'econome', 'manager'],
+            'economat.receipts.export' => ['controller', 'econome', 'manager'],
             'economat.requisitions.approve' => ['econome'],
             'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
             'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
