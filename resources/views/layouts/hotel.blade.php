@@ -471,7 +471,13 @@
                             <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
+                            @droit('economat.purchase_requests.voir')
+                                <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                            @enddroit
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @droit('economat.receipts.voir')
+                                <x-sidebar-link route="economat.receipts.index" icon="package-check">Réceptions (BL)</x-sidebar-link>
+                            @enddroit
                             @droit('economat.stock_counts.voir')
                                 <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>
                             @enddroit

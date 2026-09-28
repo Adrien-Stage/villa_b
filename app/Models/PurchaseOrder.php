@@ -33,7 +33,7 @@ class PurchaseOrder extends Model
     ];
 
     protected $fillable = [
-        'number', 'supplier_id', 'status', 'expected_at', 'sent_at', 'received_at',
+        'number', 'supplier_id', 'purchase_request_id', 'status', 'expected_at', 'sent_at', 'received_at',
         'sent_to_email', 'send_error', 'total_amount', 'notes',
         'created_by', 'received_by', 'tenant_id',
     ];
@@ -98,6 +98,21 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderLine::class);
     }
 
+    public function purchaseRequest(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseRequest::class);
+    }
+
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(GoodsReceipt::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(SupplierInvoice::class);
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -106,6 +121,23 @@ class PurchaseOrder extends Model
     public function receivedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function invoicedAmount(): int
+    {
+        return (int) $this->invoices()->sum('amount_ttc');
+    }
+
+    public function invoicingStatus(): string
+    {
+        $invoiced = $this->invoicedAmount();
+        if ($invoiced <= 0) {
+            return 'not_invoiced';
+        }
+        if ($invoiced >= $this->total_amount) {
+            return 'fully_invoiced';
+        }
+        return 'partially_invoiced';
     }
 
     public function scopeOpen(Builder $query): Builder

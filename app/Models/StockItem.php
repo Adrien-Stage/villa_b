@@ -65,6 +65,16 @@ class StockItem extends Model
         return $this->hasMany(StockCountLine::class);
     }
 
+    public function purchaseRequestLines(): HasMany
+    {
+        return $this->hasMany(PurchaseRequestLine::class);
+    }
+
+    public function goodsReceiptLines(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptLine::class);
+    }
+
     // ── Portées ──────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder

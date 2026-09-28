@@ -90,9 +90,20 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $order): View
     {
-        $order->load('supplier', 'lines.item', 'createdBy', 'receivedBy');
+        $order->load(['supplier', 'lines.item', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'invoices']);
 
         return view('economat.orders.show', compact('order'));
+    }
+
+    /**
+     * Bon de commande officiel fournisseur imprimable.
+     * Conforme aux normes d'audit et sans éléments d'interface web polluants.
+     */
+    public function print(PurchaseOrder $order): View
+    {
+        $order->load(['supplier', 'lines.item', 'createdBy', 'purchaseRequest']);
+
+        return view('economat.orders.print', compact('order'));
     }
 
     /** Envoi du bon par email au fournisseur. */
