@@ -1,74 +1,148 @@
 @extends('layouts.hotel')
 
-@section('title', 'Nouvelle demande — Économat')
+@section('title', 'Nouveau bon de réquisition — Économat')
 
 @section('content')
-<div class="max-w-3xl mx-auto"
-     x-data="requisitionForm({{ Js::from($items->map(fn($i) => ['id' => $i->id, 'name' => $i->name, 'unit' => $i->unit, 'stock' => (float) $i->current_stock])->values()) }})">
-    <a href="{{ route('economat.requisitions.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour
-    </a>
+<div class="max-w-4xl mx-auto"
+     x-data="requisitionForm({{ Js::from($items->map(fn($i) => [
+         'id'       => $i->id,
+         'name'     => $i->name,
+         'unit'     => $i->unit,
+         'stock'    => (float) $i->current_stock,
+         'category' => $i->category?->name ?? 'Général',
+         'price'    => (int) ($i->average_cost ?: $i->last_purchase_price ?: 0),
+     ])->values()) }})">
 
-    <h1 class="text-xl font-heading font-semibold text-primary mb-1">Nouvelle demande à l'économat</h1>
-    <p class="text-sm text-primary/60 mb-6">Elle sera transmise à l'économe pour validation avant la livraison.</p>
+    <div class="flex items-center justify-between gap-4 mb-4">
+        <a href="{{ route('economat.requisitions.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Retour à la liste des bons</span>
+        </a>
+    </div>
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-heading font-semibold text-primary flex items-center gap-2">
+            <i data-lucide="file-plus" class="w-6 h-6 text-primary"></i>
+            <span>Émission d'un Bon de Réquisition interne</span>
+        </h1>
+        <p class="text-sm text-primary/60 mt-1 max-w-3xl">
+            Sollicitation d'articles auprès de l'économat : denrées alimentaires, produits consommables, linge, matériels et fournitures de bureau.
+        </p>
+    </div>
 
     @include('economat.partials.flash')
 
     <form method="POST" action="{{ route('economat.requisitions.store') }}">
         @csrf
-        <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-4">
+
+        {{-- Cadre Informations du Bon --}}
+        <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-5 shadow-sm">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Service émetteur & Motif</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-primary/70 mb-1.5">Département <span class="text-red-500">*</span></label>
-                    <select name="department" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <label class="block text-xs font-semibold text-primary/70 mb-1.5">
+                        Service émetteur <span class="text-red-500">*</span>
+                    </label>
+                    <select name="department" required
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                         @foreach($departments as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
+                    <p class="text-[10px] text-primary/50 mt-1">Sélectionnez le service rattaché à ce besoin.</p>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-medium text-primary/70 mb-1.5">Motif</label>
-                    <input type="text" name="purpose" maxlength="500" placeholder="Ex : réassort chambres étage 2" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <label class="block text-xs font-semibold text-primary/70 mb-1.5">Motif / Justification du besoin</label>
+                    <input type="text" name="purpose" maxlength="500"
+                        placeholder="Ex : Réassort fournitures bureau compta, réassort accueil chambres..."
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <p class="text-[10px] text-primary/50 mt-1">Précisez la destination ou l'opération concernée.</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-4">
-            <div class="px-5 py-3 border-b border-secondary/20 flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-primary">Articles demandés</h2>
-                <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter
+        {{-- Cadre Sélection des Articles --}}
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm">
+            <div class="px-5 py-3 border-b border-secondary/20 bg-surface-light flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-primary">Articles sollicités</h2>
+                    <span class="text-xs text-primary/50" x-text="`(${lines.length} ligne(s))`"></span>
+                </div>
+                <button type="button" @click="addLine()"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-lg transition-colors">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Ajouter une ligne</span>
                 </button>
             </div>
-            <div class="p-5 space-y-3">
-                <template x-if="lines.length === 0"><p class="text-sm text-primary/40 text-center py-4">Aucun article.</p></template>
-                <template x-for="(line, idx) in lines" :key="line.key">
-                    {{-- Sur mobile : l'article prend toute la largeur, la
-                         quantité et la suppression passent en dessous. --}}
-                    <div class="grid grid-cols-12 gap-2 items-center border-b border-secondary/10 pb-2 md:border-0 md:pb-0">
-                        <div class="col-span-12 md:col-span-7">
-                            <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                                <option value="">Article…</option>
-                                <template x-for="it in items" :key="it.id">
-                                    <option :value="it.id" x-text="`${it.name} (${formatStock(it.stock)} ${it.unit} en stock)`"></option>
-                                </template>
-                            </select>
-                        </div>
-                        <div class="col-span-10 md:col-span-4">
-                            <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`" x-model.number="line.qty" placeholder="Quantité" required class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
-                        </div>
-                        <div class="col-span-2 md:col-span-1 text-right">
-                            <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700 p-2 -mr-2"><i data-lucide="x" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
+
+            <div class="p-5">
+                <template x-if="lines.length === 0">
+                    <p class="text-xs text-primary/40 text-center py-6">Aucun article sélectionné. Cliquez sur « Ajouter une ligne » ci-dessus.</p>
                 </template>
+
+                <div class="space-y-3">
+                    <template x-for="(line, idx) in lines" :key="line.key">
+                        <div class="grid grid-cols-12 gap-3 items-center p-3 rounded-lg border border-secondary/15 bg-surface-light/30">
+                            {{-- Sélection de l'article --}}
+                            <div class="col-span-12 md:col-span-6">
+                                <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Désignation de l'article</label>
+                                <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" required
+                                    class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                    <option value="">Sélectionner un article...</option>
+                                    <template x-for="it in items" :key="it.id">
+                                        <option :value="it.id" x-text="`[${it.category}] ${it.name} (${formatStock(it.stock)} ${it.unit} dispo)`"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            {{-- Quantité demandée --}}
+                            <div class="col-span-6 md:col-span-3">
+                                <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Qté demandée</label>
+                                <div class="inline-flex items-center w-full">
+                                    <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`"
+                                        x-model.number="line.qty" placeholder="Quantité" required
+                                        class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary font-mono font-bold text-right outline-none focus:border-primary">
+                                    <span class="ml-2 text-xs text-primary/60 font-medium" x-text="getItemUnit(line.itemId)"></span>
+                                </div>
+                            </div>
+
+                            {{-- Estimation financière --}}
+                            <div class="col-span-4 md:col-span-2 text-right">
+                                <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Montant estimé</label>
+                                <span class="font-mono text-xs font-bold text-primary block py-1.5" x-text="formatMoney(getLineTotal(line))"></span>
+                            </div>
+
+                            {{-- Suppression --}}
+                            <div class="col-span-2 md:col-span-1 text-right">
+                                <label class="block text-[10px] text-transparent mb-1">Action</label>
+                                <button type="button" @click="removeLine(idx)"
+                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Supprimer la ligne">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Total de la demande --}}
+            <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between text-xs">
+                <span class="text-primary/70">Budget estimé du bon :</span>
+                <strong class="font-mono text-sm text-primary" x-text="formatMoney(getTotal())"></strong>
             </div>
         </div>
 
-        <div class="flex justify-end gap-3">
-            <a href="{{ route('economat.requisitions.index') }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</a>
-            <button type="submit" :disabled="lines.length === 0" class="px-5 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark disabled:opacity-50 disabled:cursor-not-allowed">
-                Transmettre la demande
+        <div class="flex items-center justify-end gap-3">
+            <a href="{{ route('economat.requisitions.index') }}"
+                class="px-4 py-2 text-xs font-semibold text-primary/60 hover:text-primary transition-colors">
+                Annuler
+            </a>
+            <button type="submit" :disabled="lines.length === 0"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Transmettre le bon à l'économat</span>
             </button>
         </div>
     </form>
@@ -82,10 +156,39 @@
             items,
             lines: [],
             nextKey: 1,
-            addLine() { this.lines.push({ key: this.nextKey++, itemId: '', qty: 1 }); },
-            removeLine(idx) { this.lines.splice(idx, 1); },
-            formatStock(v) { return new Intl.NumberFormat('fr-FR').format(v); },
-            init() { this.addLine(); },
+            addLine() {
+                this.lines.push({ key: this.nextKey++, itemId: '', qty: 1 });
+            },
+            removeLine(idx) {
+                if (this.lines.length > 1) {
+                    this.lines.splice(idx, 1);
+                }
+            },
+            getItem(id) {
+                return this.items.find(i => i.id === id);
+            },
+            getItemUnit(id) {
+                const it = this.getItem(id);
+                return it ? it.unit : '';
+            },
+            getLineTotal(line) {
+                const it = this.getItem(line.itemId);
+                if (!it || !line.qty) return 0;
+                return Math.round(line.qty * it.price);
+            },
+            getTotal() {
+                return this.lines.reduce((sum, l) => sum + this.getLineTotal(l), 0);
+            },
+            formatStock(v) {
+                return new Intl.NumberFormat('fr-FR').format(v);
+            },
+            formatMoney(centimes) {
+                const val = Math.round(centimes / 100);
+                return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " FCFA";
+            },
+            init() {
+                this.addLine();
+            },
         };
     }
 </script>

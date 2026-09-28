@@ -20,11 +20,12 @@ class StockRequisition extends Model
     use HasFactory;
 
     public const DEPARTMENTS = [
-        'hebergement'  => 'Hébergement',
-        'housekeeping' => 'Housekeeping',
-        'restaurant'   => 'Restaurant / Cuisine',
-        'boutique'     => 'Boutique',
-        'autre'        => 'Autre',
+        'hebergement'  => 'Hébergement / Réception',
+        'housekeeping' => 'Housekeeping / Étages',
+        'restaurant'   => 'Restauration / Cuisine & Bar',
+        'boutique'     => 'Boutique / Vente',
+        'comptabilite' => 'Comptabilité / Finances',
+        'autre'        => 'Autre service',
     ];
 
     public const STATUS_PENDING   = 'pending';
@@ -47,7 +48,8 @@ class StockRequisition extends Model
         'housekeeping' => ['housekeeping_leader', 'housekeeping', 'manager'],
         'restaurant'   => ['restaurant_chief', 'manager'],
         'boutique'     => ['shop_manager', 'manager'],
-        'autre'        => ['manager'],
+        'comptabilite' => ['accountant', 'manager'],
+        'autre'        => ['manager', 'econome', 'controller'],
     ];
 
     protected $fillable = [
@@ -172,5 +174,17 @@ class StockRequisition extends Model
             fn (StockRequisitionLine $l) => $l->item
                 && (float) $l->item->current_stock >= (float) $l->quantity_requested
         );
+    }
+
+    /** Montant total valorisé au CUMP des articles demandés (centimes FCFA). */
+    public function totalRequestedCost(): int
+    {
+        return (int) $this->lines->sum(fn ($l) => $l->totalRequestedCost());
+    }
+
+    /** Montant total valorisé au CUMP des articles réellement servis (centimes FCFA). */
+    public function totalIssuedCost(): int
+    {
+        return (int) $this->lines->sum(fn ($l) => $l->totalIssuedCost());
     }
 }

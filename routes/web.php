@@ -661,6 +661,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
             Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
             Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
+            Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])->whereNumber('requisition')->name('requisitions.print');
             Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
         });
     });

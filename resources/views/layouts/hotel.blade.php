@@ -497,7 +497,7 @@
                                     $porteeDemandes = $droits->scopeFor(auth()->user(), 'economat.requisitions.voir');
                                 @endphp
                                 <x-sidebar-link route="economat.requisitions.index" icon="inbox">
-                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Demandes' }}
+                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Bons de réquisition' }}
                                 </x-sidebar-link>
                             @endunless
                             @droit('economat.control.voir')
