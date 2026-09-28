@@ -134,6 +134,11 @@
                 <i data-lucide="handshake" class="w-4 h-4"></i>
                 Partenaires
             </a>
+            <a href="{{ route('economat.suppliers.index') }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap border-transparent text-primary/40 hover:text-primary/70">
+                <i data-lucide="truck" class="w-4 h-4"></i>
+                Fournisseurs Économat
+            </a>
         @endrole
     </div>
 
