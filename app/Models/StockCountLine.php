@@ -60,6 +60,11 @@ class StockCountLine extends Model
         return $this->belongsTo(StockItem::class, 'stock_item_id');
     }
 
+    public function stockItem(): BelongsTo
+    {
+        return $this->item();
+    }
+
     public function isCounted(): bool
     {
         return $this->counted_quantity !== null;

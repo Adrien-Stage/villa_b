@@ -635,6 +635,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])->whereNumber('stockCount')->name('stock_counts.close');
             Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
             Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])->whereNumber('stockCount')->name('stock_counts.report');
+
+            // Contrôle, alertes, propositions de commande et ratios
+            Route::get('/controle', [$eco . 'StockControlController', 'index'])->name('control.index');
+            Route::get('/controle/propositions', [$eco . 'StockControlController', 'suggestions'])->name('control.suggestions.index');
+            Route::post('/controle/propositions', [$eco . 'StockControlController', 'generatePurchaseRequest'])->name('control.suggestions.store');
+            Route::get('/controle/ecarts', [$eco . 'StockControlController', 'variances'])->name('control.variances.index');
+            Route::get('/controle/imprimer', [$eco . 'StockControlController', 'printReport'])->name('control.print');
         });
 
         // Demandes & Demandes d'achat : ouvertes aussi aux responsables de département qui

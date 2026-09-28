@@ -500,6 +500,15 @@
                                     {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Demandes' }}
                                 </x-sidebar-link>
                             @endunless
+                            @droit('economat.control.voir')
+                                <x-sidebar-link route="economat.control.index" icon="pie-chart">Contrôle & Ratios</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.control.suggestions.voir')
+                                <x-sidebar-link route="economat.control.suggestions.index" icon="shopping-cart">Propositions d'achat</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.control.variances.voir')
+                                <x-sidebar-link route="economat.control.variances.index" icon="git-compare">Écarts d'inventaire</x-sidebar-link>
+                            @enddroit
                         </ul>
                     </div>
                 @endundroit
