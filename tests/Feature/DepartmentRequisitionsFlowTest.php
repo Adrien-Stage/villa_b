@@ -298,3 +298,63 @@ test('la livraison d un bon de requisition destocke correctement et trace les qu
         ->and($mvt->type)->toBe('out')
         ->and((float) $mvt->quantity)->toBe(-20.0);
 });
+
+test('chaque bon emis est automatiquement signe par le nom de l utilisateur connecte avec la police qwigley', function () {
+    // 1. Vérification de l'extraction sur nom simple et nom double
+    expect(User::extractSignatureName('Boris Setate'))->toBe('Boris')
+        ->and(User::extractSignatureName('Jean Dupont'))->toBe('Jean')
+        ->and(User::extractSignatureName('Clyde'))->toBe('Clyde')
+        ->and(User::extractSignatureName('marie-claire kuate'))->toBe('Marie-Claire');
+
+    // 2. Vérification de la présence des fichiers de police Qwigley installés localement
+    expect(file_exists(public_path('fonts/Qwigley-Regular.woff2')))->toBeTrue()
+        ->and(file_exists(public_path('fonts/Qwigley-Regular.ttf')))->toBeTrue();
+
+    // 3. Émission d'un bon par un utilisateur ayant un nom composé ("Boris Setate")
+    $demandeur = User::factory()->create([
+        'name' => 'Boris Setate',
+        'role' => 'accountant',
+    ]);
+    test()->actingAs($demandeur);
+
+    $cat = StockCategory::create(['name' => 'Fournitures de bureau']);
+    $item = StockItem::create([
+        'name'              => 'Bloc-notes A5',
+        'unit'              => 'piece',
+        'current_stock'     => 20,
+        'min_stock'         => 5,
+        'average_cost'      => 80000,
+        'stock_category_id' => $cat->id,
+        'is_active'         => true,
+    ]);
+
+    $res = test()->post(route('economat.requisitions.store'), [
+        'department' => 'comptabilite',
+        'purpose'    => 'Fournitures réunions de clôture comptable',
+        'lines'      => [
+            ['stock_item_id' => $item->id, 'quantity' => 3],
+        ],
+    ]);
+    $res->assertRedirect();
+
+    $bon = StockRequisition::where('department', 'comptabilite')->latest()->first();
+    expect($bon)->not->toBeNull()
+        ->and($bon->requester_signature)->toBe('Boris')
+        ->and($bon->requesterSignature())->toBe('Boris');
+
+    // 4. Consultation du détail (show)
+    $resShow = test()->get(route('economat.requisitions.show', $bon));
+    $resShow->assertOk();
+    $resShow->assertSee('Boris');
+    $resShow->assertSee('Qwigley');
+    $resShow->assertSee('font-signature');
+
+    // 5. Impression officielle (print)
+    $resPrint = test()->get(route('economat.requisitions.print', $bon));
+    $resPrint->assertOk();
+    $resPrint->assertSee('Qwigley');
+    $resPrint->assertSee('sig-handwritten');
+    $resPrint->assertSee('Boris');
+    $resPrint->assertSee('Signé électroniquement le', false);
+});
+

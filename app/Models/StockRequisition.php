@@ -55,6 +55,7 @@ class StockRequisition extends Model
     protected $fillable = [
         'number', 'department', 'status', 'purpose', 'review_notes',
         'requested_by', 'reviewed_by', 'reviewed_at', 'delivered_at', 'tenant_id',
+        'requester_signature',
     ];
 
     protected $casts = [
@@ -72,6 +73,14 @@ class StockRequisition extends Model
             }
             if (empty($requisition->status)) {
                 $requisition->status = self::STATUS_PENDING;
+            }
+            if (empty($requisition->requester_signature)) {
+                $user = auth()->user() ?? ($requisition->requested_by ? User::find($requisition->requested_by) : null);
+                if ($user) {
+                    $requisition->requester_signature = method_exists($user, 'signatureName')
+                        ? $user->signatureName()
+                        : User::extractSignatureName($user->name);
+                }
             }
         });
     }
@@ -186,5 +195,23 @@ class StockRequisition extends Model
     public function totalIssuedCost(): int
     {
         return (int) $this->lines->sum(fn ($l) => $l->totalIssuedCost());
+    }
+
+    /**
+     * Nom extrait pour la signature automatique du demandeur.
+     */
+    public function requesterSignature(): ?string
+    {
+        if (!empty($this->requester_signature)) {
+            return $this->requester_signature;
+        }
+
+        if ($this->requestedBy) {
+            return method_exists($this->requestedBy, 'signatureName')
+                ? $this->requestedBy->signatureName()
+                : User::extractSignatureName($this->requestedBy->name);
+        }
+
+        return null;
     }
 }

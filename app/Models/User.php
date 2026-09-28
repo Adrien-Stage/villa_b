@@ -434,4 +434,39 @@ class User extends Authenticatable
     {
         return \Illuminate\Support\Facades\Cache::has('user-is-online-' . $this->id);
     }
+
+    /**
+     * Nom utilisé pour la signature manuscrite stylisée.
+     * Si l'utilisateur possède plusieurs noms (ex: "Boris Setate"), on extrait l'un de ses noms
+     * (le prénom ou premier mot usuel) au format Titre pour un rendu manuscrit fluide.
+     */
+    public function signatureName(): string
+    {
+        return self::extractSignatureName($this->name);
+    }
+
+    /**
+     * Extrait l'un des noms pour la signature automatique manuscrite.
+     */
+    public static function extractSignatureName(?string $fullName): string
+    {
+        $raw = trim($fullName ?? '');
+        if ($raw === '') {
+            return '';
+        }
+
+        // Nettoyage éventuel des civilités
+        $cleaned = preg_replace('/^(m\.|mr\.|dr\.|mme\.|mlle\.)\s+/iu', '', $raw);
+        $parts = array_values(array_filter(preg_split('/\s+/', trim($cleaned))));
+        if (empty($parts)) {
+            $parts = array_values(array_filter(preg_split('/\s+/', $raw)));
+        }
+
+        if (empty($parts)) {
+            return '';
+        }
+
+        // Prend un des noms de l'utilisateur s'il en a deux ou plus
+        return mb_convert_case($parts[0], MB_CASE_TITLE, 'UTF-8');
+    }
 }

@@ -13,6 +13,21 @@
     ];
 @endphp
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+@font-face {
+    font-family: 'Qwigley';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Qwigley-Regular.woff2') format('woff2'),
+         url('/fonts/Qwigley-Regular.ttf') format('truetype');
+}
+.font-signature {
+    font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+}
+</style>
+
 <div class="max-w-4xl mx-auto">
     <div class="flex items-center justify-between gap-4 mb-4">
         <a href="{{ route('economat.requisitions.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
@@ -53,6 +68,20 @@
                         {{ $requisition->purpose }}
                     </div>
                 @endif
+            </div>
+
+            {{-- Signature manuscrite de l'émetteur --}}
+            <div class="sm:self-start bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 min-w-[210px] text-center shadow-xs">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Signature du Demandeur</span>
+                <div class="font-signature text-3xl text-blue-900 py-1 select-none transform -rotate-3 inline-block">
+                    {{ $requisition->requesterSignature() }}
+                </div>
+                <div class="text-[10px] font-medium text-slate-700">
+                    {{ $requisition->requestedBy?->name ?? '—' }}
+                </div>
+                <div class="text-[9px] text-slate-400 font-mono mt-0.5">
+                    Signé numériquement le {{ $requisition->created_at->format('d/m/Y H:i') }}
+                </div>
             </div>
         </div>
 

@@ -225,6 +225,17 @@
         .font-bold { font-weight: 700; }
 
         /* Cadre signatures */
+        @import url('https://fonts.googleapis.com/css2?family=Qwigley&display=swap');
+
+        @font-face {
+            font-family: 'Qwigley';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('/fonts/Qwigley-Regular.woff2') format('woff2'),
+                 url('/fonts/Qwigley-Regular.ttf') format('truetype');
+        }
+
         .signatures-table {
             width: 100%;
             margin-top: 30px;
@@ -237,7 +248,8 @@
             border: 1px solid #cbd5e1;
             padding: 10px;
             vertical-align: top;
-            height: 90px;
+            height: 95px;
+            min-height: 95px;
         }
 
         .sig-title {
@@ -250,7 +262,24 @@
 
         .sig-note {
             font-size: 8px;
-            color: #94a3b8;
+            color: #64748b;
+        }
+
+        .sig-handwritten {
+            font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
+            font-size: 32px;
+            line-height: 1;
+            color: #1e3a8a;
+            display: inline-block;
+            transform: rotate(-3deg);
+            padding-left: 6px;
+            margin: 4px 0 2px 0;
+        }
+
+        .sig-meta {
+            font-size: 7.5px;
+            color: #64748b;
+            font-family: DejaVu Sans, monospace;
         }
 
         @media print {
@@ -448,8 +477,13 @@
                 <td>
                     <div class="sig-title">Le Demandeur</div>
                     <div class="sig-note">Responsable {{ $requisition->departmentLabel() }}</div>
-                    <div class="sig-note" style="margin-top: 25px;">Nom : {{ $requisition->requestedBy?->name ?? '....................................' }}</div>
-                    <div class="sig-note">Date & Signature :</div>
+                    <div class="sig-note" style="margin-top: 4px;">Nom : <strong>{{ $requisition->requestedBy?->name ?? '—' }}</strong></div>
+                    <div style="margin-top: 4px;">
+                        <span class="sig-handwritten">{{ $requisition->requesterSignature() }}</span>
+                    </div>
+                    <div class="sig-meta">
+                        ✓ Signé électroniquement le {{ $requisition->created_at->format('d/m/Y à H:i') }}
+                    </div>
                 </td>
                 <td>
                     <div class="sig-title">L'Économe / Magasinier</div>

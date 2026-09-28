@@ -216,11 +216,15 @@ class StockRequisitionController extends Controller
         ]);
 
         $requisition = DB::transaction(function () use ($validated) {
+            $user = Auth::user();
+            $signature = $user ? $user->signatureName() : null;
+
             $requisition = StockRequisition::create([
-                'department'   => $validated['department'],
-                'purpose'      => $validated['purpose'] ?? null,
-                'requested_by' => Auth::id(),
-                'tenant_id'    => Auth::user()->tenant_id
+                'department'          => $validated['department'],
+                'purpose'             => $validated['purpose'] ?? null,
+                'requested_by'        => Auth::id(),
+                'requester_signature' => $signature,
+                'tenant_id'           => Auth::user()->tenant_id
                     ?? \App\Models\Tenant::current()?->id,
             ]);
 
