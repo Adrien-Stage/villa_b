@@ -9,6 +9,7 @@ use App\Models\RestaurantPantryMovement;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantStockCount;
 use App\Models\RestaurantStockCountLine;
+use App\Models\StockRequisition;
 use App\Notifications\PantryItemLowStock;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
@@ -52,9 +53,10 @@ class RestaurantStockService
         ?RestaurantCustomerOrder $order = null,
         ?RestaurantRecipe $recipe = null,
         ?CarbonInterface $occurredAt = null,
+        ?int $stockRequisitionId = null,
     ): RestaurantPantryMovement {
         return DB::transaction(function () use (
-            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt
+            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt, $stockRequisitionId
         ) {
             // Verrou : deux ventes simultanées ne doivent pas lire le même stock.
             $item = RestaurantPantryItem::query()->lockForUpdate()->findOrFail($item->id);
@@ -101,6 +103,7 @@ class RestaurantStockService
                 'stock_after' => round($next, 3),
                 'restaurant_customer_order_id' => $order?->id,
                 'restaurant_recipe_id' => $recipe?->id,
+                'stock_requisition_id' => $stockRequisitionId,
                 'reason' => $reason,
                 'notes' => $notes,
                 'recorded_by' => Auth::id(),
@@ -158,6 +161,40 @@ class RestaurantStockService
             unitCost: $unitCost,
             notes: $notes,
             occurredAt: $occurredAt,
+        );
+    }
+
+    /**
+     * Réception de marchandise en provenance de l'Économat (transfert interne).
+     *
+     * @param  RestaurantPantryItem  $item         L'ingrédient de destination
+     * @param  float                 $quantity     Quantité reçue en unité de stock garde-manger
+     * @param  float|int             $unitCost     Coût unitaire en centimes FCFA par unité de garde-manger
+     * @param  StockRequisition      $requisition  Le bon de sortie / demande de l'économat
+     * @param  string|null           $notes        Commentaire éventuel
+     * @param  CarbonInterface|null  $occurredAt   Date effective
+     */
+    public function receiveFromEconomat(
+        RestaurantPantryItem $item,
+        float $quantity,
+        float|int $unitCost,
+        StockRequisition $requisition,
+        ?string $notes = null,
+        ?CarbonInterface $occurredAt = null,
+    ): RestaurantPantryMovement {
+        if ($quantity <= 0) {
+            throw new RuntimeException('La quantité reçue du transfert doit être supérieure à zéro.');
+        }
+
+        return $this->recordMovement(
+            item: $item,
+            type: RestaurantPantryMovement::TYPE_IN,
+            quantity: $quantity,
+            reason: RestaurantPantryMovement::REASON_TRANSFER_IN,
+            unitCost: (float) $unitCost,
+            notes: $notes ?? "Transfert Économat (BS #{$requisition->number})",
+            occurredAt: $occurredAt,
+            stockRequisitionId: $requisition->id,
         );
     }
 

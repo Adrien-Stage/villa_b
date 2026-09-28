@@ -59,7 +59,7 @@ class RestaurantPantryController extends Controller
         $items = $itemsQuery->paginate(15)->withQueryString();
 
         $recentMovements = RestaurantPantryMovement::query()
-            ->with(['item', 'recordedBy'])
+            ->with(['item', 'recordedBy', 'stockRequisition'])
             ->latest('occurred_at')
             ->take(20)
             ->get();

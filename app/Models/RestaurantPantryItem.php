@@ -15,6 +15,7 @@ class RestaurantPantryItem extends Model
 
     protected $fillable = [
         'restaurant_pantry_category_id',
+        'stock_item_id',
         'name',
         'unit',
         'is_prepared',
@@ -38,6 +39,11 @@ class RestaurantPantryItem extends Model
         'is_prepared' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    public function stockItem(): BelongsTo
+    {
+        return $this->belongsTo(StockItem::class, 'stock_item_id');
+    }
 
     public function category(): BelongsTo
     {

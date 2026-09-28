@@ -2,13 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\RestaurantPantryCategory;
+use App\Models\RestaurantPantryItem;
+use App\Models\ShopProduct;
+use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\StockRequisition;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Cycle d'une demande d'un département à l'économat : validation par l'économe,
- * puis livraison qui déstocke réellement les articles.
+ * puis livraison qui déstocke réellement les articles et met à jour les stocks
+ * du département de destination.
  *
  * La séparation validation / livraison est volontaire : l'économe peut
  * approuver le principe, puis servir plus tard, et ajuster à la livraison les
@@ -16,8 +21,13 @@ use Illuminate\Support\Facades\DB;
  */
 class StockRequisitionService
 {
-    public function __construct(private StockService $stock)
-    {
+    private RestaurantStockService $restaurantStock;
+
+    public function __construct(
+        private StockService $stock,
+        ?RestaurantStockService $restaurantStock = null
+    ) {
+        $this->restaurantStock = $restaurantStock ?? app(RestaurantStockService::class);
     }
 
     public function approve(StockRequisition $requisition, ?string $notes = null): void
@@ -50,8 +60,8 @@ class StockRequisitionService
 
     /**
      * Livraison : sort du stock les quantités réellement servies et clôt la
-     * demande. $issued associe l'id de ligne à la quantité servie ; en son
-     * absence, on sert la quantité demandée.
+     * demande. Met également à jour le stock du département destinataire
+     * (garde-manger restaurant, boutique) de façon atomique.
      *
      * @param  array<int, float>  $issued  [line_id => quantité servie]
      */
@@ -79,7 +89,7 @@ class StockRequisitionService
                     continue;
                 }
 
-                $this->stock->recordOut(
+                $movement = $this->stock->recordOut(
                     $line->item,
                     $qty,
                     StockMovement::SOURCE_REQUISITION,
@@ -88,6 +98,13 @@ class StockRequisitionService
                 );
 
                 $line->update(['quantity_issued' => $qty]);
+
+                // Transfert vers le sous-stock du département de destination
+                if ($requisition->department === 'restaurant') {
+                    $this->creditRestaurantPantry($line->item, $qty, (int) $movement->unit_cost, $requisition);
+                } elseif ($requisition->department === 'boutique') {
+                    $this->creditShopProduct($line->item, $qty);
+                }
             }
 
             $requisition->update([
@@ -95,5 +112,99 @@ class StockRequisitionService
                 'delivered_at' => now(),
             ]);
         });
+    }
+
+    /**
+     * Crédite le garde-manger du restaurant lors d'un transfert interne.
+     */
+    protected function creditRestaurantPantry(
+        StockItem $stockItem,
+        float $economatQty,
+        int $economatUnitCost,
+        StockRequisition $requisition
+    ): void {
+        $pantryItem = $this->resolveOrCreatePantryItem($stockItem);
+
+        // Facteur de conversion : stock garde-manger = stock économat * ratio
+        $conversion = (float) $pantryItem->conversion();
+
+        $economatUnit = mb_strtolower(trim($stockItem->unit ?? ''));
+        $pantryUnit = mb_strtolower(trim($pantryItem->unit ?? ''));
+
+        if ($conversion <= 1.0) {
+            if ($economatUnit === 'kg' && $pantryUnit === 'g') {
+                $conversion = 1000.0;
+            } elseif ($economatUnit === 'l' && $pantryUnit === 'ml') {
+                $conversion = 1000.0;
+            }
+        }
+
+        $pantryQty = round($economatQty * $conversion, 3);
+        $pantryUnitCost = $conversion > 0 ? ((float) $economatUnitCost / $conversion) : (float) $economatUnitCost;
+
+        $this->restaurantStock->receiveFromEconomat(
+            item: $pantryItem,
+            quantity: $pantryQty,
+            unitCost: $pantryUnitCost,
+            requisition: $requisition,
+            notes: "Transfert Économat (BS #{$requisition->number})",
+        );
+    }
+
+    /**
+     * Retrouve ou crée automatiquement l'article du garde-manger correspondant à l'article de l'économat.
+     */
+    protected function resolveOrCreatePantryItem(StockItem $stockItem): RestaurantPantryItem
+    {
+        // 1. Recherche par stock_item_id
+        $item = RestaurantPantryItem::where('stock_item_id', $stockItem->id)->first();
+        if ($item) {
+            return $item;
+        }
+
+        // 2. Recherche par nom identique
+        $trimmedName = trim($stockItem->name);
+        $item = RestaurantPantryItem::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
+        if ($item) {
+            if (!$item->stock_item_id) {
+                $item->update(['stock_item_id' => $stockItem->id]);
+            }
+            return $item;
+        }
+
+        // 3. Création automatique si introuvable dans le garde-manger
+        $defaultCategory = RestaurantPantryCategory::first();
+
+        return RestaurantPantryItem::create([
+            'stock_item_id'                 => $stockItem->id,
+            'restaurant_pantry_category_id' => $defaultCategory?->id,
+            'name'                          => $trimmedName,
+            'unit'                          => $stockItem->unit ?: 'pcs',
+            'purchase_unit'                 => $stockItem->unit ?: 'pcs',
+            'purchase_conversion'           => 1.0,
+            'current_stock'                 => 0,
+            'min_stock'                     => 0,
+            'cost_price'                    => $stockItem->average_cost,
+            'average_cost'                  => $stockItem->average_cost,
+            'is_prepared'                   => false,
+            'is_active'                     => true,
+        ]);
+    }
+
+    /**
+     * Incrémente le stock de la boutique si un produit correspondant existe.
+     */
+    protected function creditShopProduct(StockItem $stockItem, float $qty): void
+    {
+        $trimmedName = trim($stockItem->name);
+        $product = ShopProduct::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
+
+        if (!$product && !empty($stockItem->code)) {
+            $product = ShopProduct::where('sku', $stockItem->code)->first();
+        }
+
+        if ($product) {
+            $product->increment('stock_quantity', (int) round($qty));
+        }
     }
 }

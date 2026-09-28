@@ -34,6 +34,24 @@
                 @if($requisition->review_notes) — {{ $requisition->review_notes }}@endif
             </p>
         @endif
+
+        @if($requisition->status === 'delivered')
+            <div class="mt-3 pt-3 border-t border-secondary/20 flex items-center justify-between text-xs">
+                <span class="text-green-700 font-medium inline-flex items-center gap-1.5">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    @if($requisition->department === 'restaurant')
+                        Livré et transféré automatiquement dans le stock garde-manger restaurant.
+                    @elseif($requisition->department === 'boutique')
+                        Livré et stock boutique incrémenté.
+                    @else
+                        Livré au département {{ $requisition->departmentLabel() }}.
+                    @endif
+                </span>
+                @if($requisition->delivered_at)
+                    <span class="text-primary/40">le {{ $requisition->delivered_at->format('d/m/Y H:i') }}</span>
+                @endif
+            </div>
+        @endif
     </div>
 
     {{-- Livraison (économe) : formulaire avec quantités servies --}}
