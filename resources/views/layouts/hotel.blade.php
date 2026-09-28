@@ -264,7 +264,8 @@
 
                 $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
                 $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
-                                  || $droits->allows($utilisateur, 'economat.orders.voir');
+                                  || $droits->allows($utilisateur, 'economat.orders.voir')
+                                  || $droits->allows($utilisateur, 'economat.stock_counts.voir');
                 $tientLesLivres = $droits->allows($utilisateur, 'accounting.voir');
 
                 $demandesEnComptabilite = $peutDemander && $tientLesLivres && !$gereEconomat;
@@ -272,7 +273,8 @@
                     || $droits->allows($utilisateur, 'economat.voir')
                     || $droits->allows($utilisateur, 'economat.items.voir')
                     || $droits->allows($utilisateur, 'economat.suppliers.voir')
-                    || $droits->allows($utilisateur, 'economat.requisitions.voir');
+                    || $droits->allows($utilisateur, 'economat.requisitions.voir')
+                    || $droits->allows($utilisateur, 'economat.stock_counts.voir');
             @endphp
 
                 <div>
@@ -462,7 +464,7 @@
                 @endrole
 
                 @if($afficheEconomat)
-                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir')
+                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
@@ -470,6 +472,9 @@
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @droit('economat.stock_counts.voir')
+                                <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>
+                            @enddroit
                             @unless($demandesEnComptabilite)
                                 @php
                                     // Le libellé dit l'étendue : qui ne consulte

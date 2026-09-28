@@ -603,6 +603,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])->whereNumber('requisition')->name('requisitions.approve');
             Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
             Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
+
+            // Inventaires physiques & PV d'écarts
+            Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');
+            Route::get('/inventaires/nouveau', [$eco . 'StockCountController', 'create'])->name('stock_counts.create');
+            Route::post('/inventaires', [$eco . 'StockCountController', 'store'])->name('stock_counts.store');
+            Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+            Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])->whereNumber('stockCount')->name('stock_counts.update');
+            Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])->whereNumber('stockCount')->name('stock_counts.close');
+            Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
+            Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])->whereNumber('stockCount')->name('stock_counts.report');
         });
 
         // Demandes : ouvertes aussi aux responsables de département qui

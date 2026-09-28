@@ -121,15 +121,20 @@ class StockService
      * Ajustement d'inventaire : fixe le stock à une quantité constatée. Sert à
      * caler la base sur un comptage physique. Positif ou négatif selon l'écart.
      */
-    public function adjust(StockItem $item, float $countedQuantity, ?string $reason = null): ?StockMovement
-    {
+    public function adjust(
+        StockItem $item,
+        float $countedQuantity,
+        ?string $reason = null,
+        string $sourceType = StockMovement::SOURCE_MANUAL,
+        ?int $sourceId = null
+    ): ?StockMovement {
         if ($countedQuantity < 0) {
             throw new \InvalidArgumentException('La quantité constatée ne peut pas être négative.');
         }
 
         $crossedThreshold = null;
 
-        $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, &$crossedThreshold) {
+        $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, $sourceType, $sourceId, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $delta = $countedQuantity - (float) $item->current_stock;
 
@@ -151,8 +156,8 @@ class StockService
                 StockMovement::TYPE_ADJUSTMENT,
                 $delta,
                 $item->average_cost,
-                StockMovement::SOURCE_MANUAL,
-                null,
+                $sourceType,
+                $sourceId,
                 $reason ?? 'Ajustement d\'inventaire'
             );
         });

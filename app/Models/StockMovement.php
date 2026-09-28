@@ -22,6 +22,14 @@ class StockMovement extends Model
     public const SOURCE_PURCHASE_ORDER = 'purchase_order';
     public const SOURCE_REQUISITION    = 'requisition';
     public const SOURCE_MANUAL         = 'manual';
+    public const SOURCE_STOCK_COUNT    = 'stock_count';
+
+    public const SOURCES = [
+        self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
+        self::SOURCE_REQUISITION    => 'Demande interne',
+        self::SOURCE_MANUAL         => 'Saisie manuelle',
+        self::SOURCE_STOCK_COUNT    => 'Inventaire physique',
+    ];
 
     public const TYPES = [
         self::TYPE_IN         => 'Entrée',

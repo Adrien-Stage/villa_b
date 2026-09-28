@@ -60,6 +60,11 @@ class StockItem extends Model
         return $this->hasOne(RestaurantPantryItem::class);
     }
 
+    public function stockCountLines(): HasMany
+    {
+        return $this->hasMany(StockCountLine::class);
+    }
+
     // ── Portées ──────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder
