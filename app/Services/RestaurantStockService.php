@@ -9,10 +9,13 @@ use App\Models\RestaurantPantryMovement;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantStockCount;
 use App\Models\RestaurantStockCountLine;
+use App\Models\RestaurantWasteLog;
+use App\Models\StockRequisition;
 use App\Notifications\PantryItemLowStock;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -52,9 +55,11 @@ class RestaurantStockService
         ?RestaurantCustomerOrder $order = null,
         ?RestaurantRecipe $recipe = null,
         ?CarbonInterface $occurredAt = null,
+        ?int $stockRequisitionId = null,
+        ?int $restaurantWasteLogId = null,
     ): RestaurantPantryMovement {
         return DB::transaction(function () use (
-            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt
+            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt, $stockRequisitionId, $restaurantWasteLogId
         ) {
             // Verrou : deux ventes simultanées ne doivent pas lire le même stock.
             $item = RestaurantPantryItem::query()->lockForUpdate()->findOrFail($item->id);
@@ -101,6 +106,8 @@ class RestaurantStockService
                 'stock_after' => round($next, 3),
                 'restaurant_customer_order_id' => $order?->id,
                 'restaurant_recipe_id' => $recipe?->id,
+                'stock_requisition_id' => $stockRequisitionId,
+                'restaurant_waste_log_id' => $restaurantWasteLogId,
                 'reason' => $reason,
                 'notes' => $notes,
                 'recorded_by' => Auth::id(),
@@ -158,6 +165,40 @@ class RestaurantStockService
             unitCost: $unitCost,
             notes: $notes,
             occurredAt: $occurredAt,
+        );
+    }
+
+    /**
+     * Réception de marchandise en provenance de l'Économat (transfert interne).
+     *
+     * @param  RestaurantPantryItem  $item         L'ingrédient de destination
+     * @param  float                 $quantity     Quantité reçue en unité de stock garde-manger
+     * @param  float|int             $unitCost     Coût unitaire en centimes FCFA par unité de garde-manger
+     * @param  StockRequisition      $requisition  Le bon de sortie / demande de l'économat
+     * @param  string|null           $notes        Commentaire éventuel
+     * @param  CarbonInterface|null  $occurredAt   Date effective
+     */
+    public function receiveFromEconomat(
+        RestaurantPantryItem $item,
+        float $quantity,
+        float|int $unitCost,
+        StockRequisition $requisition,
+        ?string $notes = null,
+        ?CarbonInterface $occurredAt = null,
+    ): RestaurantPantryMovement {
+        if ($quantity <= 0) {
+            throw new RuntimeException('La quantité reçue du transfert doit être supérieure à zéro.');
+        }
+
+        return $this->recordMovement(
+            item: $item,
+            type: RestaurantPantryMovement::TYPE_IN,
+            quantity: $quantity,
+            reason: RestaurantPantryMovement::REASON_TRANSFER_IN,
+            unitCost: (float) $unitCost,
+            notes: $notes ?? "Transfert Économat (BS #{$requisition->number})",
+            occurredAt: $occurredAt,
+            stockRequisitionId: $requisition->id,
         );
     }
 
@@ -438,6 +479,182 @@ class RestaurantStockService
 
             return $count->fresh(['lines.item']);
         });
+    }
+
+    /**
+     * Enregistre une perte, un déchet ou un aliment non vendu (gaspillage, avarié, plat brûlé,
+     * repas du personnel, casse, portion offerte, etc.)
+     *
+     * Valorisée rigoureusement au coût moyen pondéré du stock actuel en centimes FCFA.
+     */
+    public function recordWaste(
+        RestaurantPantryItem $item,
+        float $quantity,
+        string $reason,
+        ?string $department = 'cuisine',
+        ?string $responsiblePerson = null,
+        ?string $notes = null,
+        ?CarbonInterface $occurredAt = null,
+        ?int $tenantId = null,
+    ): RestaurantWasteLog {
+        if ($quantity <= 0) {
+            throw new RuntimeException('La quantité mise au rebut doit être supérieure à zéro.');
+        }
+
+        if (!in_array($reason, RestaurantWasteLog::REASONS, true)) {
+            throw new RuntimeException("Motif de perte non reconnu : {$reason}.");
+        }
+
+        return DB::transaction(function () use (
+            $item, $quantity, $reason, $department, $responsiblePerson, $notes, $occurredAt, $tenantId
+        ) {
+            $item = RestaurantPantryItem::query()->lockForUpdate()->findOrFail($item->id);
+
+            $unitCost = (float) $item->average_cost;
+            $totalCost = (int) round($quantity * $unitCost);
+            $datePrefix = ($occurredAt ?? now())->format('Ymd');
+            $randomSuffix = strtoupper(Str::random(4));
+            $reference = "GSP-{$datePrefix}-{$randomSuffix}";
+
+            $wasteLog = RestaurantWasteLog::create([
+                'reference' => $reference,
+                'restaurant_pantry_item_id' => $item->id,
+                'quantity' => round($quantity, 3),
+                'unit_cost' => round($unitCost, 4),
+                'total_cost' => $totalCost,
+                'reason' => $reason,
+                'department' => $department ?? RestaurantWasteLog::DEPT_KITCHEN,
+                'responsible_person' => $responsiblePerson ? trim($responsiblePerson) : null,
+                'notes' => $notes ? trim($notes) : null,
+                'recorded_by' => Auth::id(),
+                'tenant_id' => $tenantId ?? Auth::user()?->tenant_id,
+                'occurred_at' => $occurredAt ?? now(),
+            ]);
+
+            $this->recordMovement(
+                item: $item,
+                type: RestaurantPantryMovement::TYPE_OUT,
+                quantity: $quantity,
+                reason: RestaurantPantryMovement::REASON_WASTE,
+                notes: "Perte [{$wasteLog->reference}] : " . ($notes ?? $wasteLog->reasonLabel()),
+                occurredAt: $occurredAt,
+                restaurantWasteLogId: $wasteLog->id,
+            );
+
+            return $wasteLog;
+        });
+    }
+
+    /**
+     * Analyse et rapproche la consommation théorique (recettes POS / PDJ), les entrées magasin (Économat),
+     * les pertes déclarées (Gaspillage) et les ajustements d'inventaire sur une période donnée.
+     *
+     * Permet le calcul du Food Cost % et l'analyse des écarts de matière.
+     */
+    public function getKitchenConsumptionReport(
+        CarbonInterface $startDate,
+        CarbonInterface $endDate,
+        ?int $tenantId = null,
+    ): array {
+        $start = $startDate->copy()->startOfDay();
+        $end = $endDate->copy()->endOfDay();
+
+        $movements = RestaurantPantryMovement::query()
+            ->with(['item.category', 'wasteLog', 'order'])
+            ->whereBetween('occurred_at', [$start, $end])
+            ->get();
+
+        $transfersInCost = 0;
+        $purchasesCost = 0;
+        $theoreticalSalesCost = 0;
+        $wasteCost = 0;
+        $inventoryAdjustmentCost = 0;
+
+        $wasteByReason = [];
+        $itemStats = [];
+
+        foreach ($movements as $m) {
+            $itemId = $m->restaurant_pantry_item_id;
+            if (!$m->item) {
+                continue;
+            }
+
+            if (!isset($itemStats[$itemId])) {
+                $itemStats[$itemId] = [
+                    'item' => $m->item,
+                    'in_transfers_qty' => 0.0,
+                    'in_transfers_cost' => 0,
+                    'theoretical_sales_qty' => 0.0,
+                    'theoretical_sales_cost' => 0,
+                    'waste_qty' => 0.0,
+                    'waste_cost' => 0,
+                    'adjustment_qty' => 0.0,
+                    'adjustment_cost' => 0,
+                ];
+            }
+
+            $cost = (int) $m->total_cost;
+            $qty = (float) $m->quantity;
+
+            if ($m->reason === RestaurantPantryMovement::REASON_TRANSFER_IN) {
+                $transfersInCost += $cost;
+                $itemStats[$itemId]['in_transfers_qty'] += $qty;
+                $itemStats[$itemId]['in_transfers_cost'] += $cost;
+            } elseif ($m->reason === RestaurantPantryMovement::REASON_PURCHASE) {
+                $purchasesCost += $cost;
+            } elseif ($m->reason === RestaurantPantryMovement::REASON_SALE) {
+                $theoreticalSalesCost += $cost;
+                $itemStats[$itemId]['theoretical_sales_qty'] += $qty;
+                $itemStats[$itemId]['theoretical_sales_cost'] += $cost;
+            } elseif ($m->reason === RestaurantPantryMovement::REASON_SALE_RETURN) {
+                $theoreticalSalesCost -= $cost;
+                $itemStats[$itemId]['theoretical_sales_qty'] -= $qty;
+                $itemStats[$itemId]['theoretical_sales_cost'] -= $cost;
+            } elseif ($m->reason === RestaurantPantryMovement::REASON_WASTE) {
+                $wasteCost += $cost;
+                $itemStats[$itemId]['waste_qty'] += $qty;
+                $itemStats[$itemId]['waste_cost'] += $cost;
+
+                $reasonKey = $m->wasteLog?->reason ?? 'other';
+                $wasteByReason[$reasonKey] = ($wasteByReason[$reasonKey] ?? 0) + $cost;
+            } elseif ($m->reason === RestaurantPantryMovement::REASON_COUNT) {
+                $diffCost = ($m->type === RestaurantPantryMovement::TYPE_OUT ? -$cost : $cost);
+                $diffQty = ($m->type === RestaurantPantryMovement::TYPE_OUT ? -$qty : $qty);
+                $inventoryAdjustmentCost += $diffCost;
+                $itemStats[$itemId]['adjustment_qty'] += $diffQty;
+                $itemStats[$itemId]['adjustment_cost'] += $diffCost;
+            }
+        }
+
+        $ordersQuery = RestaurantCustomerOrder::query()
+            ->whereBetween('placed_at', [$start, $end])
+            ->whereNotIn('status', [RestaurantCustomerOrder::STATUS_CANCELED]);
+
+        $totalRevenue = (int) $ordersQuery->sum('total_amount');
+        $ordersCount = $ordersQuery->count();
+        $ordersFoodCost = (int) $ordersQuery->sum('food_cost');
+
+        $totalKitchenCost = $theoreticalSalesCost + $wasteCost;
+        $foodCostRatio = $totalRevenue > 0 ? round(($totalKitchenCost / $totalRevenue) * 100, 2) : 0.0;
+
+        return [
+            'period' => [
+                'start' => $start->toDateString(),
+                'end' => $end->toDateString(),
+            ],
+            'transfers_in_cost' => $transfersInCost,
+            'purchases_cost' => $purchasesCost,
+            'theoretical_sales_cost' => $theoreticalSalesCost,
+            'waste_cost' => $wasteCost,
+            'inventory_adjustment_cost' => $inventoryAdjustmentCost,
+            'total_kitchen_cost' => $totalKitchenCost,
+            'total_revenue' => $totalRevenue,
+            'orders_count' => $ordersCount,
+            'orders_food_cost' => $ordersFoodCost,
+            'food_cost_ratio' => $foodCostRatio,
+            'waste_by_reason' => $wasteByReason,
+            'items' => array_values($itemStats),
+        ];
     }
 
     /**

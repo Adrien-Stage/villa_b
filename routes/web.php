@@ -389,6 +389,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
         Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
         Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+        Route::get('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'index'])->name('waste.index');
+        Route::get('/waste/create', [App\Http\Controllers\RestaurantWasteController::class, 'create'])->name('waste.create');
+        Route::get('/waste/{waste}', [App\Http\Controllers\RestaurantWasteController::class, 'show'])->whereNumber('waste')->name('waste.show');
+        Route::get('/waste/{waste}/print', [App\Http\Controllers\RestaurantWasteController::class, 'print'])->whereNumber('waste')->name('waste.print');
+        Route::get('/consumption', [App\Http\Controllers\RestaurantConsumptionController::class, 'index'])->name('consumption.index');
     });
 
     // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
@@ -450,6 +455,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
             Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
             Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
+
+            // Déclaration de pertes & gaspillage
+            Route::post('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'store'])->name('waste.store');
         });
     });
 
@@ -592,28 +600,70 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Bons de commande
             Route::get('/bons', [$eco . 'PurchaseOrderController', 'index'])->name('orders.index');
+            Route::get('/bons/export', [$eco . 'PurchaseOrderController', 'export'])->name('orders.export');
             Route::get('/bons/nouveau', [$eco . 'PurchaseOrderController', 'create'])->name('orders.create');
             Route::post('/bons', [$eco . 'PurchaseOrderController', 'store'])->name('orders.store');
             Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
+            Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')->name('orders.print');
             Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
             Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')->name('orders.receive');
             Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')->name('orders.cancel');
+
+            // Bons de réception (Goods Receipts)
+            Route::get('/receptions', [$eco . 'GoodsReceiptController', 'index'])->name('receipts.index');
+            Route::get('/receptions/export', [$eco . 'GoodsReceiptController', 'export'])->name('receipts.export');
+            Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')->name('receipts.create');
+            Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')->name('receipts.store');
+            Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');
+            Route::get('/receptions/{receipt}/imprimer', [$eco . 'GoodsReceiptController', 'print'])->whereNumber('receipt')->name('receipts.print');
+            Route::post('/receptions/{receipt}/annuler', [$eco . 'GoodsReceiptController', 'cancel'])->whereNumber('receipt')->name('receipts.cancel');
+
+            // Traitement des demandes d'achat (approbation / rejet / conversion)
+            Route::post('/demandes-achat/{purchaseRequest}/approuver', [$eco . 'PurchaseRequestController', 'approve'])->whereNumber('purchaseRequest')->name('purchase_requests.approve');
+            Route::post('/demandes-achat/{purchaseRequest}/refuser', [$eco . 'PurchaseRequestController', 'reject'])->whereNumber('purchaseRequest')->name('purchase_requests.reject');
+            Route::post('/demandes-achat/{purchaseRequest}/convertir', [$eco . 'PurchaseRequestController', 'convert'])->whereNumber('purchaseRequest')->name('purchase_requests.convert');
 
             // Traitement des demandes (validation / livraison)
             Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])->whereNumber('requisition')->name('requisitions.approve');
             Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
             Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
+
+            // Inventaires physiques & PV d'écarts
+            Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');
+            Route::get('/inventaires/nouveau', [$eco . 'StockCountController', 'create'])->name('stock_counts.create');
+            Route::post('/inventaires', [$eco . 'StockCountController', 'store'])->name('stock_counts.store');
+            Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+            Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])->whereNumber('stockCount')->name('stock_counts.update');
+            Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])->whereNumber('stockCount')->name('stock_counts.close');
+            Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
+            Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])->whereNumber('stockCount')->name('stock_counts.report');
+
+            // Contrôle, alertes, propositions de commande et ratios
+            Route::get('/controle', [$eco . 'StockControlController', 'index'])->name('control.index');
+            Route::get('/controle/propositions', [$eco . 'StockControlController', 'suggestions'])->name('control.suggestions.index');
+            Route::post('/controle/propositions', [$eco . 'StockControlController', 'generatePurchaseRequest'])->name('control.suggestions.store');
+            Route::get('/controle/ecarts', [$eco . 'StockControlController', 'variances'])->name('control.variances.index');
+            Route::get('/controle/imprimer', [$eco . 'StockControlController', 'printReport'])->name('control.print');
         });
 
-        // Demandes : ouvertes aussi aux responsables de département qui
+        // Demandes & Demandes d'achat : ouvertes aussi aux responsables de département qui
         // sollicitent l'économat. Le contrôleur cloisonne à leurs propres demandes.
         Route::middleware('permission')->group(function () use ($eco) {
+            // Demandes d'achat internes
+            Route::get('/demandes-achat', [$eco . 'PurchaseRequestController', 'index'])->name('purchase_requests.index');
+            Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])->name('purchase_requests.create');
+            Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])->name('purchase_requests.store');
+            Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])->whereNumber('purchaseRequest')->name('purchase_requests.show');
+            Route::post('/demandes-achat/{purchaseRequest}/annuler', [$eco . 'PurchaseRequestController', 'cancel'])->whereNumber('purchaseRequest')->name('purchase_requests.cancel');
+
+            // Demandes internes
             Route::get('/demandes', [$eco . 'StockRequisitionController', 'index'])->name('requisitions.index');
             // Impression et export : mêmes filtres que l'écran, même garde.
             Route::get('/demandes/export', [$eco . 'StockRequisitionController', 'export'])->name('requisitions.export');
             Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
             Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
             Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
+            Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])->whereNumber('requisition')->name('requisitions.print');
             Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
         });
     });

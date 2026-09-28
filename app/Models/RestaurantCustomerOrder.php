@@ -60,11 +60,33 @@ class RestaurantCustomerOrder extends Model
         self::STATUS_READY,
     ];
 
+    public const ORDER_TYPE_STANDARD = 'standard';
+    public const ORDER_TYPE_BREAKFAST_INCLUDED = 'breakfast_included';
+    public const ORDER_TYPE_COMPLIMENTARY = 'complimentary';
+    public const ORDER_TYPE_STAFF_MEAL = 'staff_meal';
+
+    public const ORDER_TYPES = [
+        self::ORDER_TYPE_STANDARD,
+        self::ORDER_TYPE_BREAKFAST_INCLUDED,
+        self::ORDER_TYPE_COMPLIMENTARY,
+        self::ORDER_TYPE_STAFF_MEAL,
+    ];
+
+    public const ORDER_TYPE_LABELS = [
+        self::ORDER_TYPE_STANDARD => 'Vente standard',
+        self::ORDER_TYPE_BREAKFAST_INCLUDED => 'Petit-déjeuner inclus',
+        self::ORDER_TYPE_COMPLIMENTARY => 'Offert / Geste commercial',
+        self::ORDER_TYPE_STAFF_MEAL => 'Repas du personnel',
+    ];
+
     protected $fillable = [
         'source',
         'created_by',
         'assigned_server_id',
         'table_number',
+        'order_type',
+        'is_complimentary',
+        'complimentary_reason',
         'booking_id',
         'folio_item_id',
         'customer_name',
@@ -87,6 +109,7 @@ class RestaurantCustomerOrder extends Model
     ];
 
     protected $casts = [
+        'is_complimentary' => 'boolean',
         'total_amount' => 'integer',
         'amount_paid' => 'integer',
         'food_cost' => 'integer',
@@ -98,6 +121,21 @@ class RestaurantCustomerOrder extends Model
         'paid_at' => 'datetime',
         'stock_deducted_at' => 'datetime',
     ];
+
+    public function isComplimentary(): bool
+    {
+        return (bool) $this->is_complimentary || $this->order_type === self::ORDER_TYPE_COMPLIMENTARY;
+    }
+
+    public function isBreakfastIncluded(): bool
+    {
+        return $this->order_type === self::ORDER_TYPE_BREAKFAST_INCLUDED;
+    }
+
+    public function orderTypeLabel(): string
+    {
+        return self::ORDER_TYPE_LABELS[$this->order_type] ?? 'Standard';
+    }
 
     public function assignedServer(): BelongsTo
     {

@@ -26,6 +26,7 @@ class RestaurantPantryMovement extends Model
     const REASON_SALE_RETURN = 'sale_return'; // restitution après annulation d'une commande
     const REASON_PRODUCTION = 'production';   // fabrication d'une préparation en batch
     const REASON_COUNT = 'count';             // ajustement issu d'un inventaire physique
+    const REASON_TRANSFER_IN = 'transfer_in'; // transfert interne depuis l'économat central
 
     public const REASON_LABELS = [
         self::REASON_PURCHASE => 'Achat',
@@ -36,6 +37,7 @@ class RestaurantPantryMovement extends Model
         self::REASON_SALE_RETURN => 'Annulation de vente',
         self::REASON_PRODUCTION => 'Production',
         self::REASON_COUNT => 'Inventaire',
+        self::REASON_TRANSFER_IN => 'Transfert entrant (Économat)',
         self::REASON_OTHER => 'Autre',
     ];
 
@@ -48,6 +50,8 @@ class RestaurantPantryMovement extends Model
         'stock_after',
         'restaurant_customer_order_id',
         'restaurant_recipe_id',
+        'stock_requisition_id',
+        'restaurant_waste_log_id',
         'reason',
         'notes',
         'recorded_by',
@@ -75,6 +79,16 @@ class RestaurantPantryMovement extends Model
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(RestaurantRecipe::class, 'restaurant_recipe_id');
+    }
+
+    public function stockRequisition(): BelongsTo
+    {
+        return $this->belongsTo(StockRequisition::class, 'stock_requisition_id');
+    }
+
+    public function wasteLog(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantWasteLog::class, 'restaurant_waste_log_id');
     }
 
     public function recordedBy(): BelongsTo

@@ -47,10 +47,32 @@ class StockRequisitionController extends Controller
     {
         $requisitions = $this->filtrer($request)->paginate(self::PAR_PAGE)->withQueryString();
 
+        $statsQuery = StockRequisition::query();
+        if (!$this->isStoreKeeper()) {
+            $statsQuery->where('requested_by', Auth::id());
+        }
+        if (($service = $request->query('service')) && array_key_exists($service, StockRequisition::DEPARTMENTS)) {
+            $statsQuery->where('department', $service);
+        }
+        if ($debut = $this->date($request->query('du'))) {
+            $statsQuery->whereDate('created_at', '>=', $debut);
+        }
+        if ($fin = $this->date($request->query('au'))) {
+            $statsQuery->whereDate('created_at', '<=', $fin);
+        }
+
+        $stats = [
+            'total'     => (clone $statsQuery)->count(),
+            'pending'   => (clone $statsQuery)->where('status', StockRequisition::STATUS_PENDING)->count(),
+            'approved'  => (clone $statsQuery)->where('status', StockRequisition::STATUS_APPROVED)->count(),
+            'delivered' => (clone $statsQuery)->where('status', StockRequisition::STATUS_DELIVERED)->count(),
+        ];
+
         return view('economat.requisitions.index', [
             'requisitions' => $requisitions,
             'isKeeper'     => $this->isStoreKeeper(),
             'filtres'      => $this->filtresAppliques($request),
+            'stats'        => $stats,
         ]);
     }
 
@@ -164,7 +186,7 @@ class StockRequisitionController extends Controller
 
     public function create(): View
     {
-        $items = StockItem::active()->orderBy('name')->get();
+        $items = StockItem::active()->with('category')->orderBy('name')->get();
 
         // Départements que l'utilisateur est habilité à représenter.
         $departments = collect(StockRequisition::DEPARTMENT_ROLES)
@@ -194,11 +216,15 @@ class StockRequisitionController extends Controller
         ]);
 
         $requisition = DB::transaction(function () use ($validated) {
+            $user = Auth::user();
+            $signature = $user ? $user->signatureName() : null;
+
             $requisition = StockRequisition::create([
-                'department'   => $validated['department'],
-                'purpose'      => $validated['purpose'] ?? null,
-                'requested_by' => Auth::id(),
-                'tenant_id'    => Auth::user()->tenant_id
+                'department'          => $validated['department'],
+                'purpose'             => $validated['purpose'] ?? null,
+                'requested_by'        => Auth::id(),
+                'requester_signature' => $signature,
+                'tenant_id'           => Auth::user()->tenant_id
                     ?? \App\Models\Tenant::current()?->id,
             ]);
 
@@ -225,11 +251,26 @@ class StockRequisitionController extends Controller
     {
         $this->authorizeView($requisition);
 
-        $requisition->load('lines.item', 'requestedBy', 'reviewedBy');
+        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy');
 
         return view('economat.requisitions.show', [
             'requisition' => $requisition,
             'isKeeper'    => $this->isStoreKeeper(),
+        ]);
+    }
+
+    /**
+     * Impression officielle du Bon de Réquisition / Bon de sortie magasin.
+     */
+    public function print(StockRequisition $requisition): View
+    {
+        $this->authorizeView($requisition);
+
+        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy');
+
+        return view('economat.requisitions.print', [
+            'requisition' => $requisition,
+            'tenant'      => $requisition->tenant_id ? \App\Models\Tenant::find($requisition->tenant_id) : \App\Models\Tenant::first(),
         ]);
     }
 
@@ -301,10 +342,10 @@ class StockRequisitionController extends Controller
 
     // ── Habilitations ────────────────────────────────────────────────────────
 
-    /** L'économe et le manager gèrent le magasin (valident, livrent). */
+    /** L'économe, le manager et le contrôleur de gestion ont la vue globale sur le magasin. */
     private function isStoreKeeper(): bool
     {
-        return Auth::user()->hasAnyRole(['econome', 'manager']);
+        return Auth::user()->hasAnyRole(['econome', 'manager', 'controller']);
     }
 
     private function authorizeKeeper(): void

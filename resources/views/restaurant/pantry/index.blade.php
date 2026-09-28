@@ -274,6 +274,13 @@
                     @if($move->notes)
                         <p class="text-xs text-primary/55 mt-1">{{ $move->notes }}</p>
                     @endif
+                    @if($move->stockRequisition)
+                        <div class="mt-1">
+                            <a href="{{ route('economat.requisitions.show', $move->stockRequisition) }}" class="inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded">
+                                <i data-lucide="package" class="w-3 h-3"></i> {{ $move->stockRequisition->number }}
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="px-4 py-10 text-center text-sm text-primary/45">

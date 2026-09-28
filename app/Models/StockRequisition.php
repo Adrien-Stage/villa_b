@@ -20,11 +20,12 @@ class StockRequisition extends Model
     use HasFactory;
 
     public const DEPARTMENTS = [
-        'hebergement'  => 'Hébergement',
-        'housekeeping' => 'Housekeeping',
-        'restaurant'   => 'Restaurant / Cuisine',
-        'boutique'     => 'Boutique',
-        'autre'        => 'Autre',
+        'hebergement'  => 'Hébergement / Réception',
+        'housekeeping' => 'Housekeeping / Étages',
+        'restaurant'   => 'Restauration / Cuisine & Bar',
+        'boutique'     => 'Boutique / Vente',
+        'comptabilite' => 'Comptabilité / Finances',
+        'autre'        => 'Autre service',
     ];
 
     public const STATUS_PENDING   = 'pending';
@@ -47,12 +48,14 @@ class StockRequisition extends Model
         'housekeeping' => ['housekeeping_leader', 'housekeeping', 'manager'],
         'restaurant'   => ['restaurant_chief', 'manager'],
         'boutique'     => ['shop_manager', 'manager'],
-        'autre'        => ['manager'],
+        'comptabilite' => ['accountant', 'manager'],
+        'autre'        => ['manager', 'econome', 'controller'],
     ];
 
     protected $fillable = [
         'number', 'department', 'status', 'purpose', 'review_notes',
         'requested_by', 'reviewed_by', 'reviewed_at', 'delivered_at', 'tenant_id',
+        'requester_signature',
     ];
 
     protected $casts = [
@@ -70,6 +73,14 @@ class StockRequisition extends Model
             }
             if (empty($requisition->status)) {
                 $requisition->status = self::STATUS_PENDING;
+            }
+            if (empty($requisition->requester_signature)) {
+                $user = auth()->user() ?? ($requisition->requested_by ? User::find($requisition->requested_by) : null);
+                if ($user) {
+                    $requisition->requester_signature = method_exists($user, 'signatureName')
+                        ? $user->signatureName()
+                        : User::extractSignatureName($user->name);
+                }
             }
         });
     }
@@ -172,5 +183,35 @@ class StockRequisition extends Model
             fn (StockRequisitionLine $l) => $l->item
                 && (float) $l->item->current_stock >= (float) $l->quantity_requested
         );
+    }
+
+    /** Montant total valorisé au CUMP des articles demandés (centimes FCFA). */
+    public function totalRequestedCost(): int
+    {
+        return (int) $this->lines->sum(fn ($l) => $l->totalRequestedCost());
+    }
+
+    /** Montant total valorisé au CUMP des articles réellement servis (centimes FCFA). */
+    public function totalIssuedCost(): int
+    {
+        return (int) $this->lines->sum(fn ($l) => $l->totalIssuedCost());
+    }
+
+    /**
+     * Nom extrait pour la signature automatique du demandeur.
+     */
+    public function requesterSignature(): ?string
+    {
+        if (!empty($this->requester_signature)) {
+            return $this->requester_signature;
+        }
+
+        if ($this->requestedBy) {
+            return method_exists($this->requestedBy, 'signatureName')
+                ? $this->requestedBy->signatureName()
+                : User::extractSignatureName($this->requestedBy->name);
+        }
+
+        return null;
     }
 }

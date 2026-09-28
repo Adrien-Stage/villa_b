@@ -264,7 +264,8 @@
 
                 $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
                 $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
-                                  || $droits->allows($utilisateur, 'economat.orders.voir');
+                                  || $droits->allows($utilisateur, 'economat.orders.voir')
+                                  || $droits->allows($utilisateur, 'economat.stock_counts.voir');
                 $tientLesLivres = $droits->allows($utilisateur, 'accounting.voir');
 
                 $demandesEnComptabilite = $peutDemander && $tientLesLivres && !$gereEconomat;
@@ -272,7 +273,8 @@
                     || $droits->allows($utilisateur, 'economat.voir')
                     || $droits->allows($utilisateur, 'economat.items.voir')
                     || $droits->allows($utilisateur, 'economat.suppliers.voir')
-                    || $droits->allows($utilisateur, 'economat.requisitions.voir');
+                    || $droits->allows($utilisateur, 'economat.requisitions.voir')
+                    || $droits->allows($utilisateur, 'economat.stock_counts.voir');
             @endphp
 
                 <div>
@@ -403,6 +405,14 @@
                                 <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
                             @endrole
 
+                            @role('manager','restaurant_chief','restaurant_cook')
+                                <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
+                            @endrole
+
+                            @role('manager','restaurant_chief')
+                                <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
+                            @endrole
+
                             @role('manager','restaurant_chief','cashier')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
                             @endrole
@@ -462,14 +472,23 @@
                 @endrole
 
                 @if($afficheEconomat)
-                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir')
+                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
+                            @droit('economat.purchase_requests.voir')
+                                <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                            @enddroit
                             <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @droit('economat.receipts.voir')
+                                <x-sidebar-link route="economat.receipts.index" icon="package-check">Bons d'entrée (BR)</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.stock_counts.voir')
+                                <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>
+                            @enddroit
                             @unless($demandesEnComptabilite)
                                 @php
                                     // Le libellé dit l'étendue : qui ne consulte
@@ -478,9 +497,18 @@
                                     $porteeDemandes = $droits->scopeFor(auth()->user(), 'economat.requisitions.voir');
                                 @endphp
                                 <x-sidebar-link route="economat.requisitions.index" icon="inbox">
-                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Demandes' }}
+                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Bons de réquisition' }}
                                 </x-sidebar-link>
                             @endunless
+                            @droit('economat.control.voir')
+                                <x-sidebar-link route="economat.control.index" icon="pie-chart">Contrôle & Ratios</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.control.suggestions.voir')
+                                <x-sidebar-link route="economat.control.suggestions.index" icon="shopping-cart">Propositions d'achat</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.control.variances.voir')
+                                <x-sidebar-link route="economat.control.variances.index" icon="git-compare">Écarts d'inventaire</x-sidebar-link>
+                            @enddroit
                         </ul>
                     </div>
                 @endundroit

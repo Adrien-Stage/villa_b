@@ -50,6 +50,31 @@ class StockItem extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function pantryItems(): HasMany
+    {
+        return $this->hasMany(RestaurantPantryItem::class);
+    }
+
+    public function pantryItem(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RestaurantPantryItem::class);
+    }
+
+    public function stockCountLines(): HasMany
+    {
+        return $this->hasMany(StockCountLine::class);
+    }
+
+    public function purchaseRequestLines(): HasMany
+    {
+        return $this->hasMany(PurchaseRequestLine::class);
+    }
+
+    public function goodsReceiptLines(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptLine::class);
+    }
+
     // ── Portées ──────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder

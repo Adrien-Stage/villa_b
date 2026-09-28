@@ -19,8 +19,21 @@
     /* Typographie */
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;
-    
-    /* Vous pouvez aussi définir des espacements personnalisés, etc. */
+    --font-signature: 'Qwigley', cursive;
+}
+
+/* Police Qwigley pour signatures manuscrites officielles */
+@font-face {
+    font-family: 'Qwigley';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Qwigley-Regular.woff2') format('woff2'),
+         url('/fonts/Qwigley-Regular.ttf') format('truetype');
+}
+
+.font-signature {
+    font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
 }
 
 /* Pour le mode sombre basé sur une classe */

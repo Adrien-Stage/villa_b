@@ -111,6 +111,9 @@ class RestaurantOrderController extends Controller
             'table_number' => ['required', 'string', 'max:10'],
             'customer_name' => ['nullable', 'string', 'max:120'],
             'customer_phone' => ['nullable', 'string', 'max:30'],
+            'order_type' => ['nullable', 'string', Rule::in(RestaurantCustomerOrder::ORDER_TYPES)],
+            'is_complimentary' => ['nullable', 'boolean'],
+            'complimentary_reason' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'items_json' => ['required', 'string', 'max:20000'],
         ]);
@@ -143,10 +146,16 @@ class RestaurantOrderController extends Controller
             return back()->withErrors(['items' => 'Certains articles ne sont plus disponibles.'])->withInput();
         }
 
-        $order = DB::transaction(function () use ($validated, $lines, $menuItems) {
+        $orderType = $validated['order_type'] ?? RestaurantCustomerOrder::ORDER_TYPE_STANDARD;
+        $isComplimentary = !empty($validated['is_complimentary'])
+            || in_array($orderType, [RestaurantCustomerOrder::ORDER_TYPE_COMPLIMENTARY, RestaurantCustomerOrder::ORDER_TYPE_STAFF_MEAL], true);
+
+        $order = DB::transaction(function () use ($validated, $lines, $menuItems, $orderType, $isComplimentary) {
             $total = 0;
-            foreach ($lines as $menuItemId => $qty) {
-                $total += (int) $menuItems->get($menuItemId)->price * (int) $qty;
+            if (!$isComplimentary) {
+                foreach ($lines as $menuItemId => $qty) {
+                    $total += (int) $menuItems->get($menuItemId)->price * (int) $qty;
+                }
             }
 
             // Le serveur saisit la commande à la table et la transmet à la cuisine
@@ -157,6 +166,9 @@ class RestaurantOrderController extends Controller
                 'created_by' => Auth::id(),
                 'assigned_server_id' => Auth::id(),
                 'table_number' => trim((string) $validated['table_number']),
+                'order_type' => $orderType,
+                'is_complimentary' => $isComplimentary,
+                'complimentary_reason' => trim((string) ($validated['complimentary_reason'] ?? '')) ?: null,
                 // Champs facultatifs : absents de la requête, ils sont absents
                 // du tableau validé — les lire directement casserait la prise de
                 // commande dès qu'un écran ne les envoie pas.
@@ -164,6 +176,7 @@ class RestaurantOrderController extends Controller
                 'customer_phone' => trim((string) ($validated['customer_phone'] ?? '')) ?: null,
                 'status' => 'confirmed',
                 'total_amount' => $total,
+                'payment_status' => $isComplimentary ? 'paid' : 'pending',
                 'notes' => trim((string) ($validated['notes'] ?? '')) ?: null,
                 'placed_at' => now(),
                 'assigned_at' => now(),

@@ -34,6 +34,11 @@ class RestaurantStockCountLine extends Model
         return $this->belongsTo(RestaurantStockCount::class, 'restaurant_stock_count_id');
     }
 
+    public function stockCount(): BelongsTo
+    {
+        return $this->count();
+    }
+
     public function item(): BelongsTo
     {
         return $this->belongsTo(RestaurantPantryItem::class, 'restaurant_pantry_item_id');

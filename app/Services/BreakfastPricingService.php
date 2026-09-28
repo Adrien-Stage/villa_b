@@ -443,7 +443,106 @@ class BreakfastPricingService
                 app(\App\Services\CheckOutService::class)->recalculateTotals($booking->fresh());
             }
 
-            // 4. Mise à jour de l'entitlement
+            // 4. Création de la commande restaurant pour traçabilité matière et déduction théorique
+            $order = \App\Models\RestaurantCustomerOrder::create([
+                'source'               => 'breakfast',
+                'created_by'           => $userId,
+                'table_number'         => "Ch. {$room->number}",
+                'order_type'           => \App\Models\RestaurantCustomerOrder::ORDER_TYPE_BREAKFAST_INCLUDED,
+                'is_complimentary'     => ($extraTotalCentimes === 0),
+                'complimentary_reason' => ($extraTotalCentimes === 0 ? "Petit-déjeuner inclus séjour #{$booking->id}" : null),
+                'booking_id'           => $booking->id,
+                'folio_item_id'        => $folioItemId,
+                'customer_name'        => $booking->customer?->full_name ?? "Chambre {$room->number}",
+                'customer_phone'       => $booking->customer?->phone,
+                'status'               => \App\Models\RestaurantCustomerOrder::STATUS_SERVED,
+                'payment_status'       => ($extraTotalCentimes === 0 ? 'paid' : ($settlementMethod === 'room_charge' ? 'transferred_to_folio' : 'paid')),
+                'payment_method'       => ($extraTotalCentimes === 0 ? null : $settlementMethod),
+                'total_amount'         => $extraTotalCentimes,
+                'amount_paid'          => ($settlementMethod !== 'room_charge' ? $extraTotalCentimes : 0),
+                'placed_at'            => now(),
+                'assigned_at'          => now(),
+                'sent_to_kitchen_at'   => now(),
+                'ready_at'             => now(),
+                'served_at'            => now(),
+                'notes'                => "Pointage PDJ Ch. {$room->number} ({$adultsServed}A, {$childrenServed}E). " . ($notes ?? ''),
+            ]);
+
+            // Recherche ou association des articles du menu correspondant aux petits-déjeuners
+            $likeOp = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+            $adultItem = \App\Models\RestaurantMenuItem::query()
+                ->active()
+                ->where(function ($q) use ($likeOp) {
+                    $q->where('name', $likeOp, '%petit-déjeuner%')
+                      ->orWhere('name', $likeOp, '%petit dejeuner%')
+                      ->orWhere('name', $likeOp, '%breakfast%');
+                })
+                ->where(function ($q) use ($likeOp) {
+                    $q->where('name', 'not ' . $likeOp, '%enfant%')
+                      ->where('name', 'not ' . $likeOp, '%child%');
+                })
+                ->first();
+
+            $childItem = \App\Models\RestaurantMenuItem::query()
+                ->active()
+                ->where(function ($q) use ($likeOp) {
+                    $q->where('name', $likeOp, '%petit-déjeuner%enfant%')
+                      ->orWhere('name', $likeOp, '%breakfast%child%')
+                      ->orWhere('name', $likeOp, '%pdj enfant%');
+                })
+                ->first();
+
+            if ($adultsServed > 0) {
+                if ($coveredAdults > 0) {
+                    \App\Models\RestaurantCustomerOrderItem::create([
+                        'restaurant_customer_order_id' => $order->id,
+                        'menu_item_id' => $adultItem?->id,
+                        'item_name' => ($adultItem?->name ?? 'Petit-déjeuner adulte') . ' (Inclus)',
+                        'quantity' => $coveredAdults,
+                        'unit_price' => 0,
+                        'total_price' => 0,
+                    ]);
+                }
+                if ($extraAdults > 0) {
+                    \App\Models\RestaurantCustomerOrderItem::create([
+                        'restaurant_customer_order_id' => $order->id,
+                        'menu_item_id' => $adultItem?->id,
+                        'item_name' => ($adultItem?->name ?? 'Petit-déjeuner adulte') . ' (Supplément)',
+                        'quantity' => $extraAdults,
+                        'unit_price' => $adultUnitPrice * 100,
+                        'total_price' => $extraAdultsTotal * 100,
+                    ]);
+                }
+            }
+
+            if ($childrenServed > 0) {
+                if ($coveredChildren > 0) {
+                    \App\Models\RestaurantCustomerOrderItem::create([
+                        'restaurant_customer_order_id' => $order->id,
+                        'menu_item_id' => $childItem?->id ?? $adultItem?->id,
+                        'item_name' => ($childItem?->name ?? 'Petit-déjeuner enfant') . ' (Inclus)',
+                        'quantity' => $coveredChildren,
+                        'unit_price' => 0,
+                        'total_price' => 0,
+                    ]);
+                }
+                if ($extraChildren > 0) {
+                    \App\Models\RestaurantCustomerOrderItem::create([
+                        'restaurant_customer_order_id' => $order->id,
+                        'menu_item_id' => $childItem?->id ?? $adultItem?->id,
+                        'item_name' => ($childItem?->name ?? 'Petit-déjeuner enfant') . ' (Supplément)',
+                        'quantity' => $extraChildren,
+                        'unit_price' => (int) round(($extraChildrenTotal * 100) / $extraChildren),
+                        'total_price' => $extraChildrenTotal * 100,
+                    ]);
+                }
+            }
+
+            // Déduction théorique des ingrédients du stock restaurant selon les fiches techniques
+            app(\App\Services\RestaurantStockService::class)->deductForOrder($order->fresh('items'));
+
+            // 5. Mise à jour de l'entitlement
             $entitlement->update([
                 'adults_consumed'   => $adultsServed,
                 'children_consumed' => $childrenServed,
@@ -468,6 +567,7 @@ class BreakfastPricingService
                 'extra_amount_fcfa' => $extraTotalFcfa,
                 'settlement'        => $settlementMethod,
                 'folio_item_id'     => $folioItemId,
+                'order_id'          => $order->id,
             ];
         });
     }

@@ -3,21 +3,30 @@
 namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Notifications\PurchaseOrderUpdated;
+use App\Services\DocumentExporter;
 use App\Services\Notifier;
 use App\Services\PurchaseOrderService;
+use App\Support\Document\Colonne;
+use App\Support\Document\Document;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller
 {
     use \App\Http\Controllers\Concerns\PaginatesLists;
+
+    private const MAX_EXPORT = 2000;
 
     /** Direction et comptabilité suivent l'engagement puis la dette fournisseur. */
     private const WATCHERS = ['manager', 'accountant'];
@@ -26,56 +35,196 @@ class PurchaseOrderController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $orders = PurchaseOrder::with('supplier')
-            ->withCount('lines')
-            ->latest()
-            ->paginate(self::PAR_PAGE)
-            ->withQueryString();
+        $orders = $this->filtrer($request)->paginate(self::PAR_PAGE)->withQueryString();
 
-        return view('economat.orders.index', compact('orders'));
+        $statsQuery = PurchaseOrder::query();
+        if ($supplierId = $request->query('fournisseur') ?: $request->query('supplier_id')) {
+            $statsQuery->where('supplier_id', $supplierId);
+        }
+        if ($debut = $this->date($request->query('du'))) {
+            $statsQuery->whereDate('created_at', '>=', $debut);
+        }
+        if ($fin = $this->date($request->query('au'))) {
+            $statsQuery->whereDate('created_at', '<=', $fin);
+        }
+
+        $stats = [
+            'total'        => (clone $statsQuery)->count(),
+            'draft'        => (clone $statsQuery)->where('status', PurchaseOrder::STATUS_DRAFT)->count(),
+            'sent'         => (clone $statsQuery)->where('status', PurchaseOrder::STATUS_SENT)->count(),
+            'received'     => (clone $statsQuery)->whereIn('status', [PurchaseOrder::STATUS_RECEIVED, PurchaseOrder::STATUS_PARTIALLY_RECEIVED])->count(),
+            'total_amount' => (int) (clone $statsQuery)->where('status', '!=', PurchaseOrder::STATUS_CANCELLED)->sum('total_amount'),
+        ];
+
+        $suppliers = Supplier::active()->orderBy('name')->get();
+
+        return view('economat.orders.index', [
+            'orders'    => $orders,
+            'suppliers' => $suppliers,
+            'stats'     => $stats,
+            'filtres'   => $this->filtresAppliques($request),
+        ]);
     }
 
-    public function create(): View
+    /**
+     * Export et impression structurée de la liste des bons de commande selon une période/filtre.
+     */
+    public function export(Request $request, DocumentExporter $exporteur)
     {
-        $suppliers = Supplier::active()->orderBy('name')->get();
-        $items     = StockItem::active()->orderBy('name')->get();
+        $format = (string) $request->query('format', DocumentExporter::FORMAT_IMPRESSION);
 
-        return view('economat.orders.create', compact('suppliers', 'items'));
+        abort_unless(DocumentExporter::formatValide($format), 404);
+
+        $lignes = $this->filtrer($request)->limit(self::MAX_EXPORT)->get();
+
+        AuditLog::record(Auth::id(), 'export', 'Export des bons de commande fournisseur (' . $format . ') — '
+            . $lignes->count() . ' ligne(s)', 'economat', ['format' => $format, 'filtres' => $request->query()]);
+
+        $document = Document::intitule('Bons de commande fournisseurs')
+            ->sousTitre('Commandes de réapprovisionnement et engagements auprès des fournisseurs')
+            ->filtres($this->filtresAppliques($request))
+            ->colonnes([
+                Colonne::texte('number', 'N° Bon'),
+                Colonne::dateHeure('created_at', 'Date émission'),
+                Colonne::texte('supplier.name', 'Fournisseur'),
+                Colonne::texte('supplier.phone', 'Téléphone'),
+                Colonne::nombre('lines_count', 'Articles'),
+                Colonne::montant('total_amount', 'Montant TTC'),
+                Colonne::texte('status_label', 'Statut'),
+                Colonne::texte('issuer_signature', 'Signataire'),
+            ])
+            ->lignes($lignes)
+            ->note($lignes->count() >= self::MAX_EXPORT
+                ? 'Export limité aux ' . self::MAX_EXPORT . ' commandes les plus récentes. Affinez les filtres pour le reste.'
+                : null);
+
+        return $exporteur->rendre($document, $format);
+    }
+
+    /**
+     * Requête filtrée partagée par la liste et par l'export.
+     */
+    private function filtrer(Request $request): Builder
+    {
+        $query = PurchaseOrder::with(['supplier', 'createdBy', 'lines.item.category'])
+            ->withCount('lines')
+            ->latest();
+
+        if ($supplierId = $request->query('fournisseur') ?: $request->query('supplier_id')) {
+            $query->where('supplier_id', $supplierId);
+        }
+
+        if ($statut = $request->query('statut') ?: $request->query('status')) {
+            if (array_key_exists($statut, PurchaseOrder::STATUSES)) {
+                $query->where('status', $statut);
+            }
+        }
+
+        if ($debut = $this->date($request->query('du'))) {
+            $query->whereDate('created_at', '>=', $debut);
+        }
+
+        if ($fin = $this->date($request->query('au'))) {
+            $query->whereDate('created_at', '<=', $fin);
+        }
+
+        if ($recherche = trim((string) $request->query('recherche'))) {
+            $query->where(function ($q) use ($recherche) {
+                $q->where('number', 'like', '%' . $recherche . '%')
+                    ->orWhere('notes', 'like', '%' . $recherche . '%')
+                    ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%' . $recherche . '%')
+                        ->orWhere('code', 'like', '%' . $recherche . '%'));
+            });
+        }
+
+        return $query;
+    }
+
+    private function filtresAppliques(Request $request): array
+    {
+        $supplierName = null;
+        if ($sId = $request->query('fournisseur') ?: $request->query('supplier_id')) {
+            $supplierName = Supplier::find($sId)?->name;
+        }
+
+        return array_filter([
+            'Fournisseur' => $supplierName,
+            'Statut'      => PurchaseOrder::STATUSES[$request->query('statut') ?: $request->query('status')] ?? null,
+            'Du'          => $this->date($request->query('du'))?->format('d/m/Y'),
+            'Au'          => $this->date($request->query('au'))?->format('d/m/Y'),
+            'Recherche'   => trim((string) $request->query('recherche')) ?: null,
+        ]);
+    }
+
+    private function date(?string $valeur): ?Carbon
+    {
+        if (!$valeur) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($valeur);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public function create(Request $request): View
+    {
+        $suppliers = Supplier::active()->orderBy('name')->withCount('stockItems')->get();
+        $items     = StockItem::active()->with(['category', 'supplier'])->orderBy('name')->get();
+        $selectedSupplierId = (int) ($request->query('supplier_id') ?: $request->query('fournisseur') ?: 0);
+
+        return view('economat.orders.create', compact('suppliers', 'items', 'selectedSupplierId'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'supplier_id'        => ['required', 'exists:suppliers,id'],
-            'expected_at'        => ['nullable', 'date'],
-            'notes'              => ['nullable', 'string', 'max:1000'],
-            'lines'              => ['required', 'array', 'min:1'],
+            'supplier_id'           => ['required', 'exists:suppliers,id'],
+            'expected_at'           => ['nullable', 'date'],
+            'notes'                 => ['nullable', 'string', 'max:1000'],
+            'lines'                 => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
-            'lines.*.quantity'   => ['required', 'numeric', 'min:0.001'],
-            'lines.*.unit_price' => ['required', 'integer', 'min:0'],   // FCFA
+            'lines.*.quantity'      => ['required', 'numeric', 'min:0.001'],
+            'lines.*.unit_price'    => ['required', 'numeric', 'min:0'],   // en FCFA
         ], [
-            'lines.required' => 'Ajoutez au moins un article au bon de commande.',
+            'lines.required'       => 'Sélectionnez au moins un article pour ce bon de commande.',
+            'supplier_id.required' => 'Veuillez sélectionner un fournisseur.',
         ]);
 
         $order = DB::transaction(function () use ($validated) {
+            $user = Auth::user();
+            $signature = $user ? $user->signatureName() : null;
+
             $order = PurchaseOrder::create([
-                'supplier_id' => $validated['supplier_id'],
-                'expected_at' => $validated['expected_at'] ?? null,
-                'notes'       => $validated['notes'] ?? null,
-                'created_by'  => auth()->id(),
-                'tenant_id'   => auth()->user()->tenant_id
+                'supplier_id'      => $validated['supplier_id'],
+                'expected_at'      => $validated['expected_at'] ?? null,
+                'notes'            => $validated['notes'] ?? null,
+                'created_by'       => Auth::id(),
+                'issuer_signature' => $signature,
+                'tenant_id'        => Auth::user()?->tenant_id
                     ?? \App\Models\Tenant::current()?->id,
             ]);
 
             foreach ($validated['lines'] as $line) {
+                // Stocke en centimes FCFA
+                $unitPriceCentimes = (int) round((float) $line['unit_price'] * 100);
+
                 PurchaseOrderLine::create([
                     'purchase_order_id' => $order->id,
                     'stock_item_id'     => $line['stock_item_id'],
                     'quantity_ordered'  => $line['quantity'],
-                    'unit_price'        => (int) $line['unit_price'] * 100,
+                    'unit_price'        => $unitPriceCentimes,
                 ]);
+
+                // Si l'article n'était rattaché à aucun fournisseur, on lui associe ce fournisseur
+                $item = StockItem::find($line['stock_item_id']);
+                if ($item && empty($item->supplier_id)) {
+                    $item->update(['supplier_id' => $validated['supplier_id']]);
+                }
             }
 
             $order->recalculateTotal();
@@ -85,14 +234,25 @@ class PurchaseOrderController extends Controller
 
         return redirect()
             ->route('economat.orders.show', $order)
-            ->with('success', "Bon {$order->number} créé. Vous pouvez maintenant l'envoyer au fournisseur.");
+            ->with('success', "Bon de commande {$order->number} créé et signé numériquement.");
     }
 
     public function show(PurchaseOrder $order): View
     {
-        $order->load('supplier', 'lines.item', 'createdBy', 'receivedBy');
+        $order->load(['supplier', 'lines.item.category', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'invoices']);
 
         return view('economat.orders.show', compact('order'));
+    }
+
+    /**
+     * Bon de commande officiel fournisseur imprimable.
+     * Conforme aux normes d'audit et sans éléments d'interface web polluants.
+     */
+    public function print(PurchaseOrder $order): View
+    {
+        $order->load(['supplier', 'lines.item.category', 'createdBy', 'purchaseRequest']);
+
+        return view('economat.orders.print', compact('order'));
     }
 
     /** Envoi du bon par email au fournisseur. */
