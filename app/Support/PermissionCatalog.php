@@ -28,9 +28,10 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Le comptage des caisses n'est pas une exception : il est contresigné par
- * la comptabilité seule (CashClosurePolicy), jamais par le manager qui
- * supervise les caisses.
+ * Une exception : valider ou refuser une demande d'achat. Ce n'est pas une
+ * saisie à la place de l'économe mais la décision de dépense, que la
+ * direction se réserve. Le comptage des caisses, lui, est contresigné par la
+ * comptabilité seule (CashClosurePolicy).
  *
  * Les rôles d'un droit sont l'INTERSECTION des middlewares « role: » qui
  * gardaient la route, car ils s'empilaient : 54 routes en portaient deux, un
@@ -417,11 +418,11 @@ class PermissionCatalog
             'economat.orders.receive' => ['econome'],
             'economat.orders.send' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager'],
-            'economat.purchase_requests.approve' => ['econome', 'manager'],
+            'economat.purchase_requests.approve' => ['manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
             'economat.purchase_requests.convert' => ['econome'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.purchase_requests.reject' => ['econome', 'manager'],
+            'economat.purchase_requests.reject' => ['manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome'],

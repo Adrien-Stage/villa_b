@@ -410,7 +410,6 @@
   "econome"
  ],
  "economat.purchase_requests.approve": [
-  "econome",
   "manager"
  ],
  "economat.purchase_requests.cancel": [
@@ -440,7 +439,6 @@
   "shop_manager"
  ],
  "economat.purchase_requests.reject": [
-  "econome",
   "manager"
  ],
  "economat.purchase_requests.show": [

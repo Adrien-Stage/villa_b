@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseRequest;
 use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Services\PermissionResolver;
 use App\Services\PurchaseRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class PurchaseRequestController extends Controller
             'stats'       => $stats,
             'departments' => PurchaseRequest::DEPARTMENTS,
             'statuses'    => PurchaseRequest::STATUSES,
-            'canManage'   => Auth::user()?->hasAnyRole(['econome', 'admin']) ?? false,
+            'canManage'   => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
         ]);
     }
 
@@ -104,8 +105,11 @@ class PurchaseRequestController extends Controller
         return view('economat.purchase_requests.show', [
             'request'   => $purchaseRequest,
             'suppliers' => $suppliers,
-            'canReview' => Auth::user()?->hasAnyRole(['manager', 'admin']) ?? false,
-            'canManage' => Auth::user()?->hasAnyRole(['econome', 'admin']) ?? false,
+            // Les boutons posent la même question que la route et le service :
+            // le droit de décider, et jamais sur sa propre demande.
+            'canReview' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.approve')
+                && !PurchaseRequestService::estSaPropreDemande($purchaseRequest, Auth::user()),
+            'canManage' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
         ]);
     }
 
