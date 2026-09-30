@@ -201,3 +201,20 @@ test('la résolution des rôles d’un département pré-sélectionne tous les r
     expect($resBtq['roles'])->toContain('shop_manager', 'shop_cashier');
 });
 
+
+test('la réception consulte le restaurant et la boutique sans jamais y écrire', function () {
+    seedRolesAndModules();
+
+    // Compte à l'ancienne : le rôle ne vit que dans la colonne users.role.
+    $receptionniste = User::factory()->create(['role' => 'reception']);
+
+    // Elle lit, depuis la fiche client, les factures restaurant et boutique…
+    expect($receptionniste->canAccessModule('restaurant'))->toBeTrue()
+        ->and($receptionniste->canAccessModule('boutique'))->toBeTrue()
+        // … mais n'encaisse ni au restaurant ni à la boutique.
+        ->and($receptionniste->moduleLevel('restaurant'))->toBe('read')
+        ->and($receptionniste->moduleLevel('boutique'))->toBe('read')
+        ->and($receptionniste->moduleLevel('shop'))->toBe('read')
+        // Son propre module reste en écriture.
+        ->and($receptionniste->canWrite('hebergement'))->toBeTrue();
+});

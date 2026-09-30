@@ -136,6 +136,41 @@ class User extends Authenticatable
     ];
 
     /**
+     * Modules qu'un rôle consulte sans jamais y écrire, quel que soit le
+     * niveau de son affectation.
+     *
+     * La réception lit, depuis la fiche client, les factures restaurant et
+     * boutique du séjournant ; elle n'encaisse ni au restaurant ni à la
+     * boutique. Sans ce plafond, son niveau « écriture » d'hébergement
+     * débordait sur ces modules : une personne à la fois réceptionniste et
+     * serveur, que le manager avait mise en lecture seule au restaurant, y
+     * retrouvait l'écriture par son rôle de réception.
+     */
+    protected static array $legacyReadOnlyModules = [
+        'reception' => ['restaurant', 'boutique', 'shop'],
+    ];
+
+    /**
+     * Niveau qu'un rôle confère sur un module : celui de son affectation,
+     * plafonné à la lecture quand le rôle n'atteint ce module que pour le
+     * consulter. Le module propre du rôle n'est jamais plafonné.
+     */
+    private static function levelForRoleOnModule(string $roleSlug, ?string $roleModule, array $aliases, string $level): string
+    {
+        if ($level !== 'write' || in_array($roleModule, $aliases, true)) {
+            return $level;
+        }
+
+        $consultes = self::$legacyReadOnlyModules[$roleSlug] ?? [];
+        $ecrits    = array_diff(self::defaultModulesForRole($roleSlug), $consultes);
+
+        $atteintEnConsultation = array_intersect($aliases, $consultes) !== [];
+        $atteintEnEcriture     = in_array('*', $ecrits, true) || array_intersect($aliases, $ecrits) !== [];
+
+        return $atteintEnConsultation && !$atteintEnEcriture ? 'read' : $level;
+    }
+
+    /**
      * Retourne les modules autorisés pour un slug de rôle donné.
      */
     public static function defaultModulesForRole(string $role): array
@@ -208,7 +243,9 @@ class User extends Authenticatable
             });
 
             if ($matchingPivot->isNotEmpty()) {
-                $levels = $matchingPivot->map(fn ($r) => $r->pivot->level ?: 'write');
+                $levels = $matchingPivot->map(fn ($r) => self::levelForRoleOnModule(
+                    $r->slug, $r->module, $aliases, $r->pivot->level ?: 'write'
+                ));
                 return $levels->contains('write') ? 'write' : 'read';
             }
         }
@@ -232,7 +269,7 @@ class User extends Authenticatable
         if ($this->role) {
             $allowed = self::defaultModulesForRole($this->role);
             if (in_array('*', $allowed, true) || !empty(array_intersect($allowed, $aliases))) {
-                return 'write';
+                return self::levelForRoleOnModule($this->role, null, $aliases, 'write');
             }
         }
 
