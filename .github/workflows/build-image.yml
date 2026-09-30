@@ -13,7 +13,14 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Barrière avant publication : ce module tient la caisse et le grand livre.
+  # Une régression qui atteint le registre est déployée chez les
+  # établissements par le provisioning.
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   build-and-push:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
