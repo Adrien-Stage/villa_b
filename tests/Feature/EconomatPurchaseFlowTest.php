@@ -190,6 +190,36 @@ test('une demande approuvee peut etre convertie en bon de commande fournisseur',
         ->and($req->fresh()->status)->toBe(PurchaseRequest::STATUS_CONVERTED);
 });
 
+test("le manager valide la dépense mais laisse à l'économe la commande", function () {
+    activerModules(['economat']);
+
+    $econome = createStaffUser('econome');
+    $fournisseur = Supplier::create(['name' => 'Brasseries du Cameroun', 'is_active' => true]);
+    $article = StockItem::create([
+        'supplier_id' => $fournisseur->id, 'name' => 'Casier 33 Export', 'unit' => 'casier',
+        'current_stock' => 2, 'average_cost' => 900000, 'is_active' => true,
+    ]);
+    $service = app(PurchaseRequestService::class);
+    $demande = $service->create([
+        'department' => 'bar',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 12]],
+    ], $econome);
+
+    $manager = createStaffUser('manager');
+    $service->approve($demande, $manager);
+
+    // La demande approuvée ne lui propose pas de générer la commande…
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertDontSee('Générer le(s) bon(s) de commande');
+
+    // … et la route la lui refuse : la demande reste approuvée, sans commande.
+    $this->post(route('economat.purchase_requests.convert', $demande), ['supplier_id' => $fournisseur->id]);
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_APPROVED)
+        ->and(PurchaseOrder::where('purchase_request_id', $demande->id)->exists())->toBeFalse();
+});
+
 test('la reception de marchandise genere un bon de reception contradictoire et met a jour le stock', function () {
     $econome = createStaffUser('econome');
 

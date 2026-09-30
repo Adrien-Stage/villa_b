@@ -401,7 +401,7 @@ class PermissionCatalog
             'bookings.voir' => ['controller', 'manager', 'reception'],
 
             // ── Économat ──
-            'economat.control.suggestions.creer' => ['econome', 'manager'],
+            'economat.control.suggestions.creer' => ['econome'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
             'economat.control.variances.voir' => ['controller', 'econome', 'manager'],
             'economat.control.voir' => ['controller', 'econome', 'manager'],
@@ -420,11 +420,11 @@ class PermissionCatalog
             'economat.orders.voir' => ['controller', 'econome', 'manager'],
             'economat.purchase_requests.approve' => ['econome', 'manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.purchase_requests.convert' => ['econome', 'manager'],
+            'economat.purchase_requests.convert' => ['econome'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
             'economat.purchase_requests.reject' => ['econome', 'manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.receipts.cancel' => ['econome', 'manager'],
+            'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome'],
             'economat.receipts.voir' => ['controller', 'econome', 'manager'],
             'economat.receipts.export' => ['controller', 'econome', 'manager'],

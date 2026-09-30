@@ -44,6 +44,15 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
     // la responsabilité de chacun.
     $lectureSeule = ['restaurant', 'shop', 'economat', 'accounting'];
 
+    // Valider ou refuser une demande d'achat n'est pas saisir à la place de
+    // l'économe : c'est la décision de dépense que la direction se réserve.
+    // Convertir la demande en commande ou annuler une réception, en revanche,
+    // reste l'exécution du magasin.
+    $actesDeSupervision = [
+        'economat.purchase_requests.approve',
+        'economat.purchase_requests.reject',
+    ];
+
     $ecrituresIndues = [];
 
     foreach (PermissionCatalog::all() as $droit => $roles) {
@@ -57,7 +66,8 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         if (in_array($module, $lectureSeule, true)
             && !$lecture
             && in_array('manager', $roles, true)
-            && !str_starts_with($droit, 'accounting.cash')) {
+            && !str_starts_with($droit, 'accounting.cash')
+            && !in_array($droit, $actesDeSupervision, true)) {
             $ecrituresIndues[] = $droit;
         }
     }
