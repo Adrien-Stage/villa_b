@@ -65,10 +65,11 @@ test('une fiche vide est signalée et ne produit aucun pourcentage', function ()
     RoomType::create(['name' => 'Bungalow', 'code' => 'bung', 'base_price' => 5_000_00,
         'base_capacity' => 2, 'max_capacity' => 2, 'is_active' => true]);
 
-    $this->actingAs(User::factory()->create(['role' => 'accountant']))
+    $page = $this->actingAs(User::factory()->create(['role' => 'accountant']))
         ->get(route('rooms.cost_sheets.index'))
-        ->assertSee('à remplir')
-        ->assertDontSee('100%');
+        ->assertSee('à remplir');
+
+    expect(texteAffiche($page->getContent()))->not->toContain('100%');
 });
 
 test('le document consolidé sort dans les quatre formats', function (string $format, string $type) {

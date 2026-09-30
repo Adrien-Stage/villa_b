@@ -492,8 +492,8 @@
                             @unless($demandesEnComptabilite)
                                 @php
                                     // Le libellé dit l'étendue : qui ne consulte
-                                    // que ses propres demandes ne lit pas
-                                    // « Demandes ».
+                                    // que ses propres demandes lit « Mes demandes »,
+                                    // les autres « Bons de réquisition ».
                                     $porteeDemandes = $droits->scopeFor(auth()->user(), 'economat.requisitions.voir');
                                 @endphp
                                 <x-sidebar-link route="economat.requisitions.index" icon="inbox">

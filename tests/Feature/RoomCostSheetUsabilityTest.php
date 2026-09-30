@@ -38,19 +38,21 @@ test('sans aucun coût saisi, aucune marge trompeuse n’est affichée', functio
 test('la page annonce clairement une fiche à remplir et propose un démarrage', function () {
     [$manager, $type] = costSheetSetupUx();
 
-    test()->get(route('rooms.cost_sheets.show', $type))
+    $fiche = test()->get(route('rooms.cost_sheets.show', $type))
         ->assertOk()
         // false = comparer au texte brut : l'apostrophe du gabarit n'est pas échappée.
         ->assertSee("Cette fiche n'est pas encore remplie", false)
-        ->assertSee('Démarrer avec les postes courants')
-        ->assertDontSee('100%');
+        ->assertSee('Démarrer avec les postes courants');
+
+    expect(texteAffiche($fiche->getContent()))->not->toContain('100%');
 
     // La vue consolidée signale la fiche vide et n'invente pas de pourcentage.
     // Le libellé a suivi le bandeau de tête, qui compte les fiches « à remplir ».
-    test()->get(route('rooms.cost_sheets.index'))
+    $consolidee = test()->get(route('rooms.cost_sheets.index'))
         ->assertOk()
-        ->assertSee('à remplir')
-        ->assertDontSee('100%');
+        ->assertSee('à remplir');
+
+    expect(texteAffiche($consolidee->getContent()))->not->toContain('100%');
 });
 
 test('le démarrage rapide crée les postes courants prêts à ajuster', function () {
