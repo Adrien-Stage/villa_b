@@ -61,8 +61,10 @@ dans cet ordre :
 1. **Attendre PostgreSQL** — `pg_isready`, 30 tentatives à 3 s.
 2. **Générer `APP_KEY`** si elle est absente.
 3. **Mettre en cache** config, routes et vues.
-4. **Migrer** — `migrate --force`.
+4. **Migrer** — `migrate --force`. **Un échec arrête le conteneur**, plutôt que de
+   servir une base à moitié migrée.
 5. **Initialiser** — `ProductionTenantSeeder`, **uniquement si aucun tenant n'existe**.
+   Un échec arrête aussi le conteneur.
 6. **Synchroniser les rôles** — `roles:sync`, **à chaque démarrage**.
 7. **Lier le storage** et ajuster les permissions.
 
