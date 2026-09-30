@@ -19,26 +19,44 @@ ne remplace les autres.
 vérité**. La rubrique Utilisateurs lit la table `roles`, jamais une liste codée en
 dur.
 
-| Rôle | Module | Assignable | Périmètre |
-|---|---|---|---|
-| `admin` | direction | ❌ | Accès complet, y compris l'administration |
-| `manager` | direction | ❌ | Pilotage complet de l'établissement |
-| `customer_guest` | portail | ❌ | Accès client au portail |
-| `reception` | hebergement | ✅ | Accueil, réservations, arrivées et départs |
-| `cashier` | hebergement | ✅ | Encaissements et facturation |
-| `housekeeping_leader` | housekeeping | ✅ | Supervision du service ménage |
-| `housekeeping_staff` | housekeeping | ✅ | Personnel de ménage |
-| `restaurant_chief` | restaurant | ✅ | Cuisine et restaurant, carte, fiches techniques |
-| `restaurant_staff` | restaurant | ✅ | Service en salle |
-| `restaurant_cook` | restaurant | ✅ | Cuisine : bons et plats prêts |
-| `shop_manager` | boutique | ✅ | Catalogue et stocks boutique |
-| `shop_cashier` | boutique | ✅ | Ventes et encaissements boutique |
-| `econome` | economat | ✅ | Magasin central, fournisseurs, achats |
-| `accountant` | comptabilite | ✅ | Comptabilité et rapports financiers |
+La hiérarchie suit celle d'un hôtel. Un chef **inclut** ses membres : il détient
+leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 
-> **`is_assignable: false` signifie qu'un manager ne peut pas attribuer ce rôle**
-> depuis la rubrique staff. Les rôles privilégiés (`admin`, `manager`) ne se
-> distribuent pas depuis l'interface courante.
+| Niveau | Rôle | Service | Inclut | Statut |
+|---|---|---|---|---|
+| 1 | `admin` — Administrateur | informatique | — | actif, créé depuis la console |
+| 2 | `manager` — Manager | direction | — | actif, privilégié |
+| 3 | `reception_chief` — Chef de réception | hébergement | `reception` | en préparation |
+| 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
+| 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | en préparation |
+| 3 | `restaurant_chief` — Chef de cuisine | restaurant | `restaurant_cook` | actif |
+| 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
+| 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
+| 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | en préparation |
+| 4 | `reception` — Réceptionniste (encaisse) | hébergement | — | actif |
+| 4 | `housekeeping_staff` — Valet / Femme de chambre | housekeeping | — | actif |
+| 4 | `restaurant_staff` — Serveur, `restaurant_cook` — Cuisinier | restaurant | — | actif |
+| 4 | `cashier` — Caissier restaurant | restaurant | — | actif |
+| 4 | `shop_cashier` — Vendeur-caissier | boutique | — | actif |
+| 4 | `storekeeper` — Magasinier | économat | — | en préparation |
+| 4 | `accountant` — Comptable | comptabilité | — | actif |
+| — | `controller`, `quality_auditor` — contrôle, lecture seule | contrôle | — | actif |
+| — | `customer_guest` — portail client | portail | — | actif, privilégié |
+| — | `rh_manager`, `it_support` | — | — | retirés |
+
+- **L'administrateur consulte tout et n'écrit rien de métier.** Il administre
+  l'application ; il ne tient aucun service. Il ne se cumule avec aucun autre rôle.
+- **Il n'y a pas de caissier à l'hébergement** : le réceptionniste encaisse. Le slug
+  historique `cashier` désigne le caissier du restaurant.
+- **En préparation** : le rôle est défini, droits compris, mais pas encore proposé :
+  des écrans demandent encore les rôles par leur nom et ne le reconnaîtraient pas.
+- **Retiré** : plus proposé ; les RH deviennent une plateforme sœur, et
+  l'administrateur appartient déjà au service informatique.
+
+> **`is_assignable: false` signifie que le rôle ne se distribue pas depuis la
+> rubrique Utilisateurs** : rôles privilégiés (`admin`, `manager`), rôles en
+> préparation et rôles retirés. Niveau, inclusions et statut vivent dans le code ;
+> la table `roles` ne porte que les colonnes lues par les écrans.
 
 ### Ajouter un rôle
 
@@ -146,11 +164,14 @@ Le manager supervise et contrôle ; il ne saisit pas les commandes ni les
 encaissements à la place de ses équipes. Cette séparation est ce qui rend le
 contrôle crédible.
 
-### Qui ouvre la caisse la ferme
+### Qui ouvre la caisse la compte, la comptabilité la clôt
 
-La fermeture de caisse n'a **pas** de restriction de rôle supplémentaire : le
-contrôleur borne la session à `auth()->id()`. Chacun ferme la sienne, personne ne
-ferme celle d'un autre.
+Le comptage n'a **pas** de restriction de rôle supplémentaire : le contrôleur borne
+la session à `auth()->id()`. Chacun compte la sienne, personne ne compte celle d'un
+autre. La caisse cesse alors d'encaisser et attend la **contresignature de la
+comptabilité** (comptable ou responsable administratif et financier), seule à
+constater l'écart. Ce n'est pas un réglage : ni l'établissement ni le manager ne
+peuvent en dispenser.
 
 ### Les demandes à l'économat sont ouvertes
 

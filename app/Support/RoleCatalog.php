@@ -12,144 +12,308 @@ use App\Models\Role;
  * migrations) et apparaît aussitôt dans la rubrique Utilisateurs, qui lit la
  * table plutôt qu'une liste codée en dur.
  *
- * Chaque rôle porte le module métier qu'il couvre, son icône Lucide et s'il
- * est assignable par un manager (les rôles privilégiés ne le sont pas).
+ * La hiérarchie suit celle d'un hôtel :
+ *
+ *   1  Administrateur — le service informatique : il administre l'application
+ *      et consulte tous les services, sans y saisir d'opération.
+ *   2  Manager — la direction des opérations : il supervise tous les services
+ *      et valide les décisions qui engagent l'établissement.
+ *   3  Chefs de service — ils dirigent leur service et font ce que font leurs
+ *      membres (« includes »).
+ *   4  Membres — ils exécutent le travail de leur service.
+ *
+ * Hors hiérarchie (niveau nul) : le contrôle — contrôleur de gestion, auditeur
+ * qualité —, qui lit sans jamais participer, et le portail client.
+ *
+ * Le module d'un rôle est le service auquel il appartient.
+ *
+ * Statut d'un rôle :
+ *  - actif : en service, assignable s'il n'est pas privilégié ;
+ *  - en préparation : défini, droits compris, mais pas encore proposé — des
+ *    écrans demandent encore les rôles par leur nom et ne le connaîtraient
+ *    pas, il n'aurait qu'une partie de ses droits ;
+ *  - retiré : plus proposé. Qui le porte le garde ; il ne donne aucun droit.
  */
 class RoleCatalog
 {
+    public const ADMIN = 'admin';
+
+    public const MANAGER = 'manager';
+
+    public const ACTIF = 'actif';
+
+    public const EN_PREPARATION = 'en_preparation';
+
+    public const RETIRE = 'retire';
+
+    /** Colonnes de la table roles : la synchronisation n'écrit que celles-là. */
+    private const COLONNES = ['name', 'slug', 'description', 'module', 'icon', 'sort_order', 'is_assignable'];
+
     /**
      * @return array<int, array<string, mixed>>
      */
     public static function all(): array
     {
         return [
-            // ── Rôles privilégiés : non assignables depuis la rubrique staff ──
-            // « admin » ne figure plus ici : ce n'est pas un rôle
-            // d'établissement. C'est l'identité de la console de supervision,
-            // portée par la colonne users.role et gardée par AdminOnly, en
-            // dehors de la matrice des droits. Le seul rôle qui détient tout
-            // dans un établissement est « manager ».
+            // ── Niveau 1 : administration ──
+            // Créé depuis la console d'orchestration uniquement : personne,
+            // dans l'établissement, n'accorde un niveau égal au sien.
+            [
+                'name' => 'Administrateur',
+                'slug' => self::ADMIN,
+                'description' => 'Service informatique : comptes, rôles, droits et paramètres ; consulte tous les services',
+                'module' => 'it', 'icon' => 'monitor-cog', 'sort_order' => 1, 'is_assignable' => false,
+                'level' => 1, 'statut' => self::ACTIF,
+            ],
+
+            // ── Niveau 2 : direction ──
             [
                 'name' => 'Manager',
-                'slug' => 'manager',
-                'description' => 'Directeur d\'hôtel - gestion complète de l\'établissement',
+                'slug' => self::MANAGER,
+                'description' => 'Direction des opérations : supervise tous les services et valide les décisions',
                 'module' => 'direction', 'icon' => 'crown', 'sort_order' => 2, 'is_assignable' => false,
-            ],
-            [
-                'name' => 'Client',
-                'slug' => 'customer_guest',
-                'description' => 'Accès client au portail client',
-                'module' => 'portail', 'icon' => 'user', 'sort_order' => 99, 'is_assignable' => false,
+                'level' => 2, 'statut' => self::ACTIF,
             ],
 
             // ── Hébergement ──
+            // Il n'y a pas de caissier à l'hébergement : le réceptionniste encaisse.
+            [
+                'name' => 'Chef de réception',
+                'slug' => 'reception_chief',
+                'description' => 'Encadre la réception : réservations, séjours et caisse de la réception',
+                'module' => 'hebergement', 'icon' => 'bell-ring', 'sort_order' => 9, 'is_assignable' => false,
+                'level' => 3, 'includes' => ['reception'], 'statut' => self::EN_PREPARATION,
+            ],
             [
                 'name' => 'Réceptionniste',
                 'slug' => 'reception',
-                'description' => 'Accueil et gestion des réservations',
+                'description' => 'Accueil, réservations, séjours et encaissements de la réception',
                 'module' => 'hebergement', 'icon' => 'concierge-bell', 'sort_order' => 10, 'is_assignable' => true,
-            ],
-            [
-                'name' => 'Caissier',
-                'slug' => 'cashier',
-                'description' => 'Gestion des encaissements et facturation',
-                'module' => 'hebergement', 'icon' => 'calculator', 'sort_order' => 11, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
 
             // ── Housekeeping ──
             [
-                'name' => 'Chef d\'équipe Housekeeping',
+                'name' => 'Gouvernant(e) général(e)',
                 'slug' => 'housekeeping_leader',
-                'description' => 'Superviseur du service ménage',
+                'description' => 'Dirige les étages : affectation des chambres, contrôle de la propreté, incidents',
                 'module' => 'housekeeping', 'icon' => 'sparkles', 'sort_order' => 20, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['housekeeping_staff'], 'statut' => self::ACTIF,
             ],
             [
-                'name' => 'Équipe Housekeeping',
+                'name' => 'Valet / Femme de chambre',
                 'slug' => 'housekeeping_staff',
-                'description' => 'Personnel de ménage',
+                'description' => 'Nettoyage et remise en état des chambres',
                 'module' => 'housekeeping', 'icon' => 'brush-cleaning', 'sort_order' => 21, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
 
             // ── Restaurant ──
             [
-                'name' => 'Chef cuisinier',
+                'name' => 'Responsable de restaurant',
+                'slug' => 'restaurant_manager',
+                'description' => 'Dirige la salle : service, carte et encaissements si nécessaire',
+                'module' => 'restaurant', 'icon' => 'store', 'sort_order' => 29, 'is_assignable' => false,
+                'level' => 3, 'includes' => ['restaurant_staff', 'cashier'], 'statut' => self::EN_PREPARATION,
+            ],
+            [
+                'name' => 'Chef de cuisine',
                 'slug' => 'restaurant_chief',
-                'description' => 'Responsable de la cuisine et restaurant',
+                'description' => 'Responsable de la cuisine et du restaurant',
                 'module' => 'restaurant', 'icon' => 'chef-hat', 'sort_order' => 30, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['restaurant_cook'], 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Serveur (salle)',
                 'slug' => 'restaurant_staff',
                 'description' => 'Service en salle : prise de commande, navette avec la cuisine, service des plats',
                 'module' => 'restaurant', 'icon' => 'utensils', 'sort_order' => 31, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Cuisinier (cuisine)',
                 'slug' => 'restaurant_cook',
                 'description' => 'Cuisine : réception des bons de commande et signalement des plats prêts',
                 'module' => 'restaurant', 'icon' => 'cooking-pot', 'sort_order' => 32, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
+            ],
+            // Le slug historique « cashier » désigne désormais le caissier du
+            // restaurant, que ses droits décrivaient déjà : le garder évite de
+            // reprendre les comptes qui le portent.
+            [
+                'name' => 'Caissier restaurant',
+                'slug' => 'cashier',
+                'description' => 'Encaissement des additions du restaurant',
+                'module' => 'restaurant', 'icon' => 'calculator', 'sort_order' => 33, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
 
             // ── Boutique ──
             [
-                'name' => 'Gérant Boutique',
+                'name' => 'Responsable boutique',
                 'slug' => 'shop_manager',
                 'description' => 'Gestion des articles culturels et stocks boutique',
                 'module' => 'boutique', 'icon' => 'shopping-bag', 'sort_order' => 40, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['shop_cashier'], 'statut' => self::ACTIF,
             ],
             [
-                'name' => 'Caissier Boutique',
+                'name' => 'Vendeur-caissier',
                 'slug' => 'shop_cashier',
                 'description' => 'Ventes et encaissements boutique',
                 'module' => 'boutique', 'icon' => 'shopping-cart', 'sort_order' => 41, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
 
             // ── Économat ──
             [
-                'name' => 'Économe',
+                'name' => 'Chef économe',
                 'slug' => 'econome',
                 'description' => 'Gestion du magasin central : stock, fournisseurs, bons de commande et demandes des départements',
                 'module' => 'economat', 'icon' => 'warehouse', 'sort_order' => 50, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['storekeeper'], 'statut' => self::ACTIF,
+            ],
+            [
+                'name' => 'Magasinier',
+                'slug' => 'storekeeper',
+                'description' => 'Réception des livraisons, sorties et comptages du magasin central',
+                'module' => 'economat', 'icon' => 'package-check', 'sort_order' => 51, 'is_assignable' => false,
+                'level' => 4, 'statut' => self::EN_PREPARATION,
             ],
 
-            // ── Comptabilité ──
+            // ── Comptabilité & finances ──
+            [
+                'name' => 'Responsable administratif et financier',
+                'slug' => 'finance_manager',
+                'description' => 'Dirige la comptabilité et les finances : écritures, clôtures, contrôle des caisses',
+                'module' => 'comptabilite', 'icon' => 'landmark', 'sort_order' => 59, 'is_assignable' => false,
+                'level' => 3, 'includes' => ['accountant'], 'statut' => self::EN_PREPARATION,
+            ],
+            [
+                'name' => 'Comptable',
+                'slug' => 'accountant',
+                'description' => 'Écritures, clôtures et contrôle des comptages de caisse',
+                'module' => 'comptabilite', 'icon' => 'wallet', 'sort_order' => 60, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
+            ],
+
+            // ── Contrôle : hors hiérarchie, lecture seule ──
             [
                 'name' => 'Contrôleur de gestion',
                 'slug' => 'controller',
                 'description' => 'Contrôle et audit interne — vue sur tous les services, aucune écriture',
                 'module' => 'comptabilite', 'icon' => 'shield-check', 'sort_order' => 41, 'is_assignable' => true,
+                'level' => null, 'statut' => self::ACTIF,
             ],
-            [
-                'name' => 'Comptable',
-                'slug' => 'accountant',
-                'description' => 'Service comptabilité et rapports financiers',
-                'module' => 'comptabilite', 'icon' => 'wallet', 'sort_order' => 60, 'is_assignable' => true,
-            ],
-
-            // ── Ressources Humaines ──
-            [
-                'name' => 'Responsable RH',
-                'slug' => 'rh_manager',
-                'description' => 'Gestion du personnel, contrats et plannings',
-                'module' => 'rh', 'icon' => 'users', 'sort_order' => 70, 'is_assignable' => true,
-            ],
-
-            // ── Informatique & Support IT ──
-            [
-                'name' => 'Technicien IT',
-                'slug' => 'it_support',
-                'description' => 'Support informatique, réseau, matériel et PMS',
-                'module' => 'it', 'icon' => 'laptop', 'sort_order' => 80, 'is_assignable' => true,
-            ],
-
-            // ── Qualité & Contrôle ──
             [
                 'name' => 'Contrôleur Qualité & Audit',
                 'slug' => 'quality_auditor',
                 'description' => 'Audit des normes d’hygiène, qualité et conformité',
                 'module' => 'qualite', 'icon' => 'award', 'sort_order' => 90, 'is_assignable' => true,
+                'level' => null, 'statut' => self::ACTIF,
+            ],
+
+            // ── Portail client ──
+            [
+                'name' => 'Client',
+                'slug' => 'customer_guest',
+                'description' => 'Accès client au portail client',
+                'module' => 'portail', 'icon' => 'user', 'sort_order' => 99, 'is_assignable' => false,
+                'level' => null, 'statut' => self::ACTIF,
+            ],
+
+            // ── Retirés ──
+            // Les ressources humaines deviennent une plateforme sœur de
+            // l'application ; l'administrateur appartient déjà au service
+            // informatique. Ni l'un ni l'autre ne portait de droit.
+            [
+                'name' => 'Responsable RH',
+                'slug' => 'rh_manager',
+                'description' => 'Retiré : les ressources humaines relèvent d\'une plateforme dédiée',
+                'module' => 'rh', 'icon' => 'users', 'sort_order' => 70, 'is_assignable' => false,
+                'level' => null, 'statut' => self::RETIRE,
+            ],
+            [
+                'name' => 'Technicien IT',
+                'slug' => 'it_support',
+                'description' => 'Retiré : le service informatique administre l\'application sous le rôle Administrateur',
+                'module' => 'it', 'icon' => 'laptop', 'sort_order' => 80, 'is_assignable' => false,
+                'level' => null, 'statut' => self::RETIRE,
             ],
         ];
+    }
+
+    /** Définition d'un rôle, ou null s'il n'est pas au référentiel. */
+    public static function find(string $slug): ?array
+    {
+        foreach (self::all() as $definition) {
+            if ($definition['slug'] === $slug) {
+                return $definition;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Ces rôles et tous ceux qu'ils incluent, en suivant les inclusions en
+     * chaîne : ce qu'une personne fait réellement avec ces rôles.
+     *
+     * @param  list<string>  $slugs
+     * @return list<string>
+     */
+    public static function developper(array $slugs): array
+    {
+        $inclusions = self::inclusions();
+        $resultat = [];
+        $aVisiter = array_values($slugs);
+
+        while ($aVisiter !== []) {
+            $slug = array_pop($aVisiter);
+
+            if (in_array($slug, $resultat, true)) {
+                continue;
+            }
+
+            $resultat[] = $slug;
+            array_push($aVisiter, ...($inclusions[$slug] ?? []));
+        }
+
+        return $resultat;
+    }
+
+    /**
+     * Ces rôles et tous ceux qui les incluent, en chaîne : les détenteurs
+     * d'un droit accordé à ces rôles, chefs compris.
+     *
+     * @param  list<string>  $slugs
+     * @return list<string>
+     */
+    public static function avecCeuxQuiLesIncluent(array $slugs): array
+    {
+        $resultat = array_values(array_unique($slugs));
+
+        foreach (array_keys(self::inclusions()) as $chef) {
+            if (! in_array($chef, $resultat, true)
+                && array_intersect(self::developper([$chef]), $slugs) !== []) {
+                $resultat[] = $chef;
+            }
+        }
+
+        return $resultat;
+    }
+
+    /** @return array<string, list<string>> rôle => rôles qu'il inclut directement */
+    private static function inclusions(): array
+    {
+        $inclusions = [];
+
+        foreach (self::all() as $definition) {
+            if (! empty($definition['includes'])) {
+                $inclusions[$definition['slug']] = $definition['includes'];
+            }
+        }
+
+        return $inclusions;
     }
 
     /**
@@ -165,13 +329,16 @@ class RoleCatalog
         $updated = 0;
 
         foreach (self::all() as $definition) {
+            // Niveau, inclusions et statut vivent dans le code : la table ne
+            // porte que ce que les écrans et la console lisent en base.
+            $colonnes = array_intersect_key($definition, array_flip(self::COLONNES));
             $role = Role::where('slug', $definition['slug'])->first();
 
             if ($role) {
-                $role->fill($definition)->save();
+                $role->fill($colonnes)->save();
                 $updated++;
             } else {
-                Role::create($definition);
+                Role::create($colonnes);
                 $created++;
             }
         }

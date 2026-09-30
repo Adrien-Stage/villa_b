@@ -24,7 +24,7 @@ test('le rôle économe est proposé automatiquement à la création', function 
 
     $this->get(route('users.index'))
         ->assertOk()
-        ->assertSee('Économe')       // libellé du rôle
+        ->assertSee('Chef économe') // libellé du rôle
         ->assertSee('Économat');     // libellé du module
 });
 

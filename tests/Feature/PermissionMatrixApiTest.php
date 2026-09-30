@@ -56,6 +56,18 @@ test('la lecture rend le gabarit, les écarts et les incompatibilités', functio
         ->and($reponse->json('modules'))->toContain('economat');
 });
 
+test('la lecture décrit la hiérarchie des rôles', function () {
+    $roles = collect($this->getJson('/api/permissions/matrice', entete())->assertOk()->json('roles'))
+        ->keyBy('slug');
+
+    // La console en tirera le regroupement par niveau et par service.
+    expect($roles['admin']['level'])->toBe(1)
+        ->and($roles['econome']['includes'])->toBe(['storekeeper'])
+        ->and($roles['storekeeper']['statut'])->toBe('en_preparation')
+        ->and($roles['it_support']['statut'])->toBe('retire')
+        ->and($roles['controller']['level'])->toBeNull();
+});
+
 test('les rôles envoyés remplacent les écarts précédents', function () {
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',

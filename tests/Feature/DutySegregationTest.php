@@ -34,10 +34,31 @@ test('le contrôle indépendant ne se cumule à aucun rôle opérationnel', func
     expect(DutySegregation::isCompatible(['quality_auditor', $operationnel]))->toBeFalse();
 })->with(['reception', 'cashier', 'econome', 'accountant', 'restaurant_chief', 'shop_cashier']);
 
-test("l'accès technique doit rester nu", function () {
-    expect(DutySegregation::isCompatible(['it_support', 'accountant']))->toBeFalse()
-        // Seul, il ne pose aucun problème.
-        ->and(DutySegregation::isCompatible(['it_support']))->toBeTrue();
+test("l'administrateur doit rester nu, direction comprise", function (string $autre) {
+    expect(DutySegregation::isCompatible(['admin', $autre]))->toBeFalse();
+})->with(['manager', 'accountant', 'reception', 'econome', 'controller']);
+
+test("l'administrateur seul ne pose aucun problème", function () {
+    expect(DutySegregation::isCompatible(['admin']))->toBeTrue();
+});
+
+test('un chef porte les incompatibilités de ses membres', function () {
+    // Le chef de réception encaisse comme ses réceptionnistes.
+    $conflits = DutySegregation::conflictsFor(['reception_chief', 'accountant']);
+
+    expect($conflits)->toHaveCount(1)
+        // Rapporté sous les rôles que la personne détient, pas sous le rôle inclus.
+        ->and($conflits[0]['roles'])->toBe(['reception_chief', 'accountant']);
+});
+
+test('un cumul atteint par deux chemins n\'est rapporté qu\'une fois', function () {
+    // Le chef économe détient le stock par lui-même et par le magasinier qu'il inclut.
+    expect(DutySegregation::conflictsFor(['econome', 'accountant']))->toHaveCount(1);
+});
+
+test('le responsable financier tient les livres comme ses comptables', function () {
+    expect(DutySegregation::isCompatible(['finance_manager', 'reception']))->toBeFalse()
+        ->and(DutySegregation::isCompatible(['finance_manager', 'shop_cashier']))->toBeFalse();
 });
 
 test('chaque motif est lisible : le directeur le lira avant de déroger', function () {

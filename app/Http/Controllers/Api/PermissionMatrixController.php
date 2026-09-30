@@ -39,6 +39,12 @@ class PermissionMatrixController extends Controller
                     'name'          => $r['name'],
                     'module'        => $r['module'],
                     'is_assignable' => $r['is_assignable'],
+                    // Hiérarchie : niveau (1 administration … 4 membres, nul
+                    // hors hiérarchie), rôles inclus, statut. Champs ajoutés :
+                    // une console plus ancienne les ignore.
+                    'level'         => $r['level'] ?? null,
+                    'includes'      => $r['includes'] ?? [],
+                    'statut'        => $r['statut'] ?? RoleCatalog::ACTIF,
                 ],
                 RoleCatalog::all()
             ),
