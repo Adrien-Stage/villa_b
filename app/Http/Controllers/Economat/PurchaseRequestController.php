@@ -51,7 +51,7 @@ class PurchaseRequestController extends Controller
             'stats'       => $stats,
             'departments' => PurchaseRequest::DEPARTMENTS,
             'statuses'    => PurchaseRequest::STATUSES,
-            'canManage'   => Auth::user()?->hasAnyRole(['econome', 'manager', 'admin', 'controller']) ?? false,
+            'canManage'   => Auth::user()?->hasAnyRole(['econome', 'manager', 'admin']) ?? false,
         ]);
     }
 
@@ -104,7 +104,7 @@ class PurchaseRequestController extends Controller
         return view('economat.purchase_requests.show', [
             'request'   => $purchaseRequest,
             'suppliers' => $suppliers,
-            'canReview' => Auth::user()?->hasAnyRole(['manager', 'admin', 'controller']) ?? false,
+            'canReview' => Auth::user()?->hasAnyRole(['manager', 'admin']) ?? false,
             'canManage' => Auth::user()?->hasAnyRole(['econome', 'manager', 'admin']) ?? false,
         ]);
     }

@@ -78,6 +78,33 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
     expect($request->total_estimated_amount)->toBe(27500000);
 });
 
+test("le contrôleur de gestion consulte une demande d'achat sans pouvoir l'approuver", function () {
+    activerModules(['economat']);
+
+    $demandeur = createStaffUser('restaurant_chief');
+    $article = StockItem::create([
+        'name' => 'Farine T55 25kg', 'unit' => 'sac', 'current_stock' => 1,
+        'average_cost' => 1500000, 'is_active' => true,
+    ]);
+    $demande = app(PurchaseRequestService::class)->create([
+        'department' => 'cuisine',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 4]],
+    ], $demandeur);
+
+    createStaffUser('controller');
+
+    // Il surveille les achats : il lit la demande, mais n'y voit aucun bouton de décision.
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertDontSee('Approuver la demande');
+
+    // Et la route refuse, quelle que soit la forme du refus.
+    $this->post(route('economat.purchase_requests.approve', $demande));
+    $this->post(route('economat.purchase_requests.reject', $demande), ['rejection_reason' => 'Contrôle']);
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
+});
+
 test('la direction peut approuver ou refuser une demande d achat', function () {
     $requester = createStaffUser('restaurant_chief');
     $item = StockItem::create([
