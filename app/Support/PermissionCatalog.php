@@ -28,10 +28,9 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Une exception : le contrôle des comptages de caisse. Ce n'est pas une
- * écriture comptable mais un acte de contrôle, et CashClosurePolicy désigne
- * nommément le manager comme témoin du comptage contradictoire. L'en priver
- * supprimerait le contrôle au lieu de le déplacer.
+ * Le comptage des caisses n'est pas une exception : il est contresigné par
+ * la comptabilité seule (CashClosurePolicy), jamais par le manager qui
+ * supervise les caisses.
  *
  * Les rôles d'un droit sont l'INTERSECTION des middlewares « role: » qui
  * gardaient la route, car ils s'empilaient : 54 routes en portaient deux, un
@@ -335,7 +334,7 @@ class PermissionCatalog
             // ── Comptabilité ──
             'accounting.cash' => ['accountant', 'manager'],
             'accounting.cash_reviews' => ['accountant', 'manager'],
-            'accounting.cash_reviews.creer' => ['accountant', 'manager'],
+            'accounting.cash_reviews.creer' => ['accountant'],
             'accounting.expenses' => ['accountant', 'manager'],
             'accounting.expenses.creer' => ['accountant'],
             'accounting.expenses.modifier' => ['accountant'],

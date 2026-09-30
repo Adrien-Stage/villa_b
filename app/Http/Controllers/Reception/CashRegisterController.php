@@ -110,9 +110,9 @@ class CashRegisterController extends Controller
         $theoreticalAmountCents = $session->theoreticalBalance();
         $discrepancy = $actualAmountCents - $theoreticalAmountCents;
 
-        // Comptage contradictoire : quand l'établissement l'exige, le comptage
-        // est déclaré mais la caisse n'est pas close. Elle cesse d'encaisser
-        // et attend la contresignature d'un tiers, seule à constater l'écart.
+        // Comptage contradictoire : le comptage est déclaré mais la caisse
+        // n'est pas close. Elle cesse d'encaisser et attend la contresignature
+        // de la comptabilité, seule à constater l'écart (CashClosurePolicy).
         $aContresigner = CashClosurePolicy::requiresWitness('reception');
 
         $session->update([

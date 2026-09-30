@@ -8,8 +8,7 @@
   "manager"
  ],
  "accounting.cash_reviews.store": [
-  "accountant",
-  "manager"
+  "accountant"
  ],
  "accounting.expenses": [
   "accountant",

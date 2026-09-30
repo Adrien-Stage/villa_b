@@ -61,12 +61,9 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         // sans le dire, « revenue_journal » lit sans porter de verbe.
         $lecture = PermissionCatalog::estLecture($droit);
 
-        // Le contreseing des comptages reste au manager : acte de contrôle,
-        // non écriture comptable.
         if (in_array($module, $lectureSeule, true)
             && !$lecture
             && in_array('manager', $roles, true)
-            && !str_starts_with($droit, 'accounting.cash')
             && !in_array($droit, $actesDeSupervision, true)) {
             $ecrituresIndues[] = $droit;
         }
@@ -93,10 +90,10 @@ test("le manager consulte tout ce qu'il n'écrit plus", function () {
     expect($manquants)->toBe([]);
 });
 
-test("le manager reste témoin du comptage de caisse", function () {
-    // CashClosurePolicy le désigne nommément : l'en priver supprimerait le
-    // contrôle au lieu de le déplacer.
-    expect(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('manager');
+test("le comptage de caisse est contresigné par la comptabilité, jamais par le manager", function () {
+    // Il supervise les caisses : les faire contrôler par lui ne séparerait rien.
+    expect(PermissionCatalog::roles('accounting.cash_reviews.creer'))->not->toContain('manager')
+        ->and(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('accountant');
 });
 
 test("tout droit autrefois tenu par admin est tenu par manager", function () {
