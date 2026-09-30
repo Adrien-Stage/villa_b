@@ -170,6 +170,11 @@
   "manager",
   "reception"
  ],
+ "bookings.cancellation_receipt": [
+  "controller",
+  "manager",
+  "reception"
+ ],
  "bookings.cash_register.close": [
   "manager",
   "reception"
@@ -262,12 +267,12 @@
   "manager",
   "reception"
  ],
- "bookings.summary": [
-  "controller",
+ "bookings.store": [
   "manager",
   "reception"
  ],
- "bookings.store": [
+ "bookings.summary": [
+  "controller",
   "manager",
   "reception"
  ],
@@ -312,6 +317,29 @@
   "manager",
   "reception"
  ],
+ "economat.control.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.control.print": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.control.suggestions.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.control.suggestions.store": [
+  "econome"
+ ],
+ "economat.control.variances.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
  "economat.index": [
   "controller",
   "econome",
@@ -351,9 +379,19 @@
   "econome"
  ],
  "economat.orders.create": [
-    "econome"
+  "econome"
+ ],
+ "economat.orders.export": [
+  "controller",
+  "econome",
+  "manager"
  ],
  "economat.orders.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.orders.print": [
   "controller",
   "econome",
   "manager"
@@ -370,7 +408,86 @@
   "manager"
  ],
  "economat.orders.store": [
-    "econome"
+  "econome"
+ ],
+ "economat.purchase_requests.approve": [
+  "econome",
+  "manager"
+ ],
+ "economat.purchase_requests.cancel": [
+  "econome",
+  "housekeeping_leader",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.purchase_requests.convert": [
+  "econome"
+ ],
+ "economat.purchase_requests.create": [
+  "econome",
+  "housekeeping_leader",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.purchase_requests.index": [
+  "controller",
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.purchase_requests.reject": [
+  "econome",
+  "manager"
+ ],
+ "economat.purchase_requests.show": [
+  "controller",
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.purchase_requests.store": [
+  "econome",
+  "housekeeping_leader",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
+ "economat.receipts.cancel": [
+  "econome"
+ ],
+ "economat.receipts.create": [
+  "econome"
+ ],
+ "economat.receipts.export": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.receipts.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.receipts.print": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.receipts.show": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.receipts.store": [
+  "econome"
  ],
  "economat.requisitions.approve": [
   "econome"
@@ -412,6 +529,16 @@
   "restaurant_chief",
   "shop_manager"
  ],
+ "economat.requisitions.print": [
+  "accountant",
+  "controller",
+  "econome",
+  "housekeeping_leader",
+  "manager",
+  "reception",
+  "restaurant_chief",
+  "shop_manager"
+ ],
  "economat.requisitions.reject": [
   "econome"
  ],
@@ -432,6 +559,36 @@
   "reception",
   "restaurant_chief",
   "shop_manager"
+ ],
+ "economat.stock_counts.cancel": [
+  "econome"
+ ],
+ "economat.stock_counts.close": [
+  "econome"
+ ],
+ "economat.stock_counts.create": [
+  "econome"
+ ],
+ "economat.stock_counts.index": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.stock_counts.report": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.stock_counts.show": [
+  "controller",
+  "econome",
+  "manager"
+ ],
+ "economat.stock_counts.store": [
+  "econome"
+ ],
+ "economat.stock_counts.update": [
+  "econome"
  ],
  "economat.suppliers.destroy": [
   "econome"
@@ -576,6 +733,7 @@
   "cashier",
   "controller",
   "manager",
+  "reception",
   "restaurant_chief"
  ],
  "restaurant.billing.paid": [
@@ -584,13 +742,16 @@
  ],
  "restaurant.billing.receipt": [
   "cashier",
+  "controller",
   "manager",
+  "reception",
   "restaurant_chief"
  ],
  "restaurant.billing.show": [
   "cashier",
   "controller",
   "manager",
+  "reception",
   "restaurant_chief"
  ],
  "restaurant.billing.unpaid": [
@@ -607,6 +768,11 @@
  "restaurant.breakfast.serve": [
   "restaurant_chief",
   "restaurant_staff"
+ ],
+ "restaurant.consumption.index": [
+  "controller",
+  "manager",
+  "restaurant_chief"
  ],
  "restaurant.kitchen.index": [
   "controller",
@@ -794,6 +960,35 @@
  "restaurant.stock_counts.update": [
   "restaurant_chief"
  ],
+ "restaurant.waste.create": [
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
+ "restaurant.waste.index": [
+  "controller",
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.waste.print": [
+  "controller",
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.waste.show": [
+  "controller",
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_staff"
+ ],
+ "restaurant.waste.store": [
+  "restaurant_chief",
+  "restaurant_cook"
+ ],
  "rooms.cost_sheets.assumptions": [
   "accountant",
   "manager"
@@ -897,6 +1092,18 @@
  "rooms.updateStatus": [
   "manager",
   "reception"
+ ],
+ "settings.cancellation_policies.default": [
+  "manager"
+ ],
+ "settings.cancellation_policies.destroy": [
+  "manager"
+ ],
+ "settings.cancellation_policies.store": [
+  "manager"
+ ],
+ "settings.cancellation_policies.update": [
+  "manager"
  ],
  "settings.export": [
   "controller",
@@ -1008,8 +1215,10 @@
   "shop_manager"
  ],
  "shop.orders.index": [
+  "cashier",
   "controller",
   "manager",
+  "reception",
   "shop_cashier",
   "shop_manager"
  ],
@@ -1018,7 +1227,10 @@
   "shop_manager"
  ],
  "shop.orders.receipt": [
+  "cashier",
+  "controller",
   "manager",
+  "reception",
   "shop_cashier",
   "shop_manager"
  ],
@@ -1027,8 +1239,10 @@
   "shop_manager"
  ],
  "shop.orders.show": [
+  "cashier",
   "controller",
   "manager",
+  "reception",
   "shop_cashier",
   "shop_manager"
  ],
