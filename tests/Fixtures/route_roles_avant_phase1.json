@@ -1128,8 +1128,7 @@
  ],
  "restaurant.orders.reassign": [
   "restaurant_chief",
-  "restaurant_manager",
-  "restaurant_staff"
+  "restaurant_manager"
  ],
  "restaurant.orders.send_to_kitchen": [
   "restaurant_chief",
@@ -1153,8 +1152,7 @@
  ],
  "restaurant.orders.status": [
   "restaurant_chief",
-  "restaurant_manager",
-  "restaurant_staff"
+  "restaurant_manager"
  ],
  "restaurant.orders.store": [
   "restaurant_chief",

@@ -54,3 +54,39 @@ test("le contrôleur de gestion consulte les réservations sans bouton d'action"
         ->assertDontSee('Nouvelle réservation')
         ->assertDontSee('Ouvrir la caisse');
 });
+
+test('le serveur prend les commandes sur la carte, le responsable la gère', function () {
+    activerModules(['restaurant']);
+
+    $this->actingAs(User::factory()->create(['role' => 'restaurant_staff']))
+        ->get(route('restaurant.menus.index'))->assertOk()->assertSee('Prise de commande');
+
+    $this->actingAs(User::factory()->create(['role' => 'restaurant_manager']))
+        ->get(route('restaurant.menus.index'))->assertOk()->assertSee('Ajouter un article');
+});
+
+test('le responsable de restaurant saisit les commandes de la salle', function () {
+    activerModules(['restaurant']);
+
+    $this->actingAs(User::factory()->create(['role' => 'restaurant_manager']))
+        ->get(route('restaurant.orders.index'))
+        ->assertOk()
+        ->assertSee('Nouvelle commande');
+});
+
+test("forcer le statut d'une commande revient au chef et au responsable, pas au serveur", function () {
+    $droits = app(\App\Services\PermissionResolver::class);
+
+    expect($droits->allows(User::factory()->create(['role' => 'restaurant_staff']), 'restaurant.orders.status'))->toBeFalse()
+        ->and($droits->allows(User::factory()->create(['role' => 'restaurant_manager']), 'restaurant.orders.status'))->toBeTrue()
+        ->and($droits->allows(User::factory()->create(['role' => 'restaurant_chief']), 'restaurant.orders.reassign'))->toBeTrue();
+});
+
+test('le responsable de restaurant demande à l\'économat au nom du restaurant', function () {
+    activerModules(['economat']);
+
+    $this->actingAs(User::factory()->create(['role' => 'restaurant_manager']))
+        ->get(route('economat.requisitions.create'))
+        ->assertOk()
+        ->assertSee(\App\Models\StockRequisition::DEPARTMENTS['restaurant']);
+});

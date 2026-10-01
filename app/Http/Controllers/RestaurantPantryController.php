@@ -64,7 +64,7 @@ class RestaurantPantryController extends Controller
             ->take(20)
             ->get();
 
-        $canManage = Auth::user()->hasAnyRole(['restaurant_chief']);
+        $canManage = app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.pantry.items.creer');
 
         // Valeur du stock : ce que le garde-manger immobilise réellement en argent.
         $stockValue = RestaurantPantryItem::query()

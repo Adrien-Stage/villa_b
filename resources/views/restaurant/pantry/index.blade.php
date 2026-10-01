@@ -211,7 +211,7 @@
                                                 Réception
                                             </button>
                                         @endif
-                                        @role('restaurant_chief', 'restaurant_staff')
+                                        @droit('restaurant.pantry.movements.creer')
                                         @unless($canManage)
                                             {{-- Le staff enregistre une entrée simple ; la réception valorisée est au chef. --}}
                                             <button type="button"
@@ -225,7 +225,7 @@
                                             class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark">
                                             Sortie
                                         </button>
-                                        @endrole
+                                        @enddroit
                                         @if($canManage)
                                             <button type="button"
                                                 onclick="openMovementModal({{ $item->id }}, 'adjust')"

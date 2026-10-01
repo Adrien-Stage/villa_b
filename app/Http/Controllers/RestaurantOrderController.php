@@ -73,14 +73,15 @@ class RestaurantOrderController extends Controller
             ->get();
 
         $user = Auth::user();
-        $canManage = $user->hasAnyRole(['restaurant_chief', 'restaurant_staff']);
+        $droits = app(\App\Services\PermissionResolver::class);
+        $canManage = $droits->allows($user, 'restaurant.orders.creer');
 
         return view('restaurant.orders.index', [
             'orders' => $orders,
             'statuses' => self::STATUSES,
             'statusLabels' => RestaurantCustomerOrder::STATUS_LABELS,
             'canManage' => $canManage,
-            'isServer' => $user->hasAnyRole(['restaurant_staff', 'restaurant_chief']),
+            'isServer' => $droits->allows($user, 'restaurant.orders.served'),
             'onDuty' => $user->isOnRestaurantDuty(),
             'onDutyServers' => $this->assignment->onDutyServers(),
             'categories' => $categories,
@@ -92,15 +93,18 @@ class RestaurantOrderController extends Controller
     {
         $order->load('items', 'assignedServer:id,name');
         $user = Auth::user();
+        $droits = app(\App\Services\PermissionResolver::class);
 
         return view('restaurant.orders.show', [
             'order' => $order,
             'statuses' => self::STATUSES,
             'statusLabels' => RestaurantCustomerOrder::STATUS_LABELS,
-            'canManage' => $user->hasAnyRole(['restaurant_chief', 'restaurant_staff']),
-            'isChief' => $user->hasRole('restaurant_chief'),
-            'isServer' => $user->hasAnyRole(['restaurant_staff', 'restaurant_chief']),
-            'isCook' => $user->hasAnyRole(['restaurant_cook', 'restaurant_chief']),
+            // Chaque drapeau dit le geste qu'il ouvre : le droit de la route
+            // qui l'exécute, et non la liste des rôles qui le faisaient.
+            'canManage' => $droits->allows($user, 'restaurant.orders.creer'),
+            'isChief' => $droits->allows($user, 'restaurant.orders.reassign'),
+            'isServer' => $droits->allows($user, 'restaurant.orders.served'),
+            'isCook' => $droits->allows($user, 'restaurant.orders.ready'),
             'onDutyServers' => $this->assignment->onDutyServers(),
         ]);
     }

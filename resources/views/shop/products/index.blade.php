@@ -13,15 +13,17 @@
             <a href="{{ route('shop.products.export') }}" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
                 <i data-lucide="download" class="w-4 h-4"></i> Exporter
             </a>
-            @role('shop_manager')
+            @droit('shop.products.import')
                 <button type="button" onclick="document.getElementById('modal-import-products').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
                     <i data-lucide="upload" class="w-4 h-4"></i> Importer
                 </button>
-            @endrole
+            @enddroit
+            @droit('shop.products.creer')
             <a href="{{ route('shop.products.create') }}"
                class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                 <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i> Nouvel article
             </a>
+            @enddroit
         </div>
     </div>
 
@@ -323,7 +325,7 @@
 </script>
 @endpush
 
-@role('shop_manager')
+@droit('shop.products.import')
     <x-csv-import-modal
         id="modal-import-products"
         title="Importer des articles boutique (CSV)"
@@ -335,6 +337,6 @@
         <li><strong>sku</strong> vide = généré automatiquement (ART-…) ; un SKU déjà présent est ignoré</li>
         <li><strong>prix_fcfa</strong> en FCFA (ex. 5000)</li>
     </x-csv-import-modal>
-@endrole
+@enddroit
 
 @endsection

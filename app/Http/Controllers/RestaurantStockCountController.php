@@ -40,7 +40,7 @@ class RestaurantStockCountController extends Controller
         return view('restaurant.stock_counts.index', [
             'counts' => $counts,
             'openCount' => $openCount,
-            'canManage' => Auth::user()->hasRole('restaurant_chief'),
+            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.stock_counts.creer'),
         ]);
     }
 
@@ -53,7 +53,7 @@ class RestaurantStockCountController extends Controller
         return view('restaurant.stock_counts.show', [
             'count' => $stockCount,
             'lines' => $lines,
-            'canManage' => Auth::user()->hasRole('restaurant_chief'),
+            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.stock_counts.creer'),
         ]);
     }
 
