@@ -14,7 +14,7 @@ class StockCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'icon', 'sort_order', 'tenant_id'];
+    protected $fillable = ['name', 'icon', 'stock_account', 'sort_order', 'tenant_id'];
 
     protected $casts = ['sort_order' => 'integer'];
 

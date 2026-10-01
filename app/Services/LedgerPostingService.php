@@ -12,6 +12,8 @@ use App\Models\Payment;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantPantryMovement;
 use App\Models\ShopOrder;
+use App\Models\StockMovement;
+use App\Models\StockRequisition;
 use App\Models\SupplierInvoice;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
@@ -41,6 +43,8 @@ class LedgerPostingService
     public const SCHEMA_EXPENSE = 'expense';
     public const SCHEMA_FOOD_COST = 'food_cost';
     public const SCHEMA_SUPPLIER_INVOICE = 'supplier_invoice';
+    public const SCHEMA_ECONOMAT_STOCK = 'economat_stock';
+    public const SCHEMA_PANTRY_STOCK = 'pantry_stock';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -68,6 +72,8 @@ class LedgerPostingService
             self::SCHEMA_PAYMENT         => 0,
             self::SCHEMA_EXPENSE         => 0,
             self::SCHEMA_FOOD_COST       => 0,
+            self::SCHEMA_ECONOMAT_STOCK  => 0,
+            self::SCHEMA_PANTRY_STOCK    => 0,
         ];
 
         // Produits d'abord, encaissements ensuite : un règlement solde une
@@ -126,6 +132,14 @@ class LedgerPostingService
 
         if ($this->postFoodCost($start)) {
             $compte[self::SCHEMA_FOOD_COST]++;
+        }
+
+        if ($this->postEconomatStock($start)) {
+            $compte[self::SCHEMA_ECONOMAT_STOCK]++;
+        }
+
+        if ($this->postPantryStock($start)) {
+            $compte[self::SCHEMA_PANTRY_STOCK]++;
         }
 
         return $compte;
@@ -426,6 +440,201 @@ class LedgerPostingService
         );
     }
 
+    /**
+     * Mouvements de l'économat de la journée, en inventaire permanent.
+     *
+     * La facture fournisseur porte l'achat en 60x ; le stock, lui, vit en
+     * classe 3 avec la variation (603x) en contrepartie. Sans ce reflet, la
+     * consommation passée en 603 s'ajouterait à l'achat et la charge serait
+     * comptée deux fois.
+     *
+     *   Entrée (réception, excédent)    D 3x                 C 603x
+     *   Sortie (service, manquant)      D 603x [centre]      C 3x
+     *   Transfert vers la cuisine       D 321000             C 3x   (sans charge)
+     *
+     * La livraison à la boutique est passée en charge : la boutique ne
+     * comptabilise pas encore le coût de ses ventes. Agrégé à la journée,
+     * idempotent par schéma daté comme le coût matière.
+     */
+    public function postEconomatStock(CarbonInterface $date): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = self::SCHEMA_ECONOMAT_STOCK . ':' . $start->toDateString();
+
+        if (JournalEntry::query()->where('schema', $schema)->exists()) {
+            return null;
+        }
+
+        $mouvements = StockMovement::query()
+            ->with('item.category')
+            ->whereBetween('occurred_at', [$start, $end])
+            ->orderBy('id')
+            ->get();
+
+        $requisitions = StockRequisition::query()
+            ->whereIn('id', $mouvements
+                ->where('source_type', StockMovement::SOURCE_REQUISITION)
+                ->pluck('source_id')
+                ->filter()
+                ->unique())
+            ->get()
+            ->keyBy('id');
+
+        $imputations = [];
+
+        foreach ($mouvements as $mouvement) {
+            if ($mouvement->item === null) {
+                continue;
+            }
+
+            $valeur = (int) round(abs((float) $mouvement->quantity) * $mouvement->unit_cost);
+
+            if ($valeur <= 0) {
+                continue;
+            }
+
+            $stock = $mouvement->item->stockAccount();
+            $variation = Account::variationFor($stock);
+            $entree = (float) $mouvement->quantity > 0;
+            $inventaire = $mouvement->type === StockMovement::TYPE_ADJUSTMENT;
+
+            if ($entree) {
+                $libelle = $inventaire ? 'Excédents d’inventaire économat' : 'Entrées en stock économat';
+                $this->imputer($imputations, $stock, $libelle, $valeur, 0);
+                $this->imputer($imputations, $variation, $libelle, 0, $valeur, JournalEntryLine::CENTER_STORE);
+
+                continue;
+            }
+
+            $requisition = $mouvement->source_type === StockMovement::SOURCE_REQUISITION
+                ? $requisitions->get($mouvement->source_id)
+                : null;
+
+            // Le stock change de magasin, il ne se consomme pas : la charge
+            // naîtra à la sortie du garde-manger (coût matière).
+            if ($requisition?->department === 'restaurant') {
+                if ($stock !== Account::STOCK_KITCHEN) {
+                    $this->imputer($imputations, Account::STOCK_KITCHEN, 'Transferts vers la cuisine', $valeur, 0);
+                    $this->imputer($imputations, $stock, 'Transferts vers la cuisine', 0, $valeur);
+                }
+
+                continue;
+            }
+
+            $libelle = match (true) {
+                $requisition !== null => 'Livraisons aux services',
+                $inventaire           => 'Manquants d’inventaire économat',
+                default               => 'Sorties de stock économat',
+            };
+
+            $centre = $requisition !== null
+                ? $this->centreDuService($requisition->department)
+                : JournalEntryLine::CENTER_STORE;
+
+            $this->imputer($imputations, $variation, $libelle, $valeur, 0, $centre);
+            $this->imputer($imputations, $stock, $libelle, 0, $valeur);
+        }
+
+        if ($imputations === []) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $start,
+            label: 'Mouvements de stock économat du ' . $start->format('d/m/Y'),
+            lines: array_values($imputations),
+            schema: $schema,
+        );
+    }
+
+    /**
+     * Entrées et écarts du garde-manger de la journée, en inventaire permanent.
+     *
+     * Le coût matière crédite le 321000 à chaque sortie ; ce schéma le débite
+     * pour tout ce qui y entre sans passer par l'économat.
+     *
+     *   Achat direct, préparation, retour de vente   D 321000   C 603200
+     *   Excédent d'inventaire                        D 321000   C 603200
+     *   Manquant d'inventaire                        D 603200   C 321000
+     *
+     * Le transfert depuis l'économat est déjà passé côté économat : on l'écarte.
+     * Une préparation produite se neutralise avec la sortie de ses ingrédients ;
+     * la charge naît à sa vente.
+     */
+    public function postPantryStock(CarbonInterface $date): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = self::SCHEMA_PANTRY_STOCK . ':' . $start->toDateString();
+
+        if (JournalEntry::query()->where('schema', $schema)->exists()) {
+            return null;
+        }
+
+        $mouvements = RestaurantPantryMovement::query()
+            ->whereIn('type', [RestaurantPantryMovement::TYPE_IN, RestaurantPantryMovement::TYPE_ADJUST])
+            ->whereNull('stock_requisition_id')
+            ->where(fn ($q) => $q->whereNull('reason')
+                ->orWhere('reason', '!=', RestaurantPantryMovement::REASON_TRANSFER_IN))
+            ->whereBetween('occurred_at', [$start, $end])
+            ->orderBy('id')
+            ->get();
+
+        $imputations = [];
+        $stock = Account::STOCK_KITCHEN;
+        $variation = Account::variationFor($stock);
+
+        foreach ($mouvements as $mouvement) {
+            if ($mouvement->type === RestaurantPantryMovement::TYPE_IN) {
+                $valeur = (int) $mouvement->total_cost;
+                $libelle = match ($mouvement->reason) {
+                    RestaurantPantryMovement::REASON_PRODUCTION  => 'Préparations produites',
+                    RestaurantPantryMovement::REASON_SALE_RETURN => 'Retours de ventes annulées',
+                    default                                      => 'Entrées en cuisine',
+                };
+                $ecart = $valeur;
+            } else {
+                // Un ajustement porte le stock constaté, pas l'écart : on le
+                // retrouve contre le stock laissé par le mouvement précédent.
+                $precedent = (float) (RestaurantPantryMovement::query()
+                    ->where('restaurant_pantry_item_id', $mouvement->restaurant_pantry_item_id)
+                    ->where('id', '<', $mouvement->id)
+                    ->orderByDesc('id')
+                    ->value('stock_after') ?? 0);
+
+                $ecart = (int) round(((float) $mouvement->stock_after - $precedent) * (float) $mouvement->unit_cost);
+                $valeur = abs($ecart);
+                $libelle = $ecart > 0 ? 'Excédents d’inventaire cuisine' : 'Manquants d’inventaire cuisine';
+            }
+
+            if ($valeur <= 0) {
+                continue;
+            }
+
+            if ($ecart > 0) {
+                $this->imputer($imputations, $stock, $libelle, $valeur, 0);
+                $this->imputer($imputations, $variation, $libelle, 0, $valeur, JournalEntryLine::CENTER_RESTAURANT);
+            } else {
+                $this->imputer($imputations, $variation, $libelle, $valeur, 0, JournalEntryLine::CENTER_RESTAURANT);
+                $this->imputer($imputations, $stock, $libelle, 0, $valeur);
+            }
+        }
+
+        if ($imputations === []) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $start,
+            label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
+            lines: array_values($imputations),
+            schema: $schema,
+        );
+    }
+
     // ── Rouages internes ────────────────────────────────────────────────────
 
     /**
@@ -487,6 +696,32 @@ class LedgerPostingService
             source: $order,
             schema: $schema,
         );
+    }
+
+    /**
+     * Cumule un montant sur une ligne d'écriture, par compte, sens, libellé
+     * et centre : une journée de mouvements tient en quelques lignes.
+     *
+     * @param  array<string, array<string, mixed>>  $imputations
+     */
+    private function imputer(array &$imputations, string $compte, string $libelle, int $debit, int $credit, ?string $centre = null): void
+    {
+        $cle = implode('|', [$compte, $debit > 0 ? 'D' : 'C', $libelle, $centre]);
+
+        $imputations[$cle] ??= ['account' => $compte, 'label' => $libelle, 'debit' => 0, 'credit' => 0, 'center' => $centre];
+        $imputations[$cle]['debit'] += $debit;
+        $imputations[$cle]['credit'] += $credit;
+    }
+
+    /** Centre d'analyse qui supporte la consommation d'un service demandeur. */
+    private function centreDuService(?string $service): string
+    {
+        return match ($service) {
+            'hebergement', 'housekeeping' => JournalEntryLine::CENTER_ACCOMMODATION,
+            'restaurant'                  => JournalEntryLine::CENTER_RESTAURANT,
+            'boutique'                    => JournalEntryLine::CENTER_SHOP,
+            default                       => JournalEntryLine::CENTER_STORE,
+        };
     }
 
     private function dejaComptabilise($source, string $schema): bool
