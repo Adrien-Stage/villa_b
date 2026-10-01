@@ -96,6 +96,41 @@ Données financières sensibles : cette API n'est jamais publique.
 
 ---
 
+## API d'orchestration
+
+Le canal de la console d'orchestration (`wetchah_erp`), gardé par
+[`ValidateOrchestrationToken`](../app/Http/Middleware/ValidateOrchestrationToken.php) :
+`Authorization: Bearer {ORCHESTRATION_SECRET}`. Il ne dépend **pas** du module `api`,
+option commerciale : coupée, la console ne pourrait plus administrer l'établissement.
+
+| Route | Contenu |
+|---|---|
+| `GET /api/permissions/matrice` | Contrat v2 : catalogue, écritures, rôles (niveau, inclusions, statut, titulaires), écarts en vigueur par couche, exceptions échues, restrictions de service, personnel, revue des comptes, règles et cases de cumul, portées, droits bornés, empreinte de la couche de la console |
+| `POST /api/permissions/matrice/apercu` | Ce que changerait un lot, compte par compte, sans rien enregistrer |
+| `PUT /api/permissions/matrice` | Remplace la couche de la console (et elle seule) |
+| `GET /api/comptes` | Personnel et rôles détenus |
+| `POST /api/comptes/administrateurs` | Crée un compte administrateur — **seule voie** pour ce rôle |
+| `PATCH /api/comptes/administrateurs/{id}` | Identité, mot de passe, activation d'un administrateur |
+| `GET/POST /api/departements`, `PUT/DELETE /api/departements/{id}` | Départements |
+
+Règles appliquées par l'établissement, quelle que soit la console :
+
+- un droit hors catalogue est refusé (422 `inconnus`) — une case sans effet est pire
+  qu'une case absente ;
+- l'administrateur, le portail client et un rôle retiré ne se règlent pas (422 `roles`) ;
+- une autorisation qui ouvre un **cumul de fonctions incompatibles**
+  (`DutySegregation::conflitsDUneAutorisation`) exige `derogation: true` et un motif
+  sur l'écart (422 `cumuls` sinon) ; la dérogation est tracée au journal ;
+- avec `empreinte`, un lot préparé sur une couche qui a changé entre-temps est refusé
+  (409) ;
+- mots de passe de 8 caractères au moins ; un compte qui n'est pas administrateur ne
+  se modifie pas d'ici (422).
+
+Tant que `ORCHESTRATION_SECRET` n'est pas configuré, la matrice accepte encore
+`REPORTING_SECRET` (ancienne garde) ; les comptes et départements restent fermés (503).
+
+---
+
 ## Mode assistance
 
 [`AssistanceController`](../app/Http/Controllers/AssistanceController.php) —

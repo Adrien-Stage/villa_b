@@ -45,7 +45,12 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | — | `rh_manager`, `it_support` | — | — | retirés |
 
 - **L'administrateur consulte tout et n'écrit rien de métier.** Il administre
-  l'application ; il ne tient aucun service. Il ne se cumule avec aucun autre rôle.
+  l'application — configuration et **comptes du personnel**, managers compris — ; il
+  ne tient aucun service. Il ne se cumule avec aucun autre rôle. Ses propres comptes
+  ne se créent que depuis la console d'orchestration
+  (`POST /api/comptes/administrateurs`) : personne, dans l'établissement, n'accorde un
+  niveau égal au sien. Tant qu'il n'y en a pas, le manager gère les comptes du
+  personnel (hors managers).
 - **Il n'y a pas de caissier à l'hébergement** : le réceptionniste encaisse. Le slug
   historique `cashier` désigne le caissier du restaurant.
 - **En préparation** : statut d'un rôle défini, droits compris, mais pas encore
@@ -103,6 +108,27 @@ Le moteur décide dans cet ordre :
 En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
 `access_denied: true` pour une requête AJAX, sinon une redirection avec un message
 affiché en popup.
+
+### Les couches d'écarts
+
+Les écarts au catalogue (`permission_grants`) portent leur **origine** :
+
+| Couche | Origine | Qui la règle |
+|---|---|---|
+| Console | `erp` | La console d'orchestration, rôle par rôle (« Droits & rôles ») |
+| Hôtel | `etablissement` | L'établissement, sur ses rôles |
+| Exceptions nominatives | `etablissement` | L'établissement, sur une personne, avec échéance possible (`expires_at`) |
+
+La console ne remplace jamais que **sa** couche (`PUT /api/permissions/matrice`).
+Elle ne règle ni l'administrateur, ni le portail client, ni un rôle retiré. Une
+autorisation qui ferait exercer à un rôle une fonction incompatible avec la sienne
+(`DutySegregation::conflitsDUneAutorisation`) exige une **dérogation motivée**,
+tracée au journal. Voir [APIs et intégrations](apis-et-integrations.md#api-dorchestration).
+
+Une **portée** (`propre`, `departement`, `etablissement`) borne les données d'un
+droit là où un écran l'applique (`DepartmentScoping`) : la liste
+`PermissionScope::DROITS_BORNES`, gardée alignée sur le code par un test, dit
+lesquels.
 
 ### Les affectations font foi
 

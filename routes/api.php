@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\PermissionMatrixController;
 use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicPingController;
 use App\Http\Controllers\Api\PublicRestaurantMenuController;
 use App\Http\Controllers\Api\PublicRoomController;
 use App\Http\Controllers\Api\ReportingController;
+use App\Http\Controllers\Api\StaffAccountController;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
@@ -38,12 +41,35 @@ Route::prefix('v1')->middleware('module:api')->group(function () {
 // de service (Authorization: Bearer REPORTING_SECRET).
 // Conditionnée par l'activation du module 'api' (TENANT_MODULES).
 // ==========================================
-// Matrice des droits : lue et écrite par la console d'orchestration, qui
-// pilote les rôles ; les dérogations nominatives accordées sur place lui
-// restent étrangères.
-Route::prefix('permissions')->middleware(['module:api', 'reporting.token'])->group(function () {
-    Route::get('/matrice',  [\App\Http\Controllers\Api\PermissionMatrixController::class, 'show'])->name('api.permissions.matrice');
-    Route::put('/matrice',  [\App\Http\Controllers\Api\PermissionMatrixController::class, 'update'])->name('api.permissions.matrice.update');
+// ==========================================
+// ORCHESTRATION — canal de la console d'orchestration (wetchah_erp).
+// Matrice des droits, comptes administrateurs, départements. Gardé par le
+// jeton que seule la console détient (ORCHESTRATION_SECRET), pas par le module
+// « api » : cette option commerciale coupée, la console ne pourrait plus
+// administrer l'établissement.
+// ==========================================
+// Matrice : la console n'écrit que sa propre couche ; les écarts posés dans
+// l'établissement et les dérogations nominatives lui restent étrangers.
+Route::prefix('permissions')->middleware('orchestration.token:repli-reporting')->group(function () {
+    Route::get('/matrice', [PermissionMatrixController::class, 'show'])->name('api.permissions.matrice');
+    Route::put('/matrice', [PermissionMatrixController::class, 'update'])->name('api.permissions.matrice.update');
+    Route::post('/matrice/apercu', [PermissionMatrixController::class, 'apercu'])->name('api.permissions.matrice.apercu');
+});
+
+Route::middleware('orchestration.token')->group(function () {
+    // Les comptes administrateurs ne se créent que d'ici : personne, dans
+    // l'établissement, n'accorde un niveau égal au sien.
+    Route::get('/comptes', [StaffAccountController::class, 'index'])->name('api.comptes.index');
+    Route::post('/comptes/administrateurs', [StaffAccountController::class, 'storeAdmin'])->name('api.comptes.administrateurs.store');
+    Route::patch('/comptes/administrateurs/{user}', [StaffAccountController::class, 'updateAdmin'])
+        ->whereNumber('user')->name('api.comptes.administrateurs.update');
+
+    Route::get('/departements', [DepartmentController::class, 'index'])->name('api.departements.index');
+    Route::post('/departements', [DepartmentController::class, 'store'])->name('api.departements.store');
+    Route::put('/departements/{department}', [DepartmentController::class, 'update'])
+        ->whereNumber('department')->name('api.departements.update');
+    Route::delete('/departements/{department}', [DepartmentController::class, 'destroy'])
+        ->whereNumber('department')->name('api.departements.destroy');
 });
 
 Route::prefix('reporting')->middleware(['module:api', 'reporting.token'])->group(function () {

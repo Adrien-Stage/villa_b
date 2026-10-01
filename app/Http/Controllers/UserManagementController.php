@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\DutySegregation;
+use App\Support\RoleCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -18,15 +19,35 @@ use Illuminate\View\View;
 class UserManagementController extends Controller
 {
     /**
-     * Rôles qu'un manager peut attribuer : lus depuis la table (drapeau
-     * is_assignable). Tout rôle ajouté au référentiel apparaît automatiquement
-     * dans le formulaire — plus de liste codée en dur.
+     * Rôles que la personne connectée peut attribuer : lus depuis la table
+     * (drapeau is_assignable). Tout rôle ajouté au référentiel apparaît
+     * automatiquement dans le formulaire — plus de liste codée en dur.
+     *
+     * L'administrateur crée tous les comptes, managers compris. Personne,
+     * dans l'établissement, n'attribue le rôle d'administrateur : ces comptes
+     * se créent depuis la console d'orchestration.
      *
      * @return Collection<int, Role>
      */
     private function assignableRoles()
     {
-        return Role::assignable()->orderBy('sort_order')->orderBy('name')->get();
+        return Role::query()
+            ->where(fn ($q) => $q->where('is_assignable', true)
+                ->when(Auth::user()?->isAdmin(), fn ($q) => $q->orWhere('slug', RoleCatalog::MANAGER)))
+            ->orderBy('sort_order')->orderBy('name')->get();
+    }
+
+    /**
+     * Comptes que la personne connectée ne gère pas : les administrateurs
+     * pour tous, les managers pour qui n'est pas administrateur.
+     *
+     * @return list<string>
+     */
+    private function rolesHorsDePortee(): array
+    {
+        return Auth::user()?->isAdmin()
+            ? [RoleCatalog::ADMIN]
+            : [RoleCatalog::ADMIN, RoleCatalog::MANAGER];
     }
 
     public function index(Request $request): View
@@ -51,9 +72,11 @@ class UserManagementController extends Controller
             ];
         }
 
+        $horsDePortee = $this->rolesHorsDePortee();
+
         $query = User::query()
             ->where('id', '!=', $manager->id)
-            ->whereNotIn('role', ['admin', 'manager'])
+            ->whereNotIn('role', $horsDePortee)
             // Le département borne la liste quand la matrice le demande : un
             // chef de service n'a pas à consulter le dossier de ceux qu'il
             // n'encadre pas.
@@ -85,9 +108,9 @@ class UserManagementController extends Controller
         }
 
         $stats = [
-            'total' => User::whereNotIn('role', ['admin', 'manager'])->count(),
-            'active' => User::whereNotIn('role', ['admin', 'manager'])->where('is_active', true)->count(),
-            'inactive' => User::whereNotIn('role', ['admin', 'manager'])->where('is_active', false)->count(),
+            'total' => User::whereNotIn('role', $horsDePortee)->count(),
+            'active' => User::whereNotIn('role', $horsDePortee)->where('is_active', true)->count(),
+            'inactive' => User::whereNotIn('role', $horsDePortee)->where('is_active', false)->count(),
         ];
 
         $staffUsers = $query->latest('id')->paginate(15)->withQueryString();
@@ -297,9 +320,18 @@ class UserManagementController extends Controller
         $user->roles()->sync($pivot);
     }
 
+    /**
+     * Un administrateur se gère depuis la console d'orchestration ; un
+     * manager, par l'administrateur seulement.
+     */
     private function ensureManageableByCurrentManager(User $user): void
     {
-        if (in_array($user->role, ['admin', 'manager'], true)) {
+        if ($user->hasRole(RoleCatalog::ADMIN) || $user->role === RoleCatalog::ADMIN) {
+            abort(403, 'Un compte administrateur se gère depuis la console d\'orchestration.');
+        }
+
+        if (($user->hasRole(RoleCatalog::MANAGER) || $user->role === RoleCatalog::MANAGER)
+            && ! Auth::user()?->isAdmin()) {
             abort(403, 'Ce profil ne peut pas être géré par un manager.');
         }
     }

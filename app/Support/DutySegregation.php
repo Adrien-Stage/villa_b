@@ -161,4 +161,55 @@ class DutySegregation
     {
         return self::conflictsFor($roles) === [];
     }
+
+    /**
+     * Cumuls qu'ouvrirait l'autorisation d'un droit à un rôle qui ne le
+     * détient pas.
+     *
+     * Écrire, c'est exercer une fonction : le rôle qui reçoit une écriture
+     * fait désormais le travail de ceux qui la détiennent. Il en porte donc
+     * les incompatibilités — un caissier qui contresigne des caisses est un
+     * caissier comptable. Le contrôle, qui n'écrit nulle part, ne peut rien
+     * recevoir de tel.
+     *
+     * Une consultation n'ouvre aucun cumul, et l'administrateur n'est pas un
+     * détenteur à imiter : régler la configuration n'est pas une fonction
+     * d'exploitation.
+     *
+     * @return list<array{roles: array{0: string, 1: string}, motif: string}>
+     */
+    public static function conflitsDUneAutorisation(string $role, string $permission): array
+    {
+        if (PermissionCatalog::estLecture($permission)
+            || in_array($role, PermissionCatalog::roles($permission), true)) {
+            return [];
+        }
+
+        $detenteurs = array_values(array_diff(PermissionCatalog::roles($permission), [self::ACCES_TECHNIQUE]));
+        $conflits = [];
+
+        if (in_array($role, [self::CONTROLE_INDEPENDANT, self::CONTROLE_DE_GESTION], true)) {
+            $conflits[] = [
+                'roles' => [$role, $detenteurs[0] ?? $permission],
+                'motif' => $role === self::CONTROLE_INDEPENDANT
+                    ? "Un contrôle exercé sur son propre travail n'est plus un contrôle."
+                    : "Le contrôle de gestion voit tous les services : il perd sa vue d'ensemble s'il participe à l'un d'eux.",
+            ];
+        }
+
+        foreach ($detenteurs as $detenteur) {
+            foreach (self::conflictsFor([$role, $detenteur]) as $conflit) {
+                $conflits[] = $conflit;
+            }
+        }
+
+        // Un même motif reviendrait pour chaque chef qui inclut le rôle
+        // incompatible : une alerte par raison suffit.
+        $uniques = [];
+        foreach ($conflits as $conflit) {
+            $uniques[$conflit['motif']] ??= $conflit;
+        }
+
+        return array_values($uniques);
+    }
 }

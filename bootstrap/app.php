@@ -42,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module.access' => \App\Http\Middleware\EnsureModuleWriteAccess::class,
             'caisse' => \App\Http\Middleware\EnsureCashRegisterOpen::class,
             'reporting.token' => \App\Http\Middleware\ValidateReportingToken::class,
+            'orchestration.token' => \App\Http\Middleware\ValidateOrchestrationToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

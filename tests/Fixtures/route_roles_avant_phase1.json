@@ -1659,12 +1659,15 @@
   "manager"
  ],
  "users.store": [
+  "admin",
   "manager"
  ],
  "users.toggleStatus": [
+  "admin",
   "manager"
  ],
  "users.update": [
+  "admin",
   "manager"
  ]
 }

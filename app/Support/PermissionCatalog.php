@@ -276,13 +276,20 @@ class PermissionCatalog
     }
 
     /**
-     * La configuration de l'établissement que l'administrateur règle : ses
-     * seules écritures. Décrire les chambres de l'hôtel n'est pas l'exploiter.
+     * La configuration de l'établissement que l'administrateur règle.
+     * Décrire les chambres de l'hôtel n'est pas l'exploiter.
      */
     private const CONFIGURATION = [
         'rooms.creer', 'rooms.modifier', 'rooms.supprimer', 'rooms.images.supprimer', 'rooms.import',
         'rooms.types.creer', 'rooms.types.modifier', 'rooms.types.supprimer', 'rooms.types.import',
     ];
+
+    /**
+     * Les comptes du personnel, que l'administrateur crée et tient. Avec la
+     * configuration, ce sont ses seules écritures : il administre
+     * l'application, il ne tient aucun service.
+     */
+    private const ADMINISTRATION = ['users.creer', 'users.modifier', 'users.toggleStatus'];
 
     /**
      * Services que l'auditeur qualité consulte pour ses contrôles : fiches de
@@ -321,9 +328,9 @@ class PermissionCatalog
      * Le gabarit, complété de ce que la hiérarchie et les fonctions de
      * contrôle impliquent :
      *  - un chef détient les droits de ses membres, en chaîne ;
-     *  - l'administrateur consulte tout et règle la configuration. Il
-     *    n'écrit rien de métier : il administre l'application, il ne tient
-     *    aucun service ;
+     *  - l'administrateur consulte tout, règle la configuration et tient
+     *    les comptes. Il n'écrit rien de métier : il administre
+     *    l'application, il ne tient aucun service ;
      *  - l'auditeur qualité consulte les services d'exploitation.
      *
      * @param  array<string, list<string>>  $gabarit
@@ -336,7 +343,7 @@ class PermissionCatalog
         foreach ($gabarit as $droit => $roles) {
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
-            if (self::estLecture($droit) || in_array($droit, self::CONFIGURATION, true)) {
+            if (self::estLecture($droit) || in_array($droit, self::ecrituresDeLAdministrateur(), true)) {
                 $roles[] = RoleCatalog::ADMIN;
             }
 
@@ -395,10 +402,16 @@ class PermissionCatalog
         return self::SERVICES[explode('.', $permission)[0]] ?? null;
     }
 
-    /** @return list<string> droits de configuration, seules écritures de l'administrateur */
+    /** @return list<string> droits de configuration de l'établissement */
     public static function configuration(): array
     {
         return self::CONFIGURATION;
+    }
+
+    /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
+    public static function ecrituresDeLAdministrateur(): array
+    {
+        return [...self::CONFIGURATION, ...self::ADMINISTRATION];
     }
 
     /**
