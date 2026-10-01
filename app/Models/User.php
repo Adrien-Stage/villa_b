@@ -352,22 +352,32 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper : Vérifie si l'utilisateur a un rôle spécifique
-     * Compatible avec l'ancien système (colonne role) et le nouveau (relation roles)
+     * Rôles que la personne détient.
+     *
+     * Les affectations (table pivot role_user) font foi. La colonne héritée
+     * users.role ne compte que pour un compte sans aucune affectation : la
+     * console remplace les affectations sans toucher la colonne, qui garderait
+     * sinon un rôle retiré, et avec lui ses droits.
+     *
+     * @return list<string>
      */
-    public function hasRole(string $role): bool
+    public function rolesDetenus(): array
     {
-        // 1. Vérifier si la relation est déjà chargée
-        if ($this->relationLoaded('roles')) {
-            if ($this->roles->contains('slug', $role)) {
-                return true;
-            }
-        } elseif ($this->exists && $this->roles()->where('slug', $role)->exists()) {
-            return true;
+        $affectations = $this->relationLoaded('roles')
+            ? $this->roles->pluck('slug')->all()
+            : ($this->exists ? $this->roles()->pluck('slug')->all() : []);
+
+        if ($affectations !== []) {
+            return array_values(array_unique($affectations));
         }
 
-        // 2. Fallback vers l'ancienne colonne role pour compatibilité
-        return $this->role === $role;
+        return $this->role ? [$this->role] : [];
+    }
+
+    /** Détient-il ce rôle ? Voir rolesDetenus(). */
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->rolesDetenus(), true);
     }
 
     /**
@@ -375,17 +385,7 @@ class User extends Authenticatable
      */
     public function hasAnyRole(array $roles): bool
     {
-        // 1. Vérifier si la relation est déjà chargée
-        if ($this->relationLoaded('roles')) {
-            if ($this->roles->whereIn('slug', $roles)->isNotEmpty()) {
-                return true;
-            }
-        } elseif ($this->exists && $this->roles()->whereIn('slug', $roles)->exists()) {
-            return true;
-        }
-
-        // 2. Fallback vers l'ancienne colonne role pour compatibilité
-        return in_array($this->role, $roles, true);
+        return array_intersect($this->rolesDetenus(), $roles) !== [];
     }
 
     /**
@@ -399,15 +399,7 @@ class User extends Authenticatable
      */
     public function exerce(array $roles): bool
     {
-        $detenus = $this->relationLoaded('roles')
-            ? $this->roles->pluck('slug')->all()
-            : ($this->exists ? $this->roles()->pluck('slug')->all() : []);
-
-        if ($this->role) {
-            $detenus[] = $this->role;
-        }
-
-        return array_intersect(\App\Support\RoleCatalog::developper($detenus), $roles) !== [];
+        return array_intersect(\App\Support\RoleCatalog::developper($this->rolesDetenus()), $roles) !== [];
     }
 
     /**
@@ -416,9 +408,11 @@ class User extends Authenticatable
      */
     public function scopeHavingRole($query, array $slugs)
     {
+        // Même règle que rolesDetenus() : la colonne héritée ne compte que pour
+        // un compte sans affectation.
         return $query->where(function ($q) use ($slugs) {
-            $q->whereIn('role', $slugs)
-                ->orWhereHas('roles', fn ($r) => $r->whereIn('slug', $slugs));
+            $q->whereHas('roles', fn ($r) => $r->whereIn('slug', $slugs))
+                ->orWhere(fn ($ancien) => $ancien->whereDoesntHave('roles')->whereIn('role', $slugs));
         });
     }
 

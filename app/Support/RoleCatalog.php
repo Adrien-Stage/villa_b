@@ -119,7 +119,7 @@ class RoleCatalog
             [
                 'name' => 'Chef de cuisine',
                 'slug' => 'restaurant_chief',
-                'description' => 'Responsable de la cuisine et du restaurant',
+                'description' => 'Dirige la cuisine : carte, fiches techniques, garde-manger, inventaires et production',
                 'module' => 'restaurant', 'icon' => 'chef-hat', 'sort_order' => 30, 'is_assignable' => true,
                 'level' => 3, 'includes' => ['restaurant_cook'], 'statut' => self::ACTIF,
             ],
@@ -242,6 +242,19 @@ class RoleCatalog
         ];
     }
 
+    /**
+     * Ligne de la table roles pour un rôle du référentiel — ses seules
+     * colonnes en base —, ou null s'il n'y figure pas.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function enregistrement(string $slug): ?array
+    {
+        $definition = self::find($slug);
+
+        return $definition === null ? null : array_intersect_key($definition, array_flip(self::COLONNES));
+    }
+
     /** Définition d'un rôle, ou null s'il n'est pas au référentiel. */
     public static function find(string $slug): ?array
     {
@@ -331,7 +344,7 @@ class RoleCatalog
         foreach (self::all() as $definition) {
             // Niveau, inclusions et statut vivent dans le code : la table ne
             // porte que ce que les écrans et la console lisent en base.
-            $colonnes = array_intersect_key($definition, array_flip(self::COLONNES));
+            $colonnes = self::enregistrement($definition['slug']);
             $role = Role::where('slug', $definition['slug'])->first();
 
             if ($role) {

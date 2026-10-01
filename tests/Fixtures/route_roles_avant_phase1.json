@@ -986,12 +986,10 @@
   "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.billing.paid": [
   "cashier",
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.billing.receipt": [
@@ -1002,7 +1000,6 @@
   "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.billing.show": [
@@ -1013,12 +1010,10 @@
   "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.billing.unpaid": [
   "cashier",
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.breakfast.index": [
@@ -1033,7 +1028,6 @@
   "restaurant_staff"
  ],
  "restaurant.breakfast.serve": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -1104,7 +1098,6 @@
   "restaurant_manager"
  ],
  "restaurant.orders.claim": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -1127,16 +1120,13 @@
   "restaurant_cook"
  ],
  "restaurant.orders.reassign": [
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.orders.send_to_kitchen": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.orders.served": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -1151,11 +1141,9 @@
   "restaurant_staff"
  ],
  "restaurant.orders.status": [
-  "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.orders.store": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -1236,12 +1224,10 @@
   "restaurant_chief"
  ],
  "restaurant.shifts.close": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.shifts.open": [
-  "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff"
  ],

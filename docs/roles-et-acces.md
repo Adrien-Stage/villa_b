@@ -29,7 +29,7 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | 3 | `reception_chief` — Chef de réception | hébergement | `reception` | actif |
 | 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
 | 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | actif |
-| 3 | `restaurant_chief` — Chef de cuisine | restaurant | `restaurant_cook` | actif |
+| 3 | `restaurant_chief` — Chef de cuisine (cuisine seule) | restaurant | `restaurant_cook` | actif |
 | 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
 | 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
 | 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
@@ -104,14 +104,35 @@ En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
 `access_denied: true` pour une requête AJAX, sinon une redirection avec un message
 affiché en popup.
 
-### Deux systèmes de rôles
+### Les affectations font foi
 
-`hasRole()` interroge d'abord la relation `roles` (table pivot), puis retombe sur la
-colonne `role` héritée.
+Les rôles d'une personne sont ses **affectations** (table pivot `role_user`). La
+colonne héritée `users.role` ne compte que pour un compte **sans aucune
+affectation** : la console remplace les affectations sans toucher la colonne, qui
+garderait sinon un rôle retiré — et ses droits. `hasRole()`, `hasAnyRole()`,
+`exerce()`, le moteur de droits et `Notifier` suivent la même règle
+(`User::rolesDetenus()`).
 
-> Ce double mécanisme est intentionnel et doit être préservé : des comptes anciens
-> n'existent que dans la colonne, et `Notifier` résout ses destinataires en tenant
-> compte des deux.
+### Reprise des comptes et revue
+
+Une migration ([`RepriseDesRoles`](../app/Support/RepriseDesRoles.php)) a repris les
+comptes existants, sans retirer de droit :
+
+- un compte sans affectation reçoit son rôle hérité en affectation (l'ancien
+  `housekeeping` devient `housekeeping_staff`, aux mêmes droits) ;
+- une colonne périmée est réalignée sur le rôle principal des affectations ;
+- la salle et la caisse passent du chef de cuisine au responsable de restaurant :
+  chaque chef de cuisine reçoit aussi ce rôle, pour ne rien perdre.
+
+Ce qui reste à trancher s'affiche avec :
+
+```bash
+php artisan roles:revue
+```
+
+Cumuls cuisine et salle à confirmer, rôles retirés, cumuls interdits, comptes sans
+rôle, absence de comptable (les caisses attendraient leur contrôle) ou
+d'administrateur. La commande ne modifie rien.
 
 ### La lecture seule
 

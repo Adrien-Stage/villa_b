@@ -74,12 +74,14 @@ test('le responsable de restaurant saisit les commandes de la salle', function (
         ->assertSee('Nouvelle commande');
 });
 
-test("forcer le statut d'une commande revient au chef et au responsable, pas au serveur", function () {
+test("forcer le statut d'une commande revient au responsable de salle, ni au serveur ni à la cuisine", function () {
     $droits = app(\App\Services\PermissionResolver::class);
 
     expect($droits->allows(User::factory()->create(['role' => 'restaurant_staff']), 'restaurant.orders.status'))->toBeFalse()
         ->and($droits->allows(User::factory()->create(['role' => 'restaurant_manager']), 'restaurant.orders.status'))->toBeTrue()
-        ->and($droits->allows(User::factory()->create(['role' => 'restaurant_chief']), 'restaurant.orders.reassign'))->toBeTrue();
+        ->and($droits->allows(User::factory()->create(['role' => 'restaurant_manager']), 'restaurant.orders.reassign'))->toBeTrue()
+        // Le chef de cuisine tient la cuisine ; la salle est au responsable.
+        ->and($droits->allows(User::factory()->create(['role' => 'restaurant_chief']), 'restaurant.orders.reassign'))->toBeFalse();
 });
 
 test('le responsable de restaurant demande à l\'économat au nom du restaurant', function () {

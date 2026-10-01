@@ -228,17 +228,9 @@ class PermissionResolver
         return in_array($niveau, ['none', 'read'], true) ? $niveau : null;
     }
 
-    /** @return list<string> rôles détenus, pivot et colonne héritée confondus */
+    /** @return list<string> rôles détenus (voir User::rolesDetenus()) */
     private function rolesDe(User $user): array
     {
-        $roles = $user->relationLoaded('roles')
-            ? $user->roles->pluck('slug')->all()
-            : $user->roles()->pluck('slug')->all();
-
-        if ($user->role) {
-            $roles[] = $user->role;
-        }
-
-        return array_values(array_unique($roles));
+        return $user->rolesDetenus();
     }
 }
