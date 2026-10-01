@@ -370,6 +370,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Exerce-t-il l'un de ces rôles, directement ou par un rôle qui l'inclut ?
+     *
+     * Un chef fait le travail de ses membres (RoleCatalog) : le chef de
+     * réception exerce la réception, le responsable de restaurant le service
+     * en salle et la caisse. À employer pour les écrans et les règles qui
+     * s'adressent à une fonction, là où hasAnyRole() ne voit que le rôle
+     * attribué.
+     */
+    public function exerce(array $roles): bool
+    {
+        $detenus = $this->relationLoaded('roles')
+            ? $this->roles->pluck('slug')->all()
+            : ($this->exists ? $this->roles()->pluck('slug')->all() : []);
+
+        if ($this->role) {
+            $detenus[] = $this->role;
+        }
+
+        return array_intersect(\App\Support\RoleCatalog::developper($detenus), $roles) !== [];
+    }
+
+    /**
      * Scope : les utilisateurs porteurs d'un des rôles donnés, quel que soit le
      * système utilisé (ancienne colonne role ou relation roles).
      */

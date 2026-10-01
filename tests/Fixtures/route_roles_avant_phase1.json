@@ -1474,7 +1474,6 @@
   "controller",
   "housekeeping_leader",
   "manager",
-  "reception",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1483,7 +1482,6 @@
  "settings.import": [
   "housekeeping_leader",
   "manager",
-  "reception",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1494,7 +1492,6 @@
   "controller",
   "housekeeping_leader",
   "manager",
-  "reception",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1556,7 +1553,6 @@
  "settings.update": [
   "housekeeping_leader",
   "manager",
-  "reception",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",

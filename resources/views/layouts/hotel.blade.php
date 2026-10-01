@@ -260,7 +260,7 @@
                 // sur sa structure.
                 $droits = app(\App\Services\PermissionResolver::class);
                 $utilisateur = auth()->user();
-                $estComptable = auth()->check() && auth()->user()->role === 'accountant';
+                $estComptable = auth()->check() && auth()->user()->exerce(['accountant']);
 
                 $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
                 $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
@@ -301,13 +301,13 @@
                             <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                             <ul class="space-y-0.5">
                                 {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
-                                @role('manager','reception')
+                                @pour('manager','reception')
                                     @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
                                         <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
                                     @endif
-                                @endrole
+                                @endpour
 
-                            @role('manager','reception')
+                            @pour('manager','reception')
                                 @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
                                     {{-- L'agenda est un écran à part entière : le calendrier
                                          des séjours n'est plus une vue de la liste. --}}
@@ -361,61 +361,61 @@
                                         @endif
                                     </li>
                                 @endif
-                            @endrole
+                            @endpour
 
-                            @role('manager','housekeeping_leader','housekeeping_staff','housekeeping')
+                            @pour('manager','housekeeping_leader','housekeeping_staff','housekeeping')
                                 @module('housekeeping')
                                     <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
                                 @endmodule
-                            @endrole
+                            @endpour
 
-                            @role('manager')
+                            @pour('manager')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                                @endrole
+                                @endpour
                             </ul>
                         </div>
                     @endundroit
                 @endunless
 
-                @role('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
+                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
-                            @role('manager','restaurant_chief','restaurant_staff')
+                            @pour('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
-                            @endrole
+                            @endpour
 
-                            @role('restaurant_chief','restaurant_cook')
+                            @pour('restaurant_chief','restaurant_cook')
                                 <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
-                            @endrole
+                            @endpour
 
-                            @role('manager','restaurant_chief','restaurant_staff')
+                            @pour('manager','restaurant_chief','restaurant_staff')
                                 {{-- Pour le serveur, « Menus » est l'écran de prise de
                                      commande ; pour le chef, la carte à administrer. --}}
                                 <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
-                            @endrole
+                            @endpour
 
                             {{-- Coûts, stocks et inventaires relèvent de la gestion :
                                  la salle n'a pas à les voir. --}}
-                            @role('manager','restaurant_chief')
+                            @pour('manager','restaurant_chief')
                                 <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
-                            @endrole
+                            @endpour
 
-                            @role('manager','restaurant_chief','restaurant_cook')
+                            @pour('manager','restaurant_chief','restaurant_cook')
                                 <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
-                            @endrole
+                            @endpour
 
-                            @role('manager','restaurant_chief')
+                            @pour('manager','restaurant_chief')
                                 <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
-                            @endrole
+                            @endpour
 
-                            @role('manager','restaurant_chief','cashier')
+                            @pour('manager','restaurant_chief','cashier')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
-                            @endrole
+                            @endpour
                             @php
                                 $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
                             @endphp
@@ -436,40 +436,40 @@
                         </ul>
                     </div>
                     @endmodule
-                @endrole
+                @endpour
 
-                @role('manager','reception','cashier')
+                @pour('manager','reception','cashier')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
                             @if(!auth()->check() || auth()->user()->hasModuleAccess('clients'))
                                 <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
                             @endif
-                            @role('manager')
+                            @pour('manager')
                                 @if(!auth()->check() || auth()->user()->hasModuleAccess('utilisateurs'))
                                     <x-sidebar-link route="users.index" icon="user-cog">Utilisateurs</x-sidebar-link>
                                 @endif
-                            @endrole
+                            @endpour
                         </ul>
                     </div>
-                @endrole
+                @endpour
 
-                @role('shop_manager','shop_cashier','manager')
+                @pour('shop_manager','shop_cashier','manager')
                     @module('shop')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
-                            @role('shop_manager','manager')
+                            @pour('shop_manager','manager')
                                 <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
-                            @endrole
+                            @endpour
                             <x-sidebar-link route="shop.orders.index" icon="shopping-cart">Commandes</x-sidebar-link>
-                            @role('shop_manager','manager')
+                            @pour('shop_manager','manager')
                                 <x-sidebar-link route="shop.cash_register.index" icon="calculator">Compta Boutique</x-sidebar-link>
-                            @endrole
+                            @endpour
                         </ul>
                     </div>
                     @endmodule
-                @endrole
+                @endpour
 
                 @if($afficheEconomat)
                 @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
@@ -536,14 +536,16 @@
                                  marge par type de chambre. C'est de la
                                  comptabilité analytique, d'où sa place ici. Le
                                  manager la voit déjà dans la section Hôtel. --}}
-                            @role('accountant','admin')
+                            @pour('accountant','admin')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                            @endrole
+                            @endpour
                         </ul>
                     </div>
                 @endundroit
 
-                @role('manager','reception','housekeeping_leader','restaurant_chief','shop_manager')
+                {{-- Les paramètres se règlent par onglet, par la direction et le chef
+                     du service concerné : l'entrée suit la même règle que l'écran. --}}
+                @if(\App\Support\SettingsTabs::reglables(auth()->user()) !== [])
                     <div class="mt-4 pt-4 border-t border-surface-dark">
                         <ul class="space-y-0.5">
                             @if(!auth()->check() || auth()->user()->hasModuleAccess('parametres'))
@@ -551,7 +553,7 @@
                             @endif
                         </ul>
                     </div>
-                @endrole
+                @endif
             </nav>
 
             @module('discussions')
@@ -825,7 +827,7 @@
                     </span>
                 @endif
 
-                @role('manager', 'reception')
+                @pour('manager', 'reception')
                     <a href="{{ route('reception.pos.index') }}"
                        title="Basculer vers le terminal plein écran Mode POS Réception"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-primary hover:bg-surface-dark transition-all shadow-xs mr-1">
@@ -833,7 +835,7 @@
                         <span class="hidden md:inline">Mode POS Réception</span>
                         <span class="md:hidden">POS</span>
                     </a>
-                @endrole
+                @endpour
 
                 <span class="text-xs text-primary/50">
                     {{ ucfirst(\Carbon\Carbon::now()->locale('fr')->isoFormat('ddd. D MMM')) }}

@@ -608,9 +608,9 @@ class PermissionCatalog
             'settings.cancellation_policies.default' => ['manager'],
             'settings.cancellation_policies.modifier' => ['manager'],
             'settings.cancellation_policies.supprimer' => ['manager'],
-            'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'settings.import' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'settings.modifier' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.import' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.modifier' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'settings.packages.creer' => ['manager'],
             'settings.packages.export' => ['controller', 'manager'],
             'settings.packages.import' => ['manager'],
@@ -626,7 +626,7 @@ class PermissionCatalog
             'settings.services.import' => ['manager'],
             'settings.services.modifier' => ['manager'],
             'settings.services.supprimer' => ['manager'],
-            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
             // ── Boutique ──
             'shop.cash_register.close' => ['manager', 'shop_cashier', 'shop_manager'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\SettingsTabs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,24 +12,12 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
 
-        // Si l'utilisateur n'a aucun rôle autorisé, on le bloque (même si la route est protégée par middleware, c'est une double sécurité)
-        if (!$user->hasAnyRole(['manager', 'reception', 'housekeeping_leader', 'restaurant_chief', 'shop_manager'])) {
+        // Les paramètres se règlent par onglet : la direction, et le chef du
+        // service concerné (SettingsTabs). Sans onglet à régler, rien à voir.
+        $defaultTab = SettingsTabs::parDefaut($user);
+
+        if ($defaultTab === null) {
             abort(403, 'Accès non autorisé aux paramètres.');
-        }
-
-        // Déterminer l'onglet par défaut en fonction du rôle principal si aucun onglet n'est spécifié
-        $defaultTab = 'general';
-
-        if (!$user->hasRole('manager')) {
-            if ($user->hasRole('reception')) {
-                $defaultTab = 'hebergement';
-            } elseif ($user->hasRole('housekeeping_leader')) {
-                $defaultTab = 'housekeeping';
-            } elseif ($user->hasRole('restaurant_chief')) {
-                $defaultTab = 'restaurant';
-            } elseif ($user->hasRole('shop_manager')) {
-                $defaultTab = 'shop';
-            }
         }
 
         $tab = $request->query('tab', $defaultTab);
@@ -104,7 +93,7 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasAnyRole(['manager', 'reception', 'housekeeping_leader', 'restaurant_chief', 'shop_manager'])) {
+        if (SettingsTabs::reglables($user) === []) {
             abort(403, 'Accès non autorisé aux paramètres.');
         }
 
@@ -131,6 +120,12 @@ class SettingsController extends Controller
         $tab = $request->query('tab');
 
         if ($tab && $request->has('settings')) {
+            // Même question que l'écran : un onglet qu'on ne règle pas ne
+            // s'enregistre pas en forgeant la requête.
+            if (!SettingsTabs::peutRegler($user, $tab)) {
+                abort(403, "Ces paramètres relèvent d'un autre service.");
+            }
+
             $tabData = $this->validatedTabData($request, $tab);
 
             // Fusionne avec les données existantes de cet onglet ou crée l'onglet
@@ -171,7 +166,7 @@ class SettingsController extends Controller
             return $data;
         }
 
-        if (!Auth::user()->hasRole('manager')) {
+        if (!SettingsTabs::peutRegler(Auth::user(), 'general')) {
             abort(403, "Seul un manager peut modifier l'identité d'expédition des courriels.");
         }
 
