@@ -63,7 +63,7 @@ test('la lecture décrit la hiérarchie des rôles', function () {
     // La console en tirera le regroupement par niveau et par service.
     expect($roles['admin']['level'])->toBe(1)
         ->and($roles['econome']['includes'])->toBe(['storekeeper'])
-        ->and($roles['storekeeper']['statut'])->toBe('en_preparation')
+        ->and($roles['storekeeper']['statut'])->toBe('actif')
         ->and($roles['it_support']['statut'])->toBe('retire')
         ->and($roles['controller']['level'])->toBeNull();
 });

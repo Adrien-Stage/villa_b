@@ -111,7 +111,7 @@ test('la synchronisation écrit le référentiel sans ses champs de hiérarchie'
     $resultat = RoleCatalog::sync();
 
     expect($resultat['created'] + $resultat['updated'])->toBe(count(RoleCatalog::all()))
-        ->and(Role::where('slug', 'storekeeper')->first()->is_assignable)->toBeFalse()
+        ->and(Role::where('slug', 'storekeeper')->first()->is_assignable)->toBeTrue()
         ->and(Role::where('slug', 'it_support')->first()->is_assignable)->toBeFalse()
         ->and(Role::where('slug', 'econome')->first()->name)->toBe('Chef économe');
 });
@@ -167,4 +167,11 @@ test("l'auditeur qualité ne lit ni la comptabilité, ni les caisses, ni le fich
         ->and($auditeur)->not->toContain('shop.cash_register.voir')
         ->and($auditeur)->not->toContain('rooms.cost_sheets.voir')
         ->and($auditeur)->not->toContain('customers.export');
+});
+
+test('les rôles de la refonte sont en service et attribuables', function () {
+    foreach (['reception_chief', 'restaurant_manager', 'finance_manager', 'storekeeper'] as $slug) {
+        expect(RoleCatalog::find($slug)['statut'])->toBe(RoleCatalog::ACTIF)
+            ->and(RoleCatalog::find($slug)['is_assignable'])->toBeTrue();
+    }
 });

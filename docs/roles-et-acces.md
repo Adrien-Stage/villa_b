@@ -26,19 +26,19 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 |---|---|---|---|---|
 | 1 | `admin` — Administrateur | informatique | — | actif, créé depuis la console |
 | 2 | `manager` — Manager | direction | — | actif, privilégié |
-| 3 | `reception_chief` — Chef de réception | hébergement | `reception` | en préparation |
+| 3 | `reception_chief` — Chef de réception | hébergement | `reception` | actif |
 | 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
-| 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | en préparation |
+| 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | actif |
 | 3 | `restaurant_chief` — Chef de cuisine | restaurant | `restaurant_cook` | actif |
 | 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
 | 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
-| 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | en préparation |
+| 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
 | 4 | `reception` — Réceptionniste (encaisse) | hébergement | — | actif |
 | 4 | `housekeeping_staff` — Valet / Femme de chambre | housekeeping | — | actif |
 | 4 | `restaurant_staff` — Serveur, `restaurant_cook` — Cuisinier | restaurant | — | actif |
 | 4 | `cashier` — Caissier restaurant | restaurant | — | actif |
 | 4 | `shop_cashier` — Vendeur-caissier | boutique | — | actif |
-| 4 | `storekeeper` — Magasinier | économat | — | en préparation |
+| 4 | `storekeeper` — Magasinier | économat | — | actif |
 | 4 | `accountant` — Comptable | comptabilité | — | actif |
 | — | `controller`, `quality_auditor` — contrôle, lecture seule | contrôle | — | actif |
 | — | `customer_guest` — portail client | portail | — | actif, privilégié |
@@ -48,8 +48,9 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
   l'application ; il ne tient aucun service. Il ne se cumule avec aucun autre rôle.
 - **Il n'y a pas de caissier à l'hébergement** : le réceptionniste encaisse. Le slug
   historique `cashier` désigne le caissier du restaurant.
-- **En préparation** : le rôle est défini, droits compris, mais pas encore proposé :
-  des écrans demandent encore les rôles par leur nom et ne le reconnaîtraient pas.
+- **En préparation** : statut d'un rôle défini, droits compris, mais pas encore
+  proposé. Aucun rôle n'y est aujourd'hui : écrans et contrôleurs posent des droits,
+  ou la fonction exercée (`User::exerce()`), plus des rôles nommés.
 - **Retiré** : plus proposé ; les RH deviennent une plateforme sœur, et
   l'administrateur appartient déjà au service informatique.
 

@@ -81,8 +81,8 @@ class RoleCatalog
                 'name' => 'Chef de réception',
                 'slug' => 'reception_chief',
                 'description' => 'Encadre la réception : réservations, séjours et caisse de la réception',
-                'module' => 'hebergement', 'icon' => 'bell-ring', 'sort_order' => 9, 'is_assignable' => false,
-                'level' => 3, 'includes' => ['reception'], 'statut' => self::EN_PREPARATION,
+                'module' => 'hebergement', 'icon' => 'bell-ring', 'sort_order' => 9, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['reception'], 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Réceptionniste',
@@ -113,8 +113,8 @@ class RoleCatalog
                 'name' => 'Responsable de restaurant',
                 'slug' => 'restaurant_manager',
                 'description' => 'Dirige la salle : service, carte et encaissements si nécessaire',
-                'module' => 'restaurant', 'icon' => 'store', 'sort_order' => 29, 'is_assignable' => false,
-                'level' => 3, 'includes' => ['restaurant_staff', 'cashier'], 'statut' => self::EN_PREPARATION,
+                'module' => 'restaurant', 'icon' => 'store', 'sort_order' => 29, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['restaurant_staff', 'cashier'], 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Chef de cuisine',
@@ -176,8 +176,8 @@ class RoleCatalog
                 'name' => 'Magasinier',
                 'slug' => 'storekeeper',
                 'description' => 'Réception des livraisons, sorties et comptages du magasin central',
-                'module' => 'economat', 'icon' => 'package-check', 'sort_order' => 51, 'is_assignable' => false,
-                'level' => 4, 'statut' => self::EN_PREPARATION,
+                'module' => 'economat', 'icon' => 'package-check', 'sort_order' => 51, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
 
             // ── Comptabilité & finances ──
@@ -185,8 +185,8 @@ class RoleCatalog
                 'name' => 'Responsable administratif et financier',
                 'slug' => 'finance_manager',
                 'description' => 'Dirige la comptabilité et les finances : écritures, clôtures, contrôle des caisses',
-                'module' => 'comptabilite', 'icon' => 'landmark', 'sort_order' => 59, 'is_assignable' => false,
-                'level' => 3, 'includes' => ['accountant'], 'statut' => self::EN_PREPARATION,
+                'module' => 'comptabilite', 'icon' => 'landmark', 'sort_order' => 59, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['accountant'], 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Comptable',

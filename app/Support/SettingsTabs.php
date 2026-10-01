@@ -20,15 +20,15 @@ class SettingsTabs
      * Hébergement : les deux clés suivent la même règle.
      */
     private const ONGLETS = [
-        'general'      => ['manager'],
-        'hebergement'  => ['manager', 'reception_chief'],
-        'reception'    => ['manager', 'reception_chief'],
-        'taxes'        => ['manager', 'reception_chief'],
+        'general' => ['manager'],
+        'hebergement' => ['manager', 'reception_chief'],
+        'reception' => ['manager', 'reception_chief'],
+        'taxes' => ['manager', 'reception_chief'],
         'housekeeping' => ['manager', 'housekeeping_leader'],
-        'restaurant'   => ['manager', 'restaurant_chief', 'restaurant_manager'],
-        'shop'         => ['manager', 'shop_manager'],
-        'services'     => ['manager'],
-        'partners'     => ['manager'],
+        'restaurant' => ['manager', 'restaurant_chief', 'restaurant_manager'],
+        'shop' => ['manager', 'shop_manager'],
+        'services' => ['manager'],
+        'partners' => ['manager'],
     ];
 
     /** Ordre de préférence de l'onglet ouvert par défaut. */
