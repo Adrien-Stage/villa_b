@@ -135,3 +135,43 @@ test("le motif accompagne la décision", function () {
     // Une matrice qui change sans trace ne se contrôle pas.
     expect($ligne->reason)->not->toBeNull();
 });
+
+test("une exception échue ne s'applique plus", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $comptable->id,
+        'permission' => 'economat.items.voir', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT,
+        'reason' => 'Remplacement de l\'économe pendant ses congés.',
+        'expires_at' => now()->subDay(),
+    ]);
+
+    // Le remplacement est terminé : l'exception ne survit pas au retour du titulaire.
+    expect(app(PermissionResolver::class)->allows($comptable, 'economat.items.voir'))->toBeFalse();
+});
+
+test("une exception à échéance future s'applique jusqu'à son terme", function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $comptable->id,
+        'permission' => 'economat.items.voir', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT,
+        'reason' => 'Remplacement de l\'économe pendant ses congés.',
+        'expires_at' => now()->addWeek(),
+    ]);
+
+    expect(app(PermissionResolver::class)->allows($comptable, 'economat.items.voir'))->toBeTrue();
+});
+
+test("entre deux couches, le refus posé sur une personne l'emporte", function () {
+    $econome = User::factory()->create(['role' => 'econome']);
+    foreach ([[PermissionGrant::ORIGINE_ERP, PermissionGrant::EFFET_DENY], [PermissionGrant::ORIGINE_ETABLISSEMENT, PermissionGrant::EFFET_ALLOW]] as [$origine, $effet]) {
+        PermissionGrant::create([
+            'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $econome->id,
+            'permission' => 'economat.items.creer', 'effect' => $effet, 'origin' => $origine,
+            'reason' => 'Deux autorités, deux décisions.',
+        ]);
+    }
+
+    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.creer'))->toBeFalse();
+});

@@ -135,6 +135,7 @@ class PermissionResolver
 
         if ($roles !== []) {
             $lignes = PermissionGrant::query()
+                ->enVigueur()
                 ->where('subject_type', PermissionGrant::SUJET_ROLE)
                 ->whereIn('subject_id', $roles)
                 ->get(['subject_id', 'permission', 'effect', 'scope']);
@@ -163,12 +164,23 @@ class PermissionResolver
         }
 
         $nominatives = PermissionGrant::query()
+            ->enVigueur()
             ->where('subject_type', PermissionGrant::SUJET_USER)
             ->where('subject_id', (string) $user->id)
             ->get(['permission', 'effect', 'scope']);
 
+        // Une personne peut porter un écart dans chaque couche (console et
+        // établissement) : entre eux aussi, le refus l'emporte.
+        $propres = [];
         foreach ($nominatives as $ligne) {
-            $effets[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
+            if (($propres[$ligne->permission]['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
+                continue;
+            }
+            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
+        }
+
+        foreach ($propres as $permission => $effet) {
+            $effets[$permission] = $effet;
         }
 
         return $this->cache[$user->id] = $effets;

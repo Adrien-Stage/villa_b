@@ -27,8 +27,9 @@ class PermissionMatrixController extends Controller
     public function show(): JsonResponse
     {
         $ecarts = PermissionGrant::query()
+            ->enVigueur()
             ->orderBy('subject_type')->orderBy('subject_id')->orderBy('permission')
-            ->get(['subject_type', 'subject_id', 'permission', 'effect', 'scope', 'reason']);
+            ->get(['subject_type', 'subject_id', 'permission', 'effect', 'scope', 'origin', 'reason', 'expires_at']);
 
         return response()->json([
             'catalogue'          => PermissionCatalog::all(),
@@ -58,14 +59,15 @@ class PermissionMatrixController extends Controller
     }
 
     /**
-     * Remplace les écarts portés par les rôles.
+     * Remplace les écarts que la console porte sur les rôles.
      *
      * Remplacement et non fusion : l'ERP envoie l'état complet de ce qu'il
      * pilote. Sans cela, retirer un refus depuis l'écran ne l'effacerait
      * jamais ici, et la matrice affichée cesserait de décrire la réalité.
      *
-     * Les écarts nominatifs ne sont pas touchés : ce sont les dérogations
-     * accordées sur place par le directeur, que la console n'a pas à écraser.
+     * Seule la couche de la console est remplacée. Les écarts posés dans
+     * l'établissement — sur ses rôles comme sur des personnes — ne sont pas
+     * touchés : la console n'a pas à écraser les décisions de l'hôtel.
      */
     public function update(Request $request): JsonResponse
     {
@@ -94,7 +96,9 @@ class PermissionMatrixController extends Controller
         }
 
         DB::transaction(function () use ($valide): void {
-            PermissionGrant::where('subject_type', PermissionGrant::SUJET_ROLE)->delete();
+            PermissionGrant::where('subject_type', PermissionGrant::SUJET_ROLE)
+                ->where('origin', PermissionGrant::ORIGINE_ERP)
+                ->delete();
 
             foreach ($valide['ecarts'] as $ecart) {
                 PermissionGrant::create([
@@ -103,6 +107,7 @@ class PermissionMatrixController extends Controller
                     'permission'   => $ecart['permission'],
                     'effect'       => $ecart['effect'],
                     'scope'        => $ecart['scope'] ?? null,
+                    'origin'       => PermissionGrant::ORIGINE_ERP,
                     'reason'       => $ecart['reason'] ?? null,
                 ]);
             }
