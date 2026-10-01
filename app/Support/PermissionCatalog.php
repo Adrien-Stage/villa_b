@@ -275,6 +275,36 @@ class PermissionCatalog
         return implode('.', $segments) . '.' . (self::VERBES[$action] ?? $action);
     }
 
+    /**
+     * La configuration de l'établissement que l'administrateur règle : ses
+     * seules écritures. Décrire les chambres de l'hôtel n'est pas l'exploiter.
+     */
+    private const CONFIGURATION = [
+        'rooms.creer', 'rooms.modifier', 'rooms.supprimer', 'rooms.images.supprimer', 'rooms.import',
+        'rooms.types.creer', 'rooms.types.modifier', 'rooms.types.supprimer', 'rooms.types.import',
+    ];
+
+    /**
+     * Services que l'auditeur qualité consulte pour ses contrôles : fiches de
+     * ventes, produits, prestations et services de l'exploitation. Ni la
+     * comptabilité, ni les caisses, ni les fiches de coût : le contrôle
+     * financier relève du contrôle de gestion. Ni l'export du fichier clients :
+     * ses contrôles portent sur les ventes, pas sur les personnes. Ni les
+     * brouillons de réservation, travail en cours de la réception.
+     */
+    private const AUDIT_QUALITE_SERVICES = [
+        'agenda', 'bookings', 'customers', 'economat', 'groups', 'housekeeping',
+        'invoices', 'reception', 'restaurant', 'rooms', 'shop',
+    ];
+
+    private const AUDIT_QUALITE_EXCLUS = [
+        'bookings.cash_register.', 'shop.cash_register.', 'rooms.cost_sheets.', 'customers.export',
+        'bookings.drafts.',
+    ];
+
+    /** Catalogues de prestations, rangés dans les paramètres. */
+    private const AUDIT_QUALITE_CATALOGUES = ['settings.services.export', 'settings.packages.export'];
+
     /** @var array<string, list<string>>|null */
     private static ?array $complet = null;
 
@@ -288,10 +318,13 @@ class PermissionCatalog
     }
 
     /**
-     * Le gabarit, complété de ce que la hiérarchie implique :
+     * Le gabarit, complété de ce que la hiérarchie et les fonctions de
+     * contrôle impliquent :
      *  - un chef détient les droits de ses membres, en chaîne ;
-     *  - l'administrateur consulte tout. Il n'écrit rien de métier : il
-     *    administre l'application, il ne tient aucun service.
+     *  - l'administrateur consulte tout et règle la configuration. Il
+     *    n'écrit rien de métier : il administre l'application, il ne tient
+     *    aucun service ;
+     *  - l'auditeur qualité consulte les services d'exploitation.
      *
      * @param  array<string, list<string>>  $gabarit
      * @return array<string, list<string>>
@@ -303,8 +336,12 @@ class PermissionCatalog
         foreach ($gabarit as $droit => $roles) {
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
-            if (self::estLecture($droit)) {
+            if (self::estLecture($droit) || in_array($droit, self::CONFIGURATION, true)) {
                 $roles[] = RoleCatalog::ADMIN;
+            }
+
+            if (self::pourAuditQualite($droit)) {
+                $roles[] = DutySegregation::CONTROLE_INDEPENDANT;
             }
 
             $roles = array_values(array_unique($roles));
@@ -313,6 +350,32 @@ class PermissionCatalog
         }
 
         return $complet;
+    }
+
+    private static function pourAuditQualite(string $droit): bool
+    {
+        if (in_array($droit, self::AUDIT_QUALITE_CATALOGUES, true)) {
+            return true;
+        }
+
+        if (!self::estLecture($droit)
+            || !in_array(explode('.', $droit)[0], self::AUDIT_QUALITE_SERVICES, true)) {
+            return false;
+        }
+
+        foreach (self::AUDIT_QUALITE_EXCLUS as $exclu) {
+            if (str_starts_with($droit, $exclu)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** @return list<string> droits de configuration, seules écritures de l'administrateur */
+    public static function configuration(): array
+    {
+        return self::CONFIGURATION;
     }
 
     /**
@@ -329,7 +392,7 @@ class PermissionCatalog
             'restaurant.billing.unpaid' => ['cashier', 'restaurant_chief'],
             'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
             'restaurant.breakfast.serve' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.breakfast.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.breakfast.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.kitchen.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.menus.categories.creer' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.categories.modifier' => ['restaurant_chief', 'restaurant_manager'],
@@ -504,17 +567,17 @@ class PermissionCatalog
             'rooms.cost_sheets.starter' => ['accountant', 'manager'],
             'rooms.cost_sheets.voir' => ['accountant', 'controller', 'manager'],
             'rooms.cost_sheets.document' => ['accountant', 'controller', 'manager'],
-            'rooms.creer' => ['manager', 'reception'],
+            'rooms.creer' => ['manager', 'reception_chief'],
             'rooms.export' => ['controller', 'manager', 'reception'],
-            'rooms.images.supprimer' => ['manager', 'reception'],
-            'rooms.import' => ['manager', 'reception'],
-            'rooms.modifier' => ['manager', 'reception'],
-            'rooms.supprimer' => ['manager', 'reception'],
-            'rooms.types.creer' => ['manager', 'reception'],
+            'rooms.images.supprimer' => ['manager', 'reception_chief'],
+            'rooms.import' => ['manager', 'reception_chief'],
+            'rooms.modifier' => ['manager', 'reception_chief'],
+            'rooms.supprimer' => ['manager', 'reception_chief'],
+            'rooms.types.creer' => ['manager', 'reception_chief'],
             'rooms.types.export' => ['controller', 'manager', 'reception'],
-            'rooms.types.import' => ['manager', 'reception'],
-            'rooms.types.modifier' => ['manager', 'reception'],
-            'rooms.types.supprimer' => ['manager', 'reception'],
+            'rooms.types.import' => ['manager', 'reception_chief'],
+            'rooms.types.modifier' => ['manager', 'reception_chief'],
+            'rooms.types.supprimer' => ['manager', 'reception_chief'],
             'rooms.updateStatus' => ['manager', 'reception'],
             'rooms.voir' => ['controller', 'manager', 'reception'],
 
@@ -552,9 +615,9 @@ class PermissionCatalog
             'shop.cash_register.voir' => ['controller', 'manager', 'shop_manager'],
             'shop.orders.creer' => ['shop_cashier', 'shop_manager'],
             'shop.orders.paid' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.receipt' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
+            'shop.orders.receipt' => ['controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.orders.refund' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.voir' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
+            'shop.orders.voir' => ['controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.products.creer' => ['shop_manager'],
             'shop.products.export' => ['controller', 'manager', 'shop_manager'],
             'shop.products.import' => ['shop_manager'],
@@ -591,7 +654,7 @@ class PermissionCatalog
             'customers.export' => ['controller', 'manager', 'reception'],
             'customers.import' => ['manager', 'reception'],
             'customers.modifier' => ['manager', 'reception'],
-            'customers.voir' => ['cashier', 'controller', 'manager', 'reception'],
+            'customers.voir' => ['controller', 'manager', 'reception'],
 
             // ── Réception ──
             'reception.pos.history' => ['manager', 'reception'],
@@ -612,7 +675,7 @@ class PermissionCatalog
             'analytics.voir' => ['controller', 'manager'],
 
             // ── Factures ──
-            'invoices.voir' => ['cashier', 'controller', 'manager', 'reception'],
+            'invoices.voir' => ['controller', 'manager', 'reception'],
 
             // ── Divers ──
             'test-popup.voir' => ['controller', 'manager'],

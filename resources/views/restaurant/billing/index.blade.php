@@ -39,10 +39,19 @@
                 {{ $label }}
             </a>
         @endforeach
+
+        {{-- Clients logés ayant consommé : commandes rattachées à un séjour. --}}
+        <a href="{{ route('restaurant.billing.index', array_merge(request()->except('residents','page'), request()->boolean('residents') ? [] : ['residents' => 1])) }}"
+            class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request()->boolean('residents') ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
+            Résidents
+        </a>
     </div>
 
     <form method="GET" action="{{ route('restaurant.billing.index') }}" class="flex items-center gap-2">
         <input type="hidden" name="payment_status" value="{{ request('payment_status') }}">
+        @if(request()->boolean('residents'))
+            <input type="hidden" name="residents" value="1">
+        @endif
 
         <div class="relative">
             <input type="text"
@@ -90,6 +99,12 @@
                             </td>
                             <td class="px-4 py-3 text-sm text-primary/70">
                                 {{ $order->table_number ?? '—' }}
+                                @if($order->booking)
+                                    {{-- Client logé : chambre et séjournant, pour rapprocher la note du folio. --}}
+                                    <p class="text-xs text-primary/45 mt-0.5">
+                                        Ch. {{ $order->booking->room?->number ?? '—' }} · {{ $order->booking->customer?->full_name ?? '—' }}
+                                    </p>
+                                @endif
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-primary border border-secondary/25">

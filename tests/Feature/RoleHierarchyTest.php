@@ -115,3 +115,56 @@ test('la synchronisation écrit le référentiel sans ses champs de hiérarchie'
         ->and(Role::where('slug', 'it_support')->first()->is_assignable)->toBeFalse()
         ->and(Role::where('slug', 'econome')->first()->name)->toBe('Chef économe');
 });
+
+test("un simple réceptionniste consulte les chambres sans les configurer", function () {
+    $reception = PermissionCatalog::forRole('reception');
+
+    expect(array_intersect($reception, PermissionCatalog::configuration()))->toBe([])
+        ->and($reception)->toContain('rooms.voir')
+        ->and($reception)->toContain('rooms.export')
+        // Changer le statut d'une chambre reste un geste d'exploitation.
+        ->and($reception)->toContain('rooms.updateStatus');
+});
+
+test("le chef de réception, le manager et l'administrateur configurent les chambres", function () {
+    foreach (PermissionCatalog::configuration() as $droit) {
+        expect(PermissionCatalog::roles($droit))->toContain('reception_chief')
+            ->and(PermissionCatalog::roles($droit))->toContain('manager')
+            ->and(PermissionCatalog::roles($droit))->toContain('admin');
+    }
+});
+
+test("le caissier restaurant ne voit ni la boutique ni les factures de l'hôtel", function () {
+    $caissier = PermissionCatalog::forRole('cashier');
+
+    expect($caissier)->not->toContain('shop.orders.voir')
+        ->and($caissier)->not->toContain('invoices.voir')
+        ->and($caissier)->not->toContain('customers.voir')
+        // Il voit les chambres avec petit-déjeuner, et encaisse le restaurant.
+        ->and($caissier)->toContain('restaurant.breakfast.voir')
+        ->and($caissier)->toContain('restaurant.billing.paid');
+});
+
+test("l'auditeur qualité consulte les services d'exploitation, sans y écrire", function () {
+    $auditeur = PermissionCatalog::forRole('quality_auditor');
+
+    foreach ([
+        'restaurant.billing.voir', 'shop.orders.voir', 'shop.products.voir', 'economat.items.voir',
+        'housekeeping.voir', 'bookings.voir', 'reception.pos.history', 'restaurant.menus.voir',
+        'settings.services.export', 'settings.packages.export',
+    ] as $droit) {
+        expect($auditeur)->toContain($droit);
+    }
+
+    expect(array_filter($auditeur, fn (string $d) => !PermissionCatalog::estLecture($d)))->toBe([]);
+});
+
+test("l'auditeur qualité ne lit ni la comptabilité, ni les caisses, ni le fichier clients exporté", function () {
+    $auditeur = PermissionCatalog::forRole('quality_auditor');
+
+    expect(array_filter($auditeur, fn (string $d) => str_starts_with($d, 'accounting.')))->toBe([])
+        ->and($auditeur)->not->toContain('bookings.cash_register.voir')
+        ->and($auditeur)->not->toContain('shop.cash_register.voir')
+        ->and($auditeur)->not->toContain('rooms.cost_sheets.voir')
+        ->and($auditeur)->not->toContain('customers.export');
+});

@@ -14,45 +14,59 @@
         </p>
     </div>
     @if($tab === 'rooms')
-    @role('manager', 'reception')
+    {{-- Chaque action suit son propre droit : la réception consulte et exporte,
+         seuls le chef de réception, la direction et l'administrateur configurent. --}}
+    @undroit('rooms.export', 'rooms.import', 'rooms.creer')
     <div class="flex items-center gap-2">
+        @droit('rooms.export')
         <a href="{{ route('rooms.export') }}"
             class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter toutes les chambres en CSV">
             <i data-lucide="download" class="w-4 h-4"></i>
             Exporter CSV
         </a>
+        @enddroit
+        @droit('rooms.import')
         <button onclick="document.getElementById('modal-import-rooms').classList.remove('hidden')"
             class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des chambres depuis un fichier CSV">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Importer CSV
         </button>
+        @enddroit
+        @droit('rooms.creer')
         <button onclick="document.getElementById('modal-create-room').classList.remove('hidden')"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Nouvelle chambre
         </button>
+        @enddroit
     </div>
-    @endrole
+    @endundroit
     @else
-    @role('manager', 'reception')
+    @undroit('rooms.types.export', 'rooms.types.import', 'rooms.types.creer')
     <div class="flex items-center gap-2">
+        @droit('rooms.types.export')
         <a href="{{ route('rooms.types.export') }}"
             class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter tous les types en CSV">
             <i data-lucide="download" class="w-4 h-4"></i>
             Exporter CSV
         </a>
+        @enddroit
+        @droit('rooms.types.import')
         <button onclick="document.getElementById('modal-import-types').classList.remove('hidden')"
             class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des types depuis un fichier CSV">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Importer CSV
         </button>
+        @enddroit
+        @droit('rooms.types.creer')
         <button onclick="document.getElementById('modal-create-type').classList.remove('hidden')"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Nouveau type
         </button>
+        @enddroit
     </div>
-    @endrole
+    @endundroit
     @endif
 </div>
 
@@ -253,7 +267,7 @@
                 title="Voir détail">
                 <i data-lucide="settings" class="w-4 h-4"></i>
             </a>
-            @role('manager', 'reception')
+            @droit('rooms.modifier')
             <button
                 data-id="{{ $room->id }}"
                 data-number="{{ $room->number }}"
@@ -265,6 +279,8 @@
                 title="Modifier">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
+            @enddroit
+            @droit('rooms.supprimer')
             <form method="POST" action="{{ route('rooms.destroy', $room) }}"
                 onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')"
                 class="expect-popup">
@@ -273,7 +289,7 @@
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
-            @endrole
+            @enddroit
         </div>
     </div>
     @endforeach
@@ -376,8 +392,12 @@
             </div>
             <div class="flex items-center justify-end gap-1 pt-3 border-t border-secondary/10">
                 <a href="{{ route('rooms.show', $room) }}" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="settings" class="w-3.5 h-3.5"></i></a>
+                @droit('rooms.modifier')
                 <button data-id="{{ $room->id }}" data-number="{{ $room->number }}" data-type="{{ $room->room_type_id }}" data-floor="{{ $room->floor }}" data-view="{{ $room->view_type }}" onclick="openEditRoom(this)" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                @enddroit
+                @droit('rooms.supprimer')
                 <form method="POST" action="{{ route('rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')" class="expect-popup">@csrf @method('DELETE')<button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></form>
+                @enddroit
             </div>
         </div>
     </div>
@@ -432,6 +452,7 @@
         <div class="col-span-2 text-sm text-primary/70">{{ $type->rooms_count }}</div>
         <div class="col-span-1 flex items-center justify-end gap-1">
             {{-- ✅ data-* attributes au lieu de paramètres JS inline --}}
+            @droit('rooms.types.modifier')
             <button
                 data-id="{{ $type->id }}"
                 data-name="{{ $type->name }}"
@@ -448,6 +469,8 @@
                 class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
+            @enddroit
+            @droit('rooms.types.supprimer')
             <form method="POST" action="{{ route('rooms.types.destroy', $type) }}"
                 onsubmit="return confirm('Supprimer le type {{ $type->name }} ?')"
                 class="expect-popup">
@@ -456,6 +479,7 @@
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
+            @enddroit
         </div>
     </div>
     @endforeach
@@ -501,6 +525,7 @@
     }
 </style>
 
+@droit('rooms.creer')
 {{-- Modal : Créer chambre --}}
 @php
     $hasRoomCreateErrors = $errors->has('number') || $errors->has('room_type_id') || $errors->has('floor') || $errors->has('view_type');
@@ -586,6 +611,9 @@
     </div>
 </div>
 
+@enddroit
+
+@droit('rooms.modifier')
 {{-- Modal : Éditer chambre --}}
 <div id="modal-edit-room" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
@@ -658,6 +686,9 @@
     </div>
 </div>
 
+@enddroit
+
+@droit('rooms.types.creer')
 {{-- Modal : Créer type --}}
 @php
     $hasTypeCreateErrors = $errors->has('code') || $errors->has('name') || $errors->has('base_price') || $errors->has('base_capacity') || $errors->has('max_capacity');
@@ -748,6 +779,9 @@
     </div>
 </div>
 
+@enddroit
+
+@droit('rooms.types.modifier')
 {{-- Modal : Éditer type --}}
 <div id="modal-edit-type" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
@@ -826,6 +860,8 @@
         </form>
     </div>
 </div>
+
+@enddroit
 
 {{-- Scripts --}}
 <script>
@@ -923,6 +959,7 @@
     </div>
 </div>
 
+@droit('rooms.import')
 {{-- ===== MODAL : IMPORT CSV CHAMBRES ===== --}}
 <div id="modal-import-rooms" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
@@ -967,6 +1004,9 @@
     </div>
 </div>
 
+@enddroit
+
+@droit('rooms.types.import')
 {{-- ===== MODAL : IMPORT CSV TYPES DE CHAMBRE ===== --}}
 <div id="modal-import-types" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
@@ -1010,6 +1050,8 @@
         </form>
     </div>
 </div>
+
+@enddroit
 
 @push('scripts')
 <script>

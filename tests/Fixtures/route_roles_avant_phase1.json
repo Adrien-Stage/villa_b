@@ -217,6 +217,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -244,6 +245,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -354,6 +356,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -366,6 +369,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -378,6 +382,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -410,21 +415,19 @@
  ],
  "customers.index": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
-  "reception_chief",
-  "restaurant_manager"
+  "reception_chief"
  ],
  "customers.show": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
-  "reception_chief",
-  "restaurant_manager"
+  "reception_chief"
  ],
  "customers.store": [
   "manager",
@@ -440,19 +443,22 @@
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.control.print": [
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.control.suggestions.index": [
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.control.suggestions.store": [
   "econome"
@@ -461,13 +467,15 @@
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.index": [
   "admin",
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.items.adjust": [
@@ -481,6 +489,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.items.import": [
@@ -491,6 +500,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.items.show": [
@@ -498,6 +508,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.items.store": [
@@ -516,13 +527,15 @@
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.orders.index": [
   "admin",
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.orders.print": [
@@ -530,6 +543,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.orders.receive": [
@@ -544,6 +558,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.orders.store": [
@@ -579,6 +594,7 @@
   "econome",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -594,6 +610,7 @@
   "econome",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -621,6 +638,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.receipts.index": [
@@ -628,6 +646,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.receipts.print": [
@@ -635,6 +654,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.receipts.show": [
@@ -642,6 +662,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.receipts.store": [
@@ -681,6 +702,7 @@
   "econome",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -696,6 +718,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -711,6 +734,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -729,6 +753,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -761,19 +786,22 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.stock_counts.report": [
   "admin",
   "controller",
   "econome",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "economat.stock_counts.show": [
   "admin",
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.stock_counts.store": [
@@ -791,6 +819,7 @@
   "controller",
   "econome",
   "manager",
+  "quality_auditor",
   "storekeeper"
  ],
  "economat.suppliers.store": [
@@ -830,12 +859,14 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
  "groups.invoice": [
   "admin",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -851,6 +882,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -882,7 +914,8 @@
   "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "housekeeping.inspect": [
   "housekeeping",
@@ -914,16 +947,16 @@
  ],
  "invoices.show": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
-  "reception_chief",
-  "restaurant_manager"
+  "reception_chief"
  ],
  "reception.pos.history": [
   "admin",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -931,12 +964,14 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
  "reception.pos.receipt": [
   "admin",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -950,6 +985,7 @@
   "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -965,6 +1001,7 @@
   "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -975,6 +1012,7 @@
   "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -987,8 +1025,10 @@
  ],
  "restaurant.breakfast.index": [
   "admin",
+  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1003,6 +1043,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_manager"
  ],
@@ -1010,6 +1051,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1031,6 +1073,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1044,6 +1087,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1070,6 +1114,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1102,6 +1147,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1130,6 +1176,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook"
  ],
@@ -1140,6 +1187,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager"
@@ -1166,6 +1214,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook"
  ],
@@ -1176,6 +1225,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager"
@@ -1209,6 +1259,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager"
@@ -1217,6 +1268,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager"
@@ -1235,6 +1287,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1244,6 +1297,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1253,6 +1307,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -1321,31 +1376,33 @@
   "manager"
  ],
  "rooms.destroy": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.export": [
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
  "rooms.images.destroy": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.import": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.index": [
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -1353,44 +1410,46 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
  "rooms.store": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.types.destroy": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.types.export": [
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief"
  ],
  "rooms.types.import": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.types.store": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.types.update": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.update": [
+  "admin",
   "manager",
-  "reception",
   "reception_chief"
  ],
  "rooms.updateStatus": [
@@ -1447,7 +1506,8 @@
  "settings.packages.export": [
   "admin",
   "controller",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "settings.packages.import": [
   "manager"
@@ -1481,7 +1541,8 @@
  "settings.services.export": [
   "admin",
   "controller",
-  "manager"
+  "manager",
+  "quality_auditor"
  ],
  "settings.services.import": [
   "manager"
@@ -1537,12 +1598,11 @@
  ],
  "shop.orders.index": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -1552,12 +1612,11 @@
  ],
  "shop.orders.receipt": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -1567,12 +1626,11 @@
  ],
  "shop.orders.show": [
   "admin",
-  "cashier",
   "controller",
   "manager",
+  "quality_auditor",
   "reception",
   "reception_chief",
-  "restaurant_manager",
   "shop_cashier",
   "shop_manager"
  ],
@@ -1593,6 +1651,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "shop_manager"
  ],
  "shop.products.import": [
@@ -1602,6 +1661,7 @@
   "admin",
   "controller",
   "manager",
+  "quality_auditor",
   "shop_manager"
  ],
  "shop.products.store": [

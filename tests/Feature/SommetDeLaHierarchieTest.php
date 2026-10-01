@@ -43,13 +43,15 @@ test("l'administrateur consulte tout", function () {
     expect($aveugle)->toBe([]);
 });
 
-test("l'administrateur n'écrit rien de métier", function () {
+test("l'administrateur n'écrit que la configuration, rien de métier", function () {
     $ecritures = array_values(array_filter(
         PermissionCatalog::forRole('admin'),
         fn (string $droit) => !PermissionCatalog::estLecture($droit)
     ));
 
-    expect($ecritures)->toBe([]);
+    // Décrire les chambres de l'hôtel n'est pas l'exploiter.
+    expect(array_diff($ecritures, PermissionCatalog::configuration()))->toBe([])
+        ->and($ecritures)->toContain('rooms.types.creer');
 });
 
 test('aucun département ne confère admin', function () {
