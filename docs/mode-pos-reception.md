@@ -23,9 +23,9 @@ depuis le PMS classique et depuis l'interface POS.
 - `manager` : meme acces, pour supervision et remplacement.
 - Les autres roles : acces refuse, meme en saisissant l'URL directement.
 
-Le mode exige aussi `module.access:hebergement`. Si l'hebergement est desactive
-pour l'etablissement, le POS ne doit ni apparaitre dans les menus, ni etre
-accessible par URL.
+Les droits du mode sont ceux du catalogue (`reception.pos.*`), verifies par le
+middleware `permission` : une restriction de module posee sur la personne
+(hebergement exclu ou en lecture seule) s'y applique aussi.
 
 ### Ecran principal
 
@@ -104,7 +104,7 @@ Ajouter un groupe protege, dans `routes/web.php` :
 ```php
 Route::prefix('reception/pos')
     ->name('reception.pos.')
-    ->middleware(['auth', 'verified', 'role:manager,reception', 'module.access:hebergement'])
+    ->middleware('permission')
     ->group(function () {
         Route::get('/', [ReceptionPosController::class, 'index'])->name('index');
         Route::get('/cash-summary', [ReceptionPosController::class, 'cashSummary'])->name('cash-summary');

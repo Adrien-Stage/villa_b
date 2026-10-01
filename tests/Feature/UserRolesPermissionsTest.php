@@ -74,10 +74,11 @@ test('un accès en lecture seule bloque une écriture mais autorise la lecture',
     // Lecture : autorisée.
     $this->get(route('shop.products.index'))->assertOk();
 
-    // Écriture : bloquée par le middleware module.access (erreur module_access).
-    $this->post(route('shop.products.import'), [])
-        ->assertRedirect()
-        ->assertSessionHasErrors('module_access');
+    // Écriture : refusée par le moteur de droits, avant le contrôleur — la
+    // validation du fichier n'est même pas atteinte.
+    $refus = $this->post(route('shop.products.import'), []);
+    expect($refus->status())->not->toBe(200);
+    $refus->assertSessionDoesntHaveErrors('csv_file');
 
     // Le même rôle en écriture franchit la barrière : il échoue seulement sur
     // la validation du fichier (csv_file), pas sur l'accès au module.

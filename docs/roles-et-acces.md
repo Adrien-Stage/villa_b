@@ -1,17 +1,17 @@
 # Rôles et accès
 
-Le contrôle d'accès de l'application se joue sur **quatre niveaux successifs**, du
+Le contrôle d'accès de l'application se joue sur **trois niveaux successifs**, du
 plus large au plus fin :
 
 ```
 1. Le module est-il activé pour cet établissement ?     module:restaurant
-2. L'utilisateur a-t-il un rôle autorisé ?              role:restaurant_chief,manager
-3. A-t-il le droit d'écrire, ou seulement de lire ?     module.access:restaurant
-4. Sa caisse est-elle ouverte ?                         caisse
+2. L'utilisateur détient-il le droit ?                   permission
+3. Sa caisse est-elle ouverte ?                          caisse
 ```
 
-Une route peut porter les quatre. Chacun répond à une question différente, et aucun
-ne remplace les autres.
+Une route peut porter les trois. Chacun répond à une question différente, et aucun
+ne remplace les autres. La lecture seule n'est plus un verrou à part : c'est une
+question de droits, posée au même moteur que le reste (niveau 2).
 
 ## Le catalogue des rôles
 
@@ -83,13 +83,25 @@ Cela bloque **l'accès direct par URL**, pas seulement l'affichage du lien. Un
 établissement sans restaurant renvoie 403 sur `/restaurant/menus`, même à un
 manager.
 
-## Niveau 2 — Le rôle
+## Niveau 2 — Le droit
 
-`role:manager,reception` — [`EnsureRoleAccess`](../app/Http/Middleware/EnsureRoleAccess.php).
+`permission` — [`EnsurePermission`](../app/Http/Middleware/EnsurePermission.php), qui
+interroge [`PermissionResolver`](../app/Services/PermissionResolver.php) : le droit
+se déduit du nom de la route (`economat.items.store` → `economat.items.creer`). Les
+écrans posent la même question avec `@droit(...)`, les services avec `allows()`.
 
-En cas de refus, le middleware journalise l'incident et répond selon le contexte :
-JSON `403` avec `access_denied: true` pour une requête AJAX, sinon redirection avec
-un message affiché en popup.
+Le moteur décide dans cet ordre :
+
+1. une **restriction de module** posée sur la personne depuis la console —
+   exclusion, ou lecture seule — l'emporte sur tout ;
+2. un **refus** explicite, sur la personne ou sur l'un de ses rôles ;
+3. une **autorisation** explicite, sur la personne ou sur l'un de ses rôles ;
+4. le **catalogue** ([`PermissionCatalog`](../app/Support/PermissionCatalog.php)),
+   hiérarchie comprise.
+
+En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
+`access_denied: true` pour une requête AJAX, sinon une redirection avec un message
+affiché en popup.
 
 ### Deux systèmes de rôles
 
@@ -100,24 +112,20 @@ colonne `role` héritée.
 > n'existent que dans la colonne, et `Notifier` résout ses destinataires en tenant
 > compte des deux.
 
-## Niveau 3 — Lecture ou écriture
+### La lecture seule
 
-`module.access:restaurant` — [`EnsureModuleWriteAccess`](../app/Http/Middleware/EnsureModuleWriteAccess.php).
+Le pivot `role_user` porte un **niveau** (`read` ou `write`) par rôle. Un rôle
+affecté en lecture seule ne donne que ses **droits de consultation** — ceux du
+gabarit comme ceux qu'une autorisation pose sur ce rôle.
 
-Le pivot `role_user` porte un **niveau** (`read` ou `write`) par rôle, donc par
-module. Un utilisateur en lecture seule peut consulter les pages (GET) mais pas agir
-(POST/PUT/PATCH/DELETE).
+- **L'absence de marqueur vaut écriture.** Un pivot sans niveau — comptes créés
+  avant cette fonctionnalité — est traité comme `write`.
+- **La colonne héritée ne contourne pas l'affectation.** `users.role` ne compte, pour
+  écrire, que pour un compte sans aucune affectation.
+- **Un autre rôle en écriture peut donner le droit.** Le refus vient de l'absence de
+  rôle en écriture qui le porte, pas d'un verrou sur le module.
 
-Trois règles gouvernent la résolution :
-
-- **La direction n'est jamais restreinte.** `admin` et `manager` passent toujours.
-- **L'absence de marqueur vaut écriture.** Un pivot vide — comptes créés avant cette
-  fonctionnalité — est traité comme `write`. La lecture seule est une restriction
-  qu'on **active volontairement**, jamais un défaut hérité.
-- **Le plus permissif l'emporte.** Un utilisateur avec deux rôles sur le même module,
-  l'un en lecture et l'autre en écriture, peut écrire.
-
-## Niveau 4 — Le verrou de caisse
+## Niveau 3 — Le verrou de caisse
 
 `caisse` — [`EnsureCashRegisterOpen`](../app/Http/Middleware/EnsureCashRegisterOpen.php).
 

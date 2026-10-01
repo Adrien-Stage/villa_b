@@ -372,6 +372,28 @@ class PermissionCatalog
         return true;
     }
 
+    /**
+     * Service d'exploitation dont relève un droit, pour les restrictions de
+     * module que la console pose sur une personne (exclusion, lecture seule).
+     *
+     * Ce sont les services que gardait le middleware module.access : la
+     * restriction s'applique désormais au droit lui-même, partout où la
+     * question est posée — route, écran ou service.
+     */
+    private const SERVICES = [
+        'rooms' => 'hebergement', 'bookings' => 'hebergement', 'groups' => 'hebergement',
+        'customers' => 'hebergement', 'reception' => 'hebergement', 'agenda' => 'hebergement',
+        'housekeeping' => 'housekeeping',
+        'restaurant' => 'restaurant',
+        'economat' => 'economat',
+        'shop' => 'boutique',
+    ];
+
+    public static function serviceDu(string $permission): ?string
+    {
+        return self::SERVICES[explode('.', $permission)[0]] ?? null;
+    }
+
     /** @return list<string> droits de configuration, seules écritures de l'administrateur */
     public static function configuration(): array
     {

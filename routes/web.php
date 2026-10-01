@@ -205,7 +205,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- CHAMBRES ---
     // Chambres : géré par manager/réception. Le housekeeping change les statuts
     // depuis son propre module, plus depuis cette rubrique.
-    Route::prefix('rooms')->name('rooms.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
+    Route::prefix('rooms')->name('rooms.')->middleware('permission')->group(function () {
         Route::get('/',                [RoomController::class, 'index'])->name('index');
         Route::post('/',               [RoomController::class, 'store'])->middleware('permission')->name('store');
 
@@ -257,11 +257,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // L'agenda a sa propre entrée de menu : le calendrier des séjours n'est
     // plus une seconde vue de la liste des réservations.
     Route::get('/agenda', [BookingController::class, 'agenda'])
-        ->middleware(['permission', 'module.access:hebergement'])
+        ->middleware('permission')
         ->name('agenda.index');
 
     // --- MODE POS RÉCEPTION ---
-    Route::prefix('reception/pos')->name('reception.pos.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
+    Route::prefix('reception/pos')->name('reception.pos.')->middleware('permission')->group(function () {
         Route::get('/', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'index'])->name('index');
         Route::post('/sales', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'store'])->name('sales.store');
         Route::get('/sales/{sale}/receipt', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'receipt'])->name('receipt');
@@ -269,7 +269,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- RÉSERVATIONS ---
-    Route::prefix('bookings')->name('bookings.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
+    Route::prefix('bookings')->name('bookings.')->middleware('permission')->group(function () {
         Route::get('/',                        [BookingController::class, 'index'])->name('index');
         Route::get('/create',                  [BookingController::class, 'create'])->name('create');
         Route::post('/',                       [BookingController::class, 'store'])->name('store');
@@ -325,7 +325,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    Route::prefix('groups')->name('groups.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
+    Route::prefix('groups')->name('groups.')->middleware('permission')->group(function () {
         Route::get('/',                          [GroupBookingController::class, 'index'])->name('index');
         Route::get('/create',                    [GroupBookingController::class, 'create'])->middleware('permission')->name('create');
         Route::post('/',                         [GroupBookingController::class, 'store'])->middleware('permission')->name('store');
@@ -343,7 +343,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- CLIENTS ---
-    Route::prefix('customers')->name('customers.')->middleware(['permission', 'module.access:hebergement'])->group(function () {
+    Route::prefix('customers')->name('customers.')->middleware('permission')->group(function () {
         Route::get('/',               [CustomerController::class, 'index'])->name('index');
         // Import / export CSV — déclarés avant /{customer} pour ne pas être capturés par le binding.
         Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])->middleware('permission')->name('export');
@@ -356,7 +356,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- HOUSEKEEPING ---
-    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping', 'module.access:housekeeping'])->group(function () {
+    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping'])->group(function () {
         Route::get('/',                    [HousekeepingController::class, 'index'])->name('index');
         Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('permission')->name('teams.store');
         Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('permission')->name('assignments.store');
@@ -370,7 +370,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (menus) ---
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
         Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
         Route::get('/breakfast', [App\Http\Controllers\RestaurantBreakfastController::class, 'index'])->name('breakfast.index');
@@ -382,7 +382,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Gestion du restaurant : coûts, stocks et inventaires. La salle en est
     // écartée — masquer le lien sans fermer l'URL n'aurait rien masqué.
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
         Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
@@ -397,13 +397,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])->whereNumber('order')->name('orders.preparing');
         Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')->name('orders.ready');
     });
 
     // Salle : prise de service, transmission en cuisine, service (serveur + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])->name('shifts.open');
         Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])->name('shifts.close');
 
@@ -414,7 +414,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Écriture RESTAURANT — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
         // Le serveur n'ouvre plus le garde-manger : il n'a plus à en sortir
@@ -463,14 +463,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- RESTAURANT (facturation interne) ---
     // Lecture (manager peut consulter)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
         Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
     });
 
     // Écriture facturation — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant', 'module.access:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
         Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
     });
@@ -578,7 +578,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $eco = 'App\\Http\\Controllers\\Economat\\';
 
         // Gestion du magasin : réservée à l'économe (et manager/admin).
-        Route::middleware(['permission', 'module.access:economat'])->group(function () use ($eco) {
+        Route::middleware('permission')->group(function () use ($eco) {
             Route::get('/', [$eco . 'EconomatController', 'index'])->name('index');
 
             // Articles
@@ -670,7 +670,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- SHOP ---
     // Lecture seule pour le manager (GET uniquement)
-    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop', 'module.access:boutique'])->group(function () {
+    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop'])->group(function () {
         Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('permission')->name('cash_register.index');
         Route::get('/products', [ShopProductController::class, 'index'])->middleware('permission')->name('products.index');
         Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])->middleware('permission')->name('products.export');
@@ -680,7 +680,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Écriture SHOP — manager totalement exclu
-    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop', 'module.access:boutique'])->group(function () {
+    Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop'])->group(function () {
         // Caisse — ouverture : shop_manager + shop_cashier
         Route::get('/cash-register/open', [CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');

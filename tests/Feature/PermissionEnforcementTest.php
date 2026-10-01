@@ -36,10 +36,8 @@ test("un rôle sans le droit est refusé, jamais servi", function (string $role)
 })->with(['housekeeping_staff', 'restaurant_cook', 'shop_cashier']);
 
 test("le refus par droit est journalisé, comme avant la bascule", function () {
-    // Le comptable, et non le housekeeping : lui seul franchit
-    // « module.access:economat » — le module figure dans ses accès — pour être
-    // arrêté par la garde du droit. Un rôle sans le module est refusé plus tôt,
-    // par un autre middleware, qui ne journalise pas de la même façon.
+    // Le comptable n'a pas le droit de consulter les articles de l'économat :
+    // la garde du droit le refuse et journalise le refus.
     $this->actingAs(User::factory()->create(['role' => 'accountant']))
         ->get('/economat/articles');
 
