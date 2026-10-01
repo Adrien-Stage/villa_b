@@ -60,34 +60,44 @@
         Actions Rapides
     </h2>
     <div class="flex flex-wrap items-center gap-2.5">
-        @if($isManager || Auth::user()->hasAnyRole(['reception']))
+        {{-- Chaque raccourci pose le droit de sa route : la section s'adresse à
+             une fonction, le bouton à qui peut s'en servir. --}}
+        @if($isManager || Auth::user()->exerce(['reception']))
+            @droit('reception.pos.voir')
             <a href="{{ route('reception.pos.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#8D4925] hover:bg-[#733a1c] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="store" class="w-4 h-4"></i> Mode POS Réception
             </a>
+            @enddroit
+            @droit('bookings.creer')
             <a href="{{ route('bookings.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#2A160D] hover:bg-[#1a0e08] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Nouvelle Réservation
             </a>
+            @enddroit
+            @droit('customers.creer')
             <a href="{{ route('customers.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
                 <i data-lucide="user-plus" class="w-4 h-4 text-primary/60"></i> Nouveau Client
             </a>
+            @enddroit
+            @droit('agenda.voir')
             <a href="{{ route('agenda.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
                 <i data-lucide="calendar" class="w-4 h-4 text-primary/60"></i> Planning
             </a>
+            @enddroit
         @endif
 
-        @if($isManager || Auth::user()->hasAnyRole(['restaurant_chief', 'restaurant_staff']))
+        @if(($isManager || Auth::user()->exerce(['restaurant_chief', 'restaurant_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.orders.voir'))
             <a href="{{ route('restaurant.orders.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#EA580C] hover:bg-[#c2410c] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="utensils" class="w-4 h-4"></i> Gérer les commandes (Restaurant)
             </a>
         @endif
 
-        @if($isManager || Auth::user()->hasAnyRole(['housekeeping_leader', 'housekeeping', 'housekeeping_staff']))
+        @if(($isManager || Auth::user()->exerce(['housekeeping_leader', 'housekeeping', 'housekeeping_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'housekeeping.voir'))
             <a href="{{ route('housekeeping.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> Accéder au Housekeeping
             </a>
         @endif
 
-        @if(!$isManager && Auth::user()->hasAnyRole(['shop_manager', 'shop_cashier']))
+        @if(!$isManager && Auth::user()->exerce(['shop_manager', 'shop_cashier']))
             @if(!($panels['shop_active_session'] ?? false))
                 <a href="{{ route('shop.cash_register.open') }}" class="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-xs font-semibold hover:bg-green-700 transition shadow-sm">
                     <i data-lucide="lock-open" class="w-4 h-4"></i> Ouvrir ma caisse

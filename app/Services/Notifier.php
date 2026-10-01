@@ -28,8 +28,11 @@ class Notifier
      */
     public function toRoles(array $roles, Notification $notification, ?int $exceptUserId = null): void
     {
+        // Ce qui s'adresse aux membres d'un service s'adresse aussi à leur chef,
+        // qui fait leur travail : une réservation reçue par la réception
+        // l'est aussi par le chef de réception.
         $recipients = User::query()
-            ->havingRole($roles)
+            ->havingRole(\App\Support\RoleCatalog::avecCeuxQuiLesIncluent($roles))
             ->active()
             ->when($exceptUserId, fn ($q) => $q->where('id', '!=', $exceptUserId))
             ->get();

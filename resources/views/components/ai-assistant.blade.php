@@ -34,35 +34,35 @@
 
             <!-- Suggestions de questions dynamiques par rôle -->
             <div id="ai-chat-suggestions" class="flex flex-wrap gap-2 mt-1">
-                @role('manager', 'reception')
+                @pour('manager', 'reception')
                     <button onclick="sendAiMessage('Combien d\'arrivées sont prévues aujourd\'hui ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Arrivées du jour ?
                     </button>
                     <button onclick="sendAiMessage('Combien de chambres sont disponibles actuellement ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Chambres dispo ?
                     </button>
-                @endrole
+                @endpour
 
-                @role('housekeeping_leader', 'housekeeping', 'housekeeping_staff')
+                @pour('housekeeping_leader', 'housekeeping', 'housekeeping_staff')
                     <button onclick="sendAiMessage('Combien de chambres sont sales en ce moment ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Chambres à nettoyer ?
                     </button>
                     <button onclick="sendAiMessage('Y a-t-il des chambres en maintenance ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Chambres en maintenance ?
                     </button>
-                @endrole
+                @endpour
 
-                @role('restaurant_chief', 'restaurant_staff', 'cashier')
+                @pour('restaurant_chief', 'restaurant_staff', 'cashier')
                     <button onclick="sendAiMessage('Combien de commandes restaurant sont en cours ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Commandes en cours ?
                     </button>
-                @endrole
+                @endpour
 
-                @role('shop_manager', 'shop_cashier')
+                @pour('shop_manager', 'shop_cashier')
                     <button onclick="sendAiMessage('Comment clore ma caisse ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Comment clore ma caisse ?
                     </button>
-                @endrole
+                @endpour
             </div>
 
             <!-- Indicateur de frappe (Masqué par défaut) -->
