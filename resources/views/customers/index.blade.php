@@ -13,14 +13,18 @@
         </p>
     </div>
     <div class="flex items-center gap-3">
-        @role('reception','manager')
+        @undroit('customers.export', 'customers.import')
+            @droit('customers.export')
             <a href="{{ route('customers.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les clients en CSV">
                 <i data-lucide="download" class="w-4 h-4"></i> Exporter
             </a>
+            @enddroit
+            @droit('customers.import')
             <button type="button" onclick="document.getElementById('modal-import-customers').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des clients depuis un CSV">
                 <i data-lucide="upload" class="w-4 h-4"></i> Importer
             </button>
-        @endrole
+            @enddroit
+        @endundroit
         <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-secondary/20 shadow-sm">
             <i data-lucide="star" class="w-3.5 h-3.5 text-yellow-500"></i>
             <span class="text-xs font-medium text-primary">{{ $stats['vip'] }} VIP</span>
@@ -190,7 +194,7 @@ document.getElementById('search-input').addEventListener('input', function() {
 });
 </script>
 
-@role('reception','manager')
+@droit('customers.import')
     <x-csv-import-modal
         id="modal-import-customers"
         title="Importer des clients (CSV)"
@@ -202,6 +206,6 @@ document.getElementById('search-input').addEventListener('input', function() {
         <li><strong>email</strong> sert de clé anti-doublon (les emails déjà présents sont ignorés)</li>
         <li><strong>pays</strong> = code ISO (CM, FR…) · <strong>date_naissance</strong> = AAAA-MM-JJ · <strong>vip</strong>/<strong>blackliste</strong> = oui/non</li>
     </x-csv-import-modal>
-@endrole
+@enddroit
 
 @endsection

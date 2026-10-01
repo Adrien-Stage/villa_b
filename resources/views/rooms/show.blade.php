@@ -92,7 +92,7 @@
                             class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
                         @php
                             $user = auth()->user();
-                            $isHousekeepingOnly = $user->hasAnyRole(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->hasAnyRole(['manager', 'reception']);
+                            $isHousekeepingOnly = $user->exerce(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->exerce(['manager', 'reception']);
                             $housekeepingStatuses = [
                                 \App\Enums\RoomStatus::DIRTY,
                                 \App\Enums\RoomStatus::CLEANING,

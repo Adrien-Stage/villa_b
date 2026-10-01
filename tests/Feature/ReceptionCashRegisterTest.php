@@ -543,10 +543,10 @@ test('manager can approve pending complimentary booking', function () {
     $booking = Booking::orderBy('id', 'desc')->first();
     expect($booking->status)->toBe(\App\Enums\BookingStatus::PENDING);
 
-    // Receptionist tries to approve -> 403
+    // Receptionist tries to approve -> refused: the booking stays pending
     $this->actingAs($receptionist);
-    $response = $this->post(route('bookings.approve', $booking));
-    $response->assertStatus(403);
+    $this->post(route('bookings.approve', $booking))->assertSessionMissing('success');
+    expect($booking->refresh()->status)->toBe(\App\Enums\BookingStatus::PENDING);
 
     // Manager approves -> success
     $this->actingAs($manager);

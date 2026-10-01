@@ -131,7 +131,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         @php
         $user = auth()->user();
-        $isHousekeepingOnly = $user->hasAnyRole(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->hasAnyRole(['manager', 'reception']);
+        $isHousekeepingOnly = $user->exerce(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->exerce(['manager', 'reception']);
 
         if ($isHousekeepingOnly) {
             $filters = [

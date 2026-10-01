@@ -548,9 +548,8 @@
                 @if(\App\Support\SettingsTabs::reglables(auth()->user()) !== [])
                     <div class="mt-4 pt-4 border-t border-surface-dark">
                         <ul class="space-y-0.5">
-                            @if(!auth()->check() || auth()->user()->hasModuleAccess('parametres'))
-                                <x-sidebar-link route="settings.index" icon="settings">Paramètres</x-sidebar-link>
-                            @endif
+                            {{-- Le lien pose son droit, restriction de module comprise. --}}
+                            <x-sidebar-link route="settings.index" icon="settings">Paramètres</x-sidebar-link>
                         </ul>
                     </div>
                 @endif

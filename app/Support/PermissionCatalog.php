@@ -387,6 +387,7 @@ class PermissionCatalog
         'restaurant' => 'restaurant',
         'economat' => 'economat',
         'shop' => 'boutique',
+        'settings' => 'parametres',
     ];
 
     public static function serviceDu(string $permission): ?string
@@ -506,7 +507,7 @@ class PermissionCatalog
             'accounting.voir' => ['accountant', 'controller', 'manager'],
 
             // ── Réservations ──
-            'bookings.approve' => ['manager', 'reception'],
+            'bookings.approve' => ['manager'],
             'bookings.cancel' => ['manager', 'reception'],
             'bookings.cancellation_receipt' => ['controller', 'manager', 'reception'],
             'bookings.cash_register.close' => ['manager', 'reception'],

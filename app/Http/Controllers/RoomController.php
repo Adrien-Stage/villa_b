@@ -226,7 +226,7 @@ class RoomController extends Controller
 
         // Vérification des permissions spécifiques au housekeeping
         $user = Auth::user();
-        $isHousekeepingOnly = $user->hasAnyRole(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->hasAnyRole(['manager', 'reception']);
+        $isHousekeepingOnly = $user->exerce(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->exerce(['manager', 'reception']);
         
         if ($isHousekeepingOnly) {
             $housekeepingStatuses = [

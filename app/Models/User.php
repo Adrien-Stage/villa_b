@@ -161,7 +161,12 @@ class User extends Authenticatable
             return $level;
         }
 
-        $consultes = self::$legacyReadOnlyModules[$roleSlug] ?? [];
+        // Le plafond suit l'inclusion : le chef de réception consulte le
+        // restaurant comme la réception qu'il inclut.
+        $consultes = [];
+        foreach (\App\Support\RoleCatalog::developper([$roleSlug]) as $exerce) {
+            $consultes = array_merge($consultes, self::$legacyReadOnlyModules[$exerce] ?? []);
+        }
         $ecrits    = array_diff(self::defaultModulesForRole($roleSlug), $consultes);
 
         $atteintEnConsultation = array_intersect($aliases, $consultes) !== [];
@@ -177,6 +182,20 @@ class User extends Authenticatable
     {
         if (isset(self::$legacyRoleModules[$role])) {
             return self::$legacyRoleModules[$role];
+        }
+
+        // Rôle du référentiel : son service, plus les modules des membres
+        // qu'il inclut — le chef de réception travaille où travaille la
+        // réception. Lu dans le code, pas en base : un établissement dont les
+        // rôles ne sont pas encore synchronisés le reconnaît quand même.
+        $definition = \App\Support\RoleCatalog::find($role);
+        if ($definition !== null) {
+            $modules = self::moduleAliases($definition['module']);
+            foreach ($definition['includes'] ?? [] as $membre) {
+                $modules = array_merge($modules, self::defaultModulesForRole($membre));
+            }
+
+            return array_values(array_unique($modules));
         }
 
         try {

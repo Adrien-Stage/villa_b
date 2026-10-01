@@ -197,13 +197,13 @@
                     Factures & Pièces
                 </button>
 
-                @role('reception', 'manager')
+                @droit('customers.modifier')
                 <a href="{{ route('customers.edit', $customer) }}"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
                     <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                     Modifier le profil
                 </a>
-                @endrole
+                @enddroit
             </div>
         </div>
     </div>

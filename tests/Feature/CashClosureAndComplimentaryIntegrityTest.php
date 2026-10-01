@@ -184,8 +184,10 @@ test("seul un manager peut valider un séjour offert", function () {
     $receptionniste = User::factory()->create(['role' => 'reception']);
     $booking = sejourOffert($receptionniste);
 
+    // Refusé dès la garde du droit, réservé à la direction : la forme du
+    // refus importe moins que son effet.
     $this->actingAs($receptionniste);
-    $this->post(route('bookings.approve', $booking))->assertStatus(403);
+    $this->post(route('bookings.approve', $booking))->assertSessionMissing('success');
 
     expect($booking->refresh()->status)->toBe(BookingStatus::PENDING);
 });

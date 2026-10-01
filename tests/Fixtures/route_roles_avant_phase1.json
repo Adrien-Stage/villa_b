@@ -232,9 +232,7 @@
   "manager"
  ],
  "bookings.approve": [
-  "manager",
-  "reception",
-  "reception_chief"
+  "manager"
  ],
  "bookings.cancel": [
   "manager",
