@@ -66,8 +66,9 @@
             </dl>
         </div>
 
-        {{-- Changer le statut --}}
-        @role('housekeeping_leader', 'housekeeping_staff', 'housekeeping', 'manager', 'reception')
+        {{-- Changer le statut : même question que la route. Le housekeeping
+             change les statuts depuis son propre écran. --}}
+        @droit('rooms.updateStatus')
         <div class="bg-white rounded-xl shadow-sm p-5">
             <h2 class="font-heading font-semibold text-primary text-sm mb-4">Changer le statut</h2>
 
@@ -91,7 +92,7 @@
                             class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
                         @php
                             $user = auth()->user();
-                            $isHousekeepingOnly = $user->hasAnyRole(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->hasAnyRole(['manager', 'reception']);
+                            $isHousekeepingOnly = $user->exerce(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_leader']) && !$user->exerce(['manager', 'reception']);
                             $housekeepingStatuses = [
                                 \App\Enums\RoomStatus::DIRTY,
                                 \App\Enums\RoomStatus::CLEANING,
@@ -123,7 +124,7 @@
                 </button>
             </form>
         </div>
-        @endrole
+        @enddroit
 
         {{-- Historique des statuts --}}
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">

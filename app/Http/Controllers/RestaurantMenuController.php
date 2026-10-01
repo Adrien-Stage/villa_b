@@ -22,7 +22,8 @@ class RestaurantMenuController extends Controller
 
         // Le serveur en salle ne vient pas administrer la carte : il vient y
         // prendre une commande. Même route, écran adapté au geste du métier.
-        if ($user->hasAnyRole(['restaurant_staff']) && !$user->hasAnyRole(['restaurant_chief', 'manager'])) {
+        $droits = app(\App\Services\PermissionResolver::class);
+        if ($droits->allows($user, 'restaurant.orders.creer') && !$droits->allows($user, 'restaurant.menus.items.creer')) {
             return $this->priseDeCommande();
         }
 
@@ -63,7 +64,7 @@ class RestaurantMenuController extends Controller
 
         $items = $itemsQuery->paginate(15)->withQueryString();
 
-        $canManage = $user->hasAnyRole(['restaurant_chief']);
+        $canManage = $droits->allows($user, 'restaurant.menus.items.creer');
 
         return view('restaurant.menus.index', [
             'categories' => $categories,

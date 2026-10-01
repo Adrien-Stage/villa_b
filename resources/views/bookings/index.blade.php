@@ -3,7 +3,8 @@
 @section('title', 'Réservations')
 
 @section('content')
-<div x-data="{ showOpenRegisterModal: @json(!$isCashRegisterOpen) }">
+{{-- L'invitation à ouvrir la caisse ne s'adresse qu'à qui peut l'ouvrir. --}}
+<div x-data="{ showOpenRegisterModal: @json(!$isCashRegisterOpen && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'bookings.cash_register.open')) }">
 
 {{-- En-tête --}}
 <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
@@ -11,7 +12,7 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Réservations</h1>
         <p class="text-sm text-primary/50 mt-0.5">{{ $stats['all'] }} réservation{{ $stats['all'] > 1 ? 's' : '' }} au total</p>
     </div>
-    @role('reception', 'manager')
+    @droit('bookings.creer')
         @if($isCashRegisterOpen)
             <a href="{{ route('bookings.create') }}"
                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
@@ -25,7 +26,7 @@
                 Ouvrir la caisse
             </a>
         @endif
-    @endrole
+    @enddroit
 </div>
 
 @php
@@ -42,7 +43,7 @@
        class="px-4 py-3 text-sm font-medium transition-colors {{ ($tab ?? 'active') === 'archive' ? 'border-b-2 border-primary text-primary' : 'text-primary/60 hover:text-primary' }}">
         Archive
     </a>
-    @role('reception', 'manager')
+    @droit('bookings.drafts.voir')
     <a href="{{ route('bookings.drafts.index') }}"
        class="px-4 py-3 text-sm font-medium transition-colors text-primary/60 hover:text-primary flex items-center gap-1.5">
         <i data-lucide="file-clock" class="w-3.5 h-3.5"></i>
@@ -56,7 +57,7 @@
             </span>
         @endif
     </a>
-    @endrole
+    @enddroit
 </div>
 
 
@@ -210,6 +211,7 @@ document.getElementById('search-input').addEventListener('input', function() {
 });
 </script>
 
+    @droit('bookings.cash_register.open')
     {{-- Modal Caisse Fermée --}}
     <div x-show="showOpenRegisterModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
@@ -270,5 +272,6 @@ document.getElementById('search-input').addEventListener('input', function() {
             </div>
         </div>
     </div>
+    @enddroit
 </div>
 @endsection

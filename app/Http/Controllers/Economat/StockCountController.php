@@ -60,7 +60,7 @@ class StockCountController extends Controller
             'openCount'  => $openCount,
             'categories' => $categories,
             'stats'      => $stats,
-            'canManage'  => Auth::user()?->hasAnyRole(['econome', 'manager', 'admin']) ?? false,
+            'canManage'  => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
         ]);
     }
 
@@ -109,7 +109,7 @@ class StockCountController extends Controller
             'count'     => $stockCount,
             'lines'     => $lines,
             'reasons'   => StockCountLine::REASONS,
-            'canManage' => Auth::user()?->hasAnyRole(['econome', 'manager', 'admin']) ?? false,
+            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
         ]);
     }
 

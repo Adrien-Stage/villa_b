@@ -74,7 +74,7 @@
             <div class="flex items-center gap-2.5">
                 <div class="hidden sm:flex flex-col text-right pr-2 border-r border-white/20">
                     <span class="text-xs font-bold text-white">{{ Auth::user()->name }}</span>
-                    <span class="text-[10px] text-text-on-dark uppercase font-semibold">{{ Auth::user()->role === 'manager' ? 'Directeur' : 'Réceptionniste' }}</span>
+                    <span class="text-[10px] text-text-on-dark uppercase font-semibold">{{ Auth::user()->exerce(['manager']) ? 'Directeur' : (Auth::user()->exerce(['reception_chief']) ? 'Chef de réception' : 'Réceptionniste') }}</span>
                 </div>
 
                 {{-- Bouton Quitter le mode POS (Retour au PMS sans fermer la session) --}}

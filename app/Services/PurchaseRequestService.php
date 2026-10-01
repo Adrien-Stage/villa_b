@@ -76,6 +76,8 @@ class PurchaseRequestService
             throw new RuntimeException("Cette demande d'achat ne peut pas être approuvée dans son statut actuel.");
         }
 
+        $this->refuserSaPropreDemande($request, $reviewer);
+
         $request->update([
             'status'       => PurchaseRequest::STATUS_APPROVED,
             'reviewed_by'  => $reviewer->id,
@@ -95,6 +97,8 @@ class PurchaseRequestService
             throw new RuntimeException("Cette demande d'achat ne peut pas être refusée dans son statut actuel.");
         }
 
+        $this->refuserSaPropreDemande($request, $reviewer);
+
         $request->update([
             'status'           => PurchaseRequest::STATUS_REJECTED,
             'reviewed_by'      => $reviewer->id,
@@ -103,6 +107,23 @@ class PurchaseRequestService
         ]);
 
         return $request->fresh();
+    }
+
+    /**
+     * Le demandeur ne décide pas de sa propre demande : approuver la dépense
+     * qu'on a soi-même demandée, c'est l'autoriser sans contrôle. Vaut aussi
+     * pour le refus, qui reviendrait à la retirer sans trace de décision.
+     */
+    public static function estSaPropreDemande(PurchaseRequest $request, User $reviewer): bool
+    {
+        return (int) $request->requested_by === (int) $reviewer->id;
+    }
+
+    private function refuserSaPropreDemande(PurchaseRequest $request, User $reviewer): void
+    {
+        if (self::estSaPropreDemande($request, $reviewer)) {
+            throw new RuntimeException("Vous ne pouvez pas décider de votre propre demande d'achat : un autre responsable doit l'examiner.");
+        }
     }
 
     /**

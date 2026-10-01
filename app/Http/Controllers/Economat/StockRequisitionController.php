@@ -188,9 +188,10 @@ class StockRequisitionController extends Controller
     {
         $items = StockItem::active()->with('category')->orderBy('name')->get();
 
-        // Départements que l'utilisateur est habilité à représenter.
+        // Départements que l'utilisateur est habilité à représenter : ceux
+        // dont il exerce la fonction, directement ou comme chef.
         $departments = collect(StockRequisition::DEPARTMENT_ROLES)
-            ->filter(fn ($roles) => Auth::user()->hasAnyRole($roles))
+            ->filter(fn ($roles) => Auth::user()->exerce($roles))
             ->keys()
             ->mapWithKeys(fn ($key) => [$key => StockRequisition::DEPARTMENTS[$key]])
             ->all();
@@ -276,7 +277,7 @@ class StockRequisitionController extends Controller
 
     public function approve(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
     {
-        $this->authorizeKeeper();
+        $this->authorizeKeeper('economat.requisitions.approve');
 
         try {
             $service->approve($requisition, $request->input('review_notes'));
@@ -291,7 +292,7 @@ class StockRequisitionController extends Controller
 
     public function reject(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
     {
-        $this->authorizeKeeper();
+        $this->authorizeKeeper('economat.requisitions.reject');
 
         try {
             $service->reject($requisition, $request->input('review_notes'));
@@ -307,7 +308,7 @@ class StockRequisitionController extends Controller
     /** Livraison : déstocke les quantités réellement servies. */
     public function deliver(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
     {
-        $this->authorizeKeeper();
+        $this->authorizeKeeper('economat.requisitions.deliver');
 
         $validated = $request->validate([
             'issued'   => ['nullable', 'array'],
@@ -342,15 +343,23 @@ class StockRequisitionController extends Controller
 
     // ── Habilitations ────────────────────────────────────────────────────────
 
-    /** L'économe, le manager et le contrôleur de gestion ont la vue globale sur le magasin. */
+    /**
+     * Vue globale sur les demandes : le magasin (chef économe et magasinier),
+     * la direction, et le contrôle — contrôleur de gestion, auditeur
+     * qualité, administrateur. Les autres ne voient que leurs demandes.
+     */
     private function isStoreKeeper(): bool
     {
-        return Auth::user()->hasAnyRole(['econome', 'manager', 'controller']);
+        $user = Auth::user();
+
+        return $user->isAdmin()
+            || $user->exerce(['storekeeper', 'manager', 'controller', 'quality_auditor']);
     }
 
-    private function authorizeKeeper(): void
+    /** Traiter une demande pose le droit de son geste : approuver, refuser, servir. */
+    private function authorizeKeeper(string $droit): void
     {
-        if (!$this->isStoreKeeper()) {
+        if (!app(\App\Services\PermissionResolver::class)->allows(Auth::user(), $droit)) {
             abort(403, "Seul l'économat peut traiter cette demande.");
         }
     }

@@ -56,6 +56,18 @@ test('la lecture rend le gabarit, les écarts et les incompatibilités', functio
         ->and($reponse->json('modules'))->toContain('economat');
 });
 
+test('la lecture décrit la hiérarchie des rôles', function () {
+    $roles = collect($this->getJson('/api/permissions/matrice', entete())->assertOk()->json('roles'))
+        ->keyBy('slug');
+
+    // La console en tirera le regroupement par niveau et par service.
+    expect($roles['admin']['level'])->toBe(1)
+        ->and($roles['econome']['includes'])->toBe(['storekeeper'])
+        ->and($roles['storekeeper']['statut'])->toBe('actif')
+        ->and($roles['it_support']['statut'])->toBe('retire')
+        ->and($roles['controller']['level'])->toBeNull();
+});
+
 test('les rôles envoyés remplacent les écarts précédents', function () {
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',
@@ -89,6 +101,39 @@ test("les dérogations nominatives survivent à une mise à jour des rôles", fu
         'subject_type' => PermissionGrant::SUJET_USER,
         'subject_id'   => (string) $employe->id,
     ]);
+});
+
+test("la console ne remplace que sa couche : les écarts de l'hôtel survivent", function () {
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'reception',
+        'permission' => 'customers.export', 'effect' => PermissionGrant::EFFET_DENY,
+        'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => "Décision de l'hôtel.",
+    ]);
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',
+        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_DENY,
+        'origin' => PermissionGrant::ORIGINE_ERP, 'reason' => 'Décision de la console.',
+    ]);
+
+    $this->putJson('/api/permissions/matrice', ['ecarts' => []], entete())->assertOk();
+
+    expect(PermissionGrant::where('origin', PermissionGrant::ORIGINE_ETABLISSEMENT)->count())->toBe(1)
+        ->and(PermissionGrant::where('origin', PermissionGrant::ORIGINE_ERP)->count())->toBe(0);
+});
+
+test("la console peut poser un écart que l'hôtel a déjà posé", function () {
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',
+        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_DENY,
+        'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => "Décision de l'hôtel.",
+    ]);
+
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [[
+        'role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny',
+        'reason' => 'Même décision, prise par la console.',
+    ]]], entete())->assertOk();
+
+    expect(PermissionGrant::where('permission', 'economat.items.creer')->count())->toBe(2);
 });
 
 test('un droit absent du catalogue est refusé', function () {

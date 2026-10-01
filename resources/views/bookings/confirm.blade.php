@@ -99,7 +99,7 @@
          affiche des montants vivants, il doit donc partager le périmètre Alpine
          des champs de droite qui les font varier. --}}
     <form method="POST" action="{{ route('bookings.store') }}"
-          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->hasRole('reception')), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }}, @js($breakfastCalculation ?? null), {{ (int) ($extraBedAmount ?? 0) }}, {{ (int) ($prepaidBreakfastAmount ?? 0) }}, {{ (int) ($extraBedCount ?? 0) }})">
+          x-data="paymentCalc({{ $totalRoomAmount }}, {{ $minDepositPercentage }}, @json(Auth::user()->exerce(['reception'])), @js($roomPackages ?? []), {{ (int) ($partnerRoomDiscount ?? 0) }}, {{ (int) $nights }}, @js($breakfastCalculation ?? null), {{ (int) ($extraBedAmount ?? 0) }}, {{ (int) ($prepaidBreakfastAmount ?? 0) }}, {{ (int) ($extraBedCount ?? 0) }})">
         @csrf
         <input type="hidden" name="step" value="4">
         <input type="hidden" name="customer_id" value="{{ $customerId }}">

@@ -136,12 +136,66 @@ class User extends Authenticatable
     ];
 
     /**
+     * Modules qu'un rôle consulte sans jamais y écrire, quel que soit le
+     * niveau de son affectation.
+     *
+     * La réception lit, depuis la fiche client, les factures restaurant et
+     * boutique du séjournant ; elle n'encaisse ni au restaurant ni à la
+     * boutique. Sans ce plafond, son niveau « écriture » d'hébergement
+     * débordait sur ces modules : une personne à la fois réceptionniste et
+     * serveur, que le manager avait mise en lecture seule au restaurant, y
+     * retrouvait l'écriture par son rôle de réception.
+     */
+    protected static array $legacyReadOnlyModules = [
+        'reception' => ['restaurant', 'boutique', 'shop'],
+    ];
+
+    /**
+     * Niveau qu'un rôle confère sur un module : celui de son affectation,
+     * plafonné à la lecture quand le rôle n'atteint ce module que pour le
+     * consulter. Le module propre du rôle n'est jamais plafonné.
+     */
+    private static function levelForRoleOnModule(string $roleSlug, ?string $roleModule, array $aliases, string $level): string
+    {
+        if ($level !== 'write' || in_array($roleModule, $aliases, true)) {
+            return $level;
+        }
+
+        // Le plafond suit l'inclusion : le chef de réception consulte le
+        // restaurant comme la réception qu'il inclut.
+        $consultes = [];
+        foreach (\App\Support\RoleCatalog::developper([$roleSlug]) as $exerce) {
+            $consultes = array_merge($consultes, self::$legacyReadOnlyModules[$exerce] ?? []);
+        }
+        $ecrits    = array_diff(self::defaultModulesForRole($roleSlug), $consultes);
+
+        $atteintEnConsultation = array_intersect($aliases, $consultes) !== [];
+        $atteintEnEcriture     = in_array('*', $ecrits, true) || array_intersect($aliases, $ecrits) !== [];
+
+        return $atteintEnConsultation && !$atteintEnEcriture ? 'read' : $level;
+    }
+
+    /**
      * Retourne les modules autorisés pour un slug de rôle donné.
      */
     public static function defaultModulesForRole(string $role): array
     {
         if (isset(self::$legacyRoleModules[$role])) {
             return self::$legacyRoleModules[$role];
+        }
+
+        // Rôle du référentiel : son service, plus les modules des membres
+        // qu'il inclut — le chef de réception travaille où travaille la
+        // réception. Lu dans le code, pas en base : un établissement dont les
+        // rôles ne sont pas encore synchronisés le reconnaît quand même.
+        $definition = \App\Support\RoleCatalog::find($role);
+        if ($definition !== null) {
+            $modules = self::moduleAliases($definition['module']);
+            foreach ($definition['includes'] ?? [] as $membre) {
+                $modules = array_merge($modules, self::defaultModulesForRole($membre));
+            }
+
+            return array_values(array_unique($modules));
         }
 
         try {
@@ -208,7 +262,9 @@ class User extends Authenticatable
             });
 
             if ($matchingPivot->isNotEmpty()) {
-                $levels = $matchingPivot->map(fn ($r) => $r->pivot->level ?: 'write');
+                $levels = $matchingPivot->map(fn ($r) => self::levelForRoleOnModule(
+                    $r->slug, $r->module, $aliases, $r->pivot->level ?: 'write'
+                ));
                 return $levels->contains('write') ? 'write' : 'read';
             }
         }
@@ -232,7 +288,7 @@ class User extends Authenticatable
         if ($this->role) {
             $allowed = self::defaultModulesForRole($this->role);
             if (in_array('*', $allowed, true) || !empty(array_intersect($allowed, $aliases))) {
-                return 'write';
+                return self::levelForRoleOnModule($this->role, null, $aliases, 'write');
             }
         }
 
@@ -330,6 +386,28 @@ class User extends Authenticatable
 
         // 2. Fallback vers l'ancienne colonne role pour compatibilité
         return in_array($this->role, $roles, true);
+    }
+
+    /**
+     * Exerce-t-il l'un de ces rôles, directement ou par un rôle qui l'inclut ?
+     *
+     * Un chef fait le travail de ses membres (RoleCatalog) : le chef de
+     * réception exerce la réception, le responsable de restaurant le service
+     * en salle et la caisse. À employer pour les écrans et les règles qui
+     * s'adressent à une fonction, là où hasAnyRole() ne voit que le rôle
+     * attribué.
+     */
+    public function exerce(array $roles): bool
+    {
+        $detenus = $this->relationLoaded('roles')
+            ? $this->roles->pluck('slug')->all()
+            : ($this->exists ? $this->roles()->pluck('slug')->all() : []);
+
+        if ($this->role) {
+            $detenus[] = $this->role;
+        }
+
+        return array_intersect(\App\Support\RoleCatalog::developper($detenus), $roles) !== [];
     }
 
     /**

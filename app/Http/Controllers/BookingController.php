@@ -1002,8 +1002,9 @@ class BookingController extends Controller
         $extraBedFinalAmount = !$request->boolean('is_offerte') ? $extraBedAmountCentimes : 0;
         $extrasAmount = $breakfastAmount + $extraBedFinalAmount;
 
-        // 1. Si réceptionniste, valider que custom_price correspond à une remise autorisée
-        if (Auth::user()->hasRole('reception') && !$request->boolean('is_offerte')) {
+        // 1. Si réceptionniste — chef de réception compris, qui exerce la
+        // réception —, valider que custom_price correspond à une remise autorisée
+        if (Auth::user()->exerce(['reception']) && !$request->boolean('is_offerte')) {
             $allowedDiscounts = [];
             for ($i = 0; $i <= $maxDiscountPercentage; $i += 5) {
                 $allowedDiscounts[] = $i;
@@ -1112,7 +1113,9 @@ class BookingController extends Controller
         $isComplimentary = $request->boolean('is_offerte');
 
         $status = BookingStatus::CONFIRMED;
-        if ($isComplimentary && Auth::user()->hasRole('reception')) {
+        // Offert par la réception : la direction valide avant que le séjour
+        // ne soit confirmé.
+        if ($isComplimentary && Auth::user()->exerce(['reception'])) {
             $status = BookingStatus::PENDING;
         }
 
@@ -1534,7 +1537,7 @@ class BookingController extends Controller
      */
     public function confirm(Booking $booking)
     {
-        if (!Auth::user()->hasAnyRole(['reception', 'manager'])) {
+        if (!app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'bookings.confirm')) {
             abort(403);
         }
 
@@ -1699,7 +1702,7 @@ class BookingController extends Controller
 
     public function approve(Booking $booking)
     {
-        if (!Auth::user()->hasRole('manager')) {
+        if (!app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'bookings.approve')) {
             abort(403, 'Seul le manager peut valider cette réservation.');
         }
 

@@ -35,9 +35,16 @@ php artisan view:cache    --no-interaction 2>/dev/null || true
 
 # ── Migrations + Seeders (exécutées automatiquement) ──────────────────────────
 echo "🗄️  Exécution des migrations..."
-php artisan migrate --force --no-interaction 2>&1 || {
-    echo "⚠️  Échec des migrations. Voir les logs pour plus de détails."
-}
+# Une migration en échec arrête le conteneur. Continuer servirait
+# l'application sur une base à moitié migrée : des écrans qui lisent des
+# colonnes absentes, des écritures comptables partielles. Un établissement
+# arrêté se voit dans la console, qui peut le réépingler sur l'image
+# précédente ; un établissement qui tourne de travers ne se voit pas.
+if ! php artisan migrate --force --no-interaction 2>&1; then
+    echo "❌ Échec des migrations : arrêt du conteneur plutôt que de servir une base à moitié migrée."
+    echo "   Corriger la migration, ou réépingler l'établissement sur l'image précédente depuis la console."
+    exit 1
+fi
 
 # Seeder uniquement si aucun tenant n'existe encore (premier lancement).
 # ProductionTenantSeeder crée les rôles RBAC + le tenant réel de cet
@@ -47,9 +54,12 @@ php artisan migrate --force --no-interaction 2>&1 || {
 TENANT_COUNT=$(php artisan tinker --execute="echo \App\Models\Tenant::count();" 2>/dev/null || echo "0")
 if [ "$TENANT_COUNT" = "0" ] || [ -z "$TENANT_COUNT" ]; then
     echo "🌱 Base vide — initialisation du tenant et des rôles..."
-    php artisan db:seed --class=ProductionTenantSeeder --force --no-interaction 2>&1 || {
-        echo "⚠️  Échec de l'initialisation."
-    }
+    # Sans tenant ni rôles, l'application ne peut ni connecter personne ni
+    # appliquer un droit : démarrer quand même masquerait la panne.
+    if ! php artisan db:seed --class=ProductionTenantSeeder --force --no-interaction 2>&1; then
+        echo "❌ Échec de l'initialisation du tenant et des rôles : arrêt du conteneur."
+        exit 1
+    fi
 else
     echo "📦 Tenant déjà initialisé — seeders d'installation ignorés."
 fi

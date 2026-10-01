@@ -23,13 +23,19 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $isManager = $user->hasAnyRole(['manager']) || $user->role === 'admin';
-        $isReception = $user->hasAnyRole(['reception']);
-        $isHousekeeping = $user->hasAnyRole(['housekeeping_leader', 'housekeeping_staff', 'housekeeping']);
-        $isRestaurant = $user->hasAnyRole(['restaurant_chief', 'restaurant_staff']);
-        $isFinance = $user->hasAnyRole(['cashier', 'accountant']);
-        $isShop = $user->hasAnyRole(['shop_manager', 'shop_cashier']);
-        $isEconome = $user->hasAnyRole(['econome']);
+        // Le tableau de bord s'adresse aux fonctions : un chef retrouve celui de
+        // ses membres (exerce), l'administrateur celui de la direction, qu'il
+        // consulte sans y agir.
+        $isManager = $user->exerce(['manager']) || $user->isAdmin();
+        $isReception = $user->exerce(['reception']);
+        $isHousekeeping = $user->exerce(['housekeeping_leader', 'housekeeping_staff', 'housekeeping']);
+        $isRestaurant = $user->exerce(['restaurant_chief', 'restaurant_staff']);
+        // La caisse du restaurant suit son chiffre ; le solde des séjours relève
+        // de l'hébergement et de la comptabilité.
+        $isRestaurantCash = $user->exerce(['cashier', 'accountant']);
+        $isFinance = $user->exerce(['accountant']);
+        $isShop = $user->exerce(['shop_manager', 'shop_cashier']);
+        $isEconome = $user->exerce(['storekeeper']);
 
         $cards = [];
         $panels = [];
@@ -315,7 +321,7 @@ class DashboardController extends Controller
                 }
             }
 
-            if ($isFinance) {
+            if ($isRestaurantCash) {
                 $cards[] = [
                     'label' => 'CA resto',
                     'value' => number_format($restaurantRevenueToday / 100, 0, ',', ' ') . ' FCFA',
@@ -323,6 +329,9 @@ class DashboardController extends Controller
                     'icon' => 'trending-up',
                     'href' => route('restaurant.billing.index', ['payment_status' => 'paid']),
                 ];
+            }
+
+            if ($isFinance) {
                 $cards[] = [
                     'label' => 'Solde hotel',
                     'value' => number_format($balanceInHouse / 100, 0, ',', ' ') . ' FCFA',

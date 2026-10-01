@@ -18,12 +18,16 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Les cartes disent ce que la personne peut réellement ouvrir : la même
+        // question que les routes, posée au moteur de droits.
+        $droits = app(\App\Services\PermissionResolver::class);
+
         $permissionCards = [
-            ['label' => 'Acces chambres', 'allowed' => $user->canManageRooms()],
-            ['label' => 'Acces reservations', 'allowed' => $user->canManageBookings()],
-            ['label' => 'Acces donnees financieres', 'allowed' => $user->canAccessFinancialData()],
-            ['label' => 'Gestion staff', 'allowed' => $user->hasAnyRole(['manager'])],
-            ['label' => 'Actions housekeeping', 'allowed' => $user->hasAnyRole(['housekeeping_leader', 'housekeeping_staff', 'housekeeping', 'manager'])],
+            ['label' => 'Acces chambres', 'allowed' => $droits->allows($user, 'rooms.voir')],
+            ['label' => 'Acces reservations', 'allowed' => $droits->allows($user, 'bookings.voir')],
+            ['label' => 'Acces donnees financieres', 'allowed' => $droits->allows($user, 'accounting.voir')],
+            ['label' => 'Gestion staff', 'allowed' => $droits->allows($user, 'users.voir')],
+            ['label' => 'Actions housekeeping', 'allowed' => $droits->allows($user, 'housekeeping.voir')],
         ];
 
         return view('profile.edit', [

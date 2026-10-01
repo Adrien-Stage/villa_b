@@ -10,10 +10,13 @@ namespace App\Support;
  * détenir, enregistrer, contrôler. Qui en cumule deux sur un même cycle peut
  * commettre un acte et le dissimuler.
  *
- * Rien n'est bloqué à ce stade : cette classe déclare la règle et sait dire
- * quels cumuls la violent. L'application du refus, et la dérogation tracée du
- * directeur pour les petits établissements où trois personnes ne peuvent pas
- * tenir quatre fonctions, viendront avec l'écran d'édition de la matrice.
+ * Les rôles sont examinés avec ce qu'ils incluent (RoleCatalog) : un chef fait
+ * le travail de ses membres, il en porte donc aussi les incompatibilités. Le
+ * conflit est rapporté sous les rôles que la personne détient réellement.
+ *
+ * Le refus s'applique à l'attribution des rôles (rubrique Utilisateurs), avec
+ * une dérogation motivée et tracée pour les petits établissements où trois
+ * personnes ne peuvent pas tenir quatre fonctions.
  */
 class DutySegregation
 {
@@ -32,19 +35,23 @@ class DutySegregation
     public const CONTROLE_DE_GESTION = 'controller';
 
     /**
-     * Rôle dont l'accès technique contourne les contrôles applicatifs. Il doit
-     * rester nu de tout rôle métier.
+     * L'administrateur : il crée les comptes, attribue les rôles et règle les
+     * droits. Il ne se cumule avec aucun autre rôle — celui qui distribue les
+     * droits ne doit pas pouvoir s'en servir lui-même.
      */
-    public const ACCES_TECHNIQUE = 'it_support';
+    public const ACCES_TECHNIQUE = RoleCatalog::ADMIN;
 
     /**
      * Rôles qui conduisent une opération et ne peuvent donc pas la contrôler
      * ni la vérifier eux-mêmes.
      */
     private const OPERATIONNELS = [
-        'reception', 'cashier', 'housekeeping_leader', 'housekeeping_staff',
-        'restaurant_chief', 'restaurant_staff', 'restaurant_cook',
-        'shop_manager', 'shop_cashier', 'econome', 'accountant', 'rh_manager',
+        'reception_chief', 'reception',
+        'housekeeping_leader', 'housekeeping_staff',
+        'restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier',
+        'shop_manager', 'shop_cashier',
+        'econome', 'storekeeper',
+        'finance_manager', 'accountant',
     ];
 
     /**
@@ -62,8 +69,16 @@ class DutySegregation
                 'motif'  => "Détenir le stock et tenir les livres : un vol se couvre par une écriture de régularisation.",
             ],
             [
+                'roles'  => ['storekeeper', 'accountant'],
+                'motif'  => "Détenir le stock et tenir les livres : un vol se couvre par une écriture de régularisation.",
+            ],
+            [
                 'roles'  => ['cashier', 'accountant'],
                 'motif'  => "Encaisser et enregistrer : c'est le montage du lapping, où l'encaissement du jour couvre le trou de la veille.",
+            ],
+            [
+                'roles'  => ['restaurant_manager', 'accountant'],
+                'motif'  => "Le responsable de restaurant encaisse si nécessaire : même risque que pour la caisse.",
             ],
             [
                 'roles'  => ['reception', 'accountant'],
@@ -72,10 +87,6 @@ class DutySegregation
             [
                 'roles'  => ['shop_cashier', 'accountant'],
                 'motif'  => "Encaisser en boutique et enregistrer les écritures.",
-            ],
-            [
-                'roles'  => ['rh_manager', 'accountant'],
-                'motif'  => "Créer l'employé et le payer : c'est l'employé fantôme.",
             ],
         ];
     }
@@ -88,35 +99,61 @@ class DutySegregation
      */
     public static function conflictsFor(array $roles): array
     {
-        $conflits = [];
+        $roles = array_values(array_unique($roles));
 
-        foreach (self::incompatibilities() as $paire) {
-            [$a, $b] = $paire['roles'];
-            if (in_array($a, $roles, true) && in_array($b, $roles, true)) {
-                $conflits[] = $paire;
+        // Rôle exercé => rôle détenu qui l'apporte : un chef exerce aussi le
+        // rôle de ses membres.
+        $porteurs = [];
+        foreach ($roles as $detenu) {
+            foreach (RoleCatalog::developper([$detenu]) as $exerce) {
+                $porteurs[$exerce] ??= $detenu;
             }
         }
 
-        // Règle générale plutôt que couple à couple : le contrôle indépendant
-        // et l'accès technique sont incompatibles avec *tout* rôle opérationnel.
-        foreach ([self::CONTROLE_INDEPENDANT, self::CONTROLE_DE_GESTION, self::ACCES_TECHNIQUE] as $transverse) {
+        $conflits = [];
+        $ajouter  = static function (string $a, string $b, string $motif) use (&$conflits): void {
+            $cle = [$a, $b];
+            sort($cle);
+            $conflits[implode('|', $cle)] ??= ['roles' => [$a, $b], 'motif' => $motif];
+        };
+
+        foreach (self::incompatibilities() as $paire) {
+            [$a, $b] = $paire['roles'];
+
+            // Un même rôle détenu qui apporterait les deux côtés serait une
+            // erreur du référentiel, non un cumul : le test du catalogue la garde.
+            if (isset($porteurs[$a], $porteurs[$b]) && $porteurs[$a] !== $porteurs[$b]) {
+                $ajouter($porteurs[$a], $porteurs[$b], $paire['motif']);
+            }
+        }
+
+        // Règle générale plutôt que couple à couple : le contrôle est
+        // incompatible avec tout rôle opérationnel…
+        foreach ([self::CONTROLE_INDEPENDANT, self::CONTROLE_DE_GESTION] as $transverse) {
             if (!in_array($transverse, $roles, true)) {
                 continue;
             }
 
-            foreach (array_intersect(self::OPERATIONNELS, $roles) as $operationnel) {
-                $conflits[] = [
-                    'roles' => [$transverse, $operationnel],
-                    'motif' => match ($transverse) {
-                        self::CONTROLE_INDEPENDANT => "Un contrôle exercé sur son propre travail n'est plus un contrôle.",
-                        self::CONTROLE_DE_GESTION  => "Le contrôle de gestion voit tous les services : il perd sa vue d'ensemble s'il participe à l'un d'eux.",
-                        default                    => "L'accès technique contourne les contrôles applicatifs : il doit rester nu de tout rôle métier.",
-                    },
-                ];
+            foreach ($roles as $detenu) {
+                if (array_intersect(RoleCatalog::developper([$detenu]), self::OPERATIONNELS) !== []) {
+                    $ajouter($transverse, $detenu, $transverse === self::CONTROLE_INDEPENDANT
+                        ? "Un contrôle exercé sur son propre travail n'est plus un contrôle."
+                        : "Le contrôle de gestion voit tous les services : il perd sa vue d'ensemble s'il participe à l'un d'eux.");
+                }
             }
         }
 
-        return $conflits;
+        // … et l'administrateur, avec tout autre rôle.
+        if (in_array(self::ACCES_TECHNIQUE, $roles, true)) {
+            foreach ($roles as $detenu) {
+                if ($detenu !== self::ACCES_TECHNIQUE) {
+                    $ajouter(self::ACCES_TECHNIQUE, $detenu,
+                        "L'administrateur distribue les droits : il ne doit pas pouvoir s'en servir lui-même.");
+                }
+            }
+        }
+
+        return array_values($conflits);
     }
 
     /** Le jeu de rôles respecte-t-il la séparation des tâches ? */

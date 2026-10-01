@@ -10,13 +10,13 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Agenda</h1>
         <p class="text-sm text-primary/50 mt-0.5">Calendrier des séjours en cours et à venir</p>
     </div>
-    @role('reception', 'manager')
+    @droit('bookings.voir')
         <a href="{{ route('bookings.index') }}"
            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="list" class="w-4 h-4"></i>
             Liste des réservations
         </a>
-    @endrole
+    @enddroit
 </div>
 
 {{-- Filtres statut --}}

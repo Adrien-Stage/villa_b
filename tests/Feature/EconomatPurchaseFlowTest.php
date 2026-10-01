@@ -78,6 +78,33 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
     expect($request->total_estimated_amount)->toBe(27500000);
 });
 
+test("le contrôleur de gestion consulte une demande d'achat sans pouvoir l'approuver", function () {
+    activerModules(['economat']);
+
+    $demandeur = createStaffUser('restaurant_chief');
+    $article = StockItem::create([
+        'name' => 'Farine T55 25kg', 'unit' => 'sac', 'current_stock' => 1,
+        'average_cost' => 1500000, 'is_active' => true,
+    ]);
+    $demande = app(PurchaseRequestService::class)->create([
+        'department' => 'cuisine',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 4]],
+    ], $demandeur);
+
+    createStaffUser('controller');
+
+    // Il surveille les achats : il lit la demande, mais n'y voit aucun bouton de décision.
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertDontSee('Approuver la demande');
+
+    // Et la route refuse, quelle que soit la forme du refus.
+    $this->post(route('economat.purchase_requests.approve', $demande));
+    $this->post(route('economat.purchase_requests.reject', $demande), ['rejection_reason' => 'Contrôle']);
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
+});
+
 test('la direction peut approuver ou refuser une demande d achat', function () {
     $requester = createStaffUser('restaurant_chief');
     $item = StockItem::create([
@@ -161,6 +188,97 @@ test('une demande approuvee peut etre convertie en bon de commande fournisseur',
         ->and((float) $order->lines->first()->quantity_ordered)->toBe(30.0)
         // La demande d'achat passe au statut 'converted'
         ->and($req->fresh()->status)->toBe(PurchaseRequest::STATUS_CONVERTED);
+});
+
+test('le demandeur ne décide pas de sa propre demande', function () {
+    $manager = createStaffUser('manager');
+    $article = StockItem::create([
+        'name' => 'Nappes blanches', 'unit' => 'pièce', 'current_stock' => 0,
+        'average_cost' => 250000, 'is_active' => true,
+    ]);
+    $service = app(PurchaseRequestService::class);
+    $demande = $service->create([
+        'department' => 'direction',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 30]],
+    ], $manager);
+
+    // Approuver la dépense qu'on a soi-même demandée, c'est l'autoriser sans contrôle.
+    expect(fn () => $service->approve($demande, $manager))->toThrow(RuntimeException::class)
+        ->and(fn () => $service->reject($demande, $manager, 'Retrait'))->toThrow(RuntimeException::class)
+        ->and($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
+
+    // Un autre responsable, lui, décide.
+    expect($service->approve($demande, User::factory()->create(['role' => 'manager']))->status)
+        ->toBe(PurchaseRequest::STATUS_APPROVED);
+});
+
+test("sur sa propre demande, le manager ne voit aucun bouton de décision", function () {
+    activerModules(['economat']);
+
+    $manager = createStaffUser('manager');
+    $article = StockItem::create([
+        'name' => 'Serviettes', 'unit' => 'pièce', 'current_stock' => 0,
+        'average_cost' => 150000, 'is_active' => true,
+    ]);
+    $demande = app(PurchaseRequestService::class)->create([
+        'department' => 'direction',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 12]],
+    ], $manager);
+
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertDontSee('Approuver la demande');
+});
+
+test("l'économe ne décide plus des demandes d'achat", function () {
+    activerModules(['economat']);
+
+    $demandeur = createStaffUser('restaurant_chief');
+    $article = StockItem::create([
+        'name' => 'Sel fin 1kg', 'unit' => 'paquet', 'current_stock' => 0,
+        'average_cost' => 50000, 'is_active' => true,
+    ]);
+    $demande = app(PurchaseRequestService::class)->create([
+        'department' => 'cuisine',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 10]],
+    ], $demandeur);
+
+    createStaffUser('econome');
+
+    // Il exécute l'achat ; la décision de dépense revient à la direction.
+    $this->post(route('economat.purchase_requests.approve', $demande));
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
+});
+
+test("le manager valide la dépense mais laisse à l'économe la commande", function () {
+    activerModules(['economat']);
+
+    $econome = createStaffUser('econome');
+    $fournisseur = Supplier::create(['name' => 'Brasseries du Cameroun', 'is_active' => true]);
+    $article = StockItem::create([
+        'supplier_id' => $fournisseur->id, 'name' => 'Casier 33 Export', 'unit' => 'casier',
+        'current_stock' => 2, 'average_cost' => 900000, 'is_active' => true,
+    ]);
+    $service = app(PurchaseRequestService::class);
+    $demande = $service->create([
+        'department' => 'bar',
+        'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 12]],
+    ], $econome);
+
+    $manager = createStaffUser('manager');
+    $service->approve($demande, $manager);
+
+    // La demande approuvée ne lui propose pas de générer la commande…
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertDontSee('Générer le(s) bon(s) de commande');
+
+    // … et la route la lui refuse : la demande reste approuvée, sans commande.
+    $this->post(route('economat.purchase_requests.convert', $demande), ['supplier_id' => $fournisseur->id]);
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_APPROVED)
+        ->and(PurchaseOrder::where('purchase_request_id', $demande->id)->exists())->toBeFalse();
 });
 
 test('la reception de marchandise genere un bon de reception contradictoire et met a jour le stock', function () {

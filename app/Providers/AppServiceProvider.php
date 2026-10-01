@@ -112,6 +112,17 @@ class AppServiceProvider extends ServiceProvider
             return '<?php endif; ?>';
         });
 
+        // @pour('manager', 'reception') ... @endpour — section destinée à ces
+        // fonctions : ceux qui les exercent, directement ou par un rôle qui les
+        // inclut, et l'administrateur, qui consulte tout. Les liens et boutons
+        // qu'elle contient posent ensuite chacun leur droit.
+        Blade::directive('pour', function ($expression) {
+            return "<?php if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->exerce([{$expression}]))): ?>";
+        });
+        Blade::directive('endpour', function () {
+            return '<?php endif; ?>';
+        });
+
         Blade::directive('role', function ($expression) {
             return "<?php if(auth()->check() && auth()->user()->hasAnyRole([{$expression}])): ?>";
         });

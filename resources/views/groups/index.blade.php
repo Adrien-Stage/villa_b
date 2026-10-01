@@ -11,7 +11,7 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Réservations Groupe</h1>
         <p class="text-sm text-primary/50 mt-0.5">{{ $stats['total'] }} dossier{{ $stats['total'] > 1 ? 's' : '' }} au total</p>
     </div>
-    @role('reception', 'manager')
+    @droit('groups.creer')
         @if($isCashRegisterOpen)
             <a href="{{ route('groups.create') }}"
                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
@@ -25,7 +25,7 @@
                 Ouvrir la caisse
             </a>
         @endif
-    @endrole
+    @enddroit
 </div>
 
 {{-- Stats --}}

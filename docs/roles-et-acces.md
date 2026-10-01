@@ -1,17 +1,17 @@
 # Rôles et accès
 
-Le contrôle d'accès de l'application se joue sur **quatre niveaux successifs**, du
+Le contrôle d'accès de l'application se joue sur **trois niveaux successifs**, du
 plus large au plus fin :
 
 ```
 1. Le module est-il activé pour cet établissement ?     module:restaurant
-2. L'utilisateur a-t-il un rôle autorisé ?              role:restaurant_chief,manager
-3. A-t-il le droit d'écrire, ou seulement de lire ?     module.access:restaurant
-4. Sa caisse est-elle ouverte ?                         caisse
+2. L'utilisateur détient-il le droit ?                   permission
+3. Sa caisse est-elle ouverte ?                          caisse
 ```
 
-Une route peut porter les quatre. Chacun répond à une question différente, et aucun
-ne remplace les autres.
+Une route peut porter les trois. Chacun répond à une question différente, et aucun
+ne remplace les autres. La lecture seule n'est plus un verrou à part : c'est une
+question de droits, posée au même moteur que le reste (niveau 2).
 
 ## Le catalogue des rôles
 
@@ -19,26 +19,45 @@ ne remplace les autres.
 vérité**. La rubrique Utilisateurs lit la table `roles`, jamais une liste codée en
 dur.
 
-| Rôle | Module | Assignable | Périmètre |
-|---|---|---|---|
-| `admin` | direction | ❌ | Accès complet, y compris l'administration |
-| `manager` | direction | ❌ | Pilotage complet de l'établissement |
-| `customer_guest` | portail | ❌ | Accès client au portail |
-| `reception` | hebergement | ✅ | Accueil, réservations, arrivées et départs |
-| `cashier` | hebergement | ✅ | Encaissements et facturation |
-| `housekeeping_leader` | housekeeping | ✅ | Supervision du service ménage |
-| `housekeeping_staff` | housekeeping | ✅ | Personnel de ménage |
-| `restaurant_chief` | restaurant | ✅ | Cuisine et restaurant, carte, fiches techniques |
-| `restaurant_staff` | restaurant | ✅ | Service en salle |
-| `restaurant_cook` | restaurant | ✅ | Cuisine : bons et plats prêts |
-| `shop_manager` | boutique | ✅ | Catalogue et stocks boutique |
-| `shop_cashier` | boutique | ✅ | Ventes et encaissements boutique |
-| `econome` | economat | ✅ | Magasin central, fournisseurs, achats |
-| `accountant` | comptabilite | ✅ | Comptabilité et rapports financiers |
+La hiérarchie suit celle d'un hôtel. Un chef **inclut** ses membres : il détient
+leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 
-> **`is_assignable: false` signifie qu'un manager ne peut pas attribuer ce rôle**
-> depuis la rubrique staff. Les rôles privilégiés (`admin`, `manager`) ne se
-> distribuent pas depuis l'interface courante.
+| Niveau | Rôle | Service | Inclut | Statut |
+|---|---|---|---|---|
+| 1 | `admin` — Administrateur | informatique | — | actif, créé depuis la console |
+| 2 | `manager` — Manager | direction | — | actif, privilégié |
+| 3 | `reception_chief` — Chef de réception | hébergement | `reception` | actif |
+| 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
+| 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | actif |
+| 3 | `restaurant_chief` — Chef de cuisine | restaurant | `restaurant_cook` | actif |
+| 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
+| 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
+| 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
+| 4 | `reception` — Réceptionniste (encaisse) | hébergement | — | actif |
+| 4 | `housekeeping_staff` — Valet / Femme de chambre | housekeeping | — | actif |
+| 4 | `restaurant_staff` — Serveur, `restaurant_cook` — Cuisinier | restaurant | — | actif |
+| 4 | `cashier` — Caissier restaurant | restaurant | — | actif |
+| 4 | `shop_cashier` — Vendeur-caissier | boutique | — | actif |
+| 4 | `storekeeper` — Magasinier | économat | — | actif |
+| 4 | `accountant` — Comptable | comptabilité | — | actif |
+| — | `controller`, `quality_auditor` — contrôle, lecture seule | contrôle | — | actif |
+| — | `customer_guest` — portail client | portail | — | actif, privilégié |
+| — | `rh_manager`, `it_support` | — | — | retirés |
+
+- **L'administrateur consulte tout et n'écrit rien de métier.** Il administre
+  l'application ; il ne tient aucun service. Il ne se cumule avec aucun autre rôle.
+- **Il n'y a pas de caissier à l'hébergement** : le réceptionniste encaisse. Le slug
+  historique `cashier` désigne le caissier du restaurant.
+- **En préparation** : statut d'un rôle défini, droits compris, mais pas encore
+  proposé. Aucun rôle n'y est aujourd'hui : écrans et contrôleurs posent des droits,
+  ou la fonction exercée (`User::exerce()`), plus des rôles nommés.
+- **Retiré** : plus proposé ; les RH deviennent une plateforme sœur, et
+  l'administrateur appartient déjà au service informatique.
+
+> **`is_assignable: false` signifie que le rôle ne se distribue pas depuis la
+> rubrique Utilisateurs** : rôles privilégiés (`admin`, `manager`), rôles en
+> préparation et rôles retirés. Niveau, inclusions et statut vivent dans le code ;
+> la table `roles` ne porte que les colonnes lues par les écrans.
 
 ### Ajouter un rôle
 
@@ -65,13 +84,25 @@ Cela bloque **l'accès direct par URL**, pas seulement l'affichage du lien. Un
 établissement sans restaurant renvoie 403 sur `/restaurant/menus`, même à un
 manager.
 
-## Niveau 2 — Le rôle
+## Niveau 2 — Le droit
 
-`role:manager,reception` — [`EnsureRoleAccess`](../app/Http/Middleware/EnsureRoleAccess.php).
+`permission` — [`EnsurePermission`](../app/Http/Middleware/EnsurePermission.php), qui
+interroge [`PermissionResolver`](../app/Services/PermissionResolver.php) : le droit
+se déduit du nom de la route (`economat.items.store` → `economat.items.creer`). Les
+écrans posent la même question avec `@droit(...)`, les services avec `allows()`.
 
-En cas de refus, le middleware journalise l'incident et répond selon le contexte :
-JSON `403` avec `access_denied: true` pour une requête AJAX, sinon redirection avec
-un message affiché en popup.
+Le moteur décide dans cet ordre :
+
+1. une **restriction de module** posée sur la personne depuis la console —
+   exclusion, ou lecture seule — l'emporte sur tout ;
+2. un **refus** explicite, sur la personne ou sur l'un de ses rôles ;
+3. une **autorisation** explicite, sur la personne ou sur l'un de ses rôles ;
+4. le **catalogue** ([`PermissionCatalog`](../app/Support/PermissionCatalog.php)),
+   hiérarchie comprise.
+
+En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
+`access_denied: true` pour une requête AJAX, sinon une redirection avec un message
+affiché en popup.
 
 ### Deux systèmes de rôles
 
@@ -82,24 +113,20 @@ colonne `role` héritée.
 > n'existent que dans la colonne, et `Notifier` résout ses destinataires en tenant
 > compte des deux.
 
-## Niveau 3 — Lecture ou écriture
+### La lecture seule
 
-`module.access:restaurant` — [`EnsureModuleWriteAccess`](../app/Http/Middleware/EnsureModuleWriteAccess.php).
+Le pivot `role_user` porte un **niveau** (`read` ou `write`) par rôle. Un rôle
+affecté en lecture seule ne donne que ses **droits de consultation** — ceux du
+gabarit comme ceux qu'une autorisation pose sur ce rôle.
 
-Le pivot `role_user` porte un **niveau** (`read` ou `write`) par rôle, donc par
-module. Un utilisateur en lecture seule peut consulter les pages (GET) mais pas agir
-(POST/PUT/PATCH/DELETE).
+- **L'absence de marqueur vaut écriture.** Un pivot sans niveau — comptes créés
+  avant cette fonctionnalité — est traité comme `write`.
+- **La colonne héritée ne contourne pas l'affectation.** `users.role` ne compte, pour
+  écrire, que pour un compte sans aucune affectation.
+- **Un autre rôle en écriture peut donner le droit.** Le refus vient de l'absence de
+  rôle en écriture qui le porte, pas d'un verrou sur le module.
 
-Trois règles gouvernent la résolution :
-
-- **La direction n'est jamais restreinte.** `admin` et `manager` passent toujours.
-- **L'absence de marqueur vaut écriture.** Un pivot vide — comptes créés avant cette
-  fonctionnalité — est traité comme `write`. La lecture seule est une restriction
-  qu'on **active volontairement**, jamais un défaut hérité.
-- **Le plus permissif l'emporte.** Un utilisateur avec deux rôles sur le même module,
-  l'un en lecture et l'autre en écriture, peut écrire.
-
-## Niveau 4 — Le verrou de caisse
+## Niveau 3 — Le verrou de caisse
 
 `caisse` — [`EnsureCashRegisterOpen`](../app/Http/Middleware/EnsureCashRegisterOpen.php).
 
@@ -146,11 +173,14 @@ Le manager supervise et contrôle ; il ne saisit pas les commandes ni les
 encaissements à la place de ses équipes. Cette séparation est ce qui rend le
 contrôle crédible.
 
-### Qui ouvre la caisse la ferme
+### Qui ouvre la caisse la compte, la comptabilité la clôt
 
-La fermeture de caisse n'a **pas** de restriction de rôle supplémentaire : le
-contrôleur borne la session à `auth()->id()`. Chacun ferme la sienne, personne ne
-ferme celle d'un autre.
+Le comptage n'a **pas** de restriction de rôle supplémentaire : le contrôleur borne
+la session à `auth()->id()`. Chacun compte la sienne, personne ne compte celle d'un
+autre. La caisse cesse alors d'encaisser et attend la **contresignature de la
+comptabilité** (comptable ou responsable administratif et financier), seule à
+constater l'écart. Ce n'est pas un réglage : ni l'établissement ni le manager ne
+peuvent en dispenser.
 
 ### Les demandes à l'économat sont ouvertes
 

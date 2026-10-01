@@ -102,18 +102,43 @@ test('enregistrer les horaires ramène sur l\'onglet Hébergement', function () 
         ->assertSee('Horaires et règles de séjour');
 });
 
-test('la réception voit les horaires mais pas les packs', function () {
+test('le chef de réception voit les horaires mais pas les packs', function () {
     $this->seed(\Database\Seeders\TenantSeeder::class);
-    $receptionniste = User::factory()->create(['role' => 'reception', 'is_active' => true]);
+    $chef = User::factory()->create(['role' => 'reception_chief', 'is_active' => true]);
 
-    // La fusion ne doit pas ouvrir à la réception des réglages réservés au
-    // manager : elle règle les horaires, pas les tarifs des packs.
-    $this->actingAs($receptionniste)
+    // La fusion ne doit pas ouvrir au chef de réception des réglages réservés
+    // au manager : il règle les horaires, pas les tarifs des packs.
+    $this->actingAs($chef)
         ->get(route('settings.index'))
         ->assertOk()
         ->assertSee('Horaires et règles de séjour')
         ->assertDontSee('Remise en vente après départ')
         ->assertDontSee('Packs d\'hébergement', false);
+});
+
+test('un simple réceptionniste ne règle aucun paramètre', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $receptionniste = User::factory()->create(['role' => 'reception', 'is_active' => true]);
+
+    $this->actingAs($receptionniste);
+
+    expect($this->get(route('settings.index'))->status())->not->toBe(200);
+
+    $this->post(route('settings.update', ['tab' => 'reception']), [
+        'settings' => ['check_in_time' => '06:00'],
+    ]);
+
+    expect(Tenant::first()->settings['reception']['check_in_time'] ?? null)->not->toBe('06:00');
+});
+
+test("un chef de service ne règle pas l'onglet d'un autre service", function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $gouvernante = User::factory()->create(['role' => 'housekeeping_leader', 'is_active' => true]);
+
+    // La requête forgée vers l'onglet Hébergement est refusée comme l'onglet est masqué.
+    $this->actingAs($gouvernante)
+        ->post(route('settings.update', ['tab' => 'reception']), ['settings' => ['check_in_time' => '06:00']])
+        ->assertForbidden();
 });
 
 test('les horaires s\'enregistrent depuis le haut comme depuis le bas', function () {

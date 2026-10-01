@@ -457,9 +457,16 @@ class HousekeepingController extends Controller
         return back()->with('success', "Chambre {$room->number} renvoyée au nettoyage.");
     }
 
+    /**
+     * Chef de service : il pilote tout le housekeeping. L'administrateur en
+     * a la vue d'ensemble ; ses gestes de terrain restent refusés par leurs
+     * droits, qu'il ne détient pas.
+     */
     private function isChief(): bool
     {
-        return Auth::user()->hasAnyRole(self::CHIEF_ROLES);
+        $user = Auth::user();
+
+        return $user->isAdmin() || $user->exerce(self::CHIEF_ROLES);
     }
 
     /** Équipe responsable de la chambre (affectation active, sinon la dernière). */

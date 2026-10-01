@@ -28,10 +28,14 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Une exception : le contrôle des comptages de caisse. Ce n'est pas une
- * écriture comptable mais un acte de contrôle, et CashClosurePolicy désigne
- * nommément le manager comme témoin du comptage contradictoire. L'en priver
- * supprimerait le contrôle au lieu de le déplacer.
+ * Une exception : valider ou refuser une demande d'achat. Ce n'est pas une
+ * saisie à la place de l'économe mais la décision de dépense, que la
+ * direction se réserve. Le comptage des caisses, lui, est contresigné par la
+ * comptabilité seule (CashClosurePolicy).
+ *
+ * Le gabarit n'écrit que les rôles qui reçoivent un droit pour eux-mêmes ;
+ * all() le complète de ce que la hiérarchie implique (voir RoleCatalog) : un
+ * chef détient les droits de ses membres, et l'administrateur consulte tout.
  *
  * Les rôles d'un droit sont l'INTERSECTION des middlewares « role: » qui
  * gardaient la route, car ils s'empilaient : 54 routes en portaient deux, un
@@ -272,9 +276,137 @@ class PermissionCatalog
     }
 
     /**
-     * @return array<string, list<string>> droit => rôles qui le détiennent
+     * La configuration de l'établissement que l'administrateur règle : ses
+     * seules écritures. Décrire les chambres de l'hôtel n'est pas l'exploiter.
+     */
+    private const CONFIGURATION = [
+        'rooms.creer', 'rooms.modifier', 'rooms.supprimer', 'rooms.images.supprimer', 'rooms.import',
+        'rooms.types.creer', 'rooms.types.modifier', 'rooms.types.supprimer', 'rooms.types.import',
+    ];
+
+    /**
+     * Services que l'auditeur qualité consulte pour ses contrôles : fiches de
+     * ventes, produits, prestations et services de l'exploitation. Ni la
+     * comptabilité, ni les caisses, ni les fiches de coût : le contrôle
+     * financier relève du contrôle de gestion. Ni l'export du fichier clients :
+     * ses contrôles portent sur les ventes, pas sur les personnes. Ni les
+     * brouillons de réservation, travail en cours de la réception.
+     */
+    private const AUDIT_QUALITE_SERVICES = [
+        'agenda', 'bookings', 'customers', 'economat', 'groups', 'housekeeping',
+        'invoices', 'reception', 'restaurant', 'rooms', 'shop',
+    ];
+
+    private const AUDIT_QUALITE_EXCLUS = [
+        'bookings.cash_register.', 'shop.cash_register.', 'rooms.cost_sheets.', 'customers.export',
+        'bookings.drafts.',
+    ];
+
+    /** Catalogues de prestations, rangés dans les paramètres. */
+    private const AUDIT_QUALITE_CATALOGUES = ['settings.services.export', 'settings.packages.export'];
+
+    /** @var array<string, list<string>>|null */
+    private static ?array $complet = null;
+
+    /**
+     * @return array<string, list<string>> droit => rôles qui le détiennent,
+     *         hiérarchie comprise
      */
     public static function all(): array
+    {
+        return self::$complet ??= self::completer(self::gabarit());
+    }
+
+    /**
+     * Le gabarit, complété de ce que la hiérarchie et les fonctions de
+     * contrôle impliquent :
+     *  - un chef détient les droits de ses membres, en chaîne ;
+     *  - l'administrateur consulte tout et règle la configuration. Il
+     *    n'écrit rien de métier : il administre l'application, il ne tient
+     *    aucun service ;
+     *  - l'auditeur qualité consulte les services d'exploitation.
+     *
+     * @param  array<string, list<string>>  $gabarit
+     * @return array<string, list<string>>
+     */
+    private static function completer(array $gabarit): array
+    {
+        $complet = [];
+
+        foreach ($gabarit as $droit => $roles) {
+            $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
+
+            if (self::estLecture($droit) || in_array($droit, self::CONFIGURATION, true)) {
+                $roles[] = RoleCatalog::ADMIN;
+            }
+
+            if (self::pourAuditQualite($droit)) {
+                $roles[] = DutySegregation::CONTROLE_INDEPENDANT;
+            }
+
+            $roles = array_values(array_unique($roles));
+            sort($roles);
+            $complet[$droit] = $roles;
+        }
+
+        return $complet;
+    }
+
+    private static function pourAuditQualite(string $droit): bool
+    {
+        if (in_array($droit, self::AUDIT_QUALITE_CATALOGUES, true)) {
+            return true;
+        }
+
+        if (!self::estLecture($droit)
+            || !in_array(explode('.', $droit)[0], self::AUDIT_QUALITE_SERVICES, true)) {
+            return false;
+        }
+
+        foreach (self::AUDIT_QUALITE_EXCLUS as $exclu) {
+            if (str_starts_with($droit, $exclu)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Service d'exploitation dont relève un droit, pour les restrictions de
+     * module que la console pose sur une personne (exclusion, lecture seule).
+     *
+     * Ce sont les services que gardait le middleware module.access : la
+     * restriction s'applique désormais au droit lui-même, partout où la
+     * question est posée — route, écran ou service.
+     */
+    private const SERVICES = [
+        'rooms' => 'hebergement', 'bookings' => 'hebergement', 'groups' => 'hebergement',
+        'customers' => 'hebergement', 'reception' => 'hebergement', 'agenda' => 'hebergement',
+        'housekeeping' => 'housekeeping',
+        'restaurant' => 'restaurant',
+        'economat' => 'economat',
+        'shop' => 'boutique',
+        'settings' => 'parametres',
+    ];
+
+    public static function serviceDu(string $permission): ?string
+    {
+        return self::SERVICES[explode('.', $permission)[0]] ?? null;
+    }
+
+    /** @return list<string> droits de configuration, seules écritures de l'administrateur */
+    public static function configuration(): array
+    {
+        return self::CONFIGURATION;
+    }
+
+    /**
+     * Rôles qui reçoivent chaque droit pour eux-mêmes.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function gabarit(): array
     {
         return [
             // ── Restauration ──
@@ -283,25 +415,25 @@ class PermissionCatalog
             'restaurant.billing.unpaid' => ['cashier', 'restaurant_chief'],
             'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
             'restaurant.breakfast.serve' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.breakfast.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.breakfast.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.kitchen.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
-            'restaurant.menus.categories.creer' => ['restaurant_chief'],
-            'restaurant.menus.categories.modifier' => ['restaurant_chief'],
-            'restaurant.menus.categories.supprimer' => ['restaurant_chief'],
-            'restaurant.menus.export' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
-            'restaurant.menus.import' => ['restaurant_chief'],
-            'restaurant.menus.items.creer' => ['restaurant_chief'],
-            'restaurant.menus.items.modifier' => ['restaurant_chief'],
-            'restaurant.menus.items.supprimer' => ['restaurant_chief'],
-            'restaurant.menus.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.menus.categories.creer' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.categories.modifier' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.categories.supprimer' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.export' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
+            'restaurant.menus.import' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.items.creer' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.items.modifier' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.items.supprimer' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.menus.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
             'restaurant.orders.claim' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.creer' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.preparing' => ['restaurant_chief', 'restaurant_cook'],
             'restaurant.orders.ready' => ['restaurant_chief', 'restaurant_cook'],
-            'restaurant.orders.reassign' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.orders.reassign' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.orders.send_to_kitchen' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.orders.served' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.orders.status' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.orders.status' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.orders.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.pantry.categories.creer' => ['restaurant_chief'],
             'restaurant.pantry.categories.modifier' => ['restaurant_chief'],
@@ -313,29 +445,29 @@ class PermissionCatalog
             'restaurant.pantry.items.receive' => ['restaurant_chief'],
             'restaurant.pantry.items.supprimer' => ['restaurant_chief'],
             'restaurant.pantry.movements.creer' => ['restaurant_chief'],
-            'restaurant.pantry.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook'],
+            'restaurant.pantry.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
             'restaurant.recipes.creer' => ['restaurant_chief'],
             'restaurant.recipes.export' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook'],
             'restaurant.recipes.import' => ['restaurant_chief'],
             'restaurant.recipes.modifier' => ['restaurant_chief'],
             'restaurant.recipes.produce' => ['restaurant_chief'],
             'restaurant.recipes.supprimer' => ['restaurant_chief'],
-            'restaurant.recipes.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook'],
+            'restaurant.recipes.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
             'restaurant.shifts.close' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.shifts.open' => ['restaurant_chief', 'restaurant_staff'],
             'restaurant.stock_counts.close' => ['restaurant_chief'],
             'restaurant.stock_counts.creer' => ['restaurant_chief'],
             'restaurant.stock_counts.modifier' => ['restaurant_chief'],
             'restaurant.stock_counts.supprimer' => ['restaurant_chief'],
-            'restaurant.stock_counts.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook'],
-            'restaurant.consumption.voir' => ['controller', 'manager', 'restaurant_chief'],
+            'restaurant.stock_counts.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
+            'restaurant.consumption.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_manager'],
             'restaurant.waste.creer' => ['restaurant_chief', 'restaurant_cook'],
             'restaurant.waste.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
 
             // ── Comptabilité ──
             'accounting.cash' => ['accountant', 'manager'],
             'accounting.cash_reviews' => ['accountant', 'manager'],
-            'accounting.cash_reviews.creer' => ['accountant', 'manager'],
+            'accounting.cash_reviews.creer' => ['accountant'],
             'accounting.expenses' => ['accountant', 'manager'],
             'accounting.expenses.creer' => ['accountant'],
             'accounting.expenses.modifier' => ['accountant'],
@@ -375,7 +507,7 @@ class PermissionCatalog
             'accounting.voir' => ['accountant', 'controller', 'manager'],
 
             // ── Réservations ──
-            'bookings.approve' => ['manager', 'reception'],
+            'bookings.approve' => ['manager'],
             'bookings.cancel' => ['manager', 'reception'],
             'bookings.cancellation_receipt' => ['controller', 'manager', 'reception'],
             'bookings.cash_register.close' => ['manager', 'reception'],
@@ -401,52 +533,52 @@ class PermissionCatalog
             'bookings.voir' => ['controller', 'manager', 'reception'],
 
             // ── Économat ──
-            'economat.control.suggestions.creer' => ['econome', 'manager'],
+            'economat.control.suggestions.creer' => ['econome'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
             'economat.control.variances.voir' => ['controller', 'econome', 'manager'],
             'economat.control.voir' => ['controller', 'econome', 'manager'],
             'economat.items.adjust' => ['econome'],
             'economat.items.creer' => ['econome'],
-            'economat.items.export' => ['controller', 'econome', 'manager'],
+            'economat.items.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.items.import' => ['econome'],
             'economat.items.modifier' => ['econome'],
             'economat.items.supprimer' => ['econome'],
-            'economat.items.voir' => ['controller', 'econome', 'manager'],
+            'economat.items.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.orders.cancel' => ['econome'],
             'economat.orders.creer' => ['econome'],
             'economat.orders.export' => ['controller', 'econome', 'manager'],
-            'economat.orders.receive' => ['econome'],
+            'economat.orders.receive' => ['econome', 'storekeeper'],
             'economat.orders.send' => ['econome'],
-            'economat.orders.voir' => ['controller', 'econome', 'manager'],
-            'economat.purchase_requests.approve' => ['controller', 'econome', 'manager'],
-            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.purchase_requests.convert' => ['econome', 'manager'],
-            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.purchase_requests.reject' => ['controller', 'econome', 'manager'],
-            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.receipts.cancel' => ['econome', 'manager'],
-            'economat.receipts.creer' => ['econome'],
-            'economat.receipts.voir' => ['controller', 'econome', 'manager'],
-            'economat.receipts.export' => ['controller', 'econome', 'manager'],
+            'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.purchase_requests.approve' => ['manager'],
+            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.purchase_requests.convert' => ['econome'],
+            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.purchase_requests.reject' => ['manager'],
+            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.receipts.cancel' => ['econome'],
+            'economat.receipts.creer' => ['econome', 'storekeeper'],
+            'economat.receipts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'shop_manager'],
-            'economat.requisitions.deliver' => ['econome'],
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.requisitions.deliver' => ['econome', 'storekeeper'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
             // Extraire une liste n'est pas la consulter : droit distinct.
-            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
             'economat.suppliers.creer' => ['econome'],
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],
-            'economat.suppliers.voir' => ['controller', 'econome', 'manager'],
+            'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.stock_counts.cancel' => ['econome'],
             'economat.stock_counts.close' => ['econome'],
             'economat.stock_counts.creer' => ['econome'],
-            'economat.stock_counts.modifier' => ['econome'],
+            'economat.stock_counts.modifier' => ['econome', 'storekeeper'],
             'economat.stock_counts.report' => ['controller', 'econome', 'manager'],
-            'economat.stock_counts.voir' => ['controller', 'econome', 'manager'],
-            'economat.voir' => ['controller', 'econome', 'manager'],
+            'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
 
             // ── Chambres ──
             'rooms.cost_sheets.assumptions' => ['accountant', 'manager'],
@@ -458,17 +590,17 @@ class PermissionCatalog
             'rooms.cost_sheets.starter' => ['accountant', 'manager'],
             'rooms.cost_sheets.voir' => ['accountant', 'controller', 'manager'],
             'rooms.cost_sheets.document' => ['accountant', 'controller', 'manager'],
-            'rooms.creer' => ['manager', 'reception'],
+            'rooms.creer' => ['manager', 'reception_chief'],
             'rooms.export' => ['controller', 'manager', 'reception'],
-            'rooms.images.supprimer' => ['manager', 'reception'],
-            'rooms.import' => ['manager', 'reception'],
-            'rooms.modifier' => ['manager', 'reception'],
-            'rooms.supprimer' => ['manager', 'reception'],
-            'rooms.types.creer' => ['manager', 'reception'],
+            'rooms.images.supprimer' => ['manager', 'reception_chief'],
+            'rooms.import' => ['manager', 'reception_chief'],
+            'rooms.modifier' => ['manager', 'reception_chief'],
+            'rooms.supprimer' => ['manager', 'reception_chief'],
+            'rooms.types.creer' => ['manager', 'reception_chief'],
             'rooms.types.export' => ['controller', 'manager', 'reception'],
-            'rooms.types.import' => ['manager', 'reception'],
-            'rooms.types.modifier' => ['manager', 'reception'],
-            'rooms.types.supprimer' => ['manager', 'reception'],
+            'rooms.types.import' => ['manager', 'reception_chief'],
+            'rooms.types.modifier' => ['manager', 'reception_chief'],
+            'rooms.types.supprimer' => ['manager', 'reception_chief'],
             'rooms.updateStatus' => ['manager', 'reception'],
             'rooms.voir' => ['controller', 'manager', 'reception'],
 
@@ -477,9 +609,9 @@ class PermissionCatalog
             'settings.cancellation_policies.default' => ['manager'],
             'settings.cancellation_policies.modifier' => ['manager'],
             'settings.cancellation_policies.supprimer' => ['manager'],
-            'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
-            'settings.import' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
-            'settings.modifier' => ['housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.import' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.modifier' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'settings.packages.creer' => ['manager'],
             'settings.packages.export' => ['controller', 'manager'],
             'settings.packages.import' => ['manager'],
@@ -495,7 +627,7 @@ class PermissionCatalog
             'settings.services.import' => ['manager'],
             'settings.services.modifier' => ['manager'],
             'settings.services.supprimer' => ['manager'],
-            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'shop_manager'],
+            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
             // ── Boutique ──
             'shop.cash_register.close' => ['manager', 'shop_cashier', 'shop_manager'],
@@ -506,9 +638,9 @@ class PermissionCatalog
             'shop.cash_register.voir' => ['controller', 'manager', 'shop_manager'],
             'shop.orders.creer' => ['shop_cashier', 'shop_manager'],
             'shop.orders.paid' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.receipt' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
+            'shop.orders.receipt' => ['controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.orders.refund' => ['shop_cashier', 'shop_manager'],
-            'shop.orders.voir' => ['cashier', 'controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
+            'shop.orders.voir' => ['controller', 'manager', 'reception', 'shop_cashier', 'shop_manager'],
             'shop.products.creer' => ['shop_manager'],
             'shop.products.export' => ['controller', 'manager', 'shop_manager'],
             'shop.products.import' => ['shop_manager'],
@@ -545,7 +677,7 @@ class PermissionCatalog
             'customers.export' => ['controller', 'manager', 'reception'],
             'customers.import' => ['manager', 'reception'],
             'customers.modifier' => ['manager', 'reception'],
-            'customers.voir' => ['cashier', 'controller', 'manager', 'reception'],
+            'customers.voir' => ['controller', 'manager', 'reception'],
 
             // ── Réception ──
             'reception.pos.history' => ['manager', 'reception'],
@@ -566,7 +698,7 @@ class PermissionCatalog
             'analytics.voir' => ['controller', 'manager'],
 
             // ── Factures ──
-            'invoices.voir' => ['cashier', 'controller', 'manager', 'reception'],
+            'invoices.voir' => ['controller', 'manager', 'reception'],
 
             // ── Divers ──
             'test-popup.voir' => ['controller', 'manager'],

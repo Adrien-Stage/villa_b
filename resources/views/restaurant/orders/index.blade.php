@@ -9,14 +9,14 @@
         <p class="text-sm text-primary/50 mt-0.5">Commandes du portail client et commandes saisies par le staff</p>
     </div>
 
-    @role('restaurant_chief', 'restaurant_staff')
+    @droit('restaurant.orders.creer')
     <button type="button"
         onclick="openCreateOrderModal()"
         class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
         Nouvelle commande
     </button>
-    @endrole
+    @enddroit
 </div>
 
 {{-- Prise de service : seuls les serveurs en service reçoivent des commandes du portail --}}
@@ -233,7 +233,7 @@
     @endif
 </div>
 
-@role('restaurant_chief', 'restaurant_staff')
+@droit('restaurant.orders.creer')
 {{-- Create order modal --}}
 <x-modal id="create-order-modal" title="Nouvelle commande" subtitle="Saisie manuelle (client sans QR)" max-width="max-w-4xl" closeAction="closeCreateOrderModal()">
 
@@ -327,7 +327,7 @@
         </div>
     </div>
 </x-modal>
-@endrole
+@enddroit
 
 <script>
 const cart = new Map(); // id -> qty

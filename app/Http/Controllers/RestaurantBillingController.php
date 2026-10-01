@@ -37,7 +37,15 @@ class RestaurantBillingController extends Controller
             $query->where('table_number', 'ilike', "%{$table}%");
         }
 
-        $orders = $query->paginate(15)->withQueryString();
+        // Les clients logés qui ont consommé au restaurant : leurs commandes
+        // sont rattachées à un séjour. C'est la liste que la caisse du
+        // restaurant rapproche des folios, sans ouvrir le fichier clients de
+        // l'hébergement.
+        if ($request->boolean('residents')) {
+            $query->whereNotNull('booking_id');
+        }
+
+        $orders = $query->with(['booking.room', 'booking.customer'])->paginate(15)->withQueryString();
 
         return view('restaurant.billing.index', [
             'orders' => $orders,

@@ -170,7 +170,9 @@ test('le message au client part sous l\'adresse réglée', function () {
 
 test("un rôle non manager ne peut pas changer l'adresse d'envoi", function () {
     mailManager();
-    $this->actingAs(User::factory()->create(['role' => 'reception', 'is_active' => true]));
+    // Le chef de réception règle les paramètres de son service, pas l'identité
+    // d'expédition de l'établissement.
+    $this->actingAs(User::factory()->create(['role' => 'reception_chief', 'is_active' => true]));
 
     enregistreIdentite(['mail_from_address' => 'pirate@exemple.cm'])->assertForbidden();
 

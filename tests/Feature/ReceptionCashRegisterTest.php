@@ -40,7 +40,7 @@ test('receptionist and manager can access index and open form, but shop cashier 
     $this->get(route('bookings.cash_register.index'), ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(403);
 });
 
-test('sans politique de contrôle, celui qui ouvre la caisse la ferme', function () {
+test('celui qui ouvre la caisse la compte, la comptabilité la clôt', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
 
     $receptionist = User::factory()->create(['role' => 'reception']);
@@ -50,7 +50,6 @@ test('sans politique de contrôle, celui qui ouvre la caisse la ferme', function
         'opening_amount' => 100000,
         'opened_at' => now()]);
 
-    // Aucun réglage : l'établissement n'exige pas de comptage contradictoire.
     $this->actingAs($receptionist);
     $this->get(route('bookings.cash_register.close'))->assertStatus(200);
 
@@ -59,8 +58,8 @@ test('sans politique de contrôle, celui qui ouvre la caisse la ferme', function
         'closing_notes' => 'Clôture de test'])->assertRedirect();
 
     $session->refresh();
-    expect($session->closed_at)->not->toBeNull()
-        ->and($session->status)->toBe('closed')
+    expect($session->closed_at)->toBeNull()
+        ->and($session->status)->toBe(\App\Support\CashClosurePolicy::STATUS_PENDING_REVIEW)
         ->and($session->actual_closing_amount)->toBe(150000);
 });
 
@@ -544,10 +543,10 @@ test('manager can approve pending complimentary booking', function () {
     $booking = Booking::orderBy('id', 'desc')->first();
     expect($booking->status)->toBe(\App\Enums\BookingStatus::PENDING);
 
-    // Receptionist tries to approve -> 403
+    // Receptionist tries to approve -> refused: the booking stays pending
     $this->actingAs($receptionist);
-    $response = $this->post(route('bookings.approve', $booking));
-    $response->assertStatus(403);
+    $this->post(route('bookings.approve', $booking))->assertSessionMissing('success');
+    expect($booking->refresh()->status)->toBe(\App\Enums\BookingStatus::PENDING);
 
     // Manager approves -> success
     $this->actingAs($manager);

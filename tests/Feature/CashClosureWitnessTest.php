@@ -1,11 +1,12 @@
 <?php
 
 /**
- * Comptage contradictoire : quand l'établissement l'exige, la caisse est
- * comptée par son titulaire mais close par un tiers.
+ * Comptage contradictoire : la caisse est comptée par son titulaire mais
+ * close par la comptabilité, toujours.
  *
  * L'enjeu tient en une phrase : compter soi-même l'argent qu'on a encaissé,
- * sans témoin, prive l'écart de caisse de sa valeur probante.
+ * sans témoin, prive l'écart de caisse de sa valeur probante. Ce n'est plus
+ * un réglage : ni l'établissement ni le manager ne peuvent en dispenser.
  */
 
 use App\Models\CashRegisterSession;
@@ -16,8 +17,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-/** Règle la politique de clôture de l'établissement. */
-function politiqueClotureCaisse(string $temoin, array $modules = ['reception', 'shop']): void
+/** Inscrit dans les paramètres une ancienne politique de clôture. */
+function ancienReglageDeCloture(string $temoin, array $modules = ['reception', 'shop']): void
 {
     $tenant = Tenant::firstOrFail();
     $tenant->settings = array_merge($tenant->settings ?? [], [
@@ -47,9 +48,8 @@ function declarerComptage(int $compteEnFcfa = 900)
     ]);
 }
 
-test('le comptage déclaré ne clôt pas la caisse quand un témoin est exigé', function () {
+test('le comptage déclaré ne clôt jamais la caisse', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     $session = caisseOuverte($agent);
@@ -70,7 +70,6 @@ test('le comptage déclaré ne clôt pas la caisse quand un témoin est exigé',
 
 test('une caisse comptée n\'encaisse plus', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     caisseOuverte($agent);
@@ -88,7 +87,6 @@ test('une caisse comptée n\'encaisse plus', function () {
 
 test("l'agent ne peut ni recompter ni rouvrir sa caisse une fois déclarée", function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     $session = caisseOuverte($agent);
@@ -106,7 +104,6 @@ test("l'agent ne peut ni recompter ni rouvrir sa caisse une fois déclarée", fu
 
 test('le comptable contresigne et la caisse est close', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     $comptable = User::factory()->create(['role' => 'accountant']);
@@ -133,25 +130,44 @@ test('le comptable contresigne et la caisse est close', function () {
 });
 
 test('le déclarant ne peut pas contresigner son propre comptage', function () {
+    // Un comptable qui tiendrait une caisse, par dérogation : son rôle
+    // l'habiliterait, mais se contrôler soi-même ne ferait que déplacer le
+    // problème.
+    $comptable = User::factory()->create(['role' => 'accountant']);
+    $collegue  = User::factory()->create(['role' => 'accountant']);
+
+    expect(CashClosurePolicy::canWitness($comptable, $comptable->id))->toBeFalse()
+        ->and(CashClosurePolicy::canWitness($collegue, $comptable->id))->toBeTrue();
+});
+
+test('le manager ne contresigne plus les comptages', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_MANAGER);
 
-    // Un manager qui tient lui-même la caisse : son rôle l'habiliterait, mais
-    // se contrôler soi-même ne ferait que déplacer le problème.
+    $agent   = User::factory()->create(['role' => 'reception']);
     $manager = User::factory()->create(['role' => 'manager']);
-    $session = caisseOuverte($manager);
+    $session = caisseOuverte($agent);
 
-    $this->actingAs($manager);
+    $this->actingAs($agent);
     declarerComptage(900);
 
-    $this->post(route('accounting.cash_reviews.store', $session))->assertStatus(403);
+    // Il supervise les caisses : les faire contrôler par lui ne séparerait rien.
+    expect(CashClosurePolicy::canWitness($manager, $agent->id))->toBeFalse();
+
+    $this->actingAs($manager);
+    $this->post(route('accounting.cash_reviews.store', $session), [],
+        ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(403);
 
     expect($session->refresh()->closed_at)->toBeNull();
 });
 
+test('le responsable administratif et financier contresigne aussi', function () {
+    $raf = User::factory()->create(['role' => 'finance_manager']);
+
+    expect(CashClosurePolicy::canWitness($raf, User::factory()->create(['role' => 'reception'])->id))->toBeTrue();
+});
+
 test('un rôle non habilité ne contresigne pas', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     $collegue = User::factory()->create(['role' => 'reception']);
@@ -169,10 +185,10 @@ test('un rôle non habilité ne contresigne pas', function () {
     expect($session->refresh()->closed_at)->toBeNull();
 });
 
-test('la règle ne vaut que pour les caisses désignées', function () {
+test("un ancien réglage de l'établissement ne dispense plus du contrôle", function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    // La boutique est soumise au contrôle, la réception non.
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT, ['shop']);
+    // Paramètres enregistrés avant que la règle ne soit fixée : « personne ».
+    ancienReglageDeCloture('aucun');
 
     $agent = User::factory()->create(['role' => 'reception']);
     $session = caisseOuverte($agent);
@@ -180,13 +196,12 @@ test('la règle ne vaut que pour les caisses désignées', function () {
     $this->actingAs($agent);
     declarerComptage(900)->assertRedirect();
 
-    expect($session->refresh()->closed_at)->not->toBeNull()
-        ->and($session->status)->toBe('closed');
+    expect($session->refresh()->status)->toBe(CashClosurePolicy::STATUS_PENDING_REVIEW)
+        ->and($session->closed_at)->toBeNull();
 });
 
 test('une caisse déjà close ne se contresigne pas deux fois', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
-    politiqueClotureCaisse(CashClosurePolicy::WITNESS_ACCOUNTANT);
 
     $agent = User::factory()->create(['role' => 'reception']);
     $comptable = User::factory()->create(['role' => 'accountant']);

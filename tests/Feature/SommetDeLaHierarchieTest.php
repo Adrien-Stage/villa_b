@@ -1,13 +1,18 @@
 <?php
 
 /**
- * « manager » est le seul rôle qui détient tout dans un établissement.
+ * Le sommet de la hiérarchie : l'administrateur, puis le manager.
  *
- * « admin » figurait dans 61 droits sur 226 et dans deux départements. Ce
- * n'est pourtant pas un rôle d'établissement : c'est l'identité de la console
- * de supervision, qui gère les hôtels eux-mêmes. Le laisser dans la matrice
- * entretenait deux sommets là où il n'en faut qu'un, et donnait à un compte
- * hors établissement des droits sur les opérations de cet établissement.
+ * L'administrateur est le service informatique de l'hôtel : il administre
+ * l'application et consulte tous les services, sans y saisir d'opération.
+ * Le manager dirige les opérations : il écrit sur l'hébergement, consulte
+ * ailleurs, et se réserve la décision de dépense.
+ *
+ * « admin » a un temps quitté le référentiel, faute d'avoir un rôle dans
+ * l'hôtel : il ne servait que d'identité à la console de supervision. La
+ * direction l'a rendu à l'établissement, au service informatique — mais
+ * sans aucune écriture métier, qu'il ne pourra saisir qu'en intervention
+ * tracée.
  */
 
 use App\Models\User;
@@ -18,17 +23,35 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('aucun droit ne cite admin', function () {
-    $restants = array_keys(array_filter(
-        PermissionCatalog::all(),
-        fn (array $roles) => in_array('admin', $roles, true)
-    ));
+test("l'administrateur figure au référentiel, au sommet, et ne s'attribue pas sur place", function () {
+    $admin = RoleCatalog::find('admin');
 
-    expect($restants)->toBe([]);
+    // Créé depuis la console seulement : personne dans l'hôtel n'accorde un
+    // niveau égal au sien.
+    expect($admin)->not->toBeNull()
+        ->and($admin['level'])->toBe(1)
+        ->and($admin['is_assignable'])->toBeFalse();
 });
 
-test("admin ne figure plus au référentiel des rôles d'établissement", function () {
-    expect(array_column(RoleCatalog::all(), 'slug'))->not->toContain('admin');
+test("l'administrateur consulte tout", function () {
+    $aveugle = array_keys(array_filter(
+        PermissionCatalog::all(),
+        fn (array $roles, string $droit) => PermissionCatalog::estLecture($droit) && !in_array('admin', $roles, true),
+        ARRAY_FILTER_USE_BOTH
+    ));
+
+    expect($aveugle)->toBe([]);
+});
+
+test("l'administrateur n'écrit que la configuration, rien de métier", function () {
+    $ecritures = array_values(array_filter(
+        PermissionCatalog::forRole('admin'),
+        fn (string $droit) => !PermissionCatalog::estLecture($droit)
+    ));
+
+    // Décrire les chambres de l'hôtel n'est pas l'exploiter.
+    expect(array_diff($ecritures, PermissionCatalog::configuration()))->toBe([])
+        ->and($ecritures)->toContain('rooms.types.creer');
 });
 
 test('aucun département ne confère admin', function () {
@@ -44,6 +67,15 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
     // la responsabilité de chacun.
     $lectureSeule = ['restaurant', 'shop', 'economat', 'accounting'];
 
+    // Valider ou refuser une demande d'achat n'est pas saisir à la place de
+    // l'économe : c'est la décision de dépense que la direction se réserve.
+    // Convertir la demande en commande ou annuler une réception, en revanche,
+    // reste l'exécution du magasin.
+    $actesDeSupervision = [
+        'economat.purchase_requests.approve',
+        'economat.purchase_requests.reject',
+    ];
+
     $ecrituresIndues = [];
 
     foreach (PermissionCatalog::all() as $droit => $roles) {
@@ -52,12 +84,10 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         // sans le dire, « revenue_journal » lit sans porter de verbe.
         $lecture = PermissionCatalog::estLecture($droit);
 
-        // Le contreseing des comptages reste au manager : acte de contrôle,
-        // non écriture comptable.
         if (in_array($module, $lectureSeule, true)
             && !$lecture
             && in_array('manager', $roles, true)
-            && !str_starts_with($droit, 'accounting.cash')) {
+            && !in_array($droit, $actesDeSupervision, true)) {
             $ecrituresIndues[] = $droit;
         }
     }
@@ -83,10 +113,10 @@ test("le manager consulte tout ce qu'il n'écrit plus", function () {
     expect($manquants)->toBe([]);
 });
 
-test("le manager reste témoin du comptage de caisse", function () {
-    // CashClosurePolicy le désigne nommément : l'en priver supprimerait le
-    // contrôle au lieu de le déplacer.
-    expect(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('manager');
+test("le comptage de caisse est contresigné par la comptabilité, jamais par le manager", function () {
+    // Il supervise les caisses : les faire contrôler par lui ne séparerait rien.
+    expect(PermissionCatalog::roles('accounting.cash_reviews.creer'))->not->toContain('manager')
+        ->and(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('accountant');
 });
 
 test("tout droit autrefois tenu par admin est tenu par manager", function () {
@@ -119,13 +149,17 @@ test("la console de supervision reste gardée, hors de la matrice", function () 
     $this->actingAs($support)->get('/admin/dashboard')->assertOk();
 });
 
-test("un compte de supervision n'a plus de droits d'exploitation", function () {
+test("l'administrateur lit l'économat mais n'y crée rien", function () {
     activerModules(['economat', 'comptabilite', 'accounting', 'hebergement']);
 
-    $support = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
 
-    // Il gère les hôtels, il ne tient pas leur économat.
-    expect($this->actingAs($support)->get('/economat/articles')->status())->not->toBe(200);
+    $this->actingAs($admin)->get('/economat/articles')->assertOk();
+
+    // Il administre l'application, il ne tient pas le magasin.
+    $this->post('/economat/articles', ['name' => 'Savon de Marseille', 'unit' => 'pièce']);
+
+    expect(\App\Models\StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
 });
 
 test('le manager, lui, entre partout', function (string $url) {

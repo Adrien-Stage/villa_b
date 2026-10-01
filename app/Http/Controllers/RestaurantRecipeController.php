@@ -74,7 +74,7 @@ class RestaurantRecipeController extends Controller
             ->orderBy('name')
             ->get();
 
-        $canManage = Auth::user()->hasRole('restaurant_chief');
+        $canManage = app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.recipes.creer');
 
         return view('restaurant.recipes.index', [
             'dishes' => $dishes,

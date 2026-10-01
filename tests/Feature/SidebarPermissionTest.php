@@ -126,7 +126,7 @@ test("le libellé des demandes dit l'étendue", function () {
     $chef = User::factory()->create(['role' => 'restaurant_chief']);
 
     // Étendue par défaut : il voit les demandes du service.
-    expect(liens($chef))->toContain('Demandes')->not->toContain('Mes demandes');
+    expect(liens($chef))->toContain('Bons de réquisition')->not->toContain('Mes demandes');
 
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'restaurant_chief',
@@ -155,12 +155,12 @@ test("qui tient le magasin garde ses demandes dans la rubrique Économat", funct
     $html = $this->actingAs($econome)->get('/dashboard')->getContent();
     preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
 
-    expect(array_count_values(liens($econome))['Demandes'] ?? 0)->toBe(1)
-        ->and(mb_strpos($nav[0], 'Demandes'))->toBeGreaterThan(mb_strpos($nav[0], '>Économat<'));
+    expect(array_count_values(liens($econome))['Bons de réquisition'] ?? 0)->toBe(1)
+        ->and(mb_strpos($nav[0], 'Bons de réquisition'))->toBeGreaterThan(mb_strpos($nav[0], '>Économat<'));
 });
 
 test("un responsable de service qui ne tient pas les livres garde l'entrée sous Économat", function () {
     // Il n'a pas de section à lui : la lui retirer de l'Économat le priverait
     // de tout accès à ses demandes.
-    expect(liens(User::factory()->create(['role' => 'restaurant_chief'])))->toContain('Demandes');
+    expect(liens(User::factory()->create(['role' => 'restaurant_chief'])))->toContain('Bons de réquisition');
 });

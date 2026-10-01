@@ -12,7 +12,7 @@
     <h1 class="text-2xl font-semibold text-primary font-heading">Contrôle des comptages de caisse</h1>
     <p class="text-sm text-primary/60 mt-1">
         Caisses comptées par leur titulaire et closes seulement après contresignature.
-        Votre établissement a confié ce contrôle à <strong>{{ $witnessLabel }}</strong>.
+        Ce contrôle revient à <strong>{{ $witnessLabel }}</strong>, qui n'encaisse jamais.
     </p>
 </div>
 

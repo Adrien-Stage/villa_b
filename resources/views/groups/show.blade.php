@@ -35,8 +35,8 @@
 
     {{-- Actions globales --}}
     <div class="flex items-center gap-2">
-        @role('reception', 'manager')
-        @if($groupBooking->status === 'confirmed')
+        @undroit('groups.checkInAll', 'groups.modifier', 'groups.checkOutAll', 'groups.invoice')
+        @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.checkInAll') && $groupBooking->status === 'confirmed')
         <form method="POST" action="{{ route('groups.checkInAll', $groupBooking) }}">
             @csrf
             <button type="submit"
@@ -48,7 +48,7 @@
         </form>
         @endif
 
-        @if(!in_array($groupBooking->status, ['completed', 'cancelled']))
+        @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.modifier') && !in_array($groupBooking->status, ['completed', 'cancelled']))
         <a href="{{ route('groups.edit', $groupBooking) }}"
             class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="pencil" class="w-4 h-4"></i>
@@ -56,7 +56,7 @@
         </a>
         @endif
 
-        @if($groupBooking->status === 'in_house')
+        @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.checkOutAll') && $groupBooking->status === 'in_house')
         <form method="POST" action="{{ route('groups.checkOutAll', $groupBooking) }}">
             @csrf
             <button type="submit"
@@ -68,14 +68,14 @@
         </form>
         @endif
 
-        @if($groupBooking->status === 'checkout')
+        @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.invoice') && $groupBooking->status === 'checkout')
         <a href="{{ route('groups.invoice', $groupBooking) }}"
             class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             Facture groupe
         </a>
         @endif
-        @endrole
+        @endundroit
     </div>
 </div>
 

@@ -63,20 +63,20 @@
     {{-- Onglets de navigation dynamique selon le rôle --}}
     <div class="flex overflow-x-auto border-b border-secondary/20 bg-gray-50/50 px-4 pt-4 hide-scrollbar">
         
-        @role('manager')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'general'))
             <a href="{{ route('settings.index', ['tab' => 'general']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'general' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="settings" class="w-4 h-4"></i>
                 Général
             </a>
-        @endrole
+        @endif
 
         {{-- Hébergement : un seul onglet regroupant horaires et règles de séjour,
              délais de remise en vente et packs. Les réglages restent stockés sous
              deux clés distinctes (« reception » et « hebergement »), lues ailleurs
              dans l'application — seul l'affichage est unifié. --}}
-        @role('manager', 'reception')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'hebergement'))
             <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'hebergement' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
@@ -89,45 +89,45 @@
                 <i data-lucide="calculator" class="w-4 h-4"></i>
                 Taxes & Tarifs
             </a>
-        @endrole
+        @endif
 
-        @role('manager', 'housekeeping_leader')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
             <a href="{{ route('settings.index', ['tab' => 'housekeeping']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'housekeeping' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
                 Housekeeping
             </a>
-        @endrole
+        @endif
 
-        @role('manager', 'restaurant_chief')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'restaurant'))
             <a href="{{ route('settings.index', ['tab' => 'restaurant']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'restaurant' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="utensils" class="w-4 h-4"></i>
                 Restaurant
             </a>
-        @endrole
+        @endif
 
-        @role('manager', 'shop_manager')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'shop'))
             <a href="{{ route('settings.index', ['tab' => 'shop']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'shop' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="store" class="w-4 h-4"></i>
                 Boutique
             </a>
-        @endrole
+        @endif
 
-        @role('manager')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'services'))
             <a href="{{ route('settings.index', ['tab' => 'services']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'services' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="concierge-bell" class="w-4 h-4"></i>
                 Prestations
             </a>
-        @endrole
+        @endif
 
-        @role('manager')
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'partners'))
             <a href="{{ route('settings.index', ['tab' => 'partners']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'partners' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
@@ -139,14 +139,14 @@
                 <i data-lucide="truck" class="w-4 h-4"></i>
                 Fournisseurs Économat
             </a>
-        @endrole
+        @endif
     </div>
 
     {{-- Contenu des onglets --}}
     <div class="p-6">
         
         {{-- ONGLET: GÉNÉRAL (Uniquement Manager) --}}
-        @if($tab === 'general' && $user->hasRole('manager'))
+        @if($tab === 'general' && \App\Support\SettingsTabs::peutRegler($user, 'general'))
             <div class="max-w-3xl">
                 <h2 class="text-lg font-semibold text-primary mb-4">Informations Générales de l'établissement</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -306,58 +306,20 @@
             </div>
         @endif
 
-        {{-- Politique de clôture des caisses : réservée au manager, car elle
-             décide qui contrôle qui. Posté sous la clé « caisse », lue par
-             App\Support\CashClosurePolicy. --}}
-        @if($tab === 'hebergement' && $user->hasRole('manager'))
-            @php
-                $caisse = $tenantSettings['caisse'] ?? [];
-                $temoin = $caisse['closure_witness'] ?? \App\Support\CashClosurePolicy::WITNESS_NONE;
-                $modulesSoumis = $caisse['closure_witness_modules'] ?? \App\Support\CashClosurePolicy::MODULES;
-            @endphp
-            <form method="POST" action="{{ route('settings.update', ['tab' => 'caisse']) }}" class="max-w-3xl mb-10">
-                @csrf
-
-                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <h2 class="text-lg font-semibold text-primary">Clôture des caisses</h2>
-                    <button type="submit" class="shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                        Enregistrer
-                    </button>
-                </div>
-
+        {{-- Clôture des caisses : ce n'est plus un réglage. Le panneau reste
+             pour dire la règle à qui connaissait l'ancien choix. --}}
+        @if($tab === 'hebergement' && $user->exerce(['manager']))
+            <div class="max-w-3xl mb-10">
+                <h2 class="text-lg font-semibold text-primary mb-4">Clôture des caisses</h2>
                 <div class="bg-white rounded-xl border border-secondary/20 p-5 shadow-sm">
-                    <p class="text-xs text-primary/60 leading-relaxed mb-4">
-                        Par défaut, l'agent qui a ouvert la caisse la compte et la ferme seul.
-                        Exiger un comptage contradictoire fait contresigner le comptage par un tiers :
-                        la caisse cesse d'encaisser dès la déclaration, et n'est close qu'une fois contrôlée.
-                        Le déclarant ne peut jamais se contrôler lui-même, quel que soit son rôle.
+                    <p class="text-sm text-primary/70 leading-relaxed">
+                        Chaque caisse — réception et boutique — est comptée par son titulaire puis
+                        <strong>contresignée par la comptabilité</strong>, qui constate l'écart. La caisse
+                        cesse d'encaisser dès le comptage et n'est close qu'une fois contrôlée. Le déclarant
+                        ne peut jamais se contrôler lui-même.
                     </p>
-
-                    <label for="closure_witness" class="block text-sm font-medium text-primary mb-1.5">
-                        Comptage contrôlé par
-                    </label>
-                    <select name="settings[closure_witness]" id="closure_witness"
-                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary focus:border-primary focus:outline-none">
-                        <option value="aucun" @selected($temoin === 'aucun')>Personne — l'agent ferme sa propre caisse</option>
-                        <option value="manager" @selected($temoin === 'manager')>Un responsable d'établissement</option>
-                        <option value="comptabilite" @selected($temoin === 'comptabilite')>La comptabilité</option>
-                    </select>
-
-                    <fieldset class="mt-5">
-                        <legend class="text-sm font-medium text-primary mb-1.5">Caisses concernées</legend>
-                        <div class="flex flex-wrap gap-4">
-                            @foreach(['reception' => 'Réception', 'shop' => 'Boutique'] as $code => $libelle)
-                                <label class="inline-flex items-center gap-2 text-sm text-primary/80">
-                                    <input type="checkbox" name="settings[closure_witness_modules][]" value="{{ $code }}"
-                                           @checked(in_array($code, (array) $modulesSoumis, true))
-                                           class="rounded border-secondary/40 text-primary focus:ring-primary">
-                                    {{ $libelle }}
-                                </label>
-                            @endforeach
-                        </div>
-                    </fieldset>
                 </div>
-            </form>
+            </div>
         @endif
 
         {{-- ONGLET: HÉBERGEMENT (Réception & Manager) --}}
@@ -365,7 +327,7 @@
              Le formulaire poste sur ?tab=reception pour que ces valeurs restent
              sous la clé « reception », d'où les lisent BookingController,
              RoomType et RoomAvailabilityService. --}}
-        @if($tab === 'hebergement' && $user->hasAnyRole(['manager', 'reception']))
+        @if($tab === 'hebergement' && \App\Support\SettingsTabs::peutRegler($user, 'hebergement'))
             <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
                 @csrf
 
@@ -640,7 +602,7 @@
         @endif
 
         {{-- ONGLET: TAXES (Réception & Manager) --}}
-        @if($tab === 'taxes' && $user->hasAnyRole(['manager', 'reception']))
+        @if($tab === 'taxes' && \App\Support\SettingsTabs::peutRegler($user, 'taxes'))
             @php
                 $fisc          = app(\App\Services\TaxationService::class);
                 $taxes         = $tenantSettings['taxes'] ?? [];
@@ -772,7 +734,7 @@
         @endif
 
         {{-- ONGLET: HOUSEKEEPING (Leader & Manager) --}}
-        @if($tab === 'housekeeping' && $user->hasAnyRole(['manager', 'housekeeping_leader']))
+        @if($tab === 'housekeeping' && \App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
             <div class="max-w-3xl">
                 <h2 class="text-lg font-semibold text-primary mb-4">Paramètres Housekeeping</h2>
                 <div class="space-y-6">
@@ -814,7 +776,7 @@
         @endif
 
         {{-- ONGLET: RESTAURANT (Chief & Manager) --}}
-        @if($tab === 'restaurant' && $user->hasAnyRole(['manager', 'restaurant_chief']))
+        @if($tab === 'restaurant' && \App\Support\SettingsTabs::peutRegler($user, 'restaurant'))
             <div class="max-w-3xl">
                 <h2 class="text-lg font-semibold text-primary mb-4">Paramètres du Restaurant</h2>
                 <div class="space-y-6">
@@ -851,7 +813,7 @@
         @endif
 
         {{-- ONGLET: BOUTIQUE (Shop Manager & Manager) --}}
-        @if($tab === 'shop' && $user->hasAnyRole(['manager', 'shop_manager']))
+        @if($tab === 'shop' && \App\Support\SettingsTabs::peutRegler($user, 'shop'))
             <div class="max-w-3xl">
                 <h2 class="text-lg font-semibold text-primary mb-4">Paramètres de la Boutique</h2>
                 <div class="space-y-6">
@@ -873,7 +835,7 @@
         @endif
 
         {{-- ONGLET: PRESTATIONS (Manager) --}}
-        @if($tab === 'services' && $user->hasRole('manager'))
+        @if($tab === 'services' && \App\Support\SettingsTabs::peutRegler($user, 'services'))
             <div x-data="serviceCatalog({{ Js::from(\App\Models\ServiceItem::CATEGORIES) }})">
                 <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
                     <div>
@@ -1085,7 +1047,7 @@
         {{-- Sections 2 et 3 du même onglet Hébergement : délais de remise en
              vente puis packs. Réservées au manager — la réception n'a accès
              qu'aux horaires et règles de séjour ci-dessus. --}}
-        @if($tab === 'hebergement' && $user->hasRole('manager'))
+        @if($tab === 'hebergement' && $user->exerce(['manager']))
             <hr class="border-secondary/15 my-10">
 
             @php
@@ -1779,7 +1741,7 @@
         @endif
 
         {{-- ONGLET: PARTENAIRES (Uniquement Manager) --}}
-        @if($tab === 'partners' && $user->hasRole('manager'))
+        @if($tab === 'partners' && \App\Support\SettingsTabs::peutRegler($user, 'partners'))
             @php
                 // Charge utile de l'éditeur préparée ici : un tableau multi-ligne
                 // passé directement à @json dans un attribut casse le parseur Blade.

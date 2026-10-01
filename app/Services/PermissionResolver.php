@@ -9,13 +9,19 @@ use App\Support\PermissionScope;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Décide si une personne détient un droit.
+ * Décide si une personne détient un droit. C'est la seule source de la
+ * décision : la route, l'écran et le service posent tous la question ici.
  *
- * Trois sources, dans cet ordre :
+ * Dans cet ordre :
  *
- *   1. un refus explicite, sur la personne ou sur l'un de ses rôles ;
- *   2. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
- *   3. le catalogue, qui donne le gabarit par défaut.
+ *   1. une restriction de module posée sur la personne par la console —
+ *      exclusion du module, ou lecture seule ;
+ *   2. un refus explicite, sur la personne ou sur l'un de ses rôles ;
+ *   3. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
+ *   4. le catalogue, qui donne le gabarit par défaut.
+ *
+ * Un rôle affecté en lecture seule ne donne que ses droits de consultation,
+ * qu'ils viennent du gabarit ou d'une autorisation posée sur ce rôle.
  *
  * Le refus explicite l'emporte toujours. C'est la règle des systèmes de droits
  * éprouvés, et la seule qui reste prévisible quand une personne cumule
@@ -37,6 +43,16 @@ class PermissionResolver
             return false;
         }
 
+        $lecture = PermissionCatalog::estLecture($permission);
+
+        // Une restriction posée sur la personne pour tout un module l'emporte
+        // sur ses rôles comme sur une autorisation : c'est un refus nominatif.
+        $restriction = $this->restrictionDeModule($user, $permission);
+
+        if ($restriction === 'none' || ($restriction === 'read' && !$lecture)) {
+            return false;
+        }
+
         $surcharge = $this->surchargesPour($user)[$permission] ?? null;
 
         if (($surcharge['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
@@ -47,7 +63,11 @@ class PermissionResolver
             return true;
         }
 
-        return $user->hasAnyRole(PermissionCatalog::roles($permission));
+        $roles = PermissionCatalog::roles($permission);
+
+        return $lecture
+            ? $user->hasAnyRole($roles)
+            : array_intersect($roles, $this->rolesEnEcritureDe($user)) !== [];
     }
 
     /** Droits refusés à cette personne alors que ses rôles les lui donnaient. */
@@ -110,15 +130,26 @@ class PermissionResolver
         }
 
         $roles = $this->rolesDe($user);
+        $enEcriture = $this->rolesEnEcritureDe($user);
         $effets = [];
 
         if ($roles !== []) {
             $lignes = PermissionGrant::query()
+                ->enVigueur()
                 ->where('subject_type', PermissionGrant::SUJET_ROLE)
                 ->whereIn('subject_id', $roles)
-                ->get(['permission', 'effect', 'scope']);
+                ->get(['subject_id', 'permission', 'effect', 'scope']);
 
             foreach ($lignes as $ligne) {
+                // Le rôle est tenu en lecture seule : l'autorisation d'écrire
+                // qu'il porterait ne vaut pas pour cette personne. Un refus,
+                // lui, s'applique toujours.
+                if ($ligne->effect === PermissionGrant::EFFET_ALLOW
+                    && !PermissionCatalog::estLecture($ligne->permission)
+                    && !in_array($ligne->subject_id, $enEcriture, true)) {
+                    continue;
+                }
+
                 $connu = $effets[$ligne->permission] ?? null;
 
                 // Un refus déjà posé par un autre rôle ne se lève pas ; la
@@ -133,15 +164,68 @@ class PermissionResolver
         }
 
         $nominatives = PermissionGrant::query()
+            ->enVigueur()
             ->where('subject_type', PermissionGrant::SUJET_USER)
             ->where('subject_id', (string) $user->id)
             ->get(['permission', 'effect', 'scope']);
 
+        // Une personne peut porter un écart dans chaque couche (console et
+        // établissement) : entre eux aussi, le refus l'emporte.
+        $propres = [];
         foreach ($nominatives as $ligne) {
-            $effets[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
+            if (($propres[$ligne->permission]['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
+                continue;
+            }
+            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
+        }
+
+        foreach ($propres as $permission => $effet) {
+            $effets[$permission] = $effet;
         }
 
         return $this->cache[$user->id] = $effets;
+    }
+
+    /**
+     * Rôles que la personne exerce en écriture.
+     *
+     * Une affectation en lecture seule ne compte pas. La colonne héritée
+     * users.role ne compte que pour un compte sans affectation : ailleurs,
+     * elle doublerait un rôle que l'affectation tient peut-être en lecture
+     * seule, et la contournerait.
+     *
+     * @return list<string>
+     */
+    private function rolesEnEcritureDe(User $user): array
+    {
+        $affectations = $user->relationLoaded('roles') ? $user->roles : $user->roles()->get();
+
+        if ($affectations->isEmpty()) {
+            return $user->role ? [$user->role] : [];
+        }
+
+        return $affectations
+            ->filter(static fn ($role) => ($role->pivot->level ?? null) !== 'read')
+            ->pluck('slug')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Restriction posée sur la personne, depuis la console, pour le service
+     * dont relève ce droit : « none » (exclue) ou « read » (lecture seule).
+     */
+    private function restrictionDeModule(User $user, string $permission): ?string
+    {
+        $service = PermissionCatalog::serviceDu($permission);
+
+        if ($service === null) {
+            return null;
+        }
+
+        $niveau = $user->explicitModulePermission($service);
+
+        return in_array($niveau, ['none', 'read'], true) ? $niveau : null;
     }
 
     /** @return list<string> rôles détenus, pivot et colonne héritée confondus */

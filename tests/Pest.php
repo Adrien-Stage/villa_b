@@ -86,3 +86,19 @@ function activerModules(array $modules): void
     $cache->setAccessible(true);
     $cache->setValue(null, $modules);
 }
+
+/**
+ * Le texte qu'une page montre à l'écran, sans ses feuilles de style ni ses
+ * scripts.
+ *
+ * Chercher une valeur affichée dans le HTML brut trouve aussi le code : le
+ * gabarit d'impression déclare « width: 100% », et une assertion qui refusait
+ * « 100% » comme marge échouait sur une largeur CSS. strip_tags() seul ne
+ * suffit pas : il retire les balises mais garde le contenu des blocs <style>.
+ */
+function texteAffiche(string $html): string
+{
+    $sansCode = preg_replace('#<(style|script)\b[^>]*>.*?</\1>#si', '', $html);
+
+    return html_entity_decode(strip_tags($sansCode), ENT_QUOTES | ENT_HTML5);
+}

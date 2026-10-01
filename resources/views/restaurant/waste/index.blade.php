@@ -18,7 +18,7 @@
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Déclarer une perte
         </a>
         @else
-            @if(auth()->user()->hasAnyRole(['restaurant_chief', 'restaurant_cook']))
+            @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'restaurant.waste.creer'))
             <a href="{{ route('restaurant.waste.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Déclarer une perte
             </a>

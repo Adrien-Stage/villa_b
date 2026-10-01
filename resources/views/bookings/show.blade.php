@@ -47,7 +47,7 @@
     @if($isCashRegisterOpen)
     <div class="flex items-center gap-2">
         @if($booking->status->value === 'confirmed')
-        @role('reception', 'manager')
+        @droit('bookings.checkIn')
         @if($booking->checkin_code)
             <button type="button" onclick="document.getElementById('modal-checkin-otp').classList.remove('hidden')"
                 class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
@@ -61,11 +61,11 @@
                 Check-in
             </button>
         @endif
-        @endrole
+        @enddroit
         @endif
 
         @if($booking->status->value === 'checked_in')
-        @role('reception', 'manager')
+        @droit('bookings.checkOut')
         <form method="POST" action="{{ route('bookings.checkOut', $booking) }}" class="expect-popup">
             @csrf
             <button type="submit"
@@ -75,23 +75,23 @@
                 Check-out
             </button>
         </form>
-        @endrole
+        @enddroit
         @endif
 
         {{-- Ajoute après le bloc des boutons d'action en haut --}}
         @if($booking->status->value === 'completed' && $booking->invoice)
-        @role('manager', 'reception', 'cashier')
+        @droit('invoices.voir')
         <a href="{{ route('invoices.show', $booking->invoice) }}"
             class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             Voir la facture
         </a>
-        @endrole
+        @enddroit
         @endif
 
         @if($booking->status->value === 'pending' && $booking->source === 'website')
         {{-- Réservation issue du site : payante, à confirmer par la réception --}}
-        @role('reception', 'manager')
+        @droit('bookings.confirm')
         <form method="POST" action="{{ route('bookings.confirm', $booking) }}" class="expect-popup">
             @csrf
             <button type="submit"
@@ -100,10 +100,10 @@
                 Confirmer la réservation
             </button>
         </form>
-        @endrole
+        @enddroit
         @elseif($booking->status->value === 'pending')
         {{-- Réservation offerte : montant à 0, validée par un manager --}}
-        @role('manager')
+        @droit('bookings.approve')
         <form method="POST" action="{{ route('bookings.approve', $booking) }}" class="expect-popup">
             @csrf
             <button type="submit"
@@ -112,7 +112,7 @@
                 Valider la réservation offerte
             </button>
         </form>
-        @endrole
+        @enddroit
         @endif
 
         @if($booking->status->value === 'cancelled')
@@ -124,24 +124,24 @@
         @endif
 
         @if(in_array($booking->status->value, ['pending', 'confirmed']))
-        @role('reception', 'manager')
+        @droit('bookings.cancel')
         <button type="button"
             onclick="document.getElementById('modal-cancel-booking').classList.remove('hidden')"
             class="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm">
             <i data-lucide="x" class="w-4 h-4"></i>
             Annuler
         </button>
-        @endrole
+        @enddroit
         @endif
 
         @if($booking->isEditable())
-        @role('reception', 'manager')
+        @droit('bookings.modifier')
         <a href="{{ route('bookings.edit', $booking) }}"
             class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="pencil" class="w-4 h-4"></i>
             Modifier
         </a>
-        @endrole
+        @enddroit
         @endif
     </div>
     @endif
@@ -868,7 +868,7 @@
 
 {{-- Modal : Annulation de Réservation --}}
 @if($booking->isEditable())
-@role('reception', 'manager')
+@droit('bookings.cancel')
 <div id="modal-cancel-booking" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
      style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[92vh] overflow-hidden border border-secondary/20">
@@ -1016,12 +1016,12 @@
         </form>
     </div>
 </div>
-@endrole
+@enddroit
 @endif
 
 {{-- Modal : Check-in direct — relevé de la pièce d'identité à l'arrivée --}}
 @if($booking->status->value === 'confirmed' && !$booking->checkin_code)
-@role('reception', 'manager')
+@droit('bookings.checkIn')
 <div id="modal-checkin" class="hidden fixed inset-0 z-50 flex items-center justify-center"
      style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col">
@@ -1058,7 +1058,7 @@
         </form>
     </div>
 </div>
-@endrole
+@enddroit
 @endif
 
 {{-- Modal : Check-in OTP (Validation automatique) --}}

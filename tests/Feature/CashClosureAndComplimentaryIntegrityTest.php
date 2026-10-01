@@ -87,8 +87,10 @@ test('une clôture sincère ne fait apparaître aucun écart', function () {
 
     $session->refresh();
 
+    // Comptée juste, la caisse attend quand même la contresignature de la
+    // comptabilité : c'est elle qui constate l'absence d'écart.
     expect($session->discrepancy_amount)->toBe(0)
-        ->and($session->closed_at)->not->toBeNull();
+        ->and($session->status)->toBe(\App\Support\CashClosurePolicy::STATUS_PENDING_REVIEW);
 });
 
 // ── Les séjours offerts ──────────────────────────────────────────────────────
@@ -182,8 +184,10 @@ test("seul un manager peut valider un séjour offert", function () {
     $receptionniste = User::factory()->create(['role' => 'reception']);
     $booking = sejourOffert($receptionniste);
 
+    // Refusé dès la garde du droit, réservé à la direction : la forme du
+    // refus importe moins que son effet.
     $this->actingAs($receptionniste);
-    $this->post(route('bookings.approve', $booking))->assertStatus(403);
+    $this->post(route('bookings.approve', $booking))->assertSessionMissing('success');
 
     expect($booking->refresh()->status)->toBe(BookingStatus::PENDING);
 });

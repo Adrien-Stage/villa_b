@@ -52,6 +52,23 @@ test('toRoles ne touche que les porteurs du rôle visé', function () {
     Notification::assertNotSentTo($serveur, StockItemBelowThreshold::class);
 });
 
+test('ce qui vise les membres atteint aussi leur chef, pas l\'inverse', function () {
+    Notification::fake();
+
+    $magasinier = notifUser('storekeeper');
+    $chefEconome = notifUser('econome');
+    $article = StockItem::create(['name' => 'Huile', 'unit' => 'L', 'current_stock' => 0, 'min_stock' => 5]);
+
+    // Adressée au magasinier, l'alerte atteint le chef économe, qui fait son travail.
+    app(Notifier::class)->toRoles(['storekeeper'], new StockItemBelowThreshold($article));
+    Notification::assertSentTo($chefEconome, StockItemBelowThreshold::class);
+
+    // Adressée au chef seul, elle ne descend pas jusqu'au magasinier.
+    Notification::fake();
+    app(Notifier::class)->toRoles(['econome'], new StockItemBelowThreshold($article));
+    Notification::assertNotSentTo($magasinier, StockItemBelowThreshold::class);
+});
+
 test('un compte désactivé ne reçoit plus rien', function () {
     Notification::fake();
 
