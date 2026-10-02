@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('ledger:lock-periods')
             ->monthlyOn(5, '06:00');
 
+        // Inventaires généraux : rappel la veille et le jour même, avant
+        // l'arrivée des équipes du matin.
+        $schedule->command('inventaire:rappel')
+            ->dailyAt('06:30');
+
         // Interventions de l'administrateur : clôture des échues et trace
         // vers la console, rattrapée si elle était injoignable.
         $schedule->command('interventions:transmettre')

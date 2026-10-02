@@ -1,4 +1,7 @@
-@php($inventaireEnCours = \App\Models\StockCount::inProgress())
+@php
+    $inventaireEnCours = \App\Models\StockCount::inProgress();
+    $inventaireGeneral = !$inventaireEnCours && \App\Support\InventorySchedule::current()->isInventoryDay(now());
+@endphp
 @if($inventaireEnCours)
     <div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center gap-2" role="status">
         <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
@@ -7,6 +10,17 @@
             et validations de demandes sont suspendus jusqu'à sa clôture ou son annulation.
             @droit('economat.stock_counts.voir')
                 <a href="{{ route('economat.stock_counts.show', $inventaireEnCours) }}" class="underline font-medium">Voir l'inventaire</a>
+            @enddroit
+        </span>
+    </div>
+@endif
+@if($inventaireGeneral)
+    <div class="mb-4 px-4 py-3 bg-sky-50 border border-sky-200 text-sky-900 text-sm rounded-lg flex items-center gap-2" role="status">
+        <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
+        <span>
+            Inventaire général prévu aujourd'hui.
+            @droit('economat.stock_counts.voir')
+                <a href="{{ route('economat.stock_counts.index') }}" class="underline font-medium">Fiches de comptage et ouverture de l'inventaire</a>
             @enddroit
         </span>
     </div>

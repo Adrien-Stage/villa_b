@@ -9,6 +9,22 @@
         <p class="text-sm text-primary/60 mt-1 max-w-3xl">
             Comptage physique contradictoire du magasin central (Économat). Rapprochement entre le stock théorique issu des entrées/sorties et le stock réel constaté en rayon.
         </p>
+        @php
+            $calendrier = \App\Support\InventorySchedule::current();
+            $prochainInventaire = $calendrier->next(now());
+        @endphp
+        <p class="text-xs text-primary/55 mt-2 inline-flex items-center gap-1.5">
+            <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
+            @if($prochainInventaire)
+                Inventaire général : {{ lcfirst($calendrier->describe()) }} — prochain le
+                <strong>{{ $prochainInventaire->locale('fr')->isoFormat('dddd D MMMM YYYY') }}</strong>.
+            @else
+                Aucun inventaire général planifié.
+            @endif
+            @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'inventaire'))
+                <a href="{{ route('settings.index', ['tab' => 'inventaire']) }}" class="underline">Régler le calendrier</a>
+            @endif
+        </p>
     </div>
 
     @droit('economat.stock_counts.creer')
