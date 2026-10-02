@@ -52,16 +52,39 @@ class StockCategoryController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $this->validated($request);
 
-        StockCategory::create([
+        $category = StockCategory::create([
             'name'          => trim($validated['name']),
             'stock_account' => $validated['stock_account'] ?? null,
             'sort_order'    => $validated['sort_order'] ?? 0,
             'tenant_id'     => auth()->user()->tenant_id ?? \App\Models\Tenant::current()?->id,
         ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $maxOrder = StockCategory::max('sort_order');
+            $nextSortOrder = $maxOrder !== null ? ((int) $maxOrder + 1) : 0;
+
+            return response()->json([
+                'success'       => true,
+                'message'       => "Catégorie « {$category->name} » créée avec l'ordre {$category->sort_order}.",
+                'category'      => [
+                    'id'            => $category->id,
+                    'name'          => $category->name,
+                    'stock_account' => $category->stock_account ?? '',
+                    'sort_order'    => (int) $category->sort_order,
+                    'items_count'   => 0,
+                ],
+                'nextSortOrder' => $nextSortOrder,
+            ], 201);
+        }
+
+        if ($request->input('action') === 'save_and_create') {
+            return redirect()->route('economat.categories.index', ['open_create' => 1])
+                ->with('success', "Catégorie « {$category->name} » créée avec l'ordre {$category->sort_order}. Prêt pour la suivante.");
+        }
 
         return back()->with('success', 'Catégorie créée.');
     }
