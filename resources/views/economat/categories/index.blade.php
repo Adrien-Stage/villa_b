@@ -101,20 +101,40 @@
     @if($canManage)
     {{-- Modal création / édition --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
-         @keydown.escape.window="open = false">
-        <div class="absolute inset-0" @click="open = false"></div>
+         @keydown.escape.window="closeModal()">
+        <div class="absolute inset-0" @click="closeModal()"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 flex flex-col max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="titre-categorie">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
                 <h3 id="titre-categorie" class="font-heading font-semibold text-primary" x-text="editing ? 'Modifier la catégorie' : 'Nouvelle catégorie'"></h3>
-                <button type="button" @click="open = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" @click="closeModal()" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0">
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
+                    {{-- Alertes de notification en direct --}}
+                    <template x-if="successMessage">
+                        <div class="px-3.5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="successMessage" class="font-medium"></span>
+                            </div>
+                            <button type="button" @click="successMessage = ''" class="text-emerald-700/60 hover:text-emerald-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </template>
+                    <template x-if="errorMessage">
+                        <div class="px-3.5 py-2.5 bg-red-50 border border-red-200 text-red-800 text-xs rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 shrink-0"></i>
+                                <span x-text="errorMessage" class="font-medium"></span>
+                            </div>
+                            <button type="button" @click="errorMessage = ''" class="text-red-700/60 hover:text-red-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </template>
+
                     <div>
                         <label for="categorie-nom" class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
-                        <input id="categorie-nom" type="text" name="name" x-model="form.name" required maxlength="120" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input id="categorie-nom" x-ref="nameInput" type="text" name="name" x-model="form.name" required maxlength="120" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="sm:col-span-2">
@@ -147,14 +167,36 @@
                         Le stock de cette catégorie (<span x-text="formatFcfa(form.value)"></span> FCFA) sera reclassé vers le nouveau compte par une écriture datée d'aujourd'hui.
                     </p>
                 </div>
-                <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit"
-                            :disabled="isOrderTaken()"
-                            :class="isOrderTaken() ? 'opacity-50 cursor-not-allowed bg-primary/60' : 'bg-primary hover:bg-surface-dark'"
-                            class="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors">
-                        <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
-                    </button>
+                {{-- Pied de formulaire avec les 3 boutons : Annuler, Enregistrer et Créer, Enregistrer --}}
+                <div class="px-6 py-4 border-t border-secondary/20 flex flex-wrap items-center justify-between gap-3 bg-gray-50 rounded-b-2xl">
+                    <div>
+                        <button type="button" @click="closeModal()" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                            Annuler
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <template x-if="!editing">
+                            <button type="button"
+                                    @click="saveAndCreate()"
+                                    :disabled="isOrderTaken() || saving"
+                                    :class="(isOrderTaken() || saving) ? 'opacity-50 cursor-not-allowed bg-secondary/60 text-primary/60' : 'bg-secondary text-primary hover:bg-secondary/80'"
+                                    class="px-4 py-2 text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 shadow-xs border border-secondary/30">
+                                <i data-lucide="plus-circle" class="w-4 h-4" x-show="!saving"></i>
+                                <svg x-show="saving" class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span>Enregistrer et créer</span>
+                            </button>
+                        </template>
+                        <button type="submit"
+                                :disabled="isOrderTaken() || saving"
+                                :class="(isOrderTaken() || saving) ? 'opacity-50 cursor-not-allowed bg-primary/60' : 'bg-primary hover:bg-surface-dark'"
+                                class="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-xs">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span x-text="editing ? 'Enregistrer' : 'Enregistrer'"></span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -170,10 +212,15 @@
         const updateUrl = @js(route('economat.categories.update', ['category' => '__ID__']));
         const defaultNextOrder = nextOrder;
         const vide = { id: null, name: '', stock_account: '', sort_order: defaultNextOrder, value: 0, original_account: '' };
+        const csrfToken = @js(csrf_token());
 
         return {
             open: false,
             editing: false,
+            saving: false,
+            hasCreatedAny: false,
+            successMessage: '',
+            errorMessage: '',
             nextSortOrder: defaultNextOrder,
             categoriesList: existingCategories || [],
             form: { ...vide },
@@ -182,15 +229,97 @@
             },
             openCreate() {
                 this.editing = false;
+                this.saving = false;
+                this.successMessage = '';
+                this.errorMessage = '';
                 this.form = { ...vide, sort_order: this.nextSortOrder };
                 this.open = true;
-                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                this.$nextTick(() => {
+                    if (this.$refs.nameInput) this.$refs.nameInput.focus();
+                    if (window.lucide) window.lucide.createIcons();
+                });
             },
             openEdit(categorie) {
                 this.editing = true;
+                this.saving = false;
+                this.successMessage = '';
+                this.errorMessage = '';
                 this.form = { ...vide, ...categorie, original_account: categorie.stock_account };
                 this.open = true;
-                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                this.$nextTick(() => {
+                    if (this.$refs.nameInput) this.$refs.nameInput.focus();
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+            closeModal() {
+                this.open = false;
+                if (this.hasCreatedAny) {
+                    window.location.reload();
+                }
+            },
+            async saveAndCreate() {
+                if (!this.form.name || !this.form.name.trim()) {
+                    if (this.$refs.nameInput) {
+                        this.$refs.nameInput.focus();
+                        this.$refs.nameInput.reportValidity();
+                    }
+                    return;
+                }
+                if (this.isOrderTaken()) return;
+
+                this.saving = true;
+                this.errorMessage = '';
+                this.successMessage = '';
+
+                try {
+                    const response = await fetch(storeUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            name: this.form.name.trim(),
+                            stock_account: this.form.stock_account || null,
+                            sort_order: parseInt(this.form.sort_order, 10),
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        if (data.errors) {
+                            const firstError = Object.values(data.errors)[0][0];
+                            this.errorMessage = firstError;
+                        } else {
+                            this.errorMessage = data.message || 'Une erreur est survenue lors de l\'enregistrement.';
+                        }
+                        return;
+                    }
+
+                    // Succès : marquer qu'au moins une catégorie a été créée
+                    this.hasCreatedAny = true;
+                    const createdCat = data.category;
+                    this.categoriesList.push(createdCat);
+
+                    this.successMessage = `Catégorie « ${createdCat.name} » enregistrée (Ordre ${createdCat.sort_order}). Prêt pour la suivante.`;
+
+                    // Mettre à jour l'ordre pour la prochaine catégorie
+                    this.nextSortOrder = data.nextSortOrder;
+                    this.form.name = '';
+                    this.form.stock_account = '';
+                    this.form.sort_order = this.nextSortOrder;
+
+                    this.$nextTick(() => {
+                        if (this.$refs.nameInput) this.$refs.nameInput.focus();
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                } catch (err) {
+                    this.errorMessage = 'Erreur réseau lors de l\'enregistrement.';
+                } finally {
+                    this.saving = false;
+                }
             },
             isOrderTaken() {
                 if (this.form.sort_order === null || this.form.sort_order === '' || isNaN(this.form.sort_order)) {
