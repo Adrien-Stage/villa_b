@@ -103,26 +103,15 @@ class CashRegisterController extends Controller
             'closing_notes' => 'nullable|string',
         ]);
 
-        // Le comptage physique est déclaré par l'agent ; le solde théorique
-        // est recalculé ici et jamais accepté depuis la requête — c'est lui
-        // qui met l'écart en évidence.
-        $actualAmountCents = (int) round($request->actual_closing_amount * 100);
-        $theoreticalAmountCents = $session->theoreticalBalance();
-        $discrepancy = $actualAmountCents - $theoreticalAmountCents;
-
-        // Comptage contradictoire : le comptage est déclaré mais la caisse
-        // n'est pas close. Elle cesse d'encaisser et attend la contresignature
-        // de la comptabilité, seule à constater l'écart (CashClosurePolicy).
+        // Même circuit que toutes les caisses (CashRegisterCircuit) : le
+        // solde théorique est recalculé, jamais reçu de la requête, et la
+        // caisse attend la contresignature de la comptabilité.
+        app(\App\Services\CashRegisterCircuit::class)->compter(
+            $session,
+            (int) round($request->actual_closing_amount * 100),
+            $request->closing_notes
+        );
         $aContresigner = CashClosurePolicy::requiresWitness('shop');
-
-        $session->update([
-            'status' => $aContresigner ? CashClosurePolicy::STATUS_PENDING_REVIEW : 'closed',
-            'closed_at' => $aContresigner ? null : now(),
-            'theoretical_closing_amount' => $theoreticalAmountCents,
-            'actual_closing_amount' => $actualAmountCents,
-            'discrepancy_amount' => $discrepancy,
-            'closing_notes' => $request->closing_notes,
-        ]);
 
         if ($aContresigner) {
             return redirect()->route('shop.orders.index')->with(

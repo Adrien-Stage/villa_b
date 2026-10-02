@@ -16,6 +16,28 @@
     </div>
 @endif
 
+{{-- La caisse de celui qui encaisse : tout encaissement y passe. --}}
+@droit('restaurant.cash_register.open.creer')
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm
+        {{ $caisse && $caisse->status === 'open' ? 'border-green-200 bg-green-50 text-green-800' : 'border-amber-200 bg-amber-50 text-amber-900' }}">
+        <span class="flex items-center gap-2">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
+            @if(! $caisse)
+                Aucune caisse ouverte : ouvrez la vôtre pour encaisser.
+            @elseif($caisse->isPendingReview())
+                Votre caisse est comptée : elle attend le contrôle de la comptabilité.
+            @else
+                Caisse {{ $caisse->pointOfSale?->name ?? 'du restaurant' }} ouverte depuis {{ $caisse->opened_at?->format('H:i') }}.
+            @endif
+        </span>
+        @if(! $caisse)
+            <a href="{{ route('restaurant.cash_register.open') }}" class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white">Ouvrir ma caisse</a>
+        @elseif($caisse->status === 'open')
+            <a href="{{ route('restaurant.cash_register.close') }}" class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-800">Compter ma caisse</a>
+        @endif
+    </div>
+@enddroit
+
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {{ $errors->first() }}

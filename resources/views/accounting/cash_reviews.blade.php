@@ -4,7 +4,6 @@
 
 @php
     $fcfa = fn ($c) => number_format(((int) $c) / 100, 0, ',', ' ') . ' FCFA';
-    $moduleLabels = ['reception' => 'Hébergement', 'shop' => 'Boutique'];
 @endphp
 
 @section('content')
@@ -42,7 +41,7 @@
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <div class="text-[11px] font-bold uppercase tracking-wide text-primary/40">
-                            {{ $moduleLabels[$session->module] ?? $session->module }}
+                            {{ \App\Services\CashRegisterCircuit::libelle($session) }}
                         </div>
                         <div class="mt-0.5 text-base font-semibold text-primary">
                             {{ $session->user?->name ?? 'Agent inconnu' }}

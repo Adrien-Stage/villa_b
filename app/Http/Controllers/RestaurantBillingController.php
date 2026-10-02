@@ -6,6 +6,7 @@ use App\Models\RestaurantCustomerOrder;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
 use App\Models\FolioItem;
+use App\Services\CashRegisterCircuit;
 use App\Services\CheckOutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class RestaurantBillingController extends Controller
         return view('restaurant.billing.index', [
             'orders' => $orders,
             'paymentMethods' => self::PAYMENT_METHODS,
+            'caisse' => app(CashRegisterCircuit::class)->enCours(Auth::user(), 'restaurant')?->load('pointOfSale'),
         ]);
     }
 
@@ -65,6 +67,7 @@ class RestaurantBillingController extends Controller
             ->get();
 
         return view('restaurant.billing.show', [
+            'caisse' => app(CashRegisterCircuit::class)->ouverte(Auth::user(), 'restaurant'),
             'order' => $order,
             'paymentMethods' => self::PAYMENT_METHODS,
             'checkedInBookings' => $checkedInBookings,
@@ -83,6 +86,19 @@ class RestaurantBillingController extends Controller
         }
 
         $method = (string) $validated['payment_method'];
+
+        // Tout encaissement passe par la caisse de celui qui encaisse : sans
+        // session ouverte, l'argent reçu n'entre dans aucun comptage. La
+        // facturation sur la chambre n'est pas un encaissement — le folio
+        // la portera jusqu'au départ.
+        $session = null;
+        if ($method !== 'room_charge') {
+            $session = app(CashRegisterCircuit::class)->ouverte(Auth::user(), 'restaurant');
+
+            if (! $session) {
+                return back()->withErrors(['cash_register' => 'Ouvrez votre caisse avant d\'encaisser.']);
+            }
+        }
 
         if ($method === 'room_charge') {
             $bookingId = (int) ($validated['booking_id'] ?? 0);
@@ -139,6 +155,9 @@ class RestaurantBillingController extends Controller
                 'amount_paid' => (int) $order->total_amount,
                 'paid_at' => now(),
                 'paid_by' => Auth::id(),
+                'cash_register_session_id' => $session->id,
+                // La note se rattache au restaurant de la caisse qui l'encaisse.
+                'point_of_sale_id' => $order->point_of_sale_id ?? $session->point_of_sale_id,
             ]);
         }
 
@@ -157,12 +176,24 @@ class RestaurantBillingController extends Controller
 
     public function markUnpaid(RestaurantCustomerOrder $order): RedirectResponse
     {
+        // Annuler un encaissement modifie le contenu théorique de la caisse
+        // qui l'a reçu : seulement dans sa propre caisse, et tant qu'elle n'est
+        // pas comptée. Après, c'est un écart à expliquer, pas une ligne à effacer.
+        if ($order->cash_register_session_id) {
+            $caisse = \App\Models\CashRegisterSession::find($order->cash_register_session_id);
+
+            if ($caisse && ($caisse->user_id !== Auth::id() || $caisse->status !== 'open' || $caisse->closed_at !== null)) {
+                return back()->withErrors(['cash_register' => 'Cet encaissement appartient à une caisse déjà comptée ou tenue par une autre personne : il ne s\'annule plus ici.']);
+            }
+        }
+
         $order->update([
             'payment_status' => 'unpaid',
             'payment_method' => null,
             'amount_paid' => 0,
             'paid_at' => null,
             'paid_by' => null,
+            'cash_register_session_id' => null,
         ]);
 
         return redirect()

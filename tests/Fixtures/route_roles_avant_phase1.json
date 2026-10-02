@@ -1226,6 +1226,40 @@
   "restaurant_manager",
   "restaurant_staff"
  ],
+ "restaurant.cash_register.close": [
+  "admin",
+  "cashier",
+  "manager",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.cash_register.close.store": [
+  "cashier",
+  "restaurant_manager"
+ ],
+ "restaurant.cash_register.disbursements.store": [
+  "cashier",
+  "restaurant_manager"
+ ],
+ "restaurant.cash_register.index": [
+  "admin",
+  "cashier",
+  "controller",
+  "manager",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.cash_register.open": [
+  "admin",
+  "cashier",
+  "manager",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.cash_register.open.store": [
+  "cashier",
+  "restaurant_manager"
+ ],
  "restaurant.consumption.index": [
   "admin",
   "controller",

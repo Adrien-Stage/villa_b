@@ -282,7 +282,9 @@ la session à `auth()->id()`. Chacun compte la sienne, personne ne compte celle 
 autre. La caisse cesse alors d'encaisser et attend la **contresignature de la
 comptabilité** (comptable ou responsable administratif et financier), seule à
 constater l'écart. Ce n'est pas un réglage : ni l'établissement ni le manager ne
-peuvent en dispenser.
+peuvent en dispenser. Le circuit est le même à la réception, à la boutique et dans
+chaque restaurant — une caisse par restaurant, une session par personne (voir
+[Comptabilité](comptabilite.md)).
 
 ### Les demandes à l'économat sont ouvertes
 

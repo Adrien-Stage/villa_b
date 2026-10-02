@@ -168,6 +168,9 @@ class PermissionCatalog
         'reception.pos.sales.creer',
         'restaurant.billing.paid',
         'restaurant.billing.unpaid',
+        'restaurant.cash_register.close.creer',
+        'restaurant.cash_register.disbursements.creer',
+        'restaurant.cash_register.open.creer',
         'restaurant.breakfast.serve',
         'restaurant.menus.categories.creer',
         'restaurant.menus.categories.modifier',
@@ -334,7 +337,7 @@ class PermissionCatalog
     ];
 
     private const AUDIT_QUALITE_EXCLUS = [
-        'bookings.cash_register.', 'shop.cash_register.', 'rooms.cost_sheets.', 'customers.export',
+        'bookings.cash_register.', 'shop.cash_register.', 'restaurant.cash_register.', 'rooms.cost_sheets.', 'customers.export',
         'bookings.drafts.',
     ];
 
@@ -460,6 +463,16 @@ class PermissionCatalog
         return [
             // ── Restauration ──
             'restaurant.billing.paid' => ['cashier'],
+            // Caisse du restaurant : le caissier, et le responsable de
+            // restaurant qui l'inclut, s'il faut encaisser à sa place.
+            'restaurant.cash_register.voir' => ['cashier', 'controller', 'manager'],
+            // Les écrans d'ouverture et de comptage se consultent comme le
+            // reste du restaurant ; seul le titulaire y enregistre.
+            'restaurant.cash_register.open' => ['cashier', 'manager'],
+            'restaurant.cash_register.open.creer' => ['cashier'],
+            'restaurant.cash_register.close' => ['cashier', 'manager'],
+            'restaurant.cash_register.close.creer' => ['cashier'],
+            'restaurant.cash_register.disbursements.creer' => ['cashier'],
             'restaurant.billing.receipt' => ['cashier', 'controller', 'manager', 'reception'],
             'restaurant.billing.unpaid' => ['cashier'],
             'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception'],

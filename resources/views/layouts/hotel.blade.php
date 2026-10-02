@@ -415,6 +415,7 @@
 
                             @pour('manager','restaurant_chief','cashier')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
+                                <x-sidebar-link route="restaurant.cash_register.index" icon="calculator">Caisse</x-sidebar-link>
                             @endpour
                             @php
                                 $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
@@ -956,7 +957,7 @@
             <div class="px-6 py-4">
                 <p class="text-sm text-primary/80 leading-relaxed">
                     Vous avez actuellement une session de caisse ouverte dans le module 
-                    <strong>{{ session('caisse_module') === 'reception' ? 'Hébergement' : 'Boutique' }}</strong>.
+                    <strong>{{ \App\Services\CashRegisterCircuit::libelle((string) session('caisse_module')) }}</strong>.
                     Il est fortement recommandé de fermer votre caisse avant de quitter l'application.
                 </p>
             </div>
@@ -976,7 +977,7 @@
                         Déconnexion (Pause)
                     </button>
                 </form>
-                <a href="{{ session('caisse_module') === 'reception' ? route('bookings.cash_register.close') : route('shop.cash_register.close') }}"
+                <a href="{{ route(\App\Services\CashRegisterCircuit::routeDeComptage((string) session('caisse_module'))) }}"
                    class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-center">
                     Clôturer la caisse
                 </a>
@@ -1013,7 +1014,7 @@
             <div class="px-6 py-4">
                 <p class="text-sm text-primary/80 leading-relaxed">
                     Vous aviez une session de caisse en pause dans le module 
-                    <strong>{{ session('paused_caisse_session')['module'] === 'reception' ? 'Hébergement' : 'Boutique' }}</strong>.
+                    <strong>{{ \App\Services\CashRegisterCircuit::libelle((string) session('paused_caisse_session')['module']) }}</strong>.
                     Que voulez-vous faire ?
                 </p>
             </div>
