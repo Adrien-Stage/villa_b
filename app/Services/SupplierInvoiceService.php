@@ -50,6 +50,17 @@ class SupplierInvoiceService
         $decomposition = $this->decompose($ttc, $data['withholding_type'] ?? null);
 
         return DB::transaction(function () use ($data, $fournisseur, $ttc, $decomposition) {
+            $ecart = 0;
+
+            if (!empty($data['purchase_order_id'])) {
+                $ecart = $this->receptionVariance(
+                    (int) $data['purchase_order_id'],
+                    $fournisseur,
+                    $ttc,
+                    $data['variance_reason'] ?? null,
+                );
+            }
+
             $facture = SupplierInvoice::create([
                 'supplier_id'              => $fournisseur->id,
                 'purchase_order_id'        => $data['purchase_order_id'] ?? null,
@@ -66,6 +77,8 @@ class SupplierInvoiceService
                 'withholding_basis_points' => $decomposition['withholding']['basis_points'],
                 'withholding_amount'       => $decomposition['withholding']['amount'],
                 'net_payable'              => $decomposition['net_payable'],
+                'reception_variance'       => $ecart,
+                'variance_reason'          => $ecart > 0 ? trim((string) $data['variance_reason']) : null,
                 'notes'                    => $data['notes'] ?? null,
                 'created_by'               => Auth::id(),
                 'tenant_id'                => $fournisseur->tenant_id,
@@ -81,6 +94,42 @@ class SupplierInvoiceService
 
             return $facture->fresh(['supplier', 'purchaseOrder']);
         });
+    }
+
+    /**
+     * Rapproche la facture du bon et de ses réceptions ; rend l'écart.
+     *
+     * Le bon est verrouillé : deux factures saisies en même temps liraient le
+     * même reste à facturer et passeraient toutes deux sans écart. Les
+     * montants se comparent en TTC, comme le prix porté par le bon.
+     */
+    private function receptionVariance(int $orderId, Supplier $fournisseur, int $ttc, ?string $motif): int
+    {
+        $bon = PurchaseOrder::query()->lockForUpdate()->findOrFail($orderId);
+
+        if ((int) $bon->supplier_id !== (int) $fournisseur->id) {
+            throw new RuntimeException("Le bon {$bon->number} a été passé à un autre fournisseur.");
+        }
+
+        // Facturer ce qui n'est jamais entré en magasin ferait payer une
+        // marchandise dont rien ne prouve la livraison.
+        if ($bon->receivedAmount() <= 0) {
+            throw new RuntimeException(
+                "Le bon {$bon->number} n'a aucune réception validée : réceptionnez la marchandise avant d'y rattacher une facture."
+            );
+        }
+
+        $ecart = max(0, $ttc - $bon->uninvoicedReceivedAmount());
+
+        if ($ecart > 0 && trim((string) $motif) === '') {
+            throw new RuntimeException(
+                'Cette facture dépasse de ' . number_format($ecart / 100, 0, ',', ' ')
+                . " FCFA la valeur reçue et non encore facturée sur le bon {$bon->number}. "
+                . "Indiquez le motif de l'écart pour l'enregistrer."
+            );
+        }
+
+        return $ecart;
     }
 
     /**
@@ -163,21 +212,15 @@ class SupplierInvoiceService
         ];
     }
 
-    /** Bons de commande réceptionnés et pas encore intégralement facturés. */
+    /** Bons dont une partie reçue n'est pas encore facturée. */
     public function invoiceableOrders(): Collection
     {
-        $facturables = SupplierInvoice::query()
-            ->whereNotNull('purchase_order_id')
-            ->select('purchase_order_id', DB::raw('SUM(amount_ttc) as factures'))
-            ->groupBy('purchase_order_id')
-            ->pluck('factures', 'purchase_order_id');
-
         return PurchaseOrder::query()
             ->whereIn('status', [PurchaseOrder::STATUS_RECEIVED, PurchaseOrder::STATUS_PARTIALLY_RECEIVED])
             ->with('supplier')
             ->orderByDesc('received_at')
             ->get()
-            ->filter(fn (PurchaseOrder $o) => (int) ($facturables[$o->id] ?? 0) < (int) $o->total_amount)
+            ->filter(fn (PurchaseOrder $o) => $o->uninvoicedReceivedAmount() > 0)
             ->values();
     }
 

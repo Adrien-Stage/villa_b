@@ -59,6 +59,8 @@ class SupplierInvoice extends Model
         'withholding_basis_points',
         'withholding_amount',
         'net_payable',
+        'reception_variance',
+        'variance_reason',
         'posted_at',
         'notes',
         'created_by',
@@ -75,7 +77,14 @@ class SupplierInvoice extends Model
         'withholding_basis_points' => 'integer',
         'withholding_amount'       => 'integer',
         'net_payable'              => 'integer',
+        'reception_variance'       => 'integer',
     ];
+
+    /** La facture dépassait-elle la valeur reçue non encore facturée ? */
+    public function hasReceptionVariance(): bool
+    {
+        return $this->reception_variance > 0;
+    }
 
     public function supplier(): BelongsTo
     {

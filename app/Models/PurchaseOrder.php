@@ -137,6 +137,20 @@ class PurchaseOrder extends Model
         return (int) $this->invoices()->sum('amount_ttc');
     }
 
+    /** Valeur acceptée des réceptions non annulées : ce qui peut être facturé. */
+    public function receivedAmount(): int
+    {
+        return (int) $this->receipts()
+            ->where('status', GoodsReceipt::STATUS_RECEIVED)
+            ->sum('total_amount');
+    }
+
+    /** Reçu et pas encore facturé : ce qu'une facture peut porter sans écart. */
+    public function uninvoicedReceivedAmount(): int
+    {
+        return max(0, $this->receivedAmount() - $this->invoicedAmount());
+    }
+
     public function invoicingStatus(): string
     {
         $invoiced = $this->invoicedAmount();

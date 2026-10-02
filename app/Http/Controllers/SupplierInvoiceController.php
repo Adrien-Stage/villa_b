@@ -58,6 +58,12 @@ class SupplierInvoiceController extends Controller
             ? PurchaseOrder::with('supplier')->find((int) $request->input('bon'))
             : null;
 
+        // Le bon demandé reste sélectionnable même tout facturé : la saisie
+        // d'un écart motivé (transport, hausse de prix) doit rester possible.
+        if ($bon && !$bons->contains('id', $bon->id)) {
+            $bons->prepend($bon);
+        }
+
         $taux     = $this->taxation->withholdingRates();
         $confirme = $this->taxation->withholdingRatesConfirmed();
         $tvaBp    = $this->taxation->vatEnabled() ? ($this->taxation->defaultRate()?->rate_basis_points ?? 0) : 0;
@@ -80,6 +86,7 @@ class SupplierInvoiceController extends Controller
             'amount_ttc'        => ['required', 'numeric', 'min:1'],
             'withholding_type'  => ['nullable', Rule::in(array_keys(SupplierInvoice::WITHHOLDING_TYPES))],
             'notes'             => ['nullable', 'string', 'max:1000'],
+            'variance_reason'   => ['nullable', 'string', 'max:255'],
         ], [
             'number.required' => 'La référence portée par la facture du fournisseur est obligatoire.',
         ]);
@@ -109,12 +116,18 @@ class SupplierInvoiceController extends Controller
                 'amount_ttc'        => (int) round((float) $validated['amount_ttc'] * 100),
                 'withholding_type'  => $validated['withholding_type'] ?? null,
                 'notes'             => $validated['notes'] ?? null,
+                'variance_reason'   => $validated['variance_reason'] ?? null,
             ]);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
 
         $message = "Facture {$facture->number} enregistrée et comptabilisée.";
+
+        if ($facture->hasReceptionVariance()) {
+            $message .= ' Écart de ' . number_format($facture->reception_variance / 100, 0, ',', ' ')
+                . ' FCFA sur la valeur reçue, tracé avec son motif.';
+        }
 
         if ($facture->hasWithholding()) {
             $retenue = number_format($facture->withholding_amount / 100, 0, ',', ' ');

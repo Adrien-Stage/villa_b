@@ -79,6 +79,12 @@
                             @if($facture->purchaseOrder)
                                 <span class="block text-[10px] text-primary/40">{{ $facture->purchaseOrder->number }}</span>
                             @endif
+                            @if($facture->hasReceptionVariance())
+                                <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200"
+                                      title="{{ $facture->variance_reason }}">
+                                    Écart +{{ $fcfa($facture->reception_variance) }}
+                                </span>
+                            @endif
                         </td>
                         <td class="px-3 py-2 text-primary">{{ $facture->supplier?->name ?? '—' }}</td>
                         <td class="px-3 py-2 text-primary/60">{{ $facture->chargeLabel() }}</td>

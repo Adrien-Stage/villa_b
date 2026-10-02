@@ -66,11 +66,11 @@
                             <option value="">Aucun — facture directe</option>
                             @foreach($bons as $b)
                                 <option value="{{ $b->id }}" @selected(old('purchase_order_id', $bon?->id) == $b->id)>
-                                    {{ $b->number }} — {{ $b->supplier?->name }} ({{ $fcfa($b->total_amount) }} FCFA)
+                                    {{ $b->number }} — {{ $b->supplier?->name }} (reçu non facturé : {{ $fcfa($b->uninvoicedReceivedAmount()) }} FCFA)
                                 </option>
                             @endforeach
                         </select>
-                        <p class="text-[11px] text-primary/45 mt-1">Bons réceptionnés et pas encore intégralement facturés.</p>
+                        <p class="text-[11px] text-primary/45 mt-1">Bons dont une partie reçue n'est pas encore facturée. Au-delà de ce montant, un motif d'écart est exigé.</p>
                     </div>
                 @endif
 
@@ -148,6 +148,15 @@
                         </select>
                     </div>
                 </div>
+
+                @if($bons->isNotEmpty())
+                    <div>
+                        <label for="variance_reason" class="block text-xs font-medium text-primary/70 mb-1.5">Motif d'écart <span class="text-primary/40">(si la facture dépasse le reçu non facturé)</span></label>
+                        <input id="variance_reason" type="text" name="variance_reason" maxlength="255" value="{{ old('variance_reason') }}"
+                               placeholder="Transport facturé à part, hausse de prix acceptée…"
+                               class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+                    </div>
+                @endif
 
                 <div>
                     <label class="block text-xs font-medium text-primary/70 mb-1.5">Notes <span class="text-primary/40">(facultatif)</span></label>
