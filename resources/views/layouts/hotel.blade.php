@@ -495,6 +495,9 @@
                             @droit('economat.stock_counts.voir')
                                 <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>
                             @enddroit
+                            @droit('economat.count_sheets.voir')
+                                <x-sidebar-link route="economat.count_sheets.index" icon="printer">Fiches de comptage</x-sidebar-link>
+                            @enddroit
                             @unless($demandesEnComptabilite)
                                 @php
                                     // Le libellé dit l'étendue : qui ne consulte

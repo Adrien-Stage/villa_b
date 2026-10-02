@@ -587,6 +587,7 @@ class PermissionCatalog
             'economat.categories.supprimer' => ['econome'],
             'economat.categories.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.control.suggestions.creer' => ['econome'],
+            'economat.count_sheets.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
             'economat.control.variances.voir' => ['controller', 'econome', 'manager'],
             'economat.control.voir' => ['controller', 'econome', 'manager'],

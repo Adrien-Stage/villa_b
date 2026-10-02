@@ -657,6 +657,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
             Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
 
+            // Fiches de comptage par service (inventaire général)
+            Route::get('/fiches-comptage', [$eco . 'CountSheetController', 'index'])->name('count_sheets.index');
+            Route::get('/fiches-comptage/imprimer', [$eco . 'CountSheetController', 'print'])->name('count_sheets.print');
+
             // Inventaires physiques & PV d'écarts
             Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');
             Route::get('/inventaires/nouveau', [$eco . 'StockCountController', 'create'])->name('stock_counts.create');

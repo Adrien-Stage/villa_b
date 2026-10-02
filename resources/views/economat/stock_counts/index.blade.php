@@ -27,6 +27,14 @@
         </p>
     </div>
 
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+    @droit('economat.count_sheets.voir')
+        <a href="{{ route('economat.count_sheets.index') }}"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            Fiches de comptage
+        </a>
+    @enddroit
     @droit('economat.stock_counts.creer')
         @if(!$openCount)
             <a href="{{ route('economat.stock_counts.create') }}"
@@ -36,6 +44,7 @@
             </a>
         @endif
     @enddroit
+    </div>
 </div>
 
 @include('economat.partials.flash')

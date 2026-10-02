@@ -552,6 +552,24 @@
   "quality_auditor",
   "support"
  ],
+ "economat.count_sheets.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.count_sheets.print": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.index": [
   "admin",
   "controller",
