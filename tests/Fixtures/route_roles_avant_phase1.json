@@ -913,6 +913,33 @@
   "econome",
   "storekeeper"
  ],
+ "economat.stores.destroy": [
+  "econome"
+ ],
+ "economat.stores.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.stores.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.stores.store": [
+  "econome"
+ ],
+ "economat.stores.update": [
+  "econome"
+ ],
  "economat.suppliers.destroy": [
   "econome"
  ],

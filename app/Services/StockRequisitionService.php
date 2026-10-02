@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
+use App\Models\ServiceStoreMovement;
 use App\Models\ShopProduct;
 use App\Models\StockCount;
 use App\Models\StockItem;
@@ -24,11 +25,15 @@ class StockRequisitionService
 {
     private RestaurantStockService $restaurantStock;
 
+    private ServiceStoreService $serviceStores;
+
     public function __construct(
         private StockService $stock,
-        ?RestaurantStockService $restaurantStock = null
+        ?RestaurantStockService $restaurantStock = null,
+        ?ServiceStoreService $serviceStores = null
     ) {
         $this->restaurantStock = $restaurantStock ?? app(RestaurantStockService::class);
+        $this->serviceStores = $serviceStores ?? app(ServiceStoreService::class);
     }
 
     public function approve(StockRequisition $requisition, ?string $notes = null): void
@@ -103,7 +108,7 @@ class StockRequisitionService
                 throw new \RuntimeException('La demande doit être validée avant d\'être livrée.');
             }
 
-            $requisition->load('lines.item');
+            $requisition->load('lines.item', 'serviceStore');
 
             foreach ($requisition->lines as $line) {
                 if (!$line->item) {
@@ -132,8 +137,20 @@ class StockRequisitionService
 
                 $line->update(['quantity_issued' => $qty]);
 
-                // Transfert vers le sous-stock du département de destination
-                if ($requisition->department === 'restaurant') {
+                // Transfert vers le sous-stock du département de destination.
+                // Un dépôt désigné l'emporte : le bar relève du restaurant, mais
+                // ce qu'on lui livre entre dans son dépôt, pas au garde-manger.
+                if ($requisition->serviceStore !== null) {
+                    $this->serviceStores->receive(
+                        $requisition->serviceStore,
+                        $line->item,
+                        $qty,
+                        (int) $movement->unit_cost,
+                        ServiceStoreMovement::SOURCE_REQUISITION,
+                        $requisition->id,
+                        "Livraison économat — demande {$requisition->number}"
+                    );
+                } elseif ($requisition->department === 'restaurant') {
                     $this->creditRestaurantPantry($line->item, $qty, (int) $movement->unit_cost, $requisition);
                 } elseif ($requisition->department === 'boutique') {
                     $this->creditShopProduct($line->item, $qty);

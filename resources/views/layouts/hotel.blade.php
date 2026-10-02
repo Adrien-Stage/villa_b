@@ -481,6 +481,9 @@
                             @droit('economat.categories.voir')
                                 <x-sidebar-link route="economat.categories.index" icon="tags">Catégories</x-sidebar-link>
                             @enddroit
+                            @droit('economat.stores.voir')
+                                <x-sidebar-link route="economat.stores.index" icon="warehouse">Dépôts de service</x-sidebar-link>
+                            @enddroit
                             <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
                             @droit('economat.purchase_requests.voir')
                                 <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>

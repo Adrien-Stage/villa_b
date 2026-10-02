@@ -38,18 +38,31 @@
         {{-- Cadre Informations du Bon --}}
         <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-5 shadow-sm">
             <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Service émetteur & Motif</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                 x-data="{ service: @js(old('department', array_key_first($departments))), depots: @js($stores), depot: @js(old('service_store_id', '')) }">
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 mb-1.5">
+                    <label for="requisition-service" class="block text-xs font-semibold text-primary/70 mb-1.5">
                         Service émetteur <span class="text-red-500">*</span>
                     </label>
-                    <select name="department" required
+                    <select id="requisition-service" name="department" required x-model="service" @change="depot = ''"
                         class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                         @foreach($departments as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                     <p class="text-[10px] text-primary/50 mt-1">Sélectionnez le service rattaché à ce besoin.</p>
+                </div>
+
+                <div x-show="depots.some(d => d.department === service)" x-cloak>
+                    <label for="requisition-depot" class="block text-xs font-semibold text-primary/70 mb-1.5">Dépôt destinataire</label>
+                    <select id="requisition-depot" name="service_store_id" x-model="depot"
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="">Aucun dépôt</option>
+                        <template x-for="d in depots.filter(d => d.department === service)" :key="d.id">
+                            <option :value="d.id" x-text="d.name" :selected="String(d.id) === String(depot)"></option>
+                        </template>
+                    </select>
+                    <p class="text-[10px] text-primary/50 mt-1">Les articles entreront dans le stock de ce dépôt et seront comptés à son inventaire.</p>
                 </div>
 
                 <div>

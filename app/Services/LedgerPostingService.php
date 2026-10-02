@@ -518,6 +518,13 @@ class LedgerPostingService
                 ? $requisitions->get($mouvement->source_id)
                 : null;
 
+            // Livré à un dépôt de service : même article, même compte de
+            // stock, seul le lieu change. La charge naîtra à l'inventaire du
+            // dépôt, qui révèle ce qui a été consommé.
+            if ($requisition?->service_store_id !== null) {
+                continue;
+            }
+
             // Le stock change de magasin, il ne se consomme pas : la charge
             // naîtra à la sortie du garde-manger (coût matière).
             if ($requisition?->department === 'restaurant') {

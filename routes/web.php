@@ -609,6 +609,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/categories/{category}', [$eco . 'StockCategoryController', 'update'])->whereNumber('category')->name('categories.update');
             Route::delete('/categories/{category}', [$eco . 'StockCategoryController', 'destroy'])->whereNumber('category')->name('categories.destroy');
 
+            // Dépôts de service (étages, mini-bar, bar, pâtisserie…)
+            Route::get('/depots', [$eco . 'ServiceStoreController', 'index'])->name('stores.index');
+            Route::post('/depots', [$eco . 'ServiceStoreController', 'store'])->name('stores.store');
+            Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')->name('stores.show');
+            Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')->name('stores.update');
+            Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')->name('stores.destroy');
+
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
             Route::post('/fournisseurs', [$eco . 'SupplierController', 'store'])->name('suppliers.store');
