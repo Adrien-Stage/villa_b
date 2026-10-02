@@ -32,30 +32,48 @@ class StockRequisitionService
 
     public function approve(StockRequisition $requisition, ?string $notes = null): void
     {
-        if (!$requisition->canBeReviewed()) {
-            throw new \RuntimeException('Cette demande a déjà été traitée.');
-        }
+        DB::transaction(function () use ($requisition, $notes) {
+            $requisition = $this->lockForReview($requisition);
 
-        $requisition->update([
-            'status'       => StockRequisition::STATUS_APPROVED,
-            'review_notes' => $notes,
-            'reviewed_by'  => auth()->id(),
-            'reviewed_at'  => now(),
-        ]);
+            $requisition->update([
+                'status'       => StockRequisition::STATUS_APPROVED,
+                'review_notes' => $notes,
+                'reviewed_by'  => auth()->id(),
+                'reviewed_at'  => now(),
+            ]);
+        });
+
+        // L'appelant garde son instance : on lui rend l'état écrit sous verrou.
+        $requisition->refresh();
     }
 
     public function reject(StockRequisition $requisition, ?string $notes = null): void
     {
+        DB::transaction(function () use ($requisition, $notes) {
+            $requisition = $this->lockForReview($requisition);
+
+            $requisition->update([
+                'status'       => StockRequisition::STATUS_REJECTED,
+                'review_notes' => $notes,
+                'reviewed_by'  => auth()->id(),
+                'reviewed_at'  => now(),
+            ]);
+        });
+
+        // L'appelant garde son instance : on lui rend l'état écrit sous verrou.
+        $requisition->refresh();
+    }
+
+    /** Relit la demande sous verrou : deux validations simultanées se suivent. */
+    private function lockForReview(StockRequisition $requisition): StockRequisition
+    {
+        $requisition = StockRequisition::query()->lockForUpdate()->findOrFail($requisition->id);
+
         if (!$requisition->canBeReviewed()) {
             throw new \RuntimeException('Cette demande a déjà été traitée.');
         }
 
-        $requisition->update([
-            'status'       => StockRequisition::STATUS_REJECTED,
-            'review_notes' => $notes,
-            'reviewed_by'  => auth()->id(),
-            'reviewed_at'  => now(),
-        ]);
+        return $requisition;
     }
 
     /**
@@ -67,11 +85,17 @@ class StockRequisitionService
      */
     public function deliver(StockRequisition $requisition, array $issued = []): void
     {
-        if (!$requisition->canBeDelivered()) {
-            throw new \RuntimeException('La demande doit être validée avant d\'être livrée.');
-        }
-
         DB::transaction(function () use ($requisition, $issued) {
+            // Verrou sur la demande : un double clic livrerait deux fois et
+            // déstockerait deux fois. Le statut se relit sous verrou.
+            $requisition = StockRequisition::query()->lockForUpdate()->findOrFail($requisition->id);
+
+            if (!$requisition->canBeDelivered()) {
+                throw new \RuntimeException('La demande doit être validée avant d\'être livrée.');
+            }
+
+            $requisition->load('lines.item');
+
             foreach ($requisition->lines as $line) {
                 if (!$line->item) {
                     continue;
@@ -112,6 +136,8 @@ class StockRequisitionService
                 'delivered_at' => now(),
             ]);
         });
+
+        $requisition->refresh();
     }
 
     /**
@@ -193,18 +219,38 @@ class StockRequisitionService
 
     /**
      * Incrémente le stock de la boutique si un produit correspondant existe.
+     *
+     * La référence de l'article (= SKU du produit) fait foi avant le nom, qui
+     * peut varier d'un module à l'autre. Sans produit correspondant, la
+     * livraison est une fourniture consommée par la boutique (sacs, tickets…)
+     * et n'entre dans aucun stock de vente.
      */
     protected function creditShopProduct(StockItem $stockItem, float $qty): void
     {
-        $trimmedName = trim($stockItem->name);
-        $product = ShopProduct::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
+        $product = null;
 
-        if (!$product && !empty($stockItem->code)) {
-            $product = ShopProduct::where('sku', $stockItem->code)->first();
+        if (!empty($stockItem->reference)) {
+            $product = ShopProduct::where('sku', $stockItem->reference)->first();
         }
 
-        if ($product) {
-            $product->increment('stock_quantity', (int) round($qty));
+        if (!$product) {
+            $trimmedName = trim($stockItem->name);
+            $product = ShopProduct::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
         }
+
+        if (!$product) {
+            return;
+        }
+
+        // La boutique compte en unités entières : arrondir ferait apparaître
+        // ou disparaître de la marchandise entre les deux stocks.
+        if (abs($qty - round($qty)) > 0.0005) {
+            throw new \RuntimeException(
+                "« {$stockItem->name} » se vend à l'unité en boutique : "
+                . "servez une quantité entière ({$qty} {$stockItem->unit} demandé(s))."
+            );
+        }
+
+        $product->increment('stock_quantity', (int) round($qty));
     }
 }

@@ -89,7 +89,8 @@ class StockCountService
         }
 
         return DB::transaction(function () use ($stockCount, $linesData) {
-            $stockCount->loadMissing('lines.item');
+            $stockCount = $this->lockDraft($stockCount);
+            $stockCount->load('lines.item');
 
             $totalCountedValue = 0;
             $totalVariance = 0;
@@ -166,9 +167,12 @@ class StockCountService
             throw new RuntimeException("Cet inventaire est déjà clôturé.");
         }
 
-        $stockCount->loadMissing('lines.item');
-
         return DB::transaction(function () use ($stockCount, $user) {
+            // Une clôture rejouée appliquerait deux fois les ajustements ; une
+            // feuille annulée ne doit jamais toucher au stock.
+            $stockCount = $this->lockDraft($stockCount);
+            $stockCount->load('lines.item');
+
             $totalCountedValue = 0;
             $totalVariance = 0;
             $totalLoss = 0;
@@ -245,8 +249,27 @@ class StockCountService
             throw new RuntimeException("Un inventaire clôturé ne peut pas être annulé.");
         }
 
-        $stockCount->update([
-            'status' => StockCount::STATUS_CANCELLED,
-        ]);
+        DB::transaction(function () use ($stockCount) {
+            $this->lockDraft($stockCount)->update([
+                'status' => StockCount::STATUS_CANCELLED,
+            ]);
+        });
+
+        $stockCount->refresh();
+    }
+
+    /**
+     * Relit la feuille sous verrou et exige qu'elle soit encore en cours de
+     * comptage : seul un brouillon se modifie, se clôture ou s'annule.
+     */
+    private function lockDraft(StockCount $stockCount): StockCount
+    {
+        $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
+
+        if (!$stockCount->isDraft()) {
+            throw new RuntimeException("L'inventaire {$stockCount->reference} n'est plus en cours de comptage.");
+        }
+
+        return $stockCount;
     }
 }

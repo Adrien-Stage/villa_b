@@ -194,7 +194,9 @@ class PurchaseOrder extends Model
 
     /**
      * Statut déduit de l'avancement des réceptions : soldé si toutes les
-     * lignes sont servies, partiel dès qu'une quantité est arrivée.
+     * lignes sont servies, partiel dès qu'une quantité est arrivée. Après
+     * l'annulation de toutes ses réceptions, le bon redevient « envoyé » :
+     * il attend encore sa livraison.
      */
     public function refreshReceptionStatus(): void
     {
@@ -205,10 +207,19 @@ class PurchaseOrder extends Model
         );
         $anyReceived = $lines->contains(fn (PurchaseOrderLine $l) => (float) $l->quantity_received > 0);
 
+        $wasReceiving = in_array($this->status, [self::STATUS_RECEIVED, self::STATUS_PARTIALLY_RECEIVED], true);
+
+        $status = match (true) {
+            $fullyReceived => self::STATUS_RECEIVED,
+            $anyReceived   => self::STATUS_PARTIALLY_RECEIVED,
+            $wasReceiving  => self::STATUS_SENT,
+            default        => $this->status,
+        };
+
         $this->update([
-            'status'      => $fullyReceived ? self::STATUS_RECEIVED
-                            : ($anyReceived ? self::STATUS_PARTIALLY_RECEIVED : $this->status),
-            'received_at' => $fullyReceived ? now() : $this->received_at,
+            'status'      => $status,
+            // La date de réception complète ne vaut que pour un bon soldé.
+            'received_at' => $fullyReceived ? ($this->received_at ?? now()) : null,
         ]);
     }
 

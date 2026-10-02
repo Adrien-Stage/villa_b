@@ -118,6 +118,58 @@ class StockService
     }
 
     /**
+     * Contre-passation d'une entrée (annulation de réception).
+     *
+     * La sortie se fait au coût de l'entrée annulée, pas au CUMP : on retire
+     * du stock exactement la valeur qu'on y avait ajoutée, et le CUMP revient
+     * à ce qu'il aurait été sans cette réception. Sortir au CUMP laisserait
+     * le prix du lot annulé dilué dans le coût des articles restants.
+     */
+    public function reverseIn(
+        StockItem $item,
+        float $quantity,
+        int $unitCost,
+        string $sourceType,
+        ?int $sourceId = null,
+        ?string $reason = null
+    ): StockMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
+        }
+
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+
+            // Ce qui a déjà été consommé ne peut pas être rendu au fournisseur.
+            if ((float) $item->current_stock < $quantity) {
+                throw new \RuntimeException(
+                    "Stock insuffisant pour contre-passer « {$item->name} » : "
+                    . "{$item->current_stock} {$item->unit} disponible(s), {$quantity} à retirer. "
+                    . 'Une partie a déjà été servie.'
+                );
+            }
+
+            $currentQty = (float) $item->current_stock;
+            $remainingQty = $currentQty - $quantity;
+            $remainingValue = $currentQty * $item->average_cost - $quantity * $unitCost;
+
+            // Si les sorties intermédiaires ont été valorisées plus haut que le
+            // lot annulé, la valeur restante peut devenir négative : un coût
+            // négatif n'a pas de sens, on le borne à zéro.
+            $newAverage = $remainingQty > 0
+                ? max(0, (int) round($remainingValue / $remainingQty))
+                : $item->average_cost;
+
+            $item->update([
+                'current_stock' => $remainingQty,
+                'average_cost'  => $newAverage,
+            ]);
+
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason);
+        });
+    }
+
+    /**
      * Ajustement d'inventaire : fixe le stock à une quantité constatée. Sert à
      * caler la base sur un comptage physique. Positif ou négatif selon l'écart.
      */

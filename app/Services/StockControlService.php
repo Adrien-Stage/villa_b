@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestLine;
@@ -13,7 +14,7 @@ use App\Models\RestaurantWasteLog;
 use App\Models\StockCountLine;
 use App\Models\StockItem;
 use App\Models\StockMovement;
-use App\Models\StockRequisitionLine;
+use App\Models\StockRequisition;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -348,24 +349,30 @@ class StockControlService
         $variances = $this->getInventoryVariancesSummary($start, $end, $tenantId);
         $alerts = $this->getLowStockAlerts($tenantId);
 
-        // Achats reçus sur la période
-        $goodsReceiptsLines = GoodsReceiptLine::query()
+        // Achats reçus sur la période : valeur acceptée des bons d'entrée non
+        // annulés. Une réception annulée n'a jamais enrichi le stock.
+        $totalPurchasesReceived = (int) GoodsReceiptLine::query()
             ->whereHas('receipt', function ($q) use ($start, $end, $tenantId) {
-                $q->whereBetween('received_at', [$start, $end])
+                $q->where('status', GoodsReceipt::STATUS_RECEIVED)
+                  ->whereBetween('received_at', [$start, $end])
                   ->when($tenantId, fn ($tq) => $tq->where('tenant_id', $tenantId));
             })
-            ->get();
-        $totalPurchasesReceived = (int) $goodsReceiptsLines->sum('total_price');
+            ->sum('total_cost');
 
-        // Réquisitions livrées aux départements
-        $requisitionsLines = StockRequisitionLine::query()
-            ->whereHas('requisition', function ($q) use ($start, $end, $tenantId) {
-                $q->where('status', 'delivered')
-                  ->whereBetween('delivered_at', [$start, $end])
-                  ->when($tenantId, fn ($tq) => $tq->where('tenant_id', $tenantId));
-            })
-            ->get();
-        $totalRequisitionsDelivered = (int) $requisitionsLines->sum('total_cost');
+        // Réquisitions livrées aux départements : la ligne de demande ne porte
+        // pas de coût, la valeur servie est celle des sorties de stock au CUMP.
+        $deliveredRequisitionIds = StockRequisition::query()
+            ->where('status', StockRequisition::STATUS_DELIVERED)
+            ->whereBetween('delivered_at', [$start, $end])
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->pluck('id');
+
+        $totalRequisitionsDelivered = (int) StockMovement::query()
+            ->where('source_type', StockMovement::SOURCE_REQUISITION)
+            ->where('type', StockMovement::TYPE_OUT)
+            ->whereIn('source_id', $deliveredRequisitionIds)
+            ->get(['quantity', 'unit_cost'])
+            ->sum(fn (StockMovement $m) => (int) round(abs((float) $m->quantity) * $m->unit_cost));
 
         // Pertes restaurant
         $wasteLogs = RestaurantWasteLog::query()

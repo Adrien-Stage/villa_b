@@ -75,6 +75,16 @@ class PurchaseOrderService
         }
 
         DB::transaction(function () use ($order, $received) {
+            // Verrou sur le bon : deux réceptions simultanées liraient le même
+            // reste dû et pourraient, ensemble, dépasser la quantité commandée.
+            $order = PurchaseOrder::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (!$order->canBeReceived()) {
+                throw new \RuntimeException('Ce bon ne peut pas être réceptionné dans son état actuel.');
+            }
+
+            $order->load('lines.item');
+
             foreach ($order->lines as $line) {
                 $qty = (float) ($received[$line->id] ?? 0);
                 if ($qty <= 0) {
@@ -105,5 +115,7 @@ class PurchaseOrderService
             $order->update(['received_by' => auth()->id()]);
             $order->refreshReceptionStatus();
         });
+
+        $order->refresh();
     }
 }
