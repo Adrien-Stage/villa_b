@@ -110,6 +110,15 @@
         <div class="px-4 py-4 border-t border-secondary/15 bg-accent/10 space-y-3">
             @undroit('restaurant.billing.paid', 'restaurant.billing.unpaid')
             @if($order->payment_status !== 'paid')
+                @unless($caisse)
+                    {{-- Sans caisse ouverte, seule la facturation sur la chambre passe. --}}
+                    <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        Aucune caisse ouverte : seule la facturation sur la chambre est possible.
+                        @droit('restaurant.cash_register.open.creer')
+                            <a href="{{ route('restaurant.cash_register.open') }}" class="font-semibold underline">Ouvrir ma caisse</a>
+                        @enddroit
+                    </p>
+                @endunless
                 <form method="POST" action="{{ route('restaurant.billing.paid', $order) }}" class="space-y-2">
                     @csrf
                     <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45">Methode de paiement</label>

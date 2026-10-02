@@ -104,6 +104,8 @@ class RestaurantCustomerOrder extends Model
         'served_at',
         'paid_at',
         'paid_by',
+        'cash_register_session_id',
+        'point_of_sale_id',
         'stock_deducted_at',
         'food_cost',
     ];

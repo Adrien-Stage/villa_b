@@ -26,8 +26,11 @@ class CashClosurePolicy
     /** Le témoin des comptages, partout : la comptabilité. */
     public const WITNESS_ACCOUNTANT = 'comptabilite';
 
-    /** Caisses soumises au comptage contradictoire. */
-    public const MODULES = ['reception', 'shop'];
+    /**
+     * Caisses soumises au comptage contradictoire : toutes. La réception, la
+     * boutique et chaque restaurant suivent le même circuit.
+     */
+    public const MODULES = ['reception', 'shop', 'restaurant'];
 
     /**
      * Rôles habilités à contresigner. Le responsable administratif et

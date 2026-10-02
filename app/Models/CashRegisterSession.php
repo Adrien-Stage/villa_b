@@ -10,6 +10,7 @@ class CashRegisterSession extends Model
     protected $fillable = [
         'user_id',
         'module',
+        'point_of_sale_id',
         'status',
         'opened_at',
         'closed_at',
@@ -55,15 +56,20 @@ class CashRegisterSession extends Model
     {
         $total = (int) $this->opening_amount;
 
-        $total += $this->module === 'shop'
-            ? (int) $this->shopOrders()
+        $total += match ($this->module) {
+            'shop' => (int) $this->shopOrders()
                 ->where('payment_method', 'cash')
                 ->where('payment_status', 'paid')
-                ->sum('total_amount')
-            : (int) $this->payments()
+                ->sum('total_amount'),
+            'restaurant' => (int) $this->restaurantOrders()
+                ->where('payment_method', 'cash')
+                ->where('payment_status', 'paid')
+                ->sum('amount_paid'),
+            default => (int) $this->payments()
                 ->where('method', 'cash')
                 ->where('status', 'completed')
-                ->sum('amount');
+                ->sum('amount'),
+        };
 
         return $total - (int) $this->disbursements()->sum('amount');
     }
@@ -81,6 +87,17 @@ class CashRegisterSession extends Model
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /** La caisse — le point de vente — que tient cette session. */
+    public function pointOfSale()
+    {
+        return $this->belongsTo(PointOfSale::class);
+    }
+
+    public function restaurantOrders()
+    {
+        return $this->hasMany(RestaurantCustomerOrder::class);
     }
 
     public function shopOrders()

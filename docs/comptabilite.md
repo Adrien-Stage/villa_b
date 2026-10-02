@@ -30,15 +30,34 @@ le montant réellement compté.
 > d'autre que sa cohérence ; un écart récurrent sur une même personne ou un même
 > service est un signal exploitable.
 
-### Deux caisses indépendantes
+### Trois caisses, un seul circuit
 
 | Module | Rôles | Routes |
 |---|---|---|
-| `reception` | `reception`, `cashier`, `manager` | `/bookings/cash-register/*` |
-| `shop` | `shop_manager`, `shop_cashier` | `/shop/cash-register/*` |
+| `reception` | `reception` (et son chef), `manager` | `/bookings/cash-register/*` |
+| `shop` | `shop_cashier`, `shop_manager` | `/shop/cash-register/*` |
+| `restaurant` | `cashier`, ou `restaurant_manager` s'il le faut | `/restaurant/cash-register/*` |
 
-Elles sont totalement séparées : une caisse boutique ouverte ne débloque pas les
-actions de réception.
+Le circuit est le même partout ([`CashRegisterCircuit`](../app/Services/CashRegisterCircuit.php)) :
+ouverture avec un fond, encaissements rattachés à la session, comptage par son
+titulaire — la caisse cesse alors d'encaisser —, contresignature de la comptabilité
+qui seule la clôt et constate l'écart.
+
+Les caisses sont séparées : une caisse boutique ouverte ne débloque pas les actions de
+réception.
+
+**Une caisse par restaurant.** Chaque session désigne son point de vente
+(`point_of_sale_id`) : pour un restaurant, sa caisse. Avec plusieurs restaurants, on
+choisit la sienne à l'ouverture.
+
+**Une session par personne.** Chacun compte ce qu'il a encaissé : une personne n'a
+qu'une session en cours par caisse, et un tiroir de restaurant n'a qu'une session
+ouverte à la fois — la suivante attend que la précédente soit comptée. Un comptage en
+attente de contrôle empêche son titulaire d'en ouvrir une nouvelle.
+
+Au restaurant, tout encaissement d'une note passe par la caisse ouverte de celui qui
+encaisse ; la facturation sur la chambre n'en demande pas (le folio la porte). Un
+encaissement ne s'annule que dans sa propre caisse, tant qu'elle n'est pas comptée.
 
 ### Le verrou
 

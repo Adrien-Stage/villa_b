@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Auth;
 /**
  * Contrôle contradictoire des comptages de caisse.
  *
- * Un seul écran pour les deux caisses — réception et boutique : le tiers qui
- * contrôle est le même personne, et lui demander de chercher à deux endroits
- * n'aurait fait qu'encourager le contrôle bâclé.
+ * Un seul écran pour toutes les caisses — réception, boutique, chaque
+ * restaurant : le tiers qui contrôle est la même personne, et lui demander de
+ * chercher à plusieurs endroits n'aurait fait qu'encourager le contrôle bâclé.
  */
 class CashClosureReviewController extends Controller
 {
@@ -25,7 +25,7 @@ class CashClosureReviewController extends Controller
         $enAttente = CashRegisterSession::query()
             ->where('status', CashClosurePolicy::STATUS_PENDING_REVIEW)
             ->whereNull('closed_at')
-            ->with('user')
+            ->with(['user', 'pointOfSale'])
             ->orderBy('updated_at')
             ->get();
 
@@ -69,7 +69,7 @@ class CashClosureReviewController extends Controller
             'cash_closure_review',
             sprintf(
                 'Comptage de la caisse %s de %s contresigné — théorique %s, compté %s, écart %s FCFA',
-                $session->module,
+                \App\Services\CashRegisterCircuit::libelle($session),
                 $session->user?->name ?? 'agent inconnu',
                 number_format($session->theoretical_closing_amount / 100, 0, ',', ' '),
                 number_format($session->actual_closing_amount / 100, 0, ',', ' '),

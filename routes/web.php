@@ -455,12 +455,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
         Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
+
+        // Caisse du restaurant : une par restaurant, une session par personne.
+        Route::get('/cash-register', [App\Http\Controllers\RestaurantCashRegisterController::class, 'index'])->name('cash_register.index');
+        Route::get('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
+        Route::get('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
     });
 
     // Écriture facturation — manager exclu
     Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
         Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
+
+        Route::post('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'open'])->name('cash_register.open.store');
+        Route::post('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'close'])->name('cash_register.close.store');
+        Route::post('/cash-register/disbursements', [App\Http\Controllers\RestaurantCashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
     });
 
     Route::prefix('invoices')->name('invoices.')->middleware('permission')->group(function () {
