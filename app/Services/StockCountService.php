@@ -47,7 +47,9 @@ class StockCountService
                 $query->where('stock_category_id', $categoryId);
             }
 
-            $items = $query->get();
+            // Verrou des articles : un mouvement en cours se termine avant le
+            // relevé du théorique, et le suivant verra l'inventaire ouvert.
+            $items = $query->lockForUpdate()->get();
             $totalTheoreticalValue = 0;
 
             foreach ($items as $item) {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\StockCount;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Notifications\StockItemBelowThreshold;
@@ -42,6 +43,7 @@ class StockService
             // Verrou pessimiste : deux réceptions simultanées du même article ne
             // doivent pas se baser sur le même stock de départ.
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
 
             $currentQty   = (float) $item->current_stock;
             $currentValue = $currentQty * $item->average_cost;
@@ -83,6 +85,7 @@ class StockService
 
         $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
 
             // On ne sort jamais plus que ce qui est présent : un stock négatif
             // n'a pas de sens physique et fausserait la valorisation.
@@ -139,6 +142,7 @@ class StockService
 
         return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
 
             // Ce qui a déjà été consommé ne peut pas être rendu au fournisseur.
             if ((float) $item->current_stock < $quantity) {
@@ -188,6 +192,7 @@ class StockService
 
         $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, $sourceType, $sourceId, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
             $delta = $countedQuantity - (float) $item->current_stock;
 
             if (abs($delta) < 0.0005) {
@@ -223,6 +228,30 @@ class StockService
         }
 
         return $movement;
+    }
+
+    /**
+     * Inventaire en cours : le magasin est gelé. Le théorique a été relevé à
+     * l'ouverture ; un mouvement passé pendant le comptage fausserait l'écart
+     * que la clôture va appliquer. Seule la clôture elle-même peut écrire.
+     *
+     * Vérifié sous le verrou de l'article : un inventaire ouvert pendant un
+     * mouvement attend la fin de celui-ci pour relever son théorique.
+     */
+    private function ensureStoreNotFrozen(string $sourceType): void
+    {
+        if ($sourceType === StockMovement::SOURCE_STOCK_COUNT) {
+            return;
+        }
+
+        $inventaire = StockCount::inProgress();
+
+        if ($inventaire !== null) {
+            throw new \RuntimeException(
+                "Inventaire {$inventaire->reference} en cours : aucun mouvement de stock n'est permis "
+                . "avant sa clôture ou son annulation."
+            );
+        }
     }
 
     private function log(

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\ShopProduct;
+use App\Models\StockCount;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\StockRequisition;
@@ -34,6 +35,14 @@ class StockRequisitionService
     {
         DB::transaction(function () use ($requisition, $notes) {
             $requisition = $this->lockForReview($requisition);
+
+            // Pendant un inventaire, l'économat ne s'engage pas à servir : il
+            // ne pourrait pas livrer avant la clôture.
+            if ($inventaire = StockCount::inProgress()) {
+                throw new \RuntimeException(
+                    "Inventaire {$inventaire->reference} en cours : les demandes se valident après sa clôture."
+                );
+            }
 
             $requisition->update([
                 'status'       => StockRequisition::STATUS_APPROVED,

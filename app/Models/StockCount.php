@@ -116,6 +116,16 @@ class StockCount extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    /**
+     * L'inventaire en cours de comptage, s'il y en a un. Tant qu'il existe,
+     * le magasin est gelé : aucun mouvement de stock ne doit fausser le
+     * théorique relevé à l'ouverture.
+     */
+    public static function inProgress(): ?self
+    {
+        return self::query()->draft()->latest('id')->first();
+    }
+
     public function scopeDraft(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_DRAFT);
