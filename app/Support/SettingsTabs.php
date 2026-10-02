@@ -20,7 +20,9 @@ class SettingsTabs
      * Hébergement : les deux clés suivent la même règle.
      */
     private const ONGLETS = [
-        'general' => ['manager'],
+        // L'administrateur règle l'identité et le fonctionnement général ;
+        // tarifs, prestations et services restent à la direction et aux chefs.
+        'general' => ['manager', 'admin'],
         'hebergement' => ['manager', 'reception_chief'],
         'reception' => ['manager', 'reception_chief'],
         'taxes' => ['manager', 'reception_chief'],

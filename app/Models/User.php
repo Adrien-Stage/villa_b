@@ -438,11 +438,17 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie les permissions de niveau admin (cross-tenants)
+     * L'administrateur de l'établissement — son service informatique.
      */
     public function isAdmin(): bool
     {
         return $this->hasRole(self::ROLE_ADMIN);
+    }
+
+    /** Le compte technique du support de l'éditeur (mode assistance). */
+    public function isSupport(): bool
+    {
+        return $this->hasRole(\App\Support\RoleCatalog::SUPPORT);
     }
 
     /**

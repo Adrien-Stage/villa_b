@@ -241,6 +241,13 @@ class PermissionCatalog
         'users.creer',
         'users.modifier',
         'users.toggleStatus',
+        // Administration : rôles et droits de l'hôtel, interventions.
+        'droits.apercu',
+        'droits.exceptions.creer',
+        'droits.exceptions.supprimer',
+        'droits.modifier',
+        'interventions.creer',
+        'interventions.terminer',
     ];
 
     /** Ce droit laisse-t-il seulement consulter ? */
@@ -285,11 +292,22 @@ class PermissionCatalog
     ];
 
     /**
+     * Paramètres de l'établissement que l'administrateur règle : l'onglet
+     * Général seulement (SettingsTabs borne chaque onglet). Tarifs,
+     * prestations et partenaires restent des décisions de la direction.
+     */
+    private const PARAMETRES = ['settings.modifier'];
+
+    /**
      * Les comptes du personnel, que l'administrateur crée et tient. Avec la
      * configuration, ce sont ses seules écritures : il administre
      * l'application, il ne tient aucun service.
      */
-    private const ADMINISTRATION = ['users.creer', 'users.modifier', 'users.toggleStatus'];
+    private const ADMINISTRATION = [
+        'users.creer', 'users.modifier', 'users.toggleStatus',
+        'droits.modifier', 'droits.apercu', 'droits.exceptions.creer', 'droits.exceptions.supprimer',
+        'interventions.creer', 'interventions.terminer',
+    ];
 
     /**
      * Services que l'auditeur qualité consulte pour ses contrôles : fiches de
@@ -331,6 +349,7 @@ class PermissionCatalog
      *  - l'administrateur consulte tout, règle la configuration et tient
      *    les comptes. Il n'écrit rien de métier : il administre
      *    l'application, il ne tient aucun service ;
+     *  - le support de l'éditeur consulte tout, sans rien extraire ;
      *  - l'auditeur qualité consulte les services d'exploitation.
      *
      * @param  array<string, list<string>>  $gabarit
@@ -345,6 +364,12 @@ class PermissionCatalog
 
             if (self::estLecture($droit) || in_array($droit, self::ecrituresDeLAdministrateur(), true)) {
                 $roles[] = RoleCatalog::ADMIN;
+            }
+
+            // Le support diagnostique : il consulte, sans extraire de fichier
+            // ni écrire.
+            if (self::estLecture($droit) && !str_ends_with($droit, '.export')) {
+                $roles[] = RoleCatalog::SUPPORT;
             }
 
             if (self::pourAuditQualite($droit)) {
@@ -411,7 +436,7 @@ class PermissionCatalog
     /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
     public static function ecrituresDeLAdministrateur(): array
     {
-        return [...self::CONFIGURATION, ...self::ADMINISTRATION];
+        return [...self::CONFIGURATION, ...self::PARAMETRES, ...self::ADMINISTRATION];
     }
 
     /**
@@ -699,6 +724,22 @@ class PermissionCatalog
             'reception.pos.voir' => ['controller', 'manager', 'reception'],
 
             // ── Utilisateurs ──
+            // ── Administration ──
+            // L'administrateur (ajouté par completer()) règle la couche de
+            // l'hôtel, déclare ses interventions et lit le journal. Le contrôle
+            // de gestion consulte droits et journal ; la direction suit les
+            // interventions et les sessions du support.
+            'droits.voir' => ['controller'],
+            'droits.apercu' => [],
+            'droits.modifier' => [],
+            'droits.exceptions.creer' => [],
+            'droits.exceptions.supprimer' => [],
+            'interventions.voir' => ['manager'],
+            'interventions.creer' => [],
+            'interventions.terminer' => [],
+            'audit.voir' => ['controller'],
+            'support.sessions.voir' => ['manager'],
+
             'users.creer' => ['manager'],
             'users.modifier' => ['manager'],
             'users.toggleStatus' => ['manager'],

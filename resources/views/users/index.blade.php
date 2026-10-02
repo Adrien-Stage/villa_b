@@ -200,6 +200,10 @@
                 </div>
 
                 <div class="col-span-2 flex items-center justify-end gap-2">
+                    <a href="{{ route('users.show', $staff) }}"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
+                        <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Fiche
+                    </a>
                     <button type="button"
                         onclick="openEditModal('{{ $staff->id }}')"
                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
@@ -269,6 +273,10 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <a href="{{ route('users.show', $staff) }}"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
+                    <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Fiche
+                </a>
                 <button type="button"
                     onclick="openEditModal('{{ $staff->id }}')"
                     class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">

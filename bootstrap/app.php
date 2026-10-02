@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // se contente de signaler ce qui dépasse le délai de l'Article 22.
         $schedule->command('ledger:lock-periods')
             ->monthlyOn(5, '06:00');
+
+        // Interventions de l'administrateur : clôture des échues et trace
+        // vers la console, rattrapée si elle était injoignable.
+        $schedule->command('interventions:transmettre')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
@@ -37,7 +43,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureRoleAccess::class,
             // Garde par droit module.action, résolu depuis le nom de la route.
             'permission' => \App\Http\Middleware\EnsurePermission::class,
-            'admin' => \App\Http\Middleware\AdminOnly::class,
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
             'module.access' => \App\Http\Middleware\EnsureModuleWriteAccess::class,
             'caisse' => \App\Http\Middleware\EnsureCashRegisterOpen::class,

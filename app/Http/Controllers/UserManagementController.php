@@ -126,6 +126,45 @@ class UserManagementController extends Controller
         ]);
     }
 
+    /**
+     * Fiche d'un membre du personnel : ses rôles, son périmètre, ses
+     * exceptions, et ce que le moteur de droits lui accorde réellement.
+     */
+    public function show(User $user): View
+    {
+        // La portée de users.voir borne aussi la fiche : un chef de service ne
+        // consulte pas le dossier de ceux qu'il n'encadre pas.
+        $visible = User::query()->whereKey($user->id)
+            ->tap(fn ($q) => \App\Support\DepartmentScoping::apply($q, Auth::user(), 'users.voir', 'department_id', 'id'))
+            ->exists();
+        abort_unless($visible, 404);
+
+        $user->load(['roles', 'department']);
+        $resolveur = app(\App\Services\PermissionResolver::class);
+
+        $droitsParModule = [];
+        foreach (array_keys(\App\Support\PermissionCatalog::all()) as $droit) {
+            if ($resolveur->allows($user, $droit)) {
+                $droitsParModule[explode('.', $droit)[0]][] = $droit;
+            }
+        }
+        ksort($droitsParModule);
+
+        return view('users.show', [
+            'membre' => $user,
+            'droitsParModule' => $droitsParModule,
+            'ecritures' => array_flip(\App\Support\PermissionCatalog::ecritures()),
+            'portees' => collect(\App\Support\PermissionScope::DROITS_BORNES)
+                ->mapWithKeys(fn ($d) => [$d => \App\Support\PermissionScope::libelle($resolveur->scopeFor($user, $d))])->all(),
+            'exceptions' => \App\Models\PermissionGrant::query()->enVigueur()
+                ->where('subject_type', \App\Models\PermissionGrant::SUJET_USER)
+                ->where('subject_id', (string) $user->id)->orderBy('permission')->get(),
+            'restrictions' => $user->modulePermissions()->whereIn('access_level', ['none', 'read'])->get(),
+            'cumuls' => DutySegregation::conflictsFor($user->rolesDetenus()),
+            'catalogue' => array_keys(\App\Support\PermissionCatalog::all()),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $manager = Auth::user();

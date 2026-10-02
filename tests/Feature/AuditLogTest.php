@@ -48,115 +48,56 @@ test('failed login attempts record an audit log', function () {
 });
 
 test('access denied is recorded in audit logs', function () {
-    $this->seed(\Database\Seeders\RoleSeeder::class);
-    
-    $tenant = Tenant::create([
-        'name' => 'Villa Boutanga',
-        'slug' => 'villa-boutanga',
-        'currency' => 'XAF',
-        'is_active' => true]);
+    \App\Support\RoleCatalog::sync();
 
-    $manager = User::factory()->create([
-        'role' => 'manager',
-        'is_active' => true]);
-    
-    $this->actingAs($manager);
+    $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+    $manager->roles()->sync(\App\Models\Role::where('slug', 'manager')->pluck('id'));
 
-    // Access admin route which calls AdminOnly middleware
-    $response = $this->get('/admin/dashboard');
-    $response->assertStatus(403);
+    // Le journal d'audit relève de l'administrateur et du contrôle.
+    $this->actingAs($manager)->get(route('audit.index'));
 
     $log = AuditLog::where('event_type', 'access_denied')->first();
-    expect($log)->not->toBeNull();
-    expect($log->module)->toBe('security');
-    expect($log->user_id)->toBe($manager->id);
+    expect($log)->not->toBeNull()
+        ->and($log->module)->toBe('security')
+        ->and($log->user_id)->toBe($manager->id);
 });
 
-test('admin can toggle user status and reset password', function () {
-    $this->seed(\Database\Seeders\RoleSeeder::class);
-    
-    $tenant = Tenant::create([
-        'name' => 'Villa Boutanga',
-        'slug' => 'villa-boutanga',
-        'currency' => 'XAF',
-        'is_active' => true]);
+test("l'administrateur désactive un compte et le journal le garde", function () {
+    \App\Support\RoleCatalog::sync();
+    activerModules(['utilisateurs']);
 
-    $admin = User::factory()->create([
-        'role' => 'admin',
-        'is_active' => true]);
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $admin->roles()->sync(\App\Models\Role::where('slug', 'admin')->pluck('id'));
+    $staff = User::factory()->create(['role' => 'reception', 'is_active' => true]);
+    $staff->roles()->sync(\App\Models\Role::where('slug', 'reception')->pluck('id'));
 
-    $staff = User::factory()->create([
-        'role' => 'reception',
-        'is_active' => true]);
+    $this->actingAs($admin)->post(route('users.toggleStatus', $staff))->assertRedirect();
 
-    $this->actingAs($admin);
-
-    // Toggle active status
-    $response = $this->post(route('admin.users.toggle-active', $staff));
-    $response->assertRedirect();
-    
-    $staff->refresh();
-    expect($staff->is_active)->toBeFalse();
+    expect($staff->fresh()->is_active)->toBeFalse();
 
     // On cible l'événement attendu plutôt que la dernière ligne du journal :
-    // le middleware de suivi d'activité en écrit une après la réponse, et
-    // c'est elle que « latest » ramenait.
+    // le middleware de suivi d'activité en écrit une après la réponse.
     $log = AuditLog::where('event_type', 'user_management')->latest('id')->first();
-    expect($log)->not->toBeNull();
-    expect($log->action)->toContain('désactivé');
-
-    // Force password reset
-    $response = $this->post(route('admin.users.reset-password', $staff));
-    $response->assertRedirect();
-    $response->assertSessionHas('temp_password_info');
-
-    $log = AuditLog::where('event_type', 'user_management')->latest('id')->first();
-    expect($log)->not->toBeNull();
-    expect($log->action)->toContain('réinitialisé');
+    expect($log)->not->toBeNull()
+        ->and($log->action)->toContain('désactivé');
 });
 
-test('admin can filter audit logs', function () {
-    $this->seed(\Database\Seeders\RoleSeeder::class);
-    
-    $tenant1 = Tenant::create([
-        'name' => 'Villa A',
-        'slug' => 'villa-a',
-        'currency' => 'XAF',
-        'is_active' => true]);
+test("le journal d'audit se filtre par événement", function () {
+    \App\Support\RoleCatalog::sync();
 
-    $tenant2 = Tenant::create([
-        'name' => 'Villa B',
-        'slug' => 'villa-b',
-        'currency' => 'XAF',
-        'is_active' => true]);
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $admin->roles()->sync(\App\Models\Role::where('slug', 'admin')->pluck('id'));
 
-    $admin = User::factory()->create([
-        'role' => 'admin',
-        'is_active' => true]);
-    
-    AuditLog::create([
-        'user_id' => $admin->id,
-        'event_type' => 'sensitive_action',
-        'action' => 'Action on A',
-        'module' => 'bookings']);
+    AuditLog::create(['user_id' => $admin->id, 'event_type' => 'sensitive_action', 'action' => 'Action sur une réservation', 'module' => 'bookings']);
+    AuditLog::create(['user_id' => $admin->id, 'event_type' => 'login', 'action' => 'Connexion du matin', 'module' => 'auth']);
 
-    AuditLog::create([
-        'user_id' => $admin->id,
-        'event_type' => 'login',
-        'action' => 'Login action',
-        'module' => 'auth']);
+    $this->actingAs($admin)->get(route('audit.index'))
+        ->assertOk()
+        ->assertSee('Action sur une réservation')
+        ->assertSee('Connexion du matin');
 
-    $this->actingAs($admin);
-
-    // Filter by tenant
-    $response = $this->get(route('admin.dashboard', ['tab' => 'audit']));
-    $response->assertStatus(200);
-    $response->assertSee('Action on A');
-    $response->assertSee('Login action');
-
-    // Filter by event_type
-    $response = $this->get(route('admin.dashboard', ['tab' => 'audit', 'event_type' => 'login']));
-    $response->assertStatus(200);
-    $response->assertSee('Login action');
-    $response->assertDontSee('Action on A');
+    $this->get(route('audit.index', ['event_type' => 'login']))
+        ->assertOk()
+        ->assertSee('Connexion du matin')
+        ->assertDontSee('Action sur une réservation');
 });

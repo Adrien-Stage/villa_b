@@ -16,4 +16,17 @@ return [
     */
     'secret' => env('ORCHESTRATION_SECRET', ''),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Adresse de la console, vue depuis l'établissement
+    |--------------------------------------------------------------------------
+    | Nom du conteneur de la console sur le réseau Docker (http://wetchah_erp-app),
+    | injecté au provisioning. Sert à lui transmettre la trace des interventions
+    | de l'administrateur. Vide : les traces attendent, marquées non transmises.
+    */
+    'erp_url' => env('ERP_API_URL', ''),
+
+    /* Identifiant de l'établissement auprès de la console. */
+    'tenant_slug' => env('TENANT_SLUG', ''),
+
 ];

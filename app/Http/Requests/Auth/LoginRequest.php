@@ -54,7 +54,9 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if ($user && $user->isAdmin() && Hash::check($this->string('password')->toString(), $user->password)) {
+        // Le compte du support ne s'ouvre que par le mode assistance de la
+        // console, jamais par un mot de passe.
+        if ($user && $user->isSupport()) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

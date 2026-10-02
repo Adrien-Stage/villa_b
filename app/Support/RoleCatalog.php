@@ -40,6 +40,9 @@ class RoleCatalog
 
     public const MANAGER = 'manager';
 
+    /** Compte technique du support de l'éditeur, ouvert par le mode assistance. */
+    public const SUPPORT = 'support';
+
     public const ACTIF = 'actif';
 
     public const EN_PREPARATION = 'en_preparation';
@@ -218,6 +221,20 @@ class RoleCatalog
                 'slug' => 'customer_guest',
                 'description' => 'Accès client au portail client',
                 'module' => 'portail', 'icon' => 'user', 'sort_order' => 99, 'is_assignable' => false,
+                'level' => null, 'statut' => self::ACTIF,
+            ],
+
+            // ── Support Wetchah ──
+            // Compte technique, un par établissement, que seul le mode
+            // assistance de la console ouvre — jamais un mot de passe. Il
+            // consulte pour diagnostiquer et n'écrit rien ; ses sessions sont
+            // visibles par l'hôtel. Le support n'entre plus sous le compte de
+            // l'administrateur.
+            [
+                'name' => 'Support Wetchah',
+                'slug' => self::SUPPORT,
+                'description' => "Support technique de l'éditeur : consulte pour diagnostiquer, n'écrit rien ; ouvert par le mode assistance",
+                'module' => 'it', 'icon' => 'life-buoy', 'sort_order' => 98, 'is_assignable' => false,
                 'level' => null, 'statut' => self::ACTIF,
             ],
 

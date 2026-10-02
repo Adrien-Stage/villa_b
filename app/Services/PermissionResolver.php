@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Intervention;
 use App\Models\PermissionGrant;
 use App\Models\User;
 use App\Support\PermissionCatalog;
@@ -18,7 +19,9 @@ use Illuminate\Support\Facades\Schema;
  *      exclusion du module, ou lecture seule ;
  *   2. un refus explicite, sur la personne ou sur l'un de ses rôles ;
  *   3. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
- *   4. le catalogue, qui donne le gabarit par défaut.
+ *   4. le catalogue, qui donne le gabarit par défaut ;
+ *   5. pour l'administrateur, une intervention en cours, qui lui ouvre
+ *      l'écriture dans les services qu'elle couvre.
  *
  * Un rôle affecté en lecture seule ne donne que ses droits de consultation,
  * qu'ils viennent du gabarit ou d'une autorisation posée sur ce rôle.
@@ -36,6 +39,9 @@ class PermissionResolver
 {
     /** @var array<int, array<string, array{effect: string, scope: ?string}>> Surcharges par utilisateur, mémorisées le temps de la requête. */
     private array $cache = [];
+
+    /** @var array<int, ?Intervention> Intervention en cours par administrateur. */
+    private array $interventions = [];
 
     public function allows(?User $user, string $permission): bool
     {
@@ -65,9 +71,33 @@ class PermissionResolver
 
         $roles = PermissionCatalog::roles($permission);
 
-        return $lecture
-            ? $user->hasAnyRole($roles)
-            : array_intersect($roles, $this->rolesEnEcritureDe($user)) !== [];
+        if ($lecture) {
+            return $user->hasAnyRole($roles);
+        }
+
+        if (array_intersect($roles, $this->rolesEnEcritureDe($user)) !== []) {
+            return true;
+        }
+
+        // L'administrateur n'écrit dans l'exploitation que pendant une
+        // intervention déclarée, et seulement dans les services qu'elle couvre.
+        return $this->interventionDe($user)?->couvre($permission) ?? false;
+    }
+
+    /** Intervention en cours de cet administrateur, mémorisée le temps de la requête. */
+    private function interventionDe(User $user): ?Intervention
+    {
+        if (!$user->isAdmin()) {
+            return null;
+        }
+
+        if (!array_key_exists($user->id, $this->interventions)) {
+            $this->interventions[$user->id] = Schema::hasTable('interventions')
+                ? Intervention::enCoursPour($user)
+                : null;
+        }
+
+        return $this->interventions[$user->id];
     }
 
     /** Droits refusés à cette personne alors que ses rôles les lui donnaient. */
@@ -100,11 +130,12 @@ class PermissionResolver
     {
         if ($user === null) {
             $this->cache = [];
+            $this->interventions = [];
 
             return;
         }
 
-        unset($this->cache[$user->id]);
+        unset($this->cache[$user->id], $this->interventions[$user->id]);
     }
 
     /**

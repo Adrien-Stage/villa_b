@@ -51,7 +51,8 @@ Docker interne.
 |---|---|---|
 | `ASSISTANCE_SECRET` | Vérification des jetons du mode assistance | Le mode assistance est refusé |
 | `REPORTING_SECRET` | Protection de l'API de reporting (lue aussi par le module GRC) | **L'API de reporting est désactivée** |
-| `ORCHESTRATION_SECRET` | Canal de la console : matrice des droits, comptes administrateurs, départements | **Canal fermé** (la matrice accepte encore `REPORTING_SECRET`, comme avant) |
+| `ORCHESTRATION_SECRET` | Canal de la console : matrice des droits, comptes administrateurs, départements, traces d'intervention | **Canal fermé** (la matrice accepte encore `REPORTING_SECRET`, comme avant) |
+| `ERP_API_URL` | Adresse de la console (`http://wetchah_erp-app`) | Les traces d'intervention attendent, marquées tardives |
 
 Ces secrets sont partagés avec la console, et propres à l'établissement. Les changer
 impose de recréer le conteneur — ils sont inscrits dans le `docker-compose`.

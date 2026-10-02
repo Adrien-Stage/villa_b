@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Role;
+use App\Models\SupportSession;
 use App\Models\User;
+use App\Support\RoleCatalog;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,13 +16,18 @@ use Illuminate\Support\Facades\Auth;
  * Entrée en mode assistance depuis le PMS (Support > Mode assistance).
  *
  * Le PMS signe un jeton HMAC (secret partagé ASSISTANCE_SECRET) portant le
- * slug de l'établissement, une référence de session, le nom de l'admin et
+ * slug de l'établissement, une référence de session, le nom du technicien et
  * une expiration. Ce endpoint vérifie la signature et l'expiration, ouvre
- * une session en se connectant comme administrateur de l'établissement,
- * marque la session comme "assistance" (bannière + audit) puis redirige
- * vers le tableau de bord.
+ * une session sous le compte technique « Support Wetchah » de
+ * l'établissement, marque la session comme "assistance" (bannière + audit)
+ * puis redirige vers le tableau de bord.
  *
- * Aucune authentification préalable requise (l'admin TECH n'a pas de compte
+ * Le support n'entre plus sous le compte de l'administrateur : il a le sien,
+ * qui consulte sans écrire, et chacune de ses sessions est enregistrée pour
+ * que l'hôtel la voie. Ce compte n'a pas de mot de passe utilisable : seul
+ * un jeton signé l'ouvre.
+ *
+ * Aucune authentification préalable requise (le technicien n'a pas de compte
  * dans cette base) : la confiance vient entièrement de la signature du jeton.
  */
 class AssistanceController extends Controller
@@ -53,38 +63,71 @@ class AssistanceController extends Controller
         }
 
         // Cohérence de l'établissement ciblé
-        $expectedSlug = (string) env('TENANT_SLUG', '');
+        $expectedSlug = (string) config('orchestration.tenant_slug');
         if ($expectedSlug !== '' && ($payload['slug'] ?? null) !== $expectedSlug) {
             abort(403, 'Ce jeton ne concerne pas cet établissement.');
         }
 
-        // Cible : un administrateur (ou à défaut un manager) actif
-        $target = User::where('role', User::ROLE_ADMIN)->where('is_active', true)->first()
-            ?? User::where('role', User::ROLE_MANAGER)->where('is_active', true)->first();
+        $support = $this->compteSupport();
 
-        if (!$target) {
-            abort(409, 'Aucun compte administrateur actif disponible pour l\'assistance.');
-        }
+        Auth::login($support);
+        $request->session()->regenerate();
 
-        Auth::login($target);
+        $technicien = (string) ($payload['admin'] ?? 'Support');
+        $trace = SupportSession::create([
+            'user_id' => $support->id,
+            'technicien' => $technicien,
+            'reference' => (string) ($payload['session'] ?? ''),
+            'debut' => now(),
+            'ip_address' => $request->ip(),
+        ]);
 
         // Marque la session courante comme session d'assistance (bannière UI)
-        $adminName = (string) ($payload['admin'] ?? 'Support');
         session(['assistance_mode' => [
-            'admin' => $adminName,
-            'ref'   => (string) ($payload['session'] ?? ''),
+            'admin' => $technicien,
+            'ref' => (string) ($payload['session'] ?? ''),
             'since' => now()->toIso8601String(),
+            'trace' => $trace->id,
         ]]);
 
         AuditLog::record(
-            $target->id,
+            $support->id,
             'assistance_enter',
-            "Ouverture d'une session d'assistance par le support ({$adminName})",
+            "Ouverture d'une session d'assistance par le support ({$technicien})",
             'support',
-            ['ref' => $payload['session'] ?? null, 'impersonated' => $target->name]
+            ['ref' => $payload['session'] ?? null, 'support_session_id' => $trace->id]
         );
 
         return redirect()->route('dashboard')
             ->with('success', 'Session d\'assistance ouverte — vos actions sont enregistrées.');
+    }
+
+    /**
+     * Le compte technique du support, créé au premier passage. Son mot de
+     * passe est tiré au hasard et jamais montré : la page de connexion le
+     * refuse de toute façon.
+     */
+    private function compteSupport(): User
+    {
+        $support = User::query()->havingRole([RoleCatalog::SUPPORT])->first()
+            ?? User::create([
+                'name' => 'Support Wetchah',
+                'email' => 'support@wetchah.invalid',
+                'role' => RoleCatalog::SUPPORT,
+                'is_active' => true,
+                'password' => Hash::make(Str::random(64)),
+            ]);
+
+        $role = Role::firstOrCreate(
+            ['slug' => RoleCatalog::SUPPORT],
+            RoleCatalog::enregistrement(RoleCatalog::SUPPORT) ?? ['name' => 'Support Wetchah']
+        );
+        $support->roles()->syncWithoutDetaching([$role->id => ['level' => null]]);
+
+        if (! $support->is_active) {
+            $support->update(['is_active' => true]);
+        }
+
+        return $support->fresh();
     }
 }

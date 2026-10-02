@@ -21,8 +21,6 @@ use App\Http\Controllers\RestaurantPantryController;
 use App\Http\Controllers\ShopProductController;
 use App\Http\Controllers\ShopOrderController;
 use App\Http\Controllers\Shop\CashRegisterController;
-use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
-use App\Http\Controllers\AdminAuditController;
 use App\Http\Controllers\NotificationController;
 
 // ===== PWA (application installable) =====
@@ -42,22 +40,12 @@ Route::get('/offline', [App\Http\Controllers\PwaController::class, 'offline'])->
 
 // ===== AUTH ROUTES (Breeze) =====
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-// Admin login
-Route::get('/admin', [AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
-Route::post('/admin', [AdminAuthenticatedSessionController::class, 'store'])->name('admin.login.store');
 
-// Admin Global Routes
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminAuditController::class, 'index'])->name('admin.dashboard');
-    Route::post('/admin/users/{user}/toggle-active', [AdminAuditController::class, 'toggleUserActive'])->name('admin.users.toggle-active');
-    Route::post('/admin/users/{user}/reset-password', [AdminAuditController::class, 'forcePasswordReset'])->name('admin.users.reset-password');
-    Route::get('/admin/tenants/create', [AdminAuditController::class, 'createTenant'])->name('admin.tenants.create');
-    Route::post('/admin/tenants', [AdminAuditController::class, 'storeTenant'])->name('admin.tenants.store');
-    Route::get('/admin/tenants/{tenant}', [AdminAuditController::class, 'showTenant'])->name('admin.tenants.show');
-    Route::post('/admin/tenants/{tenant}', [AdminAuditController::class, 'updateTenant'])->name('admin.tenants.update');
-    Route::get('/admin/export/supervision', [AdminAuditController::class, 'exportSupervision'])->name('admin.export.supervision');
-    Route::get('/admin/export/backup', [AdminAuditController::class, 'exportBackup'])->name('admin.export.backup');
-});
+// L'ancienne console « admin global » (/admin) est retirée : reste de
+// l'époque multi-établissements, elle gérait des établissements depuis
+// l'intérieur de l'un d'eux. L'administrateur — le service informatique de
+// l'hôtel — se connecte comme tout le monde ; ses écrans (journal d'audit,
+// rôles et droits, interventions) vivent dans l'application.
 
 // Entrée en mode assistance depuis le PMS (jeton signé, pas d'auth préalable)
 Route::get('/assistance/enter', [\App\Http\Controllers\AssistanceController::class, 'enter'])->name('assistance.enter');
@@ -483,8 +471,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('users')->name('users.')->middleware('permission')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserManagementController::class, 'show'])->whereNumber('user')->name('show');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggleStatus');
+    });
+
+    // --- ADMINISTRATION (service informatique) ---
+    // L'administrateur règle les rôles et les droits de l'hôtel — la couche de
+    // l'établissement —, consulte le journal, et n'écrit dans l'exploitation
+    // que pendant une intervention déclarée, motivée et tracée.
+    Route::middleware('permission')->group(function () {
+        $droits = App\Http\Controllers\RoleRightsController::class;
+        Route::get('/droits', [$droits, 'index'])->name('droits.index');
+        Route::put('/droits', [$droits, 'update'])->name('droits.update');
+        Route::post('/droits/apercu', [$droits, 'apercu'])->name('droits.apercu');
+        Route::post('/droits/exceptions', [$droits, 'storeException'])->name('droits.exceptions.store');
+        Route::delete('/droits/exceptions/{grant}', [$droits, 'destroyException'])->whereNumber('grant')->name('droits.exceptions.destroy');
+
+        $interventions = App\Http\Controllers\InterventionController::class;
+        Route::get('/interventions', [$interventions, 'index'])->name('interventions.index');
+        Route::post('/interventions', [$interventions, 'store'])->name('interventions.store');
+        Route::post('/interventions/{intervention}/terminer', [$interventions, 'terminer'])->whereNumber('intervention')->name('interventions.terminer');
+
+        Route::get('/journal-audit', [App\Http\Controllers\AuditJournalController::class, 'index'])->name('audit.index');
+        Route::get('/support/sessions', [App\Http\Controllers\SupportSessionController::class, 'index'])->name('support.sessions.index');
     });
 
     // --- COMPTABILITÉ (comptabilité de caisse : hébergement + resto + boutique) ---

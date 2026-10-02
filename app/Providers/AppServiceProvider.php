@@ -61,6 +61,13 @@ class AppServiceProvider extends ServiceProvider
                     'auth'
                 );
             }
+
+            // Fin d'une session du support : l'hôtel voit combien de temps
+            // il est resté.
+            $trace = session('assistance_mode.trace');
+            if ($trace) {
+                \App\Models\SupportSession::whereKey($trace)->whereNull('fin')->update(['fin' => now()]);
+            }
         });
 
         Event::listen(Failed::class, function ($event) {
