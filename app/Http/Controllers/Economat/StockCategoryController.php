@@ -40,11 +40,15 @@ class StockCategoryController extends Controller
             ->groupBy('stock_category_id')
             ->map(fn ($items) => $items->sum(fn (StockItem $item) => $item->stockValue()));
 
+        $maxOrder = $categories->max('sort_order');
+        $nextSortOrder = $maxOrder !== null ? ((int) $maxOrder + 1) : 0;
+
         return view('economat.categories.index', [
-            'categories' => $categories,
-            'valeurs'    => $valeurs,
-            'comptes'    => StockCategory::STOCK_ACCOUNTS,
-            'canManage'  => app(PermissionResolver::class)->allows(auth()->user(), 'economat.categories.modifier'),
+            'categories'    => $categories,
+            'valeurs'       => $valeurs,
+            'comptes'       => StockCategory::STOCK_ACCOUNTS,
+            'canManage'     => app(PermissionResolver::class)->allows(auth()->user(), 'economat.categories.modifier'),
+            'nextSortOrder' => $nextSortOrder,
         ]);
     }
 
@@ -102,10 +106,38 @@ class StockCategoryController extends Controller
 
     private function validated(Request $request, ?StockCategory $category = null): array
     {
+        // Si sort_order n'est pas fourni (ex: appel programmatique ou test), attribuer le prochain ordre libre
+        if (!$request->has('sort_order') || $request->input('sort_order') === null || $request->input('sort_order') === '') {
+            $maxOrder = StockCategory::max('sort_order');
+            $request->merge(['sort_order' => $maxOrder !== null ? ((int) $maxOrder + 1) : 0]);
+        }
+
+        $targetOrder = (int) $request->input('sort_order');
+        $conflict = StockCategory::where('sort_order', $targetOrder)
+            ->when($category, fn ($q) => $q->where('id', '!=', $category->id))
+            ->first();
+
+        $conflictMessage = $conflict
+            ? "L'ordre d'affichage {$targetOrder} est déjà attribué à la catégorie « {$conflict->name} ». Veuillez en choisir un autre."
+            : "Cet ordre d'affichage est déjà attribué à une autre catégorie.";
+
         return $request->validate([
             'name'          => ['required', 'string', 'max:120', Rule::unique('stock_categories', 'name')->ignore($category?->id)],
             'stock_account' => ['nullable', Rule::in(array_keys(StockCategory::STOCK_ACCOUNTS))],
-            'sort_order'    => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'sort_order'    => [
+                'required',
+                'integer',
+                'min:0',
+                'max:9999',
+                Rule::unique('stock_categories', 'sort_order')->ignore($category?->id),
+            ],
+        ], [
+            'name.required'       => 'Le nom de la catégorie est obligatoire.',
+            'name.unique'         => 'Une catégorie portant ce nom existe déjà.',
+            'sort_order.required' => 'L\'ordre d\'affichage est obligatoire.',
+            'sort_order.integer'  => 'L\'ordre d\'affichage doit être un nombre entier.',
+            'sort_order.min'      => 'L\'ordre d\'affichage doit être supérieur ou égal à 0.',
+            'sort_order.unique'   => $conflictMessage,
         ]);
     }
 }

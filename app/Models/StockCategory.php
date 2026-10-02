@@ -30,6 +30,16 @@ class StockCategory extends Model
 
     protected $casts = ['sort_order' => 'integer'];
 
+    protected static function booted(): void
+    {
+        static::creating(function (StockCategory $category) {
+            if ($category->sort_order === null) {
+                $max = static::max('sort_order');
+                $category->sort_order = $max !== null ? ((int) $max + 1) : 0;
+            }
+        });
+    }
+
     /** Compte effectif : sans choix explicite, fournitures d'économat. */
     public function effectiveStockAccount(): string
     {

@@ -3,7 +3,7 @@
 @section('title', 'Catégories — Économat')
 
 @section('content')
-<div class="max-w-5xl mx-auto" x-data="stockCategories()">
+<div class="max-w-5xl mx-auto" x-data="stockCategories({{ (int) $nextSortOrder }}, {{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'sort_order' => (int) $c->sort_order])->values()) }})">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Catégories d'articles</h1>
@@ -35,6 +35,7 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50/70">
                         <tr>
+                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50 w-20">Ordre</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Catégorie</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Compte de stock</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Articles</th>
@@ -53,6 +54,11 @@
                                 ];
                             @endphp
                             <tr>
+                                <td class="px-5 py-3 text-center">
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-gray-100 text-primary/70 border border-secondary/20">
+                                        {{ $category->sort_order }}
+                                    </span>
+                                </td>
                                 <td class="px-5 py-3 font-medium text-primary">{{ $category->name }}</td>
                                 <td class="px-5 py-3 text-primary/70 text-xs">
                                     <span class="font-mono">{{ $category->effectiveStockAccount() }}</span>
@@ -121,8 +127,20 @@
                             </select>
                         </div>
                         <div>
-                            <label for="categorie-ordre" class="block text-xs font-medium text-primary/70 mb-1.5">Ordre</label>
-                            <input id="categorie-ordre" type="number" min="0" max="9999" name="sort_order" x-model="form.sort_order" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <label for="categorie-ordre" class="block text-xs font-medium text-primary/70 mb-1.5 flex items-center justify-between">
+                                <span>Ordre <span class="text-red-500">*</span></span>
+                                <span class="text-[10px] text-primary/40 font-normal">Auto</span>
+                            </label>
+                            <input id="categorie-ordre" type="number" min="0" max="9999" required name="sort_order"
+                                   x-model.number="form.sort_order"
+                                   :class="isOrderTaken() ? 'border-red-500 text-red-900 focus:border-red-500 bg-red-50/40 ring-1 ring-red-500' : 'border-secondary/30 text-primary focus:border-secondary bg-white'"
+                                   class="w-full px-3 py-2.5 text-sm border rounded-lg outline-none font-mono font-semibold transition-colors">
+                            <template x-if="isOrderTaken()">
+                                <p class="text-[11px] text-red-600 font-medium mt-1.5 flex items-start gap-1">
+                                    <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+                                    <span>Ordre déjà attribué à « <strong x-text="takenCategoryName()"></strong> ».</span>
+                                </p>
+                            </template>
                         </div>
                     </div>
                     <p x-show="accountChanges()" x-cloak class="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg">
@@ -131,7 +149,12 @@
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
                     <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
+                    <button type="submit"
+                            :disabled="isOrderTaken()"
+                            :class="isOrderTaken() ? 'opacity-50 cursor-not-allowed bg-primary/60' : 'bg-primary hover:bg-surface-dark'"
+                            class="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors">
+                        <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -142,27 +165,44 @@
 
 @push('scripts')
 <script>
-    function stockCategories() {
+    function stockCategories(nextOrder, existingCategories) {
         const storeUrl = @js(route('economat.categories.store'));
         const updateUrl = @js(route('economat.categories.update', ['category' => '__ID__']));
-        const vide = { id: null, name: '', stock_account: '', sort_order: 0, value: 0, original_account: '' };
+        const defaultNextOrder = nextOrder;
+        const vide = { id: null, name: '', stock_account: '', sort_order: defaultNextOrder, value: 0, original_account: '' };
 
         return {
             open: false,
             editing: false,
+            nextSortOrder: defaultNextOrder,
+            categoriesList: existingCategories || [],
             form: { ...vide },
             get formAction() {
                 return this.editing ? updateUrl.replace('__ID__', this.form.id) : storeUrl;
             },
             openCreate() {
                 this.editing = false;
-                this.form = { ...vide };
+                this.form = { ...vide, sort_order: this.nextSortOrder };
                 this.open = true;
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
             },
             openEdit(categorie) {
                 this.editing = true;
                 this.form = { ...vide, ...categorie, original_account: categorie.stock_account };
                 this.open = true;
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+            },
+            isOrderTaken() {
+                if (this.form.sort_order === null || this.form.sort_order === '' || isNaN(this.form.sort_order)) {
+                    return false;
+                }
+                const target = parseInt(this.form.sort_order, 10);
+                return this.categoriesList.some(c => c.sort_order === target && c.id !== this.form.id);
+            },
+            takenCategoryName() {
+                const target = parseInt(this.form.sort_order, 10);
+                const found = this.categoriesList.find(c => c.sort_order === target && c.id !== this.form.id);
+                return found ? found.name : '';
             },
             // Le compte vide vaut 332000 : passer de « par défaut » à 332000 ne reclasse rien.
             accountChanges() {
