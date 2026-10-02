@@ -53,6 +53,21 @@
         @csrf
         <input type="hidden" name="fiscal_year_id" value="{{ $exercice->id }}">
 
+        @if($repriseStock !== [])
+            <div class="px-4 py-3 mb-4 rounded-xl border border-secondary/20 bg-white text-xs text-primary/70">
+                <p class="font-semibold text-primary mb-1">Stock initial repris à l'économat</p>
+                <p class="mb-2">
+                    Ces valeurs, saisies à la reprise des articles, sont pré-remplies au débit des comptes de stock.
+                    Complétez la contrepartie au bilan (capitaux, report à nouveau…) : elle relève de votre jugement.
+                </p>
+                <ul class="space-y-0.5 font-mono">
+                    @foreach($repriseStock as $compte => $montant)
+                        <li>{{ $compte }} — {{ number_format($montant / 100, 0, ',', ' ') }} FCFA</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
                 <p class="text-sm font-semibold text-primary">{{ $exercice->label }}</p>
@@ -145,10 +160,14 @@
 
     <script>
         function anouveaux() {
+            // Montants en francs, comme la saisie.
+            const reprise = @js(collect($repriseStock)->map(fn ($m, $c) => ['account' => (string) $c, 'debit' => (int) round($m / 100), 'credit' => 0])->values());
+
             return {
                 lignes: [
+                    ...reprise,
                     { account: '', debit: 0, credit: 0 },
-                    { account: '', debit: 0, credit: 0 },
+                    ...(reprise.length ? [] : [{ account: '', debit: 0, credit: 0 }]),
                 ],
                 ajouter() {
                     this.lignes.push({ account: '', debit: 0, credit: 0 });

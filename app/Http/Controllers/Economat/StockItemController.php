@@ -20,7 +20,8 @@ class StockItemController extends Controller
 
     public function index(Request $request): View
     {
-        $query = StockItem::with('category', 'supplier');
+        // Le nombre de mouvements dit si l'article peut encore recevoir sa reprise.
+        $query = StockItem::with('category', 'supplier')->withCount('movements');
 
         // Filtre rapide sur les articles à traiter.
         if ($request->query('filter') === 'alert') {
@@ -115,6 +116,27 @@ class StockItemController extends Controller
         $stock->adjust($item, (float) $validated['counted_quantity'], $validated['reason'] ?? null);
 
         return back()->with('success', "Stock de « {$item->name} » ajusté.");
+    }
+
+    /**
+     * Reprise du stock initial : quantité déjà en magasin et son coût, saisis
+     * une fois, avant tout autre mouvement de l'article.
+     */
+    public function opening(Request $request, StockItem $item, StockService $stock): RedirectResponse
+    {
+        $validated = $request->validate([
+            'quantity'  => ['required', 'numeric', 'gt:0', 'max:99999999'],
+            // Coût unitaire en FCFA, stocké en centimes.
+            'unit_cost' => ['required', 'numeric', 'gt:0'],
+        ]);
+
+        try {
+            $stock->recordOpening($item, (float) $validated['quantity'], (int) round((float) $validated['unit_cost'] * 100));
+        } catch (\RuntimeException|\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Stock initial de « {$item->name} » repris. Sa valeur entrera au grand livre par les à-nouveaux.");
     }
 
     public function destroy(StockItem $item): RedirectResponse

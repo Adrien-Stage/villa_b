@@ -65,6 +65,56 @@ class StockService
     }
 
     /**
+     * Reprise du stock initial : la marchandise déjà en magasin au démarrage
+     * du module, avec la valeur qu'elle avait.
+     *
+     * Elle n'est permise que sur un article sans aucun mouvement : c'est le
+     * point de départ de son historique, pas une correction. Une fois le stock
+     * vivant, un écart se traite par ajustement ou inventaire.
+     *
+     * Le coût est exigé : un stock repris à zéro fausserait le CUMP de toutes
+     * les entrées suivantes. Au grand livre, cette valeur entre par les
+     * à-nouveaux du comptable, pas par le night audit.
+     */
+    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null): StockMovement
+    {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité reprise doit être positive.');
+        }
+
+        if ($unitCost <= 0) {
+            throw new \InvalidArgumentException('Le coût unitaire du stock repris est obligatoire.');
+        }
+
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $reason) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen(StockMovement::SOURCE_OPENING);
+
+            if ($item->movements()->exists()) {
+                throw new \RuntimeException(
+                    "« {$item->name} » a déjà des mouvements : son stock se corrige par ajustement ou inventaire, pas par une reprise."
+                );
+            }
+
+            $item->update([
+                'current_stock'       => $quantity,
+                'average_cost'        => $unitCost,
+                'last_purchase_price' => $item->last_purchase_price ?: $unitCost,
+            ]);
+
+            return $this->log(
+                $item,
+                StockMovement::TYPE_IN,
+                $quantity,
+                $unitCost,
+                StockMovement::SOURCE_OPENING,
+                null,
+                $reason ?? 'Reprise du stock initial'
+            );
+        });
+    }
+
+    /**
      * Sortie de stock (livraison à un département, perte, correction négative).
      * La sortie est valorisée au coût moyen courant, jamais au dernier prix.
      */

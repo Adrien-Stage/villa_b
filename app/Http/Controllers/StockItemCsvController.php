@@ -7,13 +7,15 @@ use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
  * Import / export CSV des articles de l'économat (magasin central). Doublons
- * repérés par nom. Le stock démarre à zéro : il n'évolue que par mouvement
- * (réception, ajustement), pour que toute quantité ait une trace.
+ * repérés par nom. Le stock démarre à zéro, sauf reprise du stock initial
+ * (colonne facultative) : elle passe par un mouvement, pour que toute
+ * quantité ait une trace.
  */
 class StockItemCsvController extends Controller
 {
@@ -21,12 +23,19 @@ class StockItemCsvController extends Controller
 
     private const HEADERS = ['nom', 'reference', 'unite', 'categorie', 'fournisseur', 'stock_min', 'cout_moyen_fcfa', 'actif'];
 
+    /**
+     * Colonne facultative du modèle : la quantité déjà en magasin, reprise au
+     * coût moyen de la ligne. Facultative pour que les fichiers déjà préparés
+     * sans elle restent importables.
+     */
+    private const OPENING_STOCK = 'stock_initial';
+
     public function export(Request $request)
     {
         if ($request->boolean('template')) {
-            return $this->streamCsv('modele_articles_economat.csv', self::HEADERS, [
-                ['Savon liquide', 'SAV-01', 'litre', 'Produits d\'entretien', 'Grossiste Central', '10', '1200', 'oui'],
-                ['Drap blanc', '', 'pièce', 'Linge', '', '5', '8000', 'oui'],
+            return $this->streamCsv('modele_articles_economat.csv', [...self::HEADERS, self::OPENING_STOCK], [
+                ['Savon liquide', 'SAV-01', 'litre', 'Produits d\'entretien', 'Grossiste Central', '10', '1200', 'oui', '24'],
+                ['Drap blanc', '', 'pièce', 'Linge', '', '5', '8000', 'oui', ''],
             ]);
         }
 
@@ -104,7 +113,19 @@ class StockItemCsvController extends Controller
                 continue;
             }
 
-            StockItem::create([
+            $initial = trim((string) ($row[self::OPENING_STOCK] ?? ''));
+            if ($initial !== '' && (!is_numeric($initial) || (float) $initial < 0)) {
+                $errors[] = "Ligne {$line} : stock_initial invalide.";
+                continue;
+            }
+            $initial = $initial === '' ? 0.0 : (float) $initial;
+            // Un stock repris sans coût fausserait le CUMP de toutes les entrées suivantes.
+            if ($initial > 0 && ($cost === '' || (float) $cost <= 0)) {
+                $errors[] = "Ligne {$line} : un stock_initial exige un cout_moyen_fcfa.";
+                continue;
+            }
+
+            $item = StockItem::create([
                 'name'              => $name,
                 'reference'         => trim((string) ($row['reference'] ?? '')) ?: null,
                 'unit'              => trim((string) ($row['unite'] ?? '')) ?: 'pièce',
@@ -116,6 +137,15 @@ class StockItemCsvController extends Controller
                 'is_active'         => $this->parseBool($row['actif'] ?? 'oui'),
                 'tenant_id'         => $tenantId,
             ]);
+            if ($initial > 0) {
+                try {
+                    app(StockService::class)->recordOpening($item, $initial, (int) round((float) $cost * 100), 'Reprise du stock initial (import CSV)');
+                } catch (\RuntimeException $e) {
+                    // Inventaire en cours : l'article existe, sa reprise attendra.
+                    $errors[] = "Ligne {$line} : article créé, stock initial non repris — " . $e->getMessage();
+                }
+            }
+
             $existingNames[mb_strtolower($name)] = true;
             $created++;
         }
@@ -125,6 +155,6 @@ class StockItemCsvController extends Controller
             'economat');
 
         return $this->csvImportRedirect('economat.items.index', [], $created, $skipped, $errors,
-            'article(s) créé(s) — le stock initial se règle via un ajustement ou une réception');
+            'article(s) créé(s)');
     }
 }

@@ -587,6 +587,9 @@
   "storekeeper",
   "support"
  ],
+ "economat.items.opening": [
+  "econome"
+ ],
  "economat.items.show": [
   "admin",
   "controller",

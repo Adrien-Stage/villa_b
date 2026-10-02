@@ -467,8 +467,12 @@ class LedgerPostingService
             return null;
         }
 
+        // La reprise du stock initial entre au grand livre par les à-nouveaux
+        // du comptable : la passer ici la compterait deux fois.
         $mouvements = StockMovement::query()
             ->with('item.category')
+            ->where(fn ($q) => $q->whereNull('source_type')
+                ->orWhere('source_type', '!=', StockMovement::SOURCE_OPENING))
             ->whereBetween('occurred_at', [$start, $end])
             ->orderBy('id')
             ->get();
@@ -636,6 +640,29 @@ class LedgerPostingService
             lines: array_values($imputations),
             schema: $schema,
         );
+    }
+
+    /**
+     * Valeur du stock repris sur un exercice, par compte de stock.
+     *
+     * Ce sont les lignes de classe 3 que le comptable porte dans ses
+     * à-nouveaux : la reprise n'est jamais comptabilisée automatiquement.
+     *
+     * @return array<string, int> [compte => montant en centimes]
+     */
+    public function openingStockByAccount(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return StockMovement::query()
+            ->with('item.category')
+            ->where('source_type', StockMovement::SOURCE_OPENING)
+            ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+            ->get()
+            ->groupBy(fn (StockMovement $m) => $m->stock_account ?: $m->item?->stockAccount() ?? Account::STOCK_STORE)
+            ->map(fn ($mouvements) => (int) $mouvements->sum(
+                fn (StockMovement $m) => (int) round((float) $m->quantity * $m->unit_cost)
+            ))
+            ->sortKeys()
+            ->all();
     }
 
     /**
