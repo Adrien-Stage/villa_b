@@ -543,6 +543,26 @@
                     </div>
                 @endundroit
 
+                {{-- Administration : le service informatique (rôles et droits,
+                     interventions, journal) ; le manager y suit les interventions
+                     et les sessions du support. Chaque lien pose son droit. --}}
+                @php
+                    $resolveurAdministration = app(\App\Services\PermissionResolver::class);
+                    $administrationVisible = auth()->check() && collect(['droits.voir', 'interventions.voir', 'audit.voir', 'support.sessions.voir'])
+                        ->contains(fn ($droit) => $resolveurAdministration->allows(auth()->user(), $droit));
+                @endphp
+                @if($administrationVisible)
+                    <div>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Administration</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="droits.index" icon="shield-check">Rôles &amp; droits</x-sidebar-link>
+                            <x-sidebar-link route="interventions.index" icon="siren">Interventions</x-sidebar-link>
+                            <x-sidebar-link route="audit.index" icon="scroll-text">Journal d'audit</x-sidebar-link>
+                            <x-sidebar-link route="support.sessions.index" icon="life-buoy">Sessions du support</x-sidebar-link>
+                        </ul>
+                    </div>
+                @endif
+
                 {{-- Les paramètres se règlent par onglet, par la direction et le chef
                      du service concerné : l'entrée suit la même règle que l'écran. --}}
                 @if(\App\Support\SettingsTabs::reglables(auth()->user()) !== [])
@@ -863,6 +883,32 @@
                     @csrf
                     <button type="submit" class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold transition">Quitter</button>
                 </form>
+            </div>
+        @endif
+
+        @php
+            // Une intervention de l'administrateur reste affichée tant qu'elle
+            // dure : à lui, qui peut la terminer, et à la direction.
+            $interventionAffichee = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->exerce(['manager']))
+                ? rescue(fn () => \App\Models\Intervention::enCours()->with('user')->latest('id')->first(), null, false)
+                : null;
+        @endphp
+        @if($interventionAffichee)
+            <div class="bg-red-700 text-white px-4 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0" role="status">
+                <div class="flex items-center gap-2 text-xs font-semibold">
+                    <i data-lucide="siren" class="w-4 h-4 shrink-0"></i>
+                    <span>
+                        Intervention de {{ $interventionAffichee->user?->name ?? "l'administrateur" }} en cours jusqu'à {{ $interventionAffichee->fin_prevue->format('H:i') }}
+                        — {{ implode(', ', $interventionAffichee->libellesPerimetres()) }} : {{ $interventionAffichee->motif }}.
+                        Chaque action est enregistrée.
+                    </span>
+                </div>
+                @if($interventionAffichee->user_id === auth()->id())
+                    <form method="POST" action="{{ route('interventions.terminer', $interventionAffichee) }}" class="shrink-0">
+                        @csrf
+                        <button type="submit" class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold transition">Terminer</button>
+                    </form>
+                @endif
             </div>
         @endif
 

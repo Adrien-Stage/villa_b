@@ -134,7 +134,6 @@ Les 6 échecs sont de **vraies assertions en échec**, pas des classes manquante
 
 | Test | Symptôme |
 |---|---|
-| `AuditLogTest > admin can toggle user status and reset password` | Chaîne attendue différente |
 | `BookingCalendarTest > calendar view … filters only confirmed bookings` | Le calendrier retourne une réservation qu'il ne devrait pas |
 | `BookingTaxAndBookerTest > shop cashier can create a shop order with 0% VAT` | 403 au lieu d'une redirection — droit refusé |
 | `ReceptionCashRegisterTest > only manager can access close form` | Attente de droit non satisfaite |

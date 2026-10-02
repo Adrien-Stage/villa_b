@@ -51,6 +51,8 @@ l'établissement :
 | `TENANT_MODULES` | JSON — modules actifs, ex. `["restaurant","shop"]` |
 | `ASSISTANCE_SECRET` | Vérification des jetons du mode assistance |
 | `REPORTING_SECRET` | Protection de l'API de reporting |
+| `ORCHESTRATION_SECRET` | Canal de la console : matrice, comptes administrateurs, départements, traces d'intervention |
+| `ERP_API_URL` | Adresse de la console sur le réseau Docker, pour la trace des interventions |
 | `VAPID_*` | Notifications Web Push |
 
 ## L'entrypoint

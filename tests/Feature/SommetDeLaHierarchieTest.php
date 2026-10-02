@@ -43,15 +43,17 @@ test("l'administrateur consulte tout", function () {
     expect($aveugle)->toBe([]);
 });
 
-test("l'administrateur n'écrit que la configuration, rien de métier", function () {
+test("l'administrateur n'écrit que la configuration et les comptes, rien de métier", function () {
     $ecritures = array_values(array_filter(
         PermissionCatalog::forRole('admin'),
         fn (string $droit) => !PermissionCatalog::estLecture($droit)
     ));
 
-    // Décrire les chambres de l'hôtel n'est pas l'exploiter.
-    expect(array_diff($ecritures, PermissionCatalog::configuration()))->toBe([])
-        ->and($ecritures)->toContain('rooms.types.creer');
+    // Décrire les chambres de l'hôtel n'est pas l'exploiter ; créer les
+    // comptes du personnel n'est pas travailler à sa place.
+    expect(array_diff($ecritures, PermissionCatalog::ecrituresDeLAdministrateur()))->toBe([])
+        ->and($ecritures)->toContain('rooms.types.creer')
+        ->and($ecritures)->toContain('users.creer');
 });
 
 test('aucun département ne confère admin', function () {
@@ -139,14 +141,23 @@ test("tout droit autrefois tenu par admin est tenu par manager", function () {
     expect($orphelins)->toBe([]);
 });
 
-test("la console de supervision reste gardée, hors de la matrice", function () {
-    // AdminOnly s'appuie sur isAdmin(), qui retombe sur la colonne users.role.
-    // Retirer admin du référentiel ne touche donc pas la console.
-    $support = User::factory()->create(['role' => 'admin']);
+test("l'ancienne console « admin global » a disparu", function () {
+    // Reste de l'époque multi-établissements : elle gérait des établissements
+    // depuis l'intérieur de l'un d'eux. L'administrateur se connecte comme
+    // tout le monde, et ses écrans vivent dans l'application.
+    $admin = User::factory()->create(['role' => 'admin']);
 
-    expect($support->isAdmin())->toBeTrue();
+    $this->actingAs($admin)->get('/admin/dashboard')->assertNotFound();
+    $this->get('/admin')->assertNotFound();
+});
 
-    $this->actingAs($support)->get('/admin/dashboard')->assertOk();
+test("l'administrateur se connecte par la page commune", function () {
+    $admin = User::factory()->create(['role' => 'admin', 'email' => 'it@hotel.test', 'password' => bcrypt('motdepasse-solide')]);
+
+    $this->post('/login', ['email' => 'it@hotel.test', 'password' => 'motdepasse-solide'])
+        ->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertAuthenticatedAs($admin);
 });
 
 test("l'administrateur lit l'économat mais n'y crée rien", function () {

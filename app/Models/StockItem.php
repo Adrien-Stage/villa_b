@@ -121,6 +121,15 @@ class StockItem extends Model
         return (int) round((float) $this->current_stock * $this->average_cost);
     }
 
+    /**
+     * Compte de classe 3 qui valorise l'article. La catégorie le décide ;
+     * sans catégorie ni compte, l'article reste une fourniture d'économat.
+     */
+    public function stockAccount(): string
+    {
+        return $this->category?->stock_account ?: Account::STOCK_STORE;
+    }
+
     /** Quantité réellement servable pour une demande. */
     public function availableFor(float $requested): float
     {

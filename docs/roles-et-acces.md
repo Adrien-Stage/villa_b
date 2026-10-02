@@ -29,7 +29,7 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | 3 | `reception_chief` — Chef de réception | hébergement | `reception` | actif |
 | 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
 | 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | actif |
-| 3 | `restaurant_chief` — Chef de cuisine | restaurant | `restaurant_cook` | actif |
+| 3 | `restaurant_chief` — Chef de cuisine (cuisine seule) | restaurant | `restaurant_cook` | actif |
 | 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
 | 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
 | 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
@@ -42,10 +42,17 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | 4 | `accountant` — Comptable | comptabilité | — | actif |
 | — | `controller`, `quality_auditor` — contrôle, lecture seule | contrôle | — | actif |
 | — | `customer_guest` — portail client | portail | — | actif, privilégié |
+| — | `support` — Support Wetchah, compte technique du mode assistance | informatique | — | actif, privilégié |
 | — | `rh_manager`, `it_support` | — | — | retirés |
 
-- **L'administrateur consulte tout et n'écrit rien de métier.** Il administre
-  l'application ; il ne tient aucun service. Il ne se cumule avec aucun autre rôle.
+- **L'administrateur consulte tout et n'écrit rien de métier, hors intervention
+  déclarée** (voir [Le mode intervention](#le-mode-intervention)). Il administre
+  l'application — configuration et **comptes du personnel**, managers compris — ; il
+  ne tient aucun service. Il ne se cumule avec aucun autre rôle. Ses propres comptes
+  ne se créent que depuis la console d'orchestration
+  (`POST /api/comptes/administrateurs`) : personne, dans l'établissement, n'accorde un
+  niveau égal au sien. Tant qu'il n'y en a pas, le manager gère les comptes du
+  personnel (hors managers).
 - **Il n'y a pas de caissier à l'hébergement** : le réceptionniste encaisse. Le slug
   historique `cashier` désigne le caissier du restaurant.
 - **En préparation** : statut d'un rôle défini, droits compris, mais pas encore
@@ -104,14 +111,56 @@ En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
 `access_denied: true` pour une requête AJAX, sinon une redirection avec un message
 affiché en popup.
 
-### Deux systèmes de rôles
+### Les couches d'écarts
 
-`hasRole()` interroge d'abord la relation `roles` (table pivot), puis retombe sur la
-colonne `role` héritée.
+Les écarts au catalogue (`permission_grants`) portent leur **origine** :
 
-> Ce double mécanisme est intentionnel et doit être préservé : des comptes anciens
-> n'existent que dans la colonne, et `Notifier` résout ses destinataires en tenant
-> compte des deux.
+| Couche | Origine | Qui la règle |
+|---|---|---|
+| Console | `erp` | La console d'orchestration, rôle par rôle (« Droits & rôles ») |
+| Hôtel | `etablissement` | L'établissement, sur ses rôles |
+| Exceptions nominatives | `etablissement` | L'établissement, sur une personne, avec échéance possible (`expires_at`) |
+
+La console ne remplace jamais que **sa** couche (`PUT /api/permissions/matrice`).
+Elle ne règle ni l'administrateur, ni le portail client, ni un rôle retiré. Une
+autorisation qui ferait exercer à un rôle une fonction incompatible avec la sienne
+(`DutySegregation::conflitsDUneAutorisation`) exige une **dérogation motivée**,
+tracée au journal. Voir [APIs et intégrations](apis-et-integrations.md#api-dorchestration).
+
+Une **portée** (`propre`, `departement`, `etablissement`) borne les données d'un
+droit là où un écran l'applique (`DepartmentScoping`) : la liste
+`PermissionScope::DROITS_BORNES`, gardée alignée sur le code par un test, dit
+lesquels.
+
+### Les affectations font foi
+
+Les rôles d'une personne sont ses **affectations** (table pivot `role_user`). La
+colonne héritée `users.role` ne compte que pour un compte **sans aucune
+affectation** : la console remplace les affectations sans toucher la colonne, qui
+garderait sinon un rôle retiré — et ses droits. `hasRole()`, `hasAnyRole()`,
+`exerce()`, le moteur de droits et `Notifier` suivent la même règle
+(`User::rolesDetenus()`).
+
+### Reprise des comptes et revue
+
+Une migration ([`RepriseDesRoles`](../app/Support/RepriseDesRoles.php)) a repris les
+comptes existants, sans retirer de droit :
+
+- un compte sans affectation reçoit son rôle hérité en affectation (l'ancien
+  `housekeeping` devient `housekeeping_staff`, aux mêmes droits) ;
+- une colonne périmée est réalignée sur le rôle principal des affectations ;
+- la salle et la caisse passent du chef de cuisine au responsable de restaurant :
+  chaque chef de cuisine reçoit aussi ce rôle, pour ne rien perdre.
+
+Ce qui reste à trancher s'affiche avec :
+
+```bash
+php artisan roles:revue
+```
+
+Cumuls cuisine et salle à confirmer, rôles retirés, cumuls interdits, comptes sans
+rôle, absence de comptable (les caisses attendraient leur contrôle) ou
+d'administrateur. La commande ne modifie rien.
 
 ### La lecture seule
 
@@ -140,16 +189,69 @@ encaissement, ligne de folio — n'est possible tant que l'utilisateur n'a pas
 
 Voir [Comptabilité](comptabilite.md).
 
-## Deux entrées d'authentification
+## Entrées d'authentification
 
 | Route | Public | Vue |
 |---|---|---|
-| `/login` | Le personnel de l'établissement | `auth/login` |
-| `/admin` | L'administrateur de l'établissement | `admin/auth/login` |
+| `/login` | Tout le personnel, administrateur compris | `auth/login` |
+| `/assistance/enter` | Le support de l'éditeur, par jeton signé | — |
 
-S'y ajoute `/assistance/enter`, sans authentification préalable : l'entrée du
-technicien de la console, dont la confiance repose entièrement sur la signature du
-jeton. Voir [APIs et intégrations](apis-et-integrations.md#mode-assistance).
+L'ancienne console « admin global » (`/admin`) est retirée : reste de l'époque
+multi-établissements, elle gérait des établissements depuis l'intérieur de l'un
+d'eux. L'administrateur se connecte comme tout le monde.
+
+Le support entre sous un **compte technique distinct**, « Support Wetchah » (rôle
+`support`), créé au premier passage. Ce compte **consulte sans écrire** (aucune
+exportation non plus), ne s'ouvre jamais par mot de passe — la page de connexion le
+refuse —, et chacune de ses sessions est enregistrée (`support_sessions`) : l'hôtel
+les voit dans *Administration → Sessions du support*. Voir
+[APIs et intégrations](apis-et-integrations.md#mode-assistance).
+
+## Administration
+
+Section de la barre latérale, chaque lien posant son droit :
+
+| Écran | Droit | Qui |
+|---|---|---|
+| **Rôles & droits** (`/droits`) | `droits.voir`, `droits.modifier`, `droits.exceptions.*` | L'administrateur règle ; le contrôle de gestion consulte |
+| **Interventions** (`/interventions`) | `interventions.voir`, `interventions.creer` | L'administrateur ouvre ; le manager suit |
+| **Journal d'audit** (`/journal-audit`) | `audit.voir` | L'administrateur, le contrôle de gestion |
+| **Sessions du support** (`/support/sessions`) | `support.sessions.voir` | L'administrateur, le manager |
+
+### Rôles & droits
+
+La même grille que la matrice de la console, **limitée à la couche de l'hôtel**
+(origine `etablissement`) : le modèle et la couche de la console s'y lisent (badge
+**C**), sans s'y modifier. Mêmes garde-fous que la console — aperçu obligatoire,
+motif, alerte et dérogation motivée sur un cumul, refus d'un écran périmé — car la
+règle vit à un seul endroit ([`PermissionMatrix`](../app/Services/PermissionMatrix.php)).
+
+Les **exceptions nominatives** s'y posent aussi : un droit accordé ou refusé à une
+personne, motivé, avec échéance possible. Une autorisation qui ferait cumuler des
+fonctions incompatibles exige une dérogation. Aucune exception ne vise
+l'administrateur ni le support : leurs droits sont fixés par construction.
+
+La **fiche d'un employé** (`/users/{id}`) montre ses rôles et leur niveau, ses cumuls
+éventuels, son périmètre, ses exceptions et restrictions, et ce que le moteur lui
+accorde réellement, module par module.
+
+### Le mode intervention
+
+L'administrateur consulte tout et n'écrit que la configuration (chambres, onglet
+Général des paramètres) et les comptes. **Encaisser, valider, comptabiliser : il ne
+le fait que pendant une intervention** qu'il déclare — motif, durée (15 min à 4 h),
+services concernés ([`Intervention::PERIMETRES`](../app/Models/Intervention.php)).
+
+- Le moteur de droits lui ouvre alors l'écriture dans ces services, et eux seuls,
+  jusqu'à la fin (étape 5 de `PermissionResolver`).
+- Un bandeau reste visible tant qu'elle dure — pour lui, qui peut la terminer, et
+  pour la direction.
+- Le manager est notifié à l'ouverture et à la clôture.
+- Chaque action porte la référence de l'intervention dans le journal d'audit.
+- La trace part à la console d'orchestration (`ERP_API_URL`). Console injoignable :
+  l'intervention a lieu quand même, la trace est rejouée toutes les cinq minutes
+  (`interventions:transmettre`) et reste marquée **tardive**.
+- Une intervention arrivée au bout de sa durée est close automatiquement.
 
 ## Cas notables
 

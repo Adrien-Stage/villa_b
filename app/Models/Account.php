@@ -34,6 +34,23 @@ class Account extends Model
     public const REVENUE_RESTAURANT = '706100';
     public const REVENUE_SHOP = '701000';
 
+    /** Comptes de stocks (inventaire permanent). */
+    public const STOCK_KITCHEN = '321000';
+    public const STOCK_STORE = '332000';
+
+    /**
+     * Variation de stock qui sert de contrepartie à un compte de stock :
+     * 31x marchandises, 32x matières premières, 33x autres approvisionnements.
+     */
+    public static function variationFor(string $stockAccount): string
+    {
+        return match (substr($stockAccount, 0, 2)) {
+            '31'    => '603100',
+            '32'    => '603200',
+            default => '603300',
+        };
+    }
+
     protected $fillable = [
         'code',
         'label',

@@ -29,6 +29,14 @@ class PermissionScope
     /** De la plus étroite à la plus large. */
     public const ORDRE = [self::PROPRE, self::DEPARTEMENT, self::ETABLISSEMENT];
 
+    /**
+     * Droits dont un écran borne les données (DepartmentScoping::apply).
+     * Ailleurs, une portée ne changerait rien : la console ne la propose pas,
+     * une case sans effet étant pire qu'une case absente. Un test garde la
+     * liste alignée sur le code.
+     */
+    public const DROITS_BORNES = ['users.voir'];
+
     public static function valide(?string $portee): bool
     {
         return $portee !== null && in_array($portee, self::ORDRE, true);

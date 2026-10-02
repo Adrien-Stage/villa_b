@@ -16,10 +16,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View|RedirectResponse
     {
-        if (Auth::check() && Auth::user()->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-
         return view('auth.login');
     }
 
@@ -75,14 +71,12 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
-        $redirectTo = $user?->isAdmin() ? '/admin' : '/';
-
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect($redirectTo);
+        return redirect('/');
     }
 }

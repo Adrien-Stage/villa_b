@@ -40,6 +40,9 @@ class RoleCatalog
 
     public const MANAGER = 'manager';
 
+    /** Compte technique du support de l'éditeur, ouvert par le mode assistance. */
+    public const SUPPORT = 'support';
+
     public const ACTIF = 'actif';
 
     public const EN_PREPARATION = 'en_preparation';
@@ -119,7 +122,7 @@ class RoleCatalog
             [
                 'name' => 'Chef de cuisine',
                 'slug' => 'restaurant_chief',
-                'description' => 'Responsable de la cuisine et du restaurant',
+                'description' => 'Dirige la cuisine : carte, fiches techniques, garde-manger, inventaires et production',
                 'module' => 'restaurant', 'icon' => 'chef-hat', 'sort_order' => 30, 'is_assignable' => true,
                 'level' => 3, 'includes' => ['restaurant_cook'], 'statut' => self::ACTIF,
             ],
@@ -221,6 +224,20 @@ class RoleCatalog
                 'level' => null, 'statut' => self::ACTIF,
             ],
 
+            // ── Support Wetchah ──
+            // Compte technique, un par établissement, que seul le mode
+            // assistance de la console ouvre — jamais un mot de passe. Il
+            // consulte pour diagnostiquer et n'écrit rien ; ses sessions sont
+            // visibles par l'hôtel. Le support n'entre plus sous le compte de
+            // l'administrateur.
+            [
+                'name' => 'Support Wetchah',
+                'slug' => self::SUPPORT,
+                'description' => "Support technique de l'éditeur : consulte pour diagnostiquer, n'écrit rien ; ouvert par le mode assistance",
+                'module' => 'it', 'icon' => 'life-buoy', 'sort_order' => 98, 'is_assignable' => false,
+                'level' => null, 'statut' => self::ACTIF,
+            ],
+
             // ── Retirés ──
             // Les ressources humaines deviennent une plateforme sœur de
             // l'application ; l'administrateur appartient déjà au service
@@ -240,6 +257,19 @@ class RoleCatalog
                 'level' => null, 'statut' => self::RETIRE,
             ],
         ];
+    }
+
+    /**
+     * Ligne de la table roles pour un rôle du référentiel — ses seules
+     * colonnes en base —, ou null s'il n'y figure pas.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function enregistrement(string $slug): ?array
+    {
+        $definition = self::find($slug);
+
+        return $definition === null ? null : array_intersect_key($definition, array_flip(self::COLONNES));
     }
 
     /** Définition d'un rôle, ou null s'il n'est pas au référentiel. */
@@ -331,7 +361,7 @@ class RoleCatalog
         foreach (self::all() as $definition) {
             // Niveau, inclusions et statut vivent dans le code : la table ne
             // porte que ce que les écrans et la console lisent en base.
-            $colonnes = array_intersect_key($definition, array_flip(self::COLONNES));
+            $colonnes = self::enregistrement($definition['slug']);
             $role = Role::where('slug', $definition['slug'])->first();
 
             if ($role) {

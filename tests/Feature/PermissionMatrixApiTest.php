@@ -192,3 +192,204 @@ test('les portées possibles sont annoncées', function () {
     expect(collect($this->getJson('/api/permissions/matrice', entete())->json('portees'))->pluck('valeur')->all())
         ->toBe(['propre', 'departement', 'etablissement']);
 });
+
+// ── Contrat v2 : couches, personnel, cumuls, aperçu ─────────────────────────
+
+test("le canal d'orchestration ne dépend pas du module api", function () {
+    // Option commerciale coupée, la console doit encore administrer l'hôtel.
+    activerModules(['economat']);
+
+    $this->getJson('/api/permissions/matrice', entete())->assertOk();
+});
+
+test("avec un secret d'orchestration, le jeton de reporting n'ouvre plus la matrice", function () {
+    // Le module GRC détient le jeton de reporting pour lire les chiffres : il
+    // ne doit pas pouvoir régler les droits.
+    config(['orchestration.secret' => 'jeton-console']);
+
+    $this->getJson('/api/permissions/matrice', entete())->assertStatus(401);
+    $this->getJson('/api/permissions/matrice', ['Authorization' => 'Bearer jeton-console'])->assertOk();
+});
+
+test('la lecture annonce sa version, les écritures et les droits bornés', function () {
+    $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
+
+    expect($reponse->json('version'))->toBe(2)
+        ->and($reponse->json('ecritures'))->toContain('economat.items.creer')
+        ->and($reponse->json('ecritures'))->not->toContain('economat.items.voir')
+        ->and($reponse->json('droits_bornes'))->toBe(['users.voir'])
+        ->and($reponse->json('empreinte'))->toBeString();
+});
+
+test('la lecture dit quels rôles se règlent et combien de comptes les portent', function () {
+    \App\Support\RoleCatalog::sync();
+    $econome = User::factory()->create(['role' => 'econome']);
+    $econome->roles()->sync(\App\Models\Role::where('slug', 'econome')->pluck('id'));
+    User::factory()->create(['role' => 'econome', 'is_active' => false]);
+
+    $roles = collect($this->getJson('/api/permissions/matrice', entete())->json('roles'))->keyBy('slug');
+
+    // L'administrateur consulte tout et n'écrit que la configuration et les
+    // comptes, par construction ; un rôle retiré ne donne plus rien.
+    expect($roles['admin']['reglable'])->toBeFalse()
+        ->and($roles['it_support']['reglable'])->toBeFalse()
+        ->and($roles['manager']['reglable'])->toBeTrue()
+        // Seuls les comptes actifs comptent.
+        ->and($roles['econome']['titulaires'])->toBe(1)
+        ->and($roles['econome']['description'])->not->toBeEmpty();
+});
+
+test("une case qui ouvrirait un cumul est signalée avant qu'on la coche", function () {
+    $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
+
+    $cumuls = $reponse->json('cumuls');
+    $regles = $reponse->json('regles_de_cumul');
+
+    // Le caissier qui contresigne des caisses est un caissier comptable.
+    expect($cumuls)->toHaveKey('cashier|accounting.cash_reviews.creer');
+
+    $regle = $regles[$cumuls['cashier|accounting.cash_reviews.creer'][0]];
+    expect($regle['roles'])->toContain('cashier')->toContain('accountant');
+
+    // Une consultation n'ouvre aucun cumul.
+    expect($cumuls)->not->toHaveKey('cashier|accounting.voir');
+});
+
+test('un cumul sans dérogation est refusé, et rien ne change', function () {
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [[
+        'role' => 'cashier', 'permission' => 'accounting.cash_reviews.creer', 'effect' => 'allow',
+        'reason' => 'Manque de personnel.',
+    ]]], entete())
+        ->assertStatus(422)
+        ->assertJsonPath('cumuls.0.role', 'cashier');
+
+    $this->assertDatabaseCount('permission_grants', 0);
+});
+
+test('une dérogation motivée passe, et le journal la garde', function () {
+    $this->putJson('/api/permissions/matrice', [
+        'derogation' => true,
+        'auteur' => 'Ada <ada@wetchah.test>',
+        'ecarts' => [[
+            'role' => 'cashier', 'permission' => 'accounting.cash_reviews.creer', 'effect' => 'allow',
+            'reason' => 'Établissement de six personnes : pas de comptable sur place le soir.',
+        ]],
+    ], entete())->assertOk()->assertJsonPath('cumuls.0.permission', 'accounting.cash_reviews.creer');
+
+    $this->assertDatabaseHas('audit_logs', ['event_type' => 'duty_segregation_override', 'module' => 'security']);
+});
+
+test('une dérogation sans motif est refusée', function () {
+    $this->putJson('/api/permissions/matrice', [
+        'derogation' => true,
+        'ecarts' => [['role' => 'cashier', 'permission' => 'accounting.cash_reviews.creer', 'effect' => 'allow']],
+    ], entete())->assertStatus(422);
+
+    $this->assertDatabaseCount('permission_grants', 0);
+});
+
+test("le contrôle ne reçoit aucune écriture sans dérogation", function () {
+    // Bug corrigé en phase 0 : le contrôleur de gestion approuvait des achats.
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [[
+        'role' => 'controller', 'permission' => 'economat.purchase_requests.approve', 'effect' => 'allow',
+        'reason' => 'Essai.',
+    ]]], entete())->assertStatus(422);
+});
+
+test("la console ne règle ni l'administrateur ni un rôle retiré", function () {
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [
+        ['role' => 'admin', 'permission' => 'economat.items.creer', 'effect' => 'allow'],
+        ['role' => 'it_support', 'permission' => 'economat.items.voir', 'effect' => 'allow'],
+    ]], entete())
+        ->assertStatus(422)
+        ->assertJson(['roles' => ['admin', 'it_support']]);
+});
+
+test('deux écarts sur la même case sont refusés', function () {
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [
+        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny'],
+        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'allow'],
+    ]], entete())->assertStatus(422)->assertJson(['doublons' => ['econome|economat.items.creer']]);
+});
+
+test("un écran ouvert sur une couche périmée n'écrase pas le travail d'un autre", function () {
+    $empreinte = $this->getJson('/api/permissions/matrice', entete())->json('empreinte');
+
+    // Un autre opérateur enregistre entre-temps.
+    $this->putJson('/api/permissions/matrice', ['ecarts' => [
+        ['role' => 'econome', 'permission' => 'economat.items.supprimer', 'effect' => 'deny', 'reason' => 'Autre opérateur.'],
+    ]], entete())->assertOk();
+
+    $this->putJson('/api/permissions/matrice', ['empreinte' => $empreinte, 'ecarts' => []], entete())
+        ->assertStatus(409);
+
+    $this->assertDatabaseHas('permission_grants', ['permission' => 'economat.items.supprimer']);
+});
+
+test("l'aperçu dit qui perd quoi, sans rien enregistrer", function () {
+    \App\Support\RoleCatalog::sync();
+    $econome = User::factory()->create(['name' => 'Rose Ngo', 'role' => 'econome']);
+    $econome->roles()->sync(\App\Models\Role::where('slug', 'econome')->pluck('id'));
+
+    $reponse = $this->postJson('/api/permissions/matrice/apercu', ['ecarts' => [
+        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny'],
+    ]], entete())->assertOk();
+
+    $personne = collect($reponse->json('personnes'))->firstWhere('id', $econome->id);
+
+    expect($personne['name'])->toBe('Rose Ngo')
+        ->and($personne['perdus'])->toBe(['economat.items.creer'])
+        ->and($personne['gagnes'])->toBe([]);
+
+    // Rien n'a été écrit : la décision reste celle d'avant.
+    $this->assertDatabaseCount('permission_grants', 0);
+    expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.creer'))->toBeTrue();
+});
+
+test("l'aperçu signale les cumuls du lot", function () {
+    $this->postJson('/api/permissions/matrice/apercu', ['ecarts' => [
+        ['role' => 'cashier', 'permission' => 'accounting.cash_reviews.creer', 'effect' => 'allow'],
+    ]], entete())->assertOk()->assertJsonPath('cumuls.0.role', 'cashier');
+});
+
+test("l'aperçu suit une portée resserrée", function () {
+    \App\Support\RoleCatalog::sync();
+    $controleur = User::factory()->create(['role' => 'controller']);
+    $controleur->roles()->sync(\App\Models\Role::where('slug', 'controller')->pluck('id'));
+
+    $personne = collect($this->postJson('/api/permissions/matrice/apercu', ['ecarts' => [
+        ['role' => 'controller', 'permission' => 'users.voir', 'effect' => 'allow', 'scope' => 'departement'],
+    ]], entete())->json('personnes'))->firstWhere('id', $controleur->id);
+
+    expect($personne['portees'][0])->toBe(['permission' => 'users.voir', 'avant' => 'etablissement', 'apres' => 'departement']);
+});
+
+test('les exceptions échues et les restrictions de service sont montrées', function () {
+    $employe = User::factory()->create(['role' => 'accountant']);
+
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $employe->id,
+        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => 'Inventaire de fin d’année.',
+        'expires_at' => now()->subDay(),
+    ]);
+    \Illuminate\Support\Facades\DB::table('user_module_permissions')->insert([
+        'user_id' => $employe->id, 'module_key' => 'economat', 'access_level' => 'read',
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
+
+    expect($reponse->json('exceptions_echues.0.permission'))->toBe('economat.items.creer')
+        ->and($reponse->json('restrictions'))->toBe([['user_id' => $employe->id, 'service' => 'economat', 'niveau' => 'read']])
+        // Échue : elle n'est plus en vigueur.
+        ->and(collect($reponse->json('ecarts'))->where('subject_type', 'user')->count())->toBe(0);
+});
+
+test('la revue des comptes accompagne la matrice', function () {
+    User::factory()->create(['role' => 'reception']);
+
+    $codes = collect($this->getJson('/api/permissions/matrice', entete())->json('constats'))->pluck('code');
+
+    expect($codes)->toContain('aucun_comptable')->toContain('aucun_administrateur');
+});

@@ -241,6 +241,13 @@ class PermissionCatalog
         'users.creer',
         'users.modifier',
         'users.toggleStatus',
+        // Administration : rôles et droits de l'hôtel, interventions.
+        'droits.apercu',
+        'droits.exceptions.creer',
+        'droits.exceptions.supprimer',
+        'droits.modifier',
+        'interventions.creer',
+        'interventions.terminer',
     ];
 
     /** Ce droit laisse-t-il seulement consulter ? */
@@ -276,12 +283,30 @@ class PermissionCatalog
     }
 
     /**
-     * La configuration de l'établissement que l'administrateur règle : ses
-     * seules écritures. Décrire les chambres de l'hôtel n'est pas l'exploiter.
+     * La configuration de l'établissement que l'administrateur règle.
+     * Décrire les chambres de l'hôtel n'est pas l'exploiter.
      */
     private const CONFIGURATION = [
         'rooms.creer', 'rooms.modifier', 'rooms.supprimer', 'rooms.images.supprimer', 'rooms.import',
         'rooms.types.creer', 'rooms.types.modifier', 'rooms.types.supprimer', 'rooms.types.import',
+    ];
+
+    /**
+     * Paramètres de l'établissement que l'administrateur règle : l'onglet
+     * Général seulement (SettingsTabs borne chaque onglet). Tarifs,
+     * prestations et partenaires restent des décisions de la direction.
+     */
+    private const PARAMETRES = ['settings.modifier'];
+
+    /**
+     * Les comptes du personnel, que l'administrateur crée et tient. Avec la
+     * configuration, ce sont ses seules écritures : il administre
+     * l'application, il ne tient aucun service.
+     */
+    private const ADMINISTRATION = [
+        'users.creer', 'users.modifier', 'users.toggleStatus',
+        'droits.modifier', 'droits.apercu', 'droits.exceptions.creer', 'droits.exceptions.supprimer',
+        'interventions.creer', 'interventions.terminer',
     ];
 
     /**
@@ -321,9 +346,10 @@ class PermissionCatalog
      * Le gabarit, complété de ce que la hiérarchie et les fonctions de
      * contrôle impliquent :
      *  - un chef détient les droits de ses membres, en chaîne ;
-     *  - l'administrateur consulte tout et règle la configuration. Il
-     *    n'écrit rien de métier : il administre l'application, il ne tient
-     *    aucun service ;
+     *  - l'administrateur consulte tout, règle la configuration et tient
+     *    les comptes. Il n'écrit rien de métier : il administre
+     *    l'application, il ne tient aucun service ;
+     *  - le support de l'éditeur consulte tout, sans rien extraire ;
      *  - l'auditeur qualité consulte les services d'exploitation.
      *
      * @param  array<string, list<string>>  $gabarit
@@ -336,8 +362,14 @@ class PermissionCatalog
         foreach ($gabarit as $droit => $roles) {
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
-            if (self::estLecture($droit) || in_array($droit, self::CONFIGURATION, true)) {
+            if (self::estLecture($droit) || in_array($droit, self::ecrituresDeLAdministrateur(), true)) {
                 $roles[] = RoleCatalog::ADMIN;
+            }
+
+            // Le support diagnostique : il consulte, sans extraire de fichier
+            // ni écrire.
+            if (self::estLecture($droit) && !str_ends_with($droit, '.export')) {
+                $roles[] = RoleCatalog::SUPPORT;
             }
 
             if (self::pourAuditQualite($droit)) {
@@ -395,10 +427,16 @@ class PermissionCatalog
         return self::SERVICES[explode('.', $permission)[0]] ?? null;
     }
 
-    /** @return list<string> droits de configuration, seules écritures de l'administrateur */
+    /** @return list<string> droits de configuration de l'établissement */
     public static function configuration(): array
     {
         return self::CONFIGURATION;
+    }
+
+    /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
+    public static function ecrituresDeLAdministrateur(): array
+    {
+        return [...self::CONFIGURATION, ...self::PARAMETRES, ...self::ADMINISTRATION];
     }
 
     /**
@@ -410,11 +448,11 @@ class PermissionCatalog
     {
         return [
             // ── Restauration ──
-            'restaurant.billing.paid' => ['cashier', 'restaurant_chief'],
-            'restaurant.billing.receipt' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
-            'restaurant.billing.unpaid' => ['cashier', 'restaurant_chief'],
-            'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief'],
-            'restaurant.breakfast.serve' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.billing.paid' => ['cashier'],
+            'restaurant.billing.receipt' => ['cashier', 'controller', 'manager', 'reception'],
+            'restaurant.billing.unpaid' => ['cashier'],
+            'restaurant.billing.voir' => ['cashier', 'controller', 'manager', 'reception'],
+            'restaurant.breakfast.serve' => ['restaurant_staff'],
             'restaurant.breakfast.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.kitchen.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.menus.categories.creer' => ['restaurant_chief', 'restaurant_manager'],
@@ -426,14 +464,14 @@ class PermissionCatalog
             'restaurant.menus.items.modifier' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.items.supprimer' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
-            'restaurant.orders.claim' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.orders.creer' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.orders.claim' => ['restaurant_staff'],
+            'restaurant.orders.creer' => ['restaurant_staff'],
             'restaurant.orders.preparing' => ['restaurant_chief', 'restaurant_cook'],
             'restaurant.orders.ready' => ['restaurant_chief', 'restaurant_cook'],
-            'restaurant.orders.reassign' => ['restaurant_chief', 'restaurant_manager'],
-            'restaurant.orders.send_to_kitchen' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.orders.served' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.orders.status' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.orders.reassign' => ['restaurant_manager'],
+            'restaurant.orders.send_to_kitchen' => ['restaurant_staff'],
+            'restaurant.orders.served' => ['restaurant_staff'],
+            'restaurant.orders.status' => ['restaurant_manager'],
             'restaurant.orders.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
             'restaurant.pantry.categories.creer' => ['restaurant_chief'],
             'restaurant.pantry.categories.modifier' => ['restaurant_chief'],
@@ -453,8 +491,8 @@ class PermissionCatalog
             'restaurant.recipes.produce' => ['restaurant_chief'],
             'restaurant.recipes.supprimer' => ['restaurant_chief'],
             'restaurant.recipes.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
-            'restaurant.shifts.close' => ['restaurant_chief', 'restaurant_staff'],
-            'restaurant.shifts.open' => ['restaurant_chief', 'restaurant_staff'],
+            'restaurant.shifts.close' => ['restaurant_staff'],
+            'restaurant.shifts.open' => ['restaurant_staff'],
             'restaurant.stock_counts.close' => ['restaurant_chief'],
             'restaurant.stock_counts.creer' => ['restaurant_chief'],
             'restaurant.stock_counts.modifier' => ['restaurant_chief'],
@@ -686,6 +724,22 @@ class PermissionCatalog
             'reception.pos.voir' => ['controller', 'manager', 'reception'],
 
             // ── Utilisateurs ──
+            // ── Administration ──
+            // L'administrateur (ajouté par completer()) règle la couche de
+            // l'hôtel, déclare ses interventions et lit le journal. Le contrôle
+            // de gestion consulte droits et journal ; la direction suit les
+            // interventions et les sessions du support.
+            'droits.voir' => ['controller'],
+            'droits.apercu' => [],
+            'droits.modifier' => [],
+            'droits.exceptions.creer' => [],
+            'droits.exceptions.supprimer' => [],
+            'interventions.voir' => ['manager'],
+            'interventions.creer' => [],
+            'interventions.terminer' => [],
+            'audit.voir' => ['controller'],
+            'support.sessions.voir' => ['manager'],
+
             'users.creer' => ['manager'],
             'users.modifier' => ['manager'],
             'users.toggleStatus' => ['manager'],

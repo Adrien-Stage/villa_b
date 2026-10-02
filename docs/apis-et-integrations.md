@@ -96,6 +96,50 @@ Données financières sensibles : cette API n'est jamais publique.
 
 ---
 
+## API d'orchestration
+
+Le canal de la console d'orchestration (`wetchah_erp`), gardé par
+[`ValidateOrchestrationToken`](../app/Http/Middleware/ValidateOrchestrationToken.php) :
+`Authorization: Bearer {ORCHESTRATION_SECRET}`. Il ne dépend **pas** du module `api`,
+option commerciale : coupée, la console ne pourrait plus administrer l'établissement.
+
+| Route | Contenu |
+|---|---|
+| `GET /api/permissions/matrice` | Contrat v2 : catalogue, écritures, rôles (niveau, inclusions, statut, titulaires), écarts en vigueur par couche, exceptions échues, restrictions de service, personnel, revue des comptes, règles et cases de cumul, portées, droits bornés, empreinte de la couche de la console |
+| `POST /api/permissions/matrice/apercu` | Ce que changerait un lot, compte par compte, sans rien enregistrer |
+| `PUT /api/permissions/matrice` | Remplace la couche de la console (et elle seule) |
+| `GET /api/comptes` | Personnel et rôles détenus |
+| `POST /api/comptes/administrateurs` | Crée un compte administrateur — **seule voie** pour ce rôle |
+| `PATCH /api/comptes/administrateurs/{id}` | Identité, mot de passe, activation d'un administrateur |
+| `GET/POST /api/departements`, `PUT/DELETE /api/departements/{id}` | Départements |
+
+Règles appliquées par l'établissement, quelle que soit la console :
+
+- un droit hors catalogue est refusé (422 `inconnus`) — une case sans effet est pire
+  qu'une case absente ;
+- l'administrateur, le portail client et un rôle retiré ne se règlent pas (422 `roles`) ;
+- une autorisation qui ouvre un **cumul de fonctions incompatibles**
+  (`DutySegregation::conflitsDUneAutorisation`) exige `derogation: true` et un motif
+  sur l'écart (422 `cumuls` sinon) ; la dérogation est tracée au journal ;
+- avec `empreinte`, un lot préparé sur une couche qui a changé entre-temps est refusé
+  (409) ;
+- mots de passe de 8 caractères au moins ; un compte qui n'est pas administrateur ne
+  se modifie pas d'ici (422).
+
+Tant que `ORCHESTRATION_SECRET` n'est pas configuré, la matrice accepte encore
+`REPORTING_SECRET` (ancienne garde) ; les comptes et départements restent fermés (503).
+
+### Dans l'autre sens : la trace des interventions
+
+L'application transmet chaque intervention de son administrateur à la console :
+`POST {ERP_API_URL}/api/etablissements/{slug}/interventions`, avec
+`Authorization: Bearer {ORCHESTRATION_SECRET}` — la console vérifie que c'est le
+secret de **cet** établissement. Envoi à l'ouverture et à la clôture ; en cas
+d'échec, rejeu par `interventions:transmettre` (planifiée toutes les cinq minutes)
+et marque **tardive** définitive ([`InterventionTrace`](../app/Services/InterventionTrace.php)).
+
+---
+
 ## Mode assistance
 
 [`AssistanceController`](../app/Http/Controllers/AssistanceController.php) —
@@ -107,18 +151,26 @@ un problème, **sans connaître le mot de passe d'un employé**.
 ### Fonctionnement
 
 La console signe un jeton HMAC-SHA256 avec `ASSISTANCE_SECRET`, portant le slug de
-l'établissement, une référence de session, le nom de l'administrateur et une
-expiration. Ce endpoint :
+l'établissement, une référence de session, le nom du technicien et une expiration.
+Ce endpoint :
 
 1. vérifie la signature en **comparaison à temps constant** (`hash_equals`) ;
-2. vérifie l'expiration ;
-3. ouvre une session en se connectant comme administrateur de l'établissement ;
-4. marque la session comme « assistance » — bannière visible + audit ;
-5. redirige vers le tableau de bord.
+2. vérifie l'expiration et l'établissement visé ;
+3. ouvre une session sous le compte technique **« Support Wetchah »** (rôle
+   `support`, créé au premier passage) — **jamais** sous le compte de
+   l'administrateur ;
+4. enregistre la session (`support_sessions`) : technicien, référence, début, et fin
+   à la déconnexion ;
+5. marque la session comme « assistance » — bannière visible + audit ;
+6. redirige vers le tableau de bord.
 
-> **Aucune authentification préalable n'est requise, et c'est nécessaire** :
-> l'administrateur technique n'a pas de compte dans cette base. La confiance vient
-> entièrement de la signature du jeton.
+Le compte du support **consulte sans écrire** et n'exporte rien. Il ne s'ouvre
+jamais par mot de passe. L'hôtel voit ses sessions dans *Administration → Sessions
+du support*.
+
+> **Aucune authentification préalable n'est requise, et c'est nécessaire** : le
+> technicien n'a pas de compte dans cette base. La confiance vient entièrement de la
+> signature du jeton.
 
 Si `ASSISTANCE_SECRET` est vide, l'endpoint refuse tout : le mode assistance n'est
 pas activé pour cet établissement.

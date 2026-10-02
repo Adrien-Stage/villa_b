@@ -53,12 +53,21 @@ class LogUserActivity
         }
 
         try {
+            // Pendant une intervention, chaque action de l'administrateur
+            // porte sa référence : le journal dit ce qu'il a fait, et sous
+            // quel motif.
+            $intervention = rescue(fn () => \App\Models\Intervention::enCoursPour(Auth::user()), null, false);
+
             AuditLog::record(
                 Auth::id(),
                 'activity',
-                $this->describe($request),
+                ($intervention ? "[Intervention #{$intervention->id}] " : '') . $this->describe($request),
                 $this->moduleFromPath($path),
-                ['method' => $request->method(), 'path' => $path]
+                array_filter([
+                    'method' => $request->method(),
+                    'path' => $path,
+                    'intervention_id' => $intervention?->id,
+                ], static fn ($v) => $v !== null)
             );
         } catch (\Throwable) {
             // Ne jamais casser la requête utilisateur pour un échec de log

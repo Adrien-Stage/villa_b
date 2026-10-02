@@ -104,3 +104,31 @@ test('le contrôleur de gestion voit tout et n\'écrit rien', function () {
 test('le contrôleur voit la comptabilité, l\'économat et les opérations', function (string $droit) {
     expect(\App\Support\PermissionCatalog::roles($droit))->toContain('controller');
 })->with(['accounting.voir', 'economat.voir', 'rooms.voir', 'bookings.voir', 'restaurant.orders.voir']);
+
+// ── Cumuls ouverts par une case de la matrice ───────────────────────────────
+
+test("autoriser une écriture fait porter au rôle les incompatibilités de ceux qui la détiennent", function () {
+    $conflits = DutySegregation::conflitsDUneAutorisation('cashier', 'accounting.cash_reviews.creer');
+
+    expect($conflits)->not->toBeEmpty()
+        ->and($conflits[0]['roles'])->toContain('cashier');
+});
+
+test("une consultation n'ouvre aucun cumul", function () {
+    expect(DutySegregation::conflitsDUneAutorisation('cashier', 'accounting.voir'))->toBe([]);
+});
+
+test("un droit déjà détenu n'ouvre rien de neuf", function () {
+    expect(DutySegregation::conflitsDUneAutorisation('accountant', 'accounting.cash_reviews.creer'))->toBe([]);
+});
+
+test("la configuration tenue par l'administrateur n'est pas une fonction à imiter", function () {
+    // rooms.creer : administrateur, manager, chef de réception. Le donner à
+    // un réceptionniste n'est pas cumuler avec l'administrateur.
+    expect(DutySegregation::conflitsDUneAutorisation('reception', 'rooms.creer'))->toBe([]);
+});
+
+test("le contrôle ne reçoit aucune écriture", function () {
+    expect(DutySegregation::conflitsDUneAutorisation('controller', 'economat.purchase_requests.approve'))->not->toBeEmpty()
+        ->and(DutySegregation::conflitsDUneAutorisation('quality_auditor', 'economat.items.creer'))->not->toBeEmpty();
+});
