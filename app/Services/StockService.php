@@ -240,6 +240,7 @@ class StockService
             'quantity'      => $signedQuantity,
             'stock_after'   => $item->current_stock,
             'unit_cost'     => $unitCost,
+            'stock_account' => $item->stockAccount(),
             'source_type'   => $sourceType,
             'source_id'     => $sourceId,
             'reason'        => $reason,

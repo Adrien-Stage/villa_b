@@ -602,6 +602,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
             Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
 
+            // Catégories d'articles et leur compte de stock
+            Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
+            Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');
+            Route::put('/categories/{category}', [$eco . 'StockCategoryController', 'update'])->whereNumber('category')->name('categories.update');
+            Route::delete('/categories/{category}', [$eco . 'StockCategoryController', 'destroy'])->whereNumber('category')->name('categories.destroy');
+
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
             Route::post('/fournisseurs', [$eco . 'SupplierController', 'store'])->name('suppliers.store');

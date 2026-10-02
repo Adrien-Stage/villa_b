@@ -499,6 +499,24 @@
  "droits.update": [
   "admin"
  ],
+ "economat.categories.destroy": [
+  "econome"
+ ],
+ "economat.categories.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.categories.store": [
+  "econome"
+ ],
+ "economat.categories.update": [
+  "econome"
+ ],
  "economat.control.index": [
   "admin",
   "controller",

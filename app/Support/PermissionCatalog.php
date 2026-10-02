@@ -108,6 +108,9 @@ class PermissionCatalog
         'customers.creer',
         'customers.import',
         'customers.modifier',
+        'economat.categories.creer',
+        'economat.categories.modifier',
+        'economat.categories.supprimer',
         'economat.control.suggestions.creer',
         'economat.items.adjust',
         'economat.items.creer',
@@ -571,6 +574,10 @@ class PermissionCatalog
             'bookings.voir' => ['controller', 'manager', 'reception'],
 
             // ── Économat ──
+            'economat.categories.creer' => ['econome'],
+            'economat.categories.modifier' => ['econome'],
+            'economat.categories.supprimer' => ['econome'],
+            'economat.categories.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.control.suggestions.creer' => ['econome'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
             'economat.control.variances.voir' => ['controller', 'econome', 'manager'],

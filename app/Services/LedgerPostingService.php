@@ -45,6 +45,7 @@ class LedgerPostingService
     public const SCHEMA_SUPPLIER_INVOICE = 'supplier_invoice';
     public const SCHEMA_ECONOMAT_STOCK = 'economat_stock';
     public const SCHEMA_PANTRY_STOCK = 'pantry_stock';
+    public const SCHEMA_STOCK_RECLASS = 'stock_reclass';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -494,7 +495,9 @@ class LedgerPostingService
                 continue;
             }
 
-            $stock = $mouvement->item->stockAccount();
+            // Le compte retenu au moment du mouvement : celui de la catégorie a
+            // pu changer depuis, et le reclassement a déjà déplacé le stock.
+            $stock = $mouvement->stock_account ?: $mouvement->item->stockAccount();
             $variation = Account::variationFor($stock);
             $entree = (float) $mouvement->quantity > 0;
             $inventaire = $mouvement->type === StockMovement::TYPE_ADJUSTMENT;
@@ -632,6 +635,34 @@ class LedgerPostingService
             label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
             lines: array_values($imputations),
             schema: $schema,
+        );
+    }
+
+    /**
+     * Reclassement du stock d'un compte de classe 3 vers un autre, quand une
+     * catégorie change de compte ou un article de catégorie.
+     *
+     *   D 3x nouveau compte    C 3x ancien compte
+     *
+     * Aucune charge : la marchandise ne bouge pas, seul son classement change.
+     * Passé immédiatement et non au night audit, car les mouvements suivants
+     * sont déjà comptabilisés sur le nouveau compte.
+     */
+    public function postStockReclassification(string $from, string $to, int $amount, string $label, CarbonInterface $date): ?JournalEntry
+    {
+        if ($amount <= 0 || $from === $to) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $date,
+            label: $label,
+            lines: [
+                ['account' => $to, 'label' => $label, 'debit' => $amount],
+                ['account' => $from, 'label' => $label, 'credit' => $amount],
+            ],
+            schema: self::SCHEMA_STOCK_RECLASS,
         );
     }
 

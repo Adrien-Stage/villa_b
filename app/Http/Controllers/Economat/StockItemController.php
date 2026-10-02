@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Services\StockAccountService;
 use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -71,21 +73,30 @@ class StockItemController extends Controller
         return back()->with('success', 'Article ajouté au magasin.');
     }
 
-    public function update(Request $request, StockItem $item): RedirectResponse
+    public function update(Request $request, StockItem $item, StockAccountService $stockAccounts): RedirectResponse
     {
         $validated = $this->validated($request, $item);
 
-        // On ne touche pas au stock courant ici : il n'évolue que par mouvement.
-        $item->update([
-            'stock_category_id' => $validated['stock_category_id'] ?? null,
-            'name'              => trim($validated['name']),
-            'reference'         => $validated['reference'] ?? null,
-            'unit'              => $validated['unit'],
-            'description'       => $validated['description'] ?? null,
-            'min_stock'         => $validated['min_stock'] ?? 0,
-            'supplier_id'       => $validated['supplier_id'] ?? null,
-            'is_active'         => $request->boolean('is_active', true),
-        ]);
+        try {
+            DB::transaction(function () use ($request, $item, $validated, $stockAccounts) {
+                // On ne touche pas au stock courant ici : il n'évolue que par mouvement.
+                $item->update([
+                    'name'        => trim($validated['name']),
+                    'reference'   => $validated['reference'] ?? null,
+                    'unit'        => $validated['unit'],
+                    'description' => $validated['description'] ?? null,
+                    'min_stock'   => $validated['min_stock'] ?? 0,
+                    'supplier_id' => $validated['supplier_id'] ?? null,
+                    'is_active'   => $request->boolean('is_active', true),
+                ]);
+
+                // Changer de catégorie peut changer de compte de stock : la
+                // valeur déjà en stock suit l'article au grand livre.
+                $stockAccounts->moveItem($item, $validated['stock_category_id'] ?? null);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Article inchangé : ' . $e->getMessage());
+        }
 
         return back()->with('success', 'Article mis à jour.');
     }
