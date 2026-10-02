@@ -36,6 +36,14 @@ class GoodsReceiptService
         }
 
         return DB::transaction(function () use ($order, $data, $user) {
+            // Verrou sur le bon : deux réceptions simultanées liraient le même
+            // reste dû et pourraient, ensemble, dépasser la quantité commandée.
+            $order = PurchaseOrder::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (!$order->canBeReceived()) {
+                throw new RuntimeException("Ce bon de commande ne peut pas être réceptionné dans son état actuel.");
+            }
+
             $receivedAt = !empty($data['received_at']) ? Carbon::parse($data['received_at']) : now();
 
             $receipt = GoodsReceipt::create([
@@ -51,7 +59,7 @@ class GoodsReceiptService
             ]);
 
             $totalAcceptedAmount = 0;
-            $order->loadMissing('lines.item');
+            $order->load('lines.item');
 
             foreach ($order->lines as $line) {
                 $lineInput = $data['lines'][$line->id] ?? null;
@@ -129,6 +137,7 @@ class GoodsReceiptService
 
     /**
      * Annule un bon de réception (en cas d'erreur de saisie immédiate avant facturation).
+     * Refusé dès que la facturation du bon dépasserait ce qui resterait reçu.
      */
     public function cancel(GoodsReceipt $receipt, User $user): GoodsReceipt
     {
@@ -137,14 +146,36 @@ class GoodsReceiptService
         }
 
         return DB::transaction(function () use ($receipt, $user) {
-            $receipt->loadMissing('lines.item', 'purchaseOrder.lines');
+            // Verrou sur le bon d'entrée : un double clic ne doit pas sortir
+            // deux fois la même marchandise du stock.
+            $receipt = GoodsReceipt::query()->lockForUpdate()->findOrFail($receipt->id);
+
+            if ($receipt->status === GoodsReceipt::STATUS_CANCELLED) {
+                throw new RuntimeException("Ce bon de réception est déjà annulé.");
+            }
+
+            // Même verrou que la saisie d'une facture sur ce bon : l'annulation
+            // et la facturation ne peuvent pas se croiser.
+            $order = PurchaseOrder::query()->lockForUpdate()->findOrFail($receipt->purchase_order_id);
+            $factureSurLeBon = $order->invoicedAmount();
+
+            if ($factureSurLeBon > $order->receivedAmount() - (int) $receipt->total_amount) {
+                throw new RuntimeException(
+                    "Le bon {$order->number} est déjà facturé pour "
+                    . number_format($factureSurLeBon / 100, 0, ',', ' ') . ' FCFA : annuler cette réception '
+                    . 'laisserait une facture sans marchandise reçue. Obtenez d\'abord un avoir du fournisseur.'
+                );
+            }
+
+            $receipt->load('lines.item', 'lines.purchaseOrderLine', 'purchaseOrder');
 
             foreach ($receipt->lines as $line) {
                 if ($line->quantity_accepted > 0 && $line->item) {
-                    // Annuler l'entrée en stock
-                    $this->stockService->recordOut(
+                    // Annuler l'entrée en stock au coût auquel elle était entrée
+                    $this->stockService->reverseIn(
                         item: $line->item,
                         quantity: (float) $line->quantity_accepted,
+                        unitCost: (int) $line->unit_cost,
                         sourceType: StockMovement::SOURCE_GOODS_RECEIPT,
                         sourceId: $receipt->id,
                         reason: "Annulation réception {$receipt->number}"

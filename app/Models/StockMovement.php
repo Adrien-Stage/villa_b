@@ -24,6 +24,7 @@ class StockMovement extends Model
     public const SOURCE_REQUISITION    = 'requisition';
     public const SOURCE_MANUAL         = 'manual';
     public const SOURCE_STOCK_COUNT    = 'stock_count';
+    public const SOURCE_OPENING        = 'opening';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -31,6 +32,7 @@ class StockMovement extends Model
         self::SOURCE_REQUISITION    => 'Demande interne',
         self::SOURCE_MANUAL         => 'Saisie manuelle',
         self::SOURCE_STOCK_COUNT    => 'Inventaire physique',
+        self::SOURCE_OPENING        => 'Reprise du stock initial',
     ];
 
     public const TYPES = [
@@ -40,7 +42,7 @@ class StockMovement extends Model
     ];
 
     protected $fillable = [
-        'stock_item_id', 'type', 'quantity', 'stock_after', 'unit_cost',
+        'stock_item_id', 'type', 'quantity', 'stock_after', 'unit_cost', 'stock_account',
         'source_type', 'source_id', 'reason', 'user_id', 'occurred_at', 'tenant_id',
     ];
 

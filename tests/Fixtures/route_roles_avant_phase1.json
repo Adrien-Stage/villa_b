@@ -499,6 +499,24 @@
  "droits.update": [
   "admin"
  ],
+ "economat.categories.destroy": [
+  "econome"
+ ],
+ "economat.categories.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.categories.store": [
+  "econome"
+ ],
+ "economat.categories.update": [
+  "econome"
+ ],
  "economat.control.index": [
   "admin",
   "controller",
@@ -532,6 +550,24 @@
   "econome",
   "manager",
   "quality_auditor",
+  "support"
+ ],
+ "economat.count_sheets.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.count_sheets.print": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
   "support"
  ],
  "economat.index": [
@@ -568,6 +604,9 @@
   "quality_auditor",
   "storekeeper",
   "support"
+ ],
+ "economat.items.opening": [
+  "econome"
  ],
  "economat.items.show": [
   "admin",
@@ -891,6 +930,55 @@
  "economat.stock_counts.update": [
   "econome",
   "storekeeper"
+ ],
+ "economat.stores.counts.cancel": [
+  "econome"
+ ],
+ "economat.stores.counts.close": [
+  "econome"
+ ],
+ "economat.stores.counts.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.stores.counts.store": [
+  "econome"
+ ],
+ "economat.stores.counts.update": [
+  "econome",
+  "storekeeper"
+ ],
+ "economat.stores.destroy": [
+  "econome"
+ ],
+ "economat.stores.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.stores.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.stores.store": [
+  "econome"
+ ],
+ "economat.stores.update": [
+  "econome"
  ],
  "economat.suppliers.destroy": [
   "econome"

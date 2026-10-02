@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\InventorySchedule;
 use App\Support\SettingsTabs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class SettingsController extends Controller
 {
@@ -142,6 +144,60 @@ class SettingsController extends Controller
     }
 
     /**
+     * Calendrier des inventaires généraux. Les listes sont toujours écrites,
+     * même vides : tout décocher doit vider le calendrier, pas laisser
+     * l'ancien en place par la fusion des réglages.
+     *
+     * @return array{month_days: list<int|string>, fixed_dates: list<string>, remind_day_before: bool}
+     */
+    private function validatedInventorySchedule(Request $request): array
+    {
+        $request->validate([
+            'settings.month_days'          => ['nullable', 'array'],
+            'settings.month_days.*'        => ['string', 'regex:/^(last|[1-9]|[12][0-9]|3[01])$/'],
+            'settings.fixed_dates'         => ['nullable', 'array'],
+            'settings.fixed_dates.*.day'   => ['nullable', 'integer', 'between:1,31'],
+            'settings.fixed_dates.*.month' => ['nullable', 'integer', 'between:1,12'],
+        ], [], [
+            'settings.month_days.*'        => 'jour du mois',
+            'settings.fixed_dates.*.day'   => 'jour',
+            'settings.fixed_dates.*.month' => 'mois',
+        ]);
+
+        $jours = collect($request->input('settings.month_days', []))
+            ->map(fn ($j) => $j === InventorySchedule::LAST_DAY ? $j : (int) $j)
+            ->unique()
+            ->sortBy(fn ($j) => $j === InventorySchedule::LAST_DAY ? 99 : $j)
+            ->values()
+            ->all();
+
+        $dates = [];
+        foreach ((array) $request->input('settings.fixed_dates', []) as $i => $date) {
+            if (empty($date['day']) || empty($date['month'])) {
+                continue;
+            }
+
+            // Une date impossible (31 avril) ne reviendrait jamais : on la refuse
+            // plutôt que de la garder en silence. Année bissextile pour le 29 février.
+            if (!checkdate((int) $date['month'], (int) $date['day'], 2000)) {
+                throw ValidationException::withMessages([
+                    "settings.fixed_dates.{$i}.day" => "Le {$date['day']}/{$date['month']} n'existe pas.",
+                ]);
+            }
+
+            $dates[] = sprintf('%02d-%02d', $date['month'], $date['day']);
+        }
+
+        sort($dates);
+
+        return [
+            'month_days'        => $jours,
+            'fixed_dates'       => array_values(array_unique($dates)),
+            'remind_day_before' => $request->boolean('settings.remind_day_before'),
+        ];
+    }
+
+    /**
      * Données de l'onglet, vérifiées quand elles le méritent.
      *
      * Le stockage des réglages est volontairement libre — un onglet ajoute une
@@ -160,6 +216,10 @@ class SettingsController extends Controller
         // d'enregistrer une politique que plus rien ne lit.
         if ($tab === 'caisse') {
             abort(404);
+        }
+
+        if ($tab === 'inventaire') {
+            return $this->validatedInventorySchedule($request);
         }
 
         if ($tab !== 'general') {

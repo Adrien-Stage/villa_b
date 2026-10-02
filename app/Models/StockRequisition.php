@@ -53,7 +53,7 @@ class StockRequisition extends Model
     ];
 
     protected $fillable = [
-        'number', 'department', 'status', 'purpose', 'review_notes',
+        'number', 'department', 'service_store_id', 'status', 'purpose', 'review_notes',
         'requested_by', 'reviewed_by', 'reviewed_at', 'delivered_at', 'tenant_id',
         'requester_signature',
     ];
@@ -114,6 +114,12 @@ class StockRequisition extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(StockRequisitionLine::class);
+    }
+
+    /** Dépôt de service destinataire : la livraison y entre en stock. */
+    public function serviceStore(): BelongsTo
+    {
+        return $this->belongsTo(ServiceStore::class);
     }
 
     public function requestedBy(): BelongsTo

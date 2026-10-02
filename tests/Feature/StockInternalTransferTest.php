@@ -171,7 +171,7 @@ test('une livraison pour la boutique incremente le stock du produit de la boutiq
 
     $stockItem = StockItem::create([
         'name' => 'Savon Artisanal Moringa',
-        'code' => 'SAV-MOR-01',
+        'reference' => 'SAV-MOR-01',
         'unit' => 'pièce',
         'current_stock' => 50,
         'average_cost' => 100000,

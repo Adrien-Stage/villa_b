@@ -127,6 +127,15 @@
             </a>
         @endif
 
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'inventaire'))
+            <a href="{{ route('settings.index', ['tab' => 'inventaire']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'inventaire' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                Inventaire
+            </a>
+        @endif
+
         @if(\App\Support\SettingsTabs::peutRegler($user, 'partners'))
             <a href="{{ route('settings.index', ['tab' => 'partners']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
@@ -832,6 +841,94 @@
                     </button>
                 </div>
             </div>
+        @endif
+
+        {{-- ONGLET: INVENTAIRE (Manager) --}}
+        @if($tab === 'inventaire' && \App\Support\SettingsTabs::peutRegler($user, 'inventaire'))
+            @php
+                $calendrier = \App\Support\InventorySchedule::fromSettings($tenantSettings['inventaire'] ?? []);
+                $joursCoches = collect(old('settings.month_days', $calendrier->monthDays))->map(fn ($j) => (string) $j)->all();
+                $datesFixes = collect($calendrier->fixedDates)
+                    ->map(fn ($d) => ['day' => (int) substr($d, 3, 2), 'month' => (int) substr($d, 0, 2)])
+                    ->values();
+                $prochain = $calendrier->next(now());
+                $moisNoms = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+            @endphp
+            <form method="POST" action="{{ route('settings.update', ['tab' => 'inventaire']) }}" class="max-w-3xl"
+                  x-data="{ dates: {{ Js::from($datesFixes) }} }">
+                @csrf
+                <h2 class="text-lg font-semibold text-primary mb-1">Inventaires généraux</h2>
+                <p class="text-sm text-primary/60 mb-4">
+                    Jours où tous les services comptent leur stock. La veille et le jour même, l'économe et les chefs de service
+                    sont prévenus ; l'économe ouvre l'inventaire quand le comptage commence, ce qui gèle le magasin.
+                </p>
+
+                <div class="mb-4 px-4 py-3 rounded-xl border border-secondary/20 bg-accent/10 text-xs text-primary/70">
+                    <strong>Calendrier actuel :</strong> {{ $calendrier->describe() }}.
+                    @if($prochain)
+                        Prochain inventaire : <strong>{{ $prochain->locale('fr')->isoFormat('dddd D MMMM YYYY') }}</strong>.
+                    @endif
+                </div>
+
+                <div class="space-y-6">
+                    <fieldset class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <legend class="text-sm font-semibold text-primary px-1">Chaque mois</legend>
+                        <p class="text-xs text-primary/60 mb-3">Un jour coché revient tous les mois. Le 31 ne se reporte pas sur les mois plus courts : utilisez « dernier jour ».</p>
+                        <div class="grid grid-cols-7 sm:grid-cols-8 gap-1.5">
+                            @for($j = 1; $j <= 31; $j++)
+                                <label class="flex items-center justify-center gap-1 h-9 rounded-lg border border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-secondary">
+                                    <input type="checkbox" name="settings[month_days][]" value="{{ $j }}" class="sr-only" @checked(in_array((string) $j, $joursCoches, true))>
+                                    {{ $j }}
+                                </label>
+                            @endfor
+                            <label class="col-span-3 flex items-center justify-center h-9 rounded-lg border border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-secondary">
+                                <input type="checkbox" name="settings[month_days][]" value="last" class="sr-only" @checked(in_array('last', $joursCoches, true))>
+                                Dernier jour
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
+                        <legend class="text-sm font-semibold text-primary px-1">Dates fixes de l'année</legend>
+                        <p class="text-xs text-primary/60 mb-3">Par exemple le 31 décembre et le 1er janvier, de part et d'autre du changement d'exercice.</p>
+                        <div class="space-y-2">
+                            <template x-for="(d, i) in dates" :key="i">
+                                <div class="flex items-center gap-2">
+                                    <label class="sr-only" :for="`date-jour-${i}`">Jour</label>
+                                    <select :id="`date-jour-${i}`" :name="`settings[fixed_dates][${i}][day]`" x-model.number="d.day" class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
+                                        @for($j = 1; $j <= 31; $j++)<option value="{{ $j }}">{{ $j === 1 ? '1er' : $j }}</option>@endfor
+                                    </select>
+                                    <label class="sr-only" :for="`date-mois-${i}`">Mois</label>
+                                    <select :id="`date-mois-${i}`" :name="`settings[fixed_dates][${i}][month]`" x-model.number="d.month" class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
+                                        @foreach($moisNoms as $m => $nom)<option value="{{ $m + 1 }}">{{ $nom }}</option>@endforeach
+                                    </select>
+                                    <button type="button" @click="dates.splice(i, 1)" class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-primary/40 hover:text-red-600" aria-label="Retirer cette date">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                        <button type="button" @click="dates.push({ day: 31, month: 12 })" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une date
+                        </button>
+                    </fieldset>
+
+                    <label class="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-secondary/20 cursor-pointer">
+                        <span>
+                            <span class="block text-sm font-semibold text-primary">Rappel la veille</span>
+                            <span class="block text-xs text-primary/60">En plus du rappel le jour même, prévenir les services la veille pour qu'ils s'organisent.</span>
+                        </span>
+                        <input type="hidden" name="settings[remind_day_before]" value="0">
+                        <input type="checkbox" name="settings[remind_day_before]" value="1" class="w-4 h-4 rounded border-secondary/40 text-primary" @checked($calendrier->remindDayBefore)>
+                    </label>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
         @endif
 
         {{-- ONGLET: PRESTATIONS (Manager) --}}

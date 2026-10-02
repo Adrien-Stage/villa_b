@@ -201,19 +201,32 @@ class StockRequisitionController extends Controller
             $departments = ['autre' => StockRequisition::DEPARTMENTS['autre']];
         }
 
-        return view('economat.requisitions.create', compact('items', 'departments'));
+        // Dépôts que ces services alimentent : la livraison y entrera en stock.
+        $stores = \App\Models\ServiceStore::active()
+            ->whereIn('department', array_keys($departments))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'department']);
+
+        return view('economat.requisitions.create', compact('items', 'departments', 'stores'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'department'  => ['required', 'in:' . implode(',', array_keys(StockRequisition::DEPARTMENTS))],
+            // Le dépôt doit appartenir au service qui demande : le bar ne
+            // reçoit pas ce que l'hébergement a demandé.
+            'service_store_id' => ['nullable', \Illuminate\Validation\Rule::exists('service_stores', 'id')
+                ->where('is_active', true)
+                ->where('department', $request->input('department'))],
             'purpose'     => ['nullable', 'string', 'max:500'],
             'lines'       => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
             'lines.*.quantity'      => ['required', 'numeric', 'min:0.001'],
         ], [
-            'lines.required' => 'Ajoutez au moins un article à votre demande.',
+            'lines.required'          => 'Ajoutez au moins un article à votre demande.',
+            'service_store_id.exists' => "Ce dépôt n'appartient pas au service émetteur.",
         ]);
 
         $requisition = DB::transaction(function () use ($validated) {
@@ -222,6 +235,7 @@ class StockRequisitionController extends Controller
 
             $requisition = StockRequisition::create([
                 'department'          => $validated['department'],
+                'service_store_id'    => $validated['service_store_id'] ?? null,
                 'purpose'             => $validated['purpose'] ?? null,
                 'requested_by'        => Auth::id(),
                 'requester_signature' => $signature,
@@ -252,7 +266,7 @@ class StockRequisitionController extends Controller
     {
         $this->authorizeView($requisition);
 
-        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy');
+        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy', 'serviceStore');
 
         return view('economat.requisitions.show', [
             'requisition' => $requisition,
@@ -267,7 +281,7 @@ class StockRequisitionController extends Controller
     {
         $this->authorizeView($requisition);
 
-        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy');
+        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy', 'serviceStore');
 
         return view('economat.requisitions.print', [
             'requisition' => $requisition,

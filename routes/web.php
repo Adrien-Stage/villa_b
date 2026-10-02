@@ -600,7 +600,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/articles/{item}', [$eco . 'StockItemController', 'show'])->whereNumber('item')->name('items.show');
             Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
             Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
+            Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
             Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
+
+            // Catégories d'articles et leur compte de stock
+            Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
+            Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');
+            Route::put('/categories/{category}', [$eco . 'StockCategoryController', 'update'])->whereNumber('category')->name('categories.update');
+            Route::delete('/categories/{category}', [$eco . 'StockCategoryController', 'destroy'])->whereNumber('category')->name('categories.destroy');
+
+            // Dépôts de service (étages, mini-bar, bar, pâtisserie…)
+            Route::get('/depots', [$eco . 'ServiceStoreController', 'index'])->name('stores.index');
+            Route::post('/depots', [$eco . 'ServiceStoreController', 'store'])->name('stores.store');
+            Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')->name('stores.show');
+            Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')->name('stores.update');
+            Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')->name('stores.destroy');
+            Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])->whereNumber('store')->name('stores.counts.store');
+            Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])->whereNumber('count')->name('stores.counts.show');
+            Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])->whereNumber('count')->name('stores.counts.update');
+            Route::post('/depots/inventaires/{count}/cloturer', [$eco . 'ServiceStoreCountController', 'close'])->whereNumber('count')->name('stores.counts.close');
+            Route::post('/depots/inventaires/{count}/annuler', [$eco . 'ServiceStoreCountController', 'cancel'])->whereNumber('count')->name('stores.counts.cancel');
 
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
@@ -637,6 +656,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])->whereNumber('requisition')->name('requisitions.approve');
             Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
             Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
+
+            // Fiches de comptage par service (inventaire général)
+            Route::get('/fiches-comptage', [$eco . 'CountSheetController', 'index'])->name('count_sheets.index');
+            Route::get('/fiches-comptage/imprimer', [$eco . 'CountSheetController', 'print'])->name('count_sheets.print');
 
             // Inventaires physiques & PV d'écarts
             Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');

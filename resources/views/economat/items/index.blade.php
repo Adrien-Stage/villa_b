@@ -31,11 +31,11 @@
         title="Importer des articles (CSV)"
         :action="route('economat.items.import')"
         :template="route('economat.items.export', ['template' => 1])"
-        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif"
+        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif;stock_initial"
         submit-label="Importer les articles">
         <li><strong>nom</strong> obligatoire — les noms déjà existants sont ignorés (pas de doublon)</li>
         <li><strong>categorie</strong> et <strong>fournisseur</strong> optionnels, mais doivent exister s'ils sont renseignés</li>
-        <li>Le <strong>stock démarre à 0</strong> : réglez-le ensuite par un ajustement ou une réception</li>
+        <li><strong>stock_initial</strong> facultatif : quantité déjà en magasin, reprise au <strong>cout_moyen_fcfa</strong> (obligatoire dans ce cas). Sans elle, le stock démarre à 0</li>
     </x-csv-import-modal>
 
     <div class="flex gap-2 mb-4">
@@ -77,6 +77,10 @@
                                     'id' => $item->id, 'name' => $item->name,
                                     'unit' => $item->unit, 'current' => (float) $item->current_stock,
                                 ];
+                                $openingPayload = [
+                                    'id' => $item->id, 'name' => $item->name, 'unit' => $item->unit,
+                                    'unit_cost' => (int) round($item->average_cost / 100),
+                                ];
                             @endphp
                             <tr class="{{ $item->is_active ? '' : 'opacity-50' }}">
                                 <td class="px-5 py-3">
@@ -95,6 +99,14 @@
                                 <td class="px-5 py-3 text-right font-medium text-primary">{{ number_format($item->stockValue() / 100, 0, ',', ' ') }}</td>
                                 <td class="px-5 py-3">
                                     <div class="flex justify-end gap-1.5">
+                                        @if($item->movements_count === 0)
+                                            @droit('economat.items.opening')
+                                                <button type="button" @click="openOpening({{ Js::from($openingPayload) }})"
+                                                    class="h-8 px-2.5 inline-flex items-center gap-1 rounded-lg border border-secondary/30 text-primary text-xs font-medium hover:bg-accent/20" title="Reprendre le stock déjà en magasin">
+                                                    <i data-lucide="package-plus" class="w-3.5 h-3.5"></i> Reprise
+                                                </button>
+                                            @enddroit
+                                        @endif
                                         <button type="button" @click="openAdjust({{ Js::from($adjustPayload) }})"
                                             class="h-8 px-2.5 inline-flex items-center gap-1 rounded-lg border border-secondary/20 text-primary/60 hover:bg-accent/20 text-xs" title="Ajuster le stock">
                                             <i data-lucide="scale" class="w-3.5 h-3.5"></i>
@@ -175,11 +187,48 @@
                         <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
                         <span class="text-xs text-primary/80">Article actif</span>
                     </label>
-                    <p class="text-[11px] text-primary/40" x-show="!editing">Le stock démarre à 0 : utilisez « Ajuster » ou une réception de bon pour l'alimenter, afin que toute quantité ait une trace.</p>
+                    <p class="text-[11px] text-primary/40" x-show="!editing">Le stock démarre à 0. Marchandise déjà en magasin : utilisez « Reprise » ; sinon, une réception de bon l'alimente.</p>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
                     <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
                     <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Modal reprise du stock initial --}}
+    <div x-show="openingOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
+         @keydown.escape.window="openingOpen = false">
+        <div class="absolute inset-0" @click="openingOpen = false"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10" role="dialog" aria-modal="true" aria-labelledby="titre-reprise">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+                <h3 id="titre-reprise" class="font-heading font-semibold text-primary">Reprise du stock initial</h3>
+                <button type="button" @click="openingOpen = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form method="POST" :action="openingAction">
+                @csrf
+                <div class="px-6 py-5 space-y-4">
+                    <p class="text-sm text-primary/70">Article : <strong x-text="opening.name"></strong></p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="reprise-quantite" class="block text-xs font-medium text-primary/70 mb-1.5">Quantité en magasin <span class="text-red-500">*</span></label>
+                            <input id="reprise-quantite" type="number" step="0.001" min="0.001" name="quantity" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <p class="text-[11px] text-primary/40 mt-1" x-text="opening.unit"></p>
+                        </div>
+                        <div>
+                            <label for="reprise-cout" class="block text-xs font-medium text-primary/70 mb-1.5">Coût unitaire (FCFA) <span class="text-red-500">*</span></label>
+                            <input id="reprise-cout" type="number" step="1" min="1" name="unit_cost" x-model="opening.unit_cost" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-primary/50">
+                        Une seule fois, avant tout autre mouvement de l'article. Ce coût devient son coût moyen.
+                        Au grand livre, la valeur entre par les à-nouveaux du comptable.
+                    </p>
+                </div>
+                <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                    <button type="button" @click="openingOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Reprendre</button>
                 </div>
             </form>
         </div>
@@ -227,6 +276,7 @@
             categories, suppliers,
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
+            openingOpen: false, openingAction: '', opening: {},
             autoCode: true,
             blank() {
                 return { id: null, name: '', reference: '', unit: 'pièce', description: '',
@@ -241,6 +291,11 @@
                     stock_category_id: item.stock_category_id ?? '', supplier_id: item.supplier_id ?? '' };
                 this.autoCode = false;
                 this.editing = true; this.formAction = `${baseUrl}/${item.id}`; this.open = true;
+            },
+            openOpening(item) {
+                this.opening = { ...item, unit_cost: item.unit_cost || '' };
+                this.openingAction = `${baseUrl}/${item.id}/reprise`;
+                this.openingOpen = true;
             },
             openAdjust(item) {
                 this.adjust = { ...item, counted: item.current };

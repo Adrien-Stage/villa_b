@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\StockCount;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Notifications\StockItemBelowThreshold;
@@ -42,6 +43,7 @@ class StockService
             // Verrou pessimiste : deux réceptions simultanées du même article ne
             // doivent pas se baser sur le même stock de départ.
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
 
             $currentQty   = (float) $item->current_stock;
             $currentValue = $currentQty * $item->average_cost;
@@ -59,6 +61,56 @@ class StockService
             ]);
 
             return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason);
+        });
+    }
+
+    /**
+     * Reprise du stock initial : la marchandise déjà en magasin au démarrage
+     * du module, avec la valeur qu'elle avait.
+     *
+     * Elle n'est permise que sur un article sans aucun mouvement : c'est le
+     * point de départ de son historique, pas une correction. Une fois le stock
+     * vivant, un écart se traite par ajustement ou inventaire.
+     *
+     * Le coût est exigé : un stock repris à zéro fausserait le CUMP de toutes
+     * les entrées suivantes. Au grand livre, cette valeur entre par les
+     * à-nouveaux du comptable, pas par le night audit.
+     */
+    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null): StockMovement
+    {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité reprise doit être positive.');
+        }
+
+        if ($unitCost <= 0) {
+            throw new \InvalidArgumentException('Le coût unitaire du stock repris est obligatoire.');
+        }
+
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $reason) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen(StockMovement::SOURCE_OPENING);
+
+            if ($item->movements()->exists()) {
+                throw new \RuntimeException(
+                    "« {$item->name} » a déjà des mouvements : son stock se corrige par ajustement ou inventaire, pas par une reprise."
+                );
+            }
+
+            $item->update([
+                'current_stock'       => $quantity,
+                'average_cost'        => $unitCost,
+                'last_purchase_price' => $item->last_purchase_price ?: $unitCost,
+            ]);
+
+            return $this->log(
+                $item,
+                StockMovement::TYPE_IN,
+                $quantity,
+                $unitCost,
+                StockMovement::SOURCE_OPENING,
+                null,
+                $reason ?? 'Reprise du stock initial'
+            );
         });
     }
 
@@ -83,6 +135,7 @@ class StockService
 
         $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
 
             // On ne sort jamais plus que ce qui est présent : un stock négatif
             // n'a pas de sens physique et fausserait la valorisation.
@@ -118,6 +171,59 @@ class StockService
     }
 
     /**
+     * Contre-passation d'une entrée (annulation de réception).
+     *
+     * La sortie se fait au coût de l'entrée annulée, pas au CUMP : on retire
+     * du stock exactement la valeur qu'on y avait ajoutée, et le CUMP revient
+     * à ce qu'il aurait été sans cette réception. Sortir au CUMP laisserait
+     * le prix du lot annulé dilué dans le coût des articles restants.
+     */
+    public function reverseIn(
+        StockItem $item,
+        float $quantity,
+        int $unitCost,
+        string $sourceType,
+        ?int $sourceId = null,
+        ?string $reason = null
+    ): StockMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
+        }
+
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
+
+            // Ce qui a déjà été consommé ne peut pas être rendu au fournisseur.
+            if ((float) $item->current_stock < $quantity) {
+                throw new \RuntimeException(
+                    "Stock insuffisant pour contre-passer « {$item->name} » : "
+                    . "{$item->current_stock} {$item->unit} disponible(s), {$quantity} à retirer. "
+                    . 'Une partie a déjà été servie.'
+                );
+            }
+
+            $currentQty = (float) $item->current_stock;
+            $remainingQty = $currentQty - $quantity;
+            $remainingValue = $currentQty * $item->average_cost - $quantity * $unitCost;
+
+            // Si les sorties intermédiaires ont été valorisées plus haut que le
+            // lot annulé, la valeur restante peut devenir négative : un coût
+            // négatif n'a pas de sens, on le borne à zéro.
+            $newAverage = $remainingQty > 0
+                ? max(0, (int) round($remainingValue / $remainingQty))
+                : $item->average_cost;
+
+            $item->update([
+                'current_stock' => $remainingQty,
+                'average_cost'  => $newAverage,
+            ]);
+
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason);
+        });
+    }
+
+    /**
      * Ajustement d'inventaire : fixe le stock à une quantité constatée. Sert à
      * caler la base sur un comptage physique. Positif ou négatif selon l'écart.
      */
@@ -136,6 +242,7 @@ class StockService
 
         $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, $sourceType, $sourceId, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
             $delta = $countedQuantity - (float) $item->current_stock;
 
             if (abs($delta) < 0.0005) {
@@ -173,6 +280,30 @@ class StockService
         return $movement;
     }
 
+    /**
+     * Inventaire en cours : le magasin est gelé. Le théorique a été relevé à
+     * l'ouverture ; un mouvement passé pendant le comptage fausserait l'écart
+     * que la clôture va appliquer. Seule la clôture elle-même peut écrire.
+     *
+     * Vérifié sous le verrou de l'article : un inventaire ouvert pendant un
+     * mouvement attend la fin de celui-ci pour relever son théorique.
+     */
+    private function ensureStoreNotFrozen(string $sourceType): void
+    {
+        if ($sourceType === StockMovement::SOURCE_STOCK_COUNT) {
+            return;
+        }
+
+        $inventaire = StockCount::inProgress();
+
+        if ($inventaire !== null) {
+            throw new \RuntimeException(
+                "Inventaire {$inventaire->reference} en cours : aucun mouvement de stock n'est permis "
+                . "avant sa clôture ou son annulation."
+            );
+        }
+    }
+
     private function log(
         StockItem $item,
         string $type,
@@ -188,6 +319,7 @@ class StockService
             'quantity'      => $signedQuantity,
             'stock_after'   => $item->current_stock,
             'unit_cost'     => $unitCost,
+            'stock_account' => $item->stockAccount(),
             'source_type'   => $sourceType,
             'source_id'     => $sourceId,
             'reason'        => $reason,

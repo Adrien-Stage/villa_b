@@ -58,6 +58,9 @@
                 </div>
                 <p class="text-sm font-semibold text-primary/80 mt-1">
                     Service : <span class="text-primary">{{ $requisition->departmentLabel() }}</span>
+                    @if($requisition->serviceStore)
+                        · Dépôt : <span class="text-primary">{{ $requisition->serviceStore->name }}</span>
+                    @endif
                 </p>
                 <p class="text-xs text-primary/50 mt-0.5">
                     Émis par <strong>{{ $requisition->requestedBy?->name ?? '—' }}</strong> le {{ $requisition->created_at->format('d/m/Y à H:i') }}
@@ -104,7 +107,7 @@
                     @elseif($requisition->department === 'boutique')
                         Livré et stock boutique incrémenté.
                     @else
-                        Livré au département {{ $requisition->departmentLabel() }}.
+                        Livré au département {{ $requisition->departmentLabel() }}@if($requisition->serviceStore), entré au dépôt {{ $requisition->serviceStore->name }}@endif.
                     @endif
                 </span>
                 @if($requisition->delivered_at)

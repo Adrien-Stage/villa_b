@@ -238,7 +238,13 @@ class LedgerController extends Controller
         // repartent à zéro à chaque exercice.
         $comptes = Account::postable()->where('account_class', '<=', 5)->orderBy('code')->get();
 
-        return view('accounting.ledger.opening', compact('exercice', 'exercices', 'comptes'));
+        // Stock repris à l'économat sur l'exercice : il n'entre au grand livre
+        // que par ces à-nouveaux. Les lignes de classe 3 sont proposées d'office.
+        $repriseStock = $exercice
+            ? app(\App\Services\LedgerPostingService::class)->openingStockByAccount($exercice->starts_on, $exercice->ends_on)
+            : [];
+
+        return view('accounting.ledger.opening', compact('exercice', 'exercices', 'comptes', 'repriseStock'));
     }
 
     public function storeOpeningBalance(Request $request): RedirectResponse

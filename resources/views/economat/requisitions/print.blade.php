@@ -334,7 +334,7 @@
             <div class="meta-grid">
                 <div class="meta-item">
                     <span class="meta-label">Service demandeur :</span>
-                    <span class="meta-value" style="font-size: 11px;">{{ $requisition->departmentLabel() }}</span>
+                    <span class="meta-value" style="font-size: 11px;">{{ $requisition->departmentLabel() }}@if($requisition->serviceStore) — dépôt {{ $requisition->serviceStore->name }}@endif</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Statut du bon :</span>

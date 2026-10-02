@@ -33,6 +33,15 @@
                     <dt class="text-[10px] uppercase tracking-widest text-primary/40">Bon de commande</dt>
                     <dd class="text-primary mt-0.5 font-mono">{{ $invoice->purchaseOrder?->number ?? '—' }}</dd>
                 </div>
+                @if($invoice->hasReceptionVariance())
+                    <div class="sm:col-span-2">
+                        <dt class="text-[10px] uppercase tracking-widest text-amber-700/70">Écart sur la valeur reçue</dt>
+                        <dd class="mt-0.5 text-amber-800">
+                            <span class="font-mono font-semibold">+{{ $fcfa($invoice->reception_variance) }} FCFA</span>
+                            — {{ $invoice->variance_reason }}
+                        </dd>
+                    </div>
+                @endif
                 <div>
                     <dt class="text-[10px] uppercase tracking-widest text-primary/40">Échéance</dt>
                     <dd class="text-primary mt-0.5">{{ $invoice->due_date?->format('d/m/Y') ?? '—' }}</dd>

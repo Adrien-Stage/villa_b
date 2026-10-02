@@ -45,6 +45,8 @@ class LedgerPostingService
     public const SCHEMA_SUPPLIER_INVOICE = 'supplier_invoice';
     public const SCHEMA_ECONOMAT_STOCK = 'economat_stock';
     public const SCHEMA_PANTRY_STOCK = 'pantry_stock';
+    public const SCHEMA_STOCK_RECLASS = 'stock_reclass';
+    public const SCHEMA_SERVICE_STORE = 'service_store_stock';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -74,6 +76,7 @@ class LedgerPostingService
             self::SCHEMA_FOOD_COST       => 0,
             self::SCHEMA_ECONOMAT_STOCK  => 0,
             self::SCHEMA_PANTRY_STOCK    => 0,
+            self::SCHEMA_SERVICE_STORE   => 0,
         ];
 
         // Produits d'abord, encaissements ensuite : un règlement solde une
@@ -140,6 +143,10 @@ class LedgerPostingService
 
         if ($this->postPantryStock($start)) {
             $compte[self::SCHEMA_PANTRY_STOCK]++;
+        }
+
+        if ($this->postServiceStoreStock($start)) {
+            $compte[self::SCHEMA_SERVICE_STORE]++;
         }
 
         return $compte;
@@ -466,8 +473,12 @@ class LedgerPostingService
             return null;
         }
 
+        // La reprise du stock initial entre au grand livre par les à-nouveaux
+        // du comptable : la passer ici la compterait deux fois.
         $mouvements = StockMovement::query()
             ->with('item.category')
+            ->where(fn ($q) => $q->whereNull('source_type')
+                ->orWhere('source_type', '!=', StockMovement::SOURCE_OPENING))
             ->whereBetween('occurred_at', [$start, $end])
             ->orderBy('id')
             ->get();
@@ -494,7 +505,9 @@ class LedgerPostingService
                 continue;
             }
 
-            $stock = $mouvement->item->stockAccount();
+            // Le compte retenu au moment du mouvement : celui de la catégorie a
+            // pu changer depuis, et le reclassement a déjà déplacé le stock.
+            $stock = $mouvement->stock_account ?: $mouvement->item->stockAccount();
             $variation = Account::variationFor($stock);
             $entree = (float) $mouvement->quantity > 0;
             $inventaire = $mouvement->type === StockMovement::TYPE_ADJUSTMENT;
@@ -510,6 +523,13 @@ class LedgerPostingService
             $requisition = $mouvement->source_type === StockMovement::SOURCE_REQUISITION
                 ? $requisitions->get($mouvement->source_id)
                 : null;
+
+            // Livré à un dépôt de service : même article, même compte de
+            // stock, seul le lieu change. La charge naîtra à l'inventaire du
+            // dépôt, qui révèle ce qui a été consommé.
+            if ($requisition?->service_store_id !== null) {
+                continue;
+            }
 
             // Le stock change de magasin, il ne se consomme pas : la charge
             // naîtra à la sortie du garde-manger (coût matière).
@@ -632,6 +652,120 @@ class LedgerPostingService
             label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
             lines: array_values($imputations),
             schema: $schema,
+        );
+    }
+
+    /**
+     * Inventaires des dépôts de service clôturés dans la journée.
+     *
+     * La livraison au dépôt n'a rien coûté au service : c'est ici, quand le
+     * comptage révèle ce qui a été consommé, que la charge naît.
+     *
+     *   Consommation (manquant)   D 603x [centre du service]   C 3x
+     *   Excédent                  D 3x                         C 603x [centre]
+     */
+    public function postServiceStoreStock(CarbonInterface $date): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = self::SCHEMA_SERVICE_STORE . ':' . $start->toDateString();
+
+        if (JournalEntry::query()->where('schema', $schema)->exists()) {
+            return null;
+        }
+
+        $mouvements = \App\Models\ServiceStoreMovement::query()
+            ->with('store', 'item.category')
+            ->where('type', \App\Models\ServiceStoreMovement::TYPE_ADJUSTMENT)
+            ->whereBetween('occurred_at', [$start, $end])
+            ->orderBy('id')
+            ->get();
+
+        $imputations = [];
+
+        foreach ($mouvements as $mouvement) {
+            $valeur = (int) round(abs((float) $mouvement->quantity) * $mouvement->unit_cost);
+
+            if ($valeur <= 0 || $mouvement->store === null) {
+                continue;
+            }
+
+            $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
+            $variation = Account::variationFor($stock);
+            $centre = $this->centreDuService($mouvement->store->department);
+
+            if ((float) $mouvement->quantity < 0) {
+                $libelle = "Consommation — {$mouvement->store->name}";
+                $this->imputer($imputations, $variation, $libelle, $valeur, 0, $centre);
+                $this->imputer($imputations, $stock, $libelle, 0, $valeur);
+            } else {
+                $libelle = "Excédent d’inventaire — {$mouvement->store->name}";
+                $this->imputer($imputations, $stock, $libelle, $valeur, 0);
+                $this->imputer($imputations, $variation, $libelle, 0, $valeur, $centre);
+            }
+        }
+
+        if ($imputations === []) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $start,
+            label: 'Inventaires des dépôts de service du ' . $start->format('d/m/Y'),
+            lines: array_values($imputations),
+            schema: $schema,
+        );
+    }
+
+    /**
+     * Valeur du stock repris sur un exercice, par compte de stock.
+     *
+     * Ce sont les lignes de classe 3 que le comptable porte dans ses
+     * à-nouveaux : la reprise n'est jamais comptabilisée automatiquement.
+     *
+     * @return array<string, int> [compte => montant en centimes]
+     */
+    public function openingStockByAccount(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return StockMovement::query()
+            ->with('item.category')
+            ->where('source_type', StockMovement::SOURCE_OPENING)
+            ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+            ->get()
+            ->groupBy(fn (StockMovement $m) => $m->stock_account ?: $m->item?->stockAccount() ?? Account::STOCK_STORE)
+            ->map(fn ($mouvements) => (int) $mouvements->sum(
+                fn (StockMovement $m) => (int) round((float) $m->quantity * $m->unit_cost)
+            ))
+            ->sortKeys()
+            ->all();
+    }
+
+    /**
+     * Reclassement du stock d'un compte de classe 3 vers un autre, quand une
+     * catégorie change de compte ou un article de catégorie.
+     *
+     *   D 3x nouveau compte    C 3x ancien compte
+     *
+     * Aucune charge : la marchandise ne bouge pas, seul son classement change.
+     * Passé immédiatement et non au night audit, car les mouvements suivants
+     * sont déjà comptabilisés sur le nouveau compte.
+     */
+    public function postStockReclassification(string $from, string $to, int $amount, string $label, CarbonInterface $date): ?JournalEntry
+    {
+        if ($amount <= 0 || $from === $to) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $date,
+            label: $label,
+            lines: [
+                ['account' => $to, 'label' => $label, 'debit' => $amount],
+                ['account' => $from, 'label' => $label, 'credit' => $amount],
+            ],
+            schema: self::SCHEMA_STOCK_RECLASS,
         );
     }
 

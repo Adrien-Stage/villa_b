@@ -30,6 +30,9 @@ class SettingsTabs
         'restaurant' => ['manager', 'restaurant_chief', 'restaurant_manager'],
         'shop' => ['manager', 'shop_manager'],
         'services' => ['manager'],
+        // Le calendrier des inventaires généraux engage tous les services :
+        // c'est une décision de la direction.
+        'inventaire' => ['manager'],
         'partners' => ['manager'],
     ];
 

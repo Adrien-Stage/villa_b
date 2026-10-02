@@ -127,7 +127,7 @@ class StockItem extends Model
      */
     public function stockAccount(): string
     {
-        return $this->category?->stock_account ?: Account::STOCK_STORE;
+        return $this->category?->effectiveStockAccount() ?? Account::STOCK_STORE;
     }
 
     /** Quantité réellement servable pour une demande. */

@@ -325,7 +325,11 @@
         <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between">
             <div>
                 <h2 class="text-sm font-semibold text-primary">Rapprochement Factures Fournisseurs</h2>
-                <p class="text-xs text-primary/50">Suivi comptable entre marchandises commandées, reçues et facturées.</p>
+                <p class="text-xs text-primary/50">
+                    Commandé {{ number_format($order->total_amount / 100, 0, ',', ' ') }} F
+                    · reçu {{ number_format($order->receivedAmount() / 100, 0, ',', ' ') }} F
+                    · facturé {{ number_format($order->invoicedAmount() / 100, 0, ',', ' ') }} F
+                </p>
             </div>
             @php
                 $invStatus = $order->invoicingStatus();
@@ -355,6 +359,9 @@
                         <div>
                             <div class="font-mono font-bold text-sm text-primary">{{ $inv->number }}</div>
                             <div class="text-xs text-primary/50">Facture du {{ $inv->invoice_date->format('d/m/Y') }} · {{ $inv->label }}</div>
+                            @if($inv->hasReceptionVariance())
+                                <div class="text-[11px] text-amber-700 mt-0.5">Écart +{{ number_format($inv->reception_variance / 100, 0, ',', ' ') }} F sur le reçu — {{ $inv->variance_reason }}</div>
+                            @endif
                         </div>
                         <div class="text-right">
                             <div class="font-mono font-bold text-sm text-primary">{{ number_format($inv->amount_ttc / 100, 0, ',', ' ') }} FCFA TTC</div>
@@ -369,14 +376,14 @@
             </div>
         @endif
 
-        @if(\Illuminate\Support\Facades\Route::has('accounting.supplier-invoices.create'))
+        @droit('accounting.ledger.suppliers.creer')
             <div class="px-5 py-3 bg-gray-50 border-t border-secondary/15 flex justify-between items-center">
                 <span class="text-xs text-primary/60">Une facture reçue du fournisseur pour cette commande ?</span>
-                <a href="{{ route('accounting.supplier-invoices.create', ['bon' => $order->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <a href="{{ route('accounting.ledger.suppliers.create', ['bon' => $order->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Saisir la facture fournisseur
                 </a>
             </div>
-        @endif
+        @enddroit
     </div>
 </div>
 @endsection
