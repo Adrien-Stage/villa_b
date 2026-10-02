@@ -44,7 +44,15 @@ class ServiceStoreController extends Controller
         // Historique du dépôt : l'audit de ce qui y est entré et sorti.
         $movements = $store->movements()->with('item', 'user')->latest('occurred_at')->latest('id')->take(50)->get();
 
-        return view('economat.stores.show', compact('store', 'stocks', 'movements'));
+        $counts = \App\Models\ServiceStoreCount::query()
+            ->where('service_store_id', $store->id)
+            ->latest('id')
+            ->take(10)
+            ->get();
+
+        $canOpenCount = app(PermissionResolver::class)->allows(auth()->user(), 'economat.stores.counts.creer');
+
+        return view('economat.stores.show', compact('store', 'stocks', 'movements', 'counts', 'canOpenCount'));
     }
 
     public function store(Request $request): RedirectResponse

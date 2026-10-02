@@ -615,6 +615,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')->name('stores.show');
             Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')->name('stores.update');
             Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')->name('stores.destroy');
+            Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])->whereNumber('store')->name('stores.counts.store');
+            Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])->whereNumber('count')->name('stores.counts.show');
+            Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])->whereNumber('count')->name('stores.counts.update');
+            Route::post('/depots/inventaires/{count}/cloturer', [$eco . 'ServiceStoreCountController', 'close'])->whereNumber('count')->name('stores.counts.close');
+            Route::post('/depots/inventaires/{count}/annuler', [$eco . 'ServiceStoreCountController', 'cancel'])->whereNumber('count')->name('stores.counts.cancel');
 
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');

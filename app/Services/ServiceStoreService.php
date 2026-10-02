@@ -33,6 +33,18 @@ class ServiceStoreService
         }
 
         return DB::transaction(function () use ($store, $item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+            // Même verrou que l'ouverture d'un inventaire : une livraison et
+            // une ouverture du même dépôt ne peuvent pas se croiser.
+            ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
+
+            // Dépôt en cours de comptage : une entrée maintenant serait lue
+            // comme une consommation à la clôture.
+            if ($inventaire = ServiceStoreCountService::inProgress($store)) {
+                throw new \RuntimeException(
+                    "Inventaire {$inventaire->reference} en cours au dépôt {$store->name} : il ne reçoit plus de livraison avant sa clôture."
+                );
+            }
+
             ServiceStoreStock::query()->firstOrCreate(
                 ['service_store_id' => $store->id, 'stock_item_id' => $item->id],
                 ['current_stock' => 0, 'average_cost' => $unitCost]

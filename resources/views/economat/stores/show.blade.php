@@ -21,6 +21,44 @@
 
     @include('economat.partials.flash')
 
+    @php
+        $encours = $counts->firstWhere('status', \App\Models\ServiceStoreCount::STATUS_DRAFT);
+    @endphp
+    <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm">
+            <p class="font-semibold text-primary">Inventaire du dépôt</p>
+            <p class="text-xs text-primary/60">Le comptage révèle ce que le service a consommé depuis le précédent : c'est sa charge.</p>
+        </div>
+        @if($encours)
+            <a href="{{ route('economat.stores.counts.show', $encours) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600">
+                <i data-lucide="clipboard-list" class="w-4 h-4"></i> Reprendre le comptage {{ $encours->reference }}
+            </a>
+        @elseif($canOpenCount && $stocks->isNotEmpty())
+            <form method="POST" action="{{ route('economat.stores.counts.store', $store) }}">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i> Ouvrir l'inventaire
+                </button>
+            </form>
+        @endif
+    </div>
+
+    @if($counts->where('status', '!=', \App\Models\ServiceStoreCount::STATUS_DRAFT)->isNotEmpty())
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-6">
+            <div class="px-5 py-3 border-b border-secondary/15 bg-gray-50/80">
+                <h2 class="text-sm font-semibold text-primary">Inventaires précédents</h2>
+            </div>
+            <ul class="divide-y divide-secondary/10 text-sm">
+                @foreach($counts->where('status', '!=', \App\Models\ServiceStoreCount::STATUS_DRAFT) as $inventaire)
+                    <li class="px-5 py-2.5 flex items-center justify-between">
+                        <a href="{{ route('economat.stores.counts.show', $inventaire) }}" class="font-mono text-primary hover:underline">{{ $inventaire->reference }}</a>
+                        <span class="text-xs text-primary/60">{{ $inventaire->count_date->format('d/m/Y') }} · {{ $inventaire->statusLabel() }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-6">
         <div class="px-5 py-3 border-b border-secondary/15 bg-gray-50/80">
             <h2 class="text-sm font-semibold text-primary">Stock du dépôt</h2>

@@ -46,6 +46,7 @@ class LedgerPostingService
     public const SCHEMA_ECONOMAT_STOCK = 'economat_stock';
     public const SCHEMA_PANTRY_STOCK = 'pantry_stock';
     public const SCHEMA_STOCK_RECLASS = 'stock_reclass';
+    public const SCHEMA_SERVICE_STORE = 'service_store_stock';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -75,6 +76,7 @@ class LedgerPostingService
             self::SCHEMA_FOOD_COST       => 0,
             self::SCHEMA_ECONOMAT_STOCK  => 0,
             self::SCHEMA_PANTRY_STOCK    => 0,
+            self::SCHEMA_SERVICE_STORE   => 0,
         ];
 
         // Produits d'abord, encaissements ensuite : un règlement solde une
@@ -141,6 +143,10 @@ class LedgerPostingService
 
         if ($this->postPantryStock($start)) {
             $compte[self::SCHEMA_PANTRY_STOCK]++;
+        }
+
+        if ($this->postServiceStoreStock($start)) {
+            $compte[self::SCHEMA_SERVICE_STORE]++;
         }
 
         return $compte;
@@ -644,6 +650,69 @@ class LedgerPostingService
             journalCode: Journal::MISC,
             date: $start,
             label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
+            lines: array_values($imputations),
+            schema: $schema,
+        );
+    }
+
+    /**
+     * Inventaires des dépôts de service clôturés dans la journée.
+     *
+     * La livraison au dépôt n'a rien coûté au service : c'est ici, quand le
+     * comptage révèle ce qui a été consommé, que la charge naît.
+     *
+     *   Consommation (manquant)   D 603x [centre du service]   C 3x
+     *   Excédent                  D 3x                         C 603x [centre]
+     */
+    public function postServiceStoreStock(CarbonInterface $date): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = self::SCHEMA_SERVICE_STORE . ':' . $start->toDateString();
+
+        if (JournalEntry::query()->where('schema', $schema)->exists()) {
+            return null;
+        }
+
+        $mouvements = \App\Models\ServiceStoreMovement::query()
+            ->with('store', 'item.category')
+            ->where('type', \App\Models\ServiceStoreMovement::TYPE_ADJUSTMENT)
+            ->whereBetween('occurred_at', [$start, $end])
+            ->orderBy('id')
+            ->get();
+
+        $imputations = [];
+
+        foreach ($mouvements as $mouvement) {
+            $valeur = (int) round(abs((float) $mouvement->quantity) * $mouvement->unit_cost);
+
+            if ($valeur <= 0 || $mouvement->store === null) {
+                continue;
+            }
+
+            $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
+            $variation = Account::variationFor($stock);
+            $centre = $this->centreDuService($mouvement->store->department);
+
+            if ((float) $mouvement->quantity < 0) {
+                $libelle = "Consommation — {$mouvement->store->name}";
+                $this->imputer($imputations, $variation, $libelle, $valeur, 0, $centre);
+                $this->imputer($imputations, $stock, $libelle, 0, $valeur);
+            } else {
+                $libelle = "Excédent d’inventaire — {$mouvement->store->name}";
+                $this->imputer($imputations, $stock, $libelle, $valeur, 0);
+                $this->imputer($imputations, $variation, $libelle, 0, $valeur, $centre);
+            }
+        }
+
+        if ($imputations === []) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $start,
+            label: 'Inventaires des dépôts de service du ' . $start->format('d/m/Y'),
             lines: array_values($imputations),
             schema: $schema,
         );
