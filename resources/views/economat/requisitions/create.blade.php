@@ -65,6 +65,20 @@
                     <p class="text-[10px] text-primary/50 mt-1">Les articles entreront dans le stock de ce dépôt et seront comptés à son inventaire.</p>
                 </div>
 
+                {{-- Chaque restaurant a sa cuisine : la livraison entre dans le garde-manger de celui qui la demande. --}}
+                @if($restaurants->count() > 1)
+                    <div x-show="service === 'restaurant' && !depot" x-cloak>
+                        <label for="requisition-restaurant" class="block text-xs font-semibold text-primary/70 mb-1.5">Restaurant destinataire</label>
+                        <select id="requisition-restaurant" name="point_of_sale_id"
+                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                            @foreach($restaurants as $restaurant)
+                                <option value="{{ $restaurant->id }}" @selected((int) old('point_of_sale_id', $restaurantParDefaut?->id) === $restaurant->id)>{{ $restaurant->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-[10px] text-primary/50 mt-1">Les articles entreront dans le garde-manger de ce restaurant.</p>
+                    </div>
+                @endif
+
                 <div>
                     <label class="block text-xs font-semibold text-primary/70 mb-1.5">Motif / Justification du besoin</label>
                     <input type="text" name="purpose" maxlength="500"

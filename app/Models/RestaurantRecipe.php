@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppartientAUnRestaurant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class RestaurantRecipe extends Model
 {
-    use HasFactory;
+    use HasFactory, AppartientAUnRestaurant;
 
     const TYPE_DISH = 'dish';
     const TYPE_PREP = 'prep';
@@ -31,6 +32,7 @@ class RestaurantRecipe extends Model
     ];
 
     protected $fillable = [
+        'point_of_sale_id',
         'name',
         'type',
         'restaurant_menu_item_id',

@@ -353,6 +353,8 @@
 
     @include('users.partials.derogation')
 
+    @include('users.partials.restaurants', ['choisis' => old('restaurants', [])])
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="text-xs text-primary/60">Mot de passe</label>
@@ -424,6 +426,8 @@
         </div>
 
         @include('users.partials.derogation')
+
+        @include('users.partials.restaurants', ['choisis' => old('restaurants', $staff->restaurants->pluck('id')->all())])
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

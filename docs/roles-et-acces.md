@@ -286,6 +286,24 @@ peuvent en dispenser. Le circuit est le même à la réception, à la boutique e
 chaque restaurant — une caisse par restaurant, une session par personne (voir
 [Comptabilité](comptabilite.md)).
 
+### Le personnel d'un restaurant ne voit que son restaurant
+
+Le droit dit **quoi** ; l'affectation dit **où**. Un hôtel qui exploite plusieurs
+restaurants affecte chaque membre du personnel de restaurant (`restaurant_*`,
+`cashier`) à un ou plusieurs restaurants, depuis la fiche du restaurant ou la gestion
+des utilisateurs. Il ne voit que ceux-là : leurs cartes, commandes, cuisines, bars,
+garde-mangers, caisses, buffets et banquets. Une adresse d'un autre restaurant lui
+répond 404.
+
+La direction et le contrôle — `admin`, `manager`, `controller`, `quality_auditor`,
+`support` — voient tous les restaurants, ensemble ou un par un. La réception voit
+dans tous les restaurants les seules notes que des résidents ont reportées sur leur
+séjour : celles qu'elle retrouvera sur la facture.
+
+Le `manager` crée les restaurants et leurs salles (l'`admin` aussi : c'est de la
+configuration) ; le `restaurant_manager` compose l'équipe des restaurants où il
+travaille. Voir [Restaurant](restaurant.md#plusieurs-restaurants).
+
 ### Les demandes à l'économat sont ouvertes
 
 Les routes de consultation et de création de demandes acceptent tous les

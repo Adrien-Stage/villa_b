@@ -40,8 +40,12 @@ class RestaurantWasteController extends Controller
             ? Carbon::parse($request->input('end_date'))->endOfDay()
             : now()->endOfDay();
 
+        // Chaque restaurant déclare les pertes de son garde-manger.
+        $user = Auth::user();
+
         $query = RestaurantWasteLog::query()
-            ->with(['item.category', 'recordedBy'])
+            ->visiblesPour($user)
+            ->with(['item.category', 'recordedBy', 'pointOfSale:id,name'])
             ->forTenant($tenantId)
             ->whereBetween('occurred_at', [$startDate, $endDate])
             ->latest('occurred_at');
@@ -73,6 +77,7 @@ class RestaurantWasteController extends Controller
 
         // Statistiques de la période
         $statsBase = RestaurantWasteLog::query()
+            ->visiblesPour($user)
             ->forTenant($tenantId)
             ->whereBetween('occurred_at', [$startDate, $endDate]);
 
@@ -87,6 +92,7 @@ class RestaurantWasteController extends Controller
             ->keyBy('reason');
 
         $activeItems = RestaurantPantryItem::query()
+            ->visiblesPour($user)
             ->active()
             ->orderBy('name')
             ->get();
@@ -111,6 +117,8 @@ class RestaurantWasteController extends Controller
     public function create(): View
     {
         $items = RestaurantPantryItem::query()
+            ->visiblesPour(Auth::user())
+            ->with('pointOfSale:id,name')
             ->active()
             ->orderBy('name')
             ->get();
@@ -138,7 +146,8 @@ class RestaurantWasteController extends Controller
             'occurred_at'               => ['nullable', 'date'],
         ]);
 
-        $item = RestaurantPantryItem::findOrFail($validated['restaurant_pantry_item_id']);
+        // Seulement un article d'un garde-manger que la personne voit.
+        $item = RestaurantPantryItem::visiblesPour(Auth::user())->findOrFail($validated['restaurant_pantry_item_id']);
 
         try {
             $wasteLog = $this->stockService->recordWaste(

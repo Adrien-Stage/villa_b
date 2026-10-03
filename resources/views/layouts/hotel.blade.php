@@ -391,6 +391,22 @@
                                 <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
                             @endpour
 
+                            {{-- Chaque restaurant a son bar. --}}
+                            @pour('restaurant_chief','restaurant_staff')
+                                <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
+                            @endpour
+
+                            {{-- Le buffet au forfait, là où un restaurant sert au buffet. --}}
+                            @if(app(\App\Services\RestaurantContext::class)->restaurants()->contains(fn ($r) => $r->sert(\App\Models\PointOfSale::MODE_BUFFET)))
+                                @pour('manager','restaurant_chief','restaurant_staff','cashier')
+                                    <x-sidebar-link route="restaurant.buffets.index" icon="salad">Buffets</x-sidebar-link>
+                                @endpour
+                            @endif
+
+                            @pour('manager','restaurant_chief','restaurant_manager','cashier')
+                                <x-sidebar-link route="restaurant.banquets.index" icon="party-popper">Banquets</x-sidebar-link>
+                            @endpour
+
                             @pour('manager','restaurant_chief','restaurant_staff')
                                 {{-- Pour le serveur, « Menus » est l'écran de prise de
                                      commande ; pour le chef, la carte à administrer. --}}
@@ -417,12 +433,18 @@
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.cash_register.index" icon="calculator">Caisse</x-sidebar-link>
                             @endpour
+
+                            {{-- Les restaurants de l'hôtel, leurs salles et leurs équipes. --}}
+                            @pour('manager','restaurant_manager')
+                                <x-sidebar-link route="restaurant.restaurants.index" icon="store">Restaurants</x-sidebar-link>
+                            @endpour
                             @php
                                 $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
                             @endphp
                             @if($tenantSlug)
                                 <li>
-                                    <a href="{{ route('portal.restaurant.menu', ['tenant' => $tenantSlug]) }}"
+                                    @php $restaurantQr = app(\App\Services\RestaurantContext::class)->plusieurs() ? app(\App\Services\RestaurantContext::class)->pourCreation(Auth::user()) : null; @endphp
+                                    <a href="{{ route('portal.restaurant.menu', array_filter(['tenant' => $tenantSlug, 'restaurant' => $restaurantQr?->slug])) }}"
                                        target="_blank"
                                        rel="noopener"
                                        title="Portail (QR)"
@@ -923,6 +945,10 @@
         @endif
 
         <main class="flex-1 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6">
+            {{-- Plusieurs restaurants : les écrans du restaurant disent lequel. --}}
+            @if(request()->routeIs('restaurant.*') && auth()->check())
+                <x-restaurant.courant />
+            @endif
             @yield('content')
         </main>
     </div>

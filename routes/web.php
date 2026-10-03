@@ -357,6 +357,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- RESTAURANT (menus) ---
+    // Restaurant dans lequel on travaille : le choix ne donne aucun droit,
+    // il ne fait que borner ce que les écrans montrent.
+    Route::post('/restaurant/restaurant-courant', [App\Http\Controllers\RestaurantContextController::class, 'choisir'])
+        ->middleware('module:restaurant')->name('restaurant.courant');
+
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
     Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
@@ -366,6 +371,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
+        // Chaque restaurant a son bar : les boissons y sont préparées.
+        Route::get('/bar', [App\Http\Controllers\RestaurantKitchenController::class, 'bar'])->name('bar.index');
     });
 
     // Gestion du restaurant : coûts, stocks et inventaires. La salle en est
@@ -397,6 +404,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/orders/{order}/send-to-kitchen', [RestaurantOrderController::class, 'sendToKitchen'])->whereNumber('order')->name('orders.send_to_kitchen');
         Route::post('/orders/{order}/served', [RestaurantOrderController::class, 'markServed'])->whereNumber('order')->name('orders.served');
+        Route::post('/orders/{order}/bar-ready', [App\Http\Controllers\RestaurantKitchenController::class, 'barReady'])->whereNumber('order')->name('orders.bar_ready');
         Route::post('/orders/{order}/claim', [RestaurantOrderController::class, 'claim'])->whereNumber('order')->name('orders.claim');
         Route::post('/orders/{order}/reassign', [RestaurantOrderController::class, 'reassign'])->whereNumber('order')->name('orders.reassign');
     });
@@ -470,6 +478,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'open'])->name('cash_register.open.store');
         Route::post('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'close'])->name('cash_register.close.store');
         Route::post('/cash-register/disbursements', [App\Http\Controllers\RestaurantCashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+    });
+
+    // --- RESTAURANTS MULTIPLES ---
+    // Les restaurants de l'hôtel, leurs salles et leurs équipes ; le buffet au
+    // forfait ; les banquets réservés dans l'un ou l'autre restaurant.
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
+        Route::get('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'index'])->name('restaurants.index');
+        Route::post('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'store'])->name('restaurants.store');
+        Route::put('/restaurants/{restaurant}', [App\Http\Controllers\RestaurantSetupController::class, 'update'])->whereNumber('restaurant')->name('restaurants.update');
+        Route::put('/restaurants/{restaurant}/equipe', [App\Http\Controllers\RestaurantSetupController::class, 'updateTeam'])->whereNumber('restaurant')->name('restaurants.team.update');
+        Route::post('/restaurants/{restaurant}/salles', [App\Http\Controllers\RestaurantSetupController::class, 'storeSpace'])->whereNumber('restaurant')->name('restaurants.spaces.store');
+        Route::put('/salles/{space}', [App\Http\Controllers\RestaurantSetupController::class, 'updateSpace'])->whereNumber('space')->name('restaurants.spaces.update');
+
+        Route::get('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'index'])->name('buffets.index');
+        Route::post('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'store'])->name('buffets.store');
+        Route::get('/buffets/{buffet}', [App\Http\Controllers\RestaurantBuffetController::class, 'show'])->whereNumber('buffet')->name('buffets.show');
+        Route::post('/buffets/{buffet}/entries', [App\Http\Controllers\RestaurantBuffetController::class, 'storeEntry'])->whereNumber('buffet')->name('buffets.entries.store');
+        Route::post('/buffets/{buffet}/close', [App\Http\Controllers\RestaurantBuffetController::class, 'close'])->whereNumber('buffet')->name('buffets.close');
+
+        Route::get('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'index'])->name('banquets.index');
+        Route::post('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'store'])->name('banquets.store');
+        Route::get('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'show'])->whereNumber('banquet')->name('banquets.show');
+        Route::put('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'update'])->whereNumber('banquet')->name('banquets.update');
+        Route::post('/banquets/{banquet}/status', [App\Http\Controllers\RestaurantBanquetController::class, 'status'])->whereNumber('banquet')->name('banquets.status');
+        Route::post('/banquets/{banquet}/payments', [App\Http\Controllers\RestaurantBanquetController::class, 'storePayment'])->whereNumber('banquet')->name('banquets.payments.store');
     });
 
     Route::prefix('invoices')->name('invoices.')->middleware('permission')->group(function () {

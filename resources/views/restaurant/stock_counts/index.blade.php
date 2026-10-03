@@ -12,7 +12,7 @@
         </p>
     </div>
 
-    @if($canManage && !$openCount)
+    @if($canManage && !$openCount && !$vueEnsemble)
         <form method="POST" action="{{ route('restaurant.stock_counts.store') }}" class="shrink-0">
             @csrf
             <button type="submit"
@@ -84,6 +84,9 @@
                         <tr class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-4 py-3">
                                 <p class="text-sm font-semibold text-primary">{{ $count->reference }}</p>
+                                @if($vueEnsemble && $count->pointOfSale)
+                                    <p class="text-[11px] font-semibold text-primary/45">{{ $count->pointOfSale->name }}</p>
+                                @endif
                                 <p class="text-[11px] text-primary/40">
                                     {{ $count->created_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}
                                 </p>

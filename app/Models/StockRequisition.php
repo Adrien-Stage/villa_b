@@ -53,7 +53,7 @@ class StockRequisition extends Model
     ];
 
     protected $fillable = [
-        'number', 'department', 'service_store_id', 'status', 'purpose', 'review_notes',
+        'number', 'department', 'service_store_id', 'point_of_sale_id', 'status', 'purpose', 'review_notes',
         'requested_by', 'reviewed_by', 'reviewed_at', 'delivered_at', 'tenant_id',
         'requester_signature',
     ];
@@ -117,6 +117,12 @@ class StockRequisition extends Model
     }
 
     /** Dépôt de service destinataire : la livraison y entre en stock. */
+    /** Restaurant dont la cuisine reçoit la livraison. */
+    public function pointOfSale(): BelongsTo
+    {
+        return $this->belongsTo(PointOfSale::class);
+    }
+
     public function serviceStore(): BelongsTo
     {
         return $this->belongsTo(ServiceStore::class);

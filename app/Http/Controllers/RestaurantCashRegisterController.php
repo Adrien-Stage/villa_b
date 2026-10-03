@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CashRegisterSession;
 use App\Models\PointOfSale;
+use App\Models\RestaurantBanquetPayment;
+use App\Models\RestaurantBuffetEntry;
 use App\Services\CashRegisterCircuit;
+use App\Services\RestaurantContext;
 use App\Support\CashClosurePolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +34,8 @@ class RestaurantCashRegisterController extends Controller
             'enCours' => $this->circuit->enCours(Auth::user(), self::MODULE),
             'sessions' => CashRegisterSession::query()
                 ->where('module', self::MODULE)
+                // Chacun voit les caisses des restaurants qu'il voit.
+                ->when(app(RestaurantContext::class)->plusieurs(), fn ($q) => $q->whereIn('point_of_sale_id', app(RestaurantContext::class)->idsVisibles(Auth::user())))
                 ->with(['user', 'pointOfSale', 'witness'])
                 ->latest('opened_at')
                 ->paginate(15),
@@ -49,6 +54,7 @@ class RestaurantCashRegisterController extends Controller
 
         return view('restaurant.cash_register.open', [
             'caisses' => $caisses,
+            'courant' => app(RestaurantContext::class)->courant(Auth::user()),
             'tenues' => $caisses->mapWithKeys(fn (PointOfSale $p) => [$p->id => $this->circuit->tiroirTenu($p, self::MODULE)]),
         ]);
     }
@@ -94,8 +100,19 @@ class RestaurantCashRegisterController extends Controller
             'session' => $session->load('pointOfSale'),
             'theorique' => $session->theoreticalBalance(),
             'especes' => (int) $session->restaurantOrders()->where('payment_method', 'cash')->where('payment_status', 'paid')->sum('amount_paid'),
+            // Le buffet au forfait et les banquets s'encaissent à la même caisse.
+            'especesBuffet' => (int) RestaurantBuffetEntry::where('cash_register_session_id', $session->id)->where('payment_method', 'cash')->sum('amount'),
+            'especesBanquets' => (int) RestaurantBanquetPayment::where('cash_register_session_id', $session->id)->where('payment_method', 'cash')->sum('amount'),
             'autresModes' => $session->restaurantOrders()->where('payment_status', 'paid')->where('payment_method', '!=', 'cash')
-                ->selectRaw('payment_method, count(*) as nombre, sum(amount_paid) as montant')->groupBy('payment_method')->get(),
+                ->selectRaw('payment_method, count(*) as nombre, sum(amount_paid) as montant')->groupBy('payment_method')->toBase()
+                ->unionAll(RestaurantBuffetEntry::where('cash_register_session_id', $session->id)->where('payment_method', '!=', 'cash')
+                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')->toBase())
+                ->unionAll(RestaurantBanquetPayment::where('cash_register_session_id', $session->id)->where('payment_method', '!=', 'cash')
+                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')->toBase())
+                ->get()
+                ->groupBy('payment_method')
+                ->map(fn ($lignes, $mode) => (object) ['payment_method' => $mode, 'nombre' => $lignes->sum('nombre'), 'montant' => $lignes->sum('montant')])
+                ->values(),
             'decaissements' => $session->disbursements()->get(),
         ]);
     }
@@ -131,9 +148,12 @@ class RestaurantCashRegisterController extends Controller
         return back()->with('success', 'Sortie de caisse enregistrée.');
     }
 
-    /** Les caisses des restaurants : un point de vente de restauration chacun. */
+    /**
+     * Les caisses des restaurants : un point de vente de restauration chacun.
+     * On n'ouvre que la caisse d'un restaurant où l'on travaille.
+     */
     private function caisses()
     {
-        return PointOfSale::active()->ofKind(PointOfSale::KIND_RESTAURATION)->orderBy('sort_order')->orderBy('name')->get();
+        return app(RestaurantContext::class)->accessibles(Auth::user());
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppartientAUnRestaurant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RestaurantCustomerOrder extends Model
 {
-    use HasFactory;
+    use HasFactory, AppartientAUnRestaurant;
 
     // Parcours d'une commande, de la salle à la table :
     //   pending    → reçue (portail), affectée à un serveur, pas encore transmise

@@ -28,9 +28,11 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Une exception : valider ou refuser une demande d'achat. Ce n'est pas une
+ * Deux exceptions. Valider ou refuser une demande d'achat : ce n'est pas une
  * saisie à la place de l'économe mais la décision de dépense, que la
- * direction se réserve. Le comptage des caisses, lui, est contresigné par la
+ * direction se réserve. Créer les restaurants de l'hôtel, leurs salles, et
+ * composer leurs équipes : c'est la structure de l'hôtel, non l'exploitation
+ * d'un restaurant. Le comptage des caisses, lui, est contresigné par la
  * comptabilité seule (CashClosurePolicy).
  *
  * Le gabarit n'écrit que les rôles qui reçoivent un droit pour eux-mêmes ;
@@ -166,12 +168,19 @@ class PermissionCatalog
         'housekeeping.reject',
         'housekeeping.teams.creer',
         'reception.pos.sales.creer',
+        'restaurant.banquets.creer',
+        'restaurant.banquets.modifier',
+        'restaurant.banquets.payments.creer',
+        'restaurant.banquets.status',
         'restaurant.billing.paid',
         'restaurant.billing.unpaid',
         'restaurant.cash_register.close.creer',
         'restaurant.cash_register.disbursements.creer',
         'restaurant.cash_register.open.creer',
         'restaurant.breakfast.serve',
+        'restaurant.buffets.close',
+        'restaurant.buffets.creer',
+        'restaurant.buffets.entries.creer',
         'restaurant.menus.categories.creer',
         'restaurant.menus.categories.modifier',
         'restaurant.menus.categories.supprimer',
@@ -179,6 +188,7 @@ class PermissionCatalog
         'restaurant.menus.items.creer',
         'restaurant.menus.items.modifier',
         'restaurant.menus.items.supprimer',
+        'restaurant.orders.bar_ready',
         'restaurant.orders.claim',
         'restaurant.orders.creer',
         'restaurant.orders.preparing',
@@ -201,6 +211,11 @@ class PermissionCatalog
         'restaurant.recipes.modifier',
         'restaurant.recipes.produce',
         'restaurant.recipes.supprimer',
+        'restaurant.restaurants.creer',
+        'restaurant.restaurants.modifier',
+        'restaurant.restaurants.spaces.creer',
+        'restaurant.restaurants.spaces.modifier',
+        'restaurant.restaurants.team.modifier',
         'restaurant.shifts.close',
         'restaurant.shifts.open',
         'restaurant.stock_counts.close',
@@ -306,6 +321,15 @@ class PermissionCatalog
     ];
 
     /**
+     * Les restaurants de l'hôtel et leurs salles, que l'administrateur règle
+     * aussi : les décrire n'est pas les exploiter.
+     */
+    private const CONFIGURATION_RESTAURANTS = [
+        'restaurant.restaurants.creer', 'restaurant.restaurants.modifier',
+        'restaurant.restaurants.spaces.creer', 'restaurant.restaurants.spaces.modifier',
+    ];
+
+    /**
      * Paramètres de l'établissement que l'administrateur règle : l'onglet
      * Général seulement (SettingsTabs borne chaque onglet). Tarifs,
      * prestations et partenaires restent des décisions de la direction.
@@ -319,6 +343,8 @@ class PermissionCatalog
      */
     private const ADMINISTRATION = [
         'users.creer', 'users.modifier', 'users.toggleStatus',
+        // Affecter le personnel à l'équipe d'un restaurant, c'est tenir son compte.
+        'restaurant.restaurants.team.modifier',
         'droits.modifier', 'droits.apercu', 'droits.exceptions.creer', 'droits.exceptions.supprimer',
         'interventions.creer', 'interventions.terminer',
     ];
@@ -450,7 +476,7 @@ class PermissionCatalog
     /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
     public static function ecrituresDeLAdministrateur(): array
     {
-        return [...self::CONFIGURATION, ...self::PARAMETRES, ...self::ADMINISTRATION];
+        return [...self::CONFIGURATION, ...self::CONFIGURATION_RESTAURANTS, ...self::PARAMETRES, ...self::ADMINISTRATION];
     }
 
     /**
@@ -462,6 +488,31 @@ class PermissionCatalog
     {
         return [
             // ── Restauration ──
+            // Restaurants multiples : la direction crée les restaurants et
+            // leurs salles ; le responsable de restaurant compose l'équipe des
+            // restaurants où il travaille.
+            'restaurant.restaurants.voir' => ['controller', 'manager', 'restaurant_manager'],
+            'restaurant.restaurants.creer' => ['manager'],
+            'restaurant.restaurants.modifier' => ['manager'],
+            'restaurant.restaurants.spaces.creer' => ['manager'],
+            'restaurant.restaurants.spaces.modifier' => ['manager'],
+            'restaurant.restaurants.team.modifier' => ['manager', 'restaurant_manager'],
+            // Chaque restaurant a son bar : les boissons s'y préparent.
+            'restaurant.bar.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.orders.bar_ready' => ['restaurant_staff'],
+            // Buffet au forfait : le responsable ouvre le service, la caisse
+            // enregistre les entrées.
+            'restaurant.buffets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_staff'],
+            'restaurant.buffets.creer' => ['restaurant_manager'],
+            'restaurant.buffets.entries.creer' => ['cashier'],
+            'restaurant.buffets.close' => ['restaurant_manager'],
+            // Banquets : le responsable établit et suit le devis, la caisse
+            // encaisse acompte et solde.
+            'restaurant.banquets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.banquets.creer' => ['restaurant_manager'],
+            'restaurant.banquets.modifier' => ['restaurant_manager'],
+            'restaurant.banquets.status' => ['restaurant_manager'],
+            'restaurant.banquets.payments.creer' => ['cashier'],
             'restaurant.billing.paid' => ['cashier'],
             // Caisse du restaurant : le caissier, et le responsable de
             // restaurant qui l'inclut, s'il faut encaisser à sa place.

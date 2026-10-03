@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantMenuCategory;
 use App\Models\RestaurantMenuItem;
 use App\Models\RestaurantOrderItem;
+use App\Services\RestaurantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +17,9 @@ use Illuminate\View\View;
 class RestaurantMenuController extends Controller
 {
     private const ITEM_TYPES = ['food', 'drink', 'other'];
+
+    /** Formule buffet vendue au couvert : seulement là où l'on sert au buffet. */
+    public const TYPE_BUFFET = 'buffet';
 
     public function index(Request $request): View
     {
@@ -28,13 +33,16 @@ class RestaurantMenuController extends Controller
         }
 
         $categories = RestaurantMenuCategory::query()
+            ->visiblesPour($user)
+            ->with('pointOfSale:id,name')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->withCount('items')
             ->get();
 
         $itemsQuery = RestaurantMenuItem::query()
-            ->with('category')
+            ->visiblesPour($user)
+            ->with(['category', 'pointOfSale:id,name'])
             ->orderBy('sort_order')
             ->orderBy('name');
 
@@ -64,13 +72,20 @@ class RestaurantMenuController extends Controller
 
         $items = $itemsQuery->paginate(15)->withQueryString();
 
+        $restaurant = app(RestaurantContext::class)->pourCreation($user);
+        $vueEnsemble = app(RestaurantContext::class)->vueEnsemble($user);
+
         $canManage = $droits->allows($user, 'restaurant.menus.items.creer');
 
         return view('restaurant.menus.index', [
             'categories' => $categories,
             'items' => $items,
             'canManage' => $canManage,
-            'itemTypes' => self::ITEM_TYPES,
+            'vueEnsemble' => $vueEnsemble,
+            // On compose la carte d'un restaurant : depuis la vue d'ensemble,
+            // on choisit d'abord lequel.
+            'peutCreer' => $canManage && ! $vueEnsemble,
+            'itemTypes' => self::typesPour($restaurant),
             'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
         ]);
     }
@@ -85,7 +100,11 @@ class RestaurantMenuController extends Controller
      */
     private function priseDeCommande(): View
     {
+        // Le serveur prend commande sur la carte de son restaurant.
+        $restaurant = app(RestaurantContext::class)->pourCreation(Auth::user());
+
         $items = RestaurantMenuItem::query()
+            ->duRestaurant($restaurant)
             ->with('category')
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -93,6 +112,7 @@ class RestaurantMenuController extends Controller
             ->get();
 
         $categories = RestaurantMenuCategory::query()
+            ->duRestaurant($restaurant)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -101,6 +121,7 @@ class RestaurantMenuController extends Controller
             ->values();
 
         return view('restaurant.menus.service', [
+            'restaurant' => $restaurant,
             'items' => $items,
             'categories' => $categories,
             'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
@@ -109,18 +130,21 @@ class RestaurantMenuController extends Controller
 
     public function storeCategory(Request $request): RedirectResponse
     {
+        $restaurant = $this->restaurantDeSaisie();
+
         $validated = $request->validate([
             'name' => [
                 'required',
                 'string',
                 'max:120',
-                Rule::unique('restaurant_menu_categories', 'name')->where(fn ($q) => $q),
+                Rule::unique('restaurant_menu_categories', 'name')->where('point_of_sale_id', $restaurant->id),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
         RestaurantMenuCategory::create([
+            'point_of_sale_id' => $restaurant->id,
             'name' => trim($validated['name']),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
@@ -140,7 +164,7 @@ class RestaurantMenuController extends Controller
                 'max:120',
                 Rule::unique('restaurant_menu_categories', 'name')
                     ->ignore($category->id)
-                    ->where(fn ($q) => $q),
+                    ->where('point_of_sale_id', $category->point_of_sale_id),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
@@ -174,22 +198,24 @@ class RestaurantMenuController extends Controller
 
     public function storeItem(Request $request): RedirectResponse
     {
+        $restaurant = $this->restaurantDeSaisie();
+
         $validated = $request->validate([
             'restaurant_menu_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q),
+                Rule::exists('restaurant_menu_categories', 'id')->where('point_of_sale_id', $restaurant->id),
             ],
             'name' => [
                 'required',
                 'string',
                 'max:140',
-                Rule::unique('restaurant_menu_items', 'name')->where(fn ($q) => $q),
+                Rule::unique('restaurant_menu_items', 'name')->where('point_of_sale_id', $restaurant->id),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             // Saisi en FCFA -> stockage en centimes
             'price' => ['required', 'integer', 'min:0', 'max:5000000'],
-            'type' => ['required', Rule::in(self::ITEM_TYPES)],
+            'type' => ['required', Rule::in(self::typesPour($restaurant))],
             'meal_services' => ['nullable', 'array'],
             'meal_services.*' => [Rule::in(array_keys(RestaurantMenuItem::MEAL_SERVICES))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
@@ -207,6 +233,7 @@ class RestaurantMenuController extends Controller
         }
 
         $item = RestaurantMenuItem::create([
+            'point_of_sale_id' => $restaurant->id,
             'restaurant_menu_category_id' => $validated['restaurant_menu_category_id'] ?? null,
             'name' => trim($validated['name']),
             'description' => $validated['description'] ?? null,
@@ -229,11 +256,13 @@ class RestaurantMenuController extends Controller
 
     public function updateItem(Request $request, RestaurantMenuItem $item): RedirectResponse
     {
+        $restaurant = $item->pointOfSale;
+
         $validated = $request->validate([
             'restaurant_menu_category_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_menu_categories', 'id')->where(fn ($q) => $q),
+                Rule::exists('restaurant_menu_categories', 'id')->where('point_of_sale_id', $item->point_of_sale_id),
             ],
             'name' => [
                 'required',
@@ -241,12 +270,14 @@ class RestaurantMenuController extends Controller
                 'max:140',
                 Rule::unique('restaurant_menu_items', 'name')
                     ->ignore($item->id)
-                    ->where(fn ($q) => $q),
+                    ->where('point_of_sale_id', $item->point_of_sale_id),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             // Saisi en FCFA -> stockage en centimes
             'price' => ['required', 'integer', 'min:0', 'max:5000000'],
-            'type' => ['required', Rule::in(self::ITEM_TYPES)],
+            // Un article déjà à la carte garde son type, même si le restaurant
+            // a changé de modes de service depuis.
+            'type' => ['required', Rule::in(array_unique([...self::typesPour($restaurant), $item->type]))],
             'meal_services' => ['nullable', 'array'],
             'meal_services.*' => [Rule::in(array_keys(RestaurantMenuItem::MEAL_SERVICES))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
@@ -315,5 +346,24 @@ class RestaurantMenuController extends Controller
         return redirect()
             ->route('restaurant.menus.index')
             ->with('success', 'Article supprime.');
+    }
+
+    /** Restaurant dont on saisit la carte : celui qui est choisi. */
+    private function restaurantDeSaisie(): PointOfSale
+    {
+        return app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+    }
+
+    /**
+     * Types d'articles qu'un restaurant peut mettre à sa carte : la formule
+     * buffet n'existe que là où l'on sert au buffet.
+     *
+     * @return list<string>
+     */
+    public static function typesPour(?PointOfSale $restaurant): array
+    {
+        return $restaurant?->sert(PointOfSale::MODE_BUFFET)
+            ? [...self::ITEM_TYPES, self::TYPE_BUFFET]
+            : self::ITEM_TYPES;
     }
 }

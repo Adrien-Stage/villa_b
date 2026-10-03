@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantShift;
 use App\Models\User;
@@ -32,9 +33,10 @@ class RestaurantAssignmentService
      * Serveurs actuellement en service (prise de service ouverte), actifs et
      * réellement porteurs du rôle serveur.
      */
-    public function onDutyServers(): Collection
+    public function onDutyServers(PointOfSale|int|null $restaurant = null): Collection
     {
-        $onDutyIds = RestaurantShift::query()->open()->pluck('user_id')->unique();
+        // En service dans ce restaurant : chaque restaurant a sa salle.
+        $onDutyIds = RestaurantShift::query()->open()->duRestaurant($restaurant)->pluck('user_id')->unique();
 
         if ($onDutyIds->isEmpty()) {
             return collect();
@@ -55,7 +57,7 @@ class RestaurantAssignmentService
      */
     public function assignPortalOrder(RestaurantCustomerOrder $order): ?User
     {
-        $server = $this->pickLeastLoadedServer();
+        $server = $this->pickLeastLoadedServer($order->point_of_sale_id);
 
         if (!$server) {
             $this->notifyUnassigned($order);
@@ -79,9 +81,9 @@ class RestaurantAssignmentService
     /**
      * Le serveur en service le moins chargé, ou null si aucun n'est en service.
      */
-    public function pickLeastLoadedServer(): ?User
+    public function pickLeastLoadedServer(PointOfSale|int|null $restaurant = null): ?User
     {
-        $servers = $this->onDutyServers();
+        $servers = $this->onDutyServers($restaurant);
 
         if ($servers->isEmpty()) {
             return null;
@@ -133,10 +135,10 @@ class RestaurantAssignmentService
      */
     private function notifyUnassigned(RestaurantCustomerOrder $order): void
     {
-        $recipients = User::query()
-            ->havingRole([self::SERVER_ROLE, 'restaurant_chief'])
-            ->active()
-            ->get();
+        $recipients = app(RestaurantContext::class)->equipe(
+            User::query()->havingRole([self::SERVER_ROLE, 'restaurant_chief'])->active(),
+            $order->point_of_sale_id
+        )->get();
 
         if ($recipients->isEmpty()) {
             return;

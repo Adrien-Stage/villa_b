@@ -1169,6 +1169,50 @@
   "reception",
   "reception_chief"
  ],
+ "restaurant.banquets.index": [
+  "admin",
+  "cashier",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.banquets.payments.store": [
+  "cashier",
+  "restaurant_manager"
+ ],
+ "restaurant.banquets.show": [
+  "admin",
+  "cashier",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.banquets.status": [
+  "restaurant_manager"
+ ],
+ "restaurant.banquets.store": [
+  "restaurant_manager"
+ ],
+ "restaurant.banquets.update": [
+  "restaurant_manager"
+ ],
+ "restaurant.bar.index": [
+  "admin",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "support"
+ ],
  "restaurant.billing.index": [
   "admin",
   "cashier",
@@ -1225,6 +1269,38 @@
  "restaurant.breakfast.serve": [
   "restaurant_manager",
   "restaurant_staff"
+ ],
+ "restaurant.buffets.close": [
+  "restaurant_manager"
+ ],
+ "restaurant.buffets.entries.store": [
+  "cashier",
+  "restaurant_manager"
+ ],
+ "restaurant.buffets.index": [
+  "admin",
+  "cashier",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_manager",
+  "restaurant_staff",
+  "support"
+ ],
+ "restaurant.buffets.show": [
+  "admin",
+  "cashier",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_manager",
+  "restaurant_staff",
+  "support"
+ ],
+ "restaurant.buffets.store": [
+  "restaurant_manager"
  ],
  "restaurant.cash_register.close": [
   "admin",
@@ -1328,6 +1404,10 @@
  "restaurant.menus.items.update": [
   "restaurant_chief",
   "restaurant_manager"
+ ],
+ "restaurant.orders.bar_ready": [
+  "restaurant_manager",
+  "restaurant_staff"
  ],
  "restaurant.orders.claim": [
   "restaurant_manager",
@@ -1458,6 +1538,35 @@
  ],
  "restaurant.recipes.update": [
   "restaurant_chief"
+ ],
+ "restaurant.restaurants.index": [
+  "admin",
+  "controller",
+  "manager",
+  "quality_auditor",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.restaurants.spaces.store": [
+  "admin",
+  "manager"
+ ],
+ "restaurant.restaurants.spaces.update": [
+  "admin",
+  "manager"
+ ],
+ "restaurant.restaurants.store": [
+  "admin",
+  "manager"
+ ],
+ "restaurant.restaurants.team.update": [
+  "admin",
+  "manager",
+  "restaurant_manager"
+ ],
+ "restaurant.restaurants.update": [
+  "admin",
+  "manager"
  ],
  "restaurant.shifts.close": [
   "restaurant_manager",

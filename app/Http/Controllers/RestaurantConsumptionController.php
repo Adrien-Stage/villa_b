@@ -35,6 +35,8 @@ class RestaurantConsumptionController extends Controller
             startDate: $startDate,
             endDate: $endDate,
             tenantId: $tenantId,
+            // La consommation des restaurants que la personne voit maintenant.
+            restaurants: app(\App\Services\RestaurantContext::class)->idsVisibles(Auth::user()),
         );
 
         return view('restaurant.consumption.index', [

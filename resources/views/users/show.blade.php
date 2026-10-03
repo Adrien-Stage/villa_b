@@ -83,6 +83,11 @@
                 @foreach($portees as $droit => $libelle)
                     <div class="flex justify-between gap-2"><dt class="font-mono text-primary/60">{{ $droit }}</dt><dd class="text-primary">{{ $libelle }}</dd></div>
                 @endforeach
+                @if(app(\App\Services\RestaurantContext::class)->plusieurs())
+                    <div class="flex justify-between gap-2"><dt class="text-primary/60">Restaurants</dt>
+                        <dd class="text-right text-primary">{{ app(\App\Services\RestaurantContext::class)->vueGlobale($membre) ? 'Tous (direction)' : ($membre->restaurants->pluck('name')->implode(', ') ?: 'Aucun') }}</dd>
+                    </div>
+                @endif
                 <div class="flex justify-between gap-2"><dt class="text-primary/60">Dernière connexion</dt><dd class="text-primary">{{ $membre->last_login_at?->format('d/m/Y H:i') ?? 'Jamais' }}</dd></div>
             </dl>
         </section>

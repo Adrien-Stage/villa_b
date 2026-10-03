@@ -13,7 +13,7 @@
         <a href="{{ route('restaurant.pantry.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter le garde-manger en CSV">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
         </a>
-        @if($canManage)
+        @if($peutCreer)
             <button type="button" onclick="document.getElementById('modal-import-pantry').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des articles depuis un CSV">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
             </button>
@@ -34,6 +34,12 @@
 </div>
 
 <x-csv-import-errors />
+
+@if($vueEnsemble && $canManage)
+    <p class="mb-4 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-2 text-xs text-primary/70">
+        Vous consultez le garde-manger de tous les restaurants. Choisissez un restaurant pour y créer ou importer des articles.
+    </p>
+@endif
 
 @if($canManage)
     <x-csv-import-modal
@@ -175,6 +181,7 @@
                                         @endif
                                     </p>
                                     <p class="text-xs text-primary/45 mt-0.5">
+                                        @if($vueEnsemble && $item->pointOfSale)<span class="font-semibold">{{ $item->pointOfSale->name }}</span> · @endif
                                         {{ strtoupper($item->unit) }}
                                         @if($item->purchase_unit)
                                             · achat : {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}

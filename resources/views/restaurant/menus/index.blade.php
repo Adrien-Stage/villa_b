@@ -13,7 +13,7 @@
         <a href="{{ route('restaurant.menus.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter les menus en CSV">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
         </a>
-        @if($canManage)
+        @if($peutCreer)
             <button type="button" onclick="document.getElementById('modal-import-menus').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des plats depuis un CSV">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
             </button>
@@ -28,6 +28,12 @@
 </div>
 
 <x-csv-import-errors />
+
+@if($vueEnsemble && $canManage)
+    <p class="mb-4 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-2 text-xs text-primary/70">
+        Vous consultez la carte de tous les restaurants. Choisissez un restaurant pour modifier sa carte.
+    </p>
+@endif
 
 @if($canManage)
     <x-csv-import-modal
@@ -67,7 +73,7 @@
                 <p class="font-heading text-sm font-semibold text-primary">Categories</p>
                 <p class="text-xs text-primary/45 mt-0.5">Classement du menu</p>
             </div>
-            @if($canManage)
+            @if($peutCreer)
                 <button type="button"
                     onclick="openCreateCategoryModal()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/30 text-primary text-xs font-semibold hover:bg-accent/40">
@@ -85,6 +91,7 @@
                         <p class="text-xs text-primary/45 mt-0.5">
                             {{ $category->items_count }} article{{ $category->items_count > 1 ? 's' : '' }}
                             @if(!$category->is_active) · Inactive @endif
+                            @if($vueEnsemble && $category->pointOfSale) · {{ $category->pointOfSale->name }} @endif
                         </p>
                     </div>
                     @if($canManage)
@@ -193,6 +200,9 @@
                             <tr class="{{ $item->is_active ? '' : 'opacity-60' }}">
                                 <td class="px-4 py-3">
                                     <p class="text-sm font-semibold text-primary">{{ $item->name }}</p>
+                                    @if($vueEnsemble && $item->pointOfSale)
+                                        <p class="text-[11px] font-semibold text-primary/45">{{ $item->pointOfSale->name }}</p>
+                                    @endif
                                     @if($item->description)
                                         <p class="text-xs text-primary/45 mt-0.5 truncate">{{ $item->description }}</p>
                                     @endif
@@ -403,7 +413,7 @@
                     <label class="text-xs text-primary/60">Categorie</label>
                     <select name="restaurant_menu_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
                         <option value="">Aucune</option>
-                        @foreach($categories as $category)
+                        @foreach($categories->where('point_of_sale_id', $item->point_of_sale_id) as $category)
                             <option value="{{ $category->id }}" @selected((string) old('restaurant_menu_category_id', $item->restaurant_menu_category_id) === (string) $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
@@ -418,7 +428,7 @@
                 <div>
                     <label class="text-xs text-primary/60">Type</label>
                     <select name="type" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                        @foreach($itemTypes as $type)
+                        @foreach(array_unique([...$itemTypes, $item->type]) as $type)
                             <option value="{{ $type }}" @selected(old('type', $item->type) === $type)>{{ strtoupper($type) }}</option>
                         @endforeach
                     </select>

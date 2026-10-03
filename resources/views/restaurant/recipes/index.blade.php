@@ -17,6 +17,11 @@
 @endphp
 
 @section('content')
+@if($vueEnsemble && $peutGerer)
+    <p class="mb-4 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-2 text-xs text-primary/70">
+        Vous consultez les fiches de tous les restaurants. Choisissez un restaurant pour composer ou modifier ses fiches.
+    </p>
+@endif
 <div class="mb-6 flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold text-primary font-heading">Fiches techniques</h1>

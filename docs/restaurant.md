@@ -21,6 +21,48 @@ RestaurantShift          RestaurantStockCount ──1──n── RestaurantSto
 Le lien central est la **fiche technique** : elle relie un plat de la carte aux
 ingrédients du garde-manger. C'est elle qui rend le stock et le coût automatiques.
 
+## Plusieurs restaurants
+
+L'hôtel crée autant de restaurants qu'il en exploite (`/restaurant/restaurants`). Un
+restaurant est un point de vente de nature `restauration` ; il a **sa** carte, **sa**
+cuisine et **son** bar, **son** garde-manger, ses inventaires, sa caisse et son
+équipe. Il choisit ses **modes de service** : à la carte, au buffet, ou les deux.
+Ses **salles** (espaces) accueillent le service et les banquets.
+
+Tout ce qui appartient à un restaurant porte un `point_of_sale_id` : catégories et
+articles de la carte, commandes, garde-manger, fiches techniques, inventaires,
+pertes, services de salle, notes, buffets, banquets, et les livraisons de
+l'économat au restaurant. Le trait
+[`AppartientAUnRestaurant`](../app/Models/Concerns/AppartientAUnRestaurant.php) :
+
+- rattache l'enregistrement créé au restaurant où l'on travaille ;
+- ouvre une adresse (`/restaurant/orders/42`) à qui voit ce restaurant seulement :
+  ailleurs, la réponse est 404 ;
+- fournit les portées `visiblesPour($user)` et `duRestaurant($restaurant)`.
+
+### Qui voit quoi
+
+[`RestaurantContext`](../app/Services/RestaurantContext.php) décide.
+
+| Qui | Voit |
+|---|---|
+| Personnel du restaurant (`restaurant_*`, `cashier`) | Les restaurants où il est **affecté** — un ou plusieurs |
+| Direction et contrôle (`admin`, `manager`, `controller`, `quality_auditor`, `support`) | Tous les restaurants, ensemble ou un par un |
+| Réception | Dans tous les restaurants, les **seules notes reportées sur un séjour** |
+
+Le sélecteur en haut des écrans du restaurant choisit le restaurant courant, ou
+« Tous les restaurants ». Choisir ne donne aucun droit : il borne ce que les écrans
+montrent. On compose une carte, un garde-manger, des fiches ou un inventaire **dans
+un restaurant** : depuis la vue d'ensemble, ces écrans se consultent seulement.
+
+L'affectation se fait depuis la fiche du restaurant (« Composer l'équipe ») ou depuis
+la gestion des utilisateurs. Un établissement qui n'a qu'un restaurant ne cloisonne
+rien : tout fonctionne comme avant, et le personnel de restaurant créé y est rattaché
+d'office, pour qu'un second restaurant ouvert plus tard ne le laisse pas sans équipe.
+
+À la migration, l'existant rejoint le restaurant d'origine, ses boissons partent au
+bar, et son personnel lui est affecté.
+
 ## La carte
 
 `Paramètres` de la carte réservés au **chef cuisinier** : catégories, plats, prix,
@@ -28,6 +70,11 @@ photos, et les **services** auxquels chaque plat est disponible (petit-déjeuner
 déjeuner, dîner).
 
 Import et export CSV disponibles (`/restaurant/menus-export`, `/restaurant/menus-import`).
+L'import charge la carte du restaurant choisi ; l'export, celle des restaurants vus.
+
+Chaque restaurant a sa carte : deux restaurants peuvent vendre chacun leur
+« Coca-Cola ». Un article de type `buffet` — la **formule buffet au couvert** —
+n'existe que dans un restaurant qui sert au buffet ; il se commande comme le reste.
 
 ## Le service en salle
 
@@ -66,7 +113,43 @@ Un serveur peut aussi **réclamer** une commande non attribuée (`claim`) ou la
 ### L'écran cuisine
 
 `/restaurant/kitchen` — la vue des cuisiniers : les bons transmis, dans l'ordre,
-avec les deux seules actions dont ils ont besoin (en préparation, prêt).
+avec les deux seules actions dont ils ont besoin (en préparation, prêt). La cuisine
+ne voit que les **plats** de son restaurant.
+
+### Le bar
+
+`/restaurant/bar` — chaque restaurant a son bar. Une ligne de commande sait où elle
+se prépare (`station`) : une boisson part au bar, le reste en cuisine. Le bar signale
+les boissons prêtes (`POST /restaurant/orders/{order}/bar-ready`) ; le serveur est
+prévenu. Une commande faite de boissons seules est alors prête.
+
+## Le buffet au forfait
+
+`/restaurant/buffets` — pour un restaurant qui sert au buffet. Le responsable de
+restaurant **ouvre un service** pour un repas d'une journée, à un prix d'entrée par
+adulte et par enfant ; un seul buffet par repas et par jour. La caisse **enregistre
+les entrées** au fil du service — combien d'adultes, combien d'enfants, payé
+comment — sans note par table. Un résident peut reporter son entrée sur son séjour :
+elle devient une ligne de folio. Le responsable clôt le buffet en fin de service.
+
+Les entrées encaissées passent par la caisse de celui qui encaisse, celle du
+restaurant du buffet ; les espèces entrent dans son solde théorique.
+
+## Les banquets
+
+`/restaurant/banquets` — un banquet est un **événement réservé** dans l'un ou
+l'autre restaurant : date, horaires, salle, client, couverts, prix par couvert,
+suppléments, menu, acompte demandé. Référence `BQT-AAAA-NNN`.
+
+```
+devis → confirmé → réalisé → soldé
+  └────────┴── annulé
+```
+
+- **Confirmer** n'est possible qu'une fois l'acompte demandé encaissé.
+- Une salle n'accueille pas deux banquets qui se chevauchent le même jour.
+- La caisse du restaurant encaisse les règlements : avant l'événement, un acompte ;
+  après, le solde. Réalisé et tout payé, le banquet est **soldé**.
 
 ## Le portail client (QR)
 
@@ -74,12 +157,14 @@ avec les deux seules actions dont ils ont besoin (en préparation, prêt).
 ouvert par le client depuis un QR code posé sur la table.
 
 Le client consulte la carte, compose sa commande et la valide. Le numéro de table est
-transmis en paramètre d'URL.
+transmis en paramètre d'URL, comme le restaurant (`?restaurant=kotibe&table=12`) :
+chaque restaurant imprime ses QR codes. Sans restaurant précisé — les QR codes
+d'avant —, c'est le premier.
 
 ### Répartition automatique
 
 [`RestaurantAssignmentService`](../app/Services/RestaurantAssignmentService.php)
-confie chaque commande du portail à un serveur en service.
+confie chaque commande du portail à un serveur en service **dans ce restaurant**.
 
 > **Règle : au moins chargé.** La commande va au serveur en service qui a le moins de
 > commandes actives ; à égalité, à celui dont la dernière affectation est la plus
@@ -187,11 +272,15 @@ restaurant. Elle devient une ligne de folio du séjour et sera réglée au dépa
 
 | Rôle | Peut |
 |---|---|
-| `restaurant_chief` | Tout : carte, garde-manger, fiches techniques, inventaires, commandes, facturation |
-| `restaurant_staff` | Service : prise de service, commandes, transmission cuisine, service |
+| `restaurant_manager` | Carte, buffets (ouvrir, clore), banquets (devis, statuts), équipe de ses restaurants ; et tout ce que font la salle et la caisse |
+| `restaurant_chief` | Carte, garde-manger, fiches techniques, inventaires, cuisine |
+| `restaurant_staff` | Service : prise de service, commandes, transmission cuisine, service, bar |
 | `restaurant_cook` | Cuisine : prise en préparation, plat prêt |
-| `cashier` | Facturation |
-| `manager` | **Lecture seule** — consulte tout, ne saisit rien |
+| `cashier` | Facturation, caisse, entrées au buffet, règlements de banquets |
+| `manager` | Crée les restaurants et leurs salles, compose les équipes ; **lecture seule** sur l'exploitation |
+
+Chacun exerce ces droits **dans les restaurants où il est affecté** (voir
+[Plusieurs restaurants](#plusieurs-restaurants)).
 
 L'exclusion du manager en écriture est délibérée : il supervise, il ne prend pas les
 commandes à la place de ses équipes. Voir

@@ -175,7 +175,8 @@ class StockRequisitionService
         int $economatUnitCost,
         StockRequisition $requisition
     ): void {
-        $pantryItem = $this->resolveOrCreatePantryItem($stockItem);
+        // Chaque restaurant a son garde-manger : celui que la demande désigne.
+        $pantryItem = $this->resolveOrCreatePantryItem($stockItem, $requisition->point_of_sale_id);
 
         // Facteur de conversion : stock garde-manger = stock économat * ratio
         $conversion = (float) $pantryItem->conversion();
@@ -206,17 +207,17 @@ class StockRequisitionService
     /**
      * Retrouve ou crée automatiquement l'article du garde-manger correspondant à l'article de l'économat.
      */
-    protected function resolveOrCreatePantryItem(StockItem $stockItem): RestaurantPantryItem
+    protected function resolveOrCreatePantryItem(StockItem $stockItem, ?int $restaurant = null): RestaurantPantryItem
     {
         // 1. Recherche par stock_item_id
-        $item = RestaurantPantryItem::where('stock_item_id', $stockItem->id)->first();
+        $item = RestaurantPantryItem::duRestaurant($restaurant)->where('stock_item_id', $stockItem->id)->first();
         if ($item) {
             return $item;
         }
 
         // 2. Recherche par nom identique
         $trimmedName = trim($stockItem->name);
-        $item = RestaurantPantryItem::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
+        $item = RestaurantPantryItem::duRestaurant($restaurant)->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
         if ($item) {
             if (!$item->stock_item_id) {
                 $item->update(['stock_item_id' => $stockItem->id]);
@@ -228,6 +229,7 @@ class StockRequisitionService
         $defaultCategory = RestaurantPantryCategory::first();
 
         return RestaurantPantryItem::create([
+            'point_of_sale_id'              => $restaurant,
             'stock_item_id'                 => $stockItem->id,
             'restaurant_pantry_category_id' => $defaultCategory?->id,
             'name'                          => $trimmedName,

@@ -83,7 +83,7 @@ class UserManagementController extends Controller
             ->tap(fn ($q) => \App\Support\DepartmentScoping::apply(
                 $q, Auth::user(), 'users.voir', 'department_id', 'id'
             ))
-            ->with(['roles', 'department']);
+            ->with(['roles', 'department', 'restaurants:id']);
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -189,6 +189,7 @@ class UserManagementController extends Controller
         ]);
 
         $this->syncUserRoles($user, $roleSlugs, $levels);
+        $this->syncRestaurants($request, $user, $roleSlugs);
 
         AuditLog::record($manager->id, 'user_management',
             "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
@@ -225,6 +226,7 @@ class UserManagementController extends Controller
 
         $user->update($payload);
         $this->syncUserRoles($user, $roleSlugs, $levels);
+        $this->syncRestaurants($request, $user, $roleSlugs);
 
         AuditLog::record(Auth::id(), 'user_management',
             "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
@@ -253,6 +255,28 @@ class UserManagementController extends Controller
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
+    /**
+     * Restaurants où la personne travaille. Le formulaire ne les montre que
+     * si l'hôtel en a plusieurs ; s'il n'en a qu'un, le personnel de
+     * restaurant y est rattaché d'office, pour qu'un second restaurant ouvert
+     * plus tard ne le laisse pas sans équipe.
+     *
+     * @param  list<string>  $roleSlugs
+     */
+    private function syncRestaurants(Request $request, User $user, array $roleSlugs): void
+    {
+        $contexte = app(\App\Services\RestaurantContext::class);
+
+        if ($request->boolean('restaurants_present')) {
+            $user->restaurants()->sync(array_map('intval', $request->input('restaurants', [])));
+        } elseif (! $contexte->plusieurs() && array_intersect($roleSlugs, \App\Services\RestaurantContext::ROLES_DU_RESTAURANT) !== []
+            && ($unique = $contexte->restaurants()->first())) {
+            $user->restaurants()->syncWithoutDetaching([$unique->id]);
+        }
+
+        $contexte->oublier();
+    }
+
     private function validatePayload(Request $request, ?User $user = null): array
     {
         $assignableSlugs = $this->assignableRoles()->pluck('slug')->all();
@@ -269,6 +293,9 @@ class UserManagementController extends Controller
             'levels.*' => [Rule::in(['read', 'write'])],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
+            // Restaurants où la personne travaille.
+            'restaurants' => ['nullable', 'array'],
+            'restaurants.*' => ['integer', Rule::exists('points_of_sale', 'id')->where('kind', \App\Models\PointOfSale::KIND_RESTAURATION)],
             // Dérogation à la séparation des tâches : un établissement de six
             // personnes ne peut pas toujours séparer quatre fonctions. Elle se
             // demande explicitement et se motive.

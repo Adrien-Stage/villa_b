@@ -79,6 +79,16 @@ class User extends Authenticatable
     /**
      * Relation : L'utilisateur peut avoir plusieurs rôles (RBAC étendu)
      */
+    /**
+     * Restaurants auxquels cette personne est affectée. Le personnel d'un
+     * restaurant ne voit que les siens ; la direction et le contrôle les
+     * voient tous (RestaurantContext).
+     */
+    public function restaurants(): BelongsToMany
+    {
+        return $this->belongsToMany(PointOfSale::class)->withTimestamps();
+    }
+
     public function roles(): BelongsToMany
     {
         // Le pivot porte le niveau d'accès (read / write) par rôle, donc par module.

@@ -6,6 +6,7 @@ use App\Models\RestaurantMenuItem;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantRecipeLine;
+use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,8 +31,13 @@ class RestaurantRecipeController extends Controller
 
     public function index(Request $request): View
     {
+        // Chaque restaurant a ses fiches, sur sa carte et son garde-manger.
+        $user = Auth::user();
+        $vueEnsemble = app(RestaurantContext::class)->vueEnsemble($user);
+
         $recipes = RestaurantRecipe::query()
-            ->with(['lines.item', 'menuItem', 'producedItem'])
+            ->visiblesPour($user)
+            ->with(['lines.item', 'menuItem', 'producedItem', 'pointOfSale:id,name'])
             ->orderBy('type')
             ->orderBy('name')
             ->get();
@@ -51,12 +57,14 @@ class RestaurantRecipeController extends Controller
 
         // Plats du menu qui n'ont pas encore de fiche : leur vente ne décrémente rien.
         $unfichedItems = RestaurantMenuItem::query()
+            ->visiblesPour($user)
             ->active()
             ->whereDoesntHave('recipe')
             ->orderBy('name')
             ->get();
 
         $pantryItems = RestaurantPantryItem::query()
+            ->visiblesPour($user)
             ->active()
             ->with('category')
             ->orderBy('name')
@@ -68,13 +76,17 @@ class RestaurantRecipeController extends Controller
         // Une préparation produit un article de garde-manger « fabriqué » qui n'a pas
         // encore sa propre fiche.
         $availablePreparedItems = RestaurantPantryItem::query()
+            ->visiblesPour($user)
             ->active()
             ->where('is_prepared', true)
             ->whereDoesntHave('recipe')
             ->orderBy('name')
             ->get();
 
-        $canManage = app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.recipes.creer');
+        // Une fiche se compose sur la carte et le garde-manger d'un restaurant :
+        // depuis la vue d'ensemble, on la consulte seulement.
+        $peutGerer = app(\App\Services\PermissionResolver::class)->allows($user, 'restaurant.recipes.creer');
+        $canManage = $peutGerer && ! $vueEnsemble;
 
         return view('restaurant.recipes.index', [
             'dishes' => $dishes,
@@ -84,16 +96,19 @@ class RestaurantRecipeController extends Controller
             'availableMenuItems' => $availableMenuItems,
             'availablePreparedItems' => $availablePreparedItems,
             'canManage' => $canManage,
+            'peutGerer' => $peutGerer,
+            'vueEnsemble' => $vueEnsemble,
             'stockService' => $this->stock,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $this->validated($request);
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+        $validated = $this->validated($request, $restaurant->id);
 
-        $recipe = DB::transaction(function () use ($validated, $request) {
-            $recipe = RestaurantRecipe::create($this->attributes($validated, $request));
+        $recipe = DB::transaction(function () use ($validated, $request, $restaurant) {
+            $recipe = RestaurantRecipe::create(['point_of_sale_id' => $restaurant->id] + $this->attributes($validated, $request));
             $this->syncLines($recipe, $validated['lines'] ?? []);
 
             return $recipe;
@@ -106,7 +121,7 @@ class RestaurantRecipeController extends Controller
 
     public function update(Request $request, RestaurantRecipe $recipe): RedirectResponse
     {
-        $validated = $this->validated($request, $recipe);
+        $validated = $this->validated($request, $recipe->point_of_sale_id, $recipe);
 
         DB::transaction(function () use ($recipe, $validated, $request) {
             $recipe->update($this->attributes($validated, $request));
@@ -159,7 +174,11 @@ class RestaurantRecipeController extends Controller
             ));
     }
 
-    private function validated(Request $request, ?RestaurantRecipe $recipe = null): array
+    /**
+     * Le plat, l'article produit et les ingrédients d'une fiche sont ceux de
+     * son restaurant.
+     */
+    private function validated(Request $request, ?int $restaurant, ?RestaurantRecipe $recipe = null): array
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:140'],
@@ -167,20 +186,20 @@ class RestaurantRecipeController extends Controller
             'restaurant_menu_item_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_menu_items', 'id'),
+                Rule::exists('restaurant_menu_items', 'id')->where('point_of_sale_id', $restaurant),
                 Rule::unique('restaurant_recipes', 'restaurant_menu_item_id')->ignore($recipe?->id),
             ],
             'produces_pantry_item_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('restaurant_pantry_items', 'id'),
+                Rule::exists('restaurant_pantry_items', 'id')->where('point_of_sale_id', $restaurant),
                 Rule::unique('restaurant_recipes', 'produces_pantry_item_id')->ignore($recipe?->id),
             ],
             'yield_quantity' => ['required', 'numeric', 'gt:0', 'max:999999'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
             'lines' => ['nullable', 'array', 'max:60'],
-            'lines.*.restaurant_pantry_item_id' => ['required', 'integer', Rule::exists('restaurant_pantry_items', 'id')],
+            'lines.*.restaurant_pantry_item_id' => ['required', 'integer', Rule::exists('restaurant_pantry_items', 'id')->where('point_of_sale_id', $restaurant)],
             'lines.*.quantity' => ['required', 'numeric', 'gt:0', 'max:999999'],
             'lines.*.waste_percent' => ['nullable', 'numeric', 'min:0', 'max:99'],
             'lines.*.notes' => ['nullable', 'string', 'max:255'],

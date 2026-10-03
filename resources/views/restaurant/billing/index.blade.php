@@ -62,11 +62,14 @@
             </a>
         @endforeach
 
-        {{-- Clients logés ayant consommé : commandes rattachées à un séjour. --}}
-        <a href="{{ route('restaurant.billing.index', array_merge(request()->except('residents','page'), request()->boolean('residents') ? [] : ['residents' => 1])) }}"
-            class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request()->boolean('residents') ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
-            Résidents
-        </a>
+        {{-- Clients logés ayant consommé : commandes rattachées à un séjour.
+             La réception ne voit qu'elles : le filtre est alors permanent. --}}
+        @unless($residentsSeulement ?? false)
+            <a href="{{ route('restaurant.billing.index', array_merge(request()->except('residents','page'), request()->boolean('residents') ? [] : ['residents' => 1])) }}"
+                class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request()->boolean('residents') ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
+                Résidents
+            </a>
+        @endunless
     </div>
 
     <form method="GET" action="{{ route('restaurant.billing.index') }}" class="flex items-center gap-2">

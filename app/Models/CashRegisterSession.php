@@ -61,10 +61,16 @@ class CashRegisterSession extends Model
                 ->where('payment_method', 'cash')
                 ->where('payment_status', 'paid')
                 ->sum('total_amount'),
+            // Au restaurant, trois sources d'espèces : les notes, les entrées
+            // au buffet et les règlements de banquet.
             'restaurant' => (int) $this->restaurantOrders()
                 ->where('payment_method', 'cash')
                 ->where('payment_status', 'paid')
-                ->sum('amount_paid'),
+                ->sum('amount_paid')
+                + (int) RestaurantBuffetEntry::where('cash_register_session_id', $this->id)
+                    ->where('payment_method', 'cash')->sum('amount')
+                + (int) RestaurantBanquetPayment::where('cash_register_session_id', $this->id)
+                    ->where('payment_method', 'cash')->sum('amount'),
             default => (int) $this->payments()
                 ->where('method', 'cash')
                 ->where('status', 'completed')

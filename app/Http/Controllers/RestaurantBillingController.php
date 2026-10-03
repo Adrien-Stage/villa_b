@@ -8,6 +8,7 @@ use App\Enums\BookingStatus;
 use App\Models\FolioItem;
 use App\Services\CashRegisterCircuit;
 use App\Services\CheckOutService;
+use App\Services\RestaurantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,9 +20,10 @@ class RestaurantBillingController extends Controller
 {
     private const PAYMENT_METHODS = ['cash', 'mobile_money', 'card', 'room_charge', 'other'];
 
-    public function index(Request $request): View
+    public function index(Request $request, RestaurantContext $contexte): View
     {
         $query = RestaurantCustomerOrder::query()
+            ->visiblesPour(Auth::user())
             ->withCount('items')
             ->orderByDesc('id');
 
@@ -42,7 +44,7 @@ class RestaurantBillingController extends Controller
         // sont rattachées à un séjour. C'est la liste que la caisse du
         // restaurant rapproche des folios, sans ouvrir le fichier clients de
         // l'hébergement.
-        if ($request->boolean('residents')) {
+        if ($request->boolean('residents') || $contexte->residentsSeulement(Auth::user())) {
             $query->whereNotNull('booking_id');
         }
 
@@ -52,11 +54,14 @@ class RestaurantBillingController extends Controller
             'orders' => $orders,
             'paymentMethods' => self::PAYMENT_METHODS,
             'caisse' => app(CashRegisterCircuit::class)->enCours(Auth::user(), 'restaurant')?->load('pointOfSale'),
+            'residentsSeulement' => $contexte->residentsSeulement(Auth::user()),
         ]);
     }
 
     public function show(RestaurantCustomerOrder $order): View
     {
+        $this->assertVisible($order);
+
         $order->load(['items', 'booking.room', 'booking.customer', 'booking.guests']);
 
         $checkedInBookings = Booking::query()
@@ -81,6 +86,8 @@ class RestaurantBillingController extends Controller
             'booking_id' => ['nullable', 'integer'],
         ]);
 
+        $this->assertVisible($order);
+
         if ($order->payment_status === 'paid') {
             return back()->with('success', 'Commande deja payee.');
         }
@@ -97,6 +104,11 @@ class RestaurantBillingController extends Controller
 
             if (! $session) {
                 return back()->withErrors(['cash_register' => 'Ouvrez votre caisse avant d\'encaisser.']);
+            }
+
+            // Une note s'encaisse à la caisse de son restaurant.
+            if ($order->point_of_sale_id && $session->point_of_sale_id && $order->point_of_sale_id !== $session->point_of_sale_id) {
+                return back()->withErrors(['cash_register' => 'Cette note appartient à un autre restaurant : elle s\'encaisse à la caisse de ce restaurant.']);
             }
         }
 
@@ -176,6 +188,8 @@ class RestaurantBillingController extends Controller
 
     public function markUnpaid(RestaurantCustomerOrder $order): RedirectResponse
     {
+        $this->assertVisible($order);
+
         // Annuler un encaissement modifie le contenu théorique de la caisse
         // qui l'a reçu : seulement dans sa propre caisse, et tant qu'elle n'est
         // pas comptée. Après, c'est un écart à expliquer, pas une ligne à effacer.
@@ -203,10 +217,21 @@ class RestaurantBillingController extends Controller
 
     public function receipt(RestaurantCustomerOrder $order): View
     {
+        $this->assertVisible($order);
+
         $order->load(['items', 'booking.room', 'booking.customer', 'booking.guests']);
 
         return view('restaurant.billing.receipt', [
             'order' => $order,
         ]);
+    }
+
+    /**
+     * La réception ne voit, dans les restaurants, que les notes reportées sur
+     * un séjour : celles qu'elle retrouvera sur la facture du client.
+     */
+    private function assertVisible(RestaurantCustomerOrder $order): void
+    {
+        abort_if($order->booking_id === null && app(RestaurantContext::class)->residentsSeulement(Auth::user()), 404);
     }
 }

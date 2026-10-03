@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppartientAUnRestaurant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class RestaurantWasteLog extends Model
 {
-    use HasFactory;
+    use HasFactory, AppartientAUnRestaurant;
 
     // Motifs normalisés de perte
     public const REASON_SPOILAGE = 'spoilage';
@@ -70,6 +71,7 @@ class RestaurantWasteLog extends Model
     ];
 
     protected $fillable = [
+        'point_of_sale_id',
         'reference',
         'restaurant_pantry_item_id',
         'quantity',

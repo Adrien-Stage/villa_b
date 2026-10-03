@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RestaurantStockCount;
+use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,13 +27,18 @@ class RestaurantStockCountController extends Controller
 
     public function index(): View
     {
+        // Chaque restaurant compte son garde-manger.
+        $user = Auth::user();
+
         $counts = RestaurantStockCount::query()
-            ->with(['openedBy', 'closedBy'])
+            ->visiblesPour($user)
+            ->with(['openedBy', 'closedBy', 'pointOfSale:id,name'])
             ->withCount('lines')
             ->latest('id')
             ->paginate(15);
 
         $openCount = RestaurantStockCount::query()
+            ->visiblesPour($user)
             ->where('status', RestaurantStockCount::STATUS_DRAFT)
             ->latest('id')
             ->first();
@@ -40,7 +46,10 @@ class RestaurantStockCountController extends Controller
         return view('restaurant.stock_counts.index', [
             'counts' => $counts,
             'openCount' => $openCount,
-            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.stock_counts.creer'),
+            'canManage' => app(\App\Services\PermissionResolver::class)->allows($user, 'restaurant.stock_counts.creer'),
+            // On ouvre l'inventaire d'un restaurant : depuis la vue d'ensemble,
+            // on choisit d'abord lequel.
+            'vueEnsemble' => app(RestaurantContext::class)->vueEnsemble($user),
         ]);
     }
 
@@ -59,13 +68,16 @@ class RestaurantStockCountController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        // Un seul inventaire ouvert à la fois : deux feuilles concurrentes figeraient
-        // deux stocks théoriques différents.
+        // Un seul inventaire ouvert à la fois par restaurant : deux feuilles
+        // concurrentes figeraient deux stocks théoriques différents.
         $existing = RestaurantStockCount::query()
+            ->duRestaurant($restaurant)
             ->where('status', RestaurantStockCount::STATUS_DRAFT)
             ->first();
 
@@ -75,7 +87,7 @@ class RestaurantStockCountController extends Controller
                 ->withErrors(['count' => 'Un inventaire est déjà en cours. Clôture-le avant d\'en ouvrir un autre.']);
         }
 
-        $count = $this->stock->openStockCount($validated['notes'] ?? null);
+        $count = $this->stock->openStockCount($validated['notes'] ?? null, $restaurant);
 
         return redirect()
             ->route('restaurant.stock_counts.show', $count)
