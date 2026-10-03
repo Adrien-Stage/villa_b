@@ -24,8 +24,8 @@ depuis le PMS classique et depuis l'interface POS.
 - Les autres roles : acces refuse, meme en saisissant l'URL directement.
 
 Les droits du mode sont ceux du catalogue (`reception.pos.*`), verifies par le
-middleware `permission` : une restriction de module posee sur la personne
-(hebergement exclu ou en lecture seule) s'y applique aussi.
+middleware `permission` : un role tenu en lecture seule, ou une exception
+nominative posee sur la personne, s'y applique aussi.
 
 ### Ecran principal
 

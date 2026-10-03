@@ -414,7 +414,7 @@
 
         @php
             // Rôles et niveaux actuels de l'utilisateur, pour pré-cocher les cartes.
-            $staffRoleSlugs = $staff->roles->pluck('slug')->all() ?: [$staff->role];
+            $staffRoleSlugs = $staff->roles->pluck('slug')->all();
             $staffLevels = $staff->roles->mapWithKeys(fn ($r) => [$r->slug => $r->pivot->level ?: 'write'])->all();
         @endphp
         <div>

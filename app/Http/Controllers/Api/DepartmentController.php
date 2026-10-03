@@ -18,16 +18,13 @@ use Illuminate\Validation\Rule;
  * elles contournaient l'application, qui ne pouvait ni valider ni tracer. Ils
  * passent désormais par ici.
  *
- * Les modules d'un département sont un héritage : ils ne donnent plus aucun
- * droit (les rôles le font) et disparaîtront au nettoyage final. Ils restent
- * acceptés tant que la console les envoie.
+ * Un département range le personnel ; il ne donne aucun droit (les rôles le
+ * font). Les modules qu'une ancienne console enverrait encore sont ignorés.
  */
 class DepartmentController extends Controller
 {
     public function index(): JsonResponse
     {
-        $modules = DB::table('department_module')->get(['department_id', 'module_key', 'default_level'])
-            ->groupBy('department_id');
         $effectifs = DB::table('users')->whereNotNull('department_id')
             ->selectRaw('department_id, count(*) as effectif')
             ->groupBy('department_id')->pluck('effectif', 'department_id');
@@ -44,9 +41,6 @@ class DepartmentController extends Controller
                     'accent' => $d->accent,
                     'sort_order' => $d->sort_order,
                     'is_active' => $d->is_active,
-                    'modules' => ($modules[$d->id] ?? collect())
-                        ->map(static fn ($m): array => ['key' => $m->module_key, 'level' => $m->default_level])
-                        ->values()->all(),
                     'users_count' => (int) ($effectifs[$d->id] ?? 0),
                 ])->all(),
         ]);
@@ -82,8 +76,6 @@ class DepartmentController extends Controller
                 'is_active' => $valide['is_active'] ?? true,
             ]);
 
-            $this->remplacerLesModules($departement, $valide['modules'] ?? []);
-
             return $departement;
         });
 
@@ -114,7 +106,6 @@ class DepartmentController extends Controller
             }
 
             $department->save();
-            $this->remplacerLesModules($department, $valide['modules'] ?? []);
         });
 
         AuditLog::record(null, 'department_console',
@@ -133,7 +124,6 @@ class DepartmentController extends Controller
         DB::transaction(function () use ($department): void {
             DB::table('users')->where('department_id', $department->id)
                 ->update(['department_id' => null, 'updated_at' => now()]);
-            DB::table('department_module')->where('department_id', $department->id)->delete();
             $department->delete();
         });
 
@@ -157,30 +147,7 @@ class DepartmentController extends Controller
             'accent' => ['nullable', 'string', 'max:30'],
             'sort_order' => ['nullable', 'integer'],
             'is_active' => ['nullable', 'boolean'],
-            // module => niveau par défaut. Héritage, sans effet sur les droits.
-            'modules' => ['nullable', 'array'],
-            'modules.*' => ['in:write,read'],
             'auteur' => ['nullable', 'string', 'max:255'],
         ]);
-    }
-
-    /** @param  array<string, string>  $modules */
-    private function remplacerLesModules(Department $departement, array $modules): void
-    {
-        DB::table('department_module')->where('department_id', $departement->id)->delete();
-
-        foreach ($modules as $cle => $niveau) {
-            if (! is_string($cle) || ! preg_match('/^[a-z0-9_]{1,50}$/', $cle)) {
-                continue;
-            }
-
-            DB::table('department_module')->insert([
-                'department_id' => $departement->id,
-                'module_key' => $cle,
-                'default_level' => $niveau === 'read' ? 'read' : 'write',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
     }
 }

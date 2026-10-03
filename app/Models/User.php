@@ -1,5 +1,4 @@
 <?php
-// app/Models/User.php (modifications à apporter au modèle existant)
 
 namespace App\Models;
 
@@ -11,27 +10,26 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * User étendu pour le système hôtelier
- * 
- * ARCHITECTURE :
- * - Chaque user appartient à un tenant (établissement)
- * - Rôle stocké en enum string (plus lisible qu'integer)
- * - Utilise Sanctum pour API tokens (PWA offline sync)
- * 
- * SÉCURITÉ :
- * - Voir section 6.3 du CDC pour le RBAC
+ * Un membre du personnel de l'établissement.
+ *
+ * Ses droits viennent de ses affectations de rôles (role_user, chacune en
+ * écriture ou en lecture seule), des exceptions posées sur un rôle ou sur lui
+ * (PermissionGrant), et, pour l'administrateur, d'une intervention déclarée.
+ * PermissionResolver décide ; ce modèle ne fait que dire quels rôles la
+ * personne détient.
  */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Constantes pour les rôles (évite les magic strings)
-    public const ROLE_ADMIN = 'admin';           // Directeur ONG / IT
+    public const ROLE_ADMIN = 'admin';           // Service informatique de l'hôtel
     public const ROLE_MANAGER = 'manager';       // Directeur d'établissement
-    public const ROLE_RECEPTION = 'reception';   // Agent de réception
-    public const ROLE_HOUSEKEEPING = 'housekeeping'; // Femme/Valet de chambre
-    public const ROLE_ECONOME = 'econome';       // Gestionnaire de l'économat / magasin central
-    public const ROLE_CONTROLLER = 'controller'; // Contrôleur de gestion / Auditeur GRC
+    public const ROLE_RECEPTION = 'reception';   // Réceptionniste
+    public const ROLE_ECONOME = 'econome';       // Chef économe
+    public const ROLE_CONTROLLER = 'controller'; // Contrôleur de gestion
+
+    /** Rôle à affecter à l'enregistrement, posé par l'attribut « role ». */
+    private ?string $roleAAffecter = null;
 
     protected $fillable = [
         'name',
@@ -69,17 +67,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Relation : Surcharges granulaires de permissions par module (write, read, none)
-     */
-    public function modulePermissions(): HasMany
-    {
-        return $this->hasMany(UserModulePermission::class);
-    }
-
-    /**
-     * Relation : L'utilisateur peut avoir plusieurs rôles (RBAC étendu)
-     */
-    /**
      * Restaurants auxquels cette personne est affectée. Le personnel d'un
      * restaurant ne voit que les siens ; la direction et le contrôle les
      * voient tous (RestaurantContext).
@@ -89,246 +76,83 @@ class User extends Authenticatable
         return $this->belongsToMany(PointOfSale::class)->withTimestamps();
     }
 
+    /**
+     * Affectations de rôles. Le pivot porte le niveau : null ou « write »
+     * pour le rôle entier, « read » pour le rôle tenu en lecture seule.
+     */
     public function roles(): BelongsToMany
     {
-        // Le pivot porte le niveau d'accès (read / write) par rôle, donc par module.
         return $this->belongsToMany(Role::class)->withPivot('level')->withTimestamps();
     }
 
     /**
-     * Mappage des modules et de leurs alias dans l'application.
-     */
-    public static function moduleAliases(string $module): array
-    {
-        $map = [
-            'boutique'     => ['boutique', 'shop'],
-            'shop'         => ['shop', 'boutique'],
-            'comptabilite' => ['comptabilite', 'accounting', 'ledger'],
-            'accounting'   => ['accounting', 'comptabilite', 'ledger'],
-            'ledger'       => ['ledger', 'comptabilite', 'accounting'],
-            'hebergement'  => ['hebergement', 'reservations', 'clients'],
-            'reservations' => ['reservations', 'hebergement', 'clients'],
-            'clients'      => ['clients', 'hebergement', 'reservations'],
-            'rh'           => ['rh', 'utilisateurs'],
-            'utilisateurs' => ['utilisateurs', 'rh'],
-            'it'           => ['it', 'parametres', 'api', 'pwa'],
-            'parametres'   => ['parametres', 'it'],
-            'qualite'      => ['qualite', 'grc'],
-            'grc'          => ['grc', 'qualite'],
-        ];
-
-        return $map[$module] ?? [$module];
-    }
-
-    /**
-     * Matrice des modules par défaut pour les rôles métiers historiques.
-     */
-    protected static array $legacyRoleModules = [
-        'admin'               => ['*'],
-        'manager'             => ['*'],
-        'reception'           => ['hebergement', 'reservations', 'clients', 'website', 'discussions', 'ai', 'comptabilite', 'restaurant', 'boutique', 'shop'],
-        'cashier'             => ['hebergement', 'reservations', 'restaurant', 'boutique', 'shop', 'comptabilite', 'accounting', 'ledger', 'discussions'],
-        'housekeeping'        => ['housekeeping', 'hebergement', 'economat', 'discussions'],
-        'housekeeping_leader' => ['housekeeping', 'hebergement', 'economat', 'discussions'],
-        'housekeeping_staff'  => ['housekeeping', 'hebergement', 'discussions'],
-        'restaurant_chief'    => ['restaurant', 'portail', 'economat', 'discussions'],
-        'restaurant_staff'    => ['restaurant', 'portail', 'discussions'],
-        'restaurant_cook'     => ['restaurant', 'discussions'],
-        'shop_manager'        => ['boutique', 'shop', 'economat', 'discussions'],
-        'shop_cashier'        => ['boutique', 'shop', 'discussions'],
-        'econome'             => ['economat', 'comptabilite', 'discussions'],
-        'accountant'          => ['comptabilite', 'ledger', 'accounting', 'economat', 'analytics', 'grc', 'discussions'],
-        'controller'          => ['comptabilite', 'ledger', 'accounting', 'analytics', 'grc', 'discussions'],
-        'rh_manager'          => ['utilisateurs', 'grc', 'discussions'],
-        'it_support'          => ['parametres', 'api', 'pwa', 'ai', 'website', 'discussions'],
-        'quality_auditor'     => ['grc', 'clients', 'housekeeping', 'restaurant', 'discussions'],
-        'customer_guest'      => ['portail'],
-    ];
-
-    /**
-     * Modules qu'un rôle consulte sans jamais y écrire, quel que soit le
-     * niveau de son affectation.
+     * « role » : le rôle principal, c'est-à-dire la première affectation.
      *
-     * La réception lit, depuis la fiche client, les factures restaurant et
-     * boutique du séjournant ; elle n'encaisse ni au restaurant ni à la
-     * boutique. Sans ce plafond, son niveau « écriture » d'hébergement
-     * débordait sur ces modules : une personne à la fois réceptionniste et
-     * serveur, que le manager avait mise en lecture seule au restaurant, y
-     * retrouvait l'écriture par son rôle de réception.
+     * La colonne users.role a disparu ; l'attribut reste pour l'affichage et
+     * pour créer un compte en une ligne : écrire « role » affecte ce rôle à
+     * l'enregistrement, sans retirer les autres.
      */
-    protected static array $legacyReadOnlyModules = [
-        'reception' => ['restaurant', 'boutique', 'shop'],
-    ];
-
-    /**
-     * Niveau qu'un rôle confère sur un module : celui de son affectation,
-     * plafonné à la lecture quand le rôle n'atteint ce module que pour le
-     * consulter. Le module propre du rôle n'est jamais plafonné.
-     */
-    private static function levelForRoleOnModule(string $roleSlug, ?string $roleModule, array $aliases, string $level): string
+    public function getRoleAttribute(): ?string
     {
-        if ($level !== 'write' || in_array($roleModule, $aliases, true)) {
-            return $level;
-        }
-
-        // Le plafond suit l'inclusion : le chef de réception consulte le
-        // restaurant comme la réception qu'il inclut.
-        $consultes = [];
-        foreach (\App\Support\RoleCatalog::developper([$roleSlug]) as $exerce) {
-            $consultes = array_merge($consultes, self::$legacyReadOnlyModules[$exerce] ?? []);
-        }
-        $ecrits    = array_diff(self::defaultModulesForRole($roleSlug), $consultes);
-
-        $atteintEnConsultation = array_intersect($aliases, $consultes) !== [];
-        $atteintEnEcriture     = in_array('*', $ecrits, true) || array_intersect($aliases, $ecrits) !== [];
-
-        return $atteintEnConsultation && !$atteintEnEcriture ? 'read' : $level;
+        return $this->roleAAffecter ?? ($this->rolesDetenus()[0] ?? null);
     }
 
-    /**
-     * Retourne les modules autorisés pour un slug de rôle donné.
-     */
-    public static function defaultModulesForRole(string $role): array
+    public function setRoleAttribute(?string $slug): void
     {
-        if (isset(self::$legacyRoleModules[$role])) {
-            return self::$legacyRoleModules[$role];
-        }
+        $this->roleAAffecter = $slug === '' ? null : $slug;
+    }
 
-        // Rôle du référentiel : son service, plus les modules des membres
-        // qu'il inclut — le chef de réception travaille où travaille la
-        // réception. Lu dans le code, pas en base : un établissement dont les
-        // rôles ne sont pas encore synchronisés le reconnaît quand même.
-        $definition = \App\Support\RoleCatalog::find($role);
-        if ($definition !== null) {
-            $modules = self::moduleAliases($definition['module']);
-            foreach ($definition['includes'] ?? [] as $membre) {
-                $modules = array_merge($modules, self::defaultModulesForRole($membre));
+    protected static function booted(): void
+    {
+        static::saved(function (self $user): void {
+            if ($user->roleAAffecter === null) {
+                return;
             }
 
-            return array_values(array_unique($modules));
-        }
+            $slug = $user->roleAAffecter;
+            $user->roleAAffecter = null;
 
-        try {
-            $roleRecord = Role::where('slug', $role)->first();
-            if ($roleRecord && $roleRecord->module) {
-                return self::moduleAliases($roleRecord->module);
+            $role = Role::where('slug', $slug)->first();
+            if ($role === null && ($enregistrement = \App\Support\RoleCatalog::enregistrement($slug)) !== null) {
+                $role = Role::create($enregistrement);
             }
-        } catch (\Throwable) {
-            // Ignorer si la table n'est pas encore migrée
-        }
 
-        return [];
+            if ($role !== null) {
+                $user->roles()->syncWithoutDetaching([$role->id]);
+                $user->unsetRelation('roles');
+            }
+        });
     }
 
     /**
-     * Retourne la permission explicite surchargée pour ce module ('write', 'read', 'none', ou null).
-     */
-    public function explicitModulePermission(string $module): ?string
-    {
-        $aliases = self::moduleAliases($module);
-
-        $override = $this->modulePermissions
-            ->first(fn ($p) => in_array($p->module_key, $aliases, true));
-
-        if ($override && in_array($override->access_level, ['write', 'read', 'none'], true)) {
-            return $override->access_level;
-        }
-
-        return null;
-    }
-
-    /**
-     * Détermine si l'utilisateur a accès au module.
+     * La personne détient-elle au moins un droit dans ce module ? C'est ce
+     * qui décide qu'une rubrique du menu lui apparaît. Les droits seuls en
+     * décident (PermissionCatalog::droitsDuModule).
      */
     public function hasModuleAccess(string $module): bool
     {
-        return $this->canAccessModule($module);
-    }
-
-    /**
-     * Niveau d'accès effectif de l'utilisateur sur un module métier :
-     * 'write', 'read', 'none', ou null.
-     */
-    public function moduleLevel(string $module): ?string
-    {
-        if ($this->is_active === false) {
-            return 'none';
-        }
-
-        // 1. Surcharge explicite utilisateur
-        $explicit = $this->explicitModulePermission($module);
-        if ($explicit !== null) {
-            return $explicit;
-        }
-
-        $aliases = self::moduleAliases($module);
-
-        // 2. Rôles pivot assignés (table pivot role_user)
-        $hasPivotRoles = $this->relationLoaded('roles') ? $this->roles->isNotEmpty() : ($this->exists && $this->roles()->exists());
-        if ($hasPivotRoles) {
-            $matchingPivot = $this->roles->filter(function ($role) use ($aliases) {
-                return in_array($role->module, $aliases, true)
-                    || !empty(array_intersect(self::defaultModulesForRole($role->slug), $aliases));
-            });
-
-            if ($matchingPivot->isNotEmpty()) {
-                $levels = $matchingPivot->map(fn ($r) => self::levelForRoleOnModule(
-                    $r->slug, $r->module, $aliases, $r->pivot->level ?: 'write'
-                ));
-                return $levels->contains('write') ? 'write' : 'read';
-            }
-        }
-
-        // 3. Direction (admin / manager ont accès à tout en écriture par défaut)
-        if ($this->hasAnyRole(['admin', 'manager']) || in_array($this->role, ['admin', 'manager'], true)) {
-            return 'write';
-        }
-
-        // 4. Héritage département
-        if ($this->department_id && $this->department) {
-            foreach ($aliases as $alias) {
-                $deptLevel = $this->department->moduleDefaultLevel($alias);
-                if ($deptLevel) {
-                    return $deptLevel;
-                }
-            }
-        }
-
-        // 5. Rôle historique (colonne users.role)
-        if ($this->role) {
-            $allowed = self::defaultModulesForRole($this->role);
-            if (in_array('*', $allowed, true) || !empty(array_intersect($allowed, $aliases))) {
-                return self::levelForRoleOnModule($this->role, null, $aliases, 'write');
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * L'utilisateur peut-il écrire (agir) dans ce module ?
-     */
-    public function canWrite(string $module): bool
-    {
         if ($this->is_active === false) {
             return false;
         }
 
-        return $this->moduleLevel($module) === 'write';
-    }
+        $droits = \App\Support\PermissionCatalog::droitsDuModule($module);
 
-    /**
-     * L'utilisateur a-t-il un accès (lecture ou écriture) à ce module ?
-     */
-    public function canAccessModule(string $module): bool
-    {
-        if ($this->is_active === false) {
-            return false;
+        // Un module sans droit catalogué (discussions, assistant) est ouvert à
+        // tout le personnel.
+        if ($droits === []) {
+            return true;
         }
 
-        $level = $this->moduleLevel($module);
+        $resolveur = app(\App\Services\PermissionResolver::class);
+        $this->loadMissing('roles');
 
-        return $level !== null && $level !== 'none';
+        foreach ($droits as $droit) {
+            if ($resolveur->allows($this, $droit)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -362,12 +186,8 @@ class User extends Authenticatable
     }
 
     /**
-     * Rôles que la personne détient.
-     *
-     * Les affectations (table pivot role_user) font foi. La colonne héritée
-     * users.role ne compte que pour un compte sans aucune affectation : la
-     * console remplace les affectations sans toucher la colonne, qui garderait
-     * sinon un rôle retiré, et avec lui ses droits.
+     * Rôles que la personne détient : ses affectations, dans l'ordre où elles
+     * ont été faites.
      *
      * @return list<string>
      */
@@ -375,13 +195,9 @@ class User extends Authenticatable
     {
         $affectations = $this->relationLoaded('roles')
             ? $this->roles->pluck('slug')->all()
-            : ($this->exists ? $this->roles()->pluck('slug')->all() : []);
+            : ($this->exists ? $this->roles()->orderBy('role_user.id')->pluck('slug')->all() : []);
 
-        if ($affectations !== []) {
-            return array_values(array_unique($affectations));
-        }
-
-        return $this->role ? [$this->role] : [];
+        return array_values(array_unique($affectations));
     }
 
     /** Détient-il ce rôle ? Voir rolesDetenus(). */
@@ -412,18 +228,10 @@ class User extends Authenticatable
         return array_intersect(\App\Support\RoleCatalog::developper($this->rolesDetenus()), $roles) !== [];
     }
 
-    /**
-     * Scope : les utilisateurs porteurs d'un des rôles donnés, quel que soit le
-     * système utilisé (ancienne colonne role ou relation roles).
-     */
+    /** Scope : les personnes affectées à l'un de ces rôles. */
     public function scopeHavingRole($query, array $slugs)
     {
-        // Même règle que rolesDetenus() : la colonne héritée ne compte que pour
-        // un compte sans affectation.
-        return $query->where(function ($q) use ($slugs) {
-            $q->whereHas('roles', fn ($r) => $r->whereIn('slug', $slugs))
-                ->orWhere(fn ($ancien) => $ancien->whereDoesntHave('roles')->whereIn('role', $slugs));
-        });
+        return $query->whereHas('roles', fn ($r) => $r->whereIn('slug', $slugs));
     }
 
     public function scopeActive($query)

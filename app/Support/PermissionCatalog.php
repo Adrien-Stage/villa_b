@@ -7,8 +7,8 @@ namespace App\Support;
  * qui la détiennent.
  *
  * Jusqu'ici les droits vivaient éparpillés dans les middlewares « role: » de
- * routes/web.php, dans @role() au fil des vues, et dans la carte
- * User::$moduleAccess. Trois sources, aucune vue d'ensemble, et rien qui
+ * routes/web.php, dans @role() au fil des vues, et dans la carte des modules
+ * par rôle du modèle User. Trois sources, aucune vue d'ensemble, et rien qui
  * permette de dire « le comptable consulte l'économat mais n'y crée pas
  * d'article » sans toucher au code.
  *
@@ -445,26 +445,40 @@ class PermissionCatalog
     }
 
     /**
-     * Service d'exploitation dont relève un droit, pour les restrictions de
-     * module que la console pose sur une personne (exclusion, lecture seule).
-     *
-     * Ce sont les services que gardait le middleware module.access : la
-     * restriction s'applique désormais au droit lui-même, partout où la
-     * question est posée — route, écran ou service.
+     * Droits de chaque module de l'établissement (TenantModules), par le
+     * préfixe de leur nom. Une rubrique du menu apparaît à qui détient au
+     * moins un de ces droits (User::hasModuleAccess).
      */
-    private const SERVICES = [
-        'rooms' => 'hebergement', 'bookings' => 'hebergement', 'groups' => 'hebergement',
-        'customers' => 'hebergement', 'reception' => 'hebergement', 'agenda' => 'hebergement',
-        'housekeeping' => 'housekeeping',
-        'restaurant' => 'restaurant',
-        'economat' => 'economat',
-        'shop' => 'boutique',
-        'settings' => 'parametres',
+    private const PREFIXES_DES_MODULES = [
+        'hebergement' => ['rooms', 'bookings', 'groups', 'customers', 'reception', 'agenda'],
+        'reservations' => ['bookings', 'groups', 'agenda'],
+        'clients' => ['customers'],
+        'housekeeping' => ['housekeeping'],
+        'restaurant' => ['restaurant'],
+        'economat' => ['economat'],
+        'shop' => ['shop'],
+        'boutique' => ['shop'],
+        'comptabilite' => ['accounting'],
+        'accounting' => ['accounting'],
+        'ledger' => ['accounting'],
+        'analytics' => ['analytics'],
+        'utilisateurs' => ['users'],
+        'parametres' => ['settings'],
     ];
 
-    public static function serviceDu(string $permission): ?string
+    /** @return list<string> droits du module ; vide pour un module sans droit catalogué */
+    public static function droitsDuModule(string $module): array
     {
-        return self::SERVICES[explode('.', $permission)[0]] ?? null;
+        $prefixes = self::PREFIXES_DES_MODULES[$module] ?? null;
+
+        if ($prefixes === null) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_keys(self::all()),
+            static fn (string $droit): bool => in_array(explode('.', $droit)[0], $prefixes, true)
+        ));
     }
 
     /** @return list<string> droits de configuration de l'établissement */

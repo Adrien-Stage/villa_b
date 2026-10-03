@@ -113,7 +113,6 @@ class AssistanceController extends Controller
             ?? User::create([
                 'name' => 'Support Wetchah',
                 'email' => 'support@wetchah.invalid',
-                'role' => RoleCatalog::SUPPORT,
                 'is_active' => true,
                 'password' => Hash::make(Str::random(64)),
             ]);

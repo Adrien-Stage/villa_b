@@ -43,7 +43,7 @@
                         </span>
                     </li>
                 @empty
-                    <li class="text-sm text-primary/60">{{ $membre->role ? 'Rôle hérité : ' . $libelleRole($membre->role) : 'Aucun rôle : ce compte ne détient aucun droit.' }}</li>
+                    <li class="text-sm text-primary/60">Aucun rôle : ce compte ne détient aucun droit.</li>
                 @endforelse
             </ul>
             @if($cumuls !== [])
@@ -115,11 +115,6 @@
                 @empty
                     <li class="text-primary/60">Aucune exception.</li>
                 @endforelse
-                @foreach($restrictions as $r)
-                    <li class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                        Service <span class="font-mono">{{ $r->module_key }}</span> : {{ $r->access_level === 'none' ? 'exclu' : 'lecture seule' }} (restriction héritée de la console)
-                    </li>
-                @endforeach
             </ul>
 
             @if($peutExcepter)

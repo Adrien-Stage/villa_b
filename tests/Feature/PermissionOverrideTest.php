@@ -57,9 +57,7 @@ test("le refus l'emporte sur l'autorisation d'un second rôle", function () {
     // rôle pour rendre le refus inopérant.
     refuser(PermissionGrant::SUJET_ROLE, 'accountant', 'economat.items.creer');
 
-    // Les deux rôles sont des affectations : la colonne héritée ne compte plus
-    // dès qu'un compte en a.
-    $comptable = User::factory()->create(['role' => 'accountant']);
+    $comptable = User::factory()->create();
     $comptable->roles()->attach([
         \App\Models\Role::firstOrCreate(['slug' => 'accountant'], ['name' => 'Comptable', 'module' => 'comptabilite'])->id,
         \App\Models\Role::firstOrCreate(['slug' => 'econome'], ['name' => 'Économe', 'module' => 'economat', 'is_assignable' => true])->id,

@@ -12,7 +12,6 @@ use App\Support\RoleReview;
 use App\Support\StaffDirectory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * La matrice des droits, en couches.
@@ -91,7 +90,6 @@ class PermissionMatrix
             ),
             'ecarts' => $ecarts,
             'exceptions_echues' => $echues,
-            'restrictions' => $this->restrictionsDeService(),
             'comptes' => $comptes,
             'constats' => RoleReview::constats(),
             'incompatibilites' => DutySegregation::incompatibilities(),
@@ -245,7 +243,7 @@ class PermissionMatrix
     {
         $comptes = User::query()
             ->where('is_active', true)
-            ->with(['roles', 'modulePermissions'])
+            ->with('roles')
             ->orderBy('name')
             ->get()
             ->reject(static fn (User $u): bool => in_array($u->rolesDetenus(), [['customer_guest'], [RoleCatalog::SUPPORT]], true))
@@ -342,30 +340,6 @@ class PermissionMatrix
         }
 
         return array_values($conflits);
-    }
-
-    /**
-     * Restrictions de service posées sur des personnes (exclusion ou lecture
-     * seule) : des refus nominatifs, à montrer comme tels.
-     *
-     * @return list<array{user_id: int, service: string, niveau: string}>
-     */
-    private function restrictionsDeService(): array
-    {
-        if (! Schema::hasTable('user_module_permissions')) {
-            return [];
-        }
-
-        return DB::table('user_module_permissions')
-            ->whereIn('access_level', ['none', 'read'])
-            ->orderBy('user_id')->orderBy('module_key')
-            ->get(['user_id', 'module_key', 'access_level'])
-            ->map(static fn ($r): array => [
-                'user_id' => (int) $r->user_id,
-                'service' => $r->module_key,
-                'niveau' => $r->access_level,
-            ])
-            ->all();
     }
 
     /**

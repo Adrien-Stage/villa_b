@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 class RepriseDesRoles
 {
     /** Ancien rôle hérité => rôle du référentiel aux droits identiques. */
-    private const EQUIVALENTS = [
+    public const EQUIVALENTS = [
         'housekeeping' => 'housekeeping_staff',
     ];
 
@@ -28,6 +28,12 @@ class RepriseDesRoles
      */
     public static function executer(): array
     {
+        // Après le nettoyage des droits hérités, la colonne n'existe plus :
+        // il ne reste que le dédoublement des chefs de cuisine.
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('users', 'role')) {
+            return ['affectes' => 0, 'ignores' => [], 'realignes' => 0, 'dedoubles' => self::dedoublerLesChefsDeCuisine()];
+        }
+
         [$affectes, $ignores] = self::affecterLesRolesHerites();
 
         return [

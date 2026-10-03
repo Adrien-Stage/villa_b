@@ -56,12 +56,10 @@ class StaffAccountController extends Controller
                 'name' => $valide['name'],
                 'email' => $email,
                 'phone' => $valide['phone'] ?? null,
-                'role' => RoleCatalog::ADMIN,
                 'is_active' => true,
                 'password' => Hash::make($valide['password']),
             ]);
 
-            // L'affectation fait foi ; la colonne n'est qu'un reflet.
             $admin->roles()->sync([$this->roleAdministrateur()->id => ['level' => null]]);
 
             return $admin;

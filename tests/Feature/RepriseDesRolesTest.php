@@ -7,6 +7,9 @@
  * que la colonne héritée accordait, réaligne la colonne quand la console l'a
  * laissée périmée, et préserve les chefs de cuisine qui tenaient la salle.
  * Elle ne retire aucun droit et peut être rejouée sans effet.
+ *
+ * La colonne a disparu depuis (nettoyage des droits hérités) : ces tests la
+ * remettent en place pour rejouer la reprise telle qu'elle s'est déroulée.
  */
 
 use App\Models\Role;
@@ -14,20 +17,27 @@ use App\Models\User;
 use App\Services\PermissionResolver;
 use App\Support\RepriseDesRoles;
 use App\Support\RoleCatalog;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
-beforeEach(fn () => RoleCatalog::sync());
+beforeEach(function () {
+    RoleCatalog::sync();
+    Schema::table('users', fn (Blueprint $table) => $table->string('role', 30)->nullable());
+});
 
 /** Compte dont le rôle ne vit que dans la colonne héritée. */
 function compteHerite(string $role): User
 {
-    $user = User::factory()->create(['role' => $role]);
-    $user->roles()->detach();
+    $id = DB::table('users')->insertGetId([
+        'name' => 'Compte hérité '.$role, 'email' => uniqid($role).'@hotel.test', 'password' => 'x',
+        'role' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+    ]);
 
-    return $user;
+    return User::find($id);
 }
 
 function affecter(User $user, string $role, ?string $niveau = null): void
@@ -79,12 +89,11 @@ test("un rôle du référentiel absent de la base est créé pour l'affectation"
 test('la colonne laissée périmée par la console est réalignée sur le rôle principal', function () {
     // Créé réceptionniste, puis passé au housekeeping depuis la console, qui
     // n'a remplacé que les affectations.
-    $compte = User::factory()->create(['role' => 'reception']);
-    $compte->roles()->detach();
+    $compte = compteHerite('reception');
     affecter($compte, 'housekeeping_staff');
 
     expect(RepriseDesRoles::realignerLaColonne())->toBe(1)
-        ->and($compte->fresh()->role)->toBe('housekeeping_staff');
+        ->and(DB::table('users')->where('id', $compte->id)->value('role'))->toBe('housekeeping_staff');
 });
 
 test('le chef de cuisine qui tenait la salle reçoit aussi le rôle de responsable, au même niveau', function () {
@@ -139,8 +148,7 @@ test('la reprise rejouée ne trouve plus rien à reprendre', function () {
 });
 
 test("les affectations font foi : la colonne périmée n'accorde plus rien", function () {
-    $compte = User::factory()->create(['role' => 'reception']);
-    $compte->roles()->detach();
+    $compte = compteHerite('reception');
     affecter($compte, 'housekeeping_staff');
     $compte = $compte->fresh();
 
@@ -148,13 +156,6 @@ test("les affectations font foi : la colonne périmée n'accorde plus rien", fun
         ->and($compte->exerce(['reception']))->toBeFalse()
         ->and(app(PermissionResolver::class)->allows($compte, 'bookings.voir'))->toBeFalse()
         ->and(User::havingRole(['reception'])->whereKey($compte->id)->exists())->toBeFalse();
-});
-
-test('un compte sans affectation garde son rôle hérité', function () {
-    $ancien = compteHerite('reception');
-
-    expect($ancien->hasRole('reception'))->toBeTrue()
-        ->and(User::havingRole(['reception'])->whereKey($ancien->id)->exists())->toBeTrue();
 });
 
 test('la migration trace la reprise au journal d\'audit', function () {

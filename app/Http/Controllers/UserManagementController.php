@@ -76,7 +76,7 @@ class UserManagementController extends Controller
 
         $query = User::query()
             ->where('id', '!=', $manager->id)
-            ->whereNotIn('role', $horsDePortee)
+            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))
             // Le département borne la liste quand la matrice le demande : un
             // chef de service n'a pas à consulter le dossier de ceux qu'il
             // n'encadre pas.
@@ -108,9 +108,9 @@ class UserManagementController extends Controller
         }
 
         $stats = [
-            'total' => User::whereNotIn('role', $horsDePortee)->count(),
-            'active' => User::whereNotIn('role', $horsDePortee)->where('is_active', true)->count(),
-            'inactive' => User::whereNotIn('role', $horsDePortee)->where('is_active', false)->count(),
+            'total' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->count(),
+            'active' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->where('is_active', true)->count(),
+            'inactive' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->where('is_active', false)->count(),
         ];
 
         $staffUsers = $query->latest('id')->paginate(15)->withQueryString();
@@ -159,7 +159,6 @@ class UserManagementController extends Controller
             'exceptions' => \App\Models\PermissionGrant::query()->enVigueur()
                 ->where('subject_type', \App\Models\PermissionGrant::SUJET_USER)
                 ->where('subject_id', (string) $user->id)->orderBy('permission')->get(),
-            'restrictions' => $user->modulePermissions()->whereIn('access_level', ['none', 'read'])->get(),
             'cumuls' => DutySegregation::conflictsFor($user->rolesDetenus()),
             'catalogue' => array_keys(\App\Support\PermissionCatalog::all()),
         ]);
@@ -181,9 +180,6 @@ class UserManagementController extends Controller
             'email' => strtolower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'department_id' => $validated['department_id'] ?? null,
-            // La colonne role garde le rôle principal (1er sélectionné), pour
-            // les consommateurs mono-rôle ; l'accès complet vit dans le pivot.
-            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active', true),
             'password' => Hash::make($validated['password']),
         ]);
@@ -216,7 +212,6 @@ class UserManagementController extends Controller
             'email' => strtolower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'department_id' => $validated['department_id'] ?? null,
-            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active'),
         ];
 
@@ -375,7 +370,10 @@ class UserManagementController extends Controller
      */
     private function syncUserRoles(User $user, array $slugs, array $levels): void
     {
-        $roles = Role::whereIn('slug', $slugs)->get();
+        // Dans l'ordre de la sélection : le premier rôle choisi est le rôle
+        // principal.
+        $roles = Role::whereIn('slug', $slugs)->get()
+            ->sortBy(fn (Role $role) => array_search($role->slug, $slugs, true));
 
         $pivot = [];
         foreach ($roles as $role) {
@@ -392,12 +390,11 @@ class UserManagementController extends Controller
      */
     private function ensureManageableByCurrentManager(User $user): void
     {
-        if ($user->hasRole(RoleCatalog::ADMIN) || $user->role === RoleCatalog::ADMIN) {
+        if ($user->hasRole(RoleCatalog::ADMIN)) {
             abort(403, 'Un compte administrateur se gère depuis la console d\'orchestration.');
         }
 
-        if (($user->hasRole(RoleCatalog::MANAGER) || $user->role === RoleCatalog::MANAGER)
-            && ! Auth::user()?->isAdmin()) {
+        if ($user->hasRole(RoleCatalog::MANAGER) && ! Auth::user()?->isAdmin()) {
             abort(403, 'Ce profil ne peut pas être géré par un manager.');
         }
     }

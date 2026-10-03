@@ -323,23 +323,6 @@
         </table>
     </div>
 
-    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-        <h2 class="border-b border-secondary/15 px-4 py-3 text-sm font-semibold text-primary">Restrictions de service</h2>
-        <p class="px-4 pt-2 text-[11px] text-primary/50">Posées autrefois depuis la console sur des personnes : exclusion d'un service, ou lecture seule. Elles l'emportent sur les rôles.</p>
-        <table class="w-full text-left text-xs">
-            <tbody class="divide-y divide-secondary/10">
-                @forelse($matrice['restrictions'] as $r)
-                    <tr>
-                        <td class="px-4 py-2 text-primary">{{ $nomDuCompte($r['user_id']) }}</td>
-                        <td class="px-4 py-2 font-mono text-primary/70">{{ $r['service'] }}</td>
-                        <td class="px-4 py-2">{{ $r['niveau'] === 'none' ? 'Exclu' : 'Lecture seule' }}</td>
-                    </tr>
-                @empty
-                    <tr><td class="px-4 py-6 text-center text-primary/50">Aucune.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
 @endif
 
 {{-- ==================== ALERTES ==================== --}}

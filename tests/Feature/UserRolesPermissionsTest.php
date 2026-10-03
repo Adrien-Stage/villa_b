@@ -55,10 +55,10 @@ test('un utilisateur est créé avec plusieurs modules et des niveaux distincts'
     expect($user)->not->toBeNull()
         ->and($user->roles)->toHaveCount(3)
         // Hébergement en écriture, restaurant et boutique en lecture seule.
-        ->and($user->canWrite('hebergement'))->toBeTrue()
-        ->and($user->moduleLevel('restaurant'))->toBe('read')
-        ->and($user->canWrite('restaurant'))->toBeFalse()
-        ->and($user->moduleLevel('boutique'))->toBe('read');
+        ->and(app(\App\Services\PermissionResolver::class)->allows($user, 'bookings.creer'))->toBeTrue()
+        ->and(app(\App\Services\PermissionResolver::class)->allows($user, 'restaurant.orders.voir'))->toBeTrue()
+        ->and(app(\App\Services\PermissionResolver::class)->allows($user, 'restaurant.orders.creer'))->toBeFalse()
+        ->and(app(\App\Services\PermissionResolver::class)->allows($user, 'shop.cash_register.open.creer'))->toBeFalse();
 });
 
 test('un accès en lecture seule bloque une écriture mais autorise la lecture', function () {
@@ -99,7 +99,7 @@ test('un compte existant sans niveau pivot n’est pas restreint (écriture par 
     $legacy = User::factory()->create(['role' => 'restaurant_chief']);
     $legacy->roles()->sync([Role::where('slug', 'restaurant_chief')->value('id')]);
 
-    expect($legacy->fresh()->canWrite('restaurant'))->toBeTrue();
+    expect(app(\App\Services\PermissionResolver::class)->allows($legacy->fresh(), 'restaurant.menus.items.creer'))->toBeTrue();
 });
 
 test('le manager n’est jamais restreint par le niveau de module', function () {
@@ -180,42 +180,37 @@ test('le filtre par département restreint la liste des employés affichés', fu
         ->assertDontSee('Employé B');
 });
 
-test('la résolution des rôles d’un département pré-sélectionne tous les rôles pour la Direction et les rôles métiers pour les autres départements', function () {
+test('le département pré-coche le rôle de base de son service, sans rien accorder', function () {
     seedRolesAndModules();
     \App\Support\RoleCatalog::sync();
 
     $assignableRoles = Role::assignable()->get();
 
+    // La direction n'emporte plus tous les rôles d'un coup : un département ne
+    // donne aucun droit, il range le personnel.
     $deptDir = Department::where('code', 'DIR')->first() ?: Department::create(['name' => 'Direction Générale', 'code' => 'DIR', 'slug' => 'direction_generale', 'is_active' => true]);
-    $resDir = $deptDir->resolveMatchingRoles($assignableRoles);
-    expect($resDir['roles'])->toHaveCount($assignableRoles->count())
-        ->and($resDir['levels'])->toHaveKey('reception', 'write')
-        ->and($resDir['levels'])->toHaveKey('restaurant_chief', 'write');
+    expect($deptDir->resolveMatchingRoles($assignableRoles)['roles'])->not->toContain('reception', 'restaurant_chief');
 
     $deptRec = Department::where('code', 'REC')->first() ?: Department::create(['name' => 'Réception', 'code' => 'REC', 'slug' => 'reception_front_office', 'is_active' => true]);
-    $resRec = $deptRec->resolveMatchingRoles($assignableRoles);
-    expect($resRec['roles'])->toContain('reception', 'cashier')
-        ->and($resRec['roles'])->not->toContain('restaurant_chief');
+    expect($deptRec->resolveMatchingRoles($assignableRoles))->toBe(['roles' => ['reception'], 'levels' => ['reception' => 'write']]);
 
     $deptBtq = Department::where('code', 'BTQ')->first() ?: Department::create(['name' => 'Boutique', 'code' => 'BTQ', 'slug' => 'boutique_commerce', 'is_active' => true]);
-    $resBtq = $deptBtq->resolveMatchingRoles($assignableRoles);
-    expect($resBtq['roles'])->toContain('shop_manager', 'shop_cashier');
+    expect($deptBtq->resolveMatchingRoles($assignableRoles)['roles'])->toBe(['shop_cashier']);
 });
 
 
 test('la réception consulte le restaurant et la boutique sans jamais y écrire', function () {
     seedRolesAndModules();
 
-    // Compte à l'ancienne : le rôle ne vit que dans la colonne users.role.
     $receptionniste = User::factory()->create(['role' => 'reception']);
+    $droits = app(\App\Services\PermissionResolver::class);
 
     // Elle lit, depuis la fiche client, les factures restaurant et boutique…
-    expect($receptionniste->canAccessModule('restaurant'))->toBeTrue()
-        ->and($receptionniste->canAccessModule('boutique'))->toBeTrue()
+    expect($receptionniste->hasModuleAccess('restaurant'))->toBeTrue()
+        ->and($droits->allows($receptionniste, 'restaurant.billing.voir'))->toBeTrue()
         // … mais n'encaisse ni au restaurant ni à la boutique.
-        ->and($receptionniste->moduleLevel('restaurant'))->toBe('read')
-        ->and($receptionniste->moduleLevel('boutique'))->toBe('read')
-        ->and($receptionniste->moduleLevel('shop'))->toBe('read')
-        // Son propre module reste en écriture.
-        ->and($receptionniste->canWrite('hebergement'))->toBeTrue();
+        ->and($droits->allows($receptionniste, 'restaurant.billing.paid'))->toBeFalse()
+        ->and($droits->allows($receptionniste, 'shop.cash_register.open.creer'))->toBeFalse()
+        // Son propre service reste en écriture.
+        ->and($droits->allows($receptionniste, 'bookings.creer'))->toBeTrue();
 });

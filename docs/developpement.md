@@ -124,30 +124,14 @@ base de développement.
 
 ### État de la suite
 
-**228 tests passent, 6 échouent** — 33 fichiers de test, 961 assertions.
+La suite complète passe (plus de mille tests). Elle couvre les domaines sensibles :
+disponibilité, tarification des packs, économat, housekeeping, restaurants,
+caisses, fiches techniques, imports/exports CSV, rôles et droits, PWA,
+notifications, intégrité des vues Blade.
 
-La suite est globalement saine et couvre les domaines sensibles : disponibilité,
-tarification des packs, économat, housekeeping, fiches techniques, imports/exports
-CSV, synchronisation des rôles, PWA, notifications, intégrité des vues Blade.
-
-Les 6 échecs sont de **vraies assertions en échec**, pas des classes manquantes :
-
-| Test | Symptôme |
-|---|---|
-| `BookingCalendarTest > calendar view … filters only confirmed bookings` | Le calendrier retourne une réservation qu'il ne devrait pas |
-| `BookingTaxAndBookerTest > shop cashier can create a shop order with 0% VAT` | 403 au lieu d'une redirection — droit refusé |
-| `ReceptionCashRegisterTest > only manager can access close form` | Attente de droit non satisfaite |
-| `ReceptionCashRegisterTest > manager can approve pending complimentary booking` | Idem |
-| `ReceptionCashRegisterTest > complimentary bookings trigger in-app notifications` | Notification attendue non émise |
-
-> Ces échecs se répartissent entre deux causes plausibles : des **régressions
-> réelles** (notamment sur les droits de caisse et les réservations offertes) et des
-> **attentes de test devenues obsolètes** après une évolution des règles d'accès.
-> Chacun demande à être tranché individuellement — ils ne sont pas interchangeables.
-
-Au moment de la rédaction, l'arbre de travail contient des modifications non
-committées sur `BookingController.php` et `bookings/index.blade.php` ; l'échec du
-calendrier pourrait leur être lié.
+Lancez-la en entier, **sans `--parallel`** : quelques fichiers partagent des
+fonctions d'aide déclarées dans un autre fichier de test, et le mode parallèle les
+sépare.
 
 ### Tests notables
 
@@ -175,10 +159,8 @@ calendrier pourrait leur être lié.
 | Sujet | Détail |
 |---|---|
 | **`tenant_id` vestigial** | Table `tenants` et colonnes `tenant_id` héritées d'une conception mutualisée. Une seule ligne utile ; l'isolation réelle est physique (un conteneur, une base) |
-| **Double système de rôles** | Pivot + colonne héritée, les deux consultés partout |
 | **`BookingController` : 1366 lignes** | Le plus gros contrôleur, candidat au découpage |
 | **`GroupBookingController` : 824 lignes** | Duplique une partie de la logique de `BookingController` |
-| **6 tests en échec** | Voir ci-dessus — à trancher un par un |
 | **Nommage `MEKA ERP`** | Subsiste dans le `Dockerfile` et l'entrypoint (messages de démarrage). Cosmétique, sans effet |
 
 Le nommage Docker en `meka-erp-*` côté console est en revanche **volontaire** et ne

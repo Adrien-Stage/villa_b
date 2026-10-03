@@ -364,7 +364,7 @@ test("l'aperçu suit une portée resserrée", function () {
     expect($personne['portees'][0])->toBe(['permission' => 'users.voir', 'avant' => 'etablissement', 'apres' => 'departement']);
 });
 
-test('les exceptions échues et les restrictions de service sont montrées', function () {
+test('les exceptions échues sont montrées', function () {
     $employe = User::factory()->create(['role' => 'accountant']);
 
     PermissionGrant::create([
@@ -373,15 +373,10 @@ test('les exceptions échues et les restrictions de service sont montrées', fun
         'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => 'Inventaire de fin d’année.',
         'expires_at' => now()->subDay(),
     ]);
-    \Illuminate\Support\Facades\DB::table('user_module_permissions')->insert([
-        'user_id' => $employe->id, 'module_key' => 'economat', 'access_level' => 'read',
-        'created_at' => now(), 'updated_at' => now(),
-    ]);
 
     $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
 
     expect($reponse->json('exceptions_echues.0.permission'))->toBe('economat.items.creer')
-        ->and($reponse->json('restrictions'))->toBe([['user_id' => $employe->id, 'service' => 'economat', 'niveau' => 'read']])
         // Échue : elle n'est plus en vigueur.
         ->and(collect($reponse->json('ecarts'))->where('subject_type', 'user')->count())->toBe(0);
 });
