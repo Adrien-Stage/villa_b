@@ -805,14 +805,14 @@ class PermissionCatalog
 
             // ── Housekeeping ──
             'housekeeping.assignments.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.available' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.clean' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.inspect' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.issue' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.ready' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.reject' => ['housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.available' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.clean' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.inspect' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.issue' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.ready' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.reject' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
             'housekeeping.teams.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.voir' => ['controller', 'housekeeping', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
 
             // ── Clients ──
             'customers.creer' => ['manager', 'reception'],

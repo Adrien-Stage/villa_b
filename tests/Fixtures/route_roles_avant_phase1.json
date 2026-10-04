@@ -1070,13 +1070,11 @@
   "manager"
  ],
  "housekeeping.available": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"
  ],
  "housekeeping.clean": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"
@@ -1084,7 +1082,6 @@
  "housekeeping.index": [
   "admin",
   "controller",
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager",
@@ -1092,25 +1089,21 @@
   "support"
  ],
  "housekeeping.inspect": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"
  ],
  "housekeeping.issue": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"
  ],
  "housekeeping.ready": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"
  ],
  "housekeeping.reject": [
-  "housekeeping",
   "housekeeping_leader",
   "housekeeping_staff",
   "manager"

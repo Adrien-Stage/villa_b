@@ -80,7 +80,8 @@ Installation complète : **[docs/installation.md](docs/installation.md)**.
 | **[Architecture](docs/architecture.md)** | Modèle mono-établissement, modules, couche services, données, conventions |
 | **[Installation](docs/installation.md)** | Développement local, et comment l'application est réellement déployée |
 | **[Configuration](docs/configuration.md)** | Variables d'environnement, `TENANT_*`, paramètres d'établissement |
-| **[Rôles et accès](docs/roles-et-acces.md)** | Catalogue des rôles, modules, niveaux lecture/écriture, verrou de caisse |
+| **[Guide des rôles et des droits](docs/guide-roles-et-droits.md)** | Qui fait quoi, comment le régler — pour la direction, l'administrateur et la console |
+| **[Rôles et accès](docs/roles-et-acces.md)** | Référence technique : moteur de droits, couches, lecture seule, verrou de caisse |
 | **[Hébergement](docs/hebergement.md)** | Chambres, disponibilité, réservations, folio, check-out, factures, housekeeping |
 | **[Restaurant](docs/restaurant.md)** | Carte, commandes, cuisine, garde-manger, fiches techniques, inventaires, portail |
 | **[Économat et boutique](docs/economat-et-boutique.md)** | Magasin central, achats, demandes internes, ventes boutique |

@@ -52,7 +52,7 @@ test('financial access control works', function () {
     $reception = User::factory()->create(['role' => 'reception']);
     $cashier = User::factory()->create(['role' => 'cashier']);
     $accountant = User::factory()->create(['role' => 'accountant']);
-    $housekeeping = User::factory()->create(['role' => 'housekeeping']);
+    $housekeeping = User::factory()->create(['role' => 'housekeeping_staff']);
 
     expect($admin->canAccessFinancialData())->toBeTrue();
     expect($manager->canAccessFinancialData())->toBeTrue();
@@ -78,7 +78,7 @@ test('booking management permissions work', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $manager = User::factory()->create(['role' => 'manager']);
     $reception = User::factory()->create(['role' => 'reception']);
-    $housekeeping = User::factory()->create(['role' => 'housekeeping']);
+    $housekeeping = User::factory()->create(['role' => 'housekeeping_staff']);
 
     expect($admin->canManageBookings())->toBeTrue();
     expect($manager->canManageBookings())->toBeTrue();
@@ -111,7 +111,7 @@ test('roles are seeded correctly', function () {
 test('room routes are protected by RBAC middleware', function () {
     $manager = User::factory()->create(['role' => 'manager']);
     $reception = User::factory()->create(['role' => 'reception']);
-    $housekeeping = User::factory()->create(['role' => 'housekeeping']);
+    $housekeeping = User::factory()->create(['role' => 'housekeeping_staff']);
 
     // Manager peut accéder aux rooms
     $this->actingAs($manager);
@@ -132,7 +132,7 @@ test('room routes are protected by RBAC middleware', function () {
 test('booking routes are protected by RBAC middleware', function () {
     $manager = User::factory()->create(['role' => 'manager']);
     $reception = User::factory()->create(['role' => 'reception']);
-    $housekeeping = User::factory()->create(['role' => 'housekeeping']);
+    $housekeeping = User::factory()->create(['role' => 'housekeeping_staff']);
 
     // Manager peut accéder aux bookings
     $this->actingAs($manager);

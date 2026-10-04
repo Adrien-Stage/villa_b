@@ -1,5 +1,9 @@
 # Rôles et accès
 
+> Pour une présentation d'ensemble — qui fait quoi, et comment le régler — voir le
+> [Guide des rôles et des droits](guide-roles-et-droits.md). Cette page en est la
+> référence technique.
+
 Le contrôle d'accès de l'application se joue sur **trois niveaux successifs**, du
 plus large au plus fin :
 
