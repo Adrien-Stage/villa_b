@@ -165,6 +165,24 @@ pagination et le même menu d'actions.
 Les états imprimables, les états comptables (balance, grand livre…) et les grilles de
 saisie gardent leurs propres tableaux : ce ne sont pas des listes.
 
+### Un document imprimé ne laisse aucune marge haute ou basse au navigateur
+
+Chrome ajoute son propre en-tête et son propre pied de page (titre et adresse de la
+page, date, « 1 sur 3 ») dès que la feuille a une marge haute ou basse. Toute règle
+`@page` garde donc ces deux marges à zéro.
+
+Un document de plusieurs pages inclut le réglage commun dans sa balise `<style>` :
+
+```blade
+@include('partials.impression', ['haut' => '14mm', 'bas' => '16mm', 'pied' => 'Bon de commande '.$order->number])
+```
+
+Il met les marges haute et basse à zéro, refait le blanc en tête et en pied de chaque
+page (`box-decoration-break: clone` sur le corps), numérote les pages dans la marge de
+droite et répète le texte de `pied` au bas de chaque feuille. Les tickets de caisse
+(`size: auto; margin: 0`) n'en ont pas besoin. Le PDF (dompdf) n'est pas concerné :
+il n'ajoute rien. `ImpressionSansEnTeteTest` lit toutes les règles `@page` des vues.
+
 ## Tests
 
 ```bash
@@ -190,6 +208,7 @@ sépare.
 | Fichier | Ce qu'il protège |
 |---|---|
 | `BladeIntegrityTest` | Toutes les vues compilent — filet contre une erreur de syntaxe Blade |
+| `ImpressionSansEnTeteTest` | Aucune page imprimée ne porte l'en-tête et le pied de page du navigateur |
 | `RoleCatalogSyncTest` | `roles:sync` est bien idempotent |
 | `RoomAvailabilityDelayTest` | La règle du délai de remise en état |
 | `CsvImportExportTest`, `SeedCsvFilesTest` | L'aller-retour import/export sans perte |

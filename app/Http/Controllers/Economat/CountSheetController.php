@@ -43,6 +43,8 @@ class CountSheetController extends Controller
             'sheets'         => $this->sheets->sheets($validated['service'], $validated['categorie'] ?? null),
             'showTheoretical' => (bool) ($validated['theorique'] ?? false),
             'tenant'         => \App\Models\Tenant::first(),
+            // Qui a sorti la fiche : une fiche qui circule doit dire d'où elle vient.
+            'printedBy'      => $request->user()?->name,
         ]);
     }
 }

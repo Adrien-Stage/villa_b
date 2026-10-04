@@ -4,27 +4,31 @@ namespace App\Services;
 
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
+use App\Models\RestaurantStockCount;
 use App\Models\ServiceStore;
 use App\Models\ServiceStoreCount;
 use App\Models\ShopProduct;
 use App\Models\StockCategory;
 use App\Models\StockCount;
 use App\Models\StockItem;
+use DateTimeInterface;
 
 /**
  * Fiches de comptage : la liste papier que chaque service remplit le jour de
- * l'inventaire — économat, garde-manger, boutique, et chaque dépôt.
+ * l'inventaire — économat, garde-manger de chaque restaurant, boutique, et
+ * chaque dépôt.
  *
  * Quand un inventaire est déjà ouvert, la fiche reprend son théorique figé :
  * c'est contre lui que le comptage sera rapproché, pas contre le stock du
- * moment.
+ * moment. La fiche dit alors à quelle heure il a été figé.
  *
- * Une fiche : ['key', 'title', 'subtitle', 'reference', 'groups' => [catégorie => [lignes]]],
+ * Une fiche : ['key', 'title', 'subtitle', 'reference', 'frozen_at', 'groups' => [catégorie => [lignes]]],
  * chaque ligne : ['reference', 'name', 'unit', 'theoretical'].
  */
 class CountSheetService
 {
     public const ECONOMAT = 'economat';
+    /** Garde-manger : « garde-manger-3 » pour celui d'un restaurant quand il y en a plusieurs. */
     public const PANTRY = 'garde-manger';
     public const SHOP = 'boutique';
     public const STORE_PREFIX = 'depot-';
@@ -37,11 +41,21 @@ class CountSheetService
      */
     public function services(): array
     {
-        $services = [
-            self::ECONOMAT => 'Économat — magasin central',
-            self::PANTRY   => 'Cuisine — garde-manger',
-            self::SHOP     => 'Boutique',
-        ];
+        $services = [self::ECONOMAT => 'Économat — magasin central'];
+
+        // Chaque restaurant compte son garde-manger : une fiche par cuisine
+        // dès qu'il y en a plusieurs, comme chacun a son inventaire.
+        $restaurants = app(RestaurantContext::class)->restaurants();
+
+        if ($restaurants->count() > 1) {
+            foreach ($restaurants as $restaurant) {
+                $services[self::PANTRY . '-' . $restaurant->id] = "Cuisine — {$restaurant->name}";
+            }
+        } else {
+            $services[self::PANTRY] = 'Cuisine — garde-manger';
+        }
+
+        $services[self::SHOP] = 'Boutique';
 
         foreach (ServiceStore::active()->orderBy('sort_order')->orderBy('name')->get() as $depot) {
             $services[self::STORE_PREFIX . $depot->id] = "{$depot->name} ({$depot->departmentLabel()})";
@@ -70,7 +84,7 @@ class CountSheetService
     {
         return match (true) {
             $key === self::ECONOMAT                 => $this->economat($categoryId),
-            $key === self::PANTRY                   => $this->pantry($categoryId),
+            str_starts_with($key, self::PANTRY)     => $this->pantry($key, $categoryId),
             $key === self::SHOP                     => $this->shop(),
             str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX))),
             default                                 => null,
@@ -99,20 +113,51 @@ class CountSheetService
             'Économat — magasin central',
             $categorie?->name,
             $inventaire?->reference,
-            $lignes
+            $lignes,
+            $inventaire?->created_at
         );
     }
 
-    private function pantry(?int $categoryId): array
+    private function pantry(string $key, ?int $categoryId): ?array
     {
+        $restaurants = app(RestaurantContext::class)->restaurants();
+
+        // « garde-manger » tout court : celui de l'unique restaurant, ou tout
+        // le garde-manger quand aucun restaurant n'est déclaré.
+        $restaurant = $key === self::PANTRY
+            ? ($restaurants->count() === 1 ? $restaurants->first() : null)
+            : $restaurants->firstWhere('id', (int) substr($key, strlen(self::PANTRY) + 1));
+
+        if ($restaurant === null && $key !== self::PANTRY) {
+            return null;
+        }
+
         $categorie = $categoryId ? RestaurantPantryCategory::find($categoryId) : null;
+        $inventaire = RestaurantStockCount::query()
+            ->duRestaurant($restaurant)
+            ->where('status', RestaurantStockCount::STATUS_DRAFT)
+            ->latest('id')
+            ->first();
 
-        $lignes = RestaurantPantryItem::active()->with('category')
-            ->when($categorie, fn ($q) => $q->where('restaurant_pantry_category_id', $categorie->id))
-            ->get()
-            ->map(fn (RestaurantPantryItem $i) => $this->ligne(null, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name));
+        if ($inventaire !== null) {
+            $lignes = $inventaire->lines()->with('item.category')->get()
+                ->filter(fn ($l) => $l->item && (!$categorie || $l->item->restaurant_pantry_category_id === $categorie->id))
+                ->map(fn ($l) => $this->ligne(null, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name));
+        } else {
+            $lignes = RestaurantPantryItem::active()->duRestaurant($restaurant)->with('category')
+                ->when($categorie, fn ($q) => $q->where('restaurant_pantry_category_id', $categorie->id))
+                ->get()
+                ->map(fn (RestaurantPantryItem $i) => $this->ligne(null, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name));
+        }
 
-        return $this->fiche(self::PANTRY, 'Cuisine — garde-manger', $categorie?->name, null, $lignes);
+        return $this->fiche(
+            $key,
+            $restaurant ? "Cuisine — {$restaurant->name}" : 'Cuisine — garde-manger',
+            $categorie?->name,
+            $inventaire?->reference,
+            $lignes,
+            $inventaire?->created_at
+        );
     }
 
     private function shop(): array
@@ -144,7 +189,8 @@ class CountSheetService
             $depot->name,
             $depot->departmentLabel(),
             $inventaire?->reference,
-            $lignes
+            $lignes,
+            $inventaire?->created_at
         );
     }
 
@@ -161,15 +207,17 @@ class CountSheetService
     }
 
     /** @return array<string, mixed> */
-    private function fiche(string $key, string $title, ?string $subtitle, ?string $reference, $lignes): array
+    private function fiche(string $key, string $title, ?string $subtitle, ?string $reference, $lignes, ?DateTimeInterface $frozenAt = null): array
     {
         return [
             'key'       => $key,
             'title'     => $title,
             'subtitle'  => $subtitle,
             'reference' => $reference,
+            'frozen_at' => $frozenAt,
             'groups'    => collect($lignes)
-                ->sortBy([['category', 'asc'], ['name', 'asc']])
+                // Ordre naturel : « article 2 » avant « article 10 », comme on range une étagère.
+                ->sortBy(fn (array $l) => $l['category'] . "\0" . $l['name'], SORT_NATURAL | SORT_FLAG_CASE)
                 ->groupBy('category')
                 ->map(fn ($groupe) => $groupe->values()->all())
                 ->all(),

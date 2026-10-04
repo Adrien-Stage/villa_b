@@ -198,6 +198,10 @@
         #invoice-print {
             margin: 0 auto !important;
             padding: 10mm 14mm !important;
+            /* Marges de la feuille à zéro (pas d'en-tête du navigateur) : ce
+               rembourrage se répète en tête et en pied de chaque page. */
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
             width: 100% !important;
             max-width: 100% !important;
             box-shadow: none !important;
