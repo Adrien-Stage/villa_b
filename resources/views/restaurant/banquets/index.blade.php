@@ -39,45 +39,41 @@
     @endforeach
 </div>
 
-<div class="overflow-x-auto rounded-xl bg-white shadow-sm">
-    <table class="w-full text-left text-xs">
-        <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
-            <tr>
-                <th class="px-4 py-2.5">Date</th>
-                <th class="px-4 py-2.5">Événement</th>
-                <th class="px-4 py-2.5">Restaurant · salle</th>
-                <th class="px-4 py-2.5 text-right">Couverts</th>
-                <th class="px-4 py-2.5 text-right">Total</th>
-                <th class="px-4 py-2.5 text-right">Encaissé</th>
-                <th class="px-4 py-2.5">Statut</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-secondary/10">
-            @forelse($banquets as $banquet)
-                <tr class="hover:bg-accent/10">
-                    <td class="px-4 py-2.5 font-semibold text-primary whitespace-nowrap">
-                        {{ $banquet->event_date->format('d/m/Y') }}
-                        @if($banquet->start_time)<span class="font-normal text-primary/50"> {{ $banquet->start_time }}</span>@endif
-                    </td>
-                    <td class="px-4 py-2.5">
-                        <a href="{{ route('restaurant.banquets.show', $banquet) }}" class="font-semibold text-primary hover:underline">{{ $banquet->title }}</a>
-                        <p class="text-[11px] text-primary/45">{{ $banquet->reference }} · {{ $banquet->client_name }}</p>
-                    </td>
-                    <td class="px-4 py-2.5 text-primary/70">{{ $banquet->pointOfSale?->name }}@if($banquet->space) · {{ $banquet->space->name }}@endif</td>
-                    <td class="px-4 py-2.5 text-right">{{ $banquet->covers }}</td>
-                    <td class="px-4 py-2.5 text-right font-semibold text-primary">{{ $fcfa($banquet->total_amount) }}</td>
-                    <td class="px-4 py-2.5 text-right">{{ $fcfa($banquet->total_encaisse) }}</td>
-                    <td class="px-4 py-2.5">
-                        <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $couleurs[$banquet->status] ?? '' }}">{{ $banquet->libelleStatut() }}</span>
-                    </td>
-                </tr>
-            @empty
-                <tr><td colspan="7" class="px-4 py-10 text-center text-primary/50">Aucun banquet.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
-<div class="mt-4">{{ $banquets->links() }}</div>
+<x-table :rows="$banquets" empty="Aucun banquet." empty-icon="party-popper" caption="Banquets">
+    <x-slot:head>
+        <x-table.col>Date</x-table.col>
+        <x-table.col>Événement</x-table.col>
+        <x-table.col hide="xl">Restaurant · salle</x-table.col>
+        <x-table.col align="right" hide="lg">Couverts</x-table.col>
+        <x-table.col align="right">Total</x-table.col>
+        <x-table.col align="right" hide="2xl">Encaissé</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
+
+    @foreach($banquets as $banquet)
+        <x-table.row :href="route('restaurant.banquets.show', $banquet)" :muted="$banquet->status === 'annule'">
+            <x-table.cell nowrap>
+                <span class="font-semibold text-primary">{{ $banquet->event_date->format('d/m/Y') }}</span>
+                @if($banquet->start_time)<span class="text-primary/50"> {{ $banquet->start_time }}</span>@endif
+            </x-table.cell>
+            <x-table.cell>
+                <a href="{{ route('restaurant.banquets.show', $banquet) }}" class="font-semibold text-primary hover:underline">{{ $banquet->title }}</a>
+                <p class="text-[11px] text-primary/45">{{ $banquet->reference }} · {{ $banquet->client_name }}</p>
+            </x-table.cell>
+            <x-table.cell hide="xl" class="text-primary/70">{{ $banquet->pointOfSale?->name }}@if($banquet->space) · {{ $banquet->space->name }}@endif</x-table.cell>
+            <x-table.cell align="right" hide="lg">{{ $banquet->covers }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ $fcfa($banquet->total_amount) }}</x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap>{{ $fcfa($banquet->total_encaisse) }}</x-table.cell>
+            <x-table.cell nowrap>
+                <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $couleurs[$banquet->status] ?? '' }}">{{ $banquet->libelleStatut() }}</span>
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour le banquet '.$banquet->reference">
+                <x-table.action :href="route('restaurant.banquets.show', $banquet)" icon="eye">Ouvrir</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 @droit('restaurant.banquets.creer')
     <x-modal id="banquet-create" title="Nouveau devis de banquet" max-width="max-w-2xl" formAction="{{ route('restaurant.banquets.store') }}">

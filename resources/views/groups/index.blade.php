@@ -86,89 +86,62 @@
 </div>
 
 {{-- Table --}}
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    @if($groups->isEmpty())
-        <div class="flex flex-col items-center justify-center py-16 text-primary/30">
-            <i data-lucide="users" class="w-10 h-10 mb-3 opacity-40"></i>
-            <p class="text-sm">Aucun dossier groupe trouvé</p>
-        </div>
-    @else
-        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Code</div>
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Groupe</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Contact</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Période</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambres</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Statut</div>
-            <div class="col-span-1"></div>
-        </div>
+@php
+    $statusColors = [
+        'pending'   => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+        'in_house'  => 'bg-green-50 text-green-700 border-green-200',
+        'completed' => 'bg-gray-50 text-gray-600 border-gray-200',
+        'cancelled' => 'bg-red-50 text-red-600 border-red-200',
+    ];
+    $eventLabels = ['family' => 'Famille', 'corporate' => 'Corporate', 'wedding' => 'Mariage', 'tour_group' => 'Tour groupe'];
+@endphp
+<x-table :rows="$groups" empty="Aucun dossier groupe trouvé." empty-icon="users" caption="Dossiers groupe">
+    <x-slot:head>
+        <x-table.col>Code</x-table.col>
+        <x-table.col>Groupe</x-table.col>
+        <x-table.col hide="2xl">Contact</x-table.col>
+        <x-table.col hide="xl">Période</x-table.col>
+        <x-table.col align="right">Chambres</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        @foreach($groups as $group)
-            @php
-                $statusColors = [
-                    'pending'   => 'bg-yellow-50 text-yellow-700 border-yellow-200',
-                    'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
-                    'in_house'  => 'bg-green-50 text-green-700 border-green-200',
-                    'completed' => 'bg-gray-50 text-gray-600 border-gray-200',
-                    'cancelled' => 'bg-red-50 text-red-600 border-red-200',
-                ];
-                $sc = $statusColors[$group->status] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
-                $eventLabels = [
-                    'family'     => 'Famille',
-                    'corporate'  => 'Corporate',
-                    'wedding'    => 'Mariage',
-                    'tour_group' => 'Tour groupe',
-                ];
-            @endphp
-            <a href="{{ route('groups.show', $group) }}"
-               class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
-
-                <div class="col-span-2">
-                    <span class="text-sm font-mono font-medium text-primary">{{ $group->group_code }}</span>
-                </div>
-
-                <div class="col-span-3">
-                    <p class="text-sm font-medium text-primary truncate">{{ $group->group_name }}</p>
-                    @if($group->event_type)
-                        <p class="text-xs text-primary/40">{{ $eventLabels[$group->event_type] ?? $group->event_type }}</p>
-                    @endif
-                </div>
-
-                <div class="col-span-2">
-                    <p class="text-xs text-primary/70 truncate">{{ $group->contactCustomer?->full_name ?? '—' }}</p>
-                </div>
-
-                <div class="col-span-2">
-                    <p class="text-xs text-primary">
-                        {{ $group->start_date->locale('fr')->isoFormat('D MMM') }}
-                        → {{ $group->end_date->locale('fr')->isoFormat('D MMM YYYY') }}
-                    </p>
-                    <p class="text-xs text-primary/40">
-                        {{ $group->start_date->diffInDays($group->end_date) }} nuit{{ $group->start_date->diffInDays($group->end_date) > 1 ? 's' : '' }}
-                    </p>
-                </div>
-
-                <div class="col-span-1">
-                    <p class="text-sm font-medium text-primary">{{ $group->bookings_count }}</p>
-                </div>
-
-                <div class="col-span-1">
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full border {{ $sc }} capitalize">
-                        {{ ucfirst($group->status) }}
-                    </span>
-                </div>
-
-                <div class="col-span-1 flex justify-end">
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-primary/30"></i>
-                </div>
-            </a>
-        @endforeach
-    @endif
-</div>
-
-@if($groups->hasPages())
-    <div class="mt-4">{{ $groups->links() }}</div>
-@endif
+    @foreach($groups as $group)
+        @php
+            $sc = $statusColors[$group->status] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
+            $nuits = $group->start_date->diffInDays($group->end_date);
+        @endphp
+        <x-table.row :href="route('groups.show', $group)">
+            <x-table.cell nowrap>
+                <a href="{{ route('groups.show', $group) }}" class="font-mono text-sm font-medium text-primary hover:underline">{{ $group->group_code }}</a>
+            </x-table.cell>
+            <x-table.cell>
+                <p class="max-w-60 truncate text-sm font-medium text-primary">{{ $group->group_name }}</p>
+                @if($group->event_type)
+                    <p class="text-xs text-primary/45">{{ $eventLabels[$group->event_type] ?? $group->event_type }}</p>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="2xl">
+                <p class="max-w-48 truncate text-xs text-primary/70">{{ $group->contactCustomer?->full_name ?? '—' }}</p>
+            </x-table.cell>
+            <x-table.cell hide="xl" nowrap>
+                <p class="text-xs text-primary">{{ $group->start_date->locale('fr')->isoFormat('D MMM') }} → {{ $group->end_date->locale('fr')->isoFormat('D MMM YYYY') }}</p>
+                <p class="text-xs text-primary/45">{{ $nuits }} nuit{{ $nuits > 1 ? 's' : '' }}</p>
+            </x-table.cell>
+            <x-table.cell align="right" class="font-medium">{{ $group->bookings_count }}</x-table.cell>
+            <x-table.cell nowrap>
+                <span class="rounded-full border px-2 py-0.5 text-xs font-medium capitalize {{ $sc }}">{{ ucfirst($group->status) }}</span>
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour le groupe '.$group->group_code">
+                <x-table.action :href="route('groups.show', $group)" icon="eye">Ouvrir</x-table.action>
+                @droit('groups.modifier')
+                    <x-table.action :href="route('groups.edit', $group)" icon="pencil">Modifier</x-table.action>
+                @enddroit
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 <script>
 let searchTimer;

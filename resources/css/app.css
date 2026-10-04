@@ -75,6 +75,48 @@
     }
 }
 
+/* Alpine : un élément x-cloak reste caché jusqu'à l'initialisation. */
+[x-cloak] {
+    display: none !important;
+}
+
+/*
+ * Actions des tableaux de liste (x-table.action) : le même élément prend
+ * l'aspect d'un bouton en ligne, ou d'une entrée du menu ⋮.
+ */
+@layer components {
+    .dt-inline .dt-action {
+        @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-secondary/25 bg-white px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .dt-inline .dt-action[data-tone='danger'] {
+        @apply border-red-200 text-red-700 hover:bg-red-50;
+    }
+
+    .dt-inline .dt-action[data-tone='success'] {
+        @apply border-green-200 text-green-700 hover:bg-green-50;
+    }
+
+    .dt-menu .dt-action {
+        @apply flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-primary transition-colors hover:bg-accent/25 focus:bg-accent/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .dt-menu .dt-action[data-tone='danger'] {
+        @apply text-red-700 hover:bg-red-50 focus:bg-red-50;
+    }
+
+    .dt-menu .dt-action[data-tone='success'] {
+        @apply text-green-700 hover:bg-green-50 focus:bg-green-50;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dt-inline .dt-action,
+    .dt-menu .dt-action {
+        transition: none;
+    }
+}
+
 /* Utilitaires d'impression professionnels */
 @layer utilities {
     .no-print {

@@ -121,8 +121,8 @@
         </div>
     </aside>
 
-    <section class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
-        <div class="px-4 py-4 border-b border-secondary/15 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <x-table :rows="$items" empty="Aucun article. Commencez par créer un article de la carte." empty-icon="book" caption="Articles de la carte">
+        <x-slot:toolbar>
             <div>
                 <p class="font-heading text-sm font-semibold text-primary">Articles</p>
                 <p class="text-xs text-primary/45 mt-0.5">Plats, boissons et autres articles</p>
@@ -171,92 +171,46 @@
                     <option value="inactive" @selected(request('status') === 'inactive')>Inactifs</option>
                 </select>
             </form>
-        </div>
+        </x-slot:toolbar>
+        <x-slot:head>
+            <x-table.col>Article</x-table.col>
+            <x-table.col hide="xl">Catégorie</x-table.col>
+            <x-table.col hide="lg">Type</x-table.col>
+            <x-table.col hide="2xl">Service</x-table.col>
+            <x-table.col align="right">Prix</x-table.col>
+            <x-table.col>Statut</x-table.col>
+            @if($canManage)<x-table.col actions />@endif
+        </x-slot:head>
 
-        @if($items->isEmpty())
-            <div class="py-16 text-center text-primary/35">
-                <i data-lucide="book" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-                <p class="text-sm font-medium">Aucun article</p>
-                <p class="text-xs mt-1">Commence par creer un article de menu.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-secondary/10">
-                    <thead class="bg-accent/20">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Article</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Categorie</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Type</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Service</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Prix</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
-                            @if($canManage)
-                                <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Actions</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($items as $item)
-                            <tr class="{{ $item->is_active ? '' : 'opacity-60' }}">
-                                <td class="px-4 py-3">
-                                    <p class="text-sm font-semibold text-primary">{{ $item->name }}</p>
-                                    @if($vueEnsemble && $item->pointOfSale)
-                                        <p class="text-[11px] font-semibold text-primary/45">{{ $item->pointOfSale->name }}</p>
-                                    @endif
-                                    @if($item->description)
-                                        <p class="text-xs text-primary/45 mt-0.5 truncate">{{ $item->description }}</p>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-sm text-primary/70">
-                                    {{ $item->category?->name ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary">
-                                        {{ strtoupper($item->type) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-xs text-primary/60 whitespace-nowrap">
-                                    {{ $item->mealServicesLabel() }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
-                                    {{ number_format($item->price / 100, 0, ',', ' ') }} FCFA
-                                </td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $item->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
-                                        {{ $item->is_active ? 'Actif' : 'Inactif' }}
-                                    </span>
-                                </td>
-                                @if($canManage)
-                                    <td class="px-4 py-3">
-                                        <div class="flex justify-end gap-2">
-                                            <button type="button"
-                                                onclick="openEditItemModal({{ $item->id }})"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                            <form method="POST" action="{{ route('restaurant.menus.items.destroy', $item) }}"
-                                                onsubmit="return confirm('Supprimer cet article ?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="px-4 py-4 border-t border-secondary/15">
-                {{ $items->links() }}
-            </div>
-        @endif
-    </section>
+        @foreach($items as $item)
+            <x-table.row :muted="! $item->is_active">
+                <x-table.cell>
+                    <p class="text-sm font-semibold text-primary">{{ $item->name }}</p>
+                    @if($vueEnsemble && $item->pointOfSale)
+                        <p class="text-[11px] font-semibold text-primary/45">{{ $item->pointOfSale->name }}</p>
+                    @endif
+                    @if($item->description)
+                        <p class="mt-0.5 max-w-72 truncate text-xs text-primary/45">{{ $item->description }}</p>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="xl" class="text-primary/70">{{ $item->category?->name ?? '—' }}</x-table.cell>
+                <x-table.cell hide="lg">
+                    <span class="inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ strtoupper($item->type) }}</span>
+                </x-table.cell>
+                <x-table.cell hide="2xl" nowrap class="text-xs text-primary/60">{{ $item->mealServicesLabel() }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($item->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+                <x-table.cell nowrap>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $item->is_active ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-red-200 bg-red-50 text-red-700' }}">{{ $item->is_active ? 'Actif' : 'Inactif' }}</span>
+                </x-table.cell>
+                @if($canManage)
+                    <x-table.actions :label="'Actions pour '.$item->name">
+                        <x-table.action icon="pencil" onclick="openEditItemModal({{ $item->id }})">Modifier</x-table.action>
+                        <x-table.action :action="route('restaurant.menus.items.destroy', $item)" method="DELETE" icon="trash-2" tone="danger" confirm="Supprimer cet article ?">Supprimer</x-table.action>
+                    </x-table.actions>
+                @endif
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 
 @if($canManage)

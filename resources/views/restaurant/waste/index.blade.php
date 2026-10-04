@@ -133,80 +133,46 @@
 </div>
 
 {{-- Tableau des déclarations --}}
-<div class="bg-white rounded-xl shadow-sm border border-secondary/15 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-            <thead class="bg-secondary/10 text-primary font-semibold border-b border-secondary/20">
-                <tr>
-                    <th class="py-3 px-4">Date & Réf.</th>
-                    <th class="py-3 px-4">Article</th>
-                    <th class="py-3 px-4 text-right">Quantité mise au rebut</th>
-                    <th class="py-3 px-4 text-right">Coût Unitaire</th>
-                    <th class="py-3 px-4 text-right">Valeur Perte</th>
-                    <th class="py-3 px-4">Motif & Atelier</th>
-                    <th class="py-3 px-4">Responsable</th>
-                    <th class="py-3 px-4 text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-secondary/10">
-                @forelse($logs as $log)
-                    <tr class="hover:bg-accent/5 transition-colors">
-                        <td class="py-3 px-4">
-                            <span class="font-mono font-semibold text-primary">{{ $log->reference }}</span>
-                            <div class="text-[11px] text-primary/50">{{ $log->occurred_at?->format('d/m/Y H:i') }}</div>
-                        </td>
-                        <td class="py-3 px-4">
-                            <span class="font-medium text-primary">{{ $log->item?->name ?? 'Article inconnu' }}</span>
-                            @if($log->item?->category)
-                                <div class="text-[10px] text-primary/50">{{ $log->item->category->name }}</div>
-                            @endif
-                        </td>
-                        <td class="py-3 px-4 text-right font-medium text-red-600">
-                            -{{ rtrim(rtrim(number_format((float) $log->quantity, 3, ',', ' '), '0'), ',') }} {{ $log->item?->unit }}
-                        </td>
-                        <td class="py-3 px-4 text-right text-primary/70">
-                            {{ number_format($log->unitCostFcfa(), 2, ',', ' ') }} FCFA
-                        </td>
-                        <td class="py-3 px-4 text-right font-semibold text-red-600">
-                            {{ $log->formattedTotalCost() }}
-                        </td>
-                        <td class="py-3 px-4">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-800">
-                                {{ $log->reasonLabel() }}
-                            </span>
-                            <div class="text-[10px] text-primary/50 mt-0.5">{{ $log->departmentLabel() }}</div>
-                        </td>
-                        <td class="py-3 px-4 text-primary/70">
-                            <div>{{ $log->responsible_person ?? 'Non spécifié' }}</div>
-                            <div class="text-[10px] text-primary/40">Saisi par {{ $log->recordedBy?->name ?? 'Système' }}</div>
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <a href="{{ route('restaurant.waste.show', $log) }}" class="p-1.5 text-primary/70 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors" title="Voir le détail">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </a>
-                                <a href="{{ route('restaurant.waste.print', $log) }}" target="_blank" class="p-1.5 text-primary/70 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors" title="Imprimer le PV de perte">
-                                    <i data-lucide="printer" class="w-4 h-4"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="py-8 text-center text-primary/40">
-                            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                            Aucune perte ou déchet enregistré sur la période sélectionnée.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+<x-table :rows="$logs" empty="Aucune perte ou déchet enregistré sur la période sélectionnée." empty-icon="inbox" caption="Pertes et déchets">
+    <x-slot:head>
+        <x-table.col>Date &amp; réf.</x-table.col>
+        <x-table.col>Article</x-table.col>
+        <x-table.col align="right">Quantité</x-table.col>
+        <x-table.col align="right" hide="2xl">Coût unitaire</x-table.col>
+        <x-table.col align="right">Valeur</x-table.col>
+        <x-table.col hide="lg">Motif &amp; atelier</x-table.col>
+        <x-table.col hide="xl">Responsable</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-    @if($logs->hasPages())
-        <div class="p-4 border-t border-secondary/15">
-            {{ $logs->links() }}
-        </div>
-    @endif
-</div>
+    @foreach($logs as $log)
+        <x-table.row :href="route('restaurant.waste.show', $log)">
+            <x-table.cell nowrap>
+                <a href="{{ route('restaurant.waste.show', $log) }}" class="font-mono text-sm font-semibold text-primary hover:underline">{{ $log->reference }}</a>
+                <div class="text-[11px] text-primary/50">{{ $log->occurred_at?->format('d/m/Y H:i') }}</div>
+            </x-table.cell>
+            <x-table.cell>
+                <span class="font-medium text-primary">{{ $log->item?->name ?? 'Article inconnu' }}</span>
+                @if($log->item?->category)
+                    <div class="text-[10px] text-primary/50">{{ $log->item->category->name }}</div>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-medium text-red-600">-{{ rtrim(rtrim(number_format((float) $log->quantity, 3, ',', ' '), '0'), ',') }} {{ $log->item?->unit }}</x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($log->unitCostFcfa(), 2, ',', ' ') }} FCFA</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold text-red-600">{{ $log->formattedTotalCost() }}</x-table.cell>
+            <x-table.cell hide="lg">
+                <span class="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-800">{{ $log->reasonLabel() }}</span>
+                <div class="mt-0.5 text-[10px] text-primary/50">{{ $log->departmentLabel() }}</div>
+            </x-table.cell>
+            <x-table.cell hide="xl" class="text-primary/70">
+                <div>{{ $log->responsible_person ?? 'Non spécifié' }}</div>
+                <div class="text-[10px] text-primary/45">Saisi par {{ $log->recordedBy?->name ?? 'Système' }}</div>
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour la perte '.$log->reference">
+                <x-table.action :href="route('restaurant.waste.show', $log)" icon="eye">Détail</x-table.action>
+                <x-table.action :href="route('restaurant.waste.print', $log)" icon="printer" target="_blank">Imprimer le PV</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection

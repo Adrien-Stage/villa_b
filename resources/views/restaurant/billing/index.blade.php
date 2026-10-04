@@ -91,79 +91,50 @@
     </form>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
-    @if($orders->isEmpty())
-        <div class="py-16 text-center text-primary/35">
-            <i data-lucide="credit-card" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-            <p class="text-sm font-medium">Aucune commande</p>
-            <p class="text-xs mt-1">Les commandes apparaitront ici pour encaissement.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Commande</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Table</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Paiement</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Total</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($orders as $order)
-                        <tr class="hover:bg-accent/10">
-                            <td class="px-4 py-3">
-                                <a href="{{ route('restaurant.billing.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">
-                                    #{{ $order->id }}
-                                </a>
-                                <p class="text-xs text-primary/45 mt-0.5">
-                                    {{ $order->items_count }} item{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}
-                                </p>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-primary/70">
-                                {{ $order->table_number ?? '—' }}
-                                @if($order->booking)
-                                    {{-- Client logé : chambre et séjournant, pour rapprocher la note du folio. --}}
-                                    <p class="text-xs text-primary/45 mt-0.5">
-                                        Ch. {{ $order->booking->room?->number ?? '—' }} · {{ $order->booking->customer?->full_name ?? '—' }}
-                                    </p>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-primary border border-secondary/25">
-                                    {{ \App\Models\RestaurantCustomerOrder::STATUS_LABELS[$order->status] ?? ucfirst($order->status) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $order->payment_status === 'paid' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
-                                    {{ strtoupper($order->payment_status ?? 'unpaid') }}
-                                </span>
-                                @if($order->payment_method)
-                                    <p class="text-[11px] text-primary/45 mt-0.5">{{ str_replace('_', ' ', $order->payment_method) }}</p>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
-                                {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <a href="{{ route('restaurant.billing.show', $order) }}"
-                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+<x-table :rows="$orders" empty="Aucune commande. Elles apparaîtront ici pour encaissement." empty-icon="credit-card" caption="Notes à encaisser">
+    <x-slot:head>
+        <x-table.col>Commande</x-table.col>
+        <x-table.col>Table</x-table.col>
+        <x-table.col hide="xl">Statut</x-table.col>
+        <x-table.col>Paiement</x-table.col>
+        <x-table.col align="right">Total</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        <div class="px-4 py-4 border-t border-secondary/15">
-            {{ $orders->links() }}
-        </div>
-    @endif
-</div>
+    @foreach($orders as $order)
+        <x-table.row :href="route('restaurant.billing.show', $order)">
+            <x-table.cell nowrap>
+                <a href="{{ route('restaurant.billing.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
+                <p class="mt-0.5 text-xs text-primary/45">{{ $order->items_count }} article{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}</p>
+            </x-table.cell>
+            <x-table.cell class="text-primary/70">
+                {{ $order->table_number ?? '—' }}
+                @if($order->booking)
+                    {{-- Client logé : chambre et séjournant, pour rapprocher la note du folio. --}}
+                    <p class="mt-0.5 text-xs text-primary/45">Ch. {{ $order->booking->room?->number ?? '—' }} · {{ $order->booking->customer?->full_name ?? '—' }}</p>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="xl" nowrap>
+                <span class="inline-flex items-center rounded-full border border-secondary/25 bg-white px-2 py-0.5 text-[11px] font-semibold text-primary">{{ \App\Models\RestaurantCustomerOrder::STATUS_LABELS[$order->status] ?? ucfirst($order->status) }}</span>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $order->payment_status === 'paid' ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-red-200 bg-red-50 text-red-700' }}">{{ $order->payment_status === 'paid' ? 'Payée' : 'À encaisser' }}</span>
+                @if($order->payment_method)
+                    <p class="mt-0.5 text-[11px] text-primary/45">{{ str_replace('_', ' ', $order->payment_method) }}</p>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+            <x-table.actions :label="'Actions pour la note #'.$order->id">
+                <x-table.action :href="route('restaurant.billing.show', $order)" icon="{{ $order->payment_status === 'paid' ? 'eye' : 'wallet' }}">{{ $order->payment_status === 'paid' ? 'Ouvrir' : 'Encaisser' }}</x-table.action>
+                @if($order->payment_status === 'paid')
+                    @droit('restaurant.billing.receipt')
+                        <x-table.action :href="route('restaurant.billing.receipt', $order)" icon="printer" target="_blank">Reçu</x-table.action>
+                    @enddroit
+                @endif
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 <script>
 let tableTimer;

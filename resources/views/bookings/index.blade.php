@@ -113,95 +113,69 @@
     </div>
 </div>
 
-{{-- Table --}}
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    @if($bookings->isEmpty())
-        <div class="flex flex-col items-center justify-center py-16 text-primary/30">
-            <i data-lucide="calendar" class="w-10 h-10 mb-3 opacity-40"></i>
-            <p class="text-sm">Aucune réservation trouvée</p>
-        </div>
-    @else
-        {{-- En-tête --}}
-        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">N° Réservation</div>
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Client</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambre</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Période</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Montant</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Statut</div>
-            <div class="col-span-1"></div>
-        </div>
+{{-- Les filtres courants suivent dans l'URL : la fiche ouverte sait alors
+     dans quelle sélection elle se trouve, et ses flèches « précédent /
+     suivant » parcourent cette même sélection. --}}
+@php
+    $statusColors = [
+        'pending'      => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        'confirmed'    => 'bg-blue-50 text-blue-700 border-blue-200',
+        'checked_in'   => 'bg-green-50 text-green-700 border-green-200',
+        'checked_out'  => 'bg-purple-50 text-purple-700 border-purple-200',
+        'completed'    => 'bg-gray-50 text-gray-600 border-gray-200',
+        'cancelled'    => 'bg-red-50 text-red-600 border-red-200',
+        'no_show'      => 'bg-red-50 text-red-600 border-red-200',
+    ];
+@endphp
+<x-table :rows="$bookings" empty="Aucune réservation trouvée." empty-icon="calendar" caption="Réservations">
+    <x-slot:head>
+        <x-table.col>N° réservation</x-table.col>
+        <x-table.col>Client</x-table.col>
+        <x-table.col hide="xl">Chambre</x-table.col>
+        <x-table.col hide="2xl">Période</x-table.col>
+        <x-table.col align="right">Montant</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        @foreach($bookings as $booking)
-            @php
-                $statusColors = [
-                    'pending'      => 'bg-yellow-50 text-yellow-700 border-yellow-200',
-                    'confirmed'    => 'bg-blue-50 text-blue-700 border-blue-200',
-                    'checked_in'   => 'bg-green-50 text-green-700 border-green-200',
-                    'checked_out'  => 'bg-purple-50 text-purple-700 border-purple-200',
-                    'completed'    => 'bg-gray-50 text-gray-600 border-gray-200',
-                    'cancelled'    => 'bg-red-50 text-red-600 border-red-200',
-                    'no_show'      => 'bg-red-50 text-red-600 border-red-200',
-                ];
-                $sc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
-            @endphp
-            {{-- Les filtres courants suivent dans l'URL : la fiche ouverte sait
-                 alors dans quelle sélection elle se trouve, et ses flèches
-                 « précédent / suivant » parcourent cette même sélection. --}}
-            <a href="{{ route('bookings.show', array_merge([$booking], request()->only('tab', 'status', 'search'))) }}"
-               class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center cursor-pointer">
-
-                <div class="col-span-2">
-                    <span class="text-sm font-mono font-medium text-primary">{{ $booking->booking_number }}</span>
-                </div>
-
-                <div class="col-span-3 flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <span class="text-white text-[10px] font-semibold">
-                            {{ strtoupper(substr($booking->customer->first_name, 0, 1) . substr($booking->customer->last_name, 0, 1)) }}
-                        </span>
+    @foreach($bookings as $booking)
+        @php
+            $fiche = route('bookings.show', array_merge([$booking], request()->only('tab', 'status', 'search')));
+            $sc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
+        @endphp
+        <x-table.row :href="$fiche">
+            <x-table.cell nowrap>
+                <a href="{{ $fiche }}" class="font-mono text-sm font-medium text-primary hover:underline">{{ $booking->booking_number }}</a>
+            </x-table.cell>
+            <x-table.cell>
+                <div class="flex min-w-0 items-center gap-2">
+                    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
+                        <span class="text-[10px] font-semibold text-white">{{ strtoupper(substr($booking->customer->first_name, 0, 1) . substr($booking->customer->last_name, 0, 1)) }}</span>
                     </div>
-                    <span class="text-sm text-primary truncate">{{ $booking->customer->full_name }}</span>
+                    <span class="max-w-56 truncate text-sm text-primary">{{ $booking->customer->full_name }}</span>
                 </div>
-
-                <div class="col-span-2">
-                    <p class="text-sm text-primary">Chambre {{ $booking->room->number }}</p>
-                    <p class="text-xs text-primary/40">{{ $booking->room->roomType->name }}</p>
-                </div>
-
-                <div class="col-span-2">
-                    <p class="text-xs text-primary">
-                        {{ $booking->check_in->locale('fr')->isoFormat('D MMM') }}
-                        → {{ $booking->check_out->locale('fr')->isoFormat('D MMM') }}
-                    </p>
-                    <p class="text-xs text-primary/40">{{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }}</p>
-                </div>
-
-                <div class="col-span-1">
-                    <p class="text-xs font-medium text-primary">
-                        {{ number_format($booking->total_amount / 100, 0, ',', ' ') }}
-                    </p>
-                    <p class="text-[10px] text-primary/40">FCFA</p>
-                </div>
-
-                <div class="col-span-1">
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full border {{ $sc }}">
-                        {{ $booking->status->label() }}
-                    </span>
-                </div>
-
-                <div class="col-span-1 flex justify-end">
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-primary/30"></i>
-                </div>
-            </a>
-        @endforeach
-    @endif
-</div>
-
-{{-- Pagination --}}
-@if($bookings->hasPages())
-    <div class="mt-4">{{ $bookings->links() }}</div>
-@endif
+            </x-table.cell>
+            <x-table.cell hide="xl" nowrap>
+                <p class="text-sm text-primary">Chambre {{ $booking->room->number }}</p>
+                <p class="text-xs text-primary/45">{{ $booking->room->roomType->name }}</p>
+            </x-table.cell>
+            <x-table.cell hide="2xl" nowrap>
+                <p class="text-xs text-primary">{{ $booking->check_in->locale('fr')->isoFormat('D MMM') }} → {{ $booking->check_out->locale('fr')->isoFormat('D MMM') }}</p>
+                <p class="text-xs text-primary/45">{{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }}</p>
+            </x-table.cell>
+            <x-table.cell align="right" nowrap>
+                <span class="text-sm font-medium text-primary">{{ number_format($booking->total_amount / 100, 0, ',', ' ') }}</span>
+                <span class="text-[10px] text-primary/45">FCFA</span>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                <span class="rounded-full border px-2 py-0.5 text-xs font-medium {{ $sc }}">{{ $booking->status->label() }}</span>
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour la réservation '.$booking->booking_number">
+                <x-table.action :href="$fiche" icon="eye">Ouvrir</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 <script>
 let searchTimer;

@@ -96,260 +96,177 @@
 @endif
 
 {{-- Les fiches de plats --}}
-<section class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden mb-8">
-    <div class="px-5 py-4 border-b border-secondary/20 bg-gray-50/50 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-primary flex items-center gap-2">
-            <i data-lucide="chef-hat" class="w-4 h-4 text-primary/50"></i>
-            Plats ({{ $dishes->count() }})
+<x-table :rows="$dishes" empty="Aucune fiche technique pour l'instant." empty-icon="book-open" caption="Fiches techniques des plats" class="mb-8">
+    <x-slot:toolbar>
+        <h2 class="flex items-center gap-2 text-sm font-semibold text-primary">
+            <i data-lucide="chef-hat" class="h-4 w-4 text-primary/50" aria-hidden="true"></i>
+            Plats ({{ $dishes->total() }})
         </h2>
-        <span class="text-[11px] text-primary/40">Coût matière, food cost et marge recalculés à chaque achat</span>
-    </div>
+        <span class="text-[11px] text-primary/45">Coût matière, food cost et marge recalculés à chaque achat</span>
+    </x-slot:toolbar>
+    <x-slot:head>
+        <x-table.col>Plat</x-table.col>
+        <x-table.col hide="2xl">Ingrédients</x-table.col>
+        <x-table.col align="right">Coût matière</x-table.col>
+        <x-table.col align="right" hide="xl">Prix de vente</x-table.col>
+        <x-table.col align="right">Food cost</x-table.col>
+        <x-table.col align="right" hide="lg">Marge</x-table.col>
+        <x-table.col align="right" hide="xl">Réalisable</x-table.col>
+        @if($canManage)<x-table.col actions />@endif
+    </x-slot:head>
 
-    @if($dishes->isEmpty())
-        <div class="px-5 py-10 text-center text-primary/40">
-            <i data-lucide="book-open" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
-            <p class="text-sm">Aucune fiche technique pour l'instant.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Plat</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Ingrédients</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Coût matière</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Prix de vente</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Food cost</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Marge</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Réalisable</th>
-                        @if($canManage)
-                            <th class="px-4 py-3"></th>
-                        @endif
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($dishes as $recipe)
-                        @php
-                            $unitCost = $recipe->unitCost();
-                            $foodCost = $recipe->foodCostPercent();
-                            $margin = $recipe->margin();
-                            $portions = $recipe->menuItem ? $stockService->availablePortions($recipe->menuItem) : null;
-                        @endphp
-                        <tr class="{{ $recipe->is_active ? '' : 'opacity-60' }}">
-                            <td class="px-4 py-3">
-                                <p class="text-sm font-semibold text-primary">{{ $recipe->name }}</p>
-                                <p class="text-[11px] text-primary/40 mt-0.5">
-                                    {{ $recipe->menuItem?->name ?? 'Plat supprimé' }}
-                                    @if((float) $recipe->yield_quantity != 1)
-                                        · rendement {{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 2, ',', ' '), '0'), ',') }} portions
-                                    @endif
-                                    @unless($recipe->is_active)
-                                        · <span class="text-red-600 font-medium">fiche inactive, stock non déduit</span>
-                                    @endunless
-                                </p>
-                            </td>
-                            <td class="px-4 py-3 text-xs text-primary/60">
-                                {{ $recipe->lines->count() }} ligne(s)
-                                @if($recipe->lines->isNotEmpty())
-                                    <span class="block text-[11px] text-primary/40 truncate max-w-xs">
-                                        {{ $recipe->lines->take(3)->map(fn ($l) => $l->item?->name)->filter()->implode(', ') }}{{ $recipe->lines->count() > 3 ? '…' : '' }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-primary whitespace-nowrap">
-                                {{ number_format($unitCost / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm text-primary/70 whitespace-nowrap">
-                                {{ $recipe->menuItem ? number_format($recipe->menuItem->price / 100, 0, ',', ' ') . ' FCFA' : '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                @if($foodCost === null)
-                                    <span class="text-xs text-primary/30">—</span>
-                                @else
-                                    {{-- Au-delà de 35 % le plat mange la marge ; au-delà de 45 % il la détruit. --}}
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold
-                                        {{ $foodCost > 45 ? 'bg-red-50 text-red-700 border border-red-200' : ($foodCost > 35 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-green-50 text-green-700 border border-green-200') }}">
-                                        {{ number_format($foodCost, 1, ',', ' ') }} %
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm whitespace-nowrap {{ $margin !== null && $margin < 0 ? 'text-red-600 font-semibold' : 'text-primary' }}">
-                                {{ $margin === null ? '—' : number_format($margin / 100, 0, ',', ' ') . ' FCFA' }}
-                            </td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                @if($portions === null)
-                                    <span class="text-xs text-primary/30">—</span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold
-                                        {{ $portions <= 0 ? 'bg-red-50 text-red-700 border border-red-200' : ($portions < 5 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-gray-100 text-primary/70') }}">
-                                        {{ $portions }} portion(s)
-                                    </span>
-                                @endif
-                            </td>
-                            @if($canManage)
-                                <td class="px-4 py-3">
-                                    <div class="flex justify-end gap-2">
-                                        @php
-                                            // Charge utile préparée ici : un @json avec tableau inline
-                                            // multi-clé casse le parseur Blade selon la version.
-                                            $recipePayload = [
-                                                'id' => $recipe->id,
-                                                'name' => $recipe->name,
-                                                'type' => $recipe->type,
-                                                'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
-                                                'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
-                                                'yield_quantity' => $recipe->yield_quantity,
-                                                'notes' => $recipe->notes,
-                                                'is_active' => $recipe->is_active,
-                                                'lines' => $recipe->lines->map(fn ($l) => [
-                                                    'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
-                                                    'quantity' => (float) $l->quantity,
-                                                    'waste_percent' => (float) $l->waste_percent,
-                                                    'notes' => $l->notes,
-                                                ])->values(),
-                                            ];
-                                        @endphp
-                                        <button type="button" onclick="openRecipeEditor(@json($recipePayload))"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                        <form method="POST" action="{{ route('restaurant.recipes.destroy', $recipe) }}"
-                                            onsubmit="return confirm('Supprimer la fiche « {{ $recipe->name }} » ? Le plat ne décrémentera plus le stock.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            @endif
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4">{{ $dishes->links() }}</div>
-    @endif
-</section>
+    @foreach($dishes as $recipe)
+        @php
+            $unitCost = $recipe->unitCost();
+            $foodCost = $recipe->foodCostPercent();
+            $margin = $recipe->margin();
+            $portions = $recipe->menuItem ? $stockService->availablePortions($recipe->menuItem) : null;
+        @endphp
+        <x-table.row :muted="! $recipe->is_active">
+            <x-table.cell>
+                <p class="text-sm font-semibold text-primary">{{ $recipe->name }}</p>
+                <p class="mt-0.5 text-[11px] text-primary/45">
+                    {{ $recipe->menuItem?->name ?? 'Plat supprimé' }}
+                    @if((float) $recipe->yield_quantity != 1)
+                        · rendement {{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 2, ',', ' '), '0'), ',') }} portions
+                    @endif
+                    @unless($recipe->is_active)
+                        · <span class="font-medium text-red-600">fiche inactive, stock non déduit</span>
+                    @endunless
+                </p>
+            </x-table.cell>
+            <x-table.cell hide="2xl" class="text-xs text-primary/60">
+                {{ $recipe->lines->count() }} ligne(s)
+                @if($recipe->lines->isNotEmpty())
+                    <span class="block max-w-xs truncate text-[11px] text-primary/45">{{ $recipe->lines->take(3)->map(fn ($l) => $l->item?->name)->filter()->implode(', ') }}{{ $recipe->lines->count() > 3 ? '…' : '' }}</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($unitCost / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+            <x-table.cell align="right" hide="xl" nowrap class="text-primary/70">{{ $recipe->menuItem ? number_format($recipe->menuItem->price / 100, 0, ',', ' ') . ' FCFA' : '—' }}</x-table.cell>
+            <x-table.cell align="right" nowrap>
+                @if($foodCost === null)
+                    <span class="text-xs text-primary/30">—</span>
+                @else
+                    {{-- Au-delà de 35 % le plat mange la marge ; au-delà de 45 % il la détruit. --}}
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $foodCost > 45 ? 'border border-red-200 bg-red-50 text-red-700' : ($foodCost > 35 ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-green-200 bg-green-50 text-green-700') }}">{{ number_format($foodCost, 1, ',', ' ') }} %</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" hide="lg" nowrap class="{{ $margin !== null && $margin < 0 ? 'font-semibold text-red-600' : '' }}">{{ $margin === null ? '—' : number_format($margin / 100, 0, ',', ' ') . ' FCFA' }}</x-table.cell>
+            <x-table.cell align="right" hide="xl" nowrap>
+                @if($portions === null)
+                    <span class="text-xs text-primary/30">—</span>
+                @else
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $portions <= 0 ? 'border border-red-200 bg-red-50 text-red-700' : ($portions < 5 ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'bg-gray-100 text-primary/70') }}">{{ $portions }} portion(s)</span>
+                @endif
+            </x-table.cell>
+            @if($canManage)
+                @php
+                    // Charge utile de l'éditeur, encodée pour un attribut HTML.
+                    $ouvrirEditeur = 'openRecipeEditor('.json_encode([
+                        'id' => $recipe->id,
+                        'name' => $recipe->name,
+                        'type' => $recipe->type,
+                        'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
+                        'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
+                        'yield_quantity' => $recipe->yield_quantity,
+                        'notes' => $recipe->notes,
+                        'is_active' => $recipe->is_active,
+                        'lines' => $recipe->lines->map(fn ($l) => [
+                            'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
+                            'quantity' => (float) $l->quantity,
+                            'waste_percent' => (float) $l->waste_percent,
+                            'notes' => $l->notes,
+                        ])->values(),
+                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT).')';
+                @endphp
+                <x-table.actions :label="'Actions pour la fiche '.$recipe->name">
+                    <x-table.action icon="pencil" :onclick="$ouvrirEditeur">Modifier</x-table.action>
+                    <x-table.action :action="route('restaurant.recipes.destroy', $recipe)" method="DELETE" icon="trash-2" tone="danger"
+                        :confirm="'Supprimer la fiche « '.$recipe->name.' » ? Le plat ne décrémentera plus le stock.'">Supprimer</x-table.action>
+                </x-table.actions>
+            @endif
+        </x-table.row>
+    @endforeach
+</x-table>
 
 {{-- Les préparations de base --}}
-<section class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
-    <div class="px-5 py-4 border-b border-secondary/20 bg-gray-50/50">
-        <h2 class="text-sm font-semibold text-primary flex items-center gap-2">
-            <i data-lucide="cooking-pot" class="w-4 h-4 text-primary/50"></i>
-            Préparations de base ({{ $preparations->count() }})
-        </h2>
-        <p class="text-[11px] text-primary/40 mt-1">
-            Une sauce ou un fond préparé en batch. On le produit une fois, il entre en stock à son coût de revient,
-            et les plats le consomment comme un ingrédient ordinaire.
-        </p>
-    </div>
+<x-table :rows="$preparations" empty="Aucune préparation de base." empty-icon="cooking-pot" caption="Préparations de base">
+    <x-slot:toolbar>
+        <div>
+            <h2 class="flex items-center gap-2 text-sm font-semibold text-primary">
+                <i data-lucide="cooking-pot" class="h-4 w-4 text-primary/50" aria-hidden="true"></i>
+                Préparations de base ({{ $preparations->total() }})
+            </h2>
+            <p class="mt-1 text-[11px] text-primary/45">
+                Une sauce ou un fond préparé en batch. On le produit une fois, il entre en stock à son coût de revient,
+                et les plats le consomment comme un ingrédient ordinaire.
+                @if($canManage && $preparations->isEmpty()) Créez d'abord un article « fabriqué » dans le garde-manger, puis sa fiche ici. @endif
+            </p>
+        </div>
+    </x-slot:toolbar>
+    <x-slot:head>
+        <x-table.col>Préparation</x-table.col>
+        <x-table.col hide="xl">Rendement</x-table.col>
+        <x-table.col align="right" hide="2xl">Coût du batch</x-table.col>
+        <x-table.col align="right">Coût unitaire</x-table.col>
+        <x-table.col align="right" hide="lg">Stock</x-table.col>
+        @if($canManage)
+            <x-table.col>Produire</x-table.col>
+            <x-table.col actions />
+        @endif
+    </x-slot:head>
 
-    @if($preparations->isEmpty())
-        <div class="px-5 py-10 text-center text-primary/40">
-            <i data-lucide="cooking-pot" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
-            <p class="text-sm">Aucune préparation de base.</p>
+    @foreach($preparations as $recipe)
+        @php $produced = $recipe->producedItem; @endphp
+        <x-table.row :muted="! $recipe->is_active">
+            <x-table.cell>
+                <p class="text-sm font-semibold text-primary">{{ $recipe->name }}</p>
+                <p class="mt-0.5 text-[11px] text-primary/45">{{ $recipe->lines->count() }} ingrédient(s) → {{ $produced?->name ?? 'article supprimé' }}</p>
+            </x-table.cell>
+            <x-table.cell hide="xl" nowrap class="text-xs text-primary/60">{{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ' '), '0'), ',') }} {{ $produced?->unit }}</x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($recipe->totalCost() / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($recipe->unitCost() / 100, 2, ',', ' ') }} FCFA / {{ $produced?->unit }}</x-table.cell>
+            <x-table.cell align="right" hide="lg" nowrap class="{{ $produced && $produced->isLowStock() ? 'font-semibold text-red-600' : 'text-primary/70' }}">{{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') . ' ' . $produced->unit : '—' }}</x-table.cell>
             @if($canManage)
-                <p class="text-xs mt-1">
-                    Créez d'abord un article « fabriqué » dans le garde-manger, puis sa fiche ici.
-                </p>
+                <x-table.cell nowrap>
+                    <form method="POST" action="{{ route('restaurant.recipes.produce', $recipe) }}" class="flex items-center gap-1">
+                        @csrf
+                        <label class="sr-only" for="batches-{{ $recipe->id }}">Nombre de batchs à produire</label>
+                        <input id="batches-{{ $recipe->id }}" type="number" name="batches" value="1" min="0.1" step="0.1"
+                            class="w-16 rounded-lg border border-secondary/30 px-2 py-1 text-xs text-primary outline-none focus:border-secondary">
+                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-surface-dark">
+                            <i data-lucide="cooking-pot" class="h-3.5 w-3.5" aria-hidden="true"></i> Produire
+                        </button>
+                    </form>
+                </x-table.cell>
+                @php
+                    // Charge utile de l'éditeur, encodée pour un attribut HTML.
+                    $ouvrirEditeur = 'openRecipeEditor('.json_encode([
+                        'id' => $recipe->id,
+                        'name' => $recipe->name,
+                        'type' => $recipe->type,
+                        'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
+                        'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
+                        'yield_quantity' => $recipe->yield_quantity,
+                        'notes' => $recipe->notes,
+                        'is_active' => $recipe->is_active,
+                        'lines' => $recipe->lines->map(fn ($l) => [
+                            'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
+                            'quantity' => (float) $l->quantity,
+                            'waste_percent' => (float) $l->waste_percent,
+                            'notes' => $l->notes,
+                        ])->values(),
+                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT).')';
+                @endphp
+                <x-table.actions :label="'Actions pour la préparation '.$recipe->name">
+                    <x-table.action icon="pencil" :onclick="$ouvrirEditeur">Modifier</x-table.action>
+                    <x-table.action :action="route('restaurant.recipes.destroy', $recipe)" method="DELETE" icon="trash-2" tone="danger"
+                        :confirm="'Supprimer la fiche « '.$recipe->name.' » ?'">Supprimer</x-table.action>
+                </x-table.actions>
             @endif
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Préparation</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Rendement</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Coût du batch</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Coût unitaire</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Stock</th>
-                        @if($canManage)
-                            <th class="px-4 py-3"></th>
-                        @endif
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($preparations as $recipe)
-                        @php $produced = $recipe->producedItem; @endphp
-                        <tr class="{{ $recipe->is_active ? '' : 'opacity-60' }}">
-                            <td class="px-4 py-3">
-                                <p class="text-sm font-semibold text-primary">{{ $recipe->name }}</p>
-                                <p class="text-[11px] text-primary/40 mt-0.5">
-                                    {{ $recipe->lines->count() }} ingrédient(s) → {{ $produced?->name ?? 'article supprimé' }}
-                                </p>
-                            </td>
-                            <td class="px-4 py-3 text-xs text-primary/60 whitespace-nowrap">
-                                {{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ' '), '0'), ',') }} {{ $produced?->unit }}
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm text-primary/70 whitespace-nowrap">
-                                {{ number_format($recipe->totalCost() / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-primary whitespace-nowrap">
-                                {{ number_format($recipe->unitCost() / 100, 2, ',', ' ') }} FCFA / {{ $produced?->unit }}
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm whitespace-nowrap {{ $produced && $produced->isLowStock() ? 'text-red-600 font-semibold' : 'text-primary/70' }}">
-                                {{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') . ' ' . $produced->unit : '—' }}
-                            </td>
-                            @if($canManage)
-                                <td class="px-4 py-3">
-                                    <div class="flex justify-end gap-2">
-                                        <form method="POST" action="{{ route('restaurant.recipes.produce', $recipe) }}" class="flex items-center gap-1">
-                                            @csrf
-                                            <input type="number" name="batches" value="1" min="0.1" step="0.1"
-                                                class="w-16 px-2 py-1 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary"
-                                                title="Nombre de batchs à produire">
-                                            <button type="submit"
-                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-surface-dark transition-colors">
-                                                <i data-lucide="cooking-pot" class="w-3.5 h-3.5"></i>
-                                                Produire
-                                            </button>
-                                        </form>
-                                        @php
-                                            $recipePayload = [
-                                                'id' => $recipe->id,
-                                                'name' => $recipe->name,
-                                                'type' => $recipe->type,
-                                                'restaurant_menu_item_id' => $recipe->restaurant_menu_item_id,
-                                                'produces_pantry_item_id' => $recipe->produces_pantry_item_id,
-                                                'yield_quantity' => $recipe->yield_quantity,
-                                                'notes' => $recipe->notes,
-                                                'is_active' => $recipe->is_active,
-                                                'lines' => $recipe->lines->map(fn ($l) => [
-                                                    'restaurant_pantry_item_id' => $l->restaurant_pantry_item_id,
-                                                    'quantity' => (float) $l->quantity,
-                                                    'waste_percent' => (float) $l->waste_percent,
-                                                    'notes' => $l->notes,
-                                                ])->values(),
-                                            ];
-                                        @endphp
-                                        <button type="button" onclick="openRecipeEditor(@json($recipePayload))"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                        <form method="POST" action="{{ route('restaurant.recipes.destroy', $recipe) }}"
-                                            onsubmit="return confirm('Supprimer la fiche « {{ $recipe->name }} » ?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            @endif
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4">{{ $preparations->links() }}</div>
-    @endif
-</section>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 @if($canManage)
     {{-- Éditeur de fiche : le coût se calcule pendant la saisie --}}
