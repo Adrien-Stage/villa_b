@@ -29,7 +29,7 @@
                         @foreach($caisses as $caisse)
                             @php $tenue = $tenues[$caisse->id] ?? null; @endphp
                             <label class="flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm {{ $tenue ? 'border-secondary/20 bg-accent/10 text-primary/40' : 'border-secondary/30 text-primary' }}">
-                                <input type="radio" name="point_of_sale_id" value="{{ $caisse->id }}" @disabled($tenue) @checked(old('point_of_sale_id') == $caisse->id) class="mt-0.5">
+                                <input type="radio" name="point_of_sale_id" value="{{ $caisse->id }}" @disabled($tenue) @checked(old('point_of_sale_id', $courant?->id) == $caisse->id) class="mt-0.5">
                                 <span>
                                     <span class="font-semibold">{{ $caisse->name }}</span>
                                     @if($tenue)

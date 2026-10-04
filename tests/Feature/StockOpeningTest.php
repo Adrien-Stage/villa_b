@@ -114,7 +114,6 @@ test('l’écran des à-nouveaux affiche le stock repris', function () {
     FiscalYear::openYear(2026);
 
     $comptable = User::factory()->create(['role' => 'accountant']);
-    $comptable->roles()->attach(\App\Models\Role::where('slug', 'accountant')->value('id'), ['level' => 'write']);
 
     $this->actingAs($comptable)->get(route('accounting.ledger.opening'))
         ->assertOk()

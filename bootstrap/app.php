@@ -49,7 +49,6 @@ return Application::configure(basePath: dirname(__DIR__))
             // Garde par droit module.action, résolu depuis le nom de la route.
             'permission' => \App\Http\Middleware\EnsurePermission::class,
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
-            'module.access' => \App\Http\Middleware\EnsureModuleWriteAccess::class,
             'caisse' => \App\Http\Middleware\EnsureCashRegisterOpen::class,
             'reporting.token' => \App\Http\Middleware\ValidateReportingToken::class,
             'orchestration.token' => \App\Http\Middleware\ValidateOrchestrationToken::class,

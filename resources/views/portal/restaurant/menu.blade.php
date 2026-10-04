@@ -24,6 +24,9 @@
         <!-- Logo -->
         <div class="flex flex-col">
             <h1 class="font-serif text-2xl md:text-3xl tracking-wide uppercase text-brand-dark">{{ $tenant->name }}</h1>
+            @if($plusieurs && $restaurant)
+                <p class="mt-1 text-sm tracking-wide uppercase text-brand-dark/60">{{ $restaurant->name }}</p>
+            @endif
             <span class="text-[10px] tracking-[0.25em] uppercase text-gray-500 mt-1">Restaurant</span>
             @if($tableNumber)
                 <p class="text-xs text-brand-dark/70 mt-1">Table {{ $tableNumber }}</p>
@@ -218,6 +221,9 @@
 
             <form id="order-form" method="POST" action="{{ route('portal.restaurant.store', ['tenant' => $tenant->slug]) }}" class="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
                 @csrf
+                @if($plusieurs && $restaurant)
+                    <input type="hidden" name="restaurant" value="{{ $restaurant->slug }}">
+                @endif
                 <input type="hidden" name="customer_name" id="customer-name-hidden">
                 <input type="hidden" name="customer_phone" id="customer-phone-hidden">
                 <input type="hidden" name="notes" id="order-notes-hidden">

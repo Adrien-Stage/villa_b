@@ -208,7 +208,12 @@ class StockRequisitionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'department']);
 
-        return view('economat.requisitions.create', compact('items', 'departments', 'stores'));
+        // Restaurants dont la personne peut alimenter le garde-manger.
+        $contexte = app(\App\Services\RestaurantContext::class);
+        $restaurants = $contexte->accessibles(Auth::user());
+        $restaurantParDefaut = $contexte->pourCreation(Auth::user());
+
+        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -220,6 +225,7 @@ class StockRequisitionController extends Controller
             'service_store_id' => ['nullable', \Illuminate\Validation\Rule::exists('service_stores', 'id')
                 ->where('is_active', true)
                 ->where('department', $request->input('department'))],
+            'point_of_sale_id' => ['nullable', 'integer'],
             'purpose'     => ['nullable', 'string', 'max:500'],
             'lines'       => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
@@ -229,13 +235,28 @@ class StockRequisitionController extends Controller
             'service_store_id.exists' => "Ce dépôt n'appartient pas au service émetteur.",
         ]);
 
-        $requisition = DB::transaction(function () use ($validated) {
+        // Une livraison au restaurant désigne la cuisine qui la reçoit : un
+        // restaurant que la personne peut voir.
+        $restaurant = null;
+        if ($validated['department'] === 'restaurant' && empty($validated['service_store_id'])) {
+            $contexte = app(\App\Services\RestaurantContext::class);
+            $restaurant = isset($validated['point_of_sale_id'])
+                ? $contexte->accessibles(Auth::user())->firstWhere('id', (int) $validated['point_of_sale_id'])
+                : $contexte->pourCreation(Auth::user());
+
+            if (! $restaurant) {
+                return back()->withInput()->withErrors(['point_of_sale_id' => "Ce restaurant n'existe pas ou ne vous est pas accessible."]);
+            }
+        }
+
+        $requisition = DB::transaction(function () use ($validated, $restaurant) {
             $user = Auth::user();
             $signature = $user ? $user->signatureName() : null;
 
             $requisition = StockRequisition::create([
                 'department'          => $validated['department'],
                 'service_store_id'    => $validated['service_store_id'] ?? null,
+                'point_of_sale_id'    => $restaurant?->id,
                 'purpose'             => $validated['purpose'] ?? null,
                 'requested_by'        => Auth::id(),
                 'requester_signature' => $signature,

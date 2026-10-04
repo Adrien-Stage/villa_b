@@ -10,6 +10,7 @@ use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantRecipeLine;
+use App\Services\RestaurantContext;
 use App\Services\RestaurantRecipeWorkbook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,6 @@ class RestaurantCsvController extends Controller
         'notes_fiche', 'ingredient', 'quantite', 'perte_pct', 'notes_ingredient',
     ];
 
-    private const MENU_TYPES   = ['food', 'drink', 'other'];
     private const PANTRY_UNITS = ['pcs', 'kg', 'g', 'l', 'ml'];
 
     // Repas acceptés à l'import : libellés FR et clés techniques → clé stockée.
@@ -56,7 +56,7 @@ class RestaurantCsvController extends Controller
             ]);
         }
 
-        $rows = RestaurantMenuItem::with('category')->orderBy('name')->get()
+        $rows = RestaurantMenuItem::visiblesPour(Auth::user())->with('category')->orderBy('name')->get()
             ->map(fn (RestaurantMenuItem $m) => [
                 $m->category?->name,
                 $m->name,
@@ -80,8 +80,12 @@ class RestaurantCsvController extends Controller
             return back()->with('error', $parseError);
         }
 
-        $categoriesByName = RestaurantMenuCategory::all()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
-        $existingNames    = RestaurantMenuItem::pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
+        // On importe la carte d'un restaurant : celui qui est choisi.
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+        $types = RestaurantMenuController::typesPour($restaurant);
+
+        $categoriesByName = RestaurantMenuCategory::duRestaurant($restaurant)->get()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
+        $existingNames    = RestaurantMenuItem::duRestaurant($restaurant)->pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
 
         $created = 0;
         $skipped = 0;
@@ -101,8 +105,8 @@ class RestaurantCsvController extends Controller
             }
 
             $type = mb_strtolower(trim((string) ($row['type'] ?? '')));
-            if (!in_array($type, self::MENU_TYPES, true)) {
-                $errors[] = "Ligne {$line} : type « {$row['type']} » invalide (valeurs : " . implode(', ', self::MENU_TYPES) . ').';
+            if (!in_array($type, $types, true)) {
+                $errors[] = "Ligne {$line} : type « {$row['type']} » invalide (valeurs : " . implode(', ', $types) . ').';
                 continue;
             }
 
@@ -124,6 +128,7 @@ class RestaurantCsvController extends Controller
             }
 
             RestaurantMenuItem::create([
+                'point_of_sale_id' => $restaurant->id,
                 'restaurant_menu_category_id' => $categoryId,
                 'name'          => $name,
                 'description'   => trim((string) ($row['description'] ?? '')) ?: null,
@@ -154,7 +159,7 @@ class RestaurantCsvController extends Controller
             ]);
         }
 
-        $rows = RestaurantPantryItem::with('category')->orderBy('name')->get()
+        $rows = RestaurantPantryItem::visiblesPour(Auth::user())->with('category')->orderBy('name')->get()
             ->map(fn (RestaurantPantryItem $it) => [
                 $it->category?->name,
                 $it->name,
@@ -179,8 +184,11 @@ class RestaurantCsvController extends Controller
             return back()->with('error', $parseError);
         }
 
+        // On importe le garde-manger d'un restaurant : celui qui est choisi.
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+
         $categoriesByName = RestaurantPantryCategory::all()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
-        $existingNames    = RestaurantPantryItem::pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
+        $existingNames    = RestaurantPantryItem::duRestaurant($restaurant)->pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
 
         $created = 0;
         $skipped = 0;
@@ -225,6 +233,7 @@ class RestaurantCsvController extends Controller
 
             $conversion = $row['conversion_achat'] ?? '';
             RestaurantPantryItem::create([
+                'point_of_sale_id' => $restaurant->id,
                 'restaurant_pantry_category_id' => $categoryId,
                 'name'                => $name,
                 'unit'                => $unit,
@@ -275,7 +284,7 @@ class RestaurantCsvController extends Controller
 
         // « lines.item.recipe » : une ligne qui pointe une préparation doit
         // pouvoir renvoyer vers l'onglet qui la fabrique.
-        $recipes = RestaurantRecipe::with([
+        $recipes = RestaurantRecipe::visiblesPour(Auth::user())->with([
                 'lines.item.category', 'lines.item.recipe',
                 'menuItem.category', 'producedItem',
             ])
@@ -332,7 +341,7 @@ class RestaurantCsvController extends Controller
      */
     private function exportRecipesXlsx($recipes, ?\App\Models\Tenant $tenant, string $nom)
     {
-        $pantry = RestaurantPantryItem::with('category')
+        $pantry = RestaurantPantryItem::visiblesPour(Auth::user())->with('category')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -373,8 +382,11 @@ class RestaurantCsvController extends Controller
             return back()->with('error', $parseError);
         }
 
-        $menuItemsByName   = RestaurantMenuItem::all()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
-        $pantryItemsByName = RestaurantPantryItem::all()->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
+        // On importe les fiches d'un restaurant : celui qui est choisi.
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+
+        $menuItemsByName   = RestaurantMenuItem::duRestaurant($restaurant)->get()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
+        $pantryItemsByName = RestaurantPantryItem::duRestaurant($restaurant)->get()->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
 
         $recipesByName = [];
         $created = 0;
@@ -423,6 +435,7 @@ class RestaurantCsvController extends Controller
                     $producedItem = $pantryItemsByName->get(mb_strtolower($prepItemName));
                     if (!$producedItem) {
                         $producedItem = RestaurantPantryItem::create([
+                            'point_of_sale_id' => $restaurant->id,
                             'name'        => $prepItemName,
                             'unit'        => 'g',
                             'is_prepared' => true,
@@ -439,7 +452,7 @@ class RestaurantCsvController extends Controller
             $notesFiche = trim((string) ($row['notes_fiche'] ?? '')) ?: null;
 
             // Création ou mise à jour de la fiche technique (par son nom)
-            $recipe = RestaurantRecipe::where('name', $recipeName)->first();
+            $recipe = RestaurantRecipe::duRestaurant($restaurant)->where('name', $recipeName)->first();
             if ($recipe) {
                 $recipe->update([
                     'type'                    => $type,
@@ -450,6 +463,7 @@ class RestaurantCsvController extends Controller
                 ]);
             } else {
                 $recipe = RestaurantRecipe::create([
+                    'point_of_sale_id'        => $restaurant->id,
                     'name'                    => $recipeName,
                     'type'                    => $type,
                     'restaurant_menu_item_id' => $menuItemId,

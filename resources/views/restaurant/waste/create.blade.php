@@ -43,7 +43,7 @@
                         data-stock="{{ (float) $item->current_stock }}"
                         data-cost="{{ (float) $item->average_cost / 100 }}"
                         @selected(old('restaurant_pantry_item_id') == $item->id)>
-                        {{ $item->name }} (Stock actuel: {{ rtrim(rtrim(number_format((float) $item->current_stock, 3, ',', ' '), '0'), ',') }} {{ $item->unit }} — Coût moy: {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA/{{ $item->unit }})
+                        @if(app(\App\Services\RestaurantContext::class)->vueEnsemble(auth()->user()) && $item->pointOfSale){{ $item->pointOfSale->name }} — @endif{{ $item->name }} (Stock actuel: {{ rtrim(rtrim(number_format((float) $item->current_stock, 3, ',', ' '), '0'), ',') }} {{ $item->unit }} — Coût moy: {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA/{{ $item->unit }})
                     </option>
                 @endforeach
             </select>

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\RestaurantOrderReady;
 use App\Notifications\RestaurantOrderSentToKitchen;
 use App\Services\RestaurantAssignmentService;
+use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -39,7 +40,14 @@ class RestaurantOrderController extends Controller
 
     public function index(Request $request): View
     {
+        $user = Auth::user();
+        $contexte = app(RestaurantContext::class);
+        // La prise de commande se fait dans un restaurant précis : celui où
+        // l'on travaille, ou le premier de ceux qu'on voit.
+        $saisie = $contexte->pourCreation($user);
+
         $query = RestaurantCustomerOrder::query()
+            ->visiblesPour($user)
             ->withCount('items')
             ->with('assignedServer:id,name')
             ->orderByDesc('id');
@@ -61,18 +69,19 @@ class RestaurantOrderController extends Controller
         $orders = $query->paginate(15)->withQueryString();
 
         $categories = RestaurantMenuCategory::query()
+            ->duRestaurant($saisie)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
         $menuItems = RestaurantMenuItem::query()
+            ->duRestaurant($saisie)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
-        $user = Auth::user();
         $droits = app(\App\Services\PermissionResolver::class);
         $canManage = $droits->allows($user, 'restaurant.orders.creer');
 
@@ -83,9 +92,10 @@ class RestaurantOrderController extends Controller
             'canManage' => $canManage,
             'isServer' => $droits->allows($user, 'restaurant.orders.served'),
             'onDuty' => $user->isOnRestaurantDuty(),
-            'onDutyServers' => $this->assignment->onDutyServers(),
+            'onDutyServers' => $this->assignment->onDutyServers($saisie),
             'categories' => $categories,
             'menuItems' => $menuItems,
+            'restaurantSaisie' => $saisie,
         ]);
     }
 
@@ -105,7 +115,7 @@ class RestaurantOrderController extends Controller
             'isChief' => $droits->allows($user, 'restaurant.orders.reassign'),
             'isServer' => $droits->allows($user, 'restaurant.orders.served'),
             'isCook' => $droits->allows($user, 'restaurant.orders.ready'),
-            'onDutyServers' => $this->assignment->onDutyServers(),
+            'onDutyServers' => $this->assignment->onDutyServers($order->point_of_sale_id),
         ]);
     }
 
@@ -150,11 +160,20 @@ class RestaurantOrderController extends Controller
             return back()->withErrors(['items' => 'Certains articles ne sont plus disponibles.'])->withInput();
         }
 
+        // Une commande se passe dans un restaurant, sur sa carte : chaque
+        // restaurant a la sienne, et ce n'est pas au serveur d'un autre de
+        // la prendre.
+        $restaurants = $menuItems->pluck('point_of_sale_id')->unique()->values();
+        if ($restaurants->count() !== 1 || ! app(RestaurantContext::class)->peutVoir(Auth::user(), (int) $restaurants->first())) {
+            return back()->withErrors(['items' => 'Une commande ne prend que des articles de la carte de votre restaurant.'])->withInput();
+        }
+        $restaurant = (int) $restaurants->first();
+
         $orderType = $validated['order_type'] ?? RestaurantCustomerOrder::ORDER_TYPE_STANDARD;
         $isComplimentary = !empty($validated['is_complimentary'])
             || in_array($orderType, [RestaurantCustomerOrder::ORDER_TYPE_COMPLIMENTARY, RestaurantCustomerOrder::ORDER_TYPE_STAFF_MEAL], true);
 
-        $order = DB::transaction(function () use ($validated, $lines, $menuItems, $orderType, $isComplimentary) {
+        $order = DB::transaction(function () use ($validated, $lines, $menuItems, $orderType, $isComplimentary, $restaurant) {
             $total = 0;
             if (!$isComplimentary) {
                 foreach ($lines as $menuItemId => $qty) {
@@ -166,6 +185,7 @@ class RestaurantOrderController extends Controller
             // dans le même geste : elle est donc directement affectée à lui et déjà
             // « en cuisine ».
             $order = RestaurantCustomerOrder::create([
+                'point_of_sale_id' => $restaurant,
                 'source' => 'staff',
                 'created_by' => Auth::id(),
                 'assigned_server_id' => Auth::id(),
@@ -281,6 +301,14 @@ class RestaurantOrderController extends Controller
             ],
         ]);
 
+        // Un serveur ne prend que les tables de son restaurant.
+        $dansLEquipe = app(RestaurantContext::class)
+            ->equipe(User::query()->whereKey((int) $validated['assigned_server_id']), $order->point_of_sale_id)
+            ->exists();
+        if (! $dansLEquipe) {
+            return back()->withErrors(['assigned_server_id' => "Ce serveur n'est pas affecté au restaurant de la commande."]);
+        }
+
         $order->update([
             'assigned_server_id' => (int) $validated['assigned_server_id'],
             'assigned_at' => now(),
@@ -384,10 +412,11 @@ class RestaurantOrderController extends Controller
      */
     private function notifyKitchen(RestaurantCustomerOrder $order): void
     {
-        $cooks = User::query()
-            ->havingRole(['restaurant_cook', 'restaurant_chief'])
-            ->active()
-            ->get();
+        // La cuisine du restaurant de la commande, pas celle de l'autre.
+        $cooks = app(RestaurantContext::class)->equipe(
+            User::query()->havingRole(['restaurant_cook', 'restaurant_chief'])->active(),
+            $order->point_of_sale_id
+        )->get();
 
         if ($cooks->isEmpty()) {
             return;

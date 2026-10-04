@@ -25,6 +25,12 @@
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between"><dt class="text-primary/70">Fond de caisse</dt><dd>{{ $fcfa($session->opening_amount) }}</dd></div>
                     <div class="flex justify-between text-green-700"><dt>+ Notes encaissées en espèces</dt><dd>{{ $fcfa($especes) }}</dd></div>
+                    @if($especesBuffet > 0)
+                        <div class="flex justify-between text-green-700"><dt>+ Entrées au buffet en espèces</dt><dd>{{ $fcfa($especesBuffet) }}</dd></div>
+                    @endif
+                    @if($especesBanquets > 0)
+                        <div class="flex justify-between text-green-700"><dt>+ Règlements de banquets en espèces</dt><dd>{{ $fcfa($especesBanquets) }}</dd></div>
+                    @endif
                     <div class="flex justify-between text-red-600"><dt>− Sorties de caisse</dt><dd>{{ $fcfa($decaissements->sum('amount')) }}</dd></div>
                     <div class="flex justify-between border-t border-secondary/15 pt-2 font-semibold text-primary"><dt>Solde théorique</dt><dd>{{ $fcfa($theorique) }}</dd></div>
                 </dl>

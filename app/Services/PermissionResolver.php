@@ -15,12 +15,10 @@ use Illuminate\Support\Facades\Schema;
  *
  * Dans cet ordre :
  *
- *   1. une restriction de module posée sur la personne par la console —
- *      exclusion du module, ou lecture seule ;
- *   2. un refus explicite, sur la personne ou sur l'un de ses rôles ;
- *   3. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
- *   4. le catalogue, qui donne le gabarit par défaut ;
- *   5. pour l'administrateur, une intervention en cours, qui lui ouvre
+ *   1. un refus explicite, sur la personne ou sur l'un de ses rôles ;
+ *   2. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
+ *   3. le catalogue, qui donne le gabarit par défaut ;
+ *   4. pour l'administrateur, une intervention en cours, qui lui ouvre
  *      l'écriture dans les services qu'elle couvre.
  *
  * Un rôle affecté en lecture seule ne donne que ses droits de consultation,
@@ -50,14 +48,6 @@ class PermissionResolver
         }
 
         $lecture = PermissionCatalog::estLecture($permission);
-
-        // Une restriction posée sur la personne pour tout un module l'emporte
-        // sur ses rôles comme sur une autorisation : c'est un refus nominatif.
-        $restriction = $this->restrictionDeModule($user, $permission);
-
-        if ($restriction === 'none' || ($restriction === 'read' && !$lecture)) {
-            return false;
-        }
 
         $surcharge = $this->surchargesPour($user)[$permission] ?? null;
 
@@ -218,12 +208,8 @@ class PermissionResolver
     }
 
     /**
-     * Rôles que la personne exerce en écriture.
-     *
-     * Une affectation en lecture seule ne compte pas. La colonne héritée
-     * users.role ne compte que pour un compte sans affectation : ailleurs,
-     * elle doublerait un rôle que l'affectation tient peut-être en lecture
-     * seule, et la contournerait.
+     * Rôles que la personne exerce en écriture : une affectation en lecture
+     * seule ne compte pas.
      *
      * @return list<string>
      */
@@ -231,32 +217,11 @@ class PermissionResolver
     {
         $affectations = $user->relationLoaded('roles') ? $user->roles : $user->roles()->get();
 
-        if ($affectations->isEmpty()) {
-            return $user->role ? [$user->role] : [];
-        }
-
         return $affectations
             ->filter(static fn ($role) => ($role->pivot->level ?? null) !== 'read')
             ->pluck('slug')
             ->values()
             ->all();
-    }
-
-    /**
-     * Restriction posée sur la personne, depuis la console, pour le service
-     * dont relève ce droit : « none » (exclue) ou « read » (lecture seule).
-     */
-    private function restrictionDeModule(User $user, string $permission): ?string
-    {
-        $service = PermissionCatalog::serviceDu($permission);
-
-        if ($service === null) {
-            return null;
-        }
-
-        $niveau = $user->explicitModulePermission($service);
-
-        return in_array($niveau, ['none', 'read'], true) ? $niveau : null;
     }
 
     /** @return list<string> rôles détenus (voir User::rolesDetenus()) */

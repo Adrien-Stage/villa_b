@@ -101,7 +101,6 @@ Deux middlewares les font respecter :
 | Middleware | Alias | Rôle |
 |---|---|---|
 | [`EnsureModuleEnabled`](../app/Http/Middleware/EnsureModuleEnabled.php) | `module:restaurant` | Bloque l'accès par URL à un module désactivé — pas seulement le lien dans le menu |
-| [`EnsureModuleWriteAccess`](../app/Http/Middleware/EnsureModuleWriteAccess.php) | `module.access:restaurant` | Distingue lecture et écriture selon le niveau de l'utilisateur |
 
 > Masquer un lien dans la barre latérale ne protège rien. `module:` existe pour que
 > l'accès direct à `/restaurant/menus` échoue aussi quand le module est coupé.

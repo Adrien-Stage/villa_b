@@ -22,8 +22,7 @@ use Illuminate\View\View;
  * La même grille que celle de la console d'orchestration, limitée à la
  * couche de l'hôtel : le modèle et la couche de la console s'y lisent sans se
  * modifier. S'y ajoutent les exceptions nominatives — un droit accordé ou
- * refusé à une personne précise, pour un motif, jusqu'à une date — et la
- * levée des restrictions de service héritées de l'ancienne console.
+ * refusé à une personne précise, pour un motif, jusqu'à une date.
  *
  * Un refus, quelle que soit sa couche, l'emporte toujours.
  */

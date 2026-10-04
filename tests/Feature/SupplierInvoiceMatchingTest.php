@@ -151,9 +151,8 @@ test('l’écran de saisie signale le motif manquant sans perdre la saisie', fun
     $modules = new ReflectionProperty(\App\Support\TenantModules::class, 'enabled');
     $modules->setValue(null, ['ledger']);
 
+    // Écrire « role » affecte ce rôle : les droits viennent des affectations.
     $comptable = User::factory()->create(['role' => 'accountant']);
-    // Les droits viennent des affectations : on rattache le rôle par le pivot.
-    $comptable->roles()->attach(\App\Models\Role::where('slug', 'accountant')->value('id'), ['level' => 'write']);
 
     $this->actingAs($comptable)
         ->from(route('accounting.ledger.suppliers.create'))

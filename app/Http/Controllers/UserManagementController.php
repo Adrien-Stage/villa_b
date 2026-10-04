@@ -76,14 +76,14 @@ class UserManagementController extends Controller
 
         $query = User::query()
             ->where('id', '!=', $manager->id)
-            ->whereNotIn('role', $horsDePortee)
+            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))
             // Le département borne la liste quand la matrice le demande : un
             // chef de service n'a pas à consulter le dossier de ceux qu'il
             // n'encadre pas.
             ->tap(fn ($q) => \App\Support\DepartmentScoping::apply(
                 $q, Auth::user(), 'users.voir', 'department_id', 'id'
             ))
-            ->with(['roles', 'department']);
+            ->with(['roles', 'department', 'restaurants:id']);
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -108,9 +108,9 @@ class UserManagementController extends Controller
         }
 
         $stats = [
-            'total' => User::whereNotIn('role', $horsDePortee)->count(),
-            'active' => User::whereNotIn('role', $horsDePortee)->where('is_active', true)->count(),
-            'inactive' => User::whereNotIn('role', $horsDePortee)->where('is_active', false)->count(),
+            'total' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->count(),
+            'active' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->where('is_active', true)->count(),
+            'inactive' => User::whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', $horsDePortee))->where('is_active', false)->count(),
         ];
 
         $staffUsers = $query->latest('id')->paginate(15)->withQueryString();
@@ -159,7 +159,6 @@ class UserManagementController extends Controller
             'exceptions' => \App\Models\PermissionGrant::query()->enVigueur()
                 ->where('subject_type', \App\Models\PermissionGrant::SUJET_USER)
                 ->where('subject_id', (string) $user->id)->orderBy('permission')->get(),
-            'restrictions' => $user->modulePermissions()->whereIn('access_level', ['none', 'read'])->get(),
             'cumuls' => DutySegregation::conflictsFor($user->rolesDetenus()),
             'catalogue' => array_keys(\App\Support\PermissionCatalog::all()),
         ]);
@@ -181,14 +180,12 @@ class UserManagementController extends Controller
             'email' => strtolower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'department_id' => $validated['department_id'] ?? null,
-            // La colonne role garde le rôle principal (1er sélectionné), pour
-            // les consommateurs mono-rôle ; l'accès complet vit dans le pivot.
-            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active', true),
             'password' => Hash::make($validated['password']),
         ]);
 
         $this->syncUserRoles($user, $roleSlugs, $levels);
+        $this->syncRestaurants($request, $user, $roleSlugs);
 
         AuditLog::record($manager->id, 'user_management',
             "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
@@ -215,7 +212,6 @@ class UserManagementController extends Controller
             'email' => strtolower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'department_id' => $validated['department_id'] ?? null,
-            'role' => $roleSlugs[0],
             'is_active' => $request->boolean('is_active'),
         ];
 
@@ -225,6 +221,7 @@ class UserManagementController extends Controller
 
         $user->update($payload);
         $this->syncUserRoles($user, $roleSlugs, $levels);
+        $this->syncRestaurants($request, $user, $roleSlugs);
 
         AuditLog::record(Auth::id(), 'user_management',
             "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
@@ -253,6 +250,28 @@ class UserManagementController extends Controller
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
+    /**
+     * Restaurants où la personne travaille. Le formulaire ne les montre que
+     * si l'hôtel en a plusieurs ; s'il n'en a qu'un, le personnel de
+     * restaurant y est rattaché d'office, pour qu'un second restaurant ouvert
+     * plus tard ne le laisse pas sans équipe.
+     *
+     * @param  list<string>  $roleSlugs
+     */
+    private function syncRestaurants(Request $request, User $user, array $roleSlugs): void
+    {
+        $contexte = app(\App\Services\RestaurantContext::class);
+
+        if ($request->boolean('restaurants_present')) {
+            $user->restaurants()->sync(array_map('intval', $request->input('restaurants', [])));
+        } elseif (! $contexte->plusieurs() && array_intersect($roleSlugs, \App\Services\RestaurantContext::ROLES_DU_RESTAURANT) !== []
+            && ($unique = $contexte->restaurants()->first())) {
+            $user->restaurants()->syncWithoutDetaching([$unique->id]);
+        }
+
+        $contexte->oublier();
+    }
+
     private function validatePayload(Request $request, ?User $user = null): array
     {
         $assignableSlugs = $this->assignableRoles()->pluck('slug')->all();
@@ -269,6 +288,9 @@ class UserManagementController extends Controller
             'levels.*' => [Rule::in(['read', 'write'])],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
+            // Restaurants où la personne travaille.
+            'restaurants' => ['nullable', 'array'],
+            'restaurants.*' => ['integer', Rule::exists('points_of_sale', 'id')->where('kind', \App\Models\PointOfSale::KIND_RESTAURATION)],
             // Dérogation à la séparation des tâches : un établissement de six
             // personnes ne peut pas toujours séparer quatre fonctions. Elle se
             // demande explicitement et se motive.
@@ -348,7 +370,10 @@ class UserManagementController extends Controller
      */
     private function syncUserRoles(User $user, array $slugs, array $levels): void
     {
-        $roles = Role::whereIn('slug', $slugs)->get();
+        // Dans l'ordre de la sélection : le premier rôle choisi est le rôle
+        // principal.
+        $roles = Role::whereIn('slug', $slugs)->get()
+            ->sortBy(fn (Role $role) => array_search($role->slug, $slugs, true));
 
         $pivot = [];
         foreach ($roles as $role) {
@@ -365,12 +390,11 @@ class UserManagementController extends Controller
      */
     private function ensureManageableByCurrentManager(User $user): void
     {
-        if ($user->hasRole(RoleCatalog::ADMIN) || $user->role === RoleCatalog::ADMIN) {
+        if ($user->hasRole(RoleCatalog::ADMIN)) {
             abort(403, 'Un compte administrateur se gère depuis la console d\'orchestration.');
         }
 
-        if (($user->hasRole(RoleCatalog::MANAGER) || $user->role === RoleCatalog::MANAGER)
-            && ! Auth::user()?->isAdmin()) {
+        if ($user->hasRole(RoleCatalog::MANAGER) && ! Auth::user()?->isAdmin()) {
             abort(403, 'Ce profil ne peut pas être géré par un manager.');
         }
     }

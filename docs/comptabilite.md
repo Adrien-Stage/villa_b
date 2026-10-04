@@ -48,7 +48,9 @@ réception.
 
 **Une caisse par restaurant.** Chaque session désigne son point de vente
 (`point_of_sale_id`) : pour un restaurant, sa caisse. Avec plusieurs restaurants, on
-choisit la sienne à l'ouverture.
+choisit la sienne à l'ouverture, parmi les restaurants où l'on est affecté. Une note,
+une entrée au buffet ou un règlement de banquet s'encaisse à la caisse **de son
+restaurant**.
 
 **Une session par personne.** Chacun compte ce qu'il a encaissé : une personne n'a
 qu'une session en cours par caisse, et un tiroir de restaurant n'a qu'une session
@@ -58,6 +60,10 @@ attente de contrôle empêche son titulaire d'en ouvrir une nouvelle.
 Au restaurant, tout encaissement d'une note passe par la caisse ouverte de celui qui
 encaisse ; la facturation sur la chambre n'en demande pas (le folio la porte). Un
 encaissement ne s'annule que dans sa propre caisse, tant qu'elle n'est pas comptée.
+
+Le solde théorique d'une caisse de restaurant compte trois sources d'espèces : les
+notes, les entrées au buffet au forfait et les règlements de banquets (acompte et
+solde). L'écran de comptage les détaille.
 
 ### Le verrou
 

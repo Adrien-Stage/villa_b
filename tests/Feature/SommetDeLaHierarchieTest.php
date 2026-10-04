@@ -76,6 +76,14 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
     $actesDeSupervision = [
         'economat.purchase_requests.approve',
         'economat.purchase_requests.reject',
+        // Créer un restaurant, ses salles, composer son équipe : c'est la
+        // structure de l'hôtel, que la direction décide — pas la saisie de
+        // l'exploitation à la place du responsable de restaurant.
+        'restaurant.restaurants.creer',
+        'restaurant.restaurants.modifier',
+        'restaurant.restaurants.spaces.creer',
+        'restaurant.restaurants.spaces.modifier',
+        'restaurant.restaurants.team.modifier',
     ];
 
     $ecrituresIndues = [];

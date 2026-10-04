@@ -146,7 +146,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // @module('restaurant') ... @endmodule
-        // Vérifie que le module est activé pour l'établissement ET que l'utilisateur courant y a accès
+        // Le module est activé pour l'établissement, et la personne y détient
+        // au moins un droit (User::hasModuleAccess).
         Blade::directive('module', function ($expression) {
             return "<?php if(\\App\\Support\\TenantModules::has({$expression}) && (!auth()->check() || auth()->user()->hasModuleAccess({$expression}))): ?>";
         });
@@ -154,13 +155,6 @@ class AppServiceProvider extends ServiceProvider
             return '<?php endif; ?>';
         });
 
-        // @canAccessModule('restaurant') ... @endcanAccessModule
-        Blade::directive('canAccessModule', function ($expression) {
-            return "<?php if(auth()->check() && auth()->user()->hasModuleAccess({$expression})): ?>";
-        });
-        Blade::directive('endcanAccessModule', function () {
-            return '<?php endif; ?>';
-        });
     }
 
     private function shareDiscussionUnreadState(): void

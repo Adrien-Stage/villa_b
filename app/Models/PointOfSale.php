@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -32,14 +33,51 @@ class PointOfSale extends Model
     public const KIND_MINI_BAR     = 'mini_bar';
     public const KIND_BANQUET      = 'banquet';
 
+    /** Modes de service d'un restaurant. */
+    public const MODE_CARTE = 'carte';
+
+    public const MODE_BUFFET = 'buffet';
+
+    public const MODES_SERVICE = [
+        self::MODE_CARTE => 'À la carte',
+        self::MODE_BUFFET => 'Buffet',
+    ];
+
     protected $fillable = [
-        'code', 'name', 'slug', 'kind', 'series_prefix', 'is_active', 'sort_order',
+        'code', 'name', 'slug', 'kind', 'service_modes', 'series_prefix', 'is_active', 'sort_order',
     ];
 
     protected $casts = [
         'is_active'  => 'boolean',
         'sort_order' => 'integer',
+        'service_modes' => 'array',
     ];
+
+    /** Le personnel affecté à ce point de vente — pour un restaurant, son équipe. */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    public function scopeRestaurants(Builder $query): Builder
+    {
+        return $query->where('kind', self::KIND_RESTAURATION);
+    }
+
+    /** Ce restaurant sert-il dans ce mode ? Un restaurant sans réglage sert à la carte. */
+    public function sert(string $mode): bool
+    {
+        return in_array($mode, $this->service_modes ?: [self::MODE_CARTE], true);
+    }
+
+    /** @return list<string> libellés des modes de service */
+    public function libellesModes(): array
+    {
+        return array_values(array_map(
+            static fn (string $m): string => self::MODES_SERVICE[$m] ?? $m,
+            $this->service_modes ?: [self::MODE_CARTE]
+        ));
+    }
 
     public function spaces(): HasMany
     {

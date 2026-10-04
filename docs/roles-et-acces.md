@@ -100,12 +100,17 @@ se déduit du nom de la route (`economat.items.store` → `economat.items.creer`
 
 Le moteur décide dans cet ordre :
 
-1. une **restriction de module** posée sur la personne depuis la console —
-   exclusion, ou lecture seule — l'emporte sur tout ;
-2. un **refus** explicite, sur la personne ou sur l'un de ses rôles ;
-3. une **autorisation** explicite, sur la personne ou sur l'un de ses rôles ;
-4. le **catalogue** ([`PermissionCatalog`](../app/Support/PermissionCatalog.php)),
-   hiérarchie comprise.
+1. un **refus** explicite, sur la personne ou sur l'un de ses rôles ;
+2. une **autorisation** explicite, sur la personne ou sur l'un de ses rôles ;
+3. le **catalogue** ([`PermissionCatalog`](../app/Support/PermissionCatalog.php)),
+   hiérarchie comprise ;
+4. pour l'administrateur, une **intervention** en cours (voir
+   [Le mode intervention](#le-mode-intervention)).
+
+Les droits d'une personne ne viennent que de là : ses affectations de rôles, les
+exceptions posées sur un rôle ou sur elle, une intervention. Un département range
+le personnel, il ne donne aucun droit ; une rubrique du menu apparaît à qui détient
+au moins un droit du module (`User::hasModuleAccess`).
 
 En cas de refus, l'incident est journalisé ; la réponse est un JSON `403` avec
 `access_denied: true` pour une requête AJAX, sinon une redirection avec un message
@@ -134,23 +139,37 @@ lesquels.
 
 ### Les affectations font foi
 
-Les rôles d'une personne sont ses **affectations** (table pivot `role_user`). La
-colonne héritée `users.role` ne compte que pour un compte **sans aucune
-affectation** : la console remplace les affectations sans toucher la colonne, qui
-garderait sinon un rôle retiré — et ses droits. `hasRole()`, `hasAnyRole()`,
-`exerce()`, le moteur de droits et `Notifier` suivent la même règle
-(`User::rolesDetenus()`).
+Les rôles d'une personne sont ses **affectations** (table pivot `role_user`), et
+rien d'autre : `hasRole()`, `hasAnyRole()`, `exerce()`, le moteur de droits et
+`Notifier` lisent `User::rolesDetenus()`. L'attribut `role` du modèle donne le
+**rôle principal** (la première affectation) pour l'affichage ; l'écrire affecte ce
+rôle — commode pour créer un compte en une ligne. La colonne `users.role` qu'il
+remplaçait n'existe plus.
 
 ### Reprise des comptes et revue
 
-Une migration ([`RepriseDesRoles`](../app/Support/RepriseDesRoles.php)) a repris les
-comptes existants, sans retirer de droit :
+Deux migrations ont repris les comptes existants, sans retirer ni ajouter de droit.
+La première ([`RepriseDesRoles`](../app/Support/RepriseDesRoles.php)) :
 
 - un compte sans affectation reçoit son rôle hérité en affectation (l'ancien
   `housekeeping` devient `housekeeping_staff`, aux mêmes droits) ;
 - une colonne périmée est réalignée sur le rôle principal des affectations ;
 - la salle et la caisse passent du chef de cuisine au responsable de restaurant :
   chaque chef de cuisine reçoit aussi ce rôle, pour ne rien perdre.
+
+La seconde (nettoyage des droits hérités) retire ce qui restait des systèmes
+précédents :
+
+- la colonne `users.role` disparaît ; un compte qui n'existait encore que par elle
+  reçoit l'affectation correspondante ;
+- chaque **restriction de module** que l'ancienne console avait posée sur une
+  personne (`user_module_permissions`) devient une **exception nominative** de
+  l'établissement : un refus par droit du service — tous pour une exclusion, les
+  écritures pour une lecture seule. Elle se lit et se lève sur la fiche de la
+  personne ;
+- les **modules par département** (`department_module`) disparaissent ;
+- le rôle hérité `housekeeping` est remplacé par `housekeeping_staff`, exceptions
+  comprises.
 
 Ce qui reste à trancher s'affiche avec :
 
@@ -170,8 +189,8 @@ gabarit comme ceux qu'une autorisation pose sur ce rôle.
 
 - **L'absence de marqueur vaut écriture.** Un pivot sans niveau — comptes créés
   avant cette fonctionnalité — est traité comme `write`.
-- **La colonne héritée ne contourne pas l'affectation.** `users.role` ne compte, pour
-  écrire, que pour un compte sans aucune affectation.
+- **Pour restreindre plus finement**, une exception nominative refuse une action
+  précise à une personne, avec un motif et, si besoin, une échéance.
 - **Un autre rôle en écriture peut donner le droit.** Le refus vient de l'absence de
   rôle en écriture qui le porte, pas d'un verrou sur le module.
 
@@ -285,6 +304,24 @@ constater l'écart. Ce n'est pas un réglage : ni l'établissement ni le manager
 peuvent en dispenser. Le circuit est le même à la réception, à la boutique et dans
 chaque restaurant — une caisse par restaurant, une session par personne (voir
 [Comptabilité](comptabilite.md)).
+
+### Le personnel d'un restaurant ne voit que son restaurant
+
+Le droit dit **quoi** ; l'affectation dit **où**. Un hôtel qui exploite plusieurs
+restaurants affecte chaque membre du personnel de restaurant (`restaurant_*`,
+`cashier`) à un ou plusieurs restaurants, depuis la fiche du restaurant ou la gestion
+des utilisateurs. Il ne voit que ceux-là : leurs cartes, commandes, cuisines, bars,
+garde-mangers, caisses, buffets et banquets. Une adresse d'un autre restaurant lui
+répond 404.
+
+La direction et le contrôle — `admin`, `manager`, `controller`, `quality_auditor`,
+`support` — voient tous les restaurants, ensemble ou un par un. La réception voit
+dans tous les restaurants les seules notes que des résidents ont reportées sur leur
+séjour : celles qu'elle retrouvera sur la facture.
+
+Le `manager` crée les restaurants et leurs salles (l'`admin` aussi : c'est de la
+configuration) ; le `restaurant_manager` compose l'équipe des restaurants où il
+travaille. Voir [Restaurant](restaurant.md#plusieurs-restaurants).
 
 ### Les demandes à l'économat sont ouvertes
 

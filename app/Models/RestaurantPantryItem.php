@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppartientAUnRestaurant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +12,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RestaurantPantryItem extends Model
 {
-    use HasFactory;
+    use HasFactory, AppartientAUnRestaurant;
 
     protected $fillable = [
+        'point_of_sale_id',
         'restaurant_pantry_category_id',
         'stock_item_id',
         'name',

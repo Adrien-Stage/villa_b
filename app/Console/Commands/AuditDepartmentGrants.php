@@ -83,13 +83,7 @@ class AuditDepartmentGrants extends Command
     /** @return list<string> */
     private function rolesDetenus(User $utilisateur): array
     {
-        $roles = $utilisateur->roles->pluck('slug')->all();
-
-        if ($utilisateur->role) {
-            $roles[] = $utilisateur->role;
-        }
-
-        $roles = array_values(array_unique($roles));
+        $roles = $utilisateur->rolesDetenus();
         sort($roles);
 
         return $roles;

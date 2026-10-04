@@ -111,18 +111,27 @@ test("un tiroir n'a qu'une session ouverte : chacun compte ce qu'il a encaissé"
 test("deux restaurants, deux caisses : chacun la sienne", function () {
     PointOfSale::create(['code' => 'KOT', 'slug' => 'kotibe', 'name' => 'Kotibe', 'kind' => PointOfSale::KIND_RESTAURATION, 'series_prefix' => 'KOT-', 'is_active' => true, 'sort_order' => 4]);
     $kotibe = PointOfSale::where('slug', 'kotibe')->first();
+    $restaurant = PointOfSale::where('slug', 'restaurant')->first();
 
-    // Avec plusieurs caisses, on dit laquelle on tient.
-    $this->actingAs(personneDuRestaurant('cashier', 'Ines Biya'))
+    // Affectée aux deux restaurants, elle dit quelle caisse elle tient.
+    $ines = personneDuRestaurant('cashier', 'Ines Biya');
+    $ines->restaurants()->sync([$restaurant->id, $kotibe->id]);
+
+    $this->actingAs($ines)
         ->post(route('restaurant.cash_register.open.store'), ['opening_amount' => 10000])
         ->assertSessionHasErrors('point_of_sale_id');
 
     $this->post(route('restaurant.cash_register.open.store'), ['opening_amount' => 10000, 'point_of_sale_id' => $kotibe->id])
         ->assertSessionHasNoErrors();
 
-    $this->actingAs(personneDuRestaurant('cashier', 'Paul Ndongo'))
+    // Affecté au seul restaurant d'origine, il n'ouvre que sa caisse.
+    $paul = personneDuRestaurant('cashier', 'Paul Ndongo');
+    $paul->restaurants()->sync([$restaurant->id]);
+    app(\App\Services\RestaurantContext::class)->oublier();
+
+    $this->actingAs($paul)
         ->post(route('restaurant.cash_register.open.store'), [
-            'opening_amount' => 10000, 'point_of_sale_id' => PointOfSale::where('slug', 'restaurant')->value('id'),
+            'opening_amount' => 10000, 'point_of_sale_id' => $kotibe->id,
         ])->assertSessionHasNoErrors();
 
     expect(CashRegisterSession::where('module', 'restaurant')->pluck('point_of_sale_id')->sort()->values()->all())

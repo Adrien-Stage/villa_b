@@ -28,7 +28,7 @@ class DashboardController extends Controller
         // consulte sans y agir.
         $isManager = $user->exerce(['manager']) || $user->isAdmin();
         $isReception = $user->exerce(['reception']);
-        $isHousekeeping = $user->exerce(['housekeeping_leader', 'housekeeping_staff', 'housekeeping']);
+        $isHousekeeping = $user->exerce(['housekeeping_leader', 'housekeeping_staff']);
         $isRestaurant = $user->exerce(['restaurant_chief', 'restaurant_staff']);
         // La caisse du restaurant suit son chiffre ; le solde des séjours relève
         // de l'hébergement et de la comptabilité.

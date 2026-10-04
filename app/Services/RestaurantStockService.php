@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantMenuItem;
 use App\Models\RestaurantPantryItem;
@@ -397,17 +398,19 @@ class RestaurantStockService
      * Ouvre une feuille de comptage : fige le stock théorique de chaque ingrédient
      * actif au moment de l'ouverture.
      */
-    public function openStockCount(?string $notes = null): RestaurantStockCount
+    public function openStockCount(?string $notes = null, ?PointOfSale $restaurant = null): RestaurantStockCount
     {
-        return DB::transaction(function () use ($notes) {
+        return DB::transaction(function () use ($notes, $restaurant) {
+            // Chaque restaurant compte son garde-manger.
             $count = RestaurantStockCount::create([
-                'reference' => 'INV-' . now()->format('Ymd-His'),
+                'point_of_sale_id' => $restaurant?->id,
+                'reference' => 'INV-' . now()->format('Ymd-His') . ($restaurant ? '-' . mb_substr($restaurant->code, 0, 10) : ''),
                 'status' => RestaurantStockCount::STATUS_DRAFT,
                 'notes' => $notes,
                 'opened_by' => Auth::id(),
             ]);
 
-            $items = RestaurantPantryItem::query()->active()->orderBy('name')->get();
+            $items = RestaurantPantryItem::query()->duRestaurant($count->point_of_sale_id)->active()->orderBy('name')->get();
 
             foreach ($items as $item) {
                 RestaurantStockCountLine::create([
@@ -517,6 +520,8 @@ class RestaurantStockService
             $reference = "GSP-{$datePrefix}-{$randomSuffix}";
 
             $wasteLog = RestaurantWasteLog::create([
+                // La perte est celle du restaurant dont le garde-manger perd l'article.
+                'point_of_sale_id' => $item->point_of_sale_id,
                 'reference' => $reference,
                 'restaurant_pantry_item_id' => $item->id,
                 'quantity' => round($quantity, 3),
@@ -555,11 +560,14 @@ class RestaurantStockService
         CarbonInterface $startDate,
         CarbonInterface $endDate,
         ?int $tenantId = null,
+        ?array $restaurants = null,
     ): array {
         $start = $startDate->copy()->startOfDay();
         $end = $endDate->copy()->endOfDay();
 
+        // Restreint, s'il le faut, aux restaurants demandés.
         $movements = RestaurantPantryMovement::query()
+            ->when($restaurants !== null, fn ($q) => $q->whereHas('item', fn ($i) => $i->whereIn('point_of_sale_id', $restaurants)))
             ->with(['item.category', 'wasteLog', 'order'])
             ->whereBetween('occurred_at', [$start, $end])
             ->get();
@@ -627,6 +635,7 @@ class RestaurantStockService
         }
 
         $ordersQuery = RestaurantCustomerOrder::query()
+            ->when($restaurants !== null, fn ($q) => $q->whereIn('point_of_sale_id', $restaurants))
             ->whereBetween('placed_at', [$start, $end])
             ->whereNotIn('status', [RestaurantCustomerOrder::STATUS_CANCELED]);
 

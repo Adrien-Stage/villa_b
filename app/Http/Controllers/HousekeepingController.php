@@ -53,7 +53,7 @@ class HousekeepingController extends Controller
             ->get();
 
         $staff = User::query()
-            ->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping'])
+            ->havingRole(['housekeeping_leader', 'housekeeping_staff'])
             ->orderBy('name')
             ->get();
 
@@ -204,8 +204,7 @@ class HousekeepingController extends Controller
         }
 
         $allowedStaffIds = User::query()
-            
-            ->whereIn('role', ['housekeeping_leader', 'housekeeping_staff', 'housekeeping'])
+            ->havingRole(['housekeeping_leader', 'housekeeping_staff'])
             ->pluck('id');
 
         if ($memberIds->diff($allowedStaffIds)->isNotEmpty()) {

@@ -4,6 +4,9 @@
 
 @php
     $labels = \App\Models\RestaurantCustomerOrder::STATUS_LABELS;
+    // Vue d'ensemble de plusieurs restaurants : chaque bon dit d'où il vient.
+    $vueEnsemble = app(\App\Services\RestaurantContext::class)->plusieurs()
+        && app(\App\Services\RestaurantContext::class)->courant(auth()->user()) === null;
     $columnMeta = [
         'confirmed' => ['title' => 'Bons reçus', 'icon' => 'inbox', 'accent' => 'border-amber-300', 'head' => 'bg-amber-50 text-amber-800'],
         'preparing' => ['title' => 'En préparation', 'icon' => 'flame', 'accent' => 'border-blue-300', 'head' => 'bg-blue-50 text-blue-800'],
@@ -70,6 +73,9 @@
                                     {{ $order->table_number ? 'Table ' . $order->table_number : 'Sans table' }}
                                 </span>
                                 <span class="text-[11px] text-primary/40">#{{ $order->id }}</span>
+                                @if($vueEnsemble && $order->pointOfSale)
+                                    <span class="text-[10px] font-semibold rounded bg-primary/5 px-1.5 py-0.5 text-primary/60">{{ $order->pointOfSale->name }}</span>
+                                @endif
                             </div>
                             @if($elapsed !== null)
                                 <span class="text-[11px] font-medium {{ $late ? 'text-red-600' : 'text-primary/45' }}">

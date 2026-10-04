@@ -7,8 +7,8 @@ namespace App\Support;
  * qui la détiennent.
  *
  * Jusqu'ici les droits vivaient éparpillés dans les middlewares « role: » de
- * routes/web.php, dans @role() au fil des vues, et dans la carte
- * User::$moduleAccess. Trois sources, aucune vue d'ensemble, et rien qui
+ * routes/web.php, dans @role() au fil des vues, et dans la carte des modules
+ * par rôle du modèle User. Trois sources, aucune vue d'ensemble, et rien qui
  * permette de dire « le comptable consulte l'économat mais n'y crée pas
  * d'article » sans toucher au code.
  *
@@ -28,9 +28,11 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Une exception : valider ou refuser une demande d'achat. Ce n'est pas une
+ * Deux exceptions. Valider ou refuser une demande d'achat : ce n'est pas une
  * saisie à la place de l'économe mais la décision de dépense, que la
- * direction se réserve. Le comptage des caisses, lui, est contresigné par la
+ * direction se réserve. Créer les restaurants de l'hôtel, leurs salles, et
+ * composer leurs équipes : c'est la structure de l'hôtel, non l'exploitation
+ * d'un restaurant. Le comptage des caisses, lui, est contresigné par la
  * comptabilité seule (CashClosurePolicy).
  *
  * Le gabarit n'écrit que les rôles qui reçoivent un droit pour eux-mêmes ;
@@ -166,12 +168,19 @@ class PermissionCatalog
         'housekeeping.reject',
         'housekeeping.teams.creer',
         'reception.pos.sales.creer',
+        'restaurant.banquets.creer',
+        'restaurant.banquets.modifier',
+        'restaurant.banquets.payments.creer',
+        'restaurant.banquets.status',
         'restaurant.billing.paid',
         'restaurant.billing.unpaid',
         'restaurant.cash_register.close.creer',
         'restaurant.cash_register.disbursements.creer',
         'restaurant.cash_register.open.creer',
         'restaurant.breakfast.serve',
+        'restaurant.buffets.close',
+        'restaurant.buffets.creer',
+        'restaurant.buffets.entries.creer',
         'restaurant.menus.categories.creer',
         'restaurant.menus.categories.modifier',
         'restaurant.menus.categories.supprimer',
@@ -179,6 +188,7 @@ class PermissionCatalog
         'restaurant.menus.items.creer',
         'restaurant.menus.items.modifier',
         'restaurant.menus.items.supprimer',
+        'restaurant.orders.bar_ready',
         'restaurant.orders.claim',
         'restaurant.orders.creer',
         'restaurant.orders.preparing',
@@ -201,6 +211,11 @@ class PermissionCatalog
         'restaurant.recipes.modifier',
         'restaurant.recipes.produce',
         'restaurant.recipes.supprimer',
+        'restaurant.restaurants.creer',
+        'restaurant.restaurants.modifier',
+        'restaurant.restaurants.spaces.creer',
+        'restaurant.restaurants.spaces.modifier',
+        'restaurant.restaurants.team.modifier',
         'restaurant.shifts.close',
         'restaurant.shifts.open',
         'restaurant.stock_counts.close',
@@ -306,6 +321,15 @@ class PermissionCatalog
     ];
 
     /**
+     * Les restaurants de l'hôtel et leurs salles, que l'administrateur règle
+     * aussi : les décrire n'est pas les exploiter.
+     */
+    private const CONFIGURATION_RESTAURANTS = [
+        'restaurant.restaurants.creer', 'restaurant.restaurants.modifier',
+        'restaurant.restaurants.spaces.creer', 'restaurant.restaurants.spaces.modifier',
+    ];
+
+    /**
      * Paramètres de l'établissement que l'administrateur règle : l'onglet
      * Général seulement (SettingsTabs borne chaque onglet). Tarifs,
      * prestations et partenaires restent des décisions de la direction.
@@ -319,6 +343,8 @@ class PermissionCatalog
      */
     private const ADMINISTRATION = [
         'users.creer', 'users.modifier', 'users.toggleStatus',
+        // Affecter le personnel à l'équipe d'un restaurant, c'est tenir son compte.
+        'restaurant.restaurants.team.modifier',
         'droits.modifier', 'droits.apercu', 'droits.exceptions.creer', 'droits.exceptions.supprimer',
         'interventions.creer', 'interventions.terminer',
     ];
@@ -419,26 +445,40 @@ class PermissionCatalog
     }
 
     /**
-     * Service d'exploitation dont relève un droit, pour les restrictions de
-     * module que la console pose sur une personne (exclusion, lecture seule).
-     *
-     * Ce sont les services que gardait le middleware module.access : la
-     * restriction s'applique désormais au droit lui-même, partout où la
-     * question est posée — route, écran ou service.
+     * Droits de chaque module de l'établissement (TenantModules), par le
+     * préfixe de leur nom. Une rubrique du menu apparaît à qui détient au
+     * moins un de ces droits (User::hasModuleAccess).
      */
-    private const SERVICES = [
-        'rooms' => 'hebergement', 'bookings' => 'hebergement', 'groups' => 'hebergement',
-        'customers' => 'hebergement', 'reception' => 'hebergement', 'agenda' => 'hebergement',
-        'housekeeping' => 'housekeeping',
-        'restaurant' => 'restaurant',
-        'economat' => 'economat',
-        'shop' => 'boutique',
-        'settings' => 'parametres',
+    private const PREFIXES_DES_MODULES = [
+        'hebergement' => ['rooms', 'bookings', 'groups', 'customers', 'reception', 'agenda'],
+        'reservations' => ['bookings', 'groups', 'agenda'],
+        'clients' => ['customers'],
+        'housekeeping' => ['housekeeping'],
+        'restaurant' => ['restaurant'],
+        'economat' => ['economat'],
+        'shop' => ['shop'],
+        'boutique' => ['shop'],
+        'comptabilite' => ['accounting'],
+        'accounting' => ['accounting'],
+        'ledger' => ['accounting'],
+        'analytics' => ['analytics'],
+        'utilisateurs' => ['users'],
+        'parametres' => ['settings'],
     ];
 
-    public static function serviceDu(string $permission): ?string
+    /** @return list<string> droits du module ; vide pour un module sans droit catalogué */
+    public static function droitsDuModule(string $module): array
     {
-        return self::SERVICES[explode('.', $permission)[0]] ?? null;
+        $prefixes = self::PREFIXES_DES_MODULES[$module] ?? null;
+
+        if ($prefixes === null) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_keys(self::all()),
+            static fn (string $droit): bool => in_array(explode('.', $droit)[0], $prefixes, true)
+        ));
     }
 
     /** @return list<string> droits de configuration de l'établissement */
@@ -450,7 +490,7 @@ class PermissionCatalog
     /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
     public static function ecrituresDeLAdministrateur(): array
     {
-        return [...self::CONFIGURATION, ...self::PARAMETRES, ...self::ADMINISTRATION];
+        return [...self::CONFIGURATION, ...self::CONFIGURATION_RESTAURANTS, ...self::PARAMETRES, ...self::ADMINISTRATION];
     }
 
     /**
@@ -462,6 +502,31 @@ class PermissionCatalog
     {
         return [
             // ── Restauration ──
+            // Restaurants multiples : la direction crée les restaurants et
+            // leurs salles ; le responsable de restaurant compose l'équipe des
+            // restaurants où il travaille.
+            'restaurant.restaurants.voir' => ['controller', 'manager', 'restaurant_manager'],
+            'restaurant.restaurants.creer' => ['manager'],
+            'restaurant.restaurants.modifier' => ['manager'],
+            'restaurant.restaurants.spaces.creer' => ['manager'],
+            'restaurant.restaurants.spaces.modifier' => ['manager'],
+            'restaurant.restaurants.team.modifier' => ['manager', 'restaurant_manager'],
+            // Chaque restaurant a son bar : les boissons s'y préparent.
+            'restaurant.bar.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
+            'restaurant.orders.bar_ready' => ['restaurant_staff'],
+            // Buffet au forfait : le responsable ouvre le service, la caisse
+            // enregistre les entrées.
+            'restaurant.buffets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_staff'],
+            'restaurant.buffets.creer' => ['restaurant_manager'],
+            'restaurant.buffets.entries.creer' => ['cashier'],
+            'restaurant.buffets.close' => ['restaurant_manager'],
+            // Banquets : le responsable établit et suit le devis, la caisse
+            // encaisse acompte et solde.
+            'restaurant.banquets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.banquets.creer' => ['restaurant_manager'],
+            'restaurant.banquets.modifier' => ['restaurant_manager'],
+            'restaurant.banquets.status' => ['restaurant_manager'],
+            'restaurant.banquets.payments.creer' => ['cashier'],
             'restaurant.billing.paid' => ['cashier'],
             // Caisse du restaurant : le caissier, et le responsable de
             // restaurant qui l'inclut, s'il faut encaisser à sa place.

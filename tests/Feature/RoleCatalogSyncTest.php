@@ -38,6 +38,7 @@ test('la synchronisation est idempotente : aucun doublon au second passage', fun
 test('un rôle existant est mis à jour, pas dupliqué', function () {
     // Rôle déjà présent mais sans module ni icône (cas d'un établissement
     // installé avant l'ajout de ces colonnes).
+    Role::where('slug', 'econome')->delete();
     Role::create(['name' => 'Économe', 'slug' => 'econome', 'description' => 'ancienne description']);
 
     RoleCatalog::sync();

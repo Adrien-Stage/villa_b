@@ -53,9 +53,7 @@ test("sans secret d'orchestration, le canal des comptes reste fermé", function 
 
 test('la console lit le personnel et ses rôles réels', function () {
     membreDuPersonnel('Jean Mvondo', ['reception']);
-    // Colonne périmée : l'affectation fait foi.
-    $chef = membreDuPersonnel('Ange Ondoa', ['reception_chief']);
-    $chef->update(['role' => 'reception']);
+    membreDuPersonnel('Ange Ondoa', ['reception_chief']);
 
     $comptes = collect($this->getJson('/api/comptes', console())->assertOk()->json('comptes'))->keyBy('name');
 
@@ -115,30 +113,24 @@ test("la console ne touche à aucun autre compte que ceux d'administrateur", fun
     expect($manager->fresh()->password)->toBe($ancien);
 });
 
-test('la console crée un département avec ses modules', function () {
+test('la console crée un département ; les modules qu\'une ancienne console envoie sont ignorés', function () {
     $this->postJson('/api/departements', [
         'name' => 'Salle et bar', 'modules' => ['restaurant' => 'write', 'shop' => 'read'],
     ], console())->assertCreated();
 
     $departement = Department::where('slug', 'salle_et_bar')->firstOrFail();
 
+    // Un département range le personnel, il ne donne aucun droit.
     expect($departement->code)->toBe('SALL')
-        ->and($departement->defaultModules())->toBe(['restaurant' => 'write', 'shop' => 'read']);
+        ->and($this->getJson('/api/departements', console())->json('departements.0'))->not->toHaveKey('modules');
 });
 
-test('modifier un département remplace ses modules', function () {
+test('la console modifie un département', function () {
     $departement = Department::create(['name' => 'Cuisine', 'slug' => 'cuisine_test']);
-    DB::table('department_module')->insert([
-        'department_id' => $departement->id, 'module_key' => 'shop', 'default_level' => 'write',
-        'created_at' => now(), 'updated_at' => now(),
-    ]);
 
-    $this->putJson("/api/departements/{$departement->id}", [
-        'name' => 'Cuisine centrale', 'modules' => ['restaurant' => 'write'],
-    ], console())->assertOk();
+    $this->putJson("/api/departements/{$departement->id}", ['name' => 'Cuisine centrale'], console())->assertOk();
 
-    expect($departement->fresh()->name)->toBe('Cuisine centrale')
-        ->and($departement->fresh()->defaultModules())->toBe(['restaurant' => 'write']);
+    expect($departement->fresh()->name)->toBe('Cuisine centrale');
 });
 
 test("supprimer un département détache ses employés sans les supprimer", function () {

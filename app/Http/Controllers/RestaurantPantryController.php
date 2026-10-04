@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantPantryMovement;
+use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -29,14 +30,20 @@ class RestaurantPantryController extends Controller
 
     public function index(Request $request): View
     {
+        // Chaque restaurant tient son garde-manger ; les catégories sont
+        // communes.
+        $user = Auth::user();
+        $vueEnsemble = app(RestaurantContext::class)->vueEnsemble($user);
+
         $categories = RestaurantPantryCategory::query()
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->withCount('items')
+            ->withCount(['items' => fn ($q) => $q->visiblesPour($user)])
             ->get();
 
         $itemsQuery = RestaurantPantryItem::query()
-            ->with('category')
+            ->visiblesPour($user)
+            ->with(['category', 'pointOfSale:id,name'])
             ->orderBy('name');
 
         if ($request->filled('search')) {
@@ -59,23 +66,25 @@ class RestaurantPantryController extends Controller
         $items = $itemsQuery->paginate(15)->withQueryString();
 
         $recentMovements = RestaurantPantryMovement::query()
+            ->whereHas('item', fn ($q) => $q->visiblesPour($user))
             ->with(['item', 'recordedBy', 'stockRequisition'])
             ->latest('occurred_at')
             ->take(20)
             ->get();
 
-        $canManage = app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.pantry.items.creer');
+        $canManage = app(\App\Services\PermissionResolver::class)->allows($user, 'restaurant.pantry.items.creer');
 
         // Valeur du stock : ce que le garde-manger immobilise réellement en argent.
         $stockValue = RestaurantPantryItem::query()
+            ->visiblesPour($user)
             ->active()
             ->get()
             ->sum(fn (RestaurantPantryItem $item) => $item->stockValue());
 
         $stats = [
-            'total_items' => RestaurantPantryItem::query()->count(),
-            'low_stock' => RestaurantPantryItem::query()->lowStock()->count(),
-            'negative_stock' => RestaurantPantryItem::query()->where('current_stock', '<', 0)->count(),
+            'total_items' => RestaurantPantryItem::query()->visiblesPour($user)->count(),
+            'low_stock' => RestaurantPantryItem::query()->visiblesPour($user)->lowStock()->count(),
+            'negative_stock' => RestaurantPantryItem::query()->visiblesPour($user)->where('current_stock', '<', 0)->count(),
             'stock_value' => $stockValue,
         ];
 
@@ -85,6 +94,10 @@ class RestaurantPantryController extends Controller
             'recentMovements' => $recentMovements,
             'stats' => $stats,
             'canManage' => $canManage,
+            // On crée les articles du garde-manger d'un restaurant : depuis la
+            // vue d'ensemble, on choisit d'abord lequel.
+            'peutCreer' => $canManage && ! $vueEnsemble,
+            'vueEnsemble' => $vueEnsemble,
             'units' => self::UNITS,
             'moveTypes' => self::MOVE_TYPES,
             'moveReasons' => self::MOVE_REASONS,
@@ -152,6 +165,8 @@ class RestaurantPantryController extends Controller
 
     public function storeItem(Request $request): RedirectResponse
     {
+        $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
+
         $validated = $request->validate([
             'restaurant_pantry_category_id' => [
                 'nullable',
@@ -162,7 +177,7 @@ class RestaurantPantryController extends Controller
                 'required',
                 'string',
                 'max:140',
-                Rule::unique('restaurant_pantry_items', 'name')->where(fn ($q) => $q),
+                Rule::unique('restaurant_pantry_items', 'name')->where('point_of_sale_id', $restaurant->id),
             ],
             'unit' => ['required', Rule::in(self::UNITS)],
             'is_prepared' => ['nullable', 'boolean'],
@@ -179,6 +194,7 @@ class RestaurantPantryController extends Controller
         $costPrice = isset($validated['cost_price']) ? ((int) $validated['cost_price'] * 100) : null;
 
         RestaurantPantryItem::create([
+            'point_of_sale_id' => $restaurant->id,
             'restaurant_pantry_category_id' => $validated['restaurant_pantry_category_id'] ?? null,
             'name' => trim($validated['name']),
             'unit' => $validated['unit'],
@@ -210,7 +226,7 @@ class RestaurantPantryController extends Controller
                 'max:140',
                 Rule::unique('restaurant_pantry_items', 'name')
                     ->ignore($item->id)
-                    ->where(fn ($q) => $q),
+                    ->where('point_of_sale_id', $item->point_of_sale_id),
             ],
             'unit' => ['required', Rule::in(self::UNITS)],
             'is_prepared' => ['nullable', 'boolean'],

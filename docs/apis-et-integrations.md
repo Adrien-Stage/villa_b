@@ -111,7 +111,7 @@ option commerciale : coupée, la console ne pourrait plus administrer l'établis
 | `GET /api/comptes` | Personnel et rôles détenus |
 | `POST /api/comptes/administrateurs` | Crée un compte administrateur — **seule voie** pour ce rôle |
 | `PATCH /api/comptes/administrateurs/{id}` | Identité, mot de passe, activation d'un administrateur |
-| `GET/POST /api/departements`, `PUT/DELETE /api/departements/{id}` | Départements |
+| `GET/POST /api/departements`, `PUT/DELETE /api/departements/{id}` | Départements (sans modules : un département ne donne aucun droit) |
 
 Règles appliquées par l'établissement, quelle que soit la console :
 
@@ -230,8 +230,8 @@ les modules :
 > **Une notification qui échoue ne fait jamais échouer l'action métier.** Push hors
 > service, table indisponible : l'incident est journalisé, le travail continue.
 
-> **Les destinataires sont résolus par rôle de façon homogène**, en tenant compte des
-> deux systèmes de rôles (colonne héritée et table pivot).
+> **Les destinataires sont résolus par rôle de façon homogène**, sur les seules
+> affectations de rôles.
 
 Les comptes désactivés et les doublons sont écartés ; l'auteur d'une action n'est
 jamais notifié de son propre geste.

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantCustomerOrderItem;
 use App\Models\RestaurantMenuCategory;
 use App\Models\RestaurantMenuItem;
 use App\Models\Tenant;
 use App\Services\RestaurantAssignmentService;
+use App\Services\RestaurantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,8 @@ class RestaurantPortalController extends Controller
     {
         abort_unless($tenant->is_active, 404);
 
+        $restaurant = $this->restaurant($request);
+
         $tableNumber = $request->query('table');
         $tableNumber = is_string($tableNumber) ? trim($tableNumber) : null;
         if ($tableNumber !== null && $tableNumber !== '' && Str::length($tableNumber) > 10) {
@@ -32,7 +36,7 @@ class RestaurantPortalController extends Controller
 
         $categories = RestaurantMenuCategory::query()
             ->withoutGlobalScopes()
-            
+            ->duRestaurant($restaurant)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -40,7 +44,7 @@ class RestaurantPortalController extends Controller
 
         $items = RestaurantMenuItem::query()
             ->withoutGlobalScopes()
-            
+            ->duRestaurant($restaurant)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -48,6 +52,8 @@ class RestaurantPortalController extends Controller
 
         return view('portal.restaurant.menu', [
             'tenant' => $tenant,
+            'restaurant' => $restaurant,
+            'plusieurs' => app(RestaurantContext::class)->plusieurs(),
             'tableNumber' => $tableNumber,
             'categories' => $categories,
             'items' => $items,
@@ -57,6 +63,8 @@ class RestaurantPortalController extends Controller
     public function store(Request $request, Tenant $tenant): RedirectResponse
     {
         abort_unless($tenant->is_active, 404);
+
+        $restaurant = $this->restaurant($request);
 
         $validated = $request->validate([
             'table_number' => ['required', 'string', 'max:10'],
@@ -90,9 +98,10 @@ class RestaurantPortalController extends Controller
         }
 
         $itemIds = array_keys($lines);
+        // Le client commande sur la carte du restaurant où il est attablé.
         $menuItems = RestaurantMenuItem::query()
             ->withoutGlobalScopes()
-            
+            ->duRestaurant($restaurant)
             ->where('is_active', true)
             ->whereIn('id', $itemIds)
             ->get()
@@ -122,7 +131,7 @@ class RestaurantPortalController extends Controller
             $notes = null;
         }
 
-        $order = DB::transaction(function () use ($tenant, $tableNumber, $customerName, $customerPhone, $notes, $lines, $menuItems) {
+        $order = DB::transaction(function () use ($restaurant, $tableNumber, $customerName, $customerPhone, $notes, $lines, $menuItems) {
             $total = 0;
 
             foreach ($lines as $menuItemId => $qty) {
@@ -133,6 +142,7 @@ class RestaurantPortalController extends Controller
             $order = RestaurantCustomerOrder::query()
                 ->withoutGlobalScopes()
                 ->create([
+                    'point_of_sale_id' => $restaurant?->id,
                     'source' => 'portal',
                     'created_by' => null,
                     'table_number' => $tableNumber,
@@ -186,5 +196,21 @@ class RestaurantPortalController extends Controller
             'tenant' => $tenant,
             'order' => $orderModel,
         ]);
+    }
+
+    /**
+     * Restaurant du QR code : chaque restaurant a le sien. Sans précision —
+     * les QR codes imprimés avant qu'il y en ait plusieurs —, le premier.
+     */
+    private function restaurant(Request $request): ?PointOfSale
+    {
+        $restaurants = app(RestaurantContext::class)->restaurants();
+        $choix = $request->input('restaurant');
+
+        if (is_string($choix) && $choix !== '') {
+            return $restaurants->firstWhere('slug', $choix) ?? abort(404);
+        }
+
+        return $restaurants->first();
     }
 }
