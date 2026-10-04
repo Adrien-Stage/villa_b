@@ -114,35 +114,28 @@
     @enddroit
 @endif
 
-<div class="overflow-x-auto rounded-xl bg-white shadow-sm">
-    <table class="w-full text-left text-xs">
-        <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
-            <tr>
-                <th class="px-4 py-2.5">Heure</th>
-                <th class="px-4 py-2.5 text-right">Adultes</th>
-                <th class="px-4 py-2.5 text-right">Enfants</th>
-                <th class="px-4 py-2.5 text-right">Montant</th>
-                <th class="px-4 py-2.5">Paiement</th>
-                <th class="px-4 py-2.5">Par</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-secondary/10">
-            @forelse($buffet->entries as $entree)
-                <tr>
-                    <td class="px-4 py-2.5 text-primary/70">{{ $entree->created_at->format('H:i') }}</td>
-                    <td class="px-4 py-2.5 text-right">{{ $entree->adults }}</td>
-                    <td class="px-4 py-2.5 text-right">{{ $entree->children }}</td>
-                    <td class="px-4 py-2.5 text-right font-semibold text-primary">{{ $fcfa($entree->amount) }}</td>
-                    <td class="px-4 py-2.5 text-primary/70">
-                        {{ $libellesModes[$entree->payment_method] ?? $entree->payment_method }}
-                        @if($entree->booking) · ch. {{ $entree->booking->room?->number }} @endif
-                    </td>
-                    <td class="px-4 py-2.5 text-primary/60">{{ $entree->recordedBy?->name }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="6" class="px-4 py-10 text-center text-primary/50">Aucune entrée pour l'instant.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+<x-table :rows="$buffet->entries" empty="Aucune entrée pour l'instant." empty-icon="ticket" caption="Entrées du buffet">
+    <x-slot:head>
+        <x-table.col>Heure</x-table.col>
+        <x-table.col align="right">Adultes</x-table.col>
+        <x-table.col align="right">Enfants</x-table.col>
+        <x-table.col align="right">Montant</x-table.col>
+        <x-table.col>Paiement</x-table.col>
+        <x-table.col hide="lg">Par</x-table.col>
+    </x-slot:head>
+
+    @foreach($buffet->entries as $entree)
+        <x-table.row>
+            <x-table.cell nowrap class="text-primary/70">{{ $entree->created_at->format('H:i') }}</x-table.cell>
+            <x-table.cell align="right">{{ $entree->adults }}</x-table.cell>
+            <x-table.cell align="right">{{ $entree->children }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ $fcfa($entree->amount) }}</x-table.cell>
+            <x-table.cell class="text-primary/70">
+                {{ $libellesModes[$entree->payment_method] ?? $entree->payment_method }}
+                @if($entree->booking) · ch. {{ $entree->booking->room?->number }} @endif
+            </x-table.cell>
+            <x-table.cell hide="lg" class="text-primary/60">{{ $entree->recordedBy?->name }}</x-table.cell>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection

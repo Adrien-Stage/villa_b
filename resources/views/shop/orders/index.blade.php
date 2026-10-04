@@ -80,71 +80,42 @@
         </form>
     </div>
 
-    <!-- Tableau des commandes -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Commande</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Client</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Montant</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Paiement</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-900">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @forelse ($orders as $order)
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <p class="font-medium text-primary">{{ $order->order_number }}</p>
-                                <p class="text-secondary text-sm">{{ $order->total_items }} article(s)</p>
-                            </td>
-                            <td class="px-6 py-4">
-                                <p class="font-medium text-primary">{{ $order->customer_name }}</p>
-                                @if ($order->customer_phone)
-                                    <p class="text-secondary text-sm">{{ $order->customer_phone }}</p>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 font-medium text-primary">
-                                {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-6 py-4">
-                                @if ($order->payment_status === 'paid')
-                                    <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">Payée</span>
-                                @elseif ($order->payment_status === 'unpaid')
-                                    <span class="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">En attente</span>
-                                @else
-                                    <span class="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm font-medium">Remboursée</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-secondary text-sm">
-                                {{ $order->created_at->locale('fr')->format('d M Y H:i') }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <a href="{{ route('shop.orders.show', $order) }}"
-                                   class="text-primary hover:text-primary/70 transition-colors">
-                                    <i data-lucide="eye" class="w-4 h-4 inline"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-secondary">
-                                <i data-lucide="shopping-cart" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
-                                <p>Aucune commande trouvée</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <x-table :rows="$orders" empty="Aucune commande trouvée." empty-icon="shopping-cart" caption="Commandes de la boutique">
+        <x-slot:head>
+            <x-table.col>Commande</x-table.col>
+            <x-table.col>Client</x-table.col>
+            <x-table.col align="right">Montant</x-table.col>
+            <x-table.col>Paiement</x-table.col>
+            <x-table.col hide="lg">Date</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
 
-    <!-- Pagination -->
-    <div class="mt-6">
-        {{ $orders->links() }}
-    </div>
+        @foreach($orders as $order)
+            <x-table.row :href="route('shop.orders.show', $order)">
+                <x-table.cell nowrap>
+                    <a href="{{ route('shop.orders.show', $order) }}" class="font-medium text-primary hover:underline">{{ $order->order_number }}</a>
+                    <p class="text-xs text-primary/50">{{ $order->total_items }} article(s)</p>
+                </x-table.cell>
+                <x-table.cell>
+                    <p class="font-medium text-primary">{{ $order->customer_name }}</p>
+                    @if($order->customer_phone)<p class="text-xs text-primary/50">{{ $order->customer_phone }}</p>@endif
+                </x-table.cell>
+                <x-table.cell align="right" nowrap class="font-medium">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+                <x-table.cell nowrap>
+                    @if($order->payment_status === 'paid')
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">Payée</span>
+                    @elseif($order->payment_status === 'unpaid')
+                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">En attente</span>
+                    @else
+                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">Remboursée</span>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">{{ $order->created_at->locale('fr')->format('d M Y H:i') }}</x-table.cell>
+                <x-table.actions :label="'Actions pour la commande '.$order->order_number">
+                    <x-table.action :href="route('shop.orders.show', $order)" icon="eye">Ouvrir</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 @endsection

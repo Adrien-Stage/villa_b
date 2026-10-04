@@ -144,106 +144,70 @@
 </div>
 
 {{-- Tableau des inventaires --}}
-<div class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
-    @if($counts->isEmpty())
-        <div class="px-5 py-12 text-center text-primary/40">
-            <i data-lucide="clipboard-check" class="w-12 h-12 mx-auto mb-3 opacity-25"></i>
-            <p class="text-sm font-medium">Aucun inventaire physique enregistré.</p>
-            <p class="text-xs text-primary/35 mt-1">Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10 text-sm">
-                <thead class="bg-gray-50/80">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Réf.</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Périmètre</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Statut</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur théorique</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur constatée</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Écart valorisé</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Clôturé par</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($counts as $count)
-                        @php
-                            $badgeStyles = [
-                                'draft'     => 'bg-amber-50 text-amber-700 border-amber-200',
-                                'closed'    => 'bg-green-50 text-green-700 border-green-200',
-                                'cancelled' => 'bg-gray-100 text-gray-600 border-gray-200',
-                            ];
-                            $var = (int) $count->variance_value;
-                        @endphp
-                        <tr class="hover:bg-accent/5 transition-colors">
-                            <td class="px-4 py-3 font-mono font-medium text-primary whitespace-nowrap">
-                                <a href="{{ route('economat.stock_counts.show', $count) }}" class="hover:underline text-indigo-600">
-                                    {{ $count->reference }}
-                                </a>
-                            </td>
-                            <td class="px-4 py-3 text-primary/70 whitespace-nowrap">
-                                {{ $count->count_date->format('d/m/Y') }}
-                            </td>
-                            <td class="px-4 py-3 text-primary/80 whitespace-nowrap">
-                                {{ $count->category?->name ?? 'Tout le magasin' }}
-                                <span class="text-xs text-primary/40 block">({{ $count->lines_count }} articles)</span>
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border {{ $badgeStyles[$count->status] ?? 'bg-gray-100' }}">
-                                    {{ $count->statusLabel() }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right font-mono text-xs text-primary/70 whitespace-nowrap">
-                                {{ number_format($count->total_theoretical_value / 100, 0, ',', ' ') }} F
-                            </td>
-                            <td class="px-4 py-3 text-right font-mono text-xs whitespace-nowrap">
-                                @if($count->isClosed())
-                                    <span class="font-medium text-primary">{{ number_format($count->total_counted_value / 100, 0, ',', ' ') }} F</span>
-                                @else
-                                    <span class="text-primary/40">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right font-mono text-xs whitespace-nowrap">
-                                @if($count->isClosed())
-                                    <span class="font-bold {{ $var < 0 ? 'text-red-600' : ($var > 0 ? 'text-green-600' : 'text-primary/60') }}">
-                                        {{ $var > 0 ? '+' : ($var < 0 ? '−' : '') }}{{ number_format(abs($var) / 100, 0, ',', ' ') }} F
-                                    </span>
-                                @else
-                                    <span class="text-primary/40">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-xs text-primary/60 whitespace-nowrap">
-                                @if($count->closedBy)
-                                    {{ $count->closedBy->name }}
-                                    <span class="text-[10px] text-primary/40 block">{{ $count->closed_at?->format('d/m/Y H:i') }}</span>
-                                @else
-                                    <span class="text-primary/30">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <a href="{{ route('economat.stock_counts.show', $count) }}" class="p-1.5 rounded-lg border border-secondary/20 hover:bg-accent/15 text-primary text-xs" title="Consulter la feuille">
-                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                    </a>
-                                    @if($count->isClosed())
-                                        <a href="{{ route('economat.stock_counts.report', $count) }}" target="_blank" class="p-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs" title="Procès-Verbal (PV)">
-                                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                        </a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @if($counts->hasPages())
-            <div class="px-4 py-3 border-t border-secondary/15">
-                {{ $counts->links() }}
-            </div>
-        @endif
-    @endif
-</div>
+@php
+    $badgeStyles = [
+        'draft'     => 'bg-amber-50 text-amber-700 border-amber-200',
+        'closed'    => 'bg-green-50 text-green-700 border-green-200',
+        'cancelled' => 'bg-gray-100 text-gray-600 border-gray-200',
+    ];
+@endphp
+<x-table :rows="$counts" empty="Aucun inventaire physique enregistré. Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire." empty-icon="clipboard-check" caption="Inventaires du magasin central">
+    <x-slot:head>
+        <x-table.col>Réf.</x-table.col>
+        <x-table.col hide="lg">Date</x-table.col>
+        <x-table.col hide="xl">Périmètre</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col align="right" hide="2xl">Valeur théorique</x-table.col>
+        <x-table.col align="right" hide="2xl">Valeur constatée</x-table.col>
+        <x-table.col align="right">Écart valorisé</x-table.col>
+        <x-table.col hide="3xl">Clôturé par</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
+
+    @foreach($counts as $count)
+        @php $var = (int) $count->variance_value; @endphp
+        <x-table.row :href="route('economat.stock_counts.show', $count)">
+            <x-table.cell nowrap>
+                <a href="{{ route('economat.stock_counts.show', $count) }}" class="font-mono font-medium text-primary hover:underline">{{ $count->reference }}</a>
+            </x-table.cell>
+            <x-table.cell hide="lg" nowrap class="text-primary/70">{{ $count->count_date->format('d/m/Y') }}</x-table.cell>
+            <x-table.cell hide="xl" nowrap class="text-primary/80">
+                {{ $count->category?->name ?? 'Tout le magasin' }}
+                <span class="block text-xs text-primary/45">({{ $count->lines_count }} articles)</span>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                <span class="inline-flex items-center rounded border px-2 py-0.5 text-xs font-semibold {{ $badgeStyles[$count->status] ?? 'bg-gray-100' }}">{{ $count->statusLabel() }}</span>
+            </x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap class="font-mono text-xs text-primary/70">{{ number_format($count->total_theoretical_value / 100, 0, ',', ' ') }} F</x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap class="font-mono text-xs">
+                @if($count->isClosed())
+                    <span class="font-medium text-primary">{{ number_format($count->total_counted_value / 100, 0, ',', ' ') }} F</span>
+                @else
+                    <span class="text-primary/40">—</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-mono text-xs">
+                @if($count->isClosed())
+                    <span class="font-bold {{ $var < 0 ? 'text-red-600' : ($var > 0 ? 'text-green-600' : 'text-primary/60') }}">{{ $var > 0 ? '+' : ($var < 0 ? '−' : '') }}{{ number_format(abs($var) / 100, 0, ',', ' ') }} F</span>
+                @else
+                    <span class="text-primary/40">—</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="3xl" nowrap class="text-xs text-primary/60">
+                @if($count->closedBy)
+                    {{ $count->closedBy->name }}
+                    <span class="block text-[10px] text-primary/45">{{ $count->closed_at?->format('d/m/Y H:i') }}</span>
+                @else
+                    <span class="text-primary/30">—</span>
+                @endif
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour l\'inventaire '.$count->reference">
+                <x-table.action :href="route('economat.stock_counts.show', $count)" icon="eye">Consulter la feuille</x-table.action>
+                @if($count->isClosed())
+                    <x-table.action :href="route('economat.stock_counts.report', $count)" icon="printer" target="_blank">Procès-verbal</x-table.action>
+                @endif
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection

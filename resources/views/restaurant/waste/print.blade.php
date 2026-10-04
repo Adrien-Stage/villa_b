@@ -4,22 +4,7 @@
     <meta charset="UTF-8">
     <title>PV de mise au rebut - {{ $waste->reference }}</title>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 15mm 15mm 20mm 15mm;
-            @bottom-right {
-                content: "Page " counter(page) " / " counter(pages);
-                font-family: Arial, sans-serif;
-                font-size: 8pt;
-                color: #666;
-            }
-            @bottom-left {
-                content: "Document généré le {{ now()->format('d/m/Y à H:i') }} — ERP Hôtelier";
-                font-family: Arial, sans-serif;
-                font-size: 8pt;
-                color: #666;
-            }
-        }
+        @include('partials.impression', ['haut' => '15mm', 'bas' => '20mm', 'cotes' => '15mm', 'pied' => 'Document généré le '.now()->format('d/m/Y à H:i').' — ERP Hôtelier'])
 
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;

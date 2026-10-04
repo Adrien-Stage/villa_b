@@ -67,43 +67,40 @@
     @endif
 @enddroit
 
-<div class="overflow-x-auto rounded-xl bg-white shadow-sm">
-    <table class="w-full text-left text-xs">
-        <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
-            <tr>
-                <th class="px-4 py-2.5">Jour</th>
-                <th class="px-4 py-2.5">Repas</th>
-                @if($vueEnsemble)<th class="px-4 py-2.5">Restaurant</th>@endif
-                <th class="px-4 py-2.5 text-right">Adultes</th>
-                <th class="px-4 py-2.5 text-right">Enfants</th>
-                <th class="px-4 py-2.5 text-right">Total</th>
-                <th class="px-4 py-2.5">Statut</th>
-                <th class="px-4 py-2.5"></th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-secondary/10">
-            @forelse($services as $service)
-                <tr>
-                    <td class="px-4 py-2.5 font-semibold text-primary">{{ $service->service_date->format('d/m/Y') }}</td>
-                    <td class="px-4 py-2.5 text-primary/70">{{ $service->libelleRepas() }}</td>
-                    @if($vueEnsemble)<td class="px-4 py-2.5 text-primary/70">{{ $service->pointOfSale?->name }}</td>@endif
-                    <td class="px-4 py-2.5 text-right">{{ (int) $service->total_adultes }}</td>
-                    <td class="px-4 py-2.5 text-right">{{ (int) $service->total_enfants }}</td>
-                    <td class="px-4 py-2.5 text-right font-semibold text-primary">{{ $fcfa($service->total_encaisse) }}</td>
-                    <td class="px-4 py-2.5">
-                        <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $service->estOuvert() ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600' }}">
-                            {{ $service->estOuvert() ? 'Ouvert' : 'Clos' }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-2.5 text-right">
-                        <a href="{{ route('restaurant.buffets.show', $service) }}" class="font-semibold text-primary hover:underline">Ouvrir</a>
-                    </td>
-                </tr>
-            @empty
-                <tr><td colspan="8" class="px-4 py-10 text-center text-primary/50">Aucun buffet.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
-<div class="mt-4">{{ $services->links() }}</div>
+<x-table :rows="$services" empty="Aucun buffet." empty-icon="salad" caption="Services de buffet">
+    <x-slot:head>
+        <x-table.col>Jour</x-table.col>
+        <x-table.col>Repas</x-table.col>
+        @if($vueEnsemble)<x-table.col hide="xl">Restaurant</x-table.col>@endif
+        <x-table.col align="right" hide="lg">Adultes</x-table.col>
+        <x-table.col align="right" hide="lg">Enfants</x-table.col>
+        <x-table.col align="right">Total</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
+
+    @foreach($services as $service)
+        <x-table.row :href="route('restaurant.buffets.show', $service)">
+            <x-table.cell nowrap>
+                <a href="{{ route('restaurant.buffets.show', $service) }}" class="font-semibold text-primary hover:underline">{{ $service->service_date->format('d/m/Y') }}</a>
+            </x-table.cell>
+            <x-table.cell class="text-primary/70">{{ $service->libelleRepas() }}</x-table.cell>
+            @if($vueEnsemble)<x-table.cell hide="xl" class="text-primary/70">{{ $service->pointOfSale?->name }}</x-table.cell>@endif
+            <x-table.cell align="right" hide="lg">{{ (int) $service->total_adultes }}</x-table.cell>
+            <x-table.cell align="right" hide="lg">{{ (int) $service->total_enfants }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ $fcfa($service->total_encaisse) }}</x-table.cell>
+            <x-table.cell nowrap>
+                <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $service->estOuvert() ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600' }}">{{ $service->estOuvert() ? 'Ouvert' : 'Clos' }}</span>
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour le buffet du '.$service->service_date->format('d/m/Y')">
+                <x-table.action :href="route('restaurant.buffets.show', $service)" icon="{{ $service->estOuvert() ? 'ticket' : 'eye' }}">{{ $service->estOuvert() ? 'Enregistrer les entrées' : 'Ouvrir' }}</x-table.action>
+                @if($service->estOuvert())
+                    @droit('restaurant.buffets.close')
+                        <x-table.action :action="route('restaurant.buffets.close', $service)" icon="lock" tone="danger" confirm="Clore ce buffet ? Il n'enregistrera plus d'entrées.">Clore</x-table.action>
+                    @enddroit
+                @endif
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection

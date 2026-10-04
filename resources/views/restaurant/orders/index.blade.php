@@ -124,114 +124,63 @@
     </form>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
-    @if($orders->isEmpty())
-        <div class="py-16 text-center text-primary/35">
-            <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-            <p class="text-sm font-medium">Aucune commande</p>
-            <p class="text-xs mt-1">Les commandes du portail apparaitront ici.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Commande</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Table</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Serveur</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Source</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Total</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @php
-                        $statusStyles = [
-                            'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
-                            'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
-                            'preparing' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
-                            'ready' => 'bg-green-50 text-green-700 border-green-200',
-                            'served' => 'bg-gray-100 text-gray-600 border-gray-200',
-                            'canceled' => 'bg-red-50 text-red-600 border-red-200',
-                        ];
-                    @endphp
-                    @foreach($orders as $order)
-                        <tr class="hover:bg-accent/10">
-                            <td class="px-4 py-3">
-                                <a href="{{ route('restaurant.orders.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">
-                                    #{{ $order->id }}
-                                </a>
-                                <p class="text-xs text-primary/45 mt-0.5">
-                                    {{ $order->items_count }} item{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}
-                                </p>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-primary/70">
-                                {{ $order->table_number ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-sm">
-                                @if($order->assignedServer)
-                                    <span class="text-primary/70">{{ $order->assignedServer->name }}</span>
-                                @else
-                                    <span class="text-red-500 text-xs font-medium">Non affectée</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary border border-secondary/15">
-                                    {{ ($order->source ?? 'portal') === 'portal' ? 'Portail' : 'Salle' }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border {{ $statusStyles[$order->status] ?? 'bg-white text-primary border-secondary/25' }}">
-                                    {{ $statusLabels[$order->status] ?? ucfirst($order->status) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-primary">
-                                {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center justify-end gap-2">
-                                    {{-- Action contextuelle rapide selon l'étape --}}
-                                    @if($isServer && $order->status === 'pending')
-                                        @if(!$order->assigned_server_id)
-                                            <form method="POST" action="{{ route('restaurant.orders.claim', $order) }}">
-                                                @csrf
-                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg border border-secondary/25 bg-white text-primary text-xs font-semibold hover:bg-accent/20">
-                                                    Prendre en charge
-                                                </button>
-                                            </form>
-                                        @endif
-                                        <form method="POST" action="{{ route('restaurant.orders.send_to_kitchen', $order) }}">
-                                            @csrf
-                                            <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark">
-                                                Transmettre en cuisine
-                                            </button>
-                                        </form>
-                                    @elseif($isServer && $order->status === 'ready')
-                                        <form method="POST" action="{{ route('restaurant.orders.served', $order) }}">
-                                            @csrf
-                                            <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
-                                                Marquer servi
-                                            </button>
-                                        </form>
-                                    @endif
-                                    <a href="{{ route('restaurant.orders.show', $order) }}"
-                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+@php
+    $statusStyles = [
+        'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
+        'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+        'preparing' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        'ready' => 'bg-green-50 text-green-700 border-green-200',
+        'served' => 'bg-gray-100 text-gray-600 border-gray-200',
+        'canceled' => 'bg-red-50 text-red-600 border-red-200',
+    ];
+@endphp
+<x-table :rows="$orders" empty="Aucune commande. Les commandes du portail apparaîtront ici." empty-icon="receipt" caption="Commandes">
+    <x-slot:head>
+        <x-table.col>Commande</x-table.col>
+        <x-table.col>Table</x-table.col>
+        <x-table.col hide="xl">Serveur</x-table.col>
+        <x-table.col hide="2xl">Source</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col align="right">Total</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        <div class="px-4 py-4 border-t border-secondary/15">
-            {{ $orders->links() }}
-        </div>
-    @endif
-</div>
+    @foreach($orders as $order)
+        <x-table.row :href="route('restaurant.orders.show', $order)">
+            <x-table.cell nowrap>
+                <a href="{{ route('restaurant.orders.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
+                <p class="mt-0.5 text-xs text-primary/45">{{ $order->items_count }} article{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}</p>
+            </x-table.cell>
+            <x-table.cell class="text-primary/70">{{ $order->table_number ?? '—' }}</x-table.cell>
+            <x-table.cell hide="xl">
+                @if($order->assignedServer)
+                    <span class="text-primary/70">{{ $order->assignedServer->name }}</span>
+                @else
+                    <span class="text-xs font-medium text-red-500">Non affectée</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="2xl">
+                <span class="inline-flex items-center rounded-full border border-secondary/15 bg-accent/30 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ ($order->source ?? 'portal') === 'portal' ? 'Portail' : 'Salle' }}</span>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $statusStyles[$order->status] ?? 'bg-white text-primary border-secondary/25' }}">{{ $statusLabels[$order->status] ?? ucfirst($order->status) }}</span>
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+            <x-table.actions :label="'Actions pour la commande #'.$order->id">
+                {{-- Le geste attendu à cette étape, puis la fiche. --}}
+                @if($isServer && $order->status === 'pending')
+                    @if(! $order->assigned_server_id)
+                        <x-table.action :action="route('restaurant.orders.claim', $order)" icon="hand">Prendre en charge</x-table.action>
+                    @endif
+                    <x-table.action :action="route('restaurant.orders.send_to_kitchen', $order)" icon="chef-hat">Transmettre en cuisine</x-table.action>
+                @elseif($isServer && $order->status === 'ready')
+                    <x-table.action :action="route('restaurant.orders.served', $order)" icon="check" tone="success">Marquer servi</x-table.action>
+                @endif
+                <x-table.action :href="route('restaurant.orders.show', $order)" icon="eye">Ouvrir</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 @droit('restaurant.orders.creer')
 {{-- Create order modal --}}

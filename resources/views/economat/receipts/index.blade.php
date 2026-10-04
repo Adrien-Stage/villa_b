@@ -110,99 +110,55 @@
     </div>
 
     {{-- Tableau des Bons d'Entrée --}}
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-        @if($receipts->isEmpty())
-            <div class="py-16 text-center text-sm text-primary/40">
-                <i data-lucide="package-open" class="w-12 h-12 mx-auto text-primary/20 mb-3"></i>
-                <p class="font-medium text-primary/60">Aucun bon d'entrée en stock trouvé pour ces critères.</p>
-                <p class="text-xs text-primary/40 mt-1">Les bons d'entrée sont générés lors du déchargement et pointage contradictoire des bons de commande.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70 border-b border-secondary/15">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">N° Bon d'entrée</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">N° Bon Commande</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Fournisseur</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">BL Fournisseur</th>
-                            <th class="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Articles</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur admise</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Litige / Qualité</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Signé par</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($receipts as $rc)
-                            <tr class="hover:bg-accent/5 transition-colors">
-                                <td class="px-5 py-3">
-                                    <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-primary hover:underline">
-                                        {{ $rc->number }}
-                                    </a>
-                                </td>
-                                <td class="px-4 py-3">
-                                    @if($rc->purchaseOrder)
-                                        <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">
-                                            {{ $rc->purchaseOrder->number }}
-                                        </a>
-                                    @else
-                                        <span class="text-xs text-primary/40">—</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 font-medium text-primary">
-                                    {{ $rc->supplier?->name ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 font-mono text-xs text-primary/70">
-                                    {{ $rc->delivery_note_number ?? '—' }}
-                                </td>
-                                <td class="px-3 py-3 text-right font-mono text-primary/70">
-                                    {{ $rc->lines_count }}
-                                </td>
-                                <td class="px-4 py-3 text-right font-mono font-bold text-emerald-800">
-                                    {{ number_format($rc->total_amount / 100, 0, ',', ' ') }} F
-                                </td>
-                                <td class="px-4 py-3">
-                                    @if($rc->hasRejections())
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                            <i data-lucide="alert-circle" class="w-3 h-3"></i> Refusé ({{ rtrim(rtrim(number_format($rc->totalRejectedQuantity(), 2, ',', ' '), '0'), ',') }})
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            <i data-lucide="check" class="w-3 h-3"></i> 100% Conforme
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200/70 rounded text-[11px] font-medium text-indigo-900" title="Signature certifiée">
-                                        <i data-lucide="pen-tool" class="w-3 h-3 text-indigo-600"></i>
-                                        <span>{{ $rc->receiverSignature() ?? ($rc->receivedBy?->name ?? 'Économe') }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-xs text-primary/60 font-mono">
-                                    {{ $rc->received_at->format('d/m/Y H:i') }}
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        <a href="{{ route('economat.receipts.print', $rc) }}" target="_blank" class="p-1.5 border border-secondary/30 rounded-lg text-primary hover:bg-gray-100 transition-colors" title="Imprimer le bordereau">
-                                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                        </a>
-                                        <a href="{{ route('economat.receipts.show', $rc) }}" class="px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 rounded-lg text-xs font-semibold text-primary transition-colors">
-                                            Détails
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    <x-table :rows="$receipts" empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage contradictoire des bons de commande." empty-icon="package-open" caption="Bons d'entrée en stock">
+        <x-slot:head>
+            <x-table.col>N° bon d'entrée</x-table.col>
+            <x-table.col hide="xl">N° bon de commande</x-table.col>
+            <x-table.col>Fournisseur</x-table.col>
+            <x-table.col hide="3xl">BL fournisseur</x-table.col>
+            <x-table.col align="right" hide="2xl">Articles</x-table.col>
+            <x-table.col align="right">Valeur admise</x-table.col>
+            <x-table.col hide="lg">Litige / qualité</x-table.col>
+            <x-table.col hide="3xl">Signé par</x-table.col>
+            <x-table.col hide="xl">Date</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
 
-            <div class="px-5 py-3 border-t border-secondary/15 bg-gray-50/50">
-                {{ $receipts->links() }}
-            </div>
-        @endif
-    </div>
+        @foreach($receipts as $rc)
+            <x-table.row :href="route('economat.receipts.show', $rc)">
+                <x-table.cell nowrap>
+                    <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-primary hover:underline">{{ $rc->number }}</a>
+                </x-table.cell>
+                <x-table.cell hide="xl" nowrap>
+                    @if($rc->purchaseOrder)
+                        <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
+                    @else
+                        <span class="text-xs text-primary/40">—</span>
+                    @endif
+                </x-table.cell>
+                <x-table.cell class="font-medium">{{ $rc->supplier?->name ?? '—' }}</x-table.cell>
+                <x-table.cell hide="3xl" class="font-mono text-xs text-primary/70">{{ $rc->delivery_note_number ?? '—' }}</x-table.cell>
+                <x-table.cell align="right" hide="2xl" class="font-mono text-primary/70">{{ $rc->lines_count }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono font-bold text-emerald-800">{{ number_format($rc->total_amount / 100, 0, ',', ' ') }} F</x-table.cell>
+                <x-table.cell hide="lg" nowrap>
+                    @if($rc->hasRejections())
+                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700"><i data-lucide="alert-circle" class="h-3 w-3" aria-hidden="true"></i> Refusé ({{ rtrim(rtrim(number_format($rc->totalRejectedQuantity(), 2, ',', ' '), '0'), ',') }})</span>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"><i data-lucide="check" class="h-3 w-3" aria-hidden="true"></i> 100 % conforme</span>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="3xl" nowrap>
+                    <span class="inline-flex items-center gap-1.5 rounded border border-indigo-200/70 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900" title="Signature certifiée">
+                        <i data-lucide="pen-tool" class="h-3 w-3 text-indigo-600" aria-hidden="true"></i><span>{{ $rc->receiverSignature() ?? ($rc->receivedBy?->name ?? 'Économe') }}</span>
+                    </span>
+                </x-table.cell>
+                <x-table.cell hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $rc->received_at->format('d/m/Y H:i') }}</x-table.cell>
+                <x-table.actions :label="'Actions pour le bon d\'entrée '.$rc->number">
+                    <x-table.action :href="route('economat.receipts.show', $rc)" icon="eye">Détails</x-table.action>
+                    <x-table.action :href="route('economat.receipts.print', $rc)" icon="printer" target="_blank">Imprimer le bordereau</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 @endsection

@@ -33,10 +33,10 @@
     <ul class="space-y-3">
         @foreach($services as $cle => $libelle)
             @php
-                $categories = match ($cle) {
-                    \App\Services\CountSheetService::ECONOMAT => $stockCategories,
-                    \App\Services\CountSheetService::PANTRY   => $pantryCategories,
-                    default                                   => collect(),
+                $categories = match (true) {
+                    $cle === \App\Services\CountSheetService::ECONOMAT              => $stockCategories,
+                    str_starts_with($cle, \App\Services\CountSheetService::PANTRY) => $pantryCategories,
+                    default                                                         => collect(),
                 };
             @endphp
             <li class="bg-white border border-secondary/20 rounded-xl p-4">

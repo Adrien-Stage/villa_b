@@ -77,51 +77,42 @@
     @endif
 @enddroit
 
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    <table class="w-full text-left text-xs">
-        <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
-            <tr>
-                <th class="px-4 py-2.5">N°</th>
-                <th class="px-4 py-2.5">Administrateur</th>
-                <th class="px-4 py-2.5">Services</th>
-                <th class="px-4 py-2.5">Motif</th>
-                <th class="px-4 py-2.5">Période</th>
-                <th class="px-4 py-2.5">Console</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-secondary/15">
-            @forelse($interventions as $i)
-                <tr>
-                    <td class="px-4 py-2.5 font-mono text-primary/60">#{{ $i->id }}</td>
-                    <td class="px-4 py-2.5 text-primary">{{ $i->user?->name }}</td>
-                    <td class="px-4 py-2.5 text-primary/80">{{ implode(', ', $i->libellesPerimetres()) }}</td>
-                    <td class="px-4 py-2.5 text-primary/80">{{ $i->motif }}</td>
-                    <td class="px-4 py-2.5 whitespace-nowrap text-primary/60">
-                        {{ $i->debut->format('d/m/Y H:i') }} →
-                        @if($i->estEnCours())
-                            <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">en cours, jusqu'à {{ $i->fin_prevue->format('H:i') }}</span>
-                        @else
-                            {{ $i->fin_reelle?->format('H:i') }}
-                            <span class="text-primary/40">({{ $i->cloture === 'expiree' ? 'durée écoulée' : 'terminée' }})</span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-2.5">
-                        @if($i->erp_a_transmettre)
-                            <span class="rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-700">En attente</span>
-                        @elseif($i->erp_tardive)
-                            <span class="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">Transmise en retard</span>
-                        @else
-                            <span class="rounded-full bg-green-50 px-2 py-0.5 font-semibold text-green-700">Transmise</span>
-                        @endif
-                    </td>
-                </tr>
-            @empty
-                <tr><td colspan="6" class="px-4 py-8 text-center text-primary/50">Aucune intervention.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+<x-table :rows="$interventions" empty="Aucune intervention." empty-icon="siren" caption="Interventions de l'administrateur">
+    <x-slot:head>
+        <x-table.col>N°</x-table.col>
+        <x-table.col>Administrateur</x-table.col>
+        <x-table.col hide="xl">Services</x-table.col>
+        <x-table.col>Motif</x-table.col>
+        <x-table.col hide="lg">Période</x-table.col>
+        <x-table.col>Console</x-table.col>
+    </x-slot:head>
 
-<div class="mt-4">{{ $interventions->links() }}</div>
+    @foreach($interventions as $i)
+        <x-table.row>
+            <x-table.cell nowrap class="font-mono text-primary/60">#{{ $i->id }}</x-table.cell>
+            <x-table.cell>{{ $i->user?->name }}</x-table.cell>
+            <x-table.cell hide="xl" class="text-primary/80">{{ implode(', ', $i->libellesPerimetres()) }}</x-table.cell>
+            <x-table.cell class="max-w-md text-primary/80">{{ $i->motif }}</x-table.cell>
+            <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">
+                {{ $i->debut->format('d/m/Y H:i') }} →
+                @if($i->estEnCours())
+                    <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">en cours, jusqu'à {{ $i->fin_prevue->format('H:i') }}</span>
+                @else
+                    {{ $i->fin_reelle?->format('H:i') }}
+                    <span class="text-primary/45">({{ $i->cloture === 'expiree' ? 'durée écoulée' : 'terminée' }})</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell nowrap>
+                @if($i->erp_a_transmettre)
+                    <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">En attente</span>
+                @elseif($i->erp_tardive)
+                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">Transmise en retard</span>
+                @else
+                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">Transmise</span>
+                @endif
+            </x-table.cell>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 @endsection

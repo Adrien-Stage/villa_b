@@ -121,35 +121,22 @@
     </div>
 
     {{-- Tableau des Fournisseurs --}}
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-xs">
-        @if($suppliers->isEmpty())
-            <div class="px-6 py-16 text-center">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/5 text-primary/40 mb-3">
-                    <i data-lucide="truck" class="w-7 h-7"></i>
-                </div>
-                <h3 class="text-base font-semibold text-primary mb-1">Aucun fournisseur trouvé</h3>
-                <p class="text-sm text-primary/50 max-w-md mx-auto mb-4">
-                    {{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun partenaire ne correspond à vos critères de recherche.' : 'Commencez par ajouter votre premier fournisseur pour pouvoir émettre des bons de commande.' }}
-                </p>
-                <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Ajouter un fournisseur
-                </button>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/80 border-b border-secondary/20">
-                        <tr>
-                            <th class="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/60">Fournisseur & Secteur</th>
-                            <th class="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/60">Interlocuteur & Contacts</th>
-                            <th class="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/60">Conditions Commerciales</th>
-                            <th class="px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/60">Articles Liés</th>
-                            <th class="px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/60">Bons (PO)</th>
-                            <th class="px-5 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/60">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($suppliers as $supplier)
+    <x-table :rows="$suppliers" empty="{{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun fournisseur ne correspond à vos critères de recherche.' : 'Aucun fournisseur. Ajoutez le premier pour pouvoir émettre des bons de commande.' }}" empty-icon="truck" caption="Fournisseurs">
+        <x-slot:emptyActions>
+            <button type="button" x-on:click="openCreate()" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-surface-dark">
+                <i data-lucide="plus" class="h-4 w-4" aria-hidden="true"></i> Ajouter un fournisseur
+            </button>
+        </x-slot:emptyActions>
+        <x-slot:head>
+            <x-table.col>Fournisseur &amp; secteur</x-table.col>
+            <x-table.col hide="xl">Interlocuteur &amp; contacts</x-table.col>
+            <x-table.col hide="3xl">Conditions commerciales</x-table.col>
+            <x-table.col align="center" hide="2xl">Articles liés</x-table.col>
+            <x-table.col align="center" hide="lg">Bons (PO)</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($suppliers as $supplier)
                             @php
                                 $editPayload = [
                                     'id'                      => $supplier->id,
@@ -178,9 +165,8 @@
                                     ])->values()->all(),
                                 ];
                             @endphp
-                            <tr class="hover:bg-gray-50/50 transition-colors {{ $supplier->is_active ? '' : 'opacity-60 bg-gray-50/30' }}">
-                                {{-- Fournisseur & Secteur --}}
-                                <td class="px-5 py-4">
+            <x-table.row :muted="! $supplier->is_active">
+                <x-table.cell>
                                     <div class="flex items-start gap-2.5">
                                         <div class="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 mt-0.5">
                                             {{ strtoupper(substr($supplier->name, 0, 2)) }}
@@ -212,10 +198,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                </td>
-
-                                {{-- Interlocuteur & Contacts --}}
-                                <td class="px-5 py-4">
+                </x-table.cell>
+                <x-table.cell hide="xl">
                                     <div class="space-y-1 text-xs">
                                         @if($supplier->contact_name)
                                             <div class="font-medium text-primary flex items-center gap-1">
@@ -240,10 +224,8 @@
                                             </div>
                                         @endif
                                     </div>
-                                </td>
-
-                                {{-- Conditions Commerciales --}}
-                                <td class="px-5 py-4">
+                </x-table.cell>
+                <x-table.cell hide="3xl">
                                     <div class="text-xs space-y-1">
                                         <div class="text-primary/70">
                                             <span class="text-primary/40 text-[11px]">Règlement :</span>
@@ -261,59 +243,28 @@
                                             </div>
                                         @endif
                                     </div>
-                                </td>
-
-                                {{-- Articles Liés --}}
-                                <td class="px-5 py-4 text-center">
+                </x-table.cell>
+                <x-table.cell align="center" hide="2xl" nowrap>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold {{ $supplier->stock_items_count > 0 ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-gray-100 text-gray-500' }}">
                                         <i data-lucide="package" class="w-3.5 h-3.5"></i>
                                         {{ $supplier->stock_items_count }} article(s)
                                     </span>
-                                </td>
-
-                                {{-- Bons de commande --}}
-                                <td class="px-5 py-4 text-center">
+                </x-table.cell>
+                <x-table.cell align="center" hide="lg" nowrap>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold {{ $supplier->purchase_orders_count > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500' }}">
                                         <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
                                         {{ $supplier->purchase_orders_count }} bon(s)
                                     </span>
-                                </td>
-
-                                {{-- Actions --}}
-                                <td class="px-5 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        {{-- Créer un bon de commande direct --}}
-                                        <a href="{{ route('economat.orders.create', ['fournisseur' => $supplier->id]) }}"
-                                            title="Émettre un bon de commande à ce fournisseur"
-                                            class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/20 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-medium">
-                                            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> Commander
-                                        </a>
-
-                                        {{-- Éditer le fournisseur --}}
-                                        <button type="button" @click="openEdit({{ Js::from($editPayload) }})"
-                                            title="Modifier la fiche et les articles associés"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/25 text-primary/70 hover:bg-accent/20 transition-colors">
-                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                        </button>
-
-                                        {{-- Supprimer --}}
-                                        <form method="POST" action="{{ route('economat.suppliers.destroy', $supplier) }}"
-                                            onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le fournisseur « {{ $supplier->name }} » ?');">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" title="Supprimer" class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-4 border-t border-secondary/15">{{ $suppliers->links() }}</div>
-        @endif
-    </div>
+                </x-table.cell>
+                <x-table.actions :label="'Actions pour le fournisseur '.$supplier->name">
+                    <x-table.action :href="route('economat.orders.create', ['fournisseur' => $supplier->id])" icon="shopping-cart" title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
+                    <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})" title="Modifier la fiche et les articles associés">Modifier</x-table.action>
+                    <x-table.action :action="route('economat.suppliers.destroy', $supplier)" method="DELETE" icon="trash-2" tone="danger"
+                        :confirm="'Supprimer définitivement le fournisseur « '.$supplier->name.' » ?'">Supprimer</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     {{-- MODALE ENRICHIE : NOUVEAU / MODIFIER FOURNISSEUR --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" style="background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">

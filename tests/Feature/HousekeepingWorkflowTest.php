@@ -102,7 +102,7 @@ test('un membre d’une autre équipe ne peut pas agir sur la chambre', function
 
 test('le rôle housekeeping n’accède plus à la rubrique Chambres', function () {
     hkSetup();
-    $agent = User::factory()->create(['role' => 'housekeeping']);
+    $agent = User::factory()->create(['role' => 'housekeeping_staff']);
 
     // La rubrique Chambres est désormais réservée à manager/réception.
     $this->actingAs($agent)->get(route('rooms.index'))->assertRedirect();

@@ -197,108 +197,66 @@
 
 {{-- Vue Liste --}}
 @if($view === 'list')
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    @if($rooms->isEmpty())
-    <div class="flex flex-col items-center justify-center py-16 text-primary/30">
-        <i data-lucide="door-open" class="w-10 h-10 mb-3 opacity-40"></i>
-        <p class="text-sm">Aucune chambre trouvée</p>
-    </div>
-    @else
-    <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
-        <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambre</div>
-        <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
-        <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Étage / Vue</div>
-        <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Statut</div>
-        <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Housekeeping</div>
-        <div class="col-span-1"></div>
-    </div>
+@php
+    $statusColors = [
+        'available' => 'bg-green-50 text-green-700 border-green-200',
+        'occupied' => 'bg-blue-50 text-blue-700 border-blue-200',
+        'cleaning' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        'maintenance' => 'bg-orange-50 text-orange-700 border-orange-200',
+        'out_of_order' => 'bg-red-50 text-red-700 border-red-200',
+    ];
+@endphp
+<x-table :rows="$rooms" empty="Aucune chambre trouvée." empty-icon="door-open" caption="Chambres">
+    <x-slot:head>
+        <x-table.col>Chambre</x-table.col>
+        <x-table.col>Type</x-table.col>
+        <x-table.col hide="xl">Étage / Vue</x-table.col>
+        <x-table.col>Statut</x-table.col>
+        <x-table.col hide="2xl">Housekeeping</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
     @foreach($rooms as $room)
-    @php
-    $statusColors = [
-    'available' => 'bg-green-50 text-green-700 border-green-200',
-    'occupied' => 'bg-blue-50 text-blue-700 border-blue-200',
-    'cleaning' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    'maintenance' => 'bg-orange-50 text-orange-700 border-orange-200',
-    'out_of_order' => 'bg-red-50 text-red-700 border-red-200',
-    ];
-    $colorClass = $statusColors[$room->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/30';
-    @endphp
-    <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
-        <div class="col-span-2 flex items-center gap-2">
-            <i data-lucide="door-open" class="w-4 h-4 text-primary/30 flex-shrink-0"></i>
-            <span class="text-sm font-semibold text-primary">{{ $room->number }}</span>
-        </div>
-        <div class="col-span-2 text-sm text-primary/70">{{ $room->roomType->name }}</div>
-        <div class="col-span-3 flex items-center gap-2 text-sm text-primary/70">
-            <span>{{ $room->floor ?? '—' }}</span>
-            @if($room->view_type)
-            <span class="text-primary/30">·</span>
-            <span class="capitalize">{{ $room->view_type }}</span>
-            @endif
-        </div>
-        <div class="col-span-2">
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full border {{ $colorClass }}">
-                {{ $room->status->label() }}
-            </span>
-        </div>
-        <div class="col-span-2">
-            @if($room->activeHousekeepingAssignment)
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
-                {{ $room->activeHousekeepingAssignment->team->name }}
-            </span>
-            @elseif($room->status->value === 'dirty')
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-red-50 text-red-700 border border-red-200">
-                à affecter
-            </span>
-            @elseif(in_array($room->status->value, ['clean', 'inspected', 'available']))
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                prêt
-            </span>
-            @else
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-secondary/10 text-primary/60 border border-secondary/20">
-                suivi manuel
-            </span>
-            @endif
-        </div>
-        <div class="col-span-1 flex items-center justify-end gap-1">
-            <a href="{{ route('rooms.show', $room) }}"
-                class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
-                title="Voir détail">
-                <i data-lucide="settings" class="w-4 h-4"></i>
-            </a>
-            @droit('rooms.modifier')
-            <button
-                data-id="{{ $room->id }}"
-                data-number="{{ $room->number }}"
-                data-type="{{ $room->room_type_id }}"
-                data-floor="{{ $room->floor }}"
-                data-view="{{ $room->view_type }}"
-                onclick="openEditRoom(this)"
-                class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"
-                title="Modifier">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-            </button>
-            @enddroit
-            @droit('rooms.supprimer')
-            <form method="POST" action="{{ route('rooms.destroy', $room) }}"
-                onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')"
-                class="expect-popup">
-                @csrf @method('DELETE')
-                <button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded" title="Supprimer">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-            </form>
-            @enddroit
-        </div>
-    </div>
+        @php $colorClass = $statusColors[$room->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/30'; @endphp
+        <x-table.row>
+            <x-table.cell nowrap>
+                <a href="{{ route('rooms.show', $room) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                    <i data-lucide="door-open" class="h-4 w-4 shrink-0 text-primary/30" aria-hidden="true"></i>{{ $room->number }}
+                </a>
+            </x-table.cell>
+            <x-table.cell class="text-primary/70">{{ $room->roomType->name }}</x-table.cell>
+            <x-table.cell hide="xl" class="text-primary/70">
+                {{ $room->floor ?? '—' }}@if($room->view_type)<span class="text-primary/30"> · </span><span class="capitalize">{{ $room->view_type }}</span>@endif
+            </x-table.cell>
+            <x-table.cell nowrap>
+                <span class="rounded-full border px-2.5 py-1 text-xs font-medium {{ $colorClass }}">{{ $room->status->label() }}</span>
+            </x-table.cell>
+            <x-table.cell hide="2xl" nowrap>
+                @if($room->activeHousekeepingAssignment)
+                    <span class="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700">{{ $room->activeHousekeepingAssignment->team->name }}</span>
+                @elseif($room->status->value === 'dirty')
+                    <span class="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">à affecter</span>
+                @elseif(in_array($room->status->value, ['clean', 'inspected', 'available']))
+                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">prêt</span>
+                @else
+                    <span class="rounded-full border border-secondary/20 bg-secondary/10 px-2.5 py-1 text-xs font-medium text-primary/60">suivi manuel</span>
+                @endif
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour la chambre '.$room->number">
+                <x-table.action :href="route('rooms.show', $room)" icon="settings">Détail</x-table.action>
+                @droit('rooms.modifier')
+                    <x-table.action icon="pencil" onclick="openEditRoom(this)"
+                        data-id="{{ $room->id }}" data-number="{{ $room->number }}" data-type="{{ $room->room_type_id }}"
+                        data-floor="{{ $room->floor }}" data-view="{{ $room->view_type }}">Modifier</x-table.action>
+                @enddroit
+                @droit('rooms.supprimer')
+                    <x-table.action :action="route('rooms.destroy', $room)" method="DELETE" icon="trash-2" tone="danger" form-class="expect-popup"
+                        :confirm="'Supprimer la chambre '.$room->number.' ?'">Supprimer</x-table.action>
+                @enddroit
+            </x-table.actions>
+        </x-table.row>
     @endforeach
-    @endif
-</div>
-
-@if($rooms->hasPages())
-<div class="mt-4">{{ $rooms->links() }}</div>
-@endif
+</x-table>
 
 {{-- Vue Carte --}}
 @else
@@ -405,7 +363,7 @@
 </div>
 
 @if($rooms->hasPages())
-<div class="mt-4">{{ $rooms->links() }}</div>
+<div class="mt-4">{{ $rooms->onEachSide(1)->links('components.table.pagination') }}</div>
 @endif
 @endif
 @endif

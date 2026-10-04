@@ -33,69 +33,41 @@
     </div>
 @endif
 
-<div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
-    <div class="px-5 py-3 border-b border-secondary/15 bg-gray-50/50 flex items-center justify-between">
-        <span class="text-sm text-primary/60">{{ $expenses->count() }} dépense(s) — {{ ucfirst($period['label']) }}</span>
+<x-table :rows="$expenses" empty="Aucune dépense enregistrée sur cette période." empty-icon="receipt" caption="Dépenses">
+    <x-slot:toolbar>
+        <span class="text-sm text-primary/60">{{ method_exists($expenses, 'total') ? $expenses->total() : $expenses->count() }} dépense(s) — {{ ucfirst($period['label']) }}</span>
         <span class="text-sm font-semibold text-primary">Total : {{ $fcfa($total) }}</span>
-    </div>
-    @if($expenses->isEmpty())
-        <div class="py-12 text-center text-primary/40">
-            <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
-            <p class="text-sm">Aucune dépense enregistrée sur cette période.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Date</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Catégorie</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Libellé</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Moyen</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Montant</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($expenses as $expense)
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-4 py-3 text-sm text-primary/70 whitespace-nowrap">{{ $expense->occurred_at->format('d/m/Y') }}</td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary">{{ $expense->categoryLabel() }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <p class="text-sm text-primary">{{ $expense->label }}</p>
-                                @if($expense->receipt_path)
-                                    <a href="{{ Storage::url($expense->receipt_path) }}" target="_blank" class="text-[11px] text-primary/50 hover:underline inline-flex items-center gap-1">
-                                        <i data-lucide="paperclip" class="w-3 h-3"></i> pièce jointe
-                                    </a>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-sm text-primary/60">{{ $methodLabels[$expense->payment_method] ?? '—' }}</td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-red-600 tabular-nums whitespace-nowrap">{{ $fcfa($expense->amount) }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex justify-end gap-2">
-                                    <button type="button" onclick="document.getElementById('expense-edit-{{ $expense->id }}').classList.remove('hidden')"
-                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                    <form method="POST" action="{{ route('accounting.expenses.destroy', $expense) }}" onsubmit="return confirm('Supprimer cette dépense ?');">
-                                        @csrf @method('DELETE')
-                                        <input type="hidden" name="month" value="{{ $period['month'] }}">
-                                        <button type="submit" class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4">{{ $expenses->links() }}</div>
-    @endif
-</div>
+    </x-slot:toolbar>
+    <x-slot:head>
+        <x-table.col hide="md">Date</x-table.col>
+        <x-table.col hide="xl">Catégorie</x-table.col>
+        <x-table.col>Libellé</x-table.col>
+        <x-table.col hide="lg">Moyen</x-table.col>
+        <x-table.col align="right">Montant</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
+
+    @foreach($expenses as $expense)
+        <x-table.row>
+            <x-table.cell hide="md" nowrap class="text-primary/70">{{ $expense->occurred_at->format('d/m/Y') }}</x-table.cell>
+            <x-table.cell hide="xl">
+                <span class="inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ $expense->categoryLabel() }}</span>
+            </x-table.cell>
+            <x-table.cell>
+                <p class="text-sm text-primary">{{ $expense->label }}</p>
+                @if($expense->receipt_path)
+                    <a href="{{ Storage::url($expense->receipt_path) }}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-primary/50 hover:underline"><i data-lucide="paperclip" class="h-3 w-3" aria-hidden="true"></i> pièce jointe</a>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="lg" class="text-primary/60">{{ $methodLabels[$expense->payment_method] ?? '—' }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold tabular-nums text-red-600">{{ $fcfa($expense->amount) }}</x-table.cell>
+            <x-table.actions :label="'Actions pour la dépense '.$expense->label">
+                <x-table.action icon="pencil" onclick="document.getElementById('expense-edit-{{ $expense->id }}').classList.remove('hidden')">Modifier</x-table.action>
+                <x-table.action :action="route('accounting.expenses.destroy', $expense)" method="DELETE" :fields="['month' => $period['month']]" icon="trash-2" tone="danger" confirm="Supprimer cette dépense ?">Supprimer</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 {{-- Modal création --}}
 <x-modal id="expense-create" title="Nouvelle dépense" formAction="{{ route('accounting.expenses.store') }}" enctype="multipart/form-data"

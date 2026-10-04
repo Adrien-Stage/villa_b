@@ -139,125 +139,72 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
-    <section class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
-        <div class="px-4 py-4 border-b border-secondary/15">
+    <x-table :rows="$items" empty="Aucun article. Ajoutez des articles au garde-manger pour suivre le stock." empty-icon="package" caption="Stocks du garde-manger">
+        <x-slot:toolbar>
             <p class="font-heading text-sm font-semibold text-primary">Stocks</p>
-        </div>
+        </x-slot:toolbar>
+        <x-slot:head>
+            <x-table.col>Article</x-table.col>
+            <x-table.col hide="2xl">Catégorie</x-table.col>
+            <x-table.col align="right">Stock</x-table.col>
+            <x-table.col align="right" hide="lg">Min</x-table.col>
+            <x-table.col align="right" hide="xl">Coût moyen</x-table.col>
+            <x-table.col align="right" hide="md">Valeur</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
 
-        @if($items->isEmpty())
-            <div class="py-16 text-center text-primary/35">
-                <i data-lucide="package" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-                <p class="text-sm font-medium">Aucun article</p>
-                <p class="text-xs mt-1">Ajoute des articles au garde-manger pour suivre le stock.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-secondary/10">
-                    <thead class="bg-accent/20">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Article</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Catégorie</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Stock</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Min</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Coût moyen</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Valeur</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($items as $item)
-                            @php
-                                $isLow = $item->isLowStock();
-                                $isNegative = (float) $item->current_stock < 0;
-                            @endphp
-                            <tr class="{{ $item->is_active ? '' : 'opacity-60' }} {{ $isLow ? 'bg-red-50/40' : '' }}">
-                                <td class="px-4 py-3">
-                                    <p class="text-sm font-semibold text-primary">
-                                        {{ $item->name }}
-                                        @if($item->is_prepared)
-                                            <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/40 text-primary" title="Article fabriqué en cuisine, produit par une fiche technique">
-                                                fabriqué
-                                            </span>
-                                        @endif
-                                    </p>
-                                    <p class="text-xs text-primary/45 mt-0.5">
-                                        @if($vueEnsemble && $item->pointOfSale)<span class="font-semibold">{{ $item->pointOfSale->name }}</span> · @endif
-                                        {{ strtoupper($item->unit) }}
-                                        @if($item->purchase_unit)
-                                            · achat : {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
-                                        @endif
-                                        @if($isLow) · <span class="text-red-700 font-semibold">Stock bas</span> @endif
-                                    </p>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-primary/70">
-                                    {{ $item->category?->name ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold {{ $isNegative ? 'text-red-600' : 'text-primary' }}">
-                                    {{ rtrim(rtrim(number_format((float) $item->current_stock, 3, '.', ''), '0'), '.') }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm text-primary/70">
-                                    {{ rtrim(rtrim(number_format((float) $item->min_stock, 3, '.', ''), '0'), '.') }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-xs whitespace-nowrap {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
-                                    @if((float) $item->average_cost <= 0)
-                                        <span title="Sans coût, les plats qui utilisent cet ingrédient ne peuvent pas être chiffrés.">coût inconnu</span>
-                                    @else
-                                        {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm text-primary whitespace-nowrap">
-                                    {{ number_format($item->stockValue() / 100, 0, ',', ' ') }} FCFA
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <div class="inline-flex items-center gap-2">
-                                        @if($canManage)
-                                            <button type="button"
-                                                onclick="openReceiveModal({{ $item->id }})"
-                                                class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700"
-                                                title="Réception de marchandise : met à jour le stock et le coût moyen">
-                                                Réception
-                                            </button>
-                                        @endif
-                                        @droit('restaurant.pantry.movements.creer')
-                                        @unless($canManage)
-                                            {{-- Le staff enregistre une entrée simple ; la réception valorisée est au chef. --}}
-                                            <button type="button"
-                                                onclick="openMovementModal({{ $item->id }}, 'in')"
-                                                class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
-                                                Entrée
-                                            </button>
-                                        @endunless
-                                        <button type="button"
-                                            onclick="openMovementModal({{ $item->id }}, 'out')"
-                                            class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark">
-                                            Sortie
-                                        </button>
-                                        @enddroit
-                                        @if($canManage)
-                                            <button type="button"
-                                                onclick="openMovementModal({{ $item->id }}, 'adjust')"
-                                                class="px-3 py-1.5 rounded-lg border border-secondary/25 bg-white text-primary text-xs font-semibold hover:bg-accent/20">
-                                                Ajuster
-                                            </button>
-                                            <button type="button"
-                                                onclick="openEditItemModal({{ $item->id }})"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="px-4 py-4 border-t border-secondary/15">
-                {{ $items->links() }}
-            </div>
-        @endif
-    </section>
+        @foreach($items as $item)
+            @php
+                $isLow = $item->isLowStock();
+                $isNegative = (float) $item->current_stock < 0;
+            @endphp
+            <x-table.row :muted="! $item->is_active" class="{{ $isLow ? 'bg-red-50/40' : '' }}">
+                <x-table.cell>
+                    <p class="text-sm font-semibold text-primary">
+                        {{ $item->name }}
+                        @if($item->is_prepared)
+                            <span class="ml-1 inline-flex items-center rounded bg-accent/40 px-1.5 py-0.5 text-[10px] font-semibold text-primary" title="Article fabriqué en cuisine, produit par une fiche technique">fabriqué</span>
+                        @endif
+                    </p>
+                    <p class="mt-0.5 text-xs text-primary/45">
+                        @if($vueEnsemble && $item->pointOfSale)<span class="font-semibold">{{ $item->pointOfSale->name }}</span> · @endif
+                        {{ strtoupper($item->unit) }}
+                        @if($item->purchase_unit)
+                            · achat : {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
+                        @endif
+                        @if($isLow) · <span class="font-semibold text-red-700">Stock bas</span> @endif
+                    </p>
+                </x-table.cell>
+                <x-table.cell hide="2xl" class="text-primary/70">{{ $item->category?->name ?? '—' }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-semibold {{ $isNegative ? 'text-red-600' : '' }}">{{ rtrim(rtrim(number_format((float) $item->current_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
+                <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ rtrim(rtrim(number_format((float) $item->min_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
+                <x-table.cell align="right" hide="xl" nowrap class="text-xs {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
+                    @if((float) $item->average_cost <= 0)
+                        <span title="Sans coût, les plats qui utilisent cet ingrédient ne peuvent pas être chiffrés.">coût inconnu</span>
+                    @else
+                        {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA
+                    @endif
+                </x-table.cell>
+                <x-table.cell align="right" hide="md" nowrap>{{ number_format($item->stockValue() / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+                <x-table.actions :label="'Actions pour '.$item->name">
+                    @if($canManage)
+                        <x-table.action icon="package-plus" tone="success" onclick="openReceiveModal({{ $item->id }})" title="Réception de marchandise : met à jour le stock et le coût moyen">Réception</x-table.action>
+                    @endif
+                    @droit('restaurant.pantry.movements.creer')
+                        @unless($canManage)
+                            {{-- Le staff enregistre une entrée simple ; la réception valorisée est au chef. --}}
+                            <x-table.action icon="log-in" tone="success" onclick="openMovementModal({{ $item->id }}, 'in')">Entrée</x-table.action>
+                        @endunless
+                        <x-table.action icon="log-out" onclick="openMovementModal({{ $item->id }}, 'out')">Sortie</x-table.action>
+                    @enddroit
+                    @if($canManage)
+                        <x-table.action icon="scale" onclick="openMovementModal({{ $item->id }}, 'adjust')">Ajuster</x-table.action>
+                        <x-table.action icon="pencil" onclick="openEditItemModal({{ $item->id }})">Modifier</x-table.action>
+                    @endif
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     <aside class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
         <div class="px-4 py-4 border-b border-secondary/15">

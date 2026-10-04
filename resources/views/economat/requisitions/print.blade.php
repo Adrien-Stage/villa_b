@@ -5,22 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bon de Réquisition {{ $requisition->number }} — {{ $requisition->departmentLabel() }}</title>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 14mm 12mm 16mm 12mm;
-            @bottom-right {
-                content: "Page " counter(page) " / " counter(pages);
-                font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-                font-size: 8pt;
-                color: #666;
-            }
-            @bottom-left {
-                content: "Bon de Réquisition {{ $requisition->number }} — Magasin Central";
-                font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-                font-size: 8pt;
-                color: #666;
-            }
-        }
+        @include('partials.impression', ['haut' => '14mm', 'bas' => '16mm', 'pied' => 'Bon de Réquisition '.$requisition->number.' — Magasin Central'])
 
         * {
             box-sizing: border-box;

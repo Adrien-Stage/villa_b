@@ -124,109 +124,81 @@
 </div>
 
 @if($viewMode === 'list')
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    @if($staffUsers->isEmpty())
-        <div class="flex flex-col items-center justify-center py-16 text-primary/30">
-            <i data-lucide="user-x" class="w-10 h-10 mb-3 opacity-40"></i>
-            <p class="text-sm">Aucun membre du staff trouve</p>
-        </div>
-    @else
-        <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 bg-accent/20">
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40">Collaborateur</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Contact</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Département</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Role</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Etat</div>
-            <div class="col-span-2"></div>
-        </div>
+<x-table :rows="$staffUsers" empty="Aucun membre du personnel trouvé." empty-icon="user-x" caption="Membres du personnel">
+    <x-slot:head>
+        <x-table.col>Collaborateur</x-table.col>
+        <x-table.col hide="2xl">Contact</x-table.col>
+        <x-table.col hide="3xl">Département</x-table.col>
+        <x-table.col>Rôles</x-table.col>
+        <x-table.col>État</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        @foreach($staffUsers as $staff)
-            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 items-center">
-                <div class="col-span-3 flex items-center gap-3 min-w-0">
-                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <span class="text-white text-xs font-semibold">
-                            {{ strtoupper(substr($staff->name, 0, 2)) }}
-                        </span>
+    @foreach($staffUsers as $staff)
+        <x-table.row :muted="! $staff->is_active">
+            <x-table.cell>
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
+                        <span class="text-xs font-semibold text-white">{{ strtoupper(substr($staff->name, 0, 2)) }}</span>
                     </div>
                     <div class="min-w-0">
-                        <p class="text-sm font-medium text-primary truncate">{{ $staff->name }}</p>
-                        <p class="text-xs text-primary/40">
-                            Cree le {{ $staff->created_at?->locale('fr')->isoFormat('D MMM YYYY') }}
-                        </p>
+                        <p class="truncate text-sm font-medium text-primary">{{ $staff->name }}</p>
+                        <p class="text-xs text-primary/45">Créé le {{ $staff->created_at?->locale('fr')->isoFormat('D MMM YYYY') }}</p>
                     </div>
                 </div>
-
-                <div class="col-span-2">
-                    <p class="text-xs text-primary/70 truncate">{{ $staff->email }}</p>
-                    <p class="text-xs text-primary/40">{{ $staff->phone ?: '-' }}</p>
-                </div>
-
-                <div class="col-span-2">
-                    @if($staff->department)
-                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold bg-primary/5 text-primary border border-secondary/20">
-                            <i data-lucide="{{ $staff->department->icon ?? 'briefcase' }}" class="w-3.5 h-3.5 text-secondary"></i>
-                            <span class="truncate">{{ $staff->department->name }}</span>
-                        </span>
-                    @else
-                        <span class="text-xs text-primary/30 italic">Non affecté</span>
-                    @endif
-                </div>
-
-                <div class="col-span-2 flex flex-wrap gap-1">
+            </x-table.cell>
+            <x-table.cell hide="2xl">
+                <p class="max-w-56 truncate text-xs text-primary/70">{{ $staff->email }}</p>
+                <p class="text-xs text-primary/45">{{ $staff->phone ?: '—' }}</p>
+            </x-table.cell>
+            <x-table.cell hide="3xl">
+                @if($staff->department)
+                    <span class="inline-flex max-w-52 items-center gap-1.5 rounded-lg border border-secondary/20 bg-primary/5 px-2 py-0.5 text-xs font-semibold text-primary">
+                        <i data-lucide="{{ $staff->department->icon ?? 'briefcase' }}" class="h-3.5 w-3.5 shrink-0 text-secondary" aria-hidden="true"></i>
+                        <span class="truncate">{{ $staff->department->name }}</span>
+                    </span>
+                @else
+                    <span class="text-xs italic text-primary/35">Non affecté</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell>
+                <div class="flex max-w-64 flex-wrap gap-1">
                     @forelse($staff->roles as $r)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
+                        <span class="inline-flex items-center gap-1 rounded-full border border-secondary/20 bg-secondary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                             {{ $r->name }}
                             @if(($r->pivot->level ?: 'write') === 'read')
-                                <i data-lucide="eye" class="w-2.5 h-2.5 text-primary/40" title="Lecture seule"></i>
+                                <i data-lucide="eye" class="h-2.5 w-2.5 text-primary/40" aria-label="Lecture seule"></i>
                             @endif
                         </span>
                     @empty
-                        <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
-                            {{ ucfirst(str_replace('_', ' ', $staff->role)) }}
-                        </span>
+                        <span class="text-xs italic text-primary/35">Aucun rôle</span>
                     @endforelse
                 </div>
-
-                <div class="col-span-1">
-                    @if($staff->is_active)
-                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border bg-green-50 text-green-700 border-green-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Actif
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border bg-red-50 text-red-700 border-red-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactif
-                        </span>
-                    @endif
-                </div>
-
-                <div class="col-span-2 flex items-center justify-end gap-2">
-                    <a href="{{ route('users.show', $staff) }}"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
-                        <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Fiche
-                    </a>
-                    <button type="button"
-                        onclick="openEditModal('{{ $staff->id }}')"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
-                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editer
-                    </button>
-
-                    <form method="POST" action="{{ route('users.toggleStatus', $staff) }}">
-                        @csrf
-                        <input type="hidden" name="view" value="{{ $viewMode }}">
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border {{ $staff->is_active ? 'border-red-200 text-red-700 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50' }} transition-colors">
-                            @if($staff->is_active)
-                                <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Desactiver
-                            @else
-                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Reactiver
-                            @endif
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @endforeach
-    @endif
-</div>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                @if($staff->is_active)
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <span class="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true"></span> Actif
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                        <span class="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true"></span> Inactif
+                    </span>
+                @endif
+            </x-table.cell>
+            <x-table.actions :label="'Actions pour '.$staff->name">
+                <x-table.action :href="route('users.show', $staff)" icon="id-card">Fiche</x-table.action>
+                <x-table.action icon="pencil" onclick="openEditModal('{{ $staff->id }}')">Éditer</x-table.action>
+                @if($staff->is_active)
+                    <x-table.action :action="route('users.toggleStatus', $staff)" :fields="['view' => $viewMode]" icon="user-x" tone="danger"
+                        :confirm="'Désactiver le compte de '.$staff->name.' ? Il ne pourra plus se connecter.'">Désactiver</x-table.action>
+                @else
+                    <x-table.action :action="route('users.toggleStatus', $staff)" :fields="['view' => $viewMode]" icon="user-check" tone="success">Réactiver</x-table.action>
+                @endif
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @else
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
     @forelse($staffUsers as $staff)
@@ -303,10 +275,9 @@
         </div>
     @endforelse
 </div>
-@endif
-
 @if($staffUsers->hasPages())
-    <div class="mt-4">{{ $staffUsers->links() }}</div>
+    <div class="mt-4">{{ $staffUsers->onEachSide(1)->links('components.table.pagination') }}</div>
+@endif
 @endif
 
 {{-- Modal create --}}

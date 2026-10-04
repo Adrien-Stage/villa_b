@@ -174,121 +174,64 @@
     </div>
 
     {{-- Tableau des Bons de Commande --}}
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-        @if($orders->isEmpty())
-            <div class="p-12 text-center text-primary/40">
-                <i data-lucide="clipboard-list" class="w-12 h-12 text-primary/20 mx-auto mb-3"></i>
-                <p class="text-sm font-medium text-primary/60">
-                    {{ !empty($filtres) ? 'Aucun bon de commande ne correspond aux filtres sélectionnés.' : 'Aucun bon de commande enregistré.' }}
-                </p>
-                @if(!empty($filtres))
-                    <div class="mt-3">
-                        <a href="{{ route('economat.orders.index') }}" class="text-xs text-primary underline">
-                            Réinitialiser les filtres
-                        </a>
-                    </div>
-                @endif
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-xs">
-                    <thead>
-                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
-                            <th class="py-3 px-4">N° de Bon</th>
-                            <th class="py-3 px-4">Fournisseur</th>
-                            <th class="py-3 px-4">Date Émission</th>
-                            <th class="py-3 px-4 text-center">Articles</th>
-                            <th class="py-3 px-4 text-right">Montant Total</th>
-                            <th class="py-3 px-4">Statut</th>
-                            <th class="py-3 px-4">Signataire</th>
-                            <th class="py-3 px-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($orders as $order)
-                            <tr class="hover:bg-accent/5 transition-colors">
-                                {{-- N° de Bon --}}
-                                <td class="py-3 px-4 font-mono font-bold text-primary whitespace-nowrap">
-                                    <a href="{{ route('economat.orders.show', $order) }}" class="hover:underline flex items-center gap-1.5">
-                                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-primary/50"></i>
-                                        <span>{{ $order->number }}</span>
-                                    </a>
-                                </td>
-
-                                {{-- Fournisseur --}}
-                                <td class="py-3 px-4">
-                                    <div class="font-medium text-primary">{{ $order->supplier?->name ?? 'Fournisseur non spécifié' }}</div>
-                                    @if($order->supplier)
-                                        <div class="text-[10px] text-primary/50 flex items-center gap-2 mt-0.5">
-                                            @if($order->supplier->code)<span class="font-mono bg-gray-100 px-1 rounded">{{ $order->supplier->code }}</span>@endif
-                                            @if($order->supplier->phone)<span><i data-lucide="phone" class="w-2.5 h-2.5 inline text-primary/40"></i> {{ $order->supplier->phone }}</span>@endif
-                                        </div>
-                                    @endif
-                                </td>
-
-                                {{-- Date émission --}}
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    <span class="text-primary/70">{{ $order->created_at->format('d/m/Y') }}</span>
-                                    <span class="text-[10px] text-primary/40 block">{{ $order->created_at->format('H:i') }}</span>
-                                </td>
-
-                                {{-- Nombre d'articles --}}
-                                <td class="py-3 px-4 text-center font-mono font-medium text-primary/70">
-                                    {{ $order->lines_count }}
-                                </td>
-
-                                {{-- Montant Total --}}
-                                <td class="py-3 px-4 text-right font-mono font-bold text-primary whitespace-nowrap">
-                                    {{ number_format($order->total_amount / 100, 0, ',', ' ') }} <span class="text-[10px] font-normal text-primary/50">FCFA</span>
-                                </td>
-
-                                {{-- Statut --}}
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-700' }}">
-                                        {{ $order->statusLabel() }}
-                                    </span>
-                                </td>
-
-                                {{-- Signataire --}}
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    @if($order->issuer_signature)
-                                        <span class="inline-flex items-center gap-1 text-[11px] text-blue-900 bg-blue-50/80 px-2 py-0.5 rounded border border-blue-200/50">
-                                            <i data-lucide="pen-tool" class="w-3 h-3 text-blue-700"></i>
-                                            <strong class="font-signature text-sm leading-none">{{ $order->issuer_signature }}</strong>
-                                        </span>
-                                    @else
-                                        <span class="text-primary/50 text-[11px]">{{ $order->createdBy?->name ?? '—' }}</span>
-                                    @endif
-                                </td>
-
-                                {{-- Actions --}}
-                                <td class="py-3 px-4 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        <a href="{{ route('economat.orders.print', $order) }}" target="_blank" rel="noopener"
-                                            class="p-1.5 bg-white border border-secondary/20 text-primary/70 hover:text-primary hover:border-primary/50 rounded-lg transition-colors shadow-xs"
-                                            title="Imprimer le bon de commande">
-                                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                        </a>
-
-                                        <a href="{{ route('economat.orders.show', $order) }}"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-light border border-secondary/25 text-primary text-[11px] font-medium rounded-lg hover:bg-secondary/15 transition-colors">
-                                            <span>Détails</span>
-                                            <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            @if($orders->hasPages())
-                <div class="p-4 border-t border-secondary/20 bg-surface-light/50">
-                    {{ $orders->links() }}
-                </div>
-            @endif
+    <x-table :rows="$orders" :empty="! empty($filtres) ? 'Aucun bon de commande ne correspond aux filtres sélectionnés.' : 'Aucun bon de commande enregistré.'" empty-icon="clipboard-list" caption="Bons de commande">
+        @if(! empty($filtres))
+            <x-slot:emptyActions>
+                <a href="{{ route('economat.orders.index') }}" class="text-primary underline">Réinitialiser les filtres</a>
+            </x-slot:emptyActions>
         @endif
-    </div>
+        <x-slot:head>
+            <x-table.col>N° de bon</x-table.col>
+            <x-table.col>Fournisseur</x-table.col>
+            <x-table.col hide="lg">Émission</x-table.col>
+            <x-table.col align="right" hide="2xl">Articles</x-table.col>
+            <x-table.col align="right">Montant</x-table.col>
+            <x-table.col>Statut</x-table.col>
+            <x-table.col hide="3xl">Signataire</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($orders as $order)
+            <x-table.row :href="route('economat.orders.show', $order)">
+                <x-table.cell nowrap>
+                    <a href="{{ route('economat.orders.show', $order) }}" class="flex items-center gap-1.5 font-mono font-bold text-primary hover:underline">
+                        <i data-lucide="file-text" class="h-3.5 w-3.5 text-primary/50" aria-hidden="true"></i><span>{{ $order->number }}</span>
+                    </a>
+                </x-table.cell>
+                <x-table.cell>
+                    <div class="font-medium text-primary">{{ $order->supplier?->name ?? 'Fournisseur non spécifié' }}</div>
+                    @if($order->supplier)
+                        <div class="mt-0.5 flex items-center gap-2 text-[10px] text-primary/50">
+                            @if($order->supplier->code)<span class="rounded bg-gray-100 px-1 font-mono">{{ $order->supplier->code }}</span>@endif
+                            @if($order->supplier->phone)<span><i data-lucide="phone" class="inline h-2.5 w-2.5 text-primary/40" aria-hidden="true"></i> {{ $order->supplier->phone }}</span>@endif
+                        </div>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="lg" nowrap>
+                    <span class="text-primary/70">{{ $order->created_at->format('d/m/Y') }}</span>
+                    <span class="block text-[10px] text-primary/45">{{ $order->created_at->format('H:i') }}</span>
+                </x-table.cell>
+                <x-table.cell align="right" hide="2xl" class="font-mono font-medium text-primary/70">{{ $order->lines_count }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono font-bold">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} <span class="text-[10px] font-normal text-primary/50">FCFA</span></x-table.cell>
+                <x-table.cell nowrap>
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-700' }}">{{ $order->statusLabel() }}</span>
+                </x-table.cell>
+                <x-table.cell hide="3xl" nowrap>
+                    @if($order->issuer_signature)
+                        <span class="inline-flex items-center gap-1 rounded border border-blue-200/50 bg-blue-50/80 px-2 py-0.5 text-[11px] text-blue-900">
+                            <i data-lucide="pen-tool" class="h-3 w-3 text-blue-700" aria-hidden="true"></i>
+                            <strong class="font-signature text-sm leading-none">{{ $order->issuer_signature }}</strong>
+                        </span>
+                    @else
+                        <span class="text-[11px] text-primary/50">{{ $order->createdBy?->name ?? '—' }}</span>
+                    @endif
+                </x-table.cell>
+                <x-table.actions :label="'Actions pour le bon '.$order->number">
+                    <x-table.action :href="route('economat.orders.show', $order)" icon="eye">Détails</x-table.action>
+                    <x-table.action :href="route('economat.orders.print', $order)" icon="printer" target="_blank">Imprimer</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 @endsection

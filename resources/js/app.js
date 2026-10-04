@@ -7,6 +7,89 @@ window.Alpine = Alpine;
 window.refreshLucideIcons = () => createIcons({ icons });
 
 document.addEventListener('alpine:init', () => {
+    /*
+     * Menu ⋮ des actions d'une ligne de tableau (x-table.actions).
+     *
+     * Le menu est en position fixe, calée sur le bouton : un tableau qui
+     * défile horizontalement ne le coupe pas. Il se referme au défilement,
+     * au clic ailleurs, sur Échap ou Tab, et après un choix ; les flèches
+     * passent d'une entrée à l'autre.
+     */
+    Alpine.data('menuLigne', () => ({
+        ouvert: false,
+        haut: 0,
+        gauche: 0,
+
+        init() {
+            this.$nextTick(() => {
+                this.$refs.menu?.querySelectorAll('.dt-action').forEach((entree) => {
+                    entree.setAttribute('role', 'menuitem');
+                    entree.setAttribute('tabindex', '-1');
+                });
+            });
+            // Un menu en position fixe ne suit pas le défilement : il se referme.
+            const refermer = (evenement) => {
+                if (this.ouvert && ! this.$refs.menu?.contains(evenement.target)) {
+                    this.fermer(false);
+                }
+            };
+            window.addEventListener('scroll', refermer, { capture: true, passive: true });
+            window.addEventListener('resize', refermer, { passive: true });
+        },
+
+        basculer() {
+            this.ouvert ? this.fermer() : this.ouvrir();
+        },
+
+        ouvrir() {
+            const bouton = this.$refs.bouton.getBoundingClientRect();
+            this.ouvert = true;
+            this.$nextTick(() => {
+                const menu = this.$refs.menu;
+                // Affiché avant d'être mesuré : caché, sa taille est nulle.
+                menu.style.removeProperty('display');
+                const largeur = menu.offsetWidth;
+                const hauteur = menu.offsetHeight;
+                let haut = bouton.bottom + 4;
+                if (haut + hauteur > window.innerHeight - 8) {
+                    haut = Math.max(8, bouton.top - hauteur - 4);
+                }
+                this.haut = haut;
+                this.gauche = Math.min(Math.max(8, bouton.right - largeur), window.innerWidth - largeur - 8);
+                this.entrees()[0]?.focus({ preventScroll: true });
+            });
+        },
+
+        fermer(rendreLeFocus = true) {
+            this.ouvert = false;
+            if (rendreLeFocus) {
+                this.$refs.bouton.focus({ preventScroll: true });
+            }
+        },
+
+        fermerApresChoix(evenement) {
+            if (evenement.target.closest('.dt-action')) {
+                this.fermer(false);
+            }
+        },
+
+        entrees() {
+            return [...this.$refs.menu.querySelectorAll('.dt-action:not([disabled])')];
+        },
+
+        deplacer(pas, absolu = false) {
+            const entrees = this.entrees();
+            if (entrees.length === 0) {
+                return;
+            }
+            const courant = entrees.indexOf(document.activeElement);
+            const cible = absolu
+                ? (pas < 0 ? entrees.length - 1 : 0)
+                : (courant + pas + entrees.length) % entrees.length;
+            entrees[cible].focus({ preventScroll: true });
+        },
+    }));
+
     Alpine.data('customerSearchDef', function(passedCustomers = [], initialCustomerId = '') {
     return {
         customers: passedCustomers.length > 0 ? passedCustomers : (typeof window.allCustomers !== 'undefined' ? window.allCustomers : []),

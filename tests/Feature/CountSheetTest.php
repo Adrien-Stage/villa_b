@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\ServiceStore;
@@ -10,6 +11,7 @@ use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\User;
 use App\Services\CountSheetService;
+use App\Services\RestaurantStockService;
 use App\Services\ServiceStoreCountService;
 use App\Services\StockCountService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -125,4 +127,44 @@ test('l’écran des fiches liste les services', function () {
         ->assertOk()
         ->assertSee('Économat — magasin central')
         ->assertSee('Mini-bar');
+});
+
+test('chaque restaurant a sa fiche de cuisine, sur le théorique figé de son inventaire', function () {
+    $jardin = PointOfSale::create(['code' => 'JAR', 'slug' => 'jardin', 'name' => 'Le Jardin', 'kind' => PointOfSale::KIND_RESTAURATION, 'is_active' => true, 'sort_order' => 1]);
+    $kotibe = PointOfSale::create(['code' => 'KOT', 'slug' => 'kotibe', 'name' => 'Kotibe', 'kind' => PointOfSale::KIND_RESTAURATION, 'is_active' => true, 'sort_order' => 2]);
+    $legumes = RestaurantPantryCategory::create(['name' => 'Légumes']);
+    RestaurantPantryItem::create(['point_of_sale_id' => $jardin->id, 'restaurant_pantry_category_id' => $legumes->id, 'name' => 'Tomate fraîche', 'unit' => 'kg', 'current_stock' => 6, 'is_active' => true]);
+    RestaurantPantryItem::create(['point_of_sale_id' => $kotibe->id, 'restaurant_pantry_category_id' => $legumes->id, 'name' => 'Gombo', 'unit' => 'kg', 'current_stock' => 2, 'is_active' => true]);
+
+    $services = array_keys(app(CountSheetService::class)->services());
+
+    expect($services)->toContain('garde-manger-' . $jardin->id, 'garde-manger-' . $kotibe->id)
+        ->not->toContain('garde-manger');
+
+    $inventaire = app(RestaurantStockService::class)->openStockCount(null, $kotibe);
+    RestaurantPantryItem::where('name', 'Gombo')->update(['current_stock' => 9]);
+
+    $fiche = app(CountSheetService::class)->sheet('garde-manger-' . $kotibe->id);
+
+    expect($fiche['title'])->toBe('Cuisine — Kotibe')
+        ->and($fiche['reference'])->toBe($inventaire->reference)
+        ->and($fiche['groups']['Légumes'])->toHaveCount(1)
+        ->and($fiche['groups']['Légumes'][0])->toMatchArray(['name' => 'Gombo', 'theoretical' => 2.0]);
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'garde-manger-' . $kotibe->id, 'theorique' => 1]))
+        ->assertOk()
+        ->assertSee('Gombo')
+        ->assertDontSee('Tomate fraîche')
+        ->assertSee('stock théorique figé le ' . $inventaire->created_at->format('d/m/Y à H:i'));
+});
+
+test('une fiche dit qui l’a imprimée et se signe page par page', function () {
+    stocksDeTousLesServices();
+    auth()->user()->update(['name' => 'Awa Ngono']);
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'economat']))
+        ->assertOk()
+        ->assertSee('par Awa Ngono')
+        ->assertSee('Visa du compteur')
+        ->assertSee('Écrire 0 pour un article absent');
 });

@@ -962,8 +962,8 @@
                 <div class="space-y-6">
                     @foreach($serviceCategories as $categoryKey => $categoryLabel)
                         @php $categoryItems = $serviceItems[$categoryKey] ?? collect(); @endphp
-                        <div class="border border-secondary/20 rounded-xl overflow-hidden">
-                            <div class="flex items-center justify-between px-5 py-3 bg-gray-50/70 border-b border-secondary/20">
+                        <x-table :rows="$categoryItems" empty="Aucune prestation dans cette catégorie." empty-icon="tag" :caption="$categoryLabel">
+                            <x-slot:toolbar>
                                 <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
                                     <i data-lucide="{{ [
                                         'activity' => 'mountain-snow',
@@ -975,84 +975,56 @@
                                     ][$categoryKey] ?? 'tag' }}" class="w-4 h-4 text-primary/50"></i>
                                     {{ $categoryLabel }}
                                 </h3>
-                                <span class="text-xs text-primary/40">{{ $categoryItems->count() }} prestation(s)</span>
-                            </div>
+                                <span class="text-xs text-primary/45">{{ $categoryItems->count() }} prestation(s)</span>
+                            </x-slot:toolbar>
+                            <x-slot:emptyActions>
+                                <button type="button" x-on:click="openCreate('{{ $categoryKey }}')" class="font-medium text-primary hover:underline">Ajouter la première</button>
+                            </x-slot:emptyActions>
+                            <x-slot:head>
+                                <x-table.col>Prestation</x-table.col>
+                                <x-table.col hide="lg">Durée</x-table.col>
+                                <x-table.col align="right">Prix</x-table.col>
+                                <x-table.col>Statut</x-table.col>
+                                <x-table.col actions />
+                            </x-slot:head>
 
-                            @if($categoryItems->isEmpty())
-                                <div class="px-5 py-6 text-center">
-                                    <p class="text-xs text-primary/40">Aucune prestation dans cette catégorie.</p>
-                                    <button type="button" @click="openCreate('{{ $categoryKey }}')"
-                                        class="mt-2 text-xs font-medium text-primary hover:underline">
-                                        Ajouter la première
-                                    </button>
-                                </div>
-                            @else
-                                {{-- overflow-x-auto : sur mobile le tableau défile au lieu de pousser la page --}}
-                                <div class="overflow-x-auto -mx-1 px-1">
-                                <table class="min-w-full divide-y divide-secondary/10">
-                                    <tbody class="divide-y divide-secondary/10">
-                                        @foreach($categoryItems as $service)
-                                            @php
-                                                // Charge utile de l'éditeur, calculée ici : un tableau multi-ligne
-                                                // passé directement à @json dans un attribut casse le parseur Blade.
-                                                $editPayload = [
-                                                    'id' => $service->id,
-                                                    'category' => $service->category,
-                                                    'name' => $service->name,
-                                                    'description' => $service->description,
-                                                    'price' => $service->priceInFcfa(),
-                                                    'duration_minutes' => $service->duration_minutes,
-                                                    'sort_order' => $service->sort_order,
-                                                    'is_active' => $service->is_active,
-                                                ];
-                                            @endphp
-                                            <tr class="{{ $service->is_active ? '' : 'opacity-60' }}">
-                                                <td class="px-5 py-3">
-                                                    <p class="text-sm font-medium text-primary">{{ $service->name }}</p>
-                                                    @if($service->description)
-                                                        <p class="text-xs text-primary/45 mt-0.5">{{ $service->description }}</p>
-                                                    @endif
-                                                </td>
-                                                <td class="px-5 py-3 text-xs text-primary/60 whitespace-nowrap">
-                                                    @if($service->duration_minutes)
-                                                        <span class="inline-flex items-center gap-1">
-                                                            <i data-lucide="clock" class="w-3 h-3"></i>
-                                                            {{ $service->duration_minutes }} min
-                                                        </span>
-                                                    @endif
-                                                </td>
-                                                <td class="px-5 py-3 text-right text-sm font-semibold text-primary whitespace-nowrap">
-                                                    {{ number_format($service->price / 100, 0, ',', ' ') }} FCFA
-                                                </td>
-                                                <td class="px-5 py-3 whitespace-nowrap">
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $service->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
-                                                        {{ $service->is_active ? 'Actif' : 'Inactif' }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-5 py-3">
-                                                    <div class="flex justify-end gap-2">
-                                                        <button type="button" @click="openEdit(@json($editPayload))"
-                                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                                        </button>
-                                                        <form method="POST" action="{{ route('settings.services.destroy', $service) }}"
-                                                            onsubmit="return confirm('Supprimer « {{ $service->name }} » du catalogue ?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                </div>
-                            @endif
-                        </div>
+                            @foreach($categoryItems as $service)
+                                @php
+                                    $editPayload = [
+                                        'id' => $service->id,
+                                        'category' => $service->category,
+                                        'name' => $service->name,
+                                        'description' => $service->description,
+                                        'price' => $service->priceInFcfa(),
+                                        'duration_minutes' => $service->duration_minutes,
+                                        'sort_order' => $service->sort_order,
+                                        'is_active' => $service->is_active,
+                                    ];
+                                @endphp
+                                <x-table.row :muted="! $service->is_active">
+                                    <x-table.cell>
+                                        <p class="text-sm font-medium text-primary">{{ $service->name }}</p>
+                                        @if($service->description)
+                                            <p class="mt-0.5 max-w-md text-xs text-primary/45">{{ $service->description }}</p>
+                                        @endif
+                                    </x-table.cell>
+                                    <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">
+                                        @if($service->duration_minutes)
+                                            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3 w-3" aria-hidden="true"></i> {{ $service->duration_minutes }} min</span>
+                                        @endif
+                                    </x-table.cell>
+                                    <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($service->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+                                    <x-table.cell nowrap>
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $service->is_active ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-red-200 bg-red-50 text-red-700' }}">{{ $service->is_active ? 'Actif' : 'Inactif' }}</span>
+                                    </x-table.cell>
+                                    <x-table.actions :label="'Actions pour '.$service->name">
+                                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                                        <x-table.action :action="route('settings.services.destroy', $service)" method="DELETE" icon="trash-2" tone="danger"
+                                            :confirm="'Supprimer « '.$service->name.' » du catalogue ?'">Supprimer</x-table.action>
+                                    </x-table.actions>
+                                </x-table.row>
+                            @endforeach
+                        </x-table>
                     @endforeach
                 </div>
 
@@ -1901,93 +1873,61 @@
                     </div>
                 @endif
 
-                @if($partnerOrganizations->isEmpty())
-                    <div class="border border-dashed border-secondary/30 rounded-xl px-6 py-12 text-center">
-                        <i data-lucide="handshake" class="w-8 h-8 mx-auto text-primary/20 mb-3"></i>
-                        <p class="text-sm text-primary/50">Aucune organisation partenaire enregistrée.</p>
-                        <button type="button" @click="openCreate()" class="mt-2 text-xs font-medium text-primary hover:underline">
-                            Créer la première
-                        </button>
-                    </div>
-                @else
-                    <div class="border border-secondary/20 rounded-xl overflow-hidden">
-                        <table class="min-w-full divide-y divide-secondary/10">
-                            <thead class="bg-gray-50/70">
-                                <tr>
-                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Organisation</th>
-                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Privilèges</th>
-                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Convention</th>
-                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Membres</th>
-                                    <th class="px-5 py-3"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-secondary/10">
-                                @foreach($partnerOrganizations as $organization)
-                                    @php
-                                        $privileges = $organization->privilegeLabels();
-                                        $expired    = !$organization->isValidOn();
-                                    @endphp
-                                    <tr class="{{ $expired ? 'bg-gray-50/50' : '' }}">
-                                        <td class="px-5 py-3">
-                                            <p class="text-sm font-medium text-primary">
-                                                {{ $organization->name }}
-                                                @if($organization->code)
-                                                    <span class="ml-1 text-[10px] font-mono text-primary/40">{{ $organization->code }}</span>
-                                                @endif
-                                            </p>
-                                            <p class="text-[11px] text-primary/40">{{ $organization->typeLabel() }}</p>
-                                        </td>
-                                        <td class="px-5 py-3">
-                                            @if(empty($privileges))
-                                                <span class="text-xs text-primary/30">Aucun privilège défini</span>
-                                            @else
-                                                <div class="flex flex-wrap gap-1">
-                                                    @foreach($privileges as $privilege)
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/30 text-primary border border-secondary/20">{{ $privilege }}</span>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="px-5 py-3 whitespace-nowrap text-[11px] text-primary/60">
-                                            @if($organization->valid_from || $organization->valid_until)
-                                                {{ $organization->valid_from?->format('d/m/Y') ?? '…' }}
-                                                &rarr;
-                                                {{ $organization->valid_until?->format('d/m/Y') ?? '…' }}
-                                            @else
-                                                <span class="text-primary/30">Sans échéance</span>
-                                            @endif
-                                            @if($expired)
-                                                <span class="block mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">
-                                                    {{ $organization->is_active ? 'Hors période' : 'Désactivée' }}
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-5 py-3 text-sm text-primary/70 whitespace-nowrap">
-                                            {{ $organization->customers()->count() }}
-                                        </td>
-                                        <td class="px-5 py-3">
-                                            <div class="flex justify-end gap-2">
-                                                <button type="button" @click="openEdit(@json($partnerPayloads[$organization->id]))"
-                                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
-                                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                                </button>
-                                                <form method="POST" action="{{ route('settings.partners.destroy', $organization) }}"
-                                                    onsubmit="return confirm('Supprimer « {{ $organization->name }} » ? Les clients rattachés ne perdront pas leur historique, mais ne bénéficieront plus des privilèges.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
-                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+                <x-table :rows="$partnerOrganizations" empty="Aucune organisation partenaire enregistrée." empty-icon="handshake" caption="Organisations partenaires">
+                    <x-slot:emptyActions>
+                        <button type="button" x-on:click="openCreate()" class="font-medium text-primary hover:underline">Créer la première</button>
+                    </x-slot:emptyActions>
+                    <x-slot:head>
+                        <x-table.col>Organisation</x-table.col>
+                        <x-table.col hide="xl">Privilèges</x-table.col>
+                        <x-table.col hide="lg">Convention</x-table.col>
+                        <x-table.col align="right">Membres</x-table.col>
+                        <x-table.col actions />
+                    </x-slot:head>
+
+                    @foreach($partnerOrganizations as $organization)
+                        @php
+                            $privileges = $organization->privilegeLabels();
+                            $expired    = ! $organization->isValidOn();
+                        @endphp
+                        <x-table.row :muted="$expired">
+                            <x-table.cell>
+                                <p class="text-sm font-medium text-primary">
+                                    {{ $organization->name }}
+                                    @if($organization->code)<span class="ml-1 font-mono text-[10px] text-primary/45">{{ $organization->code }}</span>@endif
+                                </p>
+                                <p class="text-[11px] text-primary/45">{{ $organization->typeLabel() }}</p>
+                            </x-table.cell>
+                            <x-table.cell hide="xl">
+                                @if(empty($privileges))
+                                    <span class="text-xs text-primary/30">Aucun privilège défini</span>
+                                @else
+                                    <div class="flex max-w-md flex-wrap gap-1">
+                                        @foreach($privileges as $privilege)
+                                            <span class="inline-flex items-center rounded-full border border-secondary/20 bg-accent/30 px-2 py-0.5 text-[10px] font-medium text-primary">{{ $privilege }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </x-table.cell>
+                            <x-table.cell hide="lg" nowrap class="text-[11px] text-primary/60">
+                                @if($organization->valid_from || $organization->valid_until)
+                                    {{ $organization->valid_from?->format('d/m/Y') ?? '…' }} &rarr; {{ $organization->valid_until?->format('d/m/Y') ?? '…' }}
+                                @else
+                                    <span class="text-primary/30">Sans échéance</span>
+                                @endif
+                                @if($expired)
+                                    <span class="mt-1 block w-fit rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700">{{ $organization->is_active ? 'Hors période' : 'Désactivée' }}</span>
+                                @endif
+                            </x-table.cell>
+                            <x-table.cell align="right" class="text-primary/70">{{ $organization->customers()->count() }}</x-table.cell>
+                            <x-table.actions :label="'Actions pour '.$organization->name">
+                                <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($partnerPayloads[$organization->id]) }})">Modifier</x-table.action>
+                                <x-table.action :action="route('settings.partners.destroy', $organization)" method="DELETE" icon="trash-2" tone="danger"
+                                    :confirm="'Supprimer « '.$organization->name.' » ? Les clients rattachés gardent leur historique, mais perdent les privilèges.'">Supprimer</x-table.action>
+                            </x-table.actions>
+                        </x-table.row>
+                    @endforeach
+                </x-table>
 
                 {{-- Modal création / édition --}}
                 <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"

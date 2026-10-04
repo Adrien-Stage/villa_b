@@ -120,90 +120,59 @@
 
     {{-- ===== VUE LISTE ===== --}}
     @if($view === 'list')
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Article</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Catégorie</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Prix</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Stock</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Statut</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-900">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @forelse ($products as $product)
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    @if($product->image_path)
-                                        <img src="{{ asset('storage/' . $product->image_path) }}"
-                                             alt="{{ $product->name }}"
-                                             class="w-10 h-10 rounded-full object-cover border-2 border-secondary/20 flex-shrink-0">
-                                    @else
-                                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 border-2 border-secondary/10">
-                                            <i data-lucide="package" class="w-5 h-5 text-primary/40"></i>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <p class="font-medium text-primary">{{ $product->name }}</p>
-                                        <p class="text-secondary text-sm">{{ $product->sku }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-secondary">{{ $product->category->name }}</td>
-                            <td class="px-6 py-4 font-medium text-primary">
-                                {{ number_format($product->price / 100, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($product->stock_quantity <= 0)
-                                    <span class="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm font-medium">Rupture</span>
-                                @elseif($product->stock_quantity <= $product->reorder_level)
-                                    <span class="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
-                                        {{ $product->stock_quantity }} unité(s)
-                                    </span>
-                                @else
-                                    <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                                        {{ $product->stock_quantity }} unité(s)
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                @if ($product->is_active)
-                                    <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">Actif</span>
-                                @else
-                                    <span class="bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">Inactif</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <a href="{{ route('shop.products.edit', $product) }}"
-                                   class="text-primary hover:text-primary/70 mr-4 transition-colors">
-                                    <i data-lucide="edit" class="w-4 h-4 inline"></i>
-                                </a>
-                                <form action="{{ route('shop.products.destroy', $product) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Êtes-vous sûr ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 transition-colors">
-                                        <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-secondary">
-                                <i data-lucide="box" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
-                                <p>Aucun article trouvé</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <x-table :rows="$products" empty="Aucun article trouvé." empty-icon="box" caption="Articles de la boutique">
+        <x-slot:head>
+            <x-table.col>Article</x-table.col>
+            <x-table.col hide="xl">Catégorie</x-table.col>
+            <x-table.col align="right">Prix</x-table.col>
+            <x-table.col>Stock</x-table.col>
+            <x-table.col hide="lg">Statut</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($products as $product)
+            <x-table.row :muted="! $product->is_active">
+                <x-table.cell>
+                    <div class="flex items-center gap-3">
+                        @if($product->image_path)
+                            <img src="{{ asset('storage/' . $product->image_path) }}" alt="" class="h-10 w-10 shrink-0 rounded-full border-2 border-secondary/20 object-cover">
+                        @else
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary/10 bg-primary/10" aria-hidden="true">
+                                <i data-lucide="package" class="h-5 w-5 text-primary/40"></i>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <a href="{{ route('shop.products.edit', $product) }}" class="block truncate font-medium text-primary hover:underline">{{ $product->name }}</a>
+                            <p class="text-xs text-primary/50">{{ $product->sku }}</p>
+                        </div>
+                    </div>
+                </x-table.cell>
+                <x-table.cell hide="xl" class="text-primary/70">{{ $product->category->name }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-medium">{{ number_format($product->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
+                <x-table.cell nowrap>
+                    @if($product->stock_quantity <= 0)
+                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">Rupture</span>
+                    @elseif($product->stock_quantity <= $product->reorder_level)
+                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">{{ $product->stock_quantity }} unité(s)</span>
+                    @else
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">{{ $product->stock_quantity }} unité(s)</span>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="lg" nowrap>
+                    @if($product->is_active)
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">Actif</span>
+                    @else
+                        <span class="rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700">Inactif</span>
+                    @endif
+                </x-table.cell>
+                <x-table.actions :label="'Actions pour '.$product->name">
+                    <x-table.action :href="route('shop.products.edit', $product)" icon="pencil">Modifier</x-table.action>
+                    <x-table.action :action="route('shop.products.destroy', $product)" method="DELETE" icon="trash-2" tone="danger"
+                        :confirm="'Supprimer '.$product->name.' ?'">Supprimer</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     {{-- ===== VUE CARTE ===== --}}
     @else
@@ -291,10 +260,10 @@
         @endif
     @endif
 
-    <!-- Pagination -->
-    <div class="mt-6">
-        {{ $products->links() }}
-    </div>
+    {{-- Pagination de la vue carte ; la liste porte la sienne. --}}
+    @if($view !== 'list' && $products->hasPages())
+        <div class="mt-6">{{ $products->onEachSide(1)->links('components.table.pagination') }}</div>
+    @endif
 </div>
 
 @push('scripts')

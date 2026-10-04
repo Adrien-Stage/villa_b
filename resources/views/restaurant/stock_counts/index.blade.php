@@ -60,72 +60,45 @@
     </a>
 @endif
 
-<div class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
-    @if($counts->isEmpty())
-        <div class="px-5 py-12 text-center text-primary/40">
-            <i data-lucide="clipboard-list" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
-            <p class="text-sm">Aucun inventaire réalisé.</p>
-        </div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-secondary/10">
-                <thead class="bg-accent/20">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Référence</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">État</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Lignes</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Écart valorisé</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Clôturé par</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @foreach($counts as $count)
-                        <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-4 py-3">
-                                <p class="text-sm font-semibold text-primary">{{ $count->reference }}</p>
-                                @if($vueEnsemble && $count->pointOfSale)
-                                    <p class="text-[11px] font-semibold text-primary/45">{{ $count->pointOfSale->name }}</p>
-                                @endif
-                                <p class="text-[11px] text-primary/40">
-                                    {{ $count->created_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}
-                                </p>
-                            </td>
-                            <td class="px-4 py-3">
-                                @if($count->isClosed())
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">Clôturé</span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">En cours</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-sm text-primary/60">{{ $count->lines_count }}</td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                @if($count->isClosed())
-                                    <span class="text-sm font-semibold {{ $count->variance_value < 0 ? 'text-red-600' : ($count->variance_value > 0 ? 'text-amber-600' : 'text-green-600') }}">
-                                        {{ $count->variance_value > 0 ? '+' : '' }}{{ number_format($count->variance_value / 100, 0, ',', ' ') }} FCFA
-                                    </span>
-                                @else
-                                    <span class="text-xs text-primary/30">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-xs text-primary/60">
-                                {{ $count->closedBy?->name ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <a href="{{ route('restaurant.stock_counts.show', $count) }}"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                                    Ouvrir <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+<x-table :rows="$counts" empty="Aucun inventaire réalisé." empty-icon="clipboard-list" caption="Inventaires du garde-manger">
+    <x-slot:head>
+        <x-table.col>Référence</x-table.col>
+        <x-table.col>État</x-table.col>
+        <x-table.col align="right" hide="lg">Lignes</x-table.col>
+        <x-table.col align="right">Écart valorisé</x-table.col>
+        <x-table.col hide="xl">Clôturé par</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-        <div class="px-4 py-4 border-t border-secondary/15">
-            {{ $counts->links() }}
-        </div>
-    @endif
-</div>
+    @foreach($counts as $count)
+        <x-table.row :href="route('restaurant.stock_counts.show', $count)">
+            <x-table.cell>
+                <a href="{{ route('restaurant.stock_counts.show', $count) }}" class="text-sm font-semibold text-primary hover:underline">{{ $count->reference }}</a>
+                @if($vueEnsemble && $count->pointOfSale)
+                    <p class="text-[11px] font-semibold text-primary/45">{{ $count->pointOfSale->name }}</p>
+                @endif
+                <p class="text-[11px] text-primary/45">{{ $count->created_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
+            </x-table.cell>
+            <x-table.cell nowrap>
+                @if($count->isClosed())
+                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">Clôturé</span>
+                @else
+                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">En cours</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" hide="lg" class="text-primary/60">{{ $count->lines_count }}</x-table.cell>
+            <x-table.cell align="right" nowrap>
+                @if($count->isClosed())
+                    <span class="text-sm font-semibold {{ $count->variance_value < 0 ? 'text-red-600' : ($count->variance_value > 0 ? 'text-amber-600' : 'text-green-600') }}">{{ $count->variance_value > 0 ? '+' : '' }}{{ number_format($count->variance_value / 100, 0, ',', ' ') }} FCFA</span>
+                @else
+                    <span class="text-xs text-primary/30">—</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell hide="xl" class="text-xs text-primary/60">{{ $count->closedBy?->name ?? '—' }}</x-table.cell>
+            <x-table.actions :label="'Actions pour l\'inventaire '.$count->reference">
+                <x-table.action :href="route('restaurant.stock_counts.show', $count)" icon="{{ $count->isClosed() ? 'eye' : 'clipboard-pen' }}">{{ $count->isClosed() ? 'Ouvrir' : 'Saisir le comptage' }}</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection

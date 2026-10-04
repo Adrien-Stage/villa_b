@@ -21,9 +21,12 @@
     <meta charset="utf-8">
     <title>{{ $document->titre }}</title>
     <style>
-        @page {
-            margin: {{ $pourPdf ? '12mm 12mm 16mm' : '0mm !important' }};
-        }
+        @if($pourPdf)
+            @page { margin: 12mm 12mm 16mm; }
+        @else
+            {{-- Au-delà de six colonnes, paysage : comme le PDF (DocumentExporter). --}}
+            @include('partials.impression', ['format' => 'A4 '.(count($colonnes) > 6 ? 'landscape' : 'portrait')])
+        @endif
 
         * { font-family: DejaVu Sans, Arial, sans-serif; box-sizing: border-box; }
         body { margin: 0; color: #2b1a10; font-size: 11px; }

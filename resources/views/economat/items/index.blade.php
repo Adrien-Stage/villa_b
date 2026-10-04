@@ -43,88 +43,64 @@
         <a href="{{ route('economat.items.index', ['filter' => 'alert']) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
     </div>
 
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-        @if($items->isEmpty())
-            <p class="px-5 py-12 text-center text-sm text-primary/40">
-                @if($filter === 'alert') Aucun article sous le seuil. @else Aucun article. Créez-en un pour démarrer le magasin. @endif
-            </p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Catégorie</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Coût moyen</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur</th>
-                            <th class="px-5 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($items as $item)
-                            @php
-                                $level = $item->stockLevel();
-                                // Payloads précalculés : un @json multi-clés inline dans un
-                                // attribut @click casse le compilateur Blade.
-                                $editPayload = [
-                                    'id' => $item->id, 'name' => $item->name, 'reference' => $item->reference,
-                                    'unit' => $item->unit, 'description' => $item->description,
-                                    'stock_category_id' => $item->stock_category_id, 'supplier_id' => $item->supplier_id,
-                                    'min_stock' => (float) $item->min_stock, 'is_active' => (bool) $item->is_active,
-                                ];
-                                $adjustPayload = [
-                                    'id' => $item->id, 'name' => $item->name,
-                                    'unit' => $item->unit, 'current' => (float) $item->current_stock,
-                                ];
-                                $openingPayload = [
-                                    'id' => $item->id, 'name' => $item->name, 'unit' => $item->unit,
-                                    'unit_cost' => (int) round($item->average_cost / 100),
-                                ];
-                            @endphp
-                            <tr class="{{ $item->is_active ? '' : 'opacity-50' }}">
-                                <td class="px-5 py-3">
-                                    <a href="{{ route('economat.items.show', $item) }}" class="font-medium text-primary hover:underline">{{ $item->name }}</a>
-                                    @if($item->reference)<span class="block text-[10px] font-mono text-primary/40">{{ $item->reference }}</span>@endif
-                                </td>
-                                <td class="px-5 py-3 text-primary/60 text-xs">{{ $item->category?->name ?? '—' }}</td>
-                                <td class="px-5 py-3 text-right">
-                                    <span class="inline-flex items-center gap-1.5">
-                                        <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}"></span>
-                                        <span class="font-medium text-primary">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
-                                        <span class="text-primary/40 text-xs">{{ $item->unit }}</span>
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ number_format($item->average_cost / 100, 0, ',', ' ') }}</td>
-                                <td class="px-5 py-3 text-right font-medium text-primary">{{ number_format($item->stockValue() / 100, 0, ',', ' ') }}</td>
-                                <td class="px-5 py-3">
-                                    <div class="flex justify-end gap-1.5">
-                                        @if($item->movements_count === 0)
-                                            @droit('economat.items.opening')
-                                                <button type="button" @click="openOpening({{ Js::from($openingPayload) }})"
-                                                    class="h-8 px-2.5 inline-flex items-center gap-1 rounded-lg border border-secondary/30 text-primary text-xs font-medium hover:bg-accent/20" title="Reprendre le stock déjà en magasin">
-                                                    <i data-lucide="package-plus" class="w-3.5 h-3.5"></i> Reprise
-                                                </button>
-                                            @enddroit
-                                        @endif
-                                        <button type="button" @click="openAdjust({{ Js::from($adjustPayload) }})"
-                                            class="h-8 px-2.5 inline-flex items-center gap-1 rounded-lg border border-secondary/20 text-primary/60 hover:bg-accent/20 text-xs" title="Ajuster le stock">
-                                            <i data-lucide="scale" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                        <button type="button" @click="openEdit({{ Js::from($editPayload) }})"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:bg-accent/20">
-                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-4">{{ $items->links() }}</div>
-        @endif
-    </div>
+    <x-table :rows="$items" :empty="$filter === 'alert' ? 'Aucun article sous le seuil.' : 'Aucun article. Créez-en un pour démarrer le magasin.'" empty-icon="boxes" caption="Articles du magasin central">
+        <x-slot:head>
+            <x-table.col>Article</x-table.col>
+            <x-table.col hide="xl">Catégorie</x-table.col>
+            <x-table.col align="right">Stock</x-table.col>
+            <x-table.col align="right" hide="lg">Coût moyen</x-table.col>
+            <x-table.col align="right">Valeur</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($items as $item)
+            @php
+                $level = $item->stockLevel();
+                // Payloads précalculés : un @json multi-clés inline dans un
+                // attribut casse le compilateur Blade.
+                $editPayload = [
+                    'id' => $item->id, 'name' => $item->name, 'reference' => $item->reference,
+                    'unit' => $item->unit, 'description' => $item->description,
+                    'stock_category_id' => $item->stock_category_id, 'supplier_id' => $item->supplier_id,
+                    'min_stock' => (float) $item->min_stock, 'is_active' => (bool) $item->is_active,
+                ];
+                $adjustPayload = [
+                    'id' => $item->id, 'name' => $item->name,
+                    'unit' => $item->unit, 'current' => (float) $item->current_stock,
+                ];
+                $openingPayload = [
+                    'id' => $item->id, 'name' => $item->name, 'unit' => $item->unit,
+                    'unit_cost' => (int) round($item->average_cost / 100),
+                ];
+            @endphp
+            <x-table.row :muted="! $item->is_active">
+                <x-table.cell>
+                    <a href="{{ route('economat.items.show', $item) }}" class="font-medium text-primary hover:underline">{{ $item->name }}</a>
+                    @if($item->reference)<span class="block font-mono text-[10px] text-primary/45">{{ $item->reference }}</span>@endif
+                </x-table.cell>
+                <x-table.cell hide="xl" class="text-xs text-primary/60">{{ $item->category?->name ?? '—' }}</x-table.cell>
+                <x-table.cell align="right" nowrap>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}" aria-hidden="true"></span>
+                        <span class="font-medium text-primary">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
+                        <span class="text-xs text-primary/45">{{ $item->unit }}</span>
+                    </span>
+                </x-table.cell>
+                <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ number_format($item->average_cost / 100, 0, ',', ' ') }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-medium">{{ number_format($item->stockValue() / 100, 0, ',', ' ') }}</x-table.cell>
+                <x-table.actions :label="'Actions pour '.$item->name">
+                    <x-table.action :href="route('economat.items.show', $item)" icon="eye">Fiche</x-table.action>
+                    @if($item->movements_count === 0)
+                        @droit('economat.items.opening')
+                            <x-table.action icon="package-plus" x-on:click="openOpening({{ Js::from($openingPayload) }})" title="Reprendre le stock déjà en magasin">Reprise du stock</x-table.action>
+                        @enddroit
+                    @endif
+                    <x-table.action icon="scale" x-on:click="openAdjust({{ Js::from($adjustPayload) }})">Ajuster le stock</x-table.action>
+                    <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     {{-- Modal création / édition --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
