@@ -94,57 +94,40 @@
     </div>
 
     {{-- Tableau des demandes --}}
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-        @if($requests->isEmpty())
-            <div class="py-12 text-center text-sm text-primary/40">
-                <i data-lucide="clipboard-list" class="w-10 h-10 mx-auto text-primary/20 mb-3"></i>
-                Aucune demande d'achat trouvée.
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70 border-b border-secondary/10">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Numéro</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Département</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Demandeur</th>
-                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Priorité</th>
-                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Statut</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Articles</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Montant Est.</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($requests as $req)
-                            <tr class="hover:bg-accent/5 cursor-pointer transition-colors" onclick="window.location='{{ route('economat.purchase_requests.show', $req) }}'">
-                                <td class="px-5 py-3 font-mono font-bold text-primary">{{ $req->number }}</td>
-                                <td class="px-5 py-3 text-primary/70">{{ $req->departmentLabel() }}</td>
-                                <td class="px-5 py-3 text-primary/80">{{ $req->requestedBy?->name ?? '—' }}</td>
-                                <td class="px-5 py-3 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $priorityBadges[$req->priority] ?? 'bg-gray-100' }}">
-                                        {{ $req->priorityLabel() }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border {{ $statusStyles[$req->status] ?? 'bg-gray-100' }}">
-                                        {{ $req->statusLabel() }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ $req->lines_count }}</td>
-                                <td class="px-5 py-3 text-right font-mono font-semibold text-primary">
-                                    {{ number_format($req->total_estimated_amount / 100, 0, ',', ' ') }} F
-                                </td>
-                                <td class="px-5 py-3 text-xs text-primary/50">{{ $req->created_at->format('d/m/Y') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-5 py-3 border-t border-secondary/10">
-                {{ $requests->links() }}
-            </div>
-        @endif
-    </div>
+    <x-table :rows="$requests" empty="Aucune demande d'achat trouvée." empty-icon="clipboard-list" caption="Demandes d'achat">
+        <x-slot:head>
+            <x-table.col>Numéro</x-table.col>
+            <x-table.col>Département</x-table.col>
+            <x-table.col hide="xl">Demandeur</x-table.col>
+            <x-table.col align="center" hide="lg">Priorité</x-table.col>
+            <x-table.col align="center">Statut</x-table.col>
+            <x-table.col align="right" hide="2xl">Articles</x-table.col>
+            <x-table.col align="right">Montant est.</x-table.col>
+            <x-table.col hide="xl">Date</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($requests as $req)
+            <x-table.row :href="route('economat.purchase_requests.show', $req)">
+                <x-table.cell nowrap>
+                    <a href="{{ route('economat.purchase_requests.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
+                </x-table.cell>
+                <x-table.cell class="text-primary/70">{{ $req->departmentLabel() }}</x-table.cell>
+                <x-table.cell hide="xl" class="text-primary/80">{{ $req->requestedBy?->name ?? '—' }}</x-table.cell>
+                <x-table.cell align="center" hide="lg" nowrap>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $priorityBadges[$req->priority] ?? 'bg-gray-100' }}">{{ $req->priorityLabel() }}</span>
+                </x-table.cell>
+                <x-table.cell align="center" nowrap>
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold {{ $statusStyles[$req->status] ?? 'bg-gray-100' }}">{{ $req->statusLabel() }}</span>
+                </x-table.cell>
+                <x-table.cell align="right" hide="2xl" class="font-mono text-primary/70">{{ $req->lines_count }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono font-semibold">{{ number_format($req->total_estimated_amount / 100, 0, ',', ' ') }} F</x-table.cell>
+                <x-table.cell hide="xl" nowrap class="text-xs text-primary/50">{{ $req->created_at->format('d/m/Y') }}</x-table.cell>
+                <x-table.actions :label="'Actions pour la demande '.$req->number">
+                    <x-table.action :href="route('economat.purchase_requests.show', $req)" icon="eye">Ouvrir</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 @endsection

@@ -118,94 +118,76 @@
              entre eux, et des cartes côte à côte se comparent mal. Les lignes
              sont triées par marge croissante — ce qu'on cherche d'abord, c'est
              la chambre qui rapporte le moins. --}}
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-accent/20">
-                        <tr>
-                            <th class="w-10 px-4 py-3"></th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type de chambre</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Prix / nuit</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Coût variable</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Marge</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">%</th>
-                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Postes</th>
-                            <th class="px-4 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($rows->sortBy(fn ($r) => $r['summary']['contribution_pct'] ?? -1) as $row)
-                            @php
-                                $type = $row['type'];
-                                $s    = $row['summary'];
-                                $pct  = $s['contribution_pct'];
-                            @endphp
-                            <tr class="hover:bg-accent/10 transition-colors">
-                                <td class="px-4 py-2.5">
-                                    <input type="checkbox" name="types[]" value="{{ $type->id }}" x-model.number="selection"
-                                           class="w-4 h-4 rounded border-secondary/40 text-primary cursor-pointer"
-                                           aria-label="Sélectionner la fiche {{ $type->name }}">
-                                </td>
-                                <td class="px-4 py-2.5">
-                                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
-                                       class="font-medium text-primary hover:text-secondary transition-colors">{{ $type->name }}</a>
-                                    @unless($s['is_configured'])
-                                        <span class="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                            <i data-lucide="alert-circle" class="w-3 h-3"></i> à remplir
-                                        </span>
-                                    @endunless
-                                </td>
-                                <td class="px-4 py-2.5 text-right tabular-nums text-primary/80">
-                                    {{ $fcfa($s['reference_price']) }}
-                                    @if($s['reference_is_realized'])
-                                        {{-- Prix réellement pratiqué, non tarif affiché : la marge
-                                             calculée sur un tarif jamais appliqué serait fictive. --}}
-                                        <span class="text-[10px] text-primary/40" title="Prix moyen réellement pratiqué">réel</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-2.5 text-right tabular-nums {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }}">
-                                    {{ $s['is_configured'] ? $fcfa($s['variable_cost']) : '—' }}
-                                </td>
-                                <td class="px-4 py-2.5 text-right tabular-nums font-semibold {{ $s['is_configured'] ? $teinte($pct) : 'text-primary/30' }}">
-                                    {{ $s['is_configured'] ? $fcfa($s['contribution_margin']) : '—' }}
-                                </td>
-                                <td class="px-4 py-2.5 text-right">
-                                    @if($s['is_configured'])
-                                        <span class="font-bold {{ $teinte($pct) }}">{{ $pct }}%</span>
-                                    @else
-                                        {{-- Sans coût saisi, aucun pourcentage : 100 % serait mensonger. --}}
-                                        <span class="text-primary/30">—</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-2.5 text-right tabular-nums text-primary/50">{{ $s['line_count'] ?: '—' }}</td>
-                                <td class="px-4 py-2.5 text-right">
-                                    <a href="{{ route('rooms.cost_sheets.show', $type) }}"
-                                       class="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary hover:text-primary transition-colors">
-                                        Fiche <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+        <x-table :rows="$rows" empty="Aucun type de chambre." empty-icon="calculator" caption="Fiches de coût par type de chambre">
+            <x-slot:head>
+                <x-table.col class="w-10"><span class="sr-only">Sélection</span></x-table.col>
+                <x-table.col>Type de chambre</x-table.col>
+                <x-table.col align="right">Prix / nuit</x-table.col>
+                <x-table.col align="right" hide="lg">Coût variable</x-table.col>
+                <x-table.col align="right">Marge</x-table.col>
+                <x-table.col align="right">%</x-table.col>
+                <x-table.col align="right" hide="xl">Postes</x-table.col>
+                <x-table.col actions />
+            </x-slot:head>
 
-                    @if($renseignees->isNotEmpty())
-                        <tfoot class="bg-accent/20">
-                            <tr class="font-semibold text-primary">
-                                <td></td>
-                                <td class="px-4 py-3 text-[11px] uppercase tracking-wider">
-                                    Ensemble — {{ $renseignees->count() }} fiche(s) renseignée(s)
-                                </td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ $fcfa($prixCumule) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums text-red-700">{{ $fcfa($coutCumule) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums {{ $teinte($margeGlobale) }}">{{ $fcfa($margeCumulee) }}</td>
-                                <td class="px-4 py-3 text-right {{ $teinte($margeGlobale) }}">{{ $margeGlobale }}%</td>
-                                <td colspan="2"></td>
-                            </tr>
-                        </tfoot>
-                    @endif
-                </table>
-            </div>
-        </div>
+            @foreach($rows->sortBy(fn ($r) => $r['summary']['contribution_pct'] ?? -1) as $row)
+                @php
+                    $type = $row['type'];
+                    $s    = $row['summary'];
+                    $pct  = $s['contribution_pct'];
+                @endphp
+                <x-table.row>
+                    <x-table.cell>
+                        <input type="checkbox" name="types[]" value="{{ $type->id }}" x-model.number="selection"
+                               class="h-4 w-4 cursor-pointer rounded border-secondary/40 text-primary"
+                               aria-label="Sélectionner la fiche {{ $type->name }}">
+                    </x-table.cell>
+                    <x-table.cell>
+                        <a href="{{ route('rooms.cost_sheets.show', $type) }}" class="font-medium text-primary hover:underline">{{ $type->name }}</a>
+                        @unless($s['is_configured'])
+                            <span class="ml-2 inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"><i data-lucide="alert-circle" class="h-3 w-3" aria-hidden="true"></i> à remplir</span>
+                        @endunless
+                    </x-table.cell>
+                    <x-table.cell align="right" nowrap class="tabular-nums text-primary/80">
+                        {{ $fcfa($s['reference_price']) }}
+                        @if($s['reference_is_realized'])
+                            {{-- Prix réellement pratiqué, non tarif affiché : la marge
+                                 calculée sur un tarif jamais appliqué serait fictive. --}}
+                            <span class="text-[10px] text-primary/45" title="Prix moyen réellement pratiqué">réel</span>
+                        @endif
+                    </x-table.cell>
+                    <x-table.cell align="right" hide="lg" nowrap class="tabular-nums {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['variable_cost']) : '—' }}</x-table.cell>
+                    <x-table.cell align="right" nowrap class="font-semibold tabular-nums {{ $s['is_configured'] ? $teinte($pct) : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['contribution_margin']) : '—' }}</x-table.cell>
+                    <x-table.cell align="right" nowrap>
+                        @if($s['is_configured'])
+                            <span class="font-bold {{ $teinte($pct) }}">{{ $pct }}%</span>
+                        @else
+                            {{-- Sans coût saisi, aucun pourcentage : 100 % serait mensonger. --}}
+                            <span class="text-primary/30">—</span>
+                        @endif
+                    </x-table.cell>
+                    <x-table.cell align="right" hide="xl" class="tabular-nums text-primary/50">{{ $s['line_count'] ?: '—' }}</x-table.cell>
+                    <x-table.actions :label="'Actions pour la fiche '.$type->name">
+                        <x-table.action :href="route('rooms.cost_sheets.show', $type)" icon="arrow-right">Fiche</x-table.action>
+                    </x-table.actions>
+                </x-table.row>
+            @endforeach
+
+            @if($renseignees->isNotEmpty())
+                <x-slot:foot>
+                    <tr>
+                        <td></td>
+                        <td class="px-4 py-3 text-[11px] uppercase tracking-wider">Ensemble — {{ $renseignees->count() }} fiche(s) renseignée(s)</td>
+                        <td class="px-4 py-3 text-right tabular-nums">{{ $fcfa($prixCumule) }}</td>
+                        <td class="hidden px-4 py-3 text-right tabular-nums text-red-700 @4xl:table-cell">{{ $fcfa($coutCumule) }}</td>
+                        <td class="px-4 py-3 text-right tabular-nums {{ $teinte($margeGlobale) }}">{{ $fcfa($margeCumulee) }}</td>
+                        <td class="px-4 py-3 text-right {{ $teinte($margeGlobale) }}">{{ $margeGlobale }}%</td>
+                        <td class="hidden @5xl:table-cell"></td>
+                        <td></td>
+                    </tr>
+                </x-slot:foot>
+            @endif
+        </x-table>
         </form>
 
         <p class="text-[11px] text-primary/40 mt-4">

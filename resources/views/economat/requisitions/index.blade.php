@@ -75,95 +75,45 @@
     @include('economat.requisitions.partials.filtres')
 
     {{-- Tableau des Bons --}}
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-        @if($requisitions->isEmpty())
-            <div class="p-12 text-center text-primary/40">
-                <i data-lucide="inbox" class="w-12 h-12 text-primary/20 mx-auto mb-3"></i>
-                <p class="text-sm font-medium text-primary/60">
-                    {{ $filtres ? 'Aucun bon de réquisition ne correspond aux filtres sélectionnés.' : 'Aucun bon de réquisition enregistré.' }}
-                </p>
-                @if($filtres)
-                    <div class="mt-3">
-                        <a href="{{ route('economat.requisitions.index') }}" class="text-xs text-primary underline">
-                            Réinitialiser les filtres
-                        </a>
-                    </div>
-                @endif
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-xs">
-                    <thead>
-                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
-                            <th class="py-3 px-4">N° de Bon</th>
-                            <th class="py-3 px-4">Service Demandeur</th>
-                            <th class="py-3 px-4">Demandeur</th>
-                            <th class="py-3 px-4 text-center">Date Émission</th>
-                            <th class="py-3 px-4 text-center">Nb Articles</th>
-                            <th class="py-3 px-4">Statut</th>
-                            <th class="py-3 px-4">Motif</th>
-                            <th class="py-3 px-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($requisitions as $req)
-                            <tr class="hover:bg-surface-light/40 transition-colors">
-                                <td class="py-3 px-4 font-mono font-bold text-primary">
-                                    <a href="{{ route('economat.requisitions.show', $req) }}" class="hover:underline">
-                                        {{ $req->number }}
-                                    </a>
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="font-medium text-primary">{{ $req->departmentLabel() }}</span>
-                                </td>
-                                <td class="py-3 px-4 text-primary/70">
-                                    {{ $req->requestedBy?->name ?? '—' }}
-                                </td>
-                                <td class="py-3 px-4 text-center font-mono text-primary/60">
-                                    {{ $req->created_at->format('d/m/Y') }}
-                                    <span class="text-[10px] text-primary/40 block">{{ $req->created_at->format('H:i') }}</span>
-                                </td>
-                                <td class="py-3 px-4 text-center font-mono font-bold text-primary">
-                                    {{ $req->lines->count() }}
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $statusStyles[$req->status] ?? 'bg-gray-100' }}">
-                                        {{ $req->statusLabel() }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-primary/60 max-w-xs truncate" title="{{ $req->purpose }}">
-                                    {{ $req->purpose ?: '—' }}
-                                </td>
-                                <td class="py-3 px-4 text-right">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        <a href="{{ route('economat.requisitions.show', $req) }}"
-                                            class="p-1.5 rounded-lg text-primary/60 hover:text-primary hover:bg-surface-light transition-colors"
-                                            title="Consulter les détails">
-                                            <i data-lucide="eye" class="w-4 h-4"></i>
-                                        </a>
-
-                                        <a href="{{ route('economat.requisitions.print', $req) }}" target="_blank"
-                                            class="p-1.5 rounded-lg text-primary/60 hover:text-primary hover:bg-surface-light transition-colors"
-                                            title="Imprimer le bon">
-                                            <i data-lucide="printer" class="w-4 h-4"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="p-4 border-t border-secondary/20 bg-surface-light/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="text-xs text-primary/50">
-                    Affichage de {{ $requisitions->firstItem() ?? 0 }} à {{ $requisitions->lastItem() ?? 0 }} sur {{ $requisitions->total() }} bon(s)
-                </div>
-                <div>
-                    {{ $requisitions->links() }}
-                </div>
-            </div>
+    <x-table :rows="$requisitions" :empty="$filtres ? 'Aucun bon de réquisition ne correspond aux filtres sélectionnés.' : 'Aucun bon de réquisition enregistré.'" empty-icon="inbox" caption="Bons de réquisition">
+        @if($filtres)
+            <x-slot:emptyActions>
+                <a href="{{ route('economat.requisitions.index') }}" class="text-primary underline">Réinitialiser les filtres</a>
+            </x-slot:emptyActions>
         @endif
-    </div>
+        <x-slot:head>
+            <x-table.col>N° de bon</x-table.col>
+            <x-table.col>Service demandeur</x-table.col>
+            <x-table.col hide="xl">Demandeur</x-table.col>
+            <x-table.col hide="lg">Émission</x-table.col>
+            <x-table.col align="right" hide="2xl">Articles</x-table.col>
+            <x-table.col>Statut</x-table.col>
+            <x-table.col hide="3xl">Motif</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($requisitions as $req)
+            <x-table.row :href="route('economat.requisitions.show', $req)">
+                <x-table.cell nowrap>
+                    <a href="{{ route('economat.requisitions.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
+                </x-table.cell>
+                <x-table.cell class="font-medium">{{ $req->departmentLabel() }}</x-table.cell>
+                <x-table.cell hide="xl" class="text-primary/70">{{ $req->requestedBy?->name ?? '—' }}</x-table.cell>
+                <x-table.cell hide="lg" nowrap class="font-mono text-primary/60">
+                    {{ $req->created_at->format('d/m/Y') }}
+                    <span class="block text-[10px] text-primary/45">{{ $req->created_at->format('H:i') }}</span>
+                </x-table.cell>
+                <x-table.cell align="right" hide="2xl" class="font-mono font-bold">{{ $req->lines->count() }}</x-table.cell>
+                <x-table.cell nowrap>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold {{ $statusStyles[$req->status] ?? 'bg-gray-100' }}">{{ $req->statusLabel() }}</span>
+                </x-table.cell>
+                <x-table.cell hide="3xl" class="max-w-xs truncate text-primary/60" title="{{ $req->purpose }}">{{ $req->purpose ?: '—' }}</x-table.cell>
+                <x-table.actions :label="'Actions pour le bon '.$req->number">
+                    <x-table.action :href="route('economat.requisitions.show', $req)" icon="eye">Détails</x-table.action>
+                    <x-table.action :href="route('economat.requisitions.print', $req)" icon="printer" target="_blank">Imprimer</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 </div>
 @endsection

@@ -26,67 +26,43 @@
         </p>
     </div>
 
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-        @if($stores->isEmpty())
-            <p class="px-5 py-12 text-center text-sm text-primary/40">Aucun dépôt. Créez-en un par service qui détient du stock.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Dépôt</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Service</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Articles</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur en stock</th>
-                            @if($canManage)<th class="px-5 py-3"><span class="sr-only">Actions</span></th>@endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($stores as $store)
-                            @php
-                                $editPayload = [
-                                    'id' => $store->id, 'name' => $store->name, 'department' => $store->department,
-                                    'sort_order' => $store->sort_order, 'is_active' => $store->is_active,
-                                ];
-                            @endphp
-                            <tr class="{{ $store->is_active ? '' : 'opacity-50' }}">
-                                <td class="px-5 py-3">
-                                    <a href="{{ route('economat.stores.show', $store) }}" class="font-medium text-primary hover:underline">{{ $store->name }}</a>
-                                    @unless($store->is_active)<span class="ml-1 text-[10px] text-primary/50">(inactif)</span>@endunless
-                                </td>
-                                <td class="px-5 py-3 text-primary/70 text-xs">{{ $store->departmentLabel() }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ $store->stocks_count }}</td>
-                                <td class="px-5 py-3 text-right font-medium text-primary">{{ number_format($store->stockValue() / 100, 0, ',', ' ') }}</td>
-                                @if($canManage)
-                                    <td class="px-5 py-3">
-                                        <div class="flex justify-end gap-1.5">
-                                            <button type="button" @click="openEdit({{ Js::from($editPayload) }})"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:bg-accent/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary"
-                                                aria-label="Modifier {{ $store->name }}">
-                                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                            @if($store->stocks_count === 0)
-                                                <form method="POST" action="{{ route('economat.stores.destroy', $store) }}"
-                                                      onsubmit="return confirm('Supprimer le dépôt « {{ addslashes($store->name) }} » ?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600/70 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary"
-                                                        aria-label="Supprimer {{ $store->name }}">
-                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
+    <x-table :rows="$stores" empty="Aucun dépôt. Créez-en un par service qui détient du stock." empty-icon="warehouse" caption="Dépôts de service">
+        <x-slot:head>
+            <x-table.col>Dépôt</x-table.col>
+            <x-table.col hide="lg">Service</x-table.col>
+            <x-table.col align="right" hide="md">Articles</x-table.col>
+            <x-table.col align="right">Valeur en stock</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
+
+        @foreach($stores as $store)
+            @php
+                $editPayload = [
+                    'id' => $store->id, 'name' => $store->name, 'department' => $store->department,
+                    'sort_order' => $store->sort_order, 'is_active' => $store->is_active,
+                ];
+            @endphp
+            <x-table.row :muted="! $store->is_active">
+                <x-table.cell>
+                    <a href="{{ route('economat.stores.show', $store) }}" class="font-medium text-primary hover:underline">{{ $store->name }}</a>
+                    @unless($store->is_active)<span class="ml-1 text-[10px] text-primary/50">(inactif)</span>@endunless
+                </x-table.cell>
+                <x-table.cell hide="lg" class="text-xs text-primary/70">{{ $store->departmentLabel() }}</x-table.cell>
+                <x-table.cell align="right" hide="md" class="text-primary/70">{{ $store->stocks_count }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-medium">{{ number_format($store->stockValue() / 100, 0, ',', ' ') }}</x-table.cell>
+                <x-table.actions :label="'Actions pour le dépôt '.$store->name">
+                    <x-table.action :href="route('economat.stores.show', $store)" icon="eye">Ouvrir</x-table.action>
+                    @if($canManage)
+                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                        @if($store->stocks_count === 0)
+                            <x-table.action :action="route('economat.stores.destroy', $store)" method="DELETE" icon="trash-2" tone="danger"
+                                :confirm="'Supprimer le dépôt « '.$store->name.' » ?'">Supprimer</x-table.action>
+                        @endif
+                    @endif
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     @if($canManage)
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"

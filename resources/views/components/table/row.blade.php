@@ -8,7 +8,7 @@
 @props(['muted' => false, 'href' => null])
 
 <tr {{ $attributes->class([
-    'transition-colors hover:bg-accent/10',
+    'group transition-colors hover:bg-accent/10',
     'cursor-pointer' => $href !== null,
     'opacity-60' => $muted,
 ]) }}

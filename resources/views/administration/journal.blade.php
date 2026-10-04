@@ -63,40 +63,31 @@
     </div>
 </form>
 
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    <table class="w-full text-left text-xs">
-        <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
-            <tr>
-                <th class="px-4 py-2.5">Date</th>
-                <th class="px-4 py-2.5">Utilisateur</th>
-                <th class="px-4 py-2.5">Événement</th>
-                <th class="px-4 py-2.5">Action</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-secondary/15">
-            @forelse($journal as $ligne)
-                @php $enIntervention = isset($ligne->payload['intervention_id']) || str_starts_with($ligne->event_type, 'intervention'); @endphp
-                <tr class="{{ $enIntervention ? 'bg-amber-50/60' : '' }}">
-                    <td class="px-4 py-2.5 whitespace-nowrap text-primary/60">{{ $ligne->created_at?->format('d/m/Y H:i:s') }}</td>
-                    <td class="px-4 py-2.5 text-primary">{{ $ligne->user?->name ?? 'Système' }}</td>
-                    <td class="px-4 py-2.5">
-                        <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] text-primary/70">{{ $ligne->event_type }}</span>
-                        @if($ligne->module)<span class="ml-1 text-[10px] text-primary/40">{{ $ligne->module }}</span>@endif
-                    </td>
-                    <td class="px-4 py-2.5 text-primary/80">
-                        @if($enIntervention)
-                            <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Intervention</span>
-                        @endif
-                        {{ $ligne->action }}
-                    </td>
-                </tr>
-            @empty
-                <tr><td colspan="4" class="px-4 py-8 text-center text-primary/50">Aucune entrée.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+<x-table :rows="$journal" empty="Aucune entrée." empty-icon="scroll-text" caption="Journal d'audit">
+    <x-slot:head>
+        <x-table.col>Date</x-table.col>
+        <x-table.col hide="lg">Utilisateur</x-table.col>
+        <x-table.col hide="xl">Événement</x-table.col>
+        <x-table.col>Action</x-table.col>
+    </x-slot:head>
 
-<div class="mt-4">{{ $journal->links() }}</div>
+    @foreach($journal as $ligne)
+        @php $enIntervention = isset($ligne->payload['intervention_id']) || str_starts_with($ligne->event_type, 'intervention'); @endphp
+        <x-table.row class="{{ $enIntervention ? 'bg-amber-50/60' : '' }}">
+            <x-table.cell nowrap class="text-xs text-primary/60">{{ $ligne->created_at?->format('d/m/Y H:i:s') }}</x-table.cell>
+            <x-table.cell hide="lg">{{ $ligne->user?->name ?? 'Système' }}</x-table.cell>
+            <x-table.cell hide="xl" nowrap>
+                <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] text-primary/70">{{ $ligne->event_type }}</span>
+                @if($ligne->module)<span class="ml-1 text-[10px] text-primary/45">{{ $ligne->module }}</span>@endif
+            </x-table.cell>
+            <x-table.cell class="text-primary/80">
+                @if($enIntervention)
+                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Intervention</span>
+                @endif
+                {{ $ligne->action }}
+            </x-table.cell>
+        </x-table.row>
+    @endforeach
+</x-table>
 
 @endsection

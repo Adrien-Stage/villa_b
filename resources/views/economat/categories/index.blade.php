@@ -27,76 +27,49 @@
         </p>
     </div>
 
-    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-        @if($categories->isEmpty())
-            <p class="px-5 py-12 text-center text-sm text-primary/40">Aucune catégorie. Créez-en une pour classer les articles.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70">
-                        <tr>
-                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50 w-20">Ordre</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Catégorie</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Compte de stock</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Articles</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur en stock</th>
-                            @if($canManage)<th class="px-5 py-3"><span class="sr-only">Actions</span></th>@endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($categories as $category)
-                            @php
-                                $valeur = (int) ($valeurs[$category->id] ?? 0);
-                                $editPayload = [
-                                    'id' => $category->id, 'name' => $category->name,
-                                    'stock_account' => $category->stock_account ?? '',
-                                    'sort_order' => $category->sort_order, 'value' => $valeur,
-                                ];
-                            @endphp
-                            <tr>
-                                <td class="px-5 py-3 text-center">
-                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-gray-100 text-primary/70 border border-secondary/20">
-                                        {{ $category->sort_order }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 font-medium text-primary">{{ $category->name }}</td>
-                                <td class="px-5 py-3 text-primary/70 text-xs">
-                                    <span class="font-mono">{{ $category->effectiveStockAccount() }}</span>
-                                    — {{ $comptes[$category->effectiveStockAccount()] ?? '' }}
-                                    @unless($category->stock_account)<span class="text-primary/40">(par défaut)</span>@endunless
-                                </td>
-                                <td class="px-5 py-3 text-right text-primary/70">{{ $category->items_count }}</td>
-                                <td class="px-5 py-3 text-right font-medium text-primary">{{ number_format($valeur / 100, 0, ',', ' ') }}</td>
-                                @if($canManage)
-                                    <td class="px-5 py-3">
-                                        <div class="flex justify-end gap-1.5">
-                                            <button type="button" @click="openEdit({{ Js::from($editPayload) }})"
-                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:bg-accent/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary"
-                                                aria-label="Modifier {{ $category->name }}">
-                                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                            @if($category->items_count === 0)
-                                                <form method="POST" action="{{ route('economat.categories.destroy', $category) }}"
-                                                      onsubmit="return confirm('Supprimer la catégorie « {{ addslashes($category->name) }} » ?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600/70 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary"
-                                                        aria-label="Supprimer {{ $category->name }}">
-                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
+    <x-table :rows="$categories" empty="Aucune catégorie. Créez-en une pour classer les articles." empty-icon="tags" caption="Catégories d'articles">
+        <x-slot:head>
+            <x-table.col align="center" class="w-20">Ordre</x-table.col>
+            <x-table.col>Catégorie</x-table.col>
+            <x-table.col hide="xl">Compte de stock</x-table.col>
+            <x-table.col align="right" hide="lg">Articles</x-table.col>
+            <x-table.col align="right">Valeur en stock</x-table.col>
+            @if($canManage)<x-table.col actions />@endif
+        </x-slot:head>
+
+        @foreach($categories as $category)
+            @php
+                $valeur = (int) ($valeurs[$category->id] ?? 0);
+                $editPayload = [
+                    'id' => $category->id, 'name' => $category->name,
+                    'stock_account' => $category->stock_account ?? '',
+                    'sort_order' => $category->sort_order, 'value' => $valeur,
+                ];
+            @endphp
+            <x-table.row>
+                <x-table.cell align="center">
+                    <span class="inline-flex items-center justify-center rounded border border-secondary/20 bg-gray-100 px-2 py-0.5 font-mono text-xs font-semibold text-primary/70">{{ $category->sort_order }}</span>
+                </x-table.cell>
+                <x-table.cell class="font-medium">{{ $category->name }}</x-table.cell>
+                <x-table.cell hide="xl" class="text-xs text-primary/70">
+                    <span class="font-mono">{{ $category->effectiveStockAccount() }}</span>
+                    — {{ $comptes[$category->effectiveStockAccount()] ?? '' }}
+                    @unless($category->stock_account)<span class="text-primary/40">(par défaut)</span>@endunless
+                </x-table.cell>
+                <x-table.cell align="right" hide="lg" class="text-primary/70">{{ $category->items_count }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-medium">{{ number_format($valeur / 100, 0, ',', ' ') }}</x-table.cell>
+                @if($canManage)
+                    <x-table.actions :label="'Actions pour la catégorie '.$category->name">
+                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                        @if($category->items_count === 0)
+                            <x-table.action :action="route('economat.categories.destroy', $category)" method="DELETE" icon="trash-2" tone="danger"
+                                :confirm="'Supprimer la catégorie « '.$category->name.' » ?'">Supprimer</x-table.action>
+                        @endif
+                    </x-table.actions>
+                @endif
+            </x-table.row>
+        @endforeach
+    </x-table>
 
     @if($canManage)
     {{-- Modal création / édition --}}

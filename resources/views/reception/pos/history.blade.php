@@ -61,79 +61,40 @@
         </form>
     </div>
 
-    {{-- Tableau des ventes --}}
-    <div class="bg-white rounded-2xl border border-secondary/15 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-accent/20 border-b border-secondary/15 text-[10px] font-bold uppercase tracking-wider text-primary/60">
-                        <th class="py-3 px-4">Date / Heure</th>
-                        <th class="py-3 px-4">N° Vente</th>
-                        <th class="py-3 px-4">Client / Chambre</th>
-                        <th class="py-3 px-4">Articles</th>
-                        <th class="py-3 px-4 text-right">Total TTC</th>
-                        <th class="py-3 px-4">Règlement</th>
-                        <th class="py-3 px-4">Statut</th>
-                        <th class="py-3 px-4 text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-secondary/10">
-                    @forelse($sales as $sale)
-                        <tr class="hover:bg-slate-50/80 transition-colors">
-                            <td class="py-3 px-4 whitespace-nowrap text-primary/70">
-                                {{ $sale->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="py-3 px-4 font-mono font-bold text-primary">
-                                {{ $sale->sale_number }}
-                            </td>
-                            <td class="py-3 px-4">
-                                <p class="font-bold text-primary">{{ $sale->customer_name }}</p>
-                                @if($sale->room_number)
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-800">
-                                        <i data-lucide="bed" class="w-3 h-3"></i> Chambre {{ $sale->room_number }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-4 text-primary/70 max-w-xs truncate">
-                                {{ $sale->items->pluck('name')->join(', ') }}
-                            </td>
-                            <td class="py-3 px-4 text-right font-extrabold text-primary font-heading whitespace-nowrap">
-                                {{ $sale->formattedTotal() }}
-                            </td>
-                            <td class="py-3 px-4 text-primary/80 whitespace-nowrap">
-                                {{ $sale->paymentMethodLabel() }}
-                            </td>
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full {{ $sale->payment_status === 'charged_to_room' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
-                                    {{ $sale->paymentStatusLabel() }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-center whitespace-nowrap">
-                                <a href="{{ route('reception.pos.receipt', $sale) }}"
-                                   class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary bg-secondary/10 hover:bg-secondary/20 transition-colors">
-                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                    <span>Reçu</span>
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="py-12 text-center text-primary/40">
-                                <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
-                                <p class="font-medium text-xs">Aucune vente enregistrée pour le moment.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <x-table :rows="$sales" empty="Aucune vente enregistrée pour le moment." empty-icon="receipt" caption="Ventes du POS de la réception">
+        <x-slot:head>
+            <x-table.col hide="lg">Date / heure</x-table.col>
+            <x-table.col>N° vente</x-table.col>
+            <x-table.col>Client / chambre</x-table.col>
+            <x-table.col hide="2xl">Articles</x-table.col>
+            <x-table.col align="right">Total TTC</x-table.col>
+            <x-table.col hide="xl">Règlement</x-table.col>
+            <x-table.col>Statut</x-table.col>
+            <x-table.col actions />
+        </x-slot:head>
 
-        @if($sales->hasPages())
-            <div class="p-4 border-t border-secondary/10">
-                {{ $sales->links() }}
-            </div>
-        @endif
-    </div>
+        @foreach($sales as $sale)
+            <x-table.row>
+                <x-table.cell hide="lg" nowrap class="text-primary/70">{{ $sale->created_at->format('d/m/Y H:i') }}</x-table.cell>
+                <x-table.cell nowrap class="font-mono font-bold">{{ $sale->sale_number }}</x-table.cell>
+                <x-table.cell>
+                    <p class="font-bold text-primary">{{ $sale->customer_name }}</p>
+                    @if($sale->room_number)
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-800"><i data-lucide="bed" class="h-3 w-3" aria-hidden="true"></i> Chambre {{ $sale->room_number }}</span>
+                    @endif
+                </x-table.cell>
+                <x-table.cell hide="2xl" class="max-w-xs truncate text-primary/70">{{ $sale->items->pluck('name')->join(', ') }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-heading font-extrabold">{{ $sale->formattedTotal() }}</x-table.cell>
+                <x-table.cell hide="xl" nowrap class="text-primary/80">{{ $sale->paymentMethodLabel() }}</x-table.cell>
+                <x-table.cell nowrap>
+                    <span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $sale->payment_status === 'charged_to_room' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">{{ $sale->paymentStatusLabel() }}</span>
+                </x-table.cell>
+                <x-table.actions :label="'Actions pour la vente '.$sale->sale_number">
+                    <x-table.action :href="route('reception.pos.receipt', $sale)" icon="printer">Reçu</x-table.action>
+                </x-table.actions>
+            </x-table.row>
+        @endforeach
+    </x-table>
 
 </div>
 @endsection

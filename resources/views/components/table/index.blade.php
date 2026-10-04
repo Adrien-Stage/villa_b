@@ -23,15 +23,17 @@
       l'état vide et, pour un paginateur, de la pagination en pied.
     - inline : largeur du tableau à partir de laquelle les actions d'une ligne
       s'affichent en boutons ; en dessous, elles passent dans le menu ⋮.
-      « always », « never », ou une taille de conteneur (md … 7xl).
+      « always », « never », ou un palier (sm 672 px … 3xl 1280 px ; xl,
+      1024 px, par défaut).
     - Emplacements facultatifs : toolbar (au-dessus), foot (pied du tableau,
-      totaux).
+      totaux), emptyActions (sous le message de l'état vide : « effacer les
+      filtres »…).
 --}}
 @props([
     'rows' => null,
     'empty' => 'Aucun élément.',
     'emptyIcon' => 'inbox',
-    'inline' => '5xl',
+    'inline' => 'xl',
     'caption' => null,
 ])
 
@@ -51,6 +53,9 @@
         <div class="flex flex-col items-center justify-center gap-2 px-4 py-14 text-center text-primary/45">
             <i data-lucide="{{ $emptyIcon }}" class="h-9 w-9 opacity-50" aria-hidden="true"></i>
             <p class="text-sm">{{ $empty }}</p>
+            @isset($emptyActions)
+                <div class="mt-1 text-xs">{{ $emptyActions }}</div>
+            @endisset
         </div>
     @else
         <div class="overflow-x-auto">

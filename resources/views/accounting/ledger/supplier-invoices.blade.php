@@ -55,64 +55,46 @@
     </label>
 </form>
 
-<div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full text-xs">
-            <thead class="bg-accent/20 text-primary/45 uppercase tracking-widest text-[10px]">
-                <tr>
-                    <th class="px-4 py-2.5 text-left font-semibold">Date</th>
-                    <th class="px-3 py-2.5 text-left font-semibold">Référence</th>
-                    <th class="px-3 py-2.5 text-left font-semibold">Fournisseur</th>
-                    <th class="px-3 py-2.5 text-left font-semibold">Nature</th>
-                    <th class="px-3 py-2.5 text-right font-semibold">TTC</th>
-                    <th class="px-3 py-2.5 text-right font-semibold">Retenue</th>
-                    <th class="px-4 py-2.5 text-right font-semibold">Net à payer</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-secondary/10">
-                @forelse($factures as $facture)
-                    <tr class="hover:bg-accent/10">
-                        <td class="px-4 py-2 whitespace-nowrap text-primary/70">{{ $facture->invoice_date->format('d/m/Y') }}</td>
-                        <td class="px-3 py-2">
-                            <a href="{{ route('accounting.ledger.suppliers.show', $facture) }}"
-                               class="font-mono font-medium text-primary hover:underline">{{ $facture->number }}</a>
-                            @if($facture->purchaseOrder)
-                                <span class="block text-[10px] text-primary/40">{{ $facture->purchaseOrder->number }}</span>
-                            @endif
-                            @if($facture->hasReceptionVariance())
-                                <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200"
-                                      title="{{ $facture->variance_reason }}">
-                                    Écart +{{ $fcfa($facture->reception_variance) }}
-                                </span>
-                            @endif
-                        </td>
-                        <td class="px-3 py-2 text-primary">{{ $facture->supplier?->name ?? '—' }}</td>
-                        <td class="px-3 py-2 text-primary/60">{{ $facture->chargeLabel() }}</td>
-                        <td class="px-3 py-2 text-right text-primary/75 whitespace-nowrap">{{ $fcfa($facture->amount_ttc) }}</td>
-                        <td class="px-3 py-2 text-right whitespace-nowrap">
-                            @if($facture->hasWithholding())
-                                <span class="text-amber-700 font-medium">{{ $fcfa($facture->withholding_amount) }}</span>
-                                <span class="block text-[10px] text-primary/40">{{ rtrim(rtrim(number_format($facture->withholdingRate(), 2, ',', ''), '0'), ',') }} %</span>
-                            @else
-                                <span class="text-primary/25">—</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-2 text-right font-semibold text-primary whitespace-nowrap">{{ $fcfa($facture->net_payable) }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-4 py-10 text-center text-primary/50">
-                            <i data-lucide="truck" class="w-8 h-8 mx-auto mb-3 text-primary/20"></i>
-                            Aucune facture fournisseur enregistrée.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
+<x-table :rows="$factures" empty="Aucune facture fournisseur enregistrée." empty-icon="truck" caption="Factures fournisseurs">
+    <x-slot:head>
+        <x-table.col hide="md">Date</x-table.col>
+        <x-table.col>Référence</x-table.col>
+        <x-table.col>Fournisseur</x-table.col>
+        <x-table.col hide="xl">Nature</x-table.col>
+        <x-table.col align="right" hide="lg">TTC</x-table.col>
+        <x-table.col align="right" hide="2xl">Retenue</x-table.col>
+        <x-table.col align="right">Net à payer</x-table.col>
+        <x-table.col actions />
+    </x-slot:head>
 
-@if($factures->hasPages())
-    <div class="mt-4">{{ $factures->links() }}</div>
-@endif
+    @foreach($factures as $facture)
+        <x-table.row :href="route('accounting.ledger.suppliers.show', $facture)">
+            <x-table.cell hide="md" nowrap class="text-primary/70">{{ $facture->invoice_date->format('d/m/Y') }}</x-table.cell>
+            <x-table.cell>
+                <a href="{{ route('accounting.ledger.suppliers.show', $facture) }}" class="font-mono font-medium text-primary hover:underline">{{ $facture->number }}</a>
+                @if($facture->purchaseOrder)
+                    <span class="block text-[10px] text-primary/45">{{ $facture->purchaseOrder->number }}</span>
+                @endif
+                @if($facture->hasReceptionVariance())
+                    <span class="mt-0.5 inline-block rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700" title="{{ $facture->variance_reason }}">Écart +{{ $fcfa($facture->reception_variance) }}</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell>{{ $facture->supplier?->name ?? '—' }}</x-table.cell>
+            <x-table.cell hide="xl" class="text-primary/60">{{ $facture->chargeLabel() }}</x-table.cell>
+            <x-table.cell align="right" hide="lg" nowrap class="text-primary/75">{{ $fcfa($facture->amount_ttc) }}</x-table.cell>
+            <x-table.cell align="right" hide="2xl" nowrap>
+                @if($facture->hasWithholding())
+                    <span class="font-medium text-amber-700">{{ $fcfa($facture->withholding_amount) }}</span>
+                    <span class="block text-[10px] text-primary/45">{{ rtrim(rtrim(number_format($facture->withholdingRate(), 2, ',', ''), '0'), ',') }} %</span>
+                @else
+                    <span class="text-primary/25">—</span>
+                @endif
+            </x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ $fcfa($facture->net_payable) }}</x-table.cell>
+            <x-table.actions :label="'Actions pour la facture '.$facture->number">
+                <x-table.action :href="route('accounting.ledger.suppliers.show', $facture)" icon="eye">Ouvrir</x-table.action>
+            </x-table.actions>
+        </x-table.row>
+    @endforeach
+</x-table>
 @endsection
