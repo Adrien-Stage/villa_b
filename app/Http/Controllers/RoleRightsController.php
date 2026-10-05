@@ -156,7 +156,9 @@ class RoleRightsController extends Controller
             }
         }
 
-        DB::transaction(function () use ($droits, $personne, $valide) {
+        // Les exceptions et leur trace au journal réussissent ensemble ou pas
+        // du tout : un retrait ne s'applique jamais sans être consigné.
+        DB::transaction(function () use ($droits, $personne, $valide, $request) {
             foreach ($droits as $droit) {
                 PermissionGrant::updateOrCreate(
                     [
@@ -172,15 +174,18 @@ class RoleRightsController extends Controller
                     ]
                 );
             }
+
+            $quoi = count($droits) === 1 ? PermissionLabels::complet($droits[0]) : count($droits).' accès';
+
+            AuditLog::record(Auth::id(), 'permission_exception',
+                "Exception pour {$personne->name} : ".($valide['effect'] === 'deny' ? 'retrait' : 'ajout')
+                    ." de {$quoi}".(! empty($valide['expires_at']) ? " jusqu'au {$valide['expires_at']}" : '')
+                    ." — motif : {$valide['reason']}",
+                'security', ['target_user_id' => $personne->id, 'permissions' => $droits,
+                    'effect' => $valide['effect'], 'reason' => $valide['reason'],
+                    'expires_at' => $valide['expires_at'] ?? null, 'derogation' => $request->boolean('derogation')]);
         });
         app(PermissionResolver::class)->forget($personne);
-
-        AuditLog::record(Auth::id(), 'permission_exception',
-            "Exception pour {$personne->name} : ".($valide['effect'] === 'deny' ? 'refus' : 'autorisation')
-                .' de '.implode(', ', $droits).(! empty($valide['expires_at']) ? " jusqu'au {$valide['expires_at']}" : '')
-                ." — motif : {$valide['reason']}",
-            'security', ['target_user_id' => $personne->id, 'permissions' => $droits,
-                'effect' => $valide['effect'], 'derogation' => $request->boolean('derogation')]);
 
         $message = $valide['effect'] === PermissionGrant::EFFET_DENY
             ? (count($droits) > 1 ? count($droits).' accès retirés.' : 'Accès retiré.')
