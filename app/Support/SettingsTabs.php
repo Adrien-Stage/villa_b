@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\PermissionResolver;
 
 /**
  * Qui règle quel onglet des paramètres : la direction, et le chef du service
@@ -36,6 +37,16 @@ class SettingsTabs
         'partners' => ['manager'],
     ];
 
+    /**
+     * Onglets qui montrent aussi ce qu'un droit ouvre à la consultation,
+     * quand le module est activé : l'onglet Restaurant porte les restaurants
+     * de l'hôtel, que la direction crée et que le contrôle consulte sans
+     * rien régler.
+     */
+    private const CONSULTATION = [
+        'restaurant' => ['droit' => 'restaurant.restaurants.voir', 'module' => 'restaurant'],
+    ];
+
     /** Ordre de préférence de l'onglet ouvert par défaut. */
     private const PAR_DEFAUT = ['general', 'hebergement', 'housekeeping', 'restaurant', 'shop'];
 
@@ -43,6 +54,25 @@ class SettingsTabs
     {
         // Un onglet inconnu relève de la direction seule.
         return $user !== null && $user->exerce(self::ONGLETS[$onglet] ?? ['manager']);
+    }
+
+    /** Cette personne ouvre-t-elle l'onglet, pour le régler ou pour consulter ce qu'il porte ? */
+    public static function peutOuvrir(?User $user, string $onglet): bool
+    {
+        return self::peutRegler($user, $onglet) || self::consulte($user, $onglet);
+    }
+
+    /**
+     * L'onglet montre-t-il à cette personne ce qu'il porte en consultation ?
+     * Ni le droit seul ni le module seul n'y suffisent.
+     */
+    public static function consulte(?User $user, string $onglet): bool
+    {
+        $consultation = self::CONSULTATION[$onglet] ?? null;
+
+        return $consultation !== null
+            && TenantModules::has($consultation['module'])
+            && app(PermissionResolver::class)->allows($user, $consultation['droit']);
     }
 
     /** @return list<string> onglets que cette personne règle */
@@ -58,7 +88,7 @@ class SettingsTabs
     public static function parDefaut(?User $user): ?string
     {
         foreach (self::PAR_DEFAUT as $onglet) {
-            if (self::peutRegler($user, $onglet)) {
+            if (self::peutOuvrir($user, $onglet)) {
                 return $onglet;
             }
         }

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\PermissionMatrix;
 use App\Services\PermissionResolver;
 use App\Support\PermissionCatalog;
+use App\Support\PermissionLabels;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -107,11 +108,20 @@ class RoleRightsController extends Controller
      * Exception nominative : un droit accordé ou refusé à une personne, pour
      * un motif, éventuellement jusqu'à une date.
      */
+    /**
+     * Exception nominative : un ou plusieurs droits accordés ou retirés à une
+     * seule personne, l'emportant sur ses rôles. Depuis la fiche, on coche
+     * les accès à retirer et l'on donne un motif commun.
+     */
     public function storeException(Request $request): RedirectResponse
     {
+        $catalogue = array_keys(PermissionCatalog::all());
+
         $valide = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
-            'permission' => ['required', 'string', Rule::in(array_keys(PermissionCatalog::all()))],
+            'permission' => ['required_without:permissions', 'nullable', 'string', Rule::in($catalogue)],
+            'permissions' => ['required_without:permission', 'nullable', 'array', 'min:1'],
+            'permissions.*' => ['string', Rule::in($catalogue)],
             'effect' => ['required', Rule::in([PermissionGrant::EFFET_ALLOW, PermissionGrant::EFFET_DENY])],
             'reason' => ['required', 'string', 'max:255'],
             'expires_at' => ['nullable', 'date', 'after:now'],
@@ -119,11 +129,15 @@ class RoleRightsController extends Controller
             'retour' => ['nullable', 'in:fiche'],
         ], [
             'reason.required' => 'Une exception se motive.',
+            'permission.required_without' => 'Choisissez au moins un accès.',
+            'permissions.required_without' => 'Choisissez au moins un accès.',
             'permission.in' => "Ce droit n'existe pas dans le catalogue.",
+            'permissions.*.in' => "Un des droits choisis n'existe pas dans le catalogue.",
             'expires_at.after' => "L'échéance doit être à venir.",
         ]);
 
         $personne = User::findOrFail($valide['user_id']);
+        $droits = array_values(array_unique(array_filter([$valide['permission'] ?? null, ...($valide['permissions'] ?? [])])));
 
         // L'administrateur et le support ont leurs droits par construction :
         // aucune exception ne les étend ni ne les borne.
@@ -131,42 +145,50 @@ class RoleRightsController extends Controller
             return back()->with('error', "Les droits de l'administrateur et du support ne se règlent pas par exception.");
         }
 
-        if ($valide['effect'] === PermissionGrant::EFFET_ALLOW) {
-            $cumuls = $this->matrice->cumulsDUneException($personne, $valide['permission']);
+        if ($valide['effect'] === PermissionGrant::EFFET_ALLOW && ! $request->boolean('derogation')) {
+            $cumuls = collect($droits)->flatMap(fn (string $droit) => $this->matrice->cumulsDUneException($personne, $droit));
 
-            if ($cumuls !== [] && ! $request->boolean('derogation')) {
+            if ($cumuls->isNotEmpty()) {
                 return back()->withInput()->with('error',
                     "Cette exception ferait cumuler à {$personne->name} des fonctions incompatibles : "
-                    .implode(' ; ', array_column($cumuls, 'motif'))
+                    .$cumuls->pluck('motif')->unique()->implode(' ; ')
                     .' Cochez la dérogation pour l\'accorder malgré tout.');
             }
         }
 
-        PermissionGrant::updateOrCreate(
-            [
-                'subject_type' => PermissionGrant::SUJET_USER,
-                'subject_id' => (string) $personne->id,
-                'permission' => $valide['permission'],
-                'origin' => self::ORIGINE,
-            ],
-            [
-                'effect' => $valide['effect'],
-                'reason' => $valide['reason'],
-                'expires_at' => $valide['expires_at'] ?? null,
-            ]
-        );
+        DB::transaction(function () use ($droits, $personne, $valide) {
+            foreach ($droits as $droit) {
+                PermissionGrant::updateOrCreate(
+                    [
+                        'subject_type' => PermissionGrant::SUJET_USER,
+                        'subject_id' => (string) $personne->id,
+                        'permission' => $droit,
+                        'origin' => self::ORIGINE,
+                    ],
+                    [
+                        'effect' => $valide['effect'],
+                        'reason' => $valide['reason'],
+                        'expires_at' => $valide['expires_at'] ?? null,
+                    ]
+                );
+            }
+        });
         app(PermissionResolver::class)->forget($personne);
 
         AuditLog::record(Auth::id(), 'permission_exception',
             "Exception pour {$personne->name} : ".($valide['effect'] === 'deny' ? 'refus' : 'autorisation')
-                ." de {$valide['permission']}".(! empty($valide['expires_at']) ? " jusqu'au {$valide['expires_at']}" : '')
+                .' de '.implode(', ', $droits).(! empty($valide['expires_at']) ? " jusqu'au {$valide['expires_at']}" : '')
                 ." — motif : {$valide['reason']}",
-            'security', ['target_user_id' => $personne->id, 'permission' => $valide['permission'],
+            'security', ['target_user_id' => $personne->id, 'permissions' => $droits,
                 'effect' => $valide['effect'], 'derogation' => $request->boolean('derogation')]);
 
+        $message = $valide['effect'] === PermissionGrant::EFFET_DENY
+            ? (count($droits) > 1 ? count($droits).' accès retirés.' : 'Accès retiré.')
+            : (count($droits) > 1 ? count($droits).' accès accordés.' : 'Accès accordé.');
+
         return ($valide['retour'] ?? null) === 'fiche'
-            ? redirect()->route('users.show', $personne)->with('success', 'Exception enregistrée.')
-            : redirect()->route('droits.index', ['onglet' => 'exceptions'])->with('success', 'Exception enregistrée.');
+            ? redirect()->route('users.show', $personne)->with('success', $message)
+            : redirect()->route('droits.index', ['onglet' => 'exceptions'])->with('success', $message);
     }
 
     public function destroyException(Request $request, PermissionGrant $grant): RedirectResponse
@@ -183,7 +205,7 @@ class RoleRightsController extends Controller
             'security', ['target_user_id' => $grant->subject_id, 'permission' => $grant->permission]);
 
         return $request->input('retour') === 'fiche' && $personne
-            ? redirect()->route('users.show', $personne)->with('success', 'Exception retirée.')
+            ? redirect()->route('users.show', $personne)->with('success', 'Exception levée : '.PermissionLabels::complet($grant->permission).'.')
             : redirect()->route('droits.index', ['onglet' => 'exceptions'])->with('success', 'Exception retirée.');
     }
 

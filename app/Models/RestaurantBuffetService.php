@@ -19,6 +19,9 @@ class RestaurantBuffetService extends Model
 {
     use AppartientAUnRestaurant;
 
+    /** Le buffet se sert en salle. */
+    public const SERVICE_REQUIS = PointOfSale::SERVICE_SALLE;
+
     public const OUVERT = 'open';
 
     public const CLOS = 'closed';

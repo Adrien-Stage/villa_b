@@ -14,6 +14,7 @@
 use App\Models\Booking;
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
+use App\Models\Department;
 use App\Models\FolioItem;
 use App\Models\PointOfSale;
 use App\Models\RestaurantBanquet;
@@ -31,12 +32,15 @@ use App\Models\Space;
 use App\Models\StockItem;
 use App\Models\StockRequisition;
 use App\Models\User;
+use App\Services\CountSheetService;
+use App\Services\RestaurantContext;
 use App\Services\StockRequisitionService;
 use App\Support\PointOfSaleCatalog;
 use App\Support\RoleCatalog;
 use Carbon\Carbon;
 use Database\Seeders\TenantSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -427,18 +431,25 @@ test("un banquet se tient dans un restaurant où l'on travaille, dans une de ses
 
 // ── Restaurants et équipes ────────────────────────────────────────────────
 
-test('la direction crée un restaurant et choisit ses modes de service', function () {
+test('la direction crée un restaurant, ses services et ses modes de service', function () {
     $this->actingAs(directionGenerale())
-        ->post(route('restaurant.restaurants.store'), ['name' => 'Le Baleng', 'code' => 'bal', 'series_prefix' => 'BAL-', 'service_modes' => ['buffet']])
+        ->post(route('restaurant.restaurants.store'), [
+            'name' => 'Le Baleng', 'code' => 'bal', 'series_prefix' => 'BAL-',
+            'service_modes' => ['buffet'], 'services' => ['stock', 'salle', 'cuisine'],
+        ])
+        ->assertRedirect(route('settings.index', ['tab' => 'restaurant']))
         ->assertSessionHasNoErrors();
 
     $baleng = PointOfSale::where('code', 'BAL')->sole();
     expect($baleng->kind)->toBe(PointOfSale::KIND_RESTAURATION)
         ->and($baleng->sert('buffet'))->toBeTrue()
-        ->and($baleng->sert('carte'))->toBeFalse();
+        ->and($baleng->sert('carte'))->toBeFalse()
+        // Dans l'ordre du catalogue, quel que soit l'ordre coché.
+        ->and($baleng->services)->toBe(['salle', 'cuisine', 'stock'])
+        ->and($baleng->offre('bar'))->toBeFalse();
 
     $this->actingAs(equipierDe('restaurant_manager', [$this->kotibe]))
-        ->post(route('restaurant.restaurants.store'), ['name' => 'Autre', 'code' => 'AUT', 'service_modes' => ['carte']]);
+        ->post(route('restaurant.restaurants.store'), ['name' => 'Autre', 'code' => 'AUT', 'service_modes' => ['carte'], 'services' => ['salle', 'bar']]);
 
     // Créer un restaurant relève de la direction.
     expect(PointOfSale::where('code', 'AUT')->exists())->toBeFalse();
@@ -454,15 +465,59 @@ test("le responsable compose l'équipe de son restaurant, pas celle d'un autre",
     $this->put(route('restaurant.restaurants.team.update', $this->origine), ['users' => [$serveur->id]])->assertForbidden();
 });
 
-test('la fiche du personnel dit dans quels restaurants il travaille', function () {
-    $this->actingAs(directionGenerale())->post(route('users.store'), [
+test('un membre de la restauration est créé dans le restaurant choisi', function () {
+    $restauration = Department::where('code', Department::CODE_RESTAURATION)->sole();
+    $compte = fn (array $champs) => $champs + [
         'name' => 'Serveuse Kotibe', 'email' => 'serveuse@hotel.test', 'roles' => ['restaurant_staff'],
+        'department_id' => $restauration->id,
         'password' => 'motdepasse1', 'password_confirmation' => 'motdepasse1', 'is_active' => 1,
-        'restaurants_present' => 1, 'restaurants' => [$this->kotibe->id],
-    ])->assertSessionHasNoErrors();
+    ];
+
+    $this->actingAs(directionGenerale());
+
+    // Le département Restauration exige son restaurant.
+    $this->post(route('users.store'), $compte([]))->assertSessionHasErrors('restaurant_id');
+
+    $this->post(route('users.store'), $compte(['restaurant_id' => $this->kotibe->id]))->assertSessionHasNoErrors();
 
     expect(User::where('email', 'serveuse@hotel.test')->sole()->restaurants()->pluck('points_of_sale.id')->all())
         ->toBe([$this->kotibe->id]);
+});
+
+test("changer le restaurant d'un membre de la restauration le mute, sans toucher à ses autres équipes", function () {
+    $restauration = Department::where('code', Department::CODE_RESTAURATION)->sole();
+    $responsable = equipierDe('restaurant_manager', [$this->origine, $this->kotibe], 'Responsable');
+    $responsable->update(['department_id' => $restauration->id]);
+    $champs = fn (int $restaurant) => [
+        'name' => 'Responsable', 'email' => $responsable->email, 'roles' => ['restaurant_manager'],
+        'department_id' => $restauration->id, 'restaurant_id' => $restaurant, 'is_active' => 1,
+    ];
+    $restaurantsDe = fn () => $responsable->restaurants()->orderBy('points_of_sale.id')->pluck('points_of_sale.id')->all();
+
+    $this->actingAs(directionGenerale());
+
+    // Un restaurant où il travaille déjà : ses deux équipes restent.
+    $this->put(route('users.update', $responsable), $champs($this->kotibe->id))->assertSessionHasNoErrors();
+    expect($restaurantsDe())->toBe([$this->origine->id, $this->kotibe->id]);
+
+    // Un autre : il y est muté.
+    $baleng = PointOfSale::create(['code' => 'BAL', 'slug' => 'baleng', 'name' => 'Baleng', 'kind' => PointOfSale::KIND_RESTAURATION, 'is_active' => true, 'sort_order' => 5]);
+    app(RestaurantContext::class)->oublier();
+    $this->put(route('users.update', $responsable), $champs($baleng->id))->assertSessionHasNoErrors();
+    expect($restaurantsDe())->toBe([$baleng->id]);
+});
+
+test('le formulaire du personnel propose le restaurant au seul département Restauration', function () {
+    $restauration = Department::where('code', Department::CODE_RESTAURATION)->sole();
+
+    $this->actingAs(directionGenerale())->get(route('users.index'))
+        ->assertOk()
+        ->assertSee("Restaurant d'affectation", false)
+        ->assertSee('name="restaurant_id"', false)
+        ->assertSee('"restauration":true', false);
+
+    expect(Department::where('code', '!=', Department::CODE_RESTAURATION)->get()->contains(fn ($d) => $d->estLaRestauration()))->toBeFalse()
+        ->and($restauration->estLaRestauration())->toBeTrue();
 });
 
 // ── Écrans ────────────────────────────────────────────────────────────────
@@ -480,7 +535,9 @@ test("les écrans des restaurants, des buffets et des banquets s'affichent", fun
     ]);
 
     $this->actingAs(directionGenerale());
-    $this->get(route('restaurant.restaurants.index'))->assertOk()->assertSee('Kotibe')->assertSee('Salle des fêtes');
+    $this->get(route('restaurant.restaurants.index'))->assertRedirect(route('settings.index', ['tab' => 'restaurant']));
+    $this->get(route('settings.index', ['tab' => 'restaurant']))->assertOk()
+        ->assertSee('Kotibe')->assertSee('Salle des fêtes')->assertSee('Nouveau restaurant')->assertSee('Services du restaurant');
     $this->get(route('restaurant.buffets.index'))->assertOk()->assertSee('Déjeuner')->assertDontSee('Ouvrir un buffet');
     $this->get(route('restaurant.banquets.index'))->assertOk()->assertSee('Gala annuel');
 
@@ -493,4 +550,125 @@ test("les écrans des restaurants, des buffets et des banquets s'affichent", fun
     $this->actingAs($caissier)->post(route('restaurant.cash_register.open.store'), ['opening_amount' => 0]);
     $this->post(route('restaurant.buffets.entries.store', $buffet), ['adults' => 1, 'payment_method' => 'cash']);
     $this->get(route('restaurant.cash_register.close'))->assertOk()->assertSee('Entrées au buffet en espèces');
+});
+
+// ── Services d'un restaurant ──────────────────────────────────────────────
+
+test('un restaurant active au moins un service, et sa salle a une cuisine ou un bar', function () {
+    $this->actingAs(directionGenerale());
+    $base = ['name' => 'Le Baleng', 'code' => 'BAL', 'service_modes' => ['carte']];
+
+    $this->post(route('restaurant.restaurants.store'), $base)->assertSessionHasErrors('services');
+    $this->post(route('restaurant.restaurants.store'), $base + ['services' => ['salle', 'stock']])->assertSessionHasErrors('services');
+    $this->post(route('restaurant.restaurants.store'), $base + ['services' => ['cuisine', 'stock']])->assertSessionHasNoErrors();
+
+    expect(PointOfSale::where('code', 'BAL')->sole()->libellesServices())->toBe(['Cuisine', 'Stock']);
+});
+
+test('sans bar, les boissons partent en cuisine ; sans cuisine, les plats partent au bar', function () {
+    $this->kotibe->update(['services' => ['salle', 'cuisine']]);
+    $this->origine->update(['services' => ['salle', 'bar']]);
+
+    commandeDe($this->kotibe, 'T1', [articleDe($this->kotibe, 'Jus de bissap', 'drink')]);
+    commandeDe($this->origine, 'T2', [articleDe($this->origine, 'Club sandwich')]);
+
+    expect(RestaurantCustomerOrderItem::where('item_name', 'Jus de bissap')->value('station'))->toBe('cuisine')
+        ->and(RestaurantCustomerOrderItem::where('item_name', 'Club sandwich')->value('station'))->toBe('bar');
+});
+
+test('un restaurant sans salle ne prend ni commande à table, ni salle, ni buffet', function () {
+    $this->kotibe->update(['services' => ['cuisine', 'stock'], 'service_modes' => ['carte', 'buffet']]);
+    $ndole = articleDe($this->kotibe, 'Ndolè royal');
+
+    $this->actingAs(equipierDe('restaurant_staff', [$this->kotibe]))
+        ->post(route('restaurant.orders.store'), ['table_number' => '4', 'items_json' => json_encode([['id' => $ndole->id, 'qty' => 1]])])
+        ->assertSessionHasErrors('restaurant');
+
+    $this->actingAs(directionGenerale())
+        ->post(route('restaurant.restaurants.spaces.store', $this->kotibe), ['name' => 'Terrasse'])
+        ->assertSessionHasErrors('restaurant');
+
+    expect(fn () => RestaurantBuffetService::create([
+        'point_of_sale_id' => $this->kotibe->id, 'service_date' => today(), 'meal_service' => 'lunch',
+        'adult_price' => 1200000, 'status' => 'open', 'opened_at' => now(),
+    ]))->toThrow(ValidationException::class);
+
+    expect(RestaurantCustomerOrder::count())->toBe(0)
+        ->and(Space::where('point_of_sale_id', $this->kotibe->id)->exists())->toBeFalse();
+});
+
+test("un restaurant sans stock n'a ni garde-manger, ni inventaire, ni fiche de comptage", function () {
+    $this->kotibe->update(['services' => ['salle', 'cuisine', 'bar']]);
+
+    expect(fn () => RestaurantPantryItem::create([
+        'point_of_sale_id' => $this->kotibe->id, 'name' => 'Riz', 'unit' => 'kg', 'current_stock' => 1, 'is_active' => true,
+    ]))->toThrow(ValidationException::class, "« Kotibe » n'a pas de stock");
+
+    $this->actingAs(equipierDe('restaurant_chief', [$this->kotibe]))
+        ->post(route('restaurant.stock_counts.store'))->assertSessionHasErrors('restaurant');
+
+    expect(RestaurantStockCount::count())->toBe(0)
+        // Seul le Jardin tient un stock : une seule fiche de cuisine, la sienne.
+        ->and(array_keys(app(CountSheetService::class)->services()))->toContain('garde-manger')
+        ->not->toContain('garde-manger-' . $this->kotibe->id);
+});
+
+test("un service ne se retire pas tant qu'il a du travail en cours", function () {
+    commandeDe($this->kotibe, 'T3', [articleDe($this->kotibe, 'Ndolè royal')]);
+    $champs = fn (array $services) => [
+        'name' => 'Kotibe', 'code' => 'KOT', 'series_prefix' => 'KOT-', 'service_modes' => ['carte'], 'services' => $services, 'is_active' => 1,
+    ];
+
+    $this->actingAs(directionGenerale());
+
+    $this->put(route('restaurant.restaurants.update', $this->kotibe), $champs(['salle', 'bar', 'stock']))
+        ->assertSessionHasErrors('services');
+    expect($this->kotibe->fresh()->offre('cuisine'))->toBeTrue();
+
+    RestaurantCustomerOrder::query()->update(['status' => RestaurantCustomerOrder::STATUS_SERVED]);
+
+    $this->put(route('restaurant.restaurants.update', $this->kotibe), $champs(['salle', 'bar', 'stock']))
+        ->assertSessionHasNoErrors();
+    expect($this->kotibe->fresh()->offre('cuisine'))->toBeFalse();
+});
+
+test("le menu tait un service que le restaurant n'exploite pas, et l'écran le dit", function () {
+    $this->kotibe->update(['services' => ['salle', 'cuisine', 'stock']]);
+    $chef = equipierDe('restaurant_chief', [$this->kotibe]);
+
+    $this->actingAs($chef)->get(route('restaurant.kitchen.index'))
+        ->assertOk()
+        ->assertSee('href="' . route('restaurant.kitchen.index') . '"', false)
+        ->assertDontSee('href="' . route('restaurant.bar.index') . '"', false);
+
+    $this->get(route('restaurant.bar.index'))->assertOk()->assertSee("Kotibe n'a pas de bar", false);
+});
+
+test("l'onglet Restaurant : la direction règle, le contrôle consulte, la cuisine n'y voit pas la structure", function () {
+    $this->actingAs(directionGenerale('controller'))->get(route('settings.index'))
+        ->assertOk()
+        ->assertSee('Kotibe')
+        ->assertDontSee('Nouveau restaurant');
+
+    $this->actingAs(equipierDe('restaurant_chief', [$this->kotibe]))->get(route('settings.index', ['tab' => 'restaurant']))
+        ->assertOk()
+        ->assertSee('tenus par la direction')
+        ->assertDontSee('Composer l\'équipe', false);
+});
+
+test("sans le module Restaurant, l'onglet le dit et le personnel n'a pas de restaurant à choisir", function () {
+    activerModules(['comptabilite', 'accounting', 'economat']);
+    $restauration = Department::where('code', Department::CODE_RESTAURATION)->sole();
+
+    $this->actingAs(directionGenerale())->get(route('settings.index', ['tab' => 'restaurant']))
+        ->assertOk()
+        ->assertSee("Le module Restaurant n'est pas activé", false)
+        ->assertDontSee('Nouveau restaurant');
+
+    $this->get(route('users.index'))->assertOk()->assertDontSee('name="restaurant_id"', false);
+
+    $this->post(route('users.store'), [
+        'name' => 'Commis', 'email' => 'commis@hotel.test', 'roles' => ['restaurant_staff'], 'department_id' => $restauration->id,
+        'password' => 'motdepasse1', 'password_confirmation' => 'motdepasse1', 'is_active' => 1,
+    ])->assertSessionHasNoErrors();
 });

@@ -208,10 +208,11 @@ class StockRequisitionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'department']);
 
-        // Restaurants dont la personne peut alimenter le garde-manger.
+        // Restaurants dont la personne peut alimenter le garde-manger : ceux
+        // qui tiennent un stock.
         $contexte = app(\App\Services\RestaurantContext::class);
-        $restaurants = $contexte->accessibles(Auth::user());
-        $restaurantParDefaut = $contexte->pourCreation(Auth::user());
+        $restaurants = $contexte->offrant(Auth::user(), \App\Models\PointOfSale::SERVICE_STOCK);
+        $restaurantParDefaut = $restaurants->firstWhere('id', $contexte->pourCreation(Auth::user())?->id) ?? $restaurants->first();
 
         return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut'));
     }
@@ -247,6 +248,9 @@ class StockRequisitionController extends Controller
             if (! $restaurant) {
                 return back()->withInput()->withErrors(['point_of_sale_id' => "Ce restaurant n'existe pas ou ne vous est pas accessible."]);
             }
+
+            // La livraison entrera dans son garde-manger : il doit en tenir un.
+            $restaurant->exiger(\App\Models\PointOfSale::SERVICE_STOCK);
         }
 
         $requisition = DB::transaction(function () use ($validated, $restaurant) {

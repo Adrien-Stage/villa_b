@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantStockCount;
@@ -12,6 +13,7 @@ use App\Models\StockCategory;
 use App\Models\StockCount;
 use App\Models\StockItem;
 use DateTimeInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Fiches de comptage : la liste papier que chaque service remplit le jour de
@@ -43,15 +45,16 @@ class CountSheetService
     {
         $services = [self::ECONOMAT => 'Économat — magasin central'];
 
-        // Chaque restaurant compte son garde-manger : une fiche par cuisine
-        // dès qu'il y en a plusieurs, comme chacun a son inventaire.
-        $restaurants = app(RestaurantContext::class)->restaurants();
+        // Chaque restaurant qui tient un stock compte son garde-manger : une
+        // fiche par cuisine dès qu'il y en a plusieurs, comme chacun a son
+        // inventaire.
+        $restaurants = $this->restaurantsAvecStock();
 
         if ($restaurants->count() > 1) {
             foreach ($restaurants as $restaurant) {
                 $services[self::PANTRY . '-' . $restaurant->id] = "Cuisine — {$restaurant->name}";
             }
-        } else {
+        } elseif ($restaurants->isNotEmpty() || app(RestaurantContext::class)->restaurants()->isEmpty()) {
             $services[self::PANTRY] = 'Cuisine — garde-manger';
         }
 
@@ -120,7 +123,7 @@ class CountSheetService
 
     private function pantry(string $key, ?int $categoryId): ?array
     {
-        $restaurants = app(RestaurantContext::class)->restaurants();
+        $restaurants = $this->restaurantsAvecStock();
 
         // « garde-manger » tout court : celui de l'unique restaurant, ou tout
         // le garde-manger quand aucun restaurant n'est déclaré.
@@ -192,6 +195,14 @@ class CountSheetService
             $lignes,
             $inventaire?->created_at
         );
+    }
+
+    /** @return Collection<int, PointOfSale> */
+    private function restaurantsAvecStock(): Collection
+    {
+        return app(RestaurantContext::class)->restaurants()
+            ->filter(fn (PointOfSale $restaurant): bool => $restaurant->offre(PointOfSale::SERVICE_STOCK))
+            ->values();
     }
 
     /** @return array<string, mixed> */

@@ -10,7 +10,7 @@
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
-        @if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'restaurant', 'shop']))
+        @if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'shop']))
             <a href="{{ route('settings.export', ['tab' => $tab]) }}"
                class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
                title="Exporter les réglages de cet onglet en CSV">
@@ -100,7 +100,7 @@
             </a>
         @endif
 
-        @if(\App\Support\SettingsTabs::peutRegler($user, 'restaurant'))
+        @if(\App\Support\SettingsTabs::peutOuvrir($user, 'restaurant'))
             <a href="{{ route('settings.index', ['tab' => 'restaurant']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'restaurant' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
@@ -784,41 +784,21 @@
             </div>
         @endif
 
-        {{-- ONGLET: RESTAURANT (Chief & Manager) --}}
-        @if($tab === 'restaurant' && \App\Support\SettingsTabs::peutRegler($user, 'restaurant'))
-            <div class="max-w-3xl">
-                <h2 class="text-lg font-semibold text-primary mb-4">Paramètres du Restaurant</h2>
-                <div class="space-y-6">
-                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <h3 class="text-sm font-semibold text-primary mb-4">Horaires d'ouverture</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Ouverture</label>
-                                <input type="time" value="07:00" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Fermeture</label>
-                                <input type="time" value="23:30" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <div>
-                            <h3 class="text-sm font-semibold text-primary">Tickets cuisine</h3>
-                            <p class="text-xs text-primary/60">Impression automatique en cuisine lors d'une commande.</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" value="" class="sr-only peer">
-                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
-                    </div>
-                </div>
-                <div class="mt-8 flex justify-end">
-                    <button type="button" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
-                        Enregistrer
-                    </button>
-                </div>
-            </div>
+        {{-- ONGLET : RESTAURANT — les restaurants de l'hôtel, leurs services,
+             leurs salles et leurs équipes. Le règle qui en a le droit ; le
+             consulte qui peut voir les restaurants. --}}
+        @if($tab === 'restaurant' && \App\Support\SettingsTabs::peutOuvrir($user, 'restaurant'))
+            @if(\App\Support\SettingsTabs::consulte($user, 'restaurant'))
+                @include('settings.partials.restaurants')
+            @elseif(! \App\Support\TenantModules::has('restaurant'))
+                <p class="rounded-lg border border-secondary/20 bg-accent/10 px-4 py-3 text-sm text-primary/70">
+                    Le module Restaurant n'est pas activé pour cet établissement.
+                </p>
+            @else
+                <p class="rounded-lg border border-secondary/20 bg-accent/10 px-4 py-3 text-sm text-primary/70">
+                    Les restaurants, leurs services et leurs équipes sont tenus par la direction.
+                </p>
+            @endif
         @endif
 
         {{-- ONGLET: BOUTIQUE (Shop Manager & Manager) --}}
@@ -2184,7 +2164,7 @@
             </div>
         @endif
 
-@if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'restaurant', 'shop']))
+@if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'shop']))
     <x-csv-import-modal
         id="modal-import-settings-{{ $tab }}"
         title="Importer les paramètres (CSV)"

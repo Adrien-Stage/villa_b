@@ -61,7 +61,8 @@ class RestaurantBuffetController extends Controller
             'services' => $services,
             // On ouvre le buffet d'un restaurant qui sert au buffet.
             'restaurant' => $restaurant,
-            'peutOuvrirIci' => $restaurant?->sert(PointOfSale::MODE_BUFFET) ?? false,
+            // Le buffet se sert en salle, dans un restaurant qui sert au buffet.
+            'peutOuvrirIci' => $restaurant !== null && $restaurant->sert(PointOfSale::MODE_BUFFET) && $restaurant->offre(PointOfSale::SERVICE_SALLE),
             'vueEnsemble' => $this->contexte->vueEnsemble($user),
             'repas' => RestaurantMenuItem::MEAL_SERVICES,
         ]);
@@ -72,7 +73,7 @@ class RestaurantBuffetController extends Controller
         $restaurant = $this->contexte->exigerPourSaisie(Auth::user());
 
         if (! $restaurant->sert(PointOfSale::MODE_BUFFET)) {
-            return back()->withErrors(['restaurant' => "{$restaurant->name} ne sert pas au buffet : activez ce mode dans la fiche du restaurant."]);
+            return back()->withErrors(['restaurant' => "{$restaurant->name} ne sert pas au buffet : ce mode s'active dans Paramètres › Restaurant."]);
         }
 
         $valide = $request->validate([

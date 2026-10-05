@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - Une adresse qui le désigne ne l'ouvre qu'à qui peut voir son restaurant :
  *   le serveur d'un restaurant n'ouvre pas une commande de l'autre en
  *   devinant son numéro.
+ * - Un modèle qui suppose un service du restaurant le déclare
+ *   (const SERVICE_REQUIS = PointOfSale::SERVICE_STOCK) : il ne se crée pas
+ *   dans un restaurant qui ne l'exploite pas, quel que soit le chemin.
  */
 trait AppartientAUnRestaurant
 {
@@ -25,6 +28,11 @@ trait AppartientAUnRestaurant
         static::creating(function ($modele): void {
             if (empty($modele->point_of_sale_id)) {
                 $modele->point_of_sale_id = app(RestaurantContext::class)->pourCreation(auth()->user())?->id;
+            }
+
+            $service = $modele::class . '::SERVICE_REQUIS';
+            if (defined($service) && $modele->point_of_sale_id) {
+                PointOfSale::find($modele->point_of_sale_id)?->exiger(constant($service));
             }
         });
     }

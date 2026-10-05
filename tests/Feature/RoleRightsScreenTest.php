@@ -163,8 +163,56 @@ test("la fiche d'un employé montre ses rôles, ses exceptions et ce qu'il peut 
         ->assertSee('Jean Mvondo')
         ->assertSee('Réceptionniste')
         ->assertSee('Départ annoncé')
-        ->assertSee('bookings.voir')
-        ->assertSee('Nouvelle exception');
+        // Les accès se lisent en clair, écran par écran.
+        ->assertSee('Ses accès')
+        ->assertSee('Brouillons de réservation')
+        ->assertSee('Rétablir')
+        ->assertSee('Accorder un accès en plus');
+});
+
+test('depuis la fiche, on retire plusieurs accès d\'un coup, et on les rétablit', function () {
+    $receptionniste = compteDe('reception', ['name' => 'Jean Mvondo']);
+    $admin = compteDe('admin');
+
+    $this->actingAs($admin)->post(route('droits.exceptions.store'), [
+        'user_id' => $receptionniste->id, 'effect' => 'deny', 'retour' => 'fiche',
+        'permissions' => ['customers.export', 'customers.import'],
+    ])->assertSessionHasErrors('reason');
+    expect(PermissionGrant::count())->toBe(0);
+
+    $this->post(route('droits.exceptions.store'), [
+        'user_id' => $receptionniste->id, 'effect' => 'deny', 'retour' => 'fiche',
+        'permissions' => ['customers.export', 'customers.import'], 'reason' => 'Fichier clients réservé à la direction',
+    ])->assertRedirect(route('users.show', $receptionniste))->assertSessionHas('success', '2 accès retirés.');
+
+    $resolveur = app(PermissionResolver::class);
+    $resolveur->forget();
+    expect($resolveur->allows($receptionniste, 'customers.export'))->toBeFalse()
+        ->and($resolveur->allows($receptionniste, 'customers.import'))->toBeFalse()
+        ->and($resolveur->allows($receptionniste, 'customers.voir'))->toBeTrue();
+
+    $this->get(route('users.show', $receptionniste))->assertOk()
+        ->assertSee('Fichier clients réservé à la direction')
+        ->assertSee('Clients — Exporter');
+
+    $retrait = PermissionGrant::where('permission', 'customers.export')->sole();
+    $this->delete(route('droits.exceptions.destroy', $retrait), ['retour' => 'fiche'])
+        ->assertRedirect(route('users.show', $receptionniste))
+        ->assertSessionHas('success', 'Exception levée : Clients — Exporter.');
+
+    $resolveur->forget();
+    expect($resolveur->allows($receptionniste->fresh(), 'customers.export'))->toBeTrue()
+        ->and($resolveur->allows($receptionniste->fresh(), 'customers.import'))->toBeFalse();
+});
+
+test('chaque droit du catalogue a un nom en clair', function () {
+    $sansNom = array_values(array_filter(
+        array_keys(\App\Support\PermissionCatalog::all()),
+        fn (string $droit): bool => ! \App\Support\PermissionLabels::estNomme($droit)
+    ));
+
+    expect($sansNom)->toBe([])
+        ->and(\App\Support\PermissionLabels::complet('economat.orders.send'))->toBe('Bons de commande — Envoyer au fournisseur');
 });
 
 test("l'administrateur règle l'onglet Général, pas les tarifs", function () {

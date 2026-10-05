@@ -3,6 +3,7 @@
 @section('title', 'Inventaires')
 
 @section('content')
+@include('restaurant.partials.service-absent', ['service' => \App\Models\PointOfSale::SERVICE_STOCK])
 <div class="mb-6 flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold text-primary font-heading">Inventaires</h1>

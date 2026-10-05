@@ -37,15 +37,28 @@ class RestaurantCustomerOrderItem extends Model
 
     protected static function booted(): void
     {
-        // Une boisson part au bar, le reste en cuisine.
+        // Une boisson part au bar, le reste en cuisine — sauf si le
+        // restaurant n'a pas l'un des deux : le bar d'une piscine prépare
+        // aussi ses en-cas, une cuisine sans bar sert aussi les boissons.
         static::creating(function (self $ligne): void {
             if (empty($ligne->station)) {
                 $type = $ligne->menu_item_id
                     ? RestaurantMenuItem::query()->whereKey($ligne->menu_item_id)->value('type')
                     : null;
-                $ligne->station = $type === 'drink' ? self::STATION_BAR : self::STATION_CUISINE;
+                $ligne->station = self::stationPour($type === 'drink' ? self::STATION_BAR : self::STATION_CUISINE, $ligne);
             }
         });
+    }
+
+    /** Le poste prévu, ou l'autre quand le restaurant n'a que celui-là. */
+    private static function stationPour(string $prevue, self $ligne): string
+    {
+        $restaurantId = RestaurantCustomerOrder::query()->whereKey($ligne->restaurant_customer_order_id)->value('point_of_sale_id');
+        $restaurant = $restaurantId ? PointOfSale::find($restaurantId) : null;
+        $autre = $prevue === self::STATION_BAR ? self::STATION_CUISINE : self::STATION_BAR;
+        $service = [self::STATION_CUISINE => PointOfSale::SERVICE_CUISINE, self::STATION_BAR => PointOfSale::SERVICE_BAR];
+
+        return $restaurant && ! $restaurant->offre($service[$prevue]) && $restaurant->offre($service[$autre]) ? $autre : $prevue;
     }
 
     public function scopeAuBar(Builder $requete): Builder

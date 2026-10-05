@@ -29,7 +29,11 @@
         <p class="mb-5 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-2 text-xs text-primary/70">Choisissez un restaurant pour y ouvrir un buffet.</p>
     @elseif(! $peutOuvrirIci)
         <p class="mb-5 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-2 text-xs text-primary/70">
-            {{ $restaurant?->name ?? 'Ce restaurant' }} ne sert pas au buffet. La direction peut activer ce mode dans la fiche du restaurant.
+            @if($restaurant?->sert(\App\Models\PointOfSale::MODE_BUFFET))
+                {{ $restaurant->name }} n'a pas de salle : le buffet ne s'y sert pas. Ce service s'active dans Paramètres › Restaurant.
+            @else
+                {{ $restaurant?->name ?? 'Ce restaurant' }} ne sert pas au buffet. La direction peut activer ce mode dans Paramètres › Restaurant.
+            @endif
         </p>
     @else
         <form method="POST" action="{{ route('restaurant.buffets.store') }}" class="mb-6 rounded-xl border border-secondary/20 bg-white p-5 shadow-sm">

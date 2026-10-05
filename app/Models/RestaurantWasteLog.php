@@ -20,6 +20,9 @@ class RestaurantWasteLog extends Model
 {
     use HasFactory, AppartientAUnRestaurant;
 
+    /** Une perte sort du stock du restaurant. */
+    public const SERVICE_REQUIS = PointOfSale::SERVICE_STOCK;
+
     // Motifs normalisés de perte
     public const REASON_SPOILAGE = 'spoilage';
     public const REASON_BURNT = 'burnt';

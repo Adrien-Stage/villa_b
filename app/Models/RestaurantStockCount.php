@@ -16,6 +16,9 @@ class RestaurantStockCount extends Model
 {
     use HasFactory, AppartientAUnRestaurant;
 
+    /** On ne compte que le stock d'un restaurant qui en tient un. */
+    public const SERVICE_REQUIS = PointOfSale::SERVICE_STOCK;
+
     const STATUS_DRAFT = 'draft';
     const STATUS_CLOSED = 'closed';
 

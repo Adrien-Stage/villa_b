@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantCustomerOrderItem;
 use App\Models\RestaurantMenuCategory;
@@ -168,6 +169,9 @@ class RestaurantOrderController extends Controller
             return back()->withErrors(['items' => 'Une commande ne prend que des articles de la carte de votre restaurant.'])->withInput();
         }
         $restaurant = (int) $restaurants->first();
+
+        // On ne prend commande à table que dans un restaurant qui a une salle.
+        PointOfSale::query()->find($restaurant)?->exiger(PointOfSale::SERVICE_SALLE);
 
         $orderType = $validated['order_type'] ?? RestaurantCustomerOrder::ORDER_TYPE_STANDARD;
         $isComplimentary = !empty($validated['is_complimentary'])
