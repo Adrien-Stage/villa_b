@@ -205,6 +205,30 @@ test('depuis la fiche, on retire plusieurs accès d\'un coup, et on les rétabli
         ->and($resolveur->allows($receptionniste->fresh(), 'customers.import'))->toBeFalse();
 });
 
+test("retirer tout un service d'un coup passe, et le journal le dit sans déborder", function () {
+    $receptionniste = compteDe('reception', ['name' => 'Jean Mvondo']);
+    $resolveur = app(PermissionResolver::class);
+    $ecritures = array_values(array_filter(
+        \App\Support\PermissionCatalog::ecritures(),
+        fn (string $droit): bool => str_starts_with($droit, 'bookings.') && $resolveur->allows($receptionniste, $droit)
+    ));
+    expect(count($ecritures))->toBeGreaterThan(10);
+
+    // Le motif le plus long permis, et une quinzaine de droits : le texte
+    // du journal dépasse de loin la colonne (255 caractères).
+    $this->actingAs(compteDe('admin'))->post(route('droits.exceptions.store'), [
+        'user_id' => $receptionniste->id, 'effect' => 'deny', 'retour' => 'fiche',
+        'permissions' => $ecritures, 'reason' => str_repeat('Stagiaire en observation. ', 9),
+    ])->assertRedirect(route('users.show', $receptionniste))->assertSessionHas('success');
+
+    expect(PermissionGrant::count())->toBe(count($ecritures));
+
+    $journal = \App\Models\AuditLog::where('event_type', 'permission_exception')->sole();
+    expect(mb_strlen($journal->action))->toBeLessThanOrEqual(255)
+        ->and($journal->payload['permissions'])->toBe($ecritures)
+        ->and($journal->payload['reason'])->toStartWith('Stagiaire en observation.');
+});
+
 test('chaque droit du catalogue a un nom en clair', function () {
     $sansNom = array_values(array_filter(
         array_keys(\App\Support\PermissionCatalog::all()),
