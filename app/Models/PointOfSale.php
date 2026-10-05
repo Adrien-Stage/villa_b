@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Point de vente : là où le chiffre se comptabilise.
@@ -43,14 +44,43 @@ class PointOfSale extends Model
         self::MODE_BUFFET => 'Buffet',
     ];
 
+    /**
+     * Services qu'un restaurant exploite. Un bar de piscine sert sans
+     * cuisine, une cuisine de production prépare sans salle : chacun dit
+     * lesquels il a, et l'application n'ouvre que ceux-là.
+     */
+    public const SERVICE_SALLE = 'salle';
+
+    public const SERVICE_CUISINE = 'cuisine';
+
+    public const SERVICE_BAR = 'bar';
+
+    public const SERVICE_STOCK = 'stock';
+
+    public const SERVICES = [
+        self::SERVICE_SALLE => 'Salle',
+        self::SERVICE_CUISINE => 'Cuisine',
+        self::SERVICE_BAR => 'Bar',
+        self::SERVICE_STOCK => 'Stock',
+    ];
+
+    /** Ce que chaque service ouvre, dit à qui le règle. */
+    public const DESCRIPTIONS_SERVICES = [
+        self::SERVICE_SALLE => 'Commandes à table, salles, buffets.',
+        self::SERVICE_CUISINE => 'Écran cuisine : les plats y sont préparés.',
+        self::SERVICE_BAR => 'Écran bar : les boissons y sont préparées.',
+        self::SERVICE_STOCK => "Garde-manger, inventaires, pertes, livraisons de l'économat.",
+    ];
+
     protected $fillable = [
-        'code', 'name', 'slug', 'kind', 'service_modes', 'series_prefix', 'is_active', 'sort_order',
+        'code', 'name', 'slug', 'kind', 'service_modes', 'services', 'series_prefix', 'is_active', 'sort_order',
     ];
 
     protected $casts = [
         'is_active'  => 'boolean',
         'sort_order' => 'integer',
         'service_modes' => 'array',
+        'services' => 'array',
     ];
 
     /** Le personnel affecté à ce point de vente — pour un restaurant, son équipe. */
@@ -76,6 +106,40 @@ class PointOfSale extends Model
         return array_values(array_map(
             static fn (string $m): string => self::MODES_SERVICE[$m] ?? $m,
             $this->service_modes ?: [self::MODE_CARTE]
+        ));
+    }
+
+    /**
+     * Ce restaurant exploite-t-il ce service ? Un restaurant sans réglage les
+     * exploite tous, comme avant que chacun ne les choisisse.
+     */
+    public function offre(string $service): bool
+    {
+        return in_array($service, $this->services ?? array_keys(self::SERVICES), true);
+    }
+
+    /**
+     * Refuse ce qui suppose un service que ce restaurant n'exploite pas.
+     *
+     * @throws ValidationException
+     */
+    public function exiger(string $service): void
+    {
+        if (! $this->offre($service)) {
+            throw ValidationException::withMessages([
+                'restaurant' => "« {$this->name} » n'a pas de " . mb_strtolower(self::SERVICES[$service] ?? $service)
+                    . " : ce service s'active dans Paramètres › Restaurant.",
+            ]);
+        }
+    }
+
+    /** @return list<string> libellés des services exploités */
+    public function libellesServices(): array
+    {
+        return array_values(array_filter(
+            self::SERVICES,
+            fn (string $libelle, string $service): bool => $this->offre($service),
+            ARRAY_FILTER_USE_BOTH
         ));
     }
 

@@ -9,6 +9,7 @@
 @endphp
 
 @section('content')
+@include('restaurant.partials.service-absent', ['service' => \App\Models\PointOfSale::SERVICE_BAR])
 <div class="mb-6 flex items-start justify-between gap-4" x-data="{ auto: true, timer: null }" x-init="
     timer = setInterval(() => location.reload(), 20000);
     $watch('auto', v => { clearInterval(timer); if (v) timer = setInterval(() => location.reload(), 20000); });

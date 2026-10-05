@@ -14,6 +14,9 @@ class RestaurantPantryItem extends Model
 {
     use HasFactory, AppartientAUnRestaurant;
 
+    /** Le garde-manger est le stock du restaurant. */
+    public const SERVICE_REQUIS = PointOfSale::SERVICE_STOCK;
+
     protected $fillable = [
         'point_of_sale_id',
         'restaurant_pantry_category_id',

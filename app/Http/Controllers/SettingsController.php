@@ -73,7 +73,13 @@ class SettingsController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('settings.index', compact(
+        // Onglet Restaurant : les restaurants de l'hôtel, leurs services,
+        // leurs salles et leurs équipes.
+        $ongletRestaurant = $tab === 'restaurant' && SettingsTabs::consulte($user, 'restaurant')
+            ? RestaurantSetupController::donneesDeLOnglet($user)
+            : [];
+
+        return view('settings.index', $ongletRestaurant + compact(
             'tab',
             'user',
             'tenant',

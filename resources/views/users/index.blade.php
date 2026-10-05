@@ -315,6 +315,8 @@
         </p>
     </div>
 
+    @include('users.partials.restaurants', ['contexte' => 'create', 'departements' => $departments, 'personne' => null])
+
     <div>
         <label class="text-xs text-primary/60">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
         <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles. Chaque rôle donne accès à son module ; choisissez le niveau (lecture ou lecture / écriture).</p>
@@ -324,7 +326,6 @@
 
     @include('users.partials.derogation')
 
-    @include('users.partials.restaurants', ['choisis' => old('restaurants', [])])
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -383,6 +384,8 @@
             </select>
         </div>
 
+        @include('users.partials.restaurants', ['contexte' => 'edit_' . $staff->id, 'departements' => $departments, 'personne' => $staff])
+
         @php
             // Rôles et niveaux actuels de l'utilisateur, pour pré-cocher les cartes.
             $staffRoleSlugs = $staff->roles->pluck('slug')->all();
@@ -398,7 +401,6 @@
 
         @include('users.partials.derogation')
 
-        @include('users.partials.restaurants', ['choisis' => old('restaurants', $staff->restaurants->pluck('id')->all())])
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -428,6 +430,12 @@ const deptDataMap = @json($deptMap);
 
 window.onUserDepartmentSelect = function(deptId, context) {
     const dept = deptDataMap[deptId];
+
+    // La restauration demande le restaurant d'affectation ; les autres non.
+    window.dispatchEvent(new CustomEvent('department-changed', {
+        detail: { context: context, restauration: Boolean(dept && dept.restauration) }
+    }));
+
     if (!dept) return;
 
     window.dispatchEvent(new CustomEvent('department-selected', {

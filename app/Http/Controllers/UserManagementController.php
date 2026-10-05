@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class UserManagementController extends Controller
@@ -69,6 +70,8 @@ class UserManagementController extends Controller
                 'code'   => $dept->code,
                 'roles'  => $resolved['roles'],
                 'levels' => $resolved['levels'],
+                // Le formulaire demande alors le restaurant d'affectation.
+                'restauration' => $dept->estLaRestauration(),
             ];
         }
 
@@ -185,11 +188,11 @@ class UserManagementController extends Controller
         ]);
 
         $this->syncUserRoles($user, $roleSlugs, $levels);
-        $this->syncRestaurants($request, $user, $roleSlugs);
+        $this->syncRestaurants($user, $validated, $roleSlugs);
 
         AuditLog::record($manager->id, 'user_management',
             "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
-            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs]);
+            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
 
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
@@ -221,11 +224,11 @@ class UserManagementController extends Controller
 
         $user->update($payload);
         $this->syncUserRoles($user, $roleSlugs, $levels);
-        $this->syncRestaurants($request, $user, $roleSlugs);
+        $this->syncRestaurants($user->fresh(), $validated, $roleSlugs);
 
         AuditLog::record(Auth::id(), 'user_management',
             "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
-            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs]);
+            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
 
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
@@ -251,19 +254,30 @@ class UserManagementController extends Controller
     // ── Helpers ────────────────────────────────────────────────────────────
 
     /**
-     * Restaurants où la personne travaille. Le formulaire ne les montre que
-     * si l'hôtel en a plusieurs ; s'il n'en a qu'un, le personnel de
-     * restaurant y est rattaché d'office, pour qu'un second restaurant ouvert
-     * plus tard ne le laisse pas sans équipe.
+     * Restaurant où travaille la personne.
+     *
+     * Un membre du département Restauration est affecté au restaurant choisi
+     * dans le formulaire. Choisir un restaurant où il travaille déjà ne
+     * touche pas aux autres — une personne peut appartenir à plusieurs
+     * équipes, composées depuis Paramètres › Restaurant ; en choisir un autre
+     * l'y mute.
+     *
+     * Hors de ce département, rien ne change, sauf dans un hôtel d'un seul
+     * restaurant : son personnel y est rattaché d'office, pour qu'un second
+     * restaurant ouvert plus tard ne le laisse pas sans équipe.
      *
      * @param  list<string>  $roleSlugs
      */
-    private function syncRestaurants(Request $request, User $user, array $roleSlugs): void
+    private function syncRestaurants(User $user, array $validated, array $roleSlugs): void
     {
         $contexte = app(\App\Services\RestaurantContext::class);
 
-        if ($request->boolean('restaurants_present')) {
-            $user->restaurants()->sync(array_map('intval', $request->input('restaurants', [])));
+        if (! empty($validated['restaurant_id']) && $user->department?->estLaRestauration()) {
+            $choisi = (int) $validated['restaurant_id'];
+
+            if (! $user->restaurants()->where('points_of_sale.id', $choisi)->exists()) {
+                $user->restaurants()->sync([$choisi]);
+            }
         } elseif (! $contexte->plusieurs() && array_intersect($roleSlugs, \App\Services\RestaurantContext::ROLES_DU_RESTAURANT) !== []
             && ($unique = $contexte->restaurants()->first())) {
             $user->restaurants()->syncWithoutDetaching([$unique->id]);
@@ -276,7 +290,7 @@ class UserManagementController extends Controller
     {
         $assignableSlugs = $this->assignableRoles()->pluck('slug')->all();
 
-        return $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -288,9 +302,9 @@ class UserManagementController extends Controller
             'levels.*' => [Rule::in(['read', 'write'])],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
-            // Restaurants où la personne travaille.
-            'restaurants' => ['nullable', 'array'],
-            'restaurants.*' => ['integer', Rule::exists('points_of_sale', 'id')->where('kind', \App\Models\PointOfSale::KIND_RESTAURATION)],
+            // Restaurant où travaille un membre du département Restauration.
+            'restaurant_id' => ['nullable', 'integer', Rule::exists('points_of_sale', 'id')
+                ->where('kind', \App\Models\PointOfSale::KIND_RESTAURATION)->where('is_active', true)],
             // Dérogation à la séparation des tâches : un établissement de six
             // personnes ne peut pas toujours séparer quatre fonctions. Elle se
             // demande explicitement et se motive.
@@ -300,7 +314,21 @@ class UserManagementController extends Controller
             'roles.required' => 'Sélectionnez au moins un rôle.',
             'roles.*.in' => 'Un des rôles sélectionnés n\'est pas autorisé.',
             'derogation_motif.required_if' => 'Indiquez pourquoi ce cumul est accordé malgré tout.',
+            'restaurant_id.exists' => 'Ce restaurant n\'existe pas ou est fermé.',
         ]);
+
+        // Le département Restauration travaille dans un restaurant précis :
+        // le formulaire le demande, le serveur l'exige.
+        $departement = isset($validated['department_id']) ? Department::find($validated['department_id']) : null;
+        if ($departement?->estLaRestauration() && empty($validated['restaurant_id'])
+            && \App\Support\TenantModules::has('restaurant')
+            && app(\App\Services\RestaurantContext::class)->restaurants()->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'restaurant_id' => 'Choisissez le restaurant où travaillera ce membre de la restauration.',
+            ]);
+        }
+
+        return $validated;
     }
 
     /**

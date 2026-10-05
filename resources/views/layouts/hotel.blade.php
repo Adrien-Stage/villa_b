@@ -379,25 +379,37 @@
 
                 @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
+                    @php
+                        // Un service qu'aucun des restaurants de la personne
+                        // n'exploite n'a pas d'entrée de menu.
+                        $contexteResto = app(\App\Services\RestaurantContext::class);
+                        $serviceOffert = fn (string $service): bool => $contexteResto->offrant(auth()->user(), $service)->isNotEmpty()
+                            || $contexteResto->restaurants()->isEmpty();
+                    @endphp
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @pour('manager','restaurant_chief','restaurant_staff')
                                 <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
-                                <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
+                                @if($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE))
+                                    <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
+                                @endif
                             @endpour
 
-                            @pour('restaurant_chief','restaurant_cook')
-                                <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
-                            @endpour
+                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_CUISINE))
+                                @pour('restaurant_chief','restaurant_cook')
+                                    <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
+                                @endpour
+                            @endif
 
-                            {{-- Chaque restaurant a son bar. --}}
-                            @pour('restaurant_chief','restaurant_staff')
-                                <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
-                            @endpour
+                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR))
+                                @pour('restaurant_chief','restaurant_staff')
+                                    <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
+                                @endpour
+                            @endif
 
-                            {{-- Le buffet au forfait, là où un restaurant sert au buffet. --}}
-                            @if(app(\App\Services\RestaurantContext::class)->restaurants()->contains(fn ($r) => $r->sert(\App\Models\PointOfSale::MODE_BUFFET)))
+                            {{-- Le buffet au forfait, là où un restaurant sert au buffet, en salle. --}}
+                            @if($contexteResto->offrant(auth()->user(), \App\Models\PointOfSale::SERVICE_SALLE)->contains(fn ($r) => $r->sert(\App\Models\PointOfSale::MODE_BUFFET)))
                                 @pour('manager','restaurant_chief','restaurant_staff','cashier')
                                     <x-sidebar-link route="restaurant.buffets.index" icon="salad">Buffets</x-sidebar-link>
                                 @endpour
@@ -417,13 +429,17 @@
                                  la salle n'a pas à les voir. --}}
                             @pour('manager','restaurant_chief')
                                 <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
-                                <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
-                                <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
+                                @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
+                                    <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
+                                    <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
+                                @endif
                             @endpour
 
-                            @pour('manager','restaurant_chief','restaurant_cook')
-                                <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
-                            @endpour
+                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
+                                @pour('manager','restaurant_chief','restaurant_cook')
+                                    <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
+                                @endpour
+                            @endif
 
                             @pour('manager','restaurant_chief')
                                 <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
@@ -434,7 +450,8 @@
                                 <x-sidebar-link route="restaurant.cash_register.index" icon="calculator">Caisse</x-sidebar-link>
                             @endpour
 
-                            {{-- Les restaurants de l'hôtel, leurs salles et leurs équipes. --}}
+                            {{-- Les restaurants de l'hôtel, leurs services, leurs salles et
+                                 leurs équipes : l'adresse mène à l'onglet Restaurant des paramètres. --}}
                             @pour('manager','restaurant_manager')
                                 <x-sidebar-link route="restaurant.restaurants.index" icon="store">Restaurants</x-sidebar-link>
                             @endpour
@@ -596,8 +613,9 @@
                 @endif
 
                 {{-- Les paramètres se règlent par onglet, par la direction et le chef
-                     du service concerné : l'entrée suit la même règle que l'écran. --}}
-                @if(\App\Support\SettingsTabs::reglables(auth()->user()) !== [])
+                     du service concerné ; certains se consultent (les restaurants).
+                     L'entrée suit la même règle que l'écran. --}}
+                @if(\App\Support\SettingsTabs::parDefaut(auth()->user()) !== null)
                     <div class="mt-4 pt-4 border-t border-surface-dark">
                         <ul class="space-y-0.5">
                             {{-- Le lien pose son droit, restriction de module comprise. --}}

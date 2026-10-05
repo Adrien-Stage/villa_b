@@ -1,13 +1,16 @@
-@extends('layouts.hotel')
+{{--
+    Onglet Restaurant des paramètres : les restaurants de l'hôtel, leurs
+    services, leurs salles et leurs équipes.
 
-@section('title', 'Restaurants')
-
-@section('content')
-<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+    La direction les crée et choisit leurs services ; le responsable de
+    restaurant compose l'équipe des siens ; le contrôle consulte. Chaque
+    bouton pose le droit que pose sa route.
+--}}
+<div class="flex flex-wrap items-start justify-between gap-3 mb-5">
     <div>
-        <h1 class="font-heading text-2xl font-semibold text-primary">Restaurants</h1>
+        <h2 class="text-lg font-semibold text-primary">Restaurants</h2>
         <p class="text-sm text-primary/50 mt-0.5 max-w-3xl">
-            Chaque restaurant a sa carte, sa cuisine et son bar, son garde-manger, sa caisse et son équipe.
+            Chaque restaurant active ses services — salle, cuisine, bar, stock — et a sa carte, sa caisse et son équipe.
             Le personnel ne voit que les restaurants où il est affecté ; la direction les voit tous.
         </p>
     </div>
@@ -19,11 +22,8 @@
     @enddroit
 </div>
 
-@if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
-@endif
 @if($errors->any())
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
         <ul class="list-disc list-inside space-y-0.5">
             @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
         </ul>
@@ -35,17 +35,13 @@
         <article class="rounded-xl border border-secondary/20 bg-white shadow-sm {{ $restaurant->is_active ? '' : 'opacity-70' }}">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-secondary/15 px-5 py-4">
                 <div class="min-w-0">
-                    <h2 class="font-heading text-lg font-semibold text-primary">{{ $restaurant->name }}</h2>
+                    <h3 class="font-heading text-lg font-semibold text-primary">{{ $restaurant->name }}</h3>
                     <p class="mt-0.5 text-xs text-primary/50">
                         Code {{ $restaurant->code }}
                         @if($restaurant->series_prefix) · série {{ $restaurant->series_prefix }} @endif
+                        · {{ implode(' et ', array_map('mb_strtolower', $restaurant->libellesModes())) }}
                         @unless($restaurant->is_active) · <span class="font-semibold text-red-600">fermé</span> @endunless
                     </p>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                        @foreach($restaurant->libellesModes() as $mode)
-                            <span class="rounded-full bg-accent/40 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ $mode }}</span>
-                        @endforeach
-                    </div>
                 </div>
                 @droit('restaurant.restaurants.modifier')
                     <button type="button" onclick="document.getElementById('restaurant-edit-{{ $restaurant->id }}').classList.remove('hidden')"
@@ -55,9 +51,23 @@
                 @enddroit
             </header>
 
-            <section class="px-5 py-4">
+            <section class="px-5 py-4" aria-label="Services de {{ $restaurant->name }}">
+                <h4 class="mb-2 text-xs font-bold uppercase tracking-wider text-primary/60">Services</h4>
+                <ul class="flex flex-wrap gap-1.5">
+                    @foreach($servicesRestaurant as $cle => $libelle)
+                        @php $actif = $restaurant->offre($cle); @endphp
+                        <li class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold
+                                   {{ $actif ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400 line-through' }}">
+                            <i data-lucide="{{ $actif ? 'check' : 'minus' }}" class="w-3 h-3" aria-hidden="true"></i>
+                            {{ $libelle }}<span class="sr-only">{{ $actif ? ' : activé' : ' : désactivé' }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+
+            <section class="border-t border-secondary/15 px-5 py-4">
                 <div class="mb-2 flex items-center justify-between gap-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-primary/60">Équipe ({{ $restaurant->users->count() }})</h3>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-primary/60">Équipe ({{ $restaurant->users->count() }})</h4>
                     @droit('restaurant.restaurants.team.modifier')
                         <button type="button" onclick="document.getElementById('restaurant-team-{{ $restaurant->id }}').classList.remove('hidden')"
                             class="text-xs font-semibold text-primary underline-offset-2 hover:underline">Composer l'équipe</button>
@@ -75,55 +85,62 @@
             </section>
 
             <section class="border-t border-secondary/15 px-5 py-4">
-                <h3 class="mb-2 text-xs font-bold uppercase tracking-wider text-primary/60">Salles</h3>
-                @if($restaurant->spaces->isEmpty())
-                    <p class="text-xs text-primary/45">Aucune salle : ajoutez-en pour y organiser des banquets.</p>
+                <h4 class="mb-2 text-xs font-bold uppercase tracking-wider text-primary/60">Salles</h4>
+                @if(! $restaurant->offre(\App\Models\PointOfSale::SERVICE_SALLE))
+                    <p class="text-xs text-primary/45">Ce restaurant ne sert pas en salle.</p>
                 @else
-                    <ul class="space-y-1.5">
-                        @foreach($restaurant->spaces as $salle)
-                            <li class="flex flex-wrap items-center justify-between gap-2 text-xs {{ $salle->is_active ? 'text-primary' : 'text-primary/40 line-through' }}">
-                                <span>{{ $salle->name }}@if($salle->capacity) · {{ $salle->capacity }} places @endif</span>
-                                @droit('restaurant.restaurants.spaces.modifier')
-                                    <form method="POST" action="{{ route('restaurant.restaurants.spaces.update', $salle) }}" class="flex items-center gap-1.5">
-                                        @csrf @method('PUT')
-                                        <input type="hidden" name="name" value="{{ $salle->name }}">
-                                        <input type="hidden" name="capacity" value="{{ $salle->capacity }}">
-                                        <input type="hidden" name="is_active" value="{{ $salle->is_active ? 0 : 1 }}">
-                                        <button type="submit" class="text-[11px] font-semibold text-primary/60 hover:text-primary">
-                                            {{ $salle->is_active ? 'Fermer' : 'Rouvrir' }}
-                                        </button>
-                                    </form>
-                                @enddroit
-                            </li>
-                        @endforeach
-                    </ul>
+                    @if($restaurant->spaces->isEmpty())
+                        <p class="text-xs text-primary/45">Aucune salle : ajoutez-en pour y organiser des banquets.</p>
+                    @else
+                        <ul class="space-y-1.5">
+                            @foreach($restaurant->spaces as $salle)
+                                <li class="flex flex-wrap items-center justify-between gap-2 text-xs {{ $salle->is_active ? 'text-primary' : 'text-primary/40 line-through' }}">
+                                    <span>{{ $salle->name }}@if($salle->capacity) · {{ $salle->capacity }} places @endif</span>
+                                    @droit('restaurant.restaurants.spaces.modifier')
+                                        <form method="POST" action="{{ route('restaurant.restaurants.spaces.update', $salle) }}" class="flex items-center gap-1.5">
+                                            @csrf @method('PUT')
+                                            <input type="hidden" name="name" value="{{ $salle->name }}">
+                                            <input type="hidden" name="capacity" value="{{ $salle->capacity }}">
+                                            <input type="hidden" name="is_active" value="{{ $salle->is_active ? 0 : 1 }}">
+                                            <button type="submit" class="text-[11px] font-semibold text-primary/60 hover:text-primary">
+                                                {{ $salle->is_active ? 'Fermer' : 'Rouvrir' }}
+                                            </button>
+                                        </form>
+                                    @enddroit
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                    @droit('restaurant.restaurants.spaces.creer')
+                        <form method="POST" action="{{ route('restaurant.restaurants.spaces.store', $restaurant) }}" class="mt-3 flex flex-wrap items-end gap-2">
+                            @csrf
+                            <label class="flex-1 min-w-[10rem]">
+                                <span class="sr-only">Nom de la salle</span>
+                                <input type="text" name="name" required maxlength="100" placeholder="Nouvelle salle (ex. Terrasse)"
+                                    class="w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs focus:border-secondary outline-none">
+                            </label>
+                            <label class="w-24">
+                                <span class="sr-only">Capacité</span>
+                                <input type="number" name="capacity" min="1" max="5000" placeholder="Places"
+                                    class="w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs focus:border-secondary outline-none">
+                            </label>
+                            <button type="submit" class="rounded-lg bg-accent/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/40">Ajouter</button>
+                        </form>
+                    @enddroit
                 @endif
-                @droit('restaurant.restaurants.spaces.creer')
-                    <form method="POST" action="{{ route('restaurant.restaurants.spaces.store', $restaurant) }}" class="mt-3 flex flex-wrap items-end gap-2">
-                        @csrf
-                        <label class="flex-1 min-w-[10rem]">
-                            <span class="sr-only">Nom de la salle</span>
-                            <input type="text" name="name" required maxlength="100" placeholder="Nouvelle salle (ex. Terrasse)"
-                                class="w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs focus:border-secondary outline-none">
-                        </label>
-                        <label class="w-24">
-                            <span class="sr-only">Capacité</span>
-                            <input type="number" name="capacity" min="1" max="5000" placeholder="Places"
-                                class="w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs focus:border-secondary outline-none">
-                        </label>
-                        <button type="submit" class="rounded-lg bg-accent/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/40">Ajouter</button>
-                    </form>
-                @enddroit
             </section>
         </article>
     @empty
-        <p class="col-span-full rounded-xl bg-white px-4 py-10 text-center text-sm text-primary/50 shadow-sm">Aucun restaurant.</p>
+        <p class="col-span-full rounded-xl bg-gray-50 px-4 py-10 text-center text-sm text-primary/50">
+            Aucun restaurant.
+            @droit('restaurant.restaurants.creer') Créez le premier avec « Nouveau restaurant ». @enddroit
+        </p>
     @endforelse
 </div>
 
 @droit('restaurant.restaurants.creer')
-    <x-modal id="restaurant-create" title="Nouveau restaurant" formAction="{{ route('restaurant.restaurants.store') }}">
-        @include('restaurant.restaurants._champs', ['r' => null, 'modes' => $modes])
+    <x-modal id="restaurant-create" title="Nouveau restaurant" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.store') }}">
+        @include('restaurant.restaurants._champs', ['r' => null])
         <x-slot:footer>
             <button type="button" onclick="document.getElementById('restaurant-create').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
             <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Créer le restaurant</button>
@@ -133,12 +150,12 @@
 
 @foreach($restaurants as $restaurant)
     @droit('restaurant.restaurants.modifier')
-        <x-modal id="restaurant-edit-{{ $restaurant->id }}" title="Modifier {{ $restaurant->name }}" formAction="{{ route('restaurant.restaurants.update', $restaurant) }}">
+        <x-modal id="restaurant-edit-{{ $restaurant->id }}" title="Modifier {{ $restaurant->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.update', $restaurant) }}">
             @method('PUT')
-            @include('restaurant.restaurants._champs', ['r' => $restaurant, 'modes' => $modes])
+            @include('restaurant.restaurants._champs', ['r' => $restaurant])
             <label class="flex items-center gap-2 text-xs text-primary">
                 <input type="hidden" name="is_active" value="0">
-                <input type="checkbox" name="is_active" value="1" @checked($restaurant->is_active) class="rounded border-secondary/30">
+                <input type="checkbox" name="is_active" value="1" @checked(old('form_restaurant') === (string) $restaurant->id ? old('is_active') : $restaurant->is_active) class="rounded border-secondary/30">
                 Restaurant ouvert
             </label>
             <x-slot:footer>
@@ -174,4 +191,13 @@
         </x-modal>
     @enddroit
 @endforeach
-@endsection
+
+{{-- Après un refus, le formulaire qui l'a reçu se rouvre avec sa saisie. --}}
+@if($errors->any() && old('form_restaurant'))
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const id = @js(old('form_restaurant') === 'nouveau' ? 'restaurant-create' : 'restaurant-edit-' . old('form_restaurant'));
+            document.getElementById(id)?.classList.remove('hidden');
+        });
+    </script>
+@endif

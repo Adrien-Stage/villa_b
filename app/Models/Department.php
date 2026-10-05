@@ -10,6 +10,9 @@ class Department extends Model
 {
     use HasFactory;
 
+    /** Code du département Restauration, tel que l'ERP le livre (DepartmentCatalog). */
+    public const CODE_RESTAURATION = 'FNB';
+
     protected $fillable = [
         'name',
         'slug',
@@ -35,6 +38,15 @@ class Department extends Model
     }
 
     /**
+     * Le département Restauration : on y travaille dans un restaurant précis,
+     * qu'il faut désigner en créant le compte.
+     */
+    public function estLaRestauration(): bool
+    {
+        return strtoupper((string) $this->code) === self::CODE_RESTAURATION;
+    }
+
+    /**
      * Rôles que le formulaire coche d'office quand on rattache une personne à
      * ce département, d'après son code. Une commodité de saisie : le
      * département ne donne aucun droit, et chaque case reste décochable.
@@ -48,7 +60,7 @@ class Department extends Model
             'DIR' => ['manager'],
             'REC' => ['reception'],
             'HSK' => ['housekeeping_staff'],
-            'FNB' => ['restaurant_staff'],
+            self::CODE_RESTAURATION => ['restaurant_staff'],
             'BTQ' => ['shop_cashier'],
             'FIN' => ['accountant'],
             'QLT' => ['quality_auditor'],

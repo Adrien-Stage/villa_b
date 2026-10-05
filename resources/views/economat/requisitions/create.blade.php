@@ -77,6 +77,9 @@
                         </select>
                         <p class="text-[10px] text-primary/50 mt-1">Les articles entreront dans le garde-manger de ce restaurant.</p>
                     </div>
+                @elseif($restaurants->count() === 1)
+                    {{-- Un seul restaurant tient un stock : c'est lui qui reçoit. --}}
+                    <input type="hidden" name="point_of_sale_id" value="{{ $restaurants->first()->id }}">
                 @endif
 
                 <div>

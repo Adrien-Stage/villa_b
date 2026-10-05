@@ -202,6 +202,28 @@ class RestaurantContext
         return $id !== null && $this->accessibles($user)->contains('id', $id);
     }
 
+    /**
+     * Les restaurants que cette personne peut voir et qui exploitent ce
+     * service (PointOfSale::SERVICE_*).
+     *
+     * @return Collection<int, PointOfSale>
+     */
+    public function offrant(?User $user, string $service): Collection
+    {
+        return $this->accessibles($user)->filter(fn (PointOfSale $r): bool => $r->offre($service))->values();
+    }
+
+    /**
+     * Le restaurant choisi n'exploite pas ce service. Faux depuis la vue
+     * d'ensemble : on y voit ce que les autres restaurants font.
+     */
+    public function serviceAbsentIci(?User $user, string $service): ?PointOfSale
+    {
+        $courant = $this->courant($user);
+
+        return $courant !== null && ! $courant->offre($service) ? $courant : null;
+    }
+
     /** Oublie ce qui a été mémorisé : après une affectation, ou entre deux tests. */
     public function oublier(): void
     {

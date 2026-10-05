@@ -201,16 +201,20 @@ class RestaurantPortalController extends Controller
     /**
      * Restaurant du QR code : chaque restaurant a le sien. Sans précision —
      * les QR codes imprimés avant qu'il y en ait plusieurs —, le premier.
+     * On ne commande à table que dans un restaurant qui a une salle.
      */
     private function restaurant(Request $request): ?PointOfSale
     {
-        $restaurants = app(RestaurantContext::class)->restaurants();
+        $tous = app(RestaurantContext::class)->restaurants();
+        $restaurants = $tous->filter(fn (PointOfSale $r): bool => $r->offre(PointOfSale::SERVICE_SALLE));
         $choix = $request->input('restaurant');
 
         if (is_string($choix) && $choix !== '') {
             return $restaurants->firstWhere('slug', $choix) ?? abort(404);
         }
 
-        return $restaurants->first();
+        // Sans restaurant déclaré, la carte entière, comme avant ; sinon
+        // jamais la carte de tous à la fois.
+        return $restaurants->first() ?? ($tous->isEmpty() ? null : abort(404));
     }
 }

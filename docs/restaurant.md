@@ -23,11 +23,33 @@ ingrédients du garde-manger. C'est elle qui rend le stock et le coût automatiq
 
 ## Plusieurs restaurants
 
-L'hôtel crée autant de restaurants qu'il en exploite (`/restaurant/restaurants`). Un
-restaurant est un point de vente de nature `restauration` ; il a **sa** carte, **sa**
-cuisine et **son** bar, **son** garde-manger, ses inventaires, sa caisse et son
+L'hôtel crée autant de restaurants qu'il en exploite, dans **Paramètres › Restaurant**
+(l'ancienne adresse `/restaurant/restaurants` y mène). Un restaurant est un point de
+vente de nature `restauration` ; il a **sa** carte, ses inventaires, sa caisse et son
 équipe. Il choisit ses **modes de service** : à la carte, au buffet, ou les deux.
 Ses **salles** (espaces) accueillent le service et les banquets.
+
+### Les services d'un restaurant
+
+Chaque restaurant active les services qu'il exploite (`points_of_sale.services`,
+`PointOfSale::offre()`). Un restaurant sans réglage les a tous, comme avant.
+
+| Service | Ce qu'il ouvre | Sans lui |
+|---|---|---|
+| **Salle** | Commandes à table (serveur, QR code), salles, buffets | Pas de commande à table, ni salle, ni buffet |
+| **Cuisine** | Écran cuisine : les plats y partent | Les plats partent au bar |
+| **Bar** | Écran bar : les boissons y partent | Les boissons partent en cuisine |
+| **Stock** | Garde-manger, inventaires, pertes, livraisons de l'économat, fiche de comptage | Rien n'entre ni ne se compte en stock |
+
+Une salle a besoin d'une cuisine ou d'un bar. Un service ne se retire pas s'il laisse
+quelque chose en plan : commandes ou buffet en cours (salle), plats en attente
+(cuisine), boissons en attente (bar), inventaire ouvert (stock).
+
+La règle est posée là où l'enregistrement naît : un modèle qui suppose un service le
+déclare (`const SERVICE_REQUIS`), et le trait refuse de le créer dans un restaurant
+qui ne l'exploite pas, quel que soit le chemin (écran, import, livraison). Le menu
+masque les entrées d'un service qu'aucun restaurant de la personne n'exploite ; un
+écran ouvert sur un restaurant qui ne l'a pas le dit.
 
 Tout ce qui appartient à un restaurant porte un `point_of_sale_id` : catégories et
 articles de la carte, commandes, garde-manger, fiches techniques, inventaires,
@@ -56,7 +78,9 @@ montrent. On compose une carte, un garde-manger, des fiches ou un inventaire **d
 un restaurant** : depuis la vue d'ensemble, ces écrans se consultent seulement.
 
 L'affectation se fait depuis la fiche du restaurant (« Composer l'équipe ») ou depuis
-la gestion des utilisateurs. Un établissement qui n'a qu'un restaurant ne cloisonne
+la gestion des utilisateurs : un membre du département **Restauration** (code `FNB`)
+reçoit une liste « Restaurant d'affectation », obligatoire. Y choisir un restaurant
+où il travaille déjà ne touche pas à ses autres équipes ; en choisir un autre l'y mute. Un établissement qui n'a qu'un restaurant ne cloisonne
 rien : tout fonctionne comme avant, et le personnel de restaurant créé y est rattaché
 d'office, pour qu'un second restaurant ouvert plus tard ne le laisse pas sans équipe.
 
