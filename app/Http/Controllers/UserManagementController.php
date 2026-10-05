@@ -144,26 +144,40 @@ class UserManagementController extends Controller
 
         $user->load(['roles', 'department']);
         $resolveur = app(\App\Services\PermissionResolver::class);
+        $catalogue = array_keys(\App\Support\PermissionCatalog::all());
 
-        $droitsParModule = [];
-        foreach (array_keys(\App\Support\PermissionCatalog::all()) as $droit) {
-            if ($resolveur->allows($user, $droit)) {
-                $droitsParModule[explode('.', $droit)[0]][] = $droit;
-            }
+        $exceptions = \App\Models\PermissionGrant::query()->enVigueur()
+            ->where('subject_type', \App\Models\PermissionGrant::SUJET_USER)
+            ->where('subject_id', (string) $user->id)->orderBy('permission')->get();
+        $refus = fn (string $origine) => $exceptions
+            ->where('origin', $origine)->where('effect', \App\Models\PermissionGrant::EFFET_DENY)->keyBy('permission');
+        $refusHotel = $refus(\App\Models\PermissionGrant::ORIGINE_ETABLISSEMENT);
+        $refusConsole = $refus(\App\Models\PermissionGrant::ORIGINE_ERP);
+
+        // Ses accès, droit par droit : ce que le moteur lui accorde, et ce
+        // qu'une exception lui a retiré — pour le rétablir d'un clic.
+        $acces = [];
+        foreach ($catalogue as $droit) {
+            $acces[$droit] = match (true) {
+                isset($refusHotel[$droit]) => ['etat' => 'retire', 'exception' => $refusHotel[$droit]],
+                isset($refusConsole[$droit]) => ['etat' => 'retire_console', 'exception' => $refusConsole[$droit]],
+                $resolveur->allows($user, $droit) => ['etat' => 'accorde', 'exception' => null],
+                default => null,
+            };
         }
-        ksort($droitsParModule);
+        $acces = array_filter($acces);
 
         return view('users.show', [
             'membre' => $user,
-            'droitsParModule' => $droitsParModule,
+            'acces' => $acces,
+            'accesRanges' => \App\Support\PermissionLabels::ranger(array_keys($acces)),
+            // Ce qu'on peut lui accorder en plus : ce qu'il n'a pas.
+            'aAccorder' => \App\Support\PermissionLabels::ranger(array_diff($catalogue, array_keys($acces))),
             'ecritures' => array_flip(\App\Support\PermissionCatalog::ecritures()),
             'portees' => collect(\App\Support\PermissionScope::DROITS_BORNES)
                 ->mapWithKeys(fn ($d) => [$d => \App\Support\PermissionScope::libelle($resolveur->scopeFor($user, $d))])->all(),
-            'exceptions' => \App\Models\PermissionGrant::query()->enVigueur()
-                ->where('subject_type', \App\Models\PermissionGrant::SUJET_USER)
-                ->where('subject_id', (string) $user->id)->orderBy('permission')->get(),
+            'exceptions' => $exceptions,
             'cumuls' => DutySegregation::conflictsFor($user->rolesDetenus()),
-            'catalogue' => array_keys(\App\Support\PermissionCatalog::all()),
         ]);
     }
 

@@ -314,8 +314,10 @@ Pour retirer **une seule action** à une personne, on utilise une exception nomi
 - Une rubrique du menu apparaît dès que la personne détient au moins un droit du
   module.
 - Un bouton ou un lien n'apparaît que si la personne détient le droit de l'action.
-- La **fiche de l'employé** (Utilisateurs → un nom) liste ce que le moteur lui accorde
-  réellement, service par service. C'est la référence en cas de doute.
+- La **fiche de l'employé** (Utilisateurs → un nom), section « Ses accès », liste ce
+  que le moteur lui accorde réellement, service par service puis écran par écran, en
+  clair (« Bons de commande — Envoyer au fournisseur ») ; le code du droit apparaît au
+  survol. C'est la référence en cas de doute.
 
 ---
 
@@ -465,21 +467,32 @@ On y trouve :
    décocher.
 3. Cochez un ou plusieurs rôles et leur niveau : lecture, ou lecture / écriture. Le
    premier coché est le rôle principal.
-4. Pour le personnel de restaurant, quand l'hôtel en a plusieurs, cochez ses
-   restaurants.
+4. Pour le département Restauration, choisissez son restaurant dans la liste
+   « Restaurant d'affectation » qui apparaît sous le département. Une personne
+   présente dans plusieurs restaurants s'ajoute à leurs équipes depuis Paramètres ›
+   Restaurant.
 
 Un cumul interdit est refusé, sauf dérogation motivée.
 
 **9.2 Donner un service en lecture seule.** Même écran : choisissez « lecture » pour
 ce rôle. La personne consulte, sans agir.
 
-**9.3 Retirer, ou accorder, une action précise à une personne.** Ouvrez sa fiche
-(Utilisateurs → son nom), puis « Nouvelle exception » :
+**9.3 Retirer des accès à une personne.** Ouvrez sa fiche (Utilisateurs → son nom),
+section « Ses accès » :
 
-1. choisissez le droit ;
-2. choisissez refuser ou accorder ;
-3. écrivez un motif ;
-4. si besoin, fixez une **échéance**, par exemple « jusqu'à la fin de l'inventaire ».
+1. dépliez le service ; cochez les accès à retirer — ou utilisez les raccourcis
+   « ce qui modifie (lecture seule) » et « tout le service » ;
+2. dans le bandeau qui apparaît, écrivez un **motif** ;
+3. si besoin, fixez une **échéance**, par exemple « jusqu'à la fin de l'inventaire » ;
+4. « Retirer ».
+
+Ses rôles ne changent pas, ses collègues non plus : seule cette personne perd ces
+accès. Un accès retiré reste affiché, barré, avec un bouton **Rétablir**.
+
+**9.3 bis Accorder un accès en plus.** Même fiche, colonne « Exceptions » : « Accorder
+un accès en plus » propose, en clair, ce que ses rôles ne lui donnent pas. Motif
+obligatoire, échéance possible. Si l'accès fait cumuler des fonctions incompatibles,
+l'enregistrement est refusé, sauf dérogation cochée.
 
 L'exception échue cesse d'agir et reste visible dans les alertes.
 

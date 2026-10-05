@@ -34,7 +34,7 @@
             @endforeach
         </select>
         <p class="text-[11px] text-primary/50 mt-1">
-            Il ne verra que ce restaurant. Les responsables présents dans plusieurs restaurants se composent depuis Paramètres › Restaurant.
+            La personne ne verra que ce restaurant. Les responsables présents dans plusieurs restaurants se composent depuis Paramètres › Restaurant.
         </p>
         @if(count($autres) > 1)
             <p class="text-[11px] text-primary/60 mt-1">
