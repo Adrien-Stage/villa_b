@@ -17,12 +17,49 @@
         <h1 class="font-heading text-2xl font-semibold text-primary mt-1">{{ $membre->name }}</h1>
         <p class="text-sm text-primary/50">{{ $membre->email }}{{ $membre->department ? ' · ' . $membre->department->name : '' }}</p>
     </div>
-    <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $membre->is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
-        {{ $membre->is_active ? 'Compte actif' : 'Compte désactivé' }}
-    </span>
+    <div class="flex flex-col items-end gap-3">
+        <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $membre->is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+            {{ $membre->is_active ? 'Compte actif' : 'Compte désactivé' }}
+        </span>
+
+        {{-- Gérer le compte : pas le sien, ni celui qu'on ne gère pas (administrateur ; manager, sauf pour l'administrateur). --}}
+        @if($gerable && ! $membre->is(auth()->user()))
+            <div class="flex flex-wrap justify-end gap-2">
+                @droit('users.modifier')
+                    <button type="button" onclick="openEditModal('{{ $membre->id }}')"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:opacity-95">
+                        <i data-lucide="pencil" class="h-3.5 w-3.5" aria-hidden="true"></i> Modifier
+                    </button>
+                @enddroit
+                @droit('users.resetPassword')
+                    <form method="POST" action="{{ route('users.resetPassword', $membre) }}"
+                          onsubmit="return confirm(@js('Réinitialiser le mot de passe de '.$membre->name.' ? Un mot de passe provisoire vous sera donné ; ses sessions ouvertes seront fermées.'))">
+                        @csrf
+                        <input type="hidden" name="retour" value="fiche">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                            <i data-lucide="key-round" class="h-3.5 w-3.5" aria-hidden="true"></i> Réinitialiser le mot de passe
+                        </button>
+                    </form>
+                @enddroit
+                @droit('users.toggleStatus')
+                    <form method="POST" action="{{ route('users.toggleStatus', $membre) }}"
+                          @if($membre->is_active) onsubmit="return confirm(@js('Désactiver le compte de '.$membre->name.' ? La personne ne pourra plus se connecter.'))" @endif>
+                        @csrf
+                        <input type="hidden" name="retour" value="fiche">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold {{ $membre->is_active ? 'border-red-200 bg-white text-red-700 hover:bg-red-50' : 'border-green-200 bg-white text-green-700 hover:bg-green-50' }}">
+                            <i data-lucide="{{ $membre->is_active ? 'user-x' : 'user-check' }}" class="h-3.5 w-3.5" aria-hidden="true"></i>
+                            {{ $membre->is_active ? 'Désactiver le compte' : 'Réactiver le compte' }}
+                        </button>
+                    </form>
+                @enddroit
+            </div>
+        @endif
+    </div>
 </div>
 
-@foreach(['success' => 'border-green-200 bg-green-50 text-green-700', 'error' => 'border-red-200 bg-red-50 text-red-700'] as $cle => $classes)
+@include('users.partials.mot-de-passe-provisoire')
+
+@foreach(['success' => 'border-green-200 bg-green-50 text-green-700'] as $cle => $classes)
     @if(session($cle))<div class="mb-4 rounded-lg border px-4 py-3 text-sm {{ $classes }}">{{ session($cle) }}</div>@endif
 @endforeach
 @if($errors->any())
@@ -207,7 +244,11 @@
             </p>
             {{-- Une longue liste se replie : les retraits se lisent aussi dans « Ses accès ». --}}
             <details class="mt-3" @if($exceptions->count() <= 5) open @endif>
-            <summary class="cursor-pointer text-xs font-semibold text-primary/70">{{ $exceptions->count() }} exception(s)</summary>
+            @if($exceptions->isNotEmpty())
+                <summary class="cursor-pointer text-xs font-semibold text-primary/70">{{ $exceptions->count() }} exception(s)</summary>
+            @else
+                <summary class="sr-only">Exceptions</summary>
+            @endif
             <ul class="mt-2 space-y-2 text-xs">
                 @forelse($exceptions as $e)
                     <li class="rounded-lg border border-secondary/20 px-3 py-2">
@@ -265,5 +306,12 @@
         </section>
     </div>
 </div>
+
+@if($gerable && ! $membre->is(auth()->user()))
+    @droit('users.modifier')
+        @include('users.partials.modal-edition', ['staff' => $membre, 'retour' => 'fiche'])
+        @include('users.partials.script-formulaire')
+    @enddroit
+@endif
 
 @endsection

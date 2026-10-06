@@ -30,6 +30,8 @@
     </div>
 @endif
 
+@include('users.partials.mot-de-passe-provisoire')
+
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <p class="font-semibold mb-1">Validation impossible :</p>
@@ -75,36 +77,37 @@
 
     </div>
 
-    <form method="GET" action="{{ route('users.index') }}" class="flex items-center gap-2">
+    {{-- Les filtres passent à la ligne plutôt que de faire défiler la page. --}}
+    <form method="GET" action="{{ route('users.index') }}" class="flex min-w-0 flex-wrap items-center gap-2">
         <input type="hidden" name="status" value="{{ request('status') }}">
         <input type="hidden" name="view" value="{{ $viewMode }}">
 
-        <select name="department_id"
+        <select name="department_id" aria-label="Filtrer par département"
             onchange="this.form.submit()"
-            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
             <option value="">Tous les départements</option>
             @foreach($departments as $d)
                 <option value="{{ $d->id }}" @selected(request('department_id') == $d->id)>{{ $d->name }}</option>
             @endforeach
         </select>
 
-        <select name="role"
+        <select name="role" aria-label="Filtrer par rôle"
             onchange="this.form.submit()"
-            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
             <option value="">Tous les roles</option>
             @foreach($roles as $role)
                 <option value="{{ $role->slug }}" @selected(request('role') === $role->slug)>{{ $role->name }}</option>
             @endforeach
         </select>
 
-        <div class="relative">
+        <div class="relative min-w-0 flex-1 sm:flex-none">
             <input type="text"
-                id="search-input"
+                id="search-input" aria-label="Rechercher un membre du personnel"
                 name="search"
                 value="{{ request('search') }}"
                 placeholder="Nom, email, telephone..."
                 autocomplete="off"
-                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-64 transition-all">
+                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-full sm:w-64 transition-all">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
         </div>
 
@@ -124,7 +127,7 @@
 </div>
 
 @if($viewMode === 'list')
-<x-table :rows="$staffUsers" empty="Aucun membre du personnel trouvé." empty-icon="user-x" caption="Membres du personnel">
+<x-table :rows="$staffUsers" inline="never" empty="Aucun membre du personnel trouvé." empty-icon="user-x" caption="Membres du personnel">
     <x-slot:head>
         <x-table.col>Collaborateur</x-table.col>
         <x-table.col hide="2xl">Contact</x-table.col>
@@ -188,13 +191,14 @@
             </x-table.cell>
             <x-table.actions :label="'Actions pour '.$staff->name">
                 <x-table.action :href="route('users.show', $staff)" icon="id-card">Fiche</x-table.action>
-                <x-table.action icon="pencil" onclick="openEditModal('{{ $staff->id }}')">Éditer</x-table.action>
-                @if($staff->is_active)
-                    <x-table.action :action="route('users.toggleStatus', $staff)" :fields="['view' => $viewMode]" icon="user-x" tone="danger"
-                        :confirm="'Désactiver le compte de '.$staff->name.' ? Il ne pourra plus se connecter.'">Désactiver</x-table.action>
-                @else
-                    <x-table.action :action="route('users.toggleStatus', $staff)" :fields="['view' => $viewMode]" icon="user-check" tone="success">Réactiver</x-table.action>
-                @endif
+                @droit('users.modifier')
+                    <x-table.action icon="pencil" onclick="openEditModal('{{ $staff->id }}')">Modifier</x-table.action>
+                @enddroit
+                @droit('users.resetPassword')
+                    <x-table.action :action="route('users.resetPassword', $staff)" :fields="['view' => $viewMode]" icon="key-round"
+                        :confirm="'Réinitialiser le mot de passe de '.$staff->name.' ? Un mot de passe provisoire vous sera donné ; ses sessions ouvertes seront fermées.'">Réinitialiser le mot de passe</x-table.action>
+                @enddroit
+                @include('users.partials.action-statut', ['staff' => $staff, 'champs' => ['view' => $viewMode]])
             </x-table.actions>
         </x-table.row>
     @endforeach
@@ -249,23 +253,16 @@
                     class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
                     <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Fiche
                 </a>
-                <button type="button"
-                    onclick="openEditModal('{{ $staff->id }}')"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
-                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editer
-                </button>
-                <form method="POST" action="{{ route('users.toggleStatus', $staff) }}" class="flex-1">
-                    @csrf
-                    <input type="hidden" name="view" value="{{ $viewMode }}">
-                    <button type="submit"
-                        class="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border {{ $staff->is_active ? 'border-red-200 text-red-700 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50' }} transition-colors">
-                        @if($staff->is_active)
-                            <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Desactiver
-                        @else
-                            <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Reactiver
-                        @endif
-                    </button>
-                </form>
+                <x-menu-actions :label="'Actions pour '.$staff->name">
+                    @droit('users.modifier')
+                        <x-table.action icon="pencil" onclick="openEditModal('{{ $staff->id }}')">Modifier</x-table.action>
+                    @enddroit
+                    @droit('users.resetPassword')
+                        <x-table.action :action="route('users.resetPassword', $staff)" :fields="['view' => $viewMode]" icon="key-round"
+                            :confirm="'Réinitialiser le mot de passe de '.$staff->name.' ? Un mot de passe provisoire vous sera donné ; ses sessions ouvertes seront fermées.'">Réinitialiser le mot de passe</x-table.action>
+                    @enddroit
+                    @include('users.partials.action-statut', ['staff' => $staff, 'champs' => ['view' => $viewMode]])
+                </x-menu-actions>
             </div>
         </div>
     @empty
@@ -349,103 +346,14 @@
     </x-slot:footer>
 </x-modal>
 
-{{-- Edit modals --}}
+{{-- Fenêtres de modification --}}
 @foreach($staffUsers as $staff)
-    <x-modal id="edit-user-modal-{{ $staff->id }}" title="Modifier {{ $staff->name }}" max-width="max-w-2xl" formAction="{{ route('users.update', $staff) }}" closeAction="closeEditModal('{{ $staff->id }}')">
-        @method('PUT')
-        <input type="hidden" name="form_type" value="edit_{{ $staff->id }}">
-        <input type="hidden" name="view" value="{{ $viewMode }}">
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label class="text-xs text-primary/60">Nom complet</label>
-                <input type="text" name="name" value="{{ old('name', $staff->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-            </div>
-            <div>
-                <label class="text-xs text-primary/60">Email</label>
-                <input type="email" name="email" value="{{ old('email', $staff->email) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-            </div>
-        </div>
-
-        <div>
-            <label class="text-xs text-primary/60">Téléphone</label>
-            <input type="text" name="phone" value="{{ old('phone', $staff->phone) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-        </div>
-
-        <div>
-            <label class="text-xs font-semibold text-primary">Département d'affectation</label>
-            <select name="department_id"
-                    onchange="onUserDepartmentSelect(this.value, 'edit_{{ $staff->id }}')"
-                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none bg-white">
-                <option value="">-- Aucun département --</option>
-                @foreach($departments as $dept)
-                    <option value="{{ $dept->id }}" @selected(old('department_id', $staff->department_id) == $dept->id)>{{ $dept->name }} ({{ $dept->code ?: 'N/A' }})</option>
-                @endforeach
-            </select>
-        </div>
-
-        @include('users.partials.restaurants', ['contexte' => 'edit_' . $staff->id, 'departements' => $departments, 'personne' => $staff])
-
-        @php
-            // Rôles et niveaux actuels de l'utilisateur, pour pré-cocher les cartes.
-            $staffRoleSlugs = $staff->roles->pluck('slug')->all();
-            $staffLevels = $staff->roles->mapWithKeys(fn ($r) => [$r->slug => $r->pivot->level ?: 'write'])->all();
-        @endphp
-        <div>
-            <label class="text-xs text-primary/60">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
-            <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles et leur niveau d'accès par module.</p>
-            <x-role-picker :rolesByModule="$rolesByModule" :moduleLabels="$moduleLabels"
-                           :selected="old('roles', $staffRoleSlugs)" :levels="old('levels', $staffLevels)"
-                           :context="'edit_' . $staff->id" />
-        </div>
-
-        @include('users.partials.derogation')
-
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label class="text-xs text-primary/60">Nouveau mot de passe (optionnel)</label>
-                <input type="password" name="password" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-            </div>
-            <div>
-                <label class="text-xs text-primary/60">Confirmation nouveau mot de passe</label>
-                <input type="password" name="password_confirmation" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-            </div>
-        </div>
-
-        <label class="inline-flex items-center gap-2 text-xs text-primary/70">
-            <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $staff->is_active))>
-            Compte actif
-        </label>
-
-        <x-slot:footer>
-            <button type="button" onclick="closeEditModal('{{ $staff->id }}')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
-        </x-slot:footer>
-    </x-modal>
+    @include('users.partials.modal-edition', ['staff' => $staff, 'viewMode' => $viewMode])
 @endforeach
 
+@include('users.partials.script-formulaire')
+
 <script>
-const deptDataMap = @json($deptMap);
-
-window.onUserDepartmentSelect = function(deptId, context) {
-    const dept = deptDataMap[deptId];
-
-    // La restauration demande le restaurant d'affectation ; les autres non.
-    window.dispatchEvent(new CustomEvent('department-changed', {
-        detail: { context: context, restauration: Boolean(dept && dept.restauration) }
-    }));
-
-    if (!dept) return;
-
-    window.dispatchEvent(new CustomEvent('department-selected', {
-        detail: {
-            context: context,
-            roles: dept.roles || [],
-            levels: dept.levels || {}
-        }
-    }));
-};
 let searchTimer;
 const searchInput = document.getElementById('search-input');
 
@@ -470,26 +378,8 @@ window.closeCreateModal = function() {
     document.body.style.overflow = '';
 };
 
-window.openEditModal = function(userId) {
-    const modal = document.getElementById(`edit-user-modal-${userId}`);
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-};
-
-window.closeEditModal = function(userId) {
-    const modal = document.getElementById(`edit-user-modal-${userId}`);
-    if (!modal) return;
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-};
-
-@if($errors->any())
-    @if(old('form_type') === 'create')
-        openCreateModal();
-    @elseif(old('form_type') && str_starts_with(old('form_type'), 'edit_'))
-        openEditModal('{{ str_replace('edit_', '', old('form_type')) }}');
-    @endif
+@if($errors->any() && old('form_type') === 'create')
+    openCreateModal();
 @endif
 </script>
 

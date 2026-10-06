@@ -2022,6 +2022,10 @@
   "manager",
   "support"
  ],
+ "users.resetPassword": [
+  "admin",
+  "manager"
+ ],
  "users.show": [
   "admin",
   "controller",

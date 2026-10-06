@@ -362,6 +362,7 @@ class PermissionLabels
         'users.voir' => ['Personnel', 'Consulter'],
         'users.creer' => ['Personnel', 'Créer un compte'],
         'users.modifier' => ['Personnel', 'Modifier un compte'],
+        'users.resetPassword' => ['Personnel', 'Réinitialiser un mot de passe'],
         'users.toggleStatus' => ['Personnel', 'Activer ou désactiver un compte'],
 
         // ── Divers ──

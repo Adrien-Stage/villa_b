@@ -12,7 +12,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -51,14 +53,15 @@ class UserManagementController extends Controller
             : [RoleCatalog::ADMIN, RoleCatalog::MANAGER];
     }
 
-    public function index(Request $request): View
+    /**
+     * Ce que le formulaire de création et de modification affiche, sur la
+     * liste comme sur la fiche.
+     *
+     * @return array<string, mixed>
+     */
+    private function donneesDuFormulaire(): array
     {
-        $manager = Auth::user();
-
         $assignableRoles = $this->assignableRoles();
-        // Regroupées par module pour l'affichage en cartes du formulaire.
-        $rolesByModule = $assignableRoles->groupBy('module');
-
         $departments = Department::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
 
         $deptMap = [];
@@ -74,6 +77,20 @@ class UserManagementController extends Controller
                 'restauration' => $dept->estLaRestauration(),
             ];
         }
+
+        return [
+            'departments' => $departments,
+            'deptMap' => $deptMap,
+            'roles' => $assignableRoles,
+            // Regroupés par module pour l'affichage en cartes du formulaire.
+            'rolesByModule' => $assignableRoles->groupBy('module'),
+            'moduleLabels' => Role::MODULES,
+        ];
+    }
+
+    public function index(Request $request): View
+    {
+        $manager = Auth::user();
 
         $horsDePortee = $this->rolesHorsDePortee();
 
@@ -118,13 +135,8 @@ class UserManagementController extends Controller
 
         $staffUsers = $query->latest('id')->paginate(15)->withQueryString();
 
-        return view('users.index', [
+        return view('users.index', $this->donneesDuFormulaire() + [
             'staffUsers' => $staffUsers,
-            'departments' => $departments,
-            'deptMap' => $deptMap,
-            'roles' => $assignableRoles,
-            'rolesByModule' => $rolesByModule,
-            'moduleLabels' => Role::MODULES,
             'stats' => $stats,
         ]);
     }
@@ -167,7 +179,11 @@ class UserManagementController extends Controller
         }
         $acces = array_filter($acces);
 
-        return view('users.show', [
+        $user->load('restaurants');
+
+        return view('users.show', $this->donneesDuFormulaire() + [
+            // On ne gère ni un administrateur, ni (sauf administrateur) un manager.
+            'gerable' => ! array_intersect($user->roles->pluck('slug')->all(), $this->rolesHorsDePortee()),
             'membre' => $user,
             'acces' => $acces,
             'accesRanges' => \App\Support\PermissionLabels::ranger(array_keys($acces)),
@@ -232,10 +248,6 @@ class UserManagementController extends Controller
             'is_active' => $request->boolean('is_active'),
         ];
 
-        if (! empty($validated['password'])) {
-            $payload['password'] = Hash::make($validated['password']);
-        }
-
         $user->update($payload);
         $this->syncUserRoles($user, $roleSlugs, $levels);
         $this->syncRestaurants($user->fresh(), $validated, $roleSlugs);
@@ -244,14 +256,17 @@ class UserManagementController extends Controller
             "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
             'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
 
-        return redirect()
-            ->route('users.index', $this->resolveViewMode($request))
-            ->with('success', 'Profil staff mis à jour avec succès.');
+        return $this->retour($request, $user)->with('success', 'Profil staff mis à jour avec succès.');
     }
 
-    public function toggleStatus(User $user): RedirectResponse
+    public function toggleStatus(Request $request, User $user): RedirectResponse
     {
         $this->ensureManageableByCurrentManager($user);
+
+        // Se désactiver soi-même fermerait la porte derrière soi.
+        if ($user->is($request->user())) {
+            return back()->with('error', 'Vous ne pouvez pas désactiver votre propre compte.');
+        }
 
         $user->update(['is_active' => ! $user->is_active]);
         $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
@@ -260,12 +275,74 @@ class UserManagementController extends Controller
             "Le compte de {$user->name} ({$user->email}) a été {$statusStr}",
             'users', ['target_user_id' => $user->id, 'is_active' => $user->is_active]);
 
-        return redirect()
-            ->route('users.index', $this->resolveViewMode(request()))
+        return $this->retour($request, $user)
             ->with('success', $user->is_active ? 'Compte staff réactivé.' : 'Compte staff désactivé.');
     }
 
+    /**
+     * Réinitialise le mot de passe d'un employé.
+     *
+     * Le responsable reçoit un mot de passe provisoire, affiché une seule
+     * fois, qu'il remet à la personne. Celle-ci choisit le sien à sa
+     * connexion suivante (ExigerNouveauMotDePasse) ; ses sessions ouvertes
+     * sont fermées. Le provisoire n'est écrit nulle part ailleurs : ni au
+     * journal, ni en clair en base.
+     */
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        $this->ensureManageableByCurrentManager($user);
+
+        if ($user->is($request->user())) {
+            return back()->with('error', 'Votre propre mot de passe se change depuis votre profil.');
+        }
+
+        $provisoire = $this->motDePasseProvisoire();
+
+        DB::transaction(function () use ($user, $provisoire) {
+            $user->forceFill([
+                'password' => Hash::make($provisoire),
+                'must_change_password' => true,
+                'remember_token' => Str::random(60),
+            ])->save();
+
+            // Ses sessions ouvertes se ferment : l'ancien mot de passe ne
+            // laisse personne connecté.
+            if (config('session.driver') === 'database') {
+                DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+            }
+
+            AuditLog::record(Auth::id(), 'user_management',
+                "Mot de passe de {$user->name} ({$user->email}) réinitialisé",
+                'users', ['target_user_id' => $user->id]);
+        });
+
+        return $this->retour($request, $user)->with('motDePasseProvisoire', [
+            'nom' => $user->name,
+            'valeur' => $provisoire,
+        ]);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    /**
+     * Mot de passe provisoire lisible à voix haute ou recopié à la main :
+     * sans caractères qu'on confond (0/O, 1/l/I).
+     */
+    private function motDePasseProvisoire(): string
+    {
+        $alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $tirage = fn (int $n) => implode('', array_map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)], range(1, $n)));
+
+        return $tirage(4).'-'.$tirage(4).'-'.$tirage(4);
+    }
+
+    /** Retour à la fiche quand l'action en vient, à la liste sinon. */
+    private function retour(Request $request, User $user): RedirectResponse
+    {
+        return $request->input('retour') === 'fiche'
+            ? redirect()->route('users.show', $user)
+            : redirect()->route('users.index', $this->resolveViewMode($request));
+    }
 
     /**
      * Restaurant où travaille la personne.
@@ -314,7 +391,9 @@ class UserManagementController extends Controller
             // Niveau par rôle : lecture ou lecture/écriture.
             'levels' => ['nullable', 'array'],
             'levels.*' => [Rule::in(['read', 'write'])],
-            'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
+            // Le mot de passe se choisit à la création ; ensuite, il se
+            // réinitialise (resetPassword), il ne se modifie pas ici.
+            'password' => $user ? ['exclude'] : ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
             // Restaurant où travaille un membre du département Restauration.
             'restaurant_id' => ['nullable', 'integer', Rule::exists('points_of_sale', 'id')
