@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 109 | 24 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 107 | 81 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs |
+| Administrateur (`admin`) | 1 | — | 109 | 25 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 107 | 82 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 29 | 39 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception |
 | Réceptionniste (`reception`) | 4 | — | 27 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
 | Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 6 | 14 | Économat, Paramètres, Housekeeping |
@@ -408,6 +408,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 |---|---|:-:|:-:|:-:|:-:|
 | `users.creer` | **agit** | ✓ | ✓ |  |  |
 | `users.modifier` | **agit** | ✓ | ✓ |  |  |
+| `users.resetPassword` | **agit** | ✓ | ✓ |  |  |
 | `users.toggleStatus` | **agit** | ✓ | ✓ |  |  |
 | `users.voir` | consulte | ✓ | ✓ | ✓ | ✓ |
 

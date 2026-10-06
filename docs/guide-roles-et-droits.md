@@ -474,6 +474,21 @@ On y trouve :
 
 Un cumul interdit est refusé, sauf dérogation motivée.
 
+**9.1 bis Modifier, désactiver, réinitialiser le mot de passe.** Depuis la liste
+(menu ⋮ de la ligne) ou depuis la fiche de l'employé (boutons en haut à droite).
+
+- **Modifier** : nom, email, téléphone, département, restaurant, rôles. Le mot de
+  passe ne se change pas ici.
+- **Réinitialiser le mot de passe** : l'application donne un mot de passe provisoire,
+  affiché une seule fois, à remettre à la personne. Ses sessions ouvertes se ferment ;
+  à sa connexion suivante, elle choisit le sien avant tout autre écran. Le provisoire
+  n'est écrit ni au journal ni en clair en base.
+- **Désactiver le compte** : la personne ne peut plus se connecter ; **Réactiver** la
+  rétablit.
+
+On n'applique aucune de ces actions à son propre compte. Droit
+`users.resetPassword` : manager et administrateur.
+
 **9.2 Donner un service en lecture seule.** Même écran : choisissez « lecture » pour
 ce rôle. La personne consulte, sans agir.
 

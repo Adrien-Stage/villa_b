@@ -190,6 +190,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
 
+    // Mot de passe provisoire : l'employé choisit le sien avant d'aller plus
+    // loin (ExigerNouveauMotDePasse).
+    Route::get('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'edit'])->name('password.nouveau');
+    Route::put('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'update'])->name('password.nouveau.update');
+
     // --- CHAMBRES ---
     // Chambres : géré par manager/réception. Le housekeeping change les statuts
     // depuis son propre module, plus depuis cette rubrique.
@@ -516,6 +521,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{user}', [UserManagementController::class, 'show'])->whereNumber('user')->name('show');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::post('/{user}/reinitialiser-mot-de-passe', [UserManagementController::class, 'resetPassword'])->whereNumber('user')->name('resetPassword');
     });
 
     // --- ADMINISTRATION (service informatique) ---

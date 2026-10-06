@@ -56,6 +56,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
+        'must_change_password' => 'boolean',
     ];
 
     /**

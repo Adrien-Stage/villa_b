@@ -269,6 +269,7 @@ class PermissionCatalog
         'shop.products.supprimer',
         'users.creer',
         'users.modifier',
+        'users.resetPassword',
         'users.toggleStatus',
         // Administration : rôles et droits de l'hôtel, interventions.
         'droits.apercu',
@@ -342,7 +343,7 @@ class PermissionCatalog
      * l'application, il ne tient aucun service.
      */
     private const ADMINISTRATION = [
-        'users.creer', 'users.modifier', 'users.toggleStatus',
+        'users.creer', 'users.modifier', 'users.resetPassword', 'users.toggleStatus',
         // Affecter le personnel à l'équipe d'un restaurant, c'est tenir son compte.
         'restaurant.restaurants.team.modifier',
         'droits.modifier', 'droits.apercu', 'droits.exceptions.creer', 'droits.exceptions.supprimer',
@@ -846,6 +847,7 @@ class PermissionCatalog
 
             'users.creer' => ['manager'],
             'users.modifier' => ['manager'],
+            'users.resetPassword' => ['manager'],
             'users.toggleStatus' => ['manager'],
             'users.voir' => ['controller', 'manager'],
 

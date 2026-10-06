@@ -41,6 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\TrackUserOnlineStatus::class,
             \App\Http\Middleware\LogUserActivity::class,
+            // Mot de passe provisoire : rien d'autre avant d'avoir choisi le sien.
+            \App\Http\Middleware\ExigerNouveauMotDePasse::class,
         ]);
 
         // RBAC Middleware aliases

@@ -28,23 +28,5 @@
         {{ $slot }}
     </div>
 
-    <div class="{{ $enMenu }}" x-data="menuLigne" @keydown.escape.window="ouvert && fermer()">
-        <button type="button" x-ref="bouton" @click="basculer()"
-            aria-haspopup="menu" :aria-expanded="ouvert.toString()" aria-label="{{ $label }}" title="{{ $label }}"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-primary/60 transition-colors hover:bg-accent/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-            <i data-lucide="ellipsis-vertical" class="h-4 w-4" aria-hidden="true"></i>
-        </button>
-        {{-- Le menu sort du tableau : ni le défilement horizontal ni la carte ne le coupent. --}}
-        <template x-teleport="body">
-            <div x-ref="menu" x-show="ouvert" x-cloak role="menu" aria-label="{{ $label }}"
-                :style="{ top: haut + 'px', left: gauche + 'px' }"
-                @click.outside="if (! $refs.bouton.contains($event.target)) fermer(false)"
-                @keydown.arrow-down.prevent="deplacer(1)" @keydown.arrow-up.prevent="deplacer(-1)"
-                @keydown.home.prevent="deplacer(0, true)" @keydown.end.prevent="deplacer(-1, true)"
-                @keydown.tab="fermer(false)" @click="fermerApresChoix($event)"
-                class="dt-menu fixed z-50 min-w-48 overflow-hidden rounded-xl border border-secondary/20 bg-white py-1 text-left shadow-lg">
-                {{ $slot }}
-            </div>
-        </template>
-    </div>
+    <x-menu-actions :label="$label" class="{{ $enMenu }}">{{ $slot }}</x-menu-actions>
 </td>
