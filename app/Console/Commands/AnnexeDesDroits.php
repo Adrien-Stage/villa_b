@@ -40,7 +40,7 @@ class AnnexeDesDroits extends Command
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
         'economat' => 'Économat', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
-        'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
+        'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
     ];
 

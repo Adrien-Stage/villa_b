@@ -13,26 +13,26 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 109 | 25 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 107 | 82 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs |
-| Chef de réception (`reception_chief`) | 3 | `reception` | 29 | 39 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception |
-| Réceptionniste (`reception`) | 4 | — | 27 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
-| Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 6 | 14 | Économat, Paramètres, Housekeeping |
-| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 1 | 6 | Housekeeping |
-| Responsable de restaurant (`restaurant_manager`) | 3 | `restaurant_staff`, `cashier` | 24 | 36 | Restaurant, Économat, Paramètres |
-| Chef de cuisine (`restaurant_chief`) | 3 | `restaurant_cook` | 20 | 34 | Restaurant, Économat, Paramètres |
-| Serveur (salle) (`restaurant_staff`) | 4 | — | 8 | 8 | Restaurant |
-| Cuisinier (cuisine) (`restaurant_cook`) | 4 | — | 12 | 3 | Restaurant |
-| Caissier restaurant (`cashier`) | 4 | — | 8 | 7 | Restaurant |
-| Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 12 | 16 | Économat, Paramètres, Boutique |
-| Vendeur-caissier (`shop_cashier`) | 4 | — | 4 | 6 | Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 20 | 38 | Économat |
-| Magasinier (`storekeeper`) | 4 | — | 14 | 5 | Économat |
-| Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 29 | 21 | Comptabilité, Économat, Chambres |
-| Comptable (`accountant`) | 4 | — | 29 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 75 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 58 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 93 | 0 | — |
+| Administrateur (`admin`) | 1 | — | 110 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 108 | 89 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
+| Chef de réception (`reception_chief`) | 3 | `reception` | 30 | 43 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
+| Réceptionniste (`reception`) | 4 | — | 28 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
+| Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 7 | 18 | Économat, Paramètres, Housekeeping, Planning |
+| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 2 | 6 | Housekeeping |
+| Responsable de restaurant (`restaurant_manager`) | 3 | `restaurant_staff`, `cashier` | 25 | 40 | Restaurant, Économat, Paramètres, Planning |
+| Chef de cuisine (`restaurant_chief`) | 3 | `restaurant_cook` | 21 | 38 | Restaurant, Économat, Paramètres, Planning |
+| Serveur (salle) (`restaurant_staff`) | 4 | — | 9 | 8 | Restaurant |
+| Cuisinier (cuisine) (`restaurant_cook`) | 4 | — | 13 | 3 | Restaurant |
+| Caissier restaurant (`cashier`) | 4 | — | 9 | 7 | Restaurant |
+| Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 13 | 20 | Économat, Paramètres, Boutique, Planning |
+| Vendeur-caissier (`shop_cashier`) | 4 | — | 5 | 6 | Boutique |
+| Chef économe (`econome`) | 3 | `storekeeper` | 21 | 42 | Économat, Planning |
+| Magasinier (`storekeeper`) | 4 | — | 15 | 5 | Économat |
+| Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 30 | 25 | Comptabilité, Économat, Chambres, Planning |
+| Comptable (`accountant`) | 4 | — | 30 | 21 | Comptabilité, Économat, Chambres |
+| Contrôleur de gestion (`controller`) | transversal | — | 76 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 59 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 94 | 0 | — |
 
 ## Droit par droit
 
@@ -374,6 +374,16 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 |---|---|:-:|:-:|:-:|:-:|
 | `analytics.voir` | consulte | ✓ | ✓ | ✓ | ✓ |
 
+### Planning
+
+| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `planning.affectations.creer` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.affectations.supprimer` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.publier` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.recopier` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
 ### Paramètres
 
 | Droit | Nature | Admin | Manager | Chef réc. | Gouv. | Resp. resto | Chef cuis. | Resp. bout. | Contrôleur | Auditeur | Support |
@@ -395,6 +405,9 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `settings.partners.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
 | `settings.partners.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
 | `settings.partners.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
+| `settings.quarts.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
+| `settings.quarts.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
+| `settings.quarts.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
 | `settings.services.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
 | `settings.services.export` | consulte | ✓ | ✓ |  |  |  |  |  | ✓ | ✓ |  |
 | `settings.services.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |

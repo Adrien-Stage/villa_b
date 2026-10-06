@@ -514,6 +514,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
     });
 
+    // --- PLANNING DES QUARTS ---
+    // Chaque chef place son personnel sur les quarts de l'hôtel, semaine par
+    // semaine ; chacun consulte ses quarts.
+    Route::middleware('permission')->group(function () {
+        Route::get('/planning', [App\Http\Controllers\PlanningController::class, 'index'])->name('planning.index');
+        Route::post('/planning/affectations', [App\Http\Controllers\PlanningController::class, 'store'])->name('planning.affectations.store');
+        Route::delete('/planning/affectations/{affectation}', [App\Http\Controllers\PlanningController::class, 'destroy'])->whereNumber('affectation')->name('planning.affectations.destroy');
+        Route::post('/planning/recopier', [App\Http\Controllers\PlanningController::class, 'recopier'])->name('planning.recopier');
+        Route::post('/planning/publier', [App\Http\Controllers\PlanningController::class, 'publier'])->name('planning.publier');
+
+        // Les quarts de l'hôtel, définis par la direction (Paramètres › Quarts).
+        Route::post('/settings/quarts', [App\Http\Controllers\WorkShiftController::class, 'store'])->name('settings.quarts.store');
+        Route::put('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'update'])->whereNumber('quart')->name('settings.quarts.update');
+        Route::delete('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'destroy'])->whereNumber('quart')->name('settings.quarts.destroy');
+    });
+
     // --- UTILISATEURS (staff) ---
     Route::prefix('users')->name('users.')->middleware('permission')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');

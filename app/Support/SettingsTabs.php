@@ -34,6 +34,9 @@ class SettingsTabs
         // Le calendrier des inventaires généraux engage tous les services :
         // c'est une décision de la direction.
         'inventaire' => ['manager'],
+        // Les quarts de travail engagent tout l'hôtel : la direction les
+        // définit, l'administrateur les règle aussi (configuration).
+        'quarts' => ['manager', 'admin'],
         'partners' => ['manager'],
     ];
 

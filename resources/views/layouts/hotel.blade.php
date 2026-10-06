@@ -281,6 +281,8 @@
                     <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
                         <x-sidebar-link route="dashboard" icon="grid">Tableau de bord</x-sidebar-link>
+                        {{-- Les quarts de chacun, et ceux de son service pour un chef. --}}
+                        <x-sidebar-link route="planning.index" icon="calendar-clock">Planning des quarts</x-sidebar-link>
                     </ul>
                 </div>
 

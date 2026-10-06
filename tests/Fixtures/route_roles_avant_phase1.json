@@ -1132,6 +1132,68 @@
   "reception_chief",
   "support"
  ],
+ "planning.affectations.destroy": [
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager"
+ ],
+ "planning.affectations.store": [
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager"
+ ],
+ "planning.index": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support"
+ ],
+ "planning.publier": [
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager"
+ ],
+ "planning.recopier": [
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager"
+ ],
  "reception.pos.history": [
   "admin",
   "manager",
@@ -1861,6 +1923,18 @@
   "manager"
  ],
  "settings.partners.update": [
+  "manager"
+ ],
+ "settings.quarts.destroy": [
+  "admin",
+  "manager"
+ ],
+ "settings.quarts.store": [
+  "admin",
+  "manager"
+ ],
+ "settings.quarts.update": [
+  "admin",
   "manager"
  ],
  "settings.services.destroy": [
