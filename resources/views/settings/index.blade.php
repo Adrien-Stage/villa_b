@@ -136,6 +136,15 @@
             </a>
         @endif
 
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'quarts'))
+            <a href="{{ route('settings.index', ['tab' => 'quarts']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'quarts' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                Quarts
+            </a>
+        @endif
+
         @if(\App\Support\SettingsTabs::peutRegler($user, 'partners'))
             <a href="{{ route('settings.index', ['tab' => 'partners']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
@@ -824,6 +833,11 @@
         @endif
 
         {{-- ONGLET: INVENTAIRE (Manager) --}}
+        {{-- ONGLET : QUARTS — les quarts de travail de l'hôtel. --}}
+        @if($tab === 'quarts' && \App\Support\SettingsTabs::peutRegler($user, 'quarts'))
+            @include('settings.partials.quarts')
+        @endif
+
         @if($tab === 'inventaire' && \App\Support\SettingsTabs::peutRegler($user, 'inventaire'))
             @php
                 $calendrier = \App\Support\InventorySchedule::fromSettings($tenantSettings['inventaire'] ?? []);

@@ -53,6 +53,8 @@
 </div>
 @endadmin
 
+@include('planning.partials.en-service')
+
 {{-- PANNEAU D'ACTIONS RAPIDES --}}
 <div class="bg-white rounded-2xl shadow-sm border border-secondary/15 p-4 mb-6">
     <h2 class="text-[11px] font-bold uppercase tracking-wider text-primary/60 mb-3 flex items-center gap-1.5">

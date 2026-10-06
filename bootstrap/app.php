@@ -31,6 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('inventaire:rappel')
             ->dailyAt('06:30');
 
+        // Planning des quarts : le dimanche matin, les chefs programment la
+        // semaine qui vient.
+        $schedule->command('planning:rappel')
+            ->weeklyOn(0, '08:00');
+
         // Interventions de l'administrateur : clôture des échues et trace
         // vers la console, rattrapée si elle était injoignable.
         $schedule->command('interventions:transmettre')

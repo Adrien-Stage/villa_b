@@ -489,6 +489,26 @@ Un cumul interdit est refusé, sauf dérogation motivée.
 On n'applique aucune de ces actions à son propre compte. Droit
 `users.resetPassword` : manager et administrateur.
 
+**9.1 ter Planifier les quarts.** L'hôtel tourne jour et nuit.
+
+1. La direction définit les quarts et leurs heures pour tout l'hôtel : Paramètres ›
+   Quarts (livrés : Jour 07:00 – 19:00, Nuit 19:00 – 07:00). Un quart qui finit avant
+   son heure de début se termine le lendemain.
+2. Chaque chef de service ouvre **Planning des quarts** : une grille de la semaine,
+   jours en colonnes, quarts en lignes. Il y place son personnel (« Ajouter » dans la
+   case), le retire d'un clic, ou **recopie la semaine précédente**. Il planifie la
+   semaine en cours et les suivantes ; une semaine passée ne se modifie plus.
+3. **Envoyer le planning** prévient chaque personne de ses quarts de la semaine. Un
+   nouvel envoi ne prévient que ceux dont les quarts ont changé — y compris ceux qui
+   n'en ont plus. L'écran signale un planning modifié depuis son envoi.
+4. Le dimanche à 8 h, chaque chef dont la semaine suivante n'est pas envoyée reçoit un
+   rappel ; un service sans chef relève de la direction.
+
+Un chef planifie son département (celui de son compte) ; la direction voit et planifie
+tous les services ; chacun voit ses quarts (« Mes quarts », et « Votre quart » sur le
+tableau de bord). Le planning informe sans rien bloquer : un remplaçant de dernière
+minute travaille, et son chef corrige le planning.
+
 **9.2 Donner un service en lecture seule.** Même écran : choisissez « lecture » pour
 ce rôle. La personne consulte, sans agir.
 

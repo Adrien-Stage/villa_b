@@ -167,6 +167,10 @@ class PermissionCatalog
         'housekeeping.ready',
         'housekeeping.reject',
         'housekeeping.teams.creer',
+        'planning.affectations.creer',
+        'planning.affectations.supprimer',
+        'planning.publier',
+        'planning.recopier',
         'reception.pos.sales.creer',
         'restaurant.banquets.creer',
         'restaurant.banquets.modifier',
@@ -253,6 +257,9 @@ class PermissionCatalog
         'settings.partners.import',
         'settings.partners.modifier',
         'settings.partners.supprimer',
+        'settings.quarts.creer',
+        'settings.quarts.modifier',
+        'settings.quarts.supprimer',
         'settings.services.creer',
         'settings.services.import',
         'settings.services.modifier',
@@ -328,6 +335,20 @@ class PermissionCatalog
     private const CONFIGURATION_RESTAURANTS = [
         'restaurant.restaurants.creer', 'restaurant.restaurants.modifier',
         'restaurant.restaurants.spaces.creer', 'restaurant.restaurants.spaces.modifier',
+    ];
+
+    /** Ceux qui planifient le personnel : les chefs de service et la direction. */
+    private const CHEFS_DE_SERVICE = [
+        'econome', 'finance_manager', 'housekeeping_leader', 'manager', 'reception_chief',
+        'restaurant_chief', 'restaurant_manager', 'shop_manager',
+    ];
+
+    /**
+     * Les quarts de travail de l'hôtel, que l'administrateur règle aussi :
+     * les décrire n'est pas planifier le personnel.
+     */
+    private const CONFIGURATION_QUARTS = [
+        'settings.quarts.creer', 'settings.quarts.modifier', 'settings.quarts.supprimer',
     ];
 
     /**
@@ -491,7 +512,7 @@ class PermissionCatalog
     /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
     public static function ecrituresDeLAdministrateur(): array
     {
-        return [...self::CONFIGURATION, ...self::CONFIGURATION_RESTAURANTS, ...self::PARAMETRES, ...self::ADMINISTRATION];
+        return [...self::CONFIGURATION, ...self::CONFIGURATION_RESTAURANTS, ...self::CONFIGURATION_QUARTS, ...self::PARAMETRES, ...self::ADMINISTRATION];
     }
 
     /**
@@ -859,6 +880,23 @@ class PermissionCatalog
 
             // ── Factures ──
             'invoices.voir' => ['controller', 'manager', 'reception'],
+
+            // ── Planning des quarts ──
+            // Chacun consulte ses quarts ; les chefs de service planifient
+            // leur personnel, la direction tous les services (PlanningService).
+            'planning.voir' => [
+                'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
+                'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+                'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+                'shop_cashier', 'shop_manager', 'storekeeper',
+            ],
+            'planning.affectations.creer' => self::CHEFS_DE_SERVICE,
+            'planning.affectations.supprimer' => self::CHEFS_DE_SERVICE,
+            'planning.recopier' => self::CHEFS_DE_SERVICE,
+            'planning.publier' => self::CHEFS_DE_SERVICE,
+            'settings.quarts.creer' => ['manager'],
+            'settings.quarts.modifier' => ['manager'],
+            'settings.quarts.supprimer' => ['manager'],
 
             // ── Divers ──
             'test-popup.voir' => ['controller', 'manager'],

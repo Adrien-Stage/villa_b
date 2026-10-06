@@ -22,7 +22,7 @@ class PermissionLabels
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
         'economat' => 'Économat', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
-        'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
+        'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
         'test-popup' => 'Divers',
     ];
@@ -314,6 +314,13 @@ class PermissionLabels
         'rooms.cost_sheets.export' => ['Fiches techniques des chambres', 'Exporter'],
         'rooms.cost_sheets.import' => ['Fiches techniques des chambres', 'Importer'],
 
+        // ── Planning des quarts ──
+        'planning.voir' => ['Planning des quarts', 'Consulter'],
+        'planning.affectations.creer' => ['Planning des quarts', 'Placer une personne sur un quart'],
+        'planning.affectations.supprimer' => ['Planning des quarts', "Retirer une personne d'un quart"],
+        'planning.recopier' => ['Planning des quarts', 'Recopier la semaine précédente'],
+        'planning.publier' => ['Planning des quarts', 'Envoyer le planning au personnel'],
+
         // ── Paramètres ──
         'settings.voir' => ['Paramètres', 'Consulter'],
         'settings.modifier' => ['Paramètres', 'Enregistrer les réglages'],
@@ -338,6 +345,9 @@ class PermissionLabels
         'settings.cancellation_policies.modifier' => ["Politiques d'annulation", 'Modifier'],
         'settings.cancellation_policies.supprimer' => ["Politiques d'annulation", 'Supprimer'],
         'settings.cancellation_policies.default' => ["Politiques d'annulation", 'Choisir la politique par défaut'],
+        'settings.quarts.creer' => ['Quarts de travail', 'Créer'],
+        'settings.quarts.modifier' => ['Quarts de travail', 'Modifier'],
+        'settings.quarts.supprimer' => ['Quarts de travail', 'Supprimer'],
 
         // ── Boutique ──
         'shop.products.voir' => ['Produits', 'Consulter'],
