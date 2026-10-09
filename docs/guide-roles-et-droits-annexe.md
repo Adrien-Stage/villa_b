@@ -26,7 +26,7 @@
 | Caissier restaurant (`cashier`) | 4 | — | 11 | 7 | Restaurant |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 15 | 20 | Économat, Paramètres, Boutique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 7 | 6 | Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 23 | 44 | Économat, Planning |
+| Chef économe (`econome`) | 3 | `storekeeper` | 24 | 47 | Économat, Planning |
 | Magasinier (`storekeeper`) | 4 | — | 17 | 5 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 25 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
@@ -324,6 +324,9 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.suppliers.modifier` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.suppliers.supprimer` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.suppliers.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.units.creer` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.modifier` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.supprimer` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Comptabilité
@@ -395,34 +398,34 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 ### Paramètres
 
-| Droit | Nature | Admin | Manager | Chef réc. | Gouv. | Resp. resto | Chef cuis. | Resp. bout. | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `settings.cancellation_policies.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.default` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |
-| `settings.import` | **agit** |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `settings.modifier` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `settings.packages.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.packages.export` | consulte | ✓ | ✓ |  |  |  |  |  | ✓ | ✓ |  |
-| `settings.packages.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.packages.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.packages.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.partners.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.partners.export` | consulte | ✓ | ✓ |  |  |  |  |  | ✓ |  |  |
-| `settings.partners.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.partners.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.partners.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.quarts.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
-| `settings.quarts.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
-| `settings.quarts.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |
-| `settings.services.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.services.export` | consulte | ✓ | ✓ |  |  |  |  |  | ✓ | ✓ |  |
-| `settings.services.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.services.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.services.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |
-| `settings.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| Droit | Nature | Admin | Manager | Chef réc. | Gouv. | Resp. resto | Chef cuis. | Resp. bout. | Économe | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `settings.cancellation_policies.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.default` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |  |  |
+| `settings.import` | **agit** |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
+| `settings.modifier` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
+| `settings.packages.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |
+| `settings.packages.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ |  |  |
+| `settings.partners.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.quarts.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.quarts.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.quarts.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |
+| `settings.services.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 
 ### Utilisateurs
 

@@ -141,6 +141,9 @@ class PermissionCatalog
         'economat.suppliers.creer',
         'economat.suppliers.modifier',
         'economat.suppliers.supprimer',
+        'economat.units.creer',
+        'economat.units.modifier',
+        'economat.units.supprimer',
         'economat.stores.counts.cancel',
         'economat.stores.counts.close',
         'economat.stores.counts.creer',
@@ -742,6 +745,10 @@ class PermissionCatalog
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],
             'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Les unités de stockage des articles : l'économe tient la liste.
+            'economat.units.creer' => ['econome'],
+            'economat.units.modifier' => ['econome'],
+            'economat.units.supprimer' => ['econome'],
             'economat.stores.counts.cancel' => ['econome'],
             'economat.stores.counts.close' => ['econome'],
             'economat.stores.counts.creer' => ['econome'],
@@ -806,7 +813,8 @@ class PermissionCatalog
             'settings.services.import' => ['manager'],
             'settings.services.modifier' => ['manager'],
             'settings.services.supprimer' => ['manager'],
-            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            // L'économe y règle l'onglet Économat (unités de stockage).
+            'settings.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
             // ── Boutique ──
             'shop.cash_register.close' => ['manager', 'shop_cashier', 'shop_manager'],

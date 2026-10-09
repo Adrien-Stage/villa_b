@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Economat;
 use App\Http\Controllers\Controller;
 use App\Models\StockCategory;
 use App\Models\StockItem;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Services\StockAccountService;
 use App\Services\StockService;
@@ -37,6 +38,7 @@ class StockItemController extends Controller
             'items'      => $items,
             'categories' => $categories,
             'suppliers'  => $suppliers,
+            'unites'     => StockUnit::choix(),
             'filter'     => $request->query('filter'),
         ]);
     }
@@ -155,7 +157,8 @@ class StockItemController extends Controller
         return $request->validate([
             'name'              => ['required', 'string', 'max:160'],
             'reference'         => ['nullable', 'string', 'max:60'],
-            'unit'              => ['required', 'string', 'max:20'],
+            // L'unité se choisit dans la liste tenue en Paramètres › Économat.
+            'unit'              => ['required', 'string', Rule::in(StockUnit::choix($item?->unit))],
             'description'       => ['nullable', 'string', 'max:500'],
             'stock_category_id' => ['nullable', 'exists:stock_categories,id'],
             'supplier_id'       => ['nullable', 'exists:suppliers,id'],
@@ -163,6 +166,9 @@ class StockItemController extends Controller
             // Coût moyen initial (FCFA), utile si l'article existe déjà en stock
             // au démarrage du module ; sinon il se construit aux réceptions.
             'average_cost'      => ['nullable', 'integer', 'min:0'],
+        ], [
+            'unit.required' => "Choisissez l'unité de l'article.",
+            'unit.in'       => "Cette unité n'est pas dans la liste : ajoutez-la dans Paramètres › Économat.",
         ]);
     }
 

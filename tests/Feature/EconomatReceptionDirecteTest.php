@@ -169,21 +169,21 @@ test("une réception directe incohérente n'enregistre rien", function () {
     $this->post(route('economat.receipts.direct.store'), [
         'nouveau_fournisseur' => ['name' => 'Nouveau grossiste'],
         'motif'               => 'urgence',
-        'lines'               => [['nouvel_article' => ['name' => 'Savon'], 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
+        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
     ])->assertSessionHas('error');
 
     // Un fournisseur qui existe déjà se choisit dans la liste.
     $this->post(route('economat.receipts.direct.store'), [
         'nouveau_fournisseur' => ['name' => 'quincaillerie du centre'],
         'motif'               => 'urgence',
-        'lines'               => [['nouvel_article' => ['name' => 'Savon'], 'quantity_delivered' => 5, 'unit_price' => 500]],
+        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 500]],
     ])->assertSessionHas('error');
 
     // Sans prix, le stock serait valorisé à zéro.
     $this->post(route('economat.receipts.direct.store'), [
         'nouveau_fournisseur' => ['name' => 'Nouveau grossiste'],
         'motif'               => 'urgence',
-        'lines'               => [['nouvel_article' => ['name' => 'Savon'], 'quantity_delivered' => 5, 'unit_price' => 0]],
+        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 0]],
     ])->assertSessionHasErrors('lines.0.unit_price');
 
     expect(GoodsReceipt::count())->toBe(0)

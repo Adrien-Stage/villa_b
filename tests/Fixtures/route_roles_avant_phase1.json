@@ -1007,6 +1007,15 @@
  "economat.suppliers.update": [
   "econome"
  ],
+ "economat.units.destroy": [
+  "econome"
+ ],
+ "economat.units.store": [
+  "econome"
+ ],
+ "economat.units.update": [
+  "econome"
+ ],
  "editions.export": [
   "accountant",
   "admin",
@@ -1978,6 +1987,7 @@
  "settings.index": [
   "admin",
   "controller",
+  "econome",
   "housekeeping_leader",
   "manager",
   "reception_chief",

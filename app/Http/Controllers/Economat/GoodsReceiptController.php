@@ -9,6 +9,7 @@ use App\Models\GoodsReceiptLine;
 use App\Models\PurchaseOrder;
 use App\Models\StockCategory;
 use App\Models\StockItem;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Notifications\PurchaseOrderUpdated;
 use App\Services\DocumentExporter;
@@ -160,6 +161,7 @@ class GoodsReceiptController extends Controller
             'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
             'items'         => StockItem::active()->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'unites'        => StockUnit::choix(),
             'motifs'        => PurchaseOrder::MOTIFS_REGULARISATION,
             'reasons'       => GoodsReceiptLine::REASONS,
             'peutCreerFournisseur' => $resolver->allows($user, 'economat.suppliers.creer'),
@@ -180,7 +182,7 @@ class GoodsReceiptController extends Controller
             'lines'                     => ['required', 'array', 'min:1', 'max:100'],
             'lines.*.stock_item_id'     => ['nullable', 'integer', 'exists:stock_items,id', 'required_without:lines.*.nouvel_article.name'],
             'lines.*.nouvel_article.name'              => ['nullable', 'string', 'max:160', 'required_without:lines.*.stock_item_id'],
-            'lines.*.nouvel_article.unit'              => ['nullable', 'string', 'max:20'],
+            'lines.*.nouvel_article.unit'              => ['nullable', 'required_with:lines.*.nouvel_article.name', Rule::in(StockUnit::choix())],
             'lines.*.nouvel_article.stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
@@ -195,6 +197,8 @@ class GoodsReceiptController extends Controller
             'lines.required'                            => 'Ajoutez au moins un article reçu.',
             'lines.*.stock_item_id.required_without'    => 'Chaque ligne nomme un article : choisissez-le, ou donnez le nom du nouveau.',
             'lines.*.nouvel_article.name.required_without' => 'Chaque ligne nomme un article : choisissez-le, ou donnez le nom du nouveau.',
+            'lines.*.nouvel_article.unit.required_with'    => "Choisissez l'unité du nouvel article.",
+            'lines.*.nouvel_article.unit.in'               => "Cette unité n'est pas dans la liste : ajoutez-la dans Paramètres › Économat.",
             'lines.*.quantity_delivered.gt'             => 'La quantité livrée doit être positive.',
             'lines.*.unit_price.required'               => 'Le prix unitaire est obligatoire : il valorise le stock.',
             'lines.*.unit_price.gt'                     => 'Le prix unitaire est obligatoire : il valorise le stock.',

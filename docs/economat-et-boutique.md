@@ -149,6 +149,23 @@ constat de perte, tracée comme tout autre mouvement.
 
 `Supplier` — coordonnées, articles fournis, historique des bons de commande.
 
+## Unités de stockage
+
+[`StockUnit`](../app/Models/StockUnit.php) — la liste des unités dans lesquelles
+l'économat compte ses articles (kg, litre, pièce, casier…). L'économe la tient
+dans **Paramètres › Économat** (droits `economat.units.*`) ; la direction la
+consulte.
+
+La fiche d'un article, la réception directe, la fiche fournisseur et l'import CSV
+choisissent l'unité dans cette liste au lieu de la taper. L'import ramène « KG » à
+« kg » et refuse une unité absente de la liste.
+
+L'article garde le nom de son unité en clair (`stock_items.unit`) : bons, fiches de
+comptage et éditions la lisent telle quelle. Renommer une unité renomme donc celle
+des articles qui l'emploient. Une unité employée ne se supprime pas : elle se met
+hors service, ne s'offre plus aux nouveaux articles, et reste valable pour ceux qui
+la portent déjà.
+
 ## Seuils d'alerte
 
 Un article sous son seuil déclenche

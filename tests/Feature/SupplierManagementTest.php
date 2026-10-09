@@ -3,6 +3,7 @@
 use App\Models\PurchaseOrder;
 use App\Models\StockCategory;
 use App\Models\StockItem;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,6 +67,9 @@ test('l econome cree un fournisseur avec toutes ses informations commerciales et
     ]);
 
     $category = StockCategory::create(['name' => 'Boissons']);
+    // Les unités se choisissent dans la liste de Paramètres › Économat.
+    StockUnit::create(['name' => 'Pack de 6']);
+    StockUnit::create(['name' => 'Carton de 12']);
     $itemA = StockItem::create([
         'name'              => 'Eau Minérale 1.5L x6',
         'unit'              => 'Pack',
@@ -151,6 +155,8 @@ test('l econome met a jour un fournisseur et dissocie un article retire', functi
         'email'     => 'vente@burotech.cm',
         'is_active' => true,
     ]);
+
+    StockUnit::create(['name' => 'Rame 500 feuilles']);
 
     $item1 = StockItem::create([
         'name'                => 'Rame Papier A4 80g',

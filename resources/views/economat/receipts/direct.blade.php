@@ -168,8 +168,13 @@
                                     <div class="grid grid-cols-6 gap-2">
                                         <input :id="'article-' + ligne.key" type="text" :name="`lines[${idx}][nouvel_article][name]`" x-model="ligne.name" required maxlength="160" placeholder="Nom de l'article"
                                             class="col-span-6 sm:col-span-3 px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                        <input type="text" :name="`lines[${idx}][nouvel_article][unit]`" x-model="ligne.unit" maxlength="20" placeholder="Unité (kg, pièce…)" aria-label="Unité"
-                                            class="col-span-3 sm:col-span-1 px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                        <select :name="`lines[${idx}][nouvel_article][unit]`" x-model="ligne.unit" required aria-label="Unité"
+                                            class="col-span-3 sm:col-span-1 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            <option value="">Unité…</option>
+                                            @foreach($unites as $unite)
+                                                <option value="{{ $unite }}">{{ $unite }}</option>
+                                            @endforeach
+                                        </select>
                                         <select :name="`lines[${idx}][nouvel_article][stock_category_id]`" x-model="ligne.category" aria-label="Catégorie"
                                             class="col-span-3 sm:col-span-2 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                             <option value="">Sans catégorie</option>
@@ -297,7 +302,7 @@
             },
 
             uniteDe(ligne) {
-                if (ligne.nouveau) return ligne.unit || 'pièce';
+                if (ligne.nouveau) return ligne.unit || '';
                 return this.articles.find(a => a.id === ligne.itemId)?.unit || '';
             },
 

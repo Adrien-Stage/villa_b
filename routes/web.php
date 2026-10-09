@@ -678,6 +678,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
             Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
 
+            // Unités de stockage des articles (réglées dans Paramètres › Économat)
+            Route::post('/unites', [$eco . 'StockUnitController', 'store'])->name('units.store');
+            Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
+            Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
+
             // Catégories d'articles et leur compte de stock
             Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
             Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');

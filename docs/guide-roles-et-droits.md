@@ -222,6 +222,8 @@ produits et les demandes à l'économat.
 
 - *Fait* :
   - articles, catégories, fournisseurs ;
+  - unités de stockage des articles, dans Paramètres › Économat (le seul onglet des
+    paramètres qu'il règle) ;
   - bons de commande, envoyés par email ou marqués comme transmis (main propre,
     téléphone, WhatsApp) quand le fournisseur n'a pas d'email ;
   - réception directe d'une marchandise arrivée sans bon de commande, sous un bon
