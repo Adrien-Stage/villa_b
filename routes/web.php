@@ -514,6 +514,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
     });
 
+    // --- ÉDITIONS ---
+    // Le point où l'on retrouve tout ce qui s'imprime : registres, situations,
+    // pièces. Chaque édition pose en plus le droit des données qu'elle montre.
+    Route::middleware('permission')->prefix('editions')->name('editions.')->group(function () {
+        $editions = App\Http\Controllers\EditionController::class;
+        Route::get('/', [$editions, 'index'])->name('index');
+        Route::get('/{edition}', [$editions, 'show'])->where('edition', '[a-z0-9-]+')->name('show');
+        Route::get('/{edition}/imprimer', [$editions, 'print'])->where('edition', '[a-z0-9-]+')->name('print');
+        Route::get('/{edition}/telecharger', [$editions, 'export'])->where('edition', '[a-z0-9-]+')->name('export');
+    });
+
     // --- PLANNING DES QUARTS ---
     // Chaque chef place son personnel sur les quarts de l'hôtel, semaine par
     // semaine ; chacun consulte ses quarts.

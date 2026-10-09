@@ -337,6 +337,14 @@ class PermissionCatalog
         'restaurant.restaurants.spaces.creer', 'restaurant.restaurants.spaces.modifier',
     ];
 
+    /** Toutes les fonctions de l'établissement, hors administration et support. */
+    private const TOUT_LE_PERSONNEL = [
+        'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
+        'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+        'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+        'shop_cashier', 'shop_manager', 'storekeeper',
+    ];
+
     /** Ceux qui planifient le personnel : les chefs de service et la direction. */
     private const CHEFS_DE_SERVICE = [
         'econome', 'finance_manager', 'housekeeping_leader', 'manager', 'reception_chief',
@@ -881,15 +889,16 @@ class PermissionCatalog
             // ── Factures ──
             'invoices.voir' => ['controller', 'manager', 'reception'],
 
+            // ── Éditions ──
+            // La rubrique s'ouvre à tout le personnel ; chaque édition y pose
+            // en plus le droit des données qu'elle montre (App\Editions).
+            'editions.voir' => self::TOUT_LE_PERSONNEL,
+            'editions.export' => self::TOUT_LE_PERSONNEL,
+
             // ── Planning des quarts ──
             // Chacun consulte ses quarts ; les chefs de service planifient
             // leur personnel, la direction tous les services (PlanningService).
-            'planning.voir' => [
-                'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-                'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
-                'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
-                'shop_cashier', 'shop_manager', 'storekeeper',
-            ],
+            'planning.voir' => self::TOUT_LE_PERSONNEL,
             'planning.affectations.creer' => self::CHEFS_DE_SERVICE,
             'planning.affectations.supprimer' => self::CHEFS_DE_SERVICE,
             'planning.recopier' => self::CHEFS_DE_SERVICE,

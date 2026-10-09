@@ -509,6 +509,25 @@ tous les services ; chacun voit ses quarts (« Mes quarts », et « Votre quart 
 tableau de bord). Le planning informe sans rien bloquer : un remplaçant de dernière
 minute travaille, et son chef corrige le planning.
 
+**9.1 quater Imprimer un document.** Menu **Éditions** : tout ce qui s'imprime, réuni.
+
+- **Retrouver une pièce** : tapez tout ou partie d'un numéro (facture, réservation, bon
+  de commande, bon d'entrée, réquisition, vente, PV de perte) pour l'ouvrir et l'imprimer.
+- **Les éditions**, par famille : situation journalière et synthétique, journaux des
+  ventes et des encaissements, récapitulatif des encaissements, sessions de caisse,
+  factures, créances, dépenses ; arrivées, départs, clients présents, registre des
+  voyageurs, état des chambres ; ventes du restaurant et de la boutique, pertes ; bons
+  de commande, d'entrée et de réquisition, état des stocks, mouvements ; planning des
+  quarts. Réglez les filtres, puis **Afficher**, **Imprimer**, ou exportez en PDF,
+  Excel ou Word.
+- **Les écrans dédiés** : grand livre, balance, journaux, fiches de comptage,
+  procès-verbaux d'inventaire, rapport de contrôle.
+
+Chacun ne voit que les éditions dont il lit déjà les données : la réception ses
+arrivées et départs, la comptabilité ses journaux, l'économat ses bons et ses stocks.
+Droits `editions.voir` (consulter, imprimer) et `editions.export` (PDF, Excel, Word) :
+tout le personnel.
+
 **9.2 Donner un service en lecture seule.** Même écran : choisissez « lecture » pour
 ce rôle. La personne consulte, sans agir.
 

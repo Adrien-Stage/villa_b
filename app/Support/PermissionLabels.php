@@ -22,7 +22,7 @@ class PermissionLabels
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
         'economat' => 'Économat', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
-        'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
+        'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
         'test-popup' => 'Divers',
     ];
@@ -313,6 +313,10 @@ class PermissionLabels
         'rooms.cost_sheets.document' => ['Fiches techniques des chambres', 'Imprimer'],
         'rooms.cost_sheets.export' => ['Fiches techniques des chambres', 'Exporter'],
         'rooms.cost_sheets.import' => ['Fiches techniques des chambres', 'Importer'],
+
+        // ── Éditions ──
+        'editions.voir' => ['Éditions', 'Consulter et imprimer'],
+        'editions.export' => ['Éditions', 'Exporter (PDF, Excel, Word)'],
 
         // ── Planning des quarts ──
         'planning.voir' => ['Planning des quarts', 'Consulter'],
