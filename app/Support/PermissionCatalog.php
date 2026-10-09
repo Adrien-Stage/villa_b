@@ -124,6 +124,7 @@ class PermissionCatalog
         'economat.orders.creer',
         'economat.orders.receive',
         'economat.orders.send',
+        'economat.orders.transmit',
         'economat.purchase_requests.approve',
         'economat.purchase_requests.cancel',
         'economat.purchase_requests.convert',
@@ -131,6 +132,7 @@ class PermissionCatalog
         'economat.purchase_requests.reject',
         'economat.receipts.cancel',
         'economat.receipts.creer',
+        'economat.receipts.direct.creer',
         'economat.requisitions.approve',
         'economat.requisitions.cancel',
         'economat.requisitions.creer',
@@ -712,6 +714,8 @@ class PermissionCatalog
             'economat.orders.export' => ['controller', 'econome', 'manager'],
             'economat.orders.receive' => ['econome', 'storekeeper'],
             'economat.orders.send' => ['econome'],
+            // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
+            'economat.orders.transmit' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.purchase_requests.approve' => ['manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
@@ -721,6 +725,9 @@ class PermissionCatalog
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
+            // Recevoir sans commande engage une dépense : c'est l'économe qui
+            // en décide, pas le magasinier qui pointe les livraisons attendues.
+            'economat.receipts.direct.creer' => ['econome'],
             'economat.receipts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],

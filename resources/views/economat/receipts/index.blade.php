@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-7xl mx-auto space-y-6">
     {{-- En-tête & Barre d'actions --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-heading font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="package-check" class="w-7 h-7 text-primary"></i>
@@ -26,6 +26,14 @@
                 <i data-lucide="shopping-cart" class="w-4 h-4 text-primary/70"></i>
                 <span>Bons de commande</span>
             </a>
+
+            @droit('economat.receipts.direct.creer')
+                <a href="{{ route('economat.receipts.direct.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    <i data-lucide="package-plus" class="w-4 h-4"></i>
+                    <span>Réception directe</span>
+                </a>
+            @enddroit
         </div>
     </div>
 
@@ -110,7 +118,7 @@
     </div>
 
     {{-- Tableau des Bons d'Entrée --}}
-    <x-table :rows="$receipts" empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage contradictoire des bons de commande." empty-icon="package-open" caption="Bons d'entrée en stock">
+    <x-table :rows="$receipts" empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage des bons de commande, ou d'une réception directe quand la marchandise arrive sans commande." empty-icon="package-open" caption="Bons d'entrée en stock">
         <x-slot:head>
             <x-table.col>N° bon d'entrée</x-table.col>
             <x-table.col hide="xl">N° bon de commande</x-table.col>
@@ -132,6 +140,9 @@
                 <x-table.cell hide="xl" nowrap>
                     @if($rc->purchaseOrder)
                         <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
+                        @if($rc->purchaseOrder->isRegularisation())
+                            <span class="block text-[10px] text-sky-800">Réception directe</span>
+                        @endif
                     @else
                         <span class="text-xs text-primary/40">—</span>
                     @endif

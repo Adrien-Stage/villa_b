@@ -74,10 +74,20 @@
                     <strong>Échec de distribution par email :</strong> {{ $order->send_error }}. Vous pouvez réitérer l'envoi ou imprimer directement le document.
                 </div>
             </div>
-        @elseif($order->sent_at)
+        @elseif($order->isRegularisation())
+            <div class="mt-4 text-xs text-sky-900 bg-sky-50 border border-sky-200 rounded-lg p-3 flex items-start gap-2">
+                <i data-lucide="file-check" class="w-4 h-4 text-sky-700 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Bon de régularisation.</strong> Établi le {{ $order->created_at->format('d/m/Y à H:i') }} pour une marchandise reçue sans commande préalable. Il porte ce qui a été gardé et reçoit la facture du fournisseur.</span>
+            </div>
+        @elseif($order->sent_at && $order->sent_to_email)
             <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
                 <span>Transmis avec succès au fournisseur par email le {{ $order->sent_at->format('d/m/Y à H:i') }} à <strong>{{ $order->sent_to_email }}</strong>.</span>
+            </div>
+        @elseif($order->sent_at)
+            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                <span>Transmis au fournisseur le {{ $order->sent_at->format('d/m/Y à H:i') }} — {{ mb_strtolower($order->transmissionLabel() ?? 'sans email') }}.</span>
             </div>
         @endif
 
@@ -97,12 +107,30 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 @if($order->canBeSent())
-                    <form method="POST" action="{{ route('economat.orders.send', $order) }}">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                            <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
-                        </button>
-                    </form>
+                    {{-- Sans email, le bon part imprimé, au téléphone ou par WhatsApp :
+                         l'économe dit comment, et la livraison pourra être réceptionnée. --}}
+                    @droit('economat.orders.transmit')
+                        <form method="POST" action="{{ route('economat.orders.transmit', $order) }}" class="flex items-center gap-2">
+                            @csrf
+                            <label for="moyen-transmission" class="sr-only">Moyen de transmission</label>
+                            <select id="moyen-transmission" name="moyen" required class="px-2.5 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                @foreach(\App\Models\PurchaseOrder::TRANSMISSIONS_MANUELLES as $code => $libelle)
+                                    <option value="{{ $code }}">{{ $libelle }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 {{ $order->supplier?->canReceiveOrdersByEmail() ? 'border border-secondary/30 text-primary hover:bg-accent/10' : 'bg-primary text-white hover:bg-surface-dark shadow-sm' }} text-sm font-medium rounded-lg transition-colors">
+                                <i data-lucide="hand" class="w-4 h-4"></i> Marquer comme transmis
+                            </button>
+                        </form>
+                    @enddroit
+                    @if($order->supplier?->canReceiveOrdersByEmail())
+                        <form method="POST" action="{{ route('economat.orders.send', $order) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                                <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
+                            </button>
+                        </form>
+                    @endif
                 @elseif($order->status === 'sent' && $order->send_error)
                     <form method="POST" action="{{ route('economat.orders.send', $order) }}">
                         @csrf

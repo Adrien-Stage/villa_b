@@ -26,7 +26,7 @@
 | Caissier restaurant (`cashier`) | 4 | — | 11 | 7 | Restaurant |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 15 | 20 | Économat, Paramètres, Boutique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 7 | 6 | Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 23 | 42 | Économat, Planning |
+| Chef économe (`econome`) | 3 | `storekeeper` | 23 | 44 | Économat, Planning |
 | Magasinier (`storekeeper`) | 4 | — | 17 | 5 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 25 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
@@ -285,6 +285,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.orders.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ |  |
 | `economat.orders.receive` | **agit** |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `economat.orders.send` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.transmit` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.orders.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.purchase_requests.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `economat.purchase_requests.cancel` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |  |
@@ -294,6 +295,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.purchase_requests.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.receipts.cancel` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.receipts.creer` | **agit** |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.receipts.direct.creer` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.receipts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
 | `economat.receipts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.requisitions.approve` | **agit** |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |

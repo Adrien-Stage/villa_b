@@ -7,9 +7,14 @@ use App\Models\AuditLog;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\PurchaseOrder;
+use App\Models\StockCategory;
+use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Notifications\PurchaseOrderUpdated;
 use App\Services\DocumentExporter;
 use App\Services\GoodsReceiptService;
+use App\Services\Notifier;
+use App\Services\PermissionResolver;
 use App\Support\Document\Colonne;
 use App\Support\Document\Document;
 use Carbon\Carbon;
@@ -17,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -25,6 +31,9 @@ class GoodsReceiptController extends Controller
     use \App\Http\Controllers\Concerns\PaginatesLists;
 
     public const MAX_EXPORT = 1000;
+
+    /** Prévenus d'une réception directe : la marchandise est là, la facture suivra. */
+    private const WATCHERS = ['manager', 'accountant'];
 
     public function __construct(private GoodsReceiptService $receiptService)
     {
@@ -137,6 +146,94 @@ class GoodsReceiptController extends Controller
         return redirect()
             ->route('economat.receipts.show', $receipt)
             ->with('success', "Bon d'entrée en stock {$receipt->number} validé et signé. Les marchandises acceptées sont intégrées au stock.");
+    }
+
+    /**
+     * Réception directe : la marchandise est arrivée sans bon de commande.
+     * Le fournisseur et les articles absents du magasin se créent au passage.
+     */
+    public function createDirect(PermissionResolver $resolver): View
+    {
+        $user = Auth::user();
+
+        return view('economat.receipts.direct', [
+            'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
+            'items'         => StockItem::active()->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
+            'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'motifs'        => PurchaseOrder::MOTIFS_REGULARISATION,
+            'reasons'       => GoodsReceiptLine::REASONS,
+            'peutCreerFournisseur' => $resolver->allows($user, 'economat.suppliers.creer'),
+            'peutCreerArticle'     => $resolver->allows($user, 'economat.items.creer'),
+        ]);
+    }
+
+    public function storeDirect(Request $request, PermissionResolver $resolver, Notifier $notifier): RedirectResponse
+    {
+        $validated = $request->validate([
+            'supplier_id'               => ['nullable', 'integer', 'exists:suppliers,id', 'required_without:nouveau_fournisseur.name'],
+            'nouveau_fournisseur.name'  => ['nullable', 'string', 'max:160', 'required_without:supplier_id'],
+            'nouveau_fournisseur.phone' => ['nullable', 'string', 'max:30'],
+            'motif'                     => ['required', Rule::in(array_keys(PurchaseOrder::MOTIFS_REGULARISATION))],
+            'delivery_note_number'      => ['nullable', 'string', 'max:80'],
+            'received_at'               => ['nullable', 'date', 'before_or_equal:now'],
+            'notes'                     => ['nullable', 'string', 'max:1000'],
+            'lines'                     => ['required', 'array', 'min:1', 'max:100'],
+            'lines.*.stock_item_id'     => ['nullable', 'integer', 'exists:stock_items,id', 'required_without:lines.*.nouvel_article.name'],
+            'lines.*.nouvel_article.name'              => ['nullable', 'string', 'max:160', 'required_without:lines.*.stock_item_id'],
+            'lines.*.nouvel_article.unit'              => ['nullable', 'string', 'max:20'],
+            'lines.*.nouvel_article.stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
+            'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
+            'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'lines.*.rejection_reason'   => ['nullable', Rule::in(array_keys(GoodsReceiptLine::REASONS))],
+            // Prix unitaire en FCFA : sans lui, le coût moyen du stock serait faussé.
+            'lines.*.unit_price'         => ['required', 'numeric', 'gt:0', 'max:999999999'],
+            'lines.*.notes'              => ['nullable', 'string', 'max:255'],
+        ], [
+            'supplier_id.required_without'              => 'Choisissez le fournisseur, ou donnez le nom du nouveau.',
+            'nouveau_fournisseur.name.required_without' => 'Choisissez le fournisseur, ou donnez le nom du nouveau.',
+            'motif.required'                            => 'Indiquez pourquoi la marchandise arrive sans bon de commande.',
+            'lines.required'                            => 'Ajoutez au moins un article reçu.',
+            'lines.*.stock_item_id.required_without'    => 'Chaque ligne nomme un article : choisissez-le, ou donnez le nom du nouveau.',
+            'lines.*.nouvel_article.name.required_without' => 'Chaque ligne nomme un article : choisissez-le, ou donnez le nom du nouveau.',
+            'lines.*.quantity_delivered.gt'             => 'La quantité livrée doit être positive.',
+            'lines.*.unit_price.required'               => 'Le prix unitaire est obligatoire : il valorise le stock.',
+            'lines.*.unit_price.gt'                     => 'Le prix unitaire est obligatoire : il valorise le stock.',
+            'received_at.before_or_equal'               => 'Une réception ne se date pas dans le futur.',
+        ]);
+
+        $user = Auth::user();
+
+        // Créer un fournisseur ou un article reste un droit à part : la
+        // réception directe ne le contourne pas.
+        if (empty($validated['supplier_id']) && !$resolver->allows($user, 'economat.suppliers.creer')) {
+            return back()->withInput()->withErrors(['nouveau_fournisseur.name' => "Vous ne pouvez pas créer de fournisseur : choisissez-en un dans la liste."]);
+        }
+        if (collect($validated['lines'])->contains(fn ($l) => empty($l['stock_item_id'])) && !$resolver->allows($user, 'economat.items.creer')) {
+            return back()->withInput()->withErrors(['lines' => "Vous ne pouvez pas créer d'article : choisissez chaque article dans la liste."]);
+        }
+
+        try {
+            $receipt = $this->receiptService->receiveDirect($validated, $user);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+
+        $order = $receipt->purchaseOrder;
+        $montant = number_format($receipt->total_amount / 100, 0, ',', ' ') . ' FCFA';
+
+        AuditLog::record($user->id, 'reception_directe', "Réception directe {$receipt->number} sans bon de commande — "
+            . "{$receipt->supplier?->name}, {$montant}, régularisée par le bon {$order->number}", 'economat', [
+                'goods_receipt_id'  => $receipt->id,
+                'purchase_order_id' => $order->id,
+                'motif'             => $validated['motif'],
+            ]);
+
+        $notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), $user->id);
+
+        return redirect()
+            ->route('economat.receipts.show', $receipt)
+            ->with('success', "Bon d'entrée {$receipt->number} validé : {$montant} entrés en stock. "
+                . "Le bon de régularisation {$order->number} recevra la facture du fournisseur.");
     }
 
     public function show(GoodsReceipt $receipt): View

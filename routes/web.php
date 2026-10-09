@@ -710,12 +710,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
             Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')->name('orders.print');
             Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
+            // Bon parvenu au fournisseur sans email : main propre, téléphone, WhatsApp.
+            Route::post('/bons/{order}/transmis', [$eco . 'PurchaseOrderController', 'transmit'])->whereNumber('order')->name('orders.transmit');
             Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')->name('orders.receive');
             Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')->name('orders.cancel');
 
             // Bons de réception (Goods Receipts)
             Route::get('/receptions', [$eco . 'GoodsReceiptController', 'index'])->name('receipts.index');
             Route::get('/receptions/export', [$eco . 'GoodsReceiptController', 'export'])->name('receipts.export');
+            // Réception directe : marchandise arrivée sans bon de commande.
+            Route::get('/receptions/directe', [$eco . 'GoodsReceiptController', 'createDirect'])->name('receipts.direct.create');
+            Route::post('/receptions/directe', [$eco . 'GoodsReceiptController', 'storeDirect'])->name('receipts.direct.store');
             Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')->name('receipts.create');
             Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')->name('receipts.store');
             Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');

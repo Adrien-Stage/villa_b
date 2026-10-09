@@ -673,6 +673,9 @@
  "economat.orders.store": [
   "econome"
  ],
+ "economat.orders.transmit": [
+  "econome"
+ ],
  "economat.purchase_requests.approve": [
   "manager"
  ],
@@ -743,6 +746,12 @@
  "economat.receipts.create": [
   "econome",
   "storekeeper"
+ ],
+ "economat.receipts.direct.create": [
+  "econome"
+ ],
+ "economat.receipts.direct.store": [
+  "econome"
  ],
  "economat.receipts.export": [
   "admin",

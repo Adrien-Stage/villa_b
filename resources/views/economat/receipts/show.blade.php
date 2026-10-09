@@ -94,6 +94,9 @@
                         <a href="{{ route('economat.orders.show', $receipt->purchaseOrder) }}" class="font-mono font-bold text-primary hover:underline ml-1">
                             {{ $receipt->purchaseOrder->number }}
                         </a>
+                        @if($receipt->purchaseOrder->isRegularisation())
+                            <span class="block text-[11px] text-sky-800 mt-0.5">Réception directe, sans commande préalable : bon de régularisation.</span>
+                        @endif
                     @else
                         <span class="text-primary/40">—</span>
                     @endif

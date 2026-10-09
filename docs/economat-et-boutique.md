@@ -66,6 +66,7 @@ draft → sent → partially_received → received
 |---|---|
 | Créer | `POST /economat/bons` |
 | Envoyer au fournisseur | `POST /economat/bons/{order}/envoyer` |
+| Marquer comme transmis (sans email) | `POST /economat/bons/{order}/transmis` |
 | Réceptionner | `POST /economat/bons/{order}/reception` |
 | Annuler | `POST /economat/bons/{order}/annuler` |
 
@@ -75,6 +76,36 @@ draft → sent → partially_received → received
 L'envoi produit un e-mail au fournisseur
 ([`PurchaseOrderMail`](../app/Mail/PurchaseOrderMail.php)). La réception peut être
 partielle, d'où le statut intermédiaire.
+
+Un fournisseur sans email (vendeur du marché, fournisseur joint par
+téléphone) reçoit son bon autrement : remis en main propre, dicté au
+téléphone, envoyé par WhatsApp. « Marquer comme transmis » fait passer le bon à
+`sent` comme un email, et la colonne `transmission` garde le moyen. On ne
+réceptionne qu'un bon transmis : sans cette action, un fournisseur sans
+adresse bloquait toute la chaîne.
+
+#### Réception directe, sans bon de commande
+
+Une marchandise arrive parfois sans commande : achat au comptant au marché,
+livraison imprévue, urgence. La réception directe (`GET|POST
+/economat/receptions/directe`, droit `economat.receipts.direct.creer`, réservé
+à l'économe) l'enregistre en une fois.
+
+[`GoodsReceiptService::receiveDirect`](../app/Services/GoodsReceiptService.php)
+établit un **bon de régularisation** (`transmission = regularisation`) qui
+porte ce qui est gardé, puis le réceptionne par le circuit ordinaire. Le stock,
+le coût moyen, le rapprochement de la facture fournisseur et l'annulation
+fonctionnent donc comme pour toute réception. Annuler la réception annule
+aussi le bon de régularisation, qui n'attend aucune livraison.
+
+Le fournisseur et les articles absents du magasin se créent depuis le
+formulaire, sous leurs droits habituels (`economat.suppliers.creer`,
+`economat.items.creer`). Une application encore vide peut ainsi enregistrer ce
+qui vient d'arriver. Le prix unitaire est obligatoire : il valorise le stock.
+
+Pour la marchandise déjà en magasin au démarrage, ce n'est pas une réception :
+c'est la reprise du stock initial (Articles › Reprise du stock, ou la colonne
+`stock_initial` de l'import CSV).
 
 ### 2. Distribution — la demande interne
 

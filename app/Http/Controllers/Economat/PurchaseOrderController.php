@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller
@@ -271,6 +272,31 @@ class PurchaseOrderController extends Controller
         return $sent
             ? back()->with('success', "Bon {$order->number} envoyé à {$order->supplier->email}.")
             : back()->with('error', "Le bon est marqué comme envoyé, mais l'email n'a pas pu partir. Vérifiez l'adresse et réessayez.");
+    }
+
+    /**
+     * Le bon est parvenu au fournisseur sans email (main propre, téléphone,
+     * WhatsApp) : il passe à « envoyé » et pourra être réceptionné.
+     */
+    public function transmit(Request $request, PurchaseOrder $order, PurchaseOrderService $service): RedirectResponse
+    {
+        $validated = $request->validate([
+            'moyen' => ['required', Rule::in(array_keys(PurchaseOrder::TRANSMISSIONS_MANUELLES))],
+        ], [
+            'moyen.required' => 'Indiquez comment le bon est parvenu au fournisseur.',
+        ]);
+
+        try {
+            $service->markTransmitted($order, $validated['moyen']);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+
+        return back()->with('success', "Bon {$order->number} transmis au fournisseur ("
+            . mb_strtolower(PurchaseOrder::TRANSMISSIONS_MANUELLES[$validated['moyen']])
+            . ') : sa livraison peut maintenant être réceptionnée.');
     }
 
     /** Réception (totale ou partielle) : entrée en stock des quantités livrées. */

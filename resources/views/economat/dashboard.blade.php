@@ -9,7 +9,12 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Économat</h1>
             <p class="text-sm text-primary/60 mt-0.5">Magasin central de l'établissement — stock, fournisseurs et demandes des départements.</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+            @droit('economat.receipts.direct.creer')
+                <a href="{{ route('economat.receipts.direct.create') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/10 transition-colors" title="Enregistrer une marchandise arrivée sans bon de commande">
+                    <i data-lucide="package-plus" class="w-4 h-4"></i> Réception directe
+                </a>
+            @enddroit
             @droit('economat.orders.creer')
             <a href="{{ route('economat.orders.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i> Bon de commande

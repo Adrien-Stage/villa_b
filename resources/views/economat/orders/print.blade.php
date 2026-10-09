@@ -303,8 +303,13 @@
     </table>
 
     <div class="doc-title-block">
-        <h1 class="doc-title">Bon de Commande Fournisseur</h1>
-        <div class="doc-subtitle">Engagement de dépense et commande ferme de marchandises</div>
+        @if($order->isRegularisation())
+            <h1 class="doc-title">Bon de Commande de Régularisation</h1>
+            <div class="doc-subtitle">Établi après la réception d'une marchandise livrée sans commande préalable</div>
+        @else
+            <h1 class="doc-title">Bon de Commande Fournisseur</h1>
+            <div class="doc-subtitle">Engagement de dépense et commande ferme de marchandises</div>
+        @endif
     </div>
 
     <table class="meta-grid">
@@ -336,7 +341,7 @@
         @endif
         @if($order->notes)
             <tr>
-                <td class="meta-label">Instructions livraison :</td>
+                <td class="meta-label">{{ $order->isRegularisation() ? 'Objet :' : 'Instructions livraison :' }}</td>
                 <td class="meta-val" colspan="3">{{ $order->notes }}</td>
             </tr>
         @endif

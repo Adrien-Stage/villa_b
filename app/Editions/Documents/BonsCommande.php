@@ -66,6 +66,7 @@ class BonsCommande extends Edition
                 'fournisseur' => $o->supplier?->name ?? '—',
                 'articles' => $o->lines_count,
                 'statut' => $o->statusLabel(),
+                'transmission' => $o->transmissionLabel() ?? '—',
                 'par' => $o->createdBy?->name ?? '—',
                 'montant' => (int) $o->total_amount,
             ]);
@@ -77,6 +78,7 @@ class BonsCommande extends Edition
                 Colonne::texte('fournisseur', 'Fournisseur'),
                 Colonne::nombre('articles', 'Articles'),
                 Colonne::texte('statut', 'Statut'),
+                Colonne::texte('transmission', 'Transmission'),
                 Colonne::texte('par', 'Émis par'),
                 Colonne::montant('montant', 'Montant'),
             ])

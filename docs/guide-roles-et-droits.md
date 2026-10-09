@@ -222,7 +222,10 @@ produits et les demandes à l'économat.
 
 - *Fait* :
   - articles, catégories, fournisseurs ;
-  - bons de commande ;
+  - bons de commande, envoyés par email ou marqués comme transmis (main propre,
+    téléphone, WhatsApp) quand le fournisseur n'a pas d'email ;
+  - réception directe d'une marchandise arrivée sans bon de commande, sous un bon
+    de régularisation ;
   - validation des demandes des services ;
   - dépôts de service ;
   - inventaires ;
@@ -231,8 +234,9 @@ produits et les demandes à l'économat.
 - *Ne fait pas* : valider une demande d'achat. C'est une décision de dépense, que la
   direction se réserve.
 
-**Magasinier** — réceptionne les livraisons, livre les demandes, saisit les
-comptages.
+**Magasinier** — réceptionne les livraisons commandées, livre les demandes, saisit
+les comptages. Il ne reçoit pas sans bon de commande : recevoir sans commande engage
+une dépense, que l'économe décide.
 
 ### Comptabilité et finances
 

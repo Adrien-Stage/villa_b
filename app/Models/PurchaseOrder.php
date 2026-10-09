@@ -11,8 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Bon de commande adressé à un fournisseur.
  *
- * Cycle : brouillon → envoyé (par email) → réceptionné, éventuellement en
- * plusieurs fois si le fournisseur livre partiellement.
+ * Cycle : brouillon → transmis (par email, ou remis par un autre moyen) →
+ * réceptionné, éventuellement en plusieurs fois si le fournisseur livre
+ * partiellement. Un bon de régularisation naît déjà réceptionné : il
+ * documente une livraison arrivée sans commande préalable.
  */
 class PurchaseOrder extends Model
 {
@@ -32,9 +34,27 @@ class PurchaseOrder extends Model
         self::STATUS_CANCELLED          => 'Annulé',
     ];
 
+    public const TRANSMISSION_EMAIL = 'email';
+    public const TRANSMISSION_REGULARISATION = 'regularisation';
+
+    /** Les moyens de transmettre un bon sans email, au choix de l'économe. */
+    public const TRANSMISSIONS_MANUELLES = [
+        'main_propre' => 'Remis en main propre',
+        'telephone'   => 'Dicté par téléphone',
+        'whatsapp'    => 'Envoyé par WhatsApp ou SMS',
+        'autre'       => 'Autre moyen',
+    ];
+
+    /** Pourquoi une marchandise est entrée sans bon de commande. */
+    public const MOTIFS_REGULARISATION = [
+        'achat_comptant'     => 'Achat au comptant (marché, boutique)',
+        'livraison_imprevue' => 'Livraison arrivée sans bon de commande',
+        'urgence'            => "Achat d'urgence",
+    ];
+
     protected $fillable = [
         'number', 'supplier_id', 'purchase_request_id', 'status', 'expected_at', 'sent_at', 'received_at',
-        'sent_to_email', 'send_error', 'total_amount', 'notes',
+        'sent_to_email', 'transmission', 'send_error', 'total_amount', 'notes',
         'created_by', 'received_by', 'tenant_id',
         'issuer_signature',
     ];
@@ -179,6 +199,23 @@ class PurchaseOrder extends Model
     public function canBeSent(): bool
     {
         return $this->status === self::STATUS_DRAFT && $this->lines()->exists();
+    }
+
+    /** Établi après coup pour une marchandise reçue sans commande. */
+    public function isRegularisation(): bool
+    {
+        return $this->transmission === self::TRANSMISSION_REGULARISATION;
+    }
+
+    /** Comment le bon est parvenu au fournisseur, en clair. */
+    public function transmissionLabel(): ?string
+    {
+        return match ($this->transmission) {
+            null                              => null,
+            self::TRANSMISSION_EMAIL          => 'Envoyé par email',
+            self::TRANSMISSION_REGULARISATION => 'Régularisation d\'une réception directe',
+            default                           => self::TRANSMISSIONS_MANUELLES[$this->transmission] ?? $this->transmission,
+        };
     }
 
     /** On ne réceptionne que ce qui a été commandé et pas encore soldé. */
