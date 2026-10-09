@@ -10,7 +10,15 @@
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux inventaires
         </a>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            @droit('economat.stock_counts.export')
+                <a href="{{ route('economat.stock_counts.export', ['inventaire' => $count->id]) }}"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                    title="Les articles de l'inventaire avec leur stock théorique, et la colonne « stock compté » à remplir">
+                    <i data-lucide="sheet" class="w-4 h-4 text-emerald-700"></i>
+                    Fichier de comptage (Excel)
+                </a>
+            @enddroit
             @if($count->isClosed())
                 <a href="{{ route('economat.stock_counts.report', $count) }}" target="_blank"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-lg border border-indigo-200 transition-colors shadow-sm">
@@ -28,6 +36,43 @@
     </div>
 
     @include('economat.partials.flash')
+    <x-csv-import-errors />
+
+    {{-- Après le comptage : le fichier rempli saisit d'un coup les quantités comptées. --}}
+    @if($count->isDraft())
+        @droit('economat.stock_counts.import')
+            <form method="POST" action="{{ route('economat.stock_counts.import', $count) }}" enctype="multipart/form-data"
+                  class="bg-white border border-emerald-200 rounded-xl p-4 mb-5 shadow-sm"
+                  onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Import en cours…';">
+                @csrf
+                <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                    <div class="flex-1">
+                        <h2 class="text-sm font-semibold text-primary flex items-center gap-2">
+                            <i data-lucide="file-up" class="w-4 h-4 text-emerald-700"></i> Importer le fichier de comptage
+                        </h2>
+                        <p class="text-xs text-primary/60 mt-1">
+                            Téléchargez le fichier de comptage, remplissez la colonne « stock compté » (et au besoin « motif » et « note »), puis importez-le.
+                            Les lignes laissées vides ne changent pas. La saisie à la main ci-dessous reste possible.
+                        </p>
+                        <label for="fichier-comptage" class="sr-only">Fichier de comptage</label>
+                        <input id="fichier-comptage" type="file" name="fichier" required accept=".xlsx,.xls,.csv"
+                               class="mt-2 block w-full text-xs text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-emerald-800 hover:file:bg-emerald-100">
+                    </div>
+                    <div class="flex flex-col gap-2 shrink-0">
+                        @if($canManage)
+                            <label class="inline-flex items-center gap-2 text-xs text-primary">
+                                <input type="checkbox" name="cloturer" value="1" class="rounded border-secondary/40 text-primary">
+                                Clôturer aussitôt : ajuster le stock sur les quantités comptées
+                            </label>
+                        @endif
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Importer le comptage
+                        </button>
+                    </div>
+                </div>
+            </form>
+        @enddroit
+    @endif
 
     {{-- Carte d'en-tête --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-5 sm:p-6 mb-5 shadow-sm">
@@ -131,8 +176,8 @@
                     <thead class="bg-gray-100/60 text-primary/60 text-[11px] font-semibold uppercase tracking-wider">
                         <tr>
                             <th class="px-4 py-3 text-left">Article</th>
-                            <th class="px-4 py-3 text-right">Stock théorique</th>
-                            <th class="px-4 py-3 text-right w-32">Compté réel</th>
+                            <th class="px-4 py-3 text-right">Stock initial (théorique)</th>
+                            <th class="px-4 py-3 text-right w-32">Stock compté</th>
                             <th class="px-4 py-3 text-right">Écart qté</th>
                             <th class="px-4 py-3 text-right">CUMP</th>
                             <th class="px-4 py-3 text-right">Écart FCFA</th>

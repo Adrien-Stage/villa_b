@@ -524,6 +524,9 @@
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
+                            @droit('economat.movements.voir')
+                                <x-sidebar-link route="economat.movements.index" icon="arrow-left-right">Mouvements de stock</x-sidebar-link>
+                            @enddroit
                             @droit('economat.categories.voir')
                                 <x-sidebar-link route="economat.categories.index" icon="tags">Catégories</x-sidebar-link>
                             @enddroit

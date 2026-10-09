@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 112 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 110 | 90 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
+| Administrateur (`admin`) | 1 | — | 115 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 113 | 90 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 44 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
 | Réceptionniste (`reception`) | 4 | — | 30 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
 | Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 9 | 19 | Économat, Paramètres, Housekeeping, Planning |
@@ -26,13 +26,13 @@
 | Caissier restaurant (`cashier`) | 4 | — | 11 | 7 | Restaurant |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 15 | 21 | Économat, Paramètres, Boutique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 8 | 8 | Économat, Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 24 | 47 | Économat, Planning |
-| Magasinier (`storekeeper`) | 4 | — | 17 | 5 | Économat |
+| Chef économe (`econome`) | 3 | `storekeeper` | 27 | 48 | Économat, Planning |
+| Magasinier (`storekeeper`) | 4 | — | 20 | 6 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 26 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 78 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 61 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 95 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 81 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 64 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 96 | 0 | — |
 
 ## Droit par droit
 
@@ -280,6 +280,8 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.items.opening` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.movements.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.movements.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.orders.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.orders.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.orders.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ |  |
@@ -309,6 +311,8 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.stock_counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.stock_counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.stock_counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.stock_counts.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `economat.stock_counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `economat.stock_counts.report` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.stock_counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |

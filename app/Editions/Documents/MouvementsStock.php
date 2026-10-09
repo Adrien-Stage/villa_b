@@ -6,6 +6,7 @@ use App\Editions\Edition;
 use App\Editions\Filtre;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\StockMovementJournal;
 use App\Support\Document\Colonne;
 use App\Support\Document\Document;
 
@@ -20,7 +21,7 @@ class MouvementsStock extends Edition
 
     public function description(): string
     {
-        return "Chaque entrée, sortie ou ajustement du magasin central sur la période : article, quantité, stock après mouvement, coût, motif et auteur.";
+        return "Chaque entrée, sortie ou ajustement du magasin central sur la période : article, stock avant et après, valeur, document d'origine, motif et auteur.";
     }
 
     public function droits(): array { return ['economat.items.voir']; }
@@ -37,34 +38,27 @@ class MouvementsStock extends Edition
     {
         [$du, $au] = $valeurs['periode'];
 
-        $lignes = StockMovement::query()
-            ->with(['item:id,name,unit', 'user:id,name'])
-            ->whereBetween('occurred_at', [$du->startOfDay(), $au->endOfDay()])
-            ->when($valeurs['type'] !== '', fn ($q) => $q->where('type', $valeurs['type']))
-            ->orderBy('occurred_at')
-            ->get()
-            ->map(fn (StockMovement $m) => [
-                'date' => $m->occurred_at,
-                'article' => $m->item?->name ?? '—',
-                'type' => StockMovement::TYPES[$m->type] ?? $m->type,
-                'quantite' => (float) $m->quantity . ' ' . ($m->item?->unit ?? ''),
-                'apres' => (float) $m->stock_after,
-                'cout' => (int) $m->unit_cost,
-                'motif' => $m->reason ?: '—',
-                'par' => $m->user?->name ?? '—',
-            ]);
+        // Même lecture que l'écran « Mouvements de stock » : stock avant et après chaque mouvement.
+        $journal = app(StockMovementJournal::class);
+        $mouvements = $journal->query(['du' => $du, 'au' => $au, 'type' => $valeurs['type'] ?: null])
+            ->orderBy('occurred_at')->orderBy('id')->get();
+        $documents = $journal->documents($mouvements);
 
         return $this->base($valeurs, $user)
             ->colonnes([
                 Colonne::dateHeure('date', 'Date'),
                 Colonne::texte('article', 'Article'),
-                Colonne::texte('type', 'Mouvement'),
-                Colonne::texte('quantite', 'Quantité'),
+                Colonne::texte('nature', 'Mouvement'),
+                Colonne::texte('origine', 'Document'),
+                Colonne::nombre('avant', 'Stock avant'),
+                Colonne::nombre('entree', 'Entrée'),
+                Colonne::nombre('sortie', 'Sortie'),
                 Colonne::nombre('apres', 'Stock après'),
                 Colonne::montant('cout', 'Coût unitaire', false),
+                Colonne::montant('valeur', 'Valeur'),
                 Colonne::texte('motif', 'Motif'),
                 Colonne::texte('par', 'Par'),
             ])
-            ->lignes($lignes);
+            ->lignes($mouvements->map(fn (StockMovement $m) => $journal->ligne($m, $documents)));
     }
 }

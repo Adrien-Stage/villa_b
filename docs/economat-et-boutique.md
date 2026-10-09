@@ -167,6 +167,42 @@ Chaque étape déclenche une notification
 `POST /economat/articles/{item}/ajustement` — correction manuelle après inventaire ou
 constat de perte, tracée comme tout autre mouvement.
 
+Chaque mouvement garde le **stock avant** (`stock_movements.stock_before`) et le stock
+après : un ajustement porte ainsi le stock initial de l'article et le stock compté, et
+sa valeur (quantité × coût du mouvement).
+
+### 4. Inventaire et fichier de comptage
+
+L'inventaire de l'économat (`StockCount`) fige le théorique et gèle le magasin ; sa
+clôture ajuste chaque article compté. Le comptage se saisit à la main ou par fichier :
+
+| Action | Qui | Route |
+|---|---|---|
+| Télécharger le fichier de comptage (Excel) | économe, magasinier, direction, contrôle | `GET /economat/inventaires/fichier-comptage?inventaire={id}` (ou `?categorie={id}` hors inventaire) |
+| Importer le fichier rempli | économe, magasinier | `POST /economat/inventaires/{id}/import` |
+| Ouvrir un inventaire avec le fichier déjà rempli | économe | `POST /economat/inventaires` (champ `fichier`) |
+
+Colonnes : `id`, `référence`, `article`, `catégorie`, `unité`, `stock théorique`,
+`stock compté`, `motif`, `note` ([`StockCountImportService`](../app/Services/StockCountImportService.php)).
+Une ligne se rattache à l'article par son identifiant, sinon sa référence, sinon son nom ;
+une ligne sans quantité comptée ne change rien. Le motif se donne par son libellé ou son
+code ; un motif inconnu devient « autre » et passe en note. Une ligne refusée (article
+hors inventaire, quantité illisible, doublon) est listée à l'écran.
+
+Avec « clôturer aussitôt » (droit de clôture), l'import clôture l'inventaire et ajuste le
+stock, à condition qu'aucune ligne n'ait été refusée : sinon l'inventaire reste ouvert
+pour correction.
+
+### 5. Mouvements de stock
+
+`GET /economat/mouvements` — tous les mouvements du magasin, filtrés par période (le mois
+en cours par défaut), article, catégorie, nature, origine et motif, avec le stock avant,
+l'entrée ou la sortie, le stock après, le coût, la valeur et le document d'origine. Avec un
+article, la page devient sa **fiche de stock** : stock au début, entrées, sorties,
+ajustements, stock en fin, dans l'ordre du temps. Export en impression, PDF, Excel et Word
+(`/economat/mouvements/export`). Écran, export et édition « Mouvements de stock » lisent
+le même journal ([`StockMovementJournal`](../app/Services/StockMovementJournal.php)).
+
 ## Fournisseurs
 
 `Supplier` — coordonnées, articles fournis, historique des bons de commande.

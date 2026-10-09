@@ -155,6 +155,7 @@ class PermissionCatalog
         'economat.stock_counts.cancel',
         'economat.stock_counts.close',
         'economat.stock_counts.creer',
+        'economat.stock_counts.import',
         'economat.stock_counts.modifier',
         'groups.addRoom',
         'groups.cancel',
@@ -721,6 +722,9 @@ class PermissionCatalog
             // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
             'economat.orders.transmit' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Le journal des mouvements : qui consulte le stock le lit.
+            'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.purchase_requests.approve' => ['manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.purchase_requests.convert' => ['econome'],
@@ -764,6 +768,9 @@ class PermissionCatalog
             'economat.stock_counts.cancel' => ['econome'],
             'economat.stock_counts.close' => ['econome'],
             'economat.stock_counts.creer' => ['econome'],
+            // Le fichier de comptage : qui compte le télécharge et l'importe.
+            'economat.stock_counts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stock_counts.import' => ['econome', 'storekeeper'],
             'economat.stock_counts.modifier' => ['econome', 'storekeeper'],
             'economat.stock_counts.report' => ['controller', 'econome', 'manager'],
             'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],

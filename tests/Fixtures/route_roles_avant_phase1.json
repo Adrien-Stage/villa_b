@@ -623,6 +623,23 @@
  "economat.items.update": [
   "econome"
  ],
+ "economat.movements.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.movements.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.orders.cancel": [
   "econome"
  ],
@@ -939,6 +956,18 @@
  ],
  "economat.stock_counts.create": [
   "econome"
+ ],
+ "economat.stock_counts.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.stock_counts.import": [
+  "econome",
+  "storekeeper"
  ],
  "economat.stock_counts.index": [
   "admin",
