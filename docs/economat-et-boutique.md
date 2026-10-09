@@ -162,6 +162,29 @@ Chaque étape déclenche une notification
 ([`StockRequisitionSubmitted`](../app/Notifications/StockRequisitionSubmitted.php),
 [`StockRequisitionUpdated`](../app/Notifications/StockRequisitionUpdated.php)).
 
+#### Sortie hors établissement
+
+Un matériel quitte parfois le magasin sans servir l'hôtel : prêt, envoi en réparation,
+don, cession, transfert vers un autre établissement, restitution à son propriétaire.
+L'économe enregistre et valide ces sorties dans **Économat › Sorties hors
+établissement** (`/economat/sorties-externes`, droit `economat.external_issues.creer`).
+
+- Le bon (`ExternalIssue`, numéro BSE-AAAA-NNNN) garde la personne qui emporte le
+  matériel : nom (obligatoire), structure ou qualité, téléphone, pièce d'identité. Sa
+  signature est tirée de son nom, comme celle d'un demandeur interne ; l'économe signe
+  aussi. Pour un prêt ou une réparation, une date de retour prévue peut être notée.
+- La validation sort les articles du stock au coût moyen
+  (source `external_issue`), sous le gel d'inventaire comme toute sortie ; chaque ligne
+  garde son coût. L'annulation, motivée, les fait revenir au même coût sans toucher au
+  dernier prix d'achat (`StockService::reverseOut`).
+- Au night audit, la sortie passe en charge du magasin (603x, centre économat) sous le
+  libellé « Sorties hors établissement ». Un don ou une cession peut demander au
+  comptable un reclassement.
+- La liste se filtre par date ou par période, motif, statut, article, nom ou
+  téléphone, et montre les retours en retard ; elle s'imprime et s'exporte (PDF, Excel,
+  Word). Le bon s'imprime avec les signatures. L'édition « Sorties hors établissement »
+  et la recherche de pièce des Éditions les retrouvent aussi.
+
 ### 3. Correction — l'ajustement
 
 `POST /economat/articles/{item}/ajustement` — correction manuelle après inventaire ou

@@ -570,6 +570,50 @@
   "storekeeper",
   "support"
  ],
+ "economat.external_issues.cancel": [
+  "econome"
+ ],
+ "economat.external_issues.create": [
+  "econome"
+ ],
+ "economat.external_issues.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.external_issues.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.external_issues.print": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.external_issues.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.external_issues.store": [
+  "econome"
+ ],
  "economat.index": [
   "admin",
   "controller",

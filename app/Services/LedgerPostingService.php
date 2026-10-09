@@ -545,6 +545,7 @@ class LedgerPostingService
             $libelle = match (true) {
                 $requisition !== null => 'Livraisons aux services',
                 $inventaire           => 'Manquants d’inventaire économat',
+                $mouvement->source_type === StockMovement::SOURCE_EXTERNAL_ISSUE => 'Sorties hors établissement',
                 default               => 'Sorties de stock économat',
             };
 

@@ -224,6 +224,42 @@ class StockService
     }
 
     /**
+     * Contre-passation d'une sortie (annulation d'un bon de sortie) : la
+     * marchandise revient au coût auquel elle était sortie. Le CUMP se
+     * recalcule comme pour une entrée, mais le dernier prix d'achat ne bouge
+     * pas : ce retour n'est pas un achat.
+     */
+    public function reverseOut(
+        StockItem $item,
+        float $quantity,
+        int $unitCost,
+        string $sourceType,
+        ?int $sourceId = null,
+        ?string $reason = null
+    ): StockMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
+        }
+
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
+
+            $courant = (float) $item->current_stock;
+            $nouveau = $courant + $quantity;
+
+            $item->update([
+                'current_stock' => $nouveau,
+                'average_cost'  => $nouveau > 0
+                    ? (int) round(($courant * $item->average_cost + $quantity * $unitCost) / $nouveau)
+                    : $unitCost,
+            ]);
+
+            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason);
+        });
+    }
+
+    /**
      * Ajustement d'inventaire : fixe le stock à une quantité constatée. Sert à
      * caler la base sur un comptage physique. Positif ou négatif selon l'écart.
      */

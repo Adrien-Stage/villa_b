@@ -45,6 +45,7 @@ class Catalogue
         Documents\BonsCommande::class,
         Documents\BonsReception::class,
         Documents\BonsRequisition::class,
+        Documents\SortiesHorsEtablissement::class,
         Documents\EtatStocks::class,
         Documents\MouvementsStock::class,
         Documents\PlanningQuarts::class,
