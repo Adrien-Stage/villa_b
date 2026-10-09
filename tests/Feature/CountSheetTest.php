@@ -168,3 +168,105 @@ test('une fiche dit qui l’a imprimée et se signe page par page', function () 
         ->assertSee('Visa du compteur')
         ->assertSee('Écrire 0 pour un article absent');
 });
+
+// ── Articles à compter ──────────────────────────────────────────────────────
+
+/**
+ * Trois articles à l'économat : du riz en stock, du sel jamais bougé et à 0,
+ * de l'huile vidée le 5 octobre.
+ */
+function magasinAvecArticleVide(): array
+{
+    test()->travelTo(\Carbon\CarbonImmutable::parse('2026-10-01 08:00'));
+    $stock = app(\App\Services\StockService::class);
+    $riz = StockItem::create(['name' => 'Riz parfumé', 'unit' => 'kg', 'is_active' => true]);
+    $sel = StockItem::create(['name' => 'Sel fin', 'unit' => 'kg', 'is_active' => true]);
+    $huile = StockItem::create(['name' => 'Huile de palme', 'unit' => 'litre', 'is_active' => true]);
+    $stock->recordOpening($riz, 40, 80000);
+    $stock->recordOpening($huile, 5, 150000);
+
+    test()->travelTo(\Carbon\CarbonImmutable::parse('2026-10-05 10:00'));
+    $stock->recordOut($huile, 5, \App\Models\StockMovement::SOURCE_MANUAL, null, 'Service cuisine');
+
+    test()->travelTo(\Carbon\CarbonImmutable::parse('2026-10-09 08:00'));
+
+    return compact('riz', 'sel', 'huile');
+}
+
+function nomsDeLaFiche(array $fiche): array
+{
+    return collect($fiche['groups'])->flatten(1)->pluck('name')->sort()->values()->all();
+}
+
+test('la fiche liste tous les articles, ou seulement ceux en stock', function () {
+    magasinAvecArticleVide();
+    $fiches = app(CountSheetService::class);
+
+    expect(nomsDeLaFiche($fiches->sheet('economat')))->toBe(['Huile de palme', 'Riz parfumé', 'Sel fin'])
+        ->and(nomsDeLaFiche($fiches->sheet('economat', null, CountSheetService::ARTICLES_EN_STOCK)))->toBe(['Riz parfumé'])
+        ->and($fiches->sheet('economat', null, CountSheetService::ARTICLES_EN_STOCK)['selection'])->toBe('Articles en stock uniquement');
+});
+
+test('un article tombé à 0 après un mouvement de la période reste sur la fiche', function () {
+    magasinAvecArticleVide();
+    $fiches = app(CountSheetService::class);
+
+    // Sans inventaire clôturé : depuis le début du mois. L'huile a bougé le 5, le sel jamais.
+    $fiche = $fiches->sheet('economat', null, CountSheetService::ARTICLES_EN_STOCK_ET_MOUVEMENTES);
+    expect(nomsDeLaFiche($fiche))->toBe(['Huile de palme', 'Riz parfumé'])
+        ->and($fiche['selection'])->toContain('depuis le 01/10/2026');
+
+    // Une période qui commence après le mouvement l'écarte.
+    $fiche = $fiches->sheet('economat', null, CountSheetService::ARTICLES_EN_STOCK_ET_MOUVEMENTES, \Carbon\CarbonImmutable::parse('2026-10-06'));
+    expect(nomsDeLaFiche($fiche))->toBe(['Riz parfumé']);
+});
+
+test('par défaut, la période part du dernier inventaire clôturé du service', function () {
+    $articles = magasinAvecArticleVide();
+
+    // Inventaire clôturé le 7 : la sortie d'huile du 5 le précède.
+    test()->travelTo(\Carbon\CarbonImmutable::parse('2026-10-07 18:00'));
+    $service = app(StockCountService::class);
+    $service->close($service->open([]));
+    test()->travelTo(\Carbon\CarbonImmutable::parse('2026-10-09 08:00'));
+
+    $fiche = app(CountSheetService::class)->sheet('economat', null, CountSheetService::ARTICLES_EN_STOCK_ET_MOUVEMENTES);
+    expect(nomsDeLaFiche($fiche))->toBe(['Riz parfumé'])
+        ->and($fiche['selection'])->toContain('depuis le 07/10/2026 (dernier inventaire)');
+});
+
+test('au garde-manger, un stock négatif se compte aussi', function () {
+    RestaurantPantryItem::create(['name' => 'Oignon', 'unit' => 'kg', 'current_stock' => -2, 'is_active' => true]);
+    RestaurantPantryItem::create(['name' => 'Ail', 'unit' => 'kg', 'current_stock' => 0, 'is_active' => true]);
+
+    $fiche = app(CountSheetService::class)->sheet('garde-manger', null, CountSheetService::ARTICLES_EN_STOCK);
+
+    expect(nomsDeLaFiche($fiche))->toBe(['Oignon']);
+});
+
+test('la fiche imprimée dit quels articles elle liste', function () {
+    magasinAvecArticleVide();
+
+    $this->get(route('economat.count_sheets.index'))->assertOk()->assertSee('Articles à compter');
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'economat', 'articles' => 'mouvementes', 'depuis' => '2026-10-02']))
+        ->assertOk()
+        ->assertSee('Articles en stock, et articles tombés à 0 après un mouvement depuis le 02/10/2026')
+        ->assertSee('Huile de palme')
+        ->assertDontSee('Sel fin');
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'economat', 'articles' => 'n_importe_quoi']))->assertSessionHasErrors('articles');
+});
+
+test('toutes les fiches appliquent le même choix, boutique et dépôts compris', function () {
+    $minibar = stocksDeTousLesServices();
+    ShopProduct::create(['shop_category_id' => ShopCategory::first()->id, 'name' => 'Carte postale', 'sku' => 'CP-01', 'price' => 50_000, 'stock_quantity' => 0, 'is_active' => true]);
+    ServiceStoreStock::create(['service_store_id' => $minibar->id, 'stock_item_id' => StockItem::create(['name' => 'Soda', 'unit' => 'canette'])->id, 'current_stock' => 0, 'average_cost' => 30_000]);
+
+    $fiches = collect(app(CountSheetService::class)->sheets(CountSheetService::ALL, null, CountSheetService::ARTICLES_EN_STOCK_ET_MOUVEMENTES))->keyBy('key');
+
+    expect(nomsDeLaFiche($fiches['boutique']))->toBe(['Masque bamiléké'])
+        ->and(nomsDeLaFiche($fiches['depot-' . $minibar->id]))->toBe(['Eau minérale']);
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'tout', 'articles' => 'en_stock']))->assertOk()->assertDontSee('Carte postale');
+});

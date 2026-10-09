@@ -193,6 +193,21 @@ Avec « clôturer aussitôt » (droit de clôture), l'import clôture l'inventai
 stock, à condition qu'aucune ligne n'ait été refusée : sinon l'inventaire reste ouvert
 pour correction.
 
+#### Fiches de comptage
+
+`GET /economat/fiches-comptage` imprime une fiche par service (économat, garde-manger de
+chaque restaurant, boutique, chaque dépôt), à l'aveugle ou avec le théorique. On choisit
+les articles listés ([`CountSheetService::SELECTIONS`](../app/Services/CountSheetService.php)) :
+
+- tous les articles actifs ;
+- uniquement les articles en stock (stock différent de 0 : un stock négatif au
+  garde-manger se compte aussi) ;
+- les articles en stock, et ceux tombés à 0 après un mouvement depuis une date. Sans
+  date, la période part du dernier inventaire clôturé du service, à défaut du début du
+  mois. Pour la boutique, qui n'a pas de journal, un produit a bougé s'il a été vendu.
+
+La fiche imprimée rappelle le choix fait.
+
 ### 5. Mouvements de stock
 
 `GET /economat/mouvements` — tous les mouvements du magasin, filtrés par période (le mois

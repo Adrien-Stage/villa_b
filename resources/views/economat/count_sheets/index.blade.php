@@ -3,7 +3,7 @@
 @section('title', 'Fiches de comptage — Inventaire')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto" x-data="{ articles: 'tous', depuis: '' }">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Fiches de comptage</h1>
@@ -14,10 +14,14 @@
                 @endif
             </p>
         </div>
-        <a href="{{ route('economat.count_sheets.print', ['service' => \App\Services\CountSheetService::ALL]) }}" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-            <i data-lucide="printer" class="w-4 h-4"></i> Toutes les fiches
-        </a>
+        <form method="GET" action="{{ route('economat.count_sheets.print') }}" target="_blank">
+            <input type="hidden" name="service" value="{{ \App\Services\CountSheetService::ALL }}">
+            <input type="hidden" name="articles" :value="articles">
+            <input type="hidden" name="depuis" :value="articles === 'mouvementes' ? depuis : ''">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                <i data-lucide="printer" class="w-4 h-4"></i> Toutes les fiches
+            </button>
+        </form>
     </div>
 
     @include('economat.partials.flash')
@@ -29,6 +33,27 @@
             La fiche « avec théorique » sert au contrôle. Si un inventaire est déjà ouvert, la fiche reprend son théorique figé.
         </p>
     </div>
+
+    {{-- Les articles à compter : valable pour toutes les fiches ci-dessous. --}}
+    <fieldset class="mb-4 bg-white border border-secondary/20 rounded-xl p-4">
+        <legend class="sr-only">Articles à compter</legend>
+        <p class="text-xs font-semibold uppercase tracking-wider text-primary/70 mb-2" aria-hidden="true">Articles à compter</p>
+        <div class="space-y-2">
+            @foreach($selections as $cle => $libelle)
+                <label class="flex items-start gap-2 text-sm text-primary">
+                    <input type="radio" name="choix-articles" value="{{ $cle }}" x-model="articles" class="mt-0.5 border-secondary/40 text-primary">
+                    <span>{{ $libelle }}</span>
+                </label>
+            @endforeach
+        </div>
+        <div class="mt-3 pl-6" x-show="articles === 'mouvementes'" x-cloak>
+            <label for="depuis" class="block text-xs text-primary/70">Mouvements depuis le</label>
+            <input id="depuis" type="date" x-model="depuis" max="{{ now()->toDateString() }}"
+                   class="mt-1 px-2.5 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary">
+            <p class="text-[11px] text-primary/50 mt-1">Vide : depuis le dernier inventaire clôturé de chaque service (à défaut, depuis le début du mois). Pour la boutique, un produit a bougé s'il a été vendu.</p>
+        </div>
+        <p class="text-[11px] text-primary/50 mt-2" x-show="articles !== 'tous'" x-cloak>« En stock » veut dire un stock différent de 0 : un stock négatif au garde-manger se compte aussi.</p>
+    </fieldset>
 
     <ul class="space-y-3">
         @foreach($services as $cle => $libelle)
@@ -43,6 +68,8 @@
                 <form method="GET" action="{{ route('economat.count_sheets.print') }}" target="_blank"
                       class="flex flex-wrap items-center justify-between gap-3">
                     <input type="hidden" name="service" value="{{ $cle }}">
+                    <input type="hidden" name="articles" :value="articles">
+                    <input type="hidden" name="depuis" :value="articles === 'mouvementes' ? depuis : ''">
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-primary">{{ $libelle }}</p>
                         @if($categories->isNotEmpty())
