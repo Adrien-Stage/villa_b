@@ -145,6 +145,15 @@
             </a>
         @endif
 
+        @if(\App\Support\SettingsTabs::peutRegler($user, 'economat'))
+            <a href="{{ route('settings.index', ['tab' => 'economat']) }}"
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      {{ $tab === 'economat' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
+                <i data-lucide="warehouse" class="w-4 h-4"></i>
+                Économat
+            </a>
+        @endif
+
         @if(\App\Support\SettingsTabs::peutRegler($user, 'partners'))
             <a href="{{ route('settings.index', ['tab' => 'partners']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
@@ -833,6 +842,11 @@
         @endif
 
         {{-- ONGLET: INVENTAIRE (Manager) --}}
+        {{-- ONGLET : ÉCONOMAT — les unités de stockage des articles. --}}
+        @if($tab === 'economat' && \App\Support\SettingsTabs::peutRegler($user, 'economat'))
+            @include('settings.partials.unites')
+        @endif
+
         {{-- ONGLET : QUARTS — les quarts de travail de l'hôtel. --}}
         @if($tab === 'quarts' && \App\Support\SettingsTabs::peutRegler($user, 'quarts'))
             @include('settings.partials.quarts')

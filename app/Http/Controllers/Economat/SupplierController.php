@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Economat;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\StockItem;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -188,8 +189,11 @@ class SupplierController extends Controller
                 if (isset($entry['price']) && is_numeric($entry['price']) && $entry['price'] >= 0) {
                     $data['last_purchase_price'] = (int) round((float) $entry['price'] * 100);
                 }
-                if (!empty($entry['unit']) && is_string($entry['unit'])) {
-                    $data['unit'] = trim($entry['unit']);
+                // Seule une unité de la liste (Paramètres › Économat) remplace
+                // celle de l'article.
+                if (!empty($entry['unit']) && is_string($entry['unit'])
+                    && ($unite = StockUnit::canonique($entry['unit'])) !== null) {
+                    $data['unit'] = $unite;
                 }
             }
 

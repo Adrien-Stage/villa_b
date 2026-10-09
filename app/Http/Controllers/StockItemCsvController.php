@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\HandlesCsv;
 use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Services\StockService;
 use Illuminate\Http\Request;
@@ -67,6 +68,8 @@ class StockItemCsvController extends Controller
         $categoriesByName = StockCategory::all()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
         $suppliersByName  = Supplier::all()->keyBy(fn ($s) => mb_strtolower(trim($s->name)));
         $existingNames  = StockItem::pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
+        // L'unité se choisit dans la liste de Paramètres › Économat ; « Kg » vaut « kg ».
+        $unitesByName   = collect(StockUnit::choix())->keyBy(fn ($u) => mb_strtolower($u));
 
         $created = 0;
         $skipped = 0;
@@ -107,6 +110,15 @@ class StockItemCsvController extends Controller
                 }
             }
 
+            $uniteSaisie = trim((string) ($row['unite'] ?? ''));
+            $unite = $unitesByName->get(mb_strtolower($uniteSaisie === '' ? 'pièce' : $uniteSaisie));
+            if ($unite === null) {
+                $errors[] = $uniteSaisie === ''
+                    ? "Ligne {$line} : unité obligatoire."
+                    : "Ligne {$line} : unité « {$uniteSaisie} » inconnue — ajoutez-la dans Paramètres › Économat.";
+                continue;
+            }
+
             $cost = $row['cout_moyen_fcfa'] ?? '';
             if ($cost !== '' && (!is_numeric($cost) || (float) $cost < 0)) {
                 $errors[] = "Ligne {$line} : cout_moyen_fcfa invalide.";
@@ -128,7 +140,7 @@ class StockItemCsvController extends Controller
             $item = StockItem::create([
                 'name'              => $name,
                 'reference'         => trim((string) ($row['reference'] ?? '')) ?: null,
-                'unit'              => trim((string) ($row['unite'] ?? '')) ?: 'pièce',
+                'unit'              => $unite,
                 'stock_category_id' => $category?->id,
                 'supplier_id'       => $supplier?->id,
                 'min_stock'         => is_numeric($row['stock_min'] ?? null) ? (float) $row['stock_min'] : 0,

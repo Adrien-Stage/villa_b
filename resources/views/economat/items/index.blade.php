@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto"
-     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }})">
+     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }})">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
@@ -120,8 +120,14 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Unité <span class="text-red-500">*</span></label>
-                            <input type="text" name="unit" x-model="form.unit" required maxlength="20" placeholder="kg, litre, pièce…" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <label for="article-unite" class="block text-xs font-medium text-primary/70 mb-1.5">Unité <span class="text-red-500">*</span></label>
+                            <select id="article-unite" name="unit" x-model="form.unit" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                <option value="">Choisir…</option>
+                                <template x-for="u in unitesProposees" :key="u"><option :value="u" x-text="u" :selected="u === form.unit"></option></template>
+                            </select>
+                            @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'economat'))
+                                <a href="{{ route('settings.index', ['tab' => 'economat']) }}" class="mt-1 inline-block text-[11px] text-primary/50 underline hover:text-primary">Gérer les unités</a>
+                            @endif
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Référence</label>
@@ -245,18 +251,22 @@
 
 @push('scripts')
 <script>
-    function stockItems(categories, suppliers) {
+    function stockItems(categories, suppliers, unites) {
         const storeUrl = @js(route('economat.items.store'));
         const baseUrl = @js(url('/economat/articles'));
         return {
-            categories, suppliers,
+            categories, suppliers, unites,
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
             openingOpen: false, openingAction: '', opening: {},
             autoCode: true,
             blank() {
-                return { id: null, name: '', reference: '', unit: 'pièce', description: '',
+                return { id: null, name: '', reference: '', unit: this.unites.includes('pièce') ? 'pièce' : (this.unites[0] ?? ''), description: '',
                     stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true };
+            },
+            // L'unité d'un article mise hors service depuis reste proposée pour lui.
+            get unitesProposees() {
+                return this.form.unit && !this.unites.includes(this.form.unit) ? [...this.unites, this.form.unit] : this.unites;
             },
             // La référence suit le nom tant qu'elle n'a pas été saisie à la main.
             applyAutoCode() { if (this.autoCode) this.form.reference = window.suggestCode(this.form.name || ''); },

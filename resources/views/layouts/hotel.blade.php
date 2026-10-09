@@ -283,6 +283,10 @@
                         <x-sidebar-link route="dashboard" icon="grid">Tableau de bord</x-sidebar-link>
                         {{-- Les quarts de chacun, et ceux de son service pour un chef. --}}
                         <x-sidebar-link route="planning.index" icon="calendar-clock">Planning des quarts</x-sidebar-link>
+                        {{-- Tout ce qui s'imprime : l'entrée n'apparaît qu'avec au moins une édition à lire. --}}
+                        @if(app(\App\Editions\Catalogue::class)->pour(auth()->user())->isNotEmpty())
+                            <x-sidebar-link route="editions.index" icon="printer">Éditions</x-sidebar-link>
+                        @endif
                     </ul>
                 </div>
 

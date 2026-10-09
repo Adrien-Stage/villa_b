@@ -22,7 +22,7 @@ class PermissionLabels
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
         'economat' => 'Économat', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
-        'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
+        'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
         'test-popup' => 'Divers',
     ];
@@ -137,6 +137,9 @@ class PermissionLabels
         'economat.suppliers.creer' => ['Fournisseurs', 'Créer'],
         'economat.suppliers.modifier' => ['Fournisseurs', 'Modifier'],
         'economat.suppliers.supprimer' => ['Fournisseurs', 'Supprimer'],
+        'economat.units.creer' => ['Unités de stockage', 'Créer'],
+        'economat.units.modifier' => ['Unités de stockage', 'Modifier ou mettre hors service'],
+        'economat.units.supprimer' => ['Unités de stockage', 'Supprimer'],
         'economat.purchase_requests.voir' => ["Demandes d'achat", 'Consulter'],
         'economat.purchase_requests.creer' => ["Demandes d'achat", 'Créer'],
         'economat.purchase_requests.approve' => ["Demandes d'achat", 'Approuver'],
@@ -146,11 +149,13 @@ class PermissionLabels
         'economat.orders.voir' => ['Bons de commande', 'Consulter'],
         'economat.orders.creer' => ['Bons de commande', 'Créer'],
         'economat.orders.send' => ['Bons de commande', 'Envoyer au fournisseur'],
+        'economat.orders.transmit' => ['Bons de commande', 'Marquer comme transmis sans email'],
         'economat.orders.receive' => ['Bons de commande', 'Réceptionner'],
         'economat.orders.cancel' => ['Bons de commande', 'Annuler'],
         'economat.orders.export' => ['Bons de commande', 'Exporter'],
         'economat.receipts.voir' => ["Bons d'entrée", 'Consulter'],
         'economat.receipts.creer' => ["Bons d'entrée", 'Enregistrer une réception'],
+        'economat.receipts.direct.creer' => ["Bons d'entrée", 'Réception directe, sans bon de commande'],
         'economat.receipts.cancel' => ["Bons d'entrée", 'Annuler'],
         'economat.receipts.export' => ["Bons d'entrée", 'Exporter'],
         'economat.requisitions.voir' => ['Bons de réquisition', 'Consulter'],
@@ -313,6 +318,10 @@ class PermissionLabels
         'rooms.cost_sheets.document' => ['Fiches techniques des chambres', 'Imprimer'],
         'rooms.cost_sheets.export' => ['Fiches techniques des chambres', 'Exporter'],
         'rooms.cost_sheets.import' => ['Fiches techniques des chambres', 'Importer'],
+
+        // ── Éditions ──
+        'editions.voir' => ['Éditions', 'Consulter et imprimer'],
+        'editions.export' => ['Éditions', 'Exporter (PDF, Excel, Word)'],
 
         // ── Planning des quarts ──
         'planning.voir' => ['Planning des quarts', 'Consulter'],

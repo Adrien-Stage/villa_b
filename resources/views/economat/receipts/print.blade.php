@@ -309,7 +309,7 @@
         </tr>
         <tr>
             <td class="meta-label">Bon de commande lié :</td>
-            <td class="meta-val font-mono">{{ $receipt->purchaseOrder?->number }}</td>
+            <td class="meta-val font-mono">{{ $receipt->purchaseOrder?->number }}@if($receipt->purchaseOrder?->isRegularisation()) <span style="font-family: inherit;">(régularisation — réception directe)</span>@endif</td>
             <td class="meta-label">Réceptionné par :</td>
             <td class="meta-val">{{ $receipt->receivedBy?->name ?? 'Magasinier' }}</td>
         </tr>

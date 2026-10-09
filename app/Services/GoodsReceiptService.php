@@ -5,7 +5,11 @@ namespace App\Services;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderLine;
+use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Models\Supplier;
+use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -136,6 +140,158 @@ class GoodsReceiptService
     }
 
     /**
+     * Réception directe : la marchandise est arrivée sans bon de commande
+     * (achat au comptant, livraison imprévue, urgence).
+     *
+     * Un bon de régularisation est établi pour ce qui est gardé, puis
+     * réceptionné par le circuit ordinaire. Le stock, le coût moyen, le
+     * rapprochement de la facture fournisseur et l'annulation fonctionnent
+     * donc comme pour toute réception. Le fournisseur et les articles
+     * absents du magasin se créent au passage : une application encore vide
+     * ne doit pas empêcher d'enregistrer ce qui vient d'arriver.
+     *
+     * @param  array  $data  supplier_id ou nouveau_fournisseur, motif, delivery_note_number,
+     *                       received_at, notes, et lines : stock_item_id ou nouvel_article,
+     *                       quantity_delivered, quantity_rejected, rejection_reason, unit_price (FCFA), notes
+     */
+    public function receiveDirect(array $data, User $user): GoodsReceipt
+    {
+        return DB::transaction(function () use ($data, $user) {
+            $tenantId = $user->tenant_id ?? Tenant::current()?->id;
+            $supplier = $this->fournisseur($data, $tenantId);
+            $motif    = PurchaseOrder::MOTIFS_REGULARISATION[$data['motif'] ?? ''] ?? null;
+
+            $order = PurchaseOrder::create([
+                'supplier_id'      => $supplier->id,
+                // « Envoyé » le temps d'être réceptionné juste après : la
+                // réception le soldera.
+                'status'           => PurchaseOrder::STATUS_SENT,
+                'sent_at'          => now(),
+                'transmission'     => PurchaseOrder::TRANSMISSION_REGULARISATION,
+                'notes'            => 'Régularisation d\'une réception directe' . ($motif ? " — {$motif}" : '') . '.',
+                'created_by'       => $user->id,
+                'issuer_signature' => $user->signatureName(),
+                'tenant_id'        => $tenantId,
+            ]);
+
+            $pointage = [];
+            $nouveaux = [];
+
+            foreach ($data['lines'] as $ligne) {
+                $livre   = max(0, (float) ($ligne['quantity_delivered'] ?? 0));
+                $refuse  = max(0, (float) ($ligne['quantity_rejected'] ?? 0));
+                // Le bon de régularisation porte ce qui est gardé : il sera
+                // soldé par cette réception, et la facture se rapproche de lui.
+                $accepte = round($livre - $refuse, 3);
+
+                if ($accepte <= 0) {
+                    $nom = $ligne['nouvel_article']['name'] ?? StockItem::find($ligne['stock_item_id'] ?? null)?->name ?? 'Un article';
+                    throw new RuntimeException(
+                        "« {$nom} » : rien n'est gardé. Une marchandise refusée en entier repart avec le livreur, sans bon d'entrée."
+                    );
+                }
+
+                $item = $this->article($ligne, $supplier, $tenantId, $nouveaux);
+
+                $line = PurchaseOrderLine::create([
+                    'purchase_order_id' => $order->id,
+                    'stock_item_id'     => $item->id,
+                    'quantity_ordered'  => $accepte,
+                    'unit_price'        => (int) round((float) $ligne['unit_price'] * 100),
+                ]);
+
+                $pointage[$line->id] = [
+                    'quantity_delivered' => $livre,
+                    'quantity_accepted'  => $accepte,
+                    'quantity_rejected'  => $refuse,
+                    'rejection_reason'   => $ligne['rejection_reason'] ?? null,
+                    'notes'              => $ligne['notes'] ?? null,
+                ];
+            }
+
+            $order->recalculateTotal();
+
+            return $this->receive($order, [
+                'delivery_note_number' => $data['delivery_note_number'] ?? null,
+                'received_at'          => $data['received_at'] ?? null,
+                'notes'                => $data['notes'] ?? null,
+                'lines'                => $pointage,
+            ], $user);
+        });
+    }
+
+    private function fournisseur(array $data, ?int $tenantId): Supplier
+    {
+        if (!empty($data['supplier_id'])) {
+            return Supplier::findOrFail($data['supplier_id']);
+        }
+
+        $nom = trim((string) ($data['nouveau_fournisseur']['name'] ?? ''));
+        if ($nom === '') {
+            throw new RuntimeException('Choisissez le fournisseur, ou donnez le nom du nouveau.');
+        }
+
+        if (Supplier::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($nom)])->exists()) {
+            throw new RuntimeException("Le fournisseur « {$nom} » existe déjà : choisissez-le dans la liste.");
+        }
+
+        return Supplier::create([
+            'name'      => $nom,
+            'phone'     => trim((string) ($data['nouveau_fournisseur']['phone'] ?? '')) ?: null,
+            'is_active' => true,
+            'tenant_id' => $tenantId,
+        ]);
+    }
+
+    /**
+     * L'article de la ligne, créé s'il n'existe pas encore. Deux lignes qui
+     * nomment le même nouvel article le partagent.
+     *
+     * @param  array<string, StockItem>  $nouveaux
+     */
+    private function article(array $ligne, Supplier $supplier, ?int $tenantId, array &$nouveaux): StockItem
+    {
+        if (!empty($ligne['stock_item_id'])) {
+            $item = StockItem::findOrFail($ligne['stock_item_id']);
+
+            // Comme à la commande : l'article sans fournisseur habituel
+            // prend celui qui vient de le livrer.
+            if (empty($item->supplier_id)) {
+                $item->update(['supplier_id' => $supplier->id]);
+            }
+
+            return $item;
+        }
+
+        $nom = trim((string) ($ligne['nouvel_article']['name'] ?? ''));
+        if ($nom === '') {
+            throw new RuntimeException("Chaque ligne nomme un article : choisissez-le, ou donnez le nom du nouveau.");
+        }
+
+        $cle = mb_strtolower($nom);
+        if (isset($nouveaux[$cle])) {
+            return $nouveaux[$cle];
+        }
+
+        if (StockItem::query()->whereRaw('LOWER(name) = ?', [$cle])->exists()) {
+            throw new RuntimeException("L'article « {$nom} » existe déjà : choisissez-le dans la liste.");
+        }
+
+        return $nouveaux[$cle] = StockItem::create([
+            'name'              => $nom,
+            'unit'              => trim((string) ($ligne['nouvel_article']['unit'] ?? '')) ?: 'pièce',
+            'stock_category_id' => $ligne['nouvel_article']['stock_category_id'] ?? null,
+            'supplier_id'       => $supplier->id,
+            // Le stock et le coût moyen naissent de la réception qui suit.
+            'current_stock'     => 0,
+            'average_cost'      => 0,
+            'min_stock'         => 0,
+            'is_active'         => true,
+            'tenant_id'         => $tenantId,
+        ]);
+    }
+
+    /**
      * Annule un bon de réception (en cas d'erreur de saisie immédiate avant facturation).
      * Refusé dès que la facturation du bon dépasserait ce qui resterait reçu.
      */
@@ -195,6 +351,13 @@ class GoodsReceiptService
             ]);
 
             $receipt->purchaseOrder->refreshReceptionStatus();
+
+            // Un bon de régularisation n'attend aucune livraison : sa
+            // réception annulée, il l'est aussi.
+            if ($receipt->purchaseOrder->isRegularisation()
+                && $receipt->purchaseOrder->status === PurchaseOrder::STATUS_SENT) {
+                $receipt->purchaseOrder->update(['status' => PurchaseOrder::STATUS_CANCELLED]);
+            }
 
             return $receipt->fresh();
         });

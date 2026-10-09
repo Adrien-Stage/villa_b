@@ -673,6 +673,9 @@
  "economat.orders.store": [
   "econome"
  ],
+ "economat.orders.transmit": [
+  "econome"
+ ],
  "economat.purchase_requests.approve": [
   "manager"
  ],
@@ -743,6 +746,12 @@
  "economat.receipts.create": [
   "econome",
   "storekeeper"
+ ],
+ "economat.receipts.direct.create": [
+  "econome"
+ ],
+ "economat.receipts.direct.store": [
+  "econome"
  ],
  "economat.receipts.export": [
   "admin",
@@ -997,6 +1006,102 @@
  ],
  "economat.suppliers.update": [
   "econome"
+ ],
+ "economat.units.destroy": [
+  "econome"
+ ],
+ "economat.units.store": [
+  "econome"
+ ],
+ "economat.units.update": [
+  "econome"
+ ],
+ "editions.export": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper"
+ ],
+ "editions.index": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support"
+ ],
+ "editions.print": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support"
+ ],
+ "editions.show": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support"
  ],
  "groups.addRoom": [
   "manager"
@@ -1882,6 +1987,7 @@
  "settings.index": [
   "admin",
   "controller",
+  "econome",
   "housekeeping_leader",
   "manager",
   "reception_chief",

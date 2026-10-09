@@ -38,6 +38,14 @@ class SettingsTabs
         // définit, l'administrateur les règle aussi (configuration).
         'quarts' => ['manager', 'admin'],
         'partners' => ['manager'],
+        // Les unités de stockage des articles : l'économe les tient, la
+        // direction les consulte (les écrire reste un droit de l'économat).
+        'economat' => ['manager', 'econome'],
+    ];
+
+    /** Onglets d'un module : sans le module, l'onglet n'existe pas. */
+    private const MODULES = [
+        'economat' => 'economat',
     ];
 
     /**
@@ -51,10 +59,14 @@ class SettingsTabs
     ];
 
     /** Ordre de préférence de l'onglet ouvert par défaut. */
-    private const PAR_DEFAUT = ['general', 'hebergement', 'housekeeping', 'restaurant', 'shop'];
+    private const PAR_DEFAUT = ['general', 'hebergement', 'housekeeping', 'restaurant', 'shop', 'economat'];
 
     public static function peutRegler(?User $user, string $onglet): bool
     {
+        if (isset(self::MODULES[$onglet]) && !TenantModules::has(self::MODULES[$onglet])) {
+            return false;
+        }
+
         // Un onglet inconnu relève de la direction seule.
         return $user !== null && $user->exerce(self::ONGLETS[$onglet] ?? ['manager']);
     }

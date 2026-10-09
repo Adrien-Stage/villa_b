@@ -165,6 +165,30 @@ pagination et le même menu d'actions.
 Les états imprimables, les états comptables (balance, grand livre…) et les grilles de
 saisie gardent leurs propres tableaux : ce ne sont pas des listes.
 
+### Tout ce qui s'imprime se retrouve dans les Éditions
+
+La rubrique **Éditions** (`/editions`) réunit les registres, situations et journaux de
+l'établissement, la recherche d'une pièce par son numéro, et les liens vers les
+documents qui ont déjà leur écran (grand livre, fiches de comptage, PV d'inventaire…).
+
+Une édition est une classe de `app/Editions/Documents`, inscrite dans
+[`Catalogue`](../app/Editions/Catalogue.php). Elle déclare :
+
+- sa famille, son titre et sa description ;
+- ses **droits** : au moins un de ceux qui ouvrent déjà les mêmes données ailleurs —
+  l'édition n'ouvre rien que l'écran d'origine ne montrerait pas ;
+- ses **filtres** (`Filtre::periode`, `jour`, `semaine`, `choix`), lus et validés avant
+  de lui parvenir ;
+- son `document()` : un `Document` que `DocumentExporter` rend à l'écran, à
+  l'impression, en PDF, Excel et Word.
+
+Les éditions financières lisent [`Registres`](../app/Editions/Registres.php) : une vente
+y est comptée **une fois, là où elle naît** (un repas porté à la chambre est une vente
+du restaurant, pas une seconde vente au séjour ; les nuitées se comptent nuit par nuit
+pour les séjours effectués) et un encaissement **sur sa pièce** (une consommation portée
+à la chambre n'est pas encaissée). `EditionsTest` affiche et imprime chaque édition du
+catalogue.
+
 ### Un document imprimé ne laisse aucune marge haute ou basse au navigateur
 
 Chrome ajoute son propre en-tête et son propre pied de page (titre et adresse de la

@@ -55,10 +55,44 @@ class PurchaseOrderService
             'status'        => PurchaseOrder::STATUS_SENT,
             'sent_at'       => now(),
             'sent_to_email' => $supplier->email,
+            'transmission'  => PurchaseOrder::TRANSMISSION_EMAIL,
             'send_error'    => $error,
         ]);
 
         return $sent;
+    }
+
+    /**
+     * Le bon est parvenu au fournisseur sans email : remis en main propre,
+     * dicté au téléphone, envoyé par WhatsApp. Il passe à « envoyé » comme
+     * après un email, et peut donc être réceptionné : un fournisseur sans
+     * adresse ne doit pas bloquer la chaîne d'achat.
+     */
+    public function markTransmitted(PurchaseOrder $order, string $moyen): void
+    {
+        if (!array_key_exists($moyen, PurchaseOrder::TRANSMISSIONS_MANUELLES)) {
+            throw new \InvalidArgumentException('Moyen de transmission inconnu.');
+        }
+
+        DB::transaction(function () use ($order, $moyen) {
+            $order = PurchaseOrder::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (!$order->canBeSent()) {
+                throw new \RuntimeException('Ce bon ne peut pas être transmis (statut ou lignes manquantes).');
+            }
+
+            $order->recalculateTotal();
+
+            $order->update([
+                'status'        => PurchaseOrder::STATUS_SENT,
+                'sent_at'       => now(),
+                'sent_to_email' => null,
+                'transmission'  => $moyen,
+                'send_error'    => null,
+            ]);
+        });
+
+        $order->refresh();
     }
 
     /**

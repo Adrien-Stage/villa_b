@@ -514,6 +514,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
     });
 
+    // --- ÉDITIONS ---
+    // Le point où l'on retrouve tout ce qui s'imprime : registres, situations,
+    // pièces. Chaque édition pose en plus le droit des données qu'elle montre.
+    Route::middleware('permission')->prefix('editions')->name('editions.')->group(function () {
+        $editions = App\Http\Controllers\EditionController::class;
+        Route::get('/', [$editions, 'index'])->name('index');
+        Route::get('/{edition}', [$editions, 'show'])->where('edition', '[a-z0-9-]+')->name('show');
+        Route::get('/{edition}/imprimer', [$editions, 'print'])->where('edition', '[a-z0-9-]+')->name('print');
+        Route::get('/{edition}/telecharger', [$editions, 'export'])->where('edition', '[a-z0-9-]+')->name('export');
+    });
+
     // --- PLANNING DES QUARTS ---
     // Chaque chef place son personnel sur les quarts de l'hôtel, semaine par
     // semaine ; chacun consulte ses quarts.
@@ -667,6 +678,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
             Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
 
+            // Unités de stockage des articles (réglées dans Paramètres › Économat)
+            Route::post('/unites', [$eco . 'StockUnitController', 'store'])->name('units.store');
+            Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
+            Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
+
             // Catégories d'articles et leur compte de stock
             Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
             Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');
@@ -699,12 +715,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
             Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')->name('orders.print');
             Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
+            // Bon parvenu au fournisseur sans email : main propre, téléphone, WhatsApp.
+            Route::post('/bons/{order}/transmis', [$eco . 'PurchaseOrderController', 'transmit'])->whereNumber('order')->name('orders.transmit');
             Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')->name('orders.receive');
             Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')->name('orders.cancel');
 
             // Bons de réception (Goods Receipts)
             Route::get('/receptions', [$eco . 'GoodsReceiptController', 'index'])->name('receipts.index');
             Route::get('/receptions/export', [$eco . 'GoodsReceiptController', 'export'])->name('receipts.export');
+            // Réception directe : marchandise arrivée sans bon de commande.
+            Route::get('/receptions/directe', [$eco . 'GoodsReceiptController', 'createDirect'])->name('receipts.direct.create');
+            Route::post('/receptions/directe', [$eco . 'GoodsReceiptController', 'storeDirect'])->name('receipts.direct.store');
             Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')->name('receipts.create');
             Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')->name('receipts.store');
             Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');

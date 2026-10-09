@@ -124,6 +124,7 @@ class PermissionCatalog
         'economat.orders.creer',
         'economat.orders.receive',
         'economat.orders.send',
+        'economat.orders.transmit',
         'economat.purchase_requests.approve',
         'economat.purchase_requests.cancel',
         'economat.purchase_requests.convert',
@@ -131,6 +132,7 @@ class PermissionCatalog
         'economat.purchase_requests.reject',
         'economat.receipts.cancel',
         'economat.receipts.creer',
+        'economat.receipts.direct.creer',
         'economat.requisitions.approve',
         'economat.requisitions.cancel',
         'economat.requisitions.creer',
@@ -139,6 +141,9 @@ class PermissionCatalog
         'economat.suppliers.creer',
         'economat.suppliers.modifier',
         'economat.suppliers.supprimer',
+        'economat.units.creer',
+        'economat.units.modifier',
+        'economat.units.supprimer',
         'economat.stores.counts.cancel',
         'economat.stores.counts.close',
         'economat.stores.counts.creer',
@@ -335,6 +340,14 @@ class PermissionCatalog
     private const CONFIGURATION_RESTAURANTS = [
         'restaurant.restaurants.creer', 'restaurant.restaurants.modifier',
         'restaurant.restaurants.spaces.creer', 'restaurant.restaurants.spaces.modifier',
+    ];
+
+    /** Toutes les fonctions de l'établissement, hors administration et support. */
+    private const TOUT_LE_PERSONNEL = [
+        'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
+        'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+        'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+        'shop_cashier', 'shop_manager', 'storekeeper',
     ];
 
     /** Ceux qui planifient le personnel : les chefs de service et la direction. */
@@ -704,6 +717,8 @@ class PermissionCatalog
             'economat.orders.export' => ['controller', 'econome', 'manager'],
             'economat.orders.receive' => ['econome', 'storekeeper'],
             'economat.orders.send' => ['econome'],
+            // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
+            'economat.orders.transmit' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.purchase_requests.approve' => ['manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
@@ -713,6 +728,9 @@ class PermissionCatalog
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
+            // Recevoir sans commande engage une dépense : c'est l'économe qui
+            // en décide, pas le magasinier qui pointe les livraisons attendues.
+            'economat.receipts.direct.creer' => ['econome'],
             'economat.receipts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
@@ -727,6 +745,10 @@ class PermissionCatalog
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],
             'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Les unités de stockage des articles : l'économe tient la liste.
+            'economat.units.creer' => ['econome'],
+            'economat.units.modifier' => ['econome'],
+            'economat.units.supprimer' => ['econome'],
             'economat.stores.counts.cancel' => ['econome'],
             'economat.stores.counts.close' => ['econome'],
             'economat.stores.counts.creer' => ['econome'],
@@ -791,7 +813,8 @@ class PermissionCatalog
             'settings.services.import' => ['manager'],
             'settings.services.modifier' => ['manager'],
             'settings.services.supprimer' => ['manager'],
-            'settings.voir' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            // L'économe y règle l'onglet Économat (unités de stockage).
+            'settings.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
             // ── Boutique ──
             'shop.cash_register.close' => ['manager', 'shop_cashier', 'shop_manager'],
@@ -881,15 +904,16 @@ class PermissionCatalog
             // ── Factures ──
             'invoices.voir' => ['controller', 'manager', 'reception'],
 
+            // ── Éditions ──
+            // La rubrique s'ouvre à tout le personnel ; chaque édition y pose
+            // en plus le droit des données qu'elle montre (App\Editions).
+            'editions.voir' => self::TOUT_LE_PERSONNEL,
+            'editions.export' => self::TOUT_LE_PERSONNEL,
+
             // ── Planning des quarts ──
             // Chacun consulte ses quarts ; les chefs de service planifient
             // leur personnel, la direction tous les services (PlanningService).
-            'planning.voir' => [
-                'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-                'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
-                'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
-                'shop_cashier', 'shop_manager', 'storekeeper',
-            ],
+            'planning.voir' => self::TOUT_LE_PERSONNEL,
             'planning.affectations.creer' => self::CHEFS_DE_SERVICE,
             'planning.affectations.supprimer' => self::CHEFS_DE_SERVICE,
             'planning.recopier' => self::CHEFS_DE_SERVICE,
