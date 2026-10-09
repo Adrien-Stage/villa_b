@@ -783,6 +783,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
             Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])->whereNumber('requisition')->name('requisitions.print');
             Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
+            // Visa du chef de service avant l'économat (le contrôleur vérifie le service).
+            Route::post('/demandes/{requisition}/viser', [$eco . 'StockRequisitionController', 'endorse'])->whereNumber('requisition')->name('requisitions.endorse');
         });
     });
 

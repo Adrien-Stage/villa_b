@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\StockItem;
 use App\Models\StockRequisition;
 use App\Models\StockRequisitionLine;
+use App\Models\User;
 use App\Notifications\StockRequisitionSubmitted;
 use App\Notifications\StockRequisitionUpdated;
 use App\Services\DocumentExporter;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -25,8 +27,9 @@ use Illuminate\View\View;
 /**
  * Demandes des départements à l'économat.
  *
- * L'économe (et le manager) voient toutes les demandes et les traitent ; un
- * responsable de département ne voit et ne crée que les siennes.
+ * Un membre d'un service demande ; son chef vise ; l'économe valide puis
+ * livre. L'économe (et la direction) voient toutes les demandes ; un chef
+ * voit les siennes et celles de son service ; un membre, les siennes.
  */
 class StockRequisitionController extends Controller
 {
@@ -47,10 +50,7 @@ class StockRequisitionController extends Controller
     {
         $requisitions = $this->filtrer($request)->paginate(self::PAR_PAGE)->withQueryString();
 
-        $statsQuery = StockRequisition::query();
-        if (!$this->isStoreKeeper()) {
-            $statsQuery->where('requested_by', Auth::id());
-        }
+        $statsQuery = StockRequisition::query()->visiblesPour(Auth::user());
         if (($service = $request->query('service')) && array_key_exists($service, StockRequisition::DEPARTMENTS)) {
             $statsQuery->where('department', $service);
         }
@@ -63,6 +63,7 @@ class StockRequisitionController extends Controller
 
         $stats = [
             'total'     => (clone $statsQuery)->count(),
+            'a_viser'   => (clone $statsQuery)->where('status', StockRequisition::STATUS_AWAITING_ENDORSEMENT)->count(),
             'pending'   => (clone $statsQuery)->where('status', StockRequisition::STATUS_PENDING)->count(),
             'approved'  => (clone $statsQuery)->where('status', StockRequisition::STATUS_APPROVED)->count(),
             'delivered' => (clone $statsQuery)->where('status', StockRequisition::STATUS_DELIVERED)->count(),
@@ -71,6 +72,7 @@ class StockRequisitionController extends Controller
         return view('economat.requisitions.index', [
             'requisitions' => $requisitions,
             'isKeeper'     => $this->isStoreKeeper(),
+            'viseur'       => StockRequisition::servicesDirigesPar(Auth::user()) !== [],
             'filtres'      => $this->filtresAppliques($request),
             'stats'        => $stats,
         ]);
@@ -125,12 +127,9 @@ class StockRequisitionController extends Controller
      */
     private function filtrer(Request $request): Builder
     {
-        $query = StockRequisition::with('requestedBy', 'lines')->withCount('lines')->latest();
-
-        // Un département ne voit que ses propres demandes.
-        if (!$this->isStoreKeeper()) {
-            $query->where('requested_by', Auth::id());
-        }
+        // Un membre voit ses demandes, un chef aussi celles de son service.
+        $query = StockRequisition::with('requestedBy', 'lines')->withCount('lines')->latest()
+            ->visiblesPour(Auth::user());
 
         if (($statut = $request->query('statut')) && array_key_exists($statut, StockRequisition::STATUSES)) {
             $query->where('status', $statut);
@@ -188,18 +187,13 @@ class StockRequisitionController extends Controller
     {
         $items = StockItem::active()->with('category')->orderBy('name')->get();
 
-        // Départements que l'utilisateur est habilité à représenter : ceux
-        // dont il exerce la fonction, directement ou comme chef.
-        $departments = collect(StockRequisition::DEPARTMENT_ROLES)
-            ->filter(fn ($roles) => Auth::user()->exerce($roles))
-            ->keys()
-            ->mapWithKeys(fn ($key) => [$key => StockRequisition::DEPARTMENTS[$key]])
-            ->all();
+        $departments = $this->departementsDe(Auth::user());
 
-        // Un économe/manager sans département précis peut demander pour « autre ».
-        if (empty($departments)) {
-            $departments = ['autre' => StockRequisition::DEPARTMENTS['autre']];
-        }
+        // Services où la demande passera d'abord par le chef : l'écran le dit.
+        $avecVisa = array_values(array_filter(
+            array_keys($departments),
+            fn (string $service) => StockRequisition::visaRequis(Auth::user(), $service)
+        ));
 
         // Dépôts que ces services alimentent : la livraison y entrera en stock.
         $stores = \App\Models\ServiceStore::active()
@@ -214,13 +208,14 @@ class StockRequisitionController extends Controller
         $restaurants = $contexte->offrant(Auth::user(), \App\Models\PointOfSale::SERVICE_STOCK);
         $restaurantParDefaut = $restaurants->firstWhere('id', $contexte->pourCreation(Auth::user())?->id) ?? $restaurants->first();
 
-        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut'));
+        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut', 'avecVisa'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'department'  => ['required', 'in:' . implode(',', array_keys(StockRequisition::DEPARTMENTS))],
+            // On demande pour son propre service : c'est son chef qui visera.
+            'department'  => ['required', 'in:' . implode(',', array_keys($this->departementsDe(Auth::user())))],
             // Le dépôt doit appartenir au service qui demande : le bar ne
             // reçoit pas ce que l'hébergement a demandé.
             'service_store_id' => ['nullable', \Illuminate\Validation\Rule::exists('service_stores', 'id')
@@ -232,6 +227,7 @@ class StockRequisitionController extends Controller
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
             'lines.*.quantity'      => ['required', 'numeric', 'min:0.001'],
         ], [
+            'department.in'           => "Vous ne pouvez demander que pour votre service.",
             'lines.required'          => 'Ajoutez au moins un article à votre demande.',
             'service_store_id.exists' => "Ce dépôt n'appartient pas au service émetteur.",
         ]);
@@ -257,7 +253,13 @@ class StockRequisitionController extends Controller
             $user = Auth::user();
             $signature = $user ? $user->signatureName() : null;
 
+            // Le chef qui demande pour son service porte lui-même le visa.
+            $visaRequis = StockRequisition::visaRequis($user, $validated['department']);
+
             $requisition = StockRequisition::create([
+                'status'              => $visaRequis ? StockRequisition::STATUS_AWAITING_ENDORSEMENT : StockRequisition::STATUS_PENDING,
+                'endorsed_by'         => $visaRequis ? null : $user->id,
+                'endorsed_at'         => $visaRequis ? null : now(),
                 'department'          => $validated['department'],
                 'service_store_id'    => $validated['service_store_id'] ?? null,
                 'point_of_sale_id'    => $restaurant?->id,
@@ -279,6 +281,17 @@ class StockRequisitionController extends Controller
             return $requisition;
         });
 
+        if ($requisition->canBeEndorsed()) {
+            // Le chef du service vise d'abord : c'est lui qu'on prévient.
+            foreach ($this->viseurs($requisition) as $chef) {
+                $this->notifier->send($chef, new StockRequisitionSubmitted($requisition));
+            }
+
+            return redirect()
+                ->route('economat.requisitions.show', $requisition)
+                ->with('success', "Demande {$requisition->number} transmise à votre chef de service pour visa.");
+        }
+
         // L'economat doit savoir qu'une demande attend son arbitrage.
         $this->notifier->toRoles(['econome', 'manager'], new StockRequisitionSubmitted($requisition), Auth::id());
 
@@ -287,15 +300,53 @@ class StockRequisitionController extends Controller
             ->with('success', "Demande {$requisition->number} transmise à l'économat.");
     }
 
+    /**
+     * Visa du chef de service : il vise la demande d'un membre de son service,
+     * qui part alors à l'économat, ou la refuse avec un motif.
+     */
+    public function endorse(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
+    {
+        $validated = $request->validate([
+            'decision' => ['required', 'in:viser,refuser'],
+            'notes'    => ['nullable', 'string', 'max:500', 'required_if:decision,refuser'],
+        ], [
+            'notes.required_if' => 'Donnez le motif du refus : le demandeur le lira.',
+        ]);
+
+        if (!$requisition->peutEtreViseePar(Auth::user())) {
+            abort(403, "Seul le chef de ce service, ou la direction, vise cette demande.");
+        }
+
+        try {
+            $validated['decision'] === 'viser'
+                ? $service->endorse($requisition, $validated['notes'] ?? null)
+                : $service->declineEndorsement($requisition, $validated['notes']);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $requisition->refresh();
+        $this->notifier->send($requisition->requestedBy, new StockRequisitionUpdated($requisition));
+
+        if ($validated['decision'] === 'refuser') {
+            return back()->with('success', "Demande {$requisition->number} refusée : elle n'ira pas à l'économat.");
+        }
+
+        $this->notifier->toRoles(['econome', 'manager'], new StockRequisitionSubmitted($requisition), Auth::id());
+
+        return back()->with('success', "Demande {$requisition->number} visée : elle part à l'économat.");
+    }
+
     public function show(StockRequisition $requisition): View
     {
         $this->authorizeView($requisition);
 
-        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy', 'serviceStore');
+        $requisition->load('lines.item.category', 'requestedBy', 'endorsedBy', 'reviewedBy', 'serviceStore');
 
         return view('economat.requisitions.show', [
             'requisition' => $requisition,
             'isKeeper'    => $this->isStoreKeeper(),
+            'peutViser'   => $requisition->peutEtreViseePar(Auth::user()),
         ]);
     }
 
@@ -306,7 +357,7 @@ class StockRequisitionController extends Controller
     {
         $this->authorizeView($requisition);
 
-        $requisition->load('lines.item.category', 'requestedBy', 'reviewedBy', 'serviceStore');
+        $requisition->load('lines.item.category', 'requestedBy', 'endorsedBy', 'reviewedBy', 'serviceStore');
 
         return view('economat.requisitions.print', [
             'requisition' => $requisition,
@@ -405,8 +456,48 @@ class StockRequisitionController extends Controller
 
     private function authorizeView(StockRequisition $requisition): void
     {
-        if (!$this->isStoreKeeper() && $requisition->requested_by !== Auth::id()) {
+        if (!StockRequisition::query()->visiblesPour(Auth::user())->whereKey($requisition->id)->exists()) {
             abort(403);
         }
+    }
+
+    /**
+     * Services pour lesquels cette personne demande : ceux dont elle exerce
+     * la fonction, directement ou comme chef. Sans service précis (économe,
+     * direction, contrôle), elle demande pour « autre ».
+     *
+     * @return array<string, string>
+     */
+    private function departementsDe(User $user): array
+    {
+        $departments = collect(StockRequisition::DEPARTMENT_ROLES)
+            ->filter(fn ($roles) => $user->exerce($roles))
+            ->keys()
+            ->mapWithKeys(fn ($key) => [$key => StockRequisition::DEPARTMENTS[$key]])
+            ->all();
+
+        return $departments ?: ['autre' => StockRequisition::DEPARTMENTS['autre']];
+    }
+
+    /**
+     * Qui prévenir d'une demande à viser : les chefs du service (pour un
+     * restaurant, ceux qui y travaillent). Sans chef, la direction.
+     *
+     * @return Collection<int, User>
+     */
+    private function viseurs(StockRequisition $requisition): Collection
+    {
+        $chefs = User::query()->active()
+            ->havingRole(StockRequisition::CHEFS[$requisition->department] ?? ['manager'])
+            ->whereKeyNot($requisition->requested_by)
+            ->get()
+            ->filter(fn ($chef) => $requisition->peutEtreViseePar($chef));
+
+        if ($chefs->isNotEmpty()) {
+            return $chefs->values();
+        }
+
+        return User::query()->active()->havingRole(['manager'])
+            ->whereKeyNot($requisition->requested_by)->get();
     }
 }

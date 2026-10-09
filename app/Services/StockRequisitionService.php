@@ -36,6 +36,56 @@ class StockRequisitionService
         $this->serviceStores = $serviceStores ?? app(ServiceStoreService::class);
     }
 
+    /**
+     * Visa du chef de service : la demande d'un membre du service part à
+     * l'économat. Le visa n'engage pas le magasin ; c'est l'économe qui
+     * valide ensuite, puis qui livre.
+     */
+    public function endorse(StockRequisition $requisition, ?string $notes = null): void
+    {
+        DB::transaction(function () use ($requisition, $notes) {
+            $requisition = $this->lockForEndorsement($requisition);
+
+            $requisition->update([
+                'status'            => StockRequisition::STATUS_PENDING,
+                'endorsed_by'       => auth()->id(),
+                'endorsed_at'       => now(),
+                'endorsement_notes' => $notes,
+            ]);
+        });
+
+        $requisition->refresh();
+    }
+
+    /** Refus au visa : la demande s'arrête là, l'économat ne la voit pas arriver. */
+    public function declineEndorsement(StockRequisition $requisition, string $motif): void
+    {
+        DB::transaction(function () use ($requisition, $motif) {
+            $requisition = $this->lockForEndorsement($requisition);
+
+            $requisition->update([
+                'status'            => StockRequisition::STATUS_REJECTED,
+                'endorsed_by'       => auth()->id(),
+                'endorsed_at'       => now(),
+                'endorsement_notes' => $motif,
+            ]);
+        });
+
+        $requisition->refresh();
+    }
+
+    /** Relit la demande sous verrou : deux visas simultanés se suivent. */
+    private function lockForEndorsement(StockRequisition $requisition): StockRequisition
+    {
+        $requisition = StockRequisition::query()->lockForUpdate()->findOrFail($requisition->id);
+
+        if (!$requisition->canBeEndorsed()) {
+            throw new \RuntimeException('Cette demande a déjà été visée ou traitée.');
+        }
+
+        return $requisition;
+    }
+
     public function approve(StockRequisition $requisition, ?string $notes = null): void
     {
         DB::transaction(function () use ($requisition, $notes) {
@@ -82,6 +132,10 @@ class StockRequisitionService
     private function lockForReview(StockRequisition $requisition): StockRequisition
     {
         $requisition = StockRequisition::query()->lockForUpdate()->findOrFail($requisition->id);
+
+        if ($requisition->canBeEndorsed()) {
+            throw new \RuntimeException("Cette demande attend encore le visa du chef de service : elle n'est pas arrivée à l'économat.");
+        }
 
         if (!$requisition->canBeReviewed()) {
             throw new \RuntimeException('Cette demande a déjà été traitée.');

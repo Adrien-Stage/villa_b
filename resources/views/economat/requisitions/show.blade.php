@@ -5,6 +5,7 @@
 @section('content')
 @php
     $statusStyles = [
+        'awaiting_endorsement' => 'bg-amber-50 text-amber-800 border border-amber-200',
         'pending'   => 'bg-blue-50 text-blue-700 border border-blue-200',
         'approved'  => 'bg-indigo-50 text-indigo-700 border border-indigo-200',
         'rejected'  => 'bg-red-50 text-red-700 border border-red-200',
@@ -87,6 +88,29 @@
                 </div>
             </div>
         </div>
+
+        {{-- Visa du chef de service, avant l'économat --}}
+        @if($requisition->canBeEndorsed())
+            <div class="mt-4 pt-3 border-t border-secondary/15 text-xs text-amber-800 flex items-center gap-2">
+                <i data-lucide="hourglass" class="w-4 h-4"></i>
+                <span>En attente du visa du chef de service : la demande n'est pas encore arrivée à l'économat.</span>
+            </div>
+        @elseif($requisition->endorsedBy)
+            <div class="mt-4 pt-3 border-t border-secondary/15 text-xs text-primary/70 flex items-center gap-2">
+                <i data-lucide="stamp" class="w-4 h-4 text-primary/50"></i>
+                <span>
+                    @if($requisition->refuseeAuVisa())
+                        Refusée au visa par <strong>{{ $requisition->endorsedBy->name }}</strong>
+                    @elseif($requisition->endorsed_by === $requisition->requested_by)
+                        Demande du chef de service : visa porté par <strong>{{ $requisition->endorsedBy->name }}</strong>
+                    @else
+                        Visée par <strong>{{ $requisition->endorsedBy->name }}</strong>
+                    @endif
+                    le {{ $requisition->endorsed_at?->format('d/m/Y à H:i') }}
+                    @if($requisition->endorsement_notes) — <em>« {{ $requisition->endorsement_notes }} »</em>@endif
+                </span>
+            </div>
+        @endif
 
         @if($requisition->reviewedBy)
             <div class="mt-4 pt-3 border-t border-secondary/15 text-xs text-primary/70 flex items-center gap-2">
@@ -235,6 +259,41 @@
         </div>
     </form>
 
+    {{-- Visa du chef de service --}}
+    @if($peutViser)
+        <div class="bg-white border border-amber-200 rounded-xl p-5 mb-4 shadow-sm" x-data="{ decision: null }">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-1">Visa du chef de service</h2>
+            <p class="text-xs text-primary/60 mb-3">
+                {{ $requisition->requestedBy?->name ?? 'Un membre du service' }} demande ces articles. Visée, la demande part à l'économat, qui la valide puis la livre.
+            </p>
+            <div class="flex gap-3 mb-3">
+                <button type="button" @click="decision = 'viser'"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    :class="decision === 'viser' ? 'bg-green-600 text-white border-green-600' : 'border-secondary/30 text-primary hover:bg-green-50'">
+                    <i data-lucide="stamp" class="w-4 h-4"></i>
+                    <span>Viser la demande</span>
+                </button>
+                <button type="button" @click="decision = 'refuser'"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    :class="decision === 'refuser' ? 'bg-red-600 text-white border-red-600' : 'border-secondary/30 text-primary hover:bg-red-50'">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    <span>Refuser</span>
+                </button>
+            </div>
+            <form x-show="decision" x-cloak method="POST" action="{{ route('economat.requisitions.endorse', $requisition) }}">
+                @csrf
+                <input type="hidden" name="decision" :value="decision">
+                <label for="notes-visa" class="sr-only">Remarque ou motif</label>
+                <textarea id="notes-visa" name="notes" rows="2" maxlength="500" :required="decision === 'refuser'"
+                    :placeholder="decision === 'refuser' ? 'Motif du refus (le demandeur le lira)…' : 'Remarque pour l\'économat (facultatif)…'"
+                    class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary mb-3">{{ old('notes') }}</textarea>
+                <button type="submit" class="w-full py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                    <span x-text="decision === 'viser' ? 'Confirmer le visa : envoyer à l\'économat' : 'Confirmer le refus'"></span>
+                </button>
+            </form>
+        </div>
+    @endif
+
     {{-- Actions de validation par l'économe / manager --}}
     @if($isKeeper && $requisition->canBeReviewed())
         <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-4 shadow-sm" x-data="{ mode: null }">
@@ -264,8 +323,8 @@
         </div>
     @endif
 
-    {{-- Annulation par le demandeur --}}
-    @if($requisition->canBeCancelled())
+    {{-- Annulation par le demandeur (ou l'économat) ; le chef, lui, refuse au visa --}}
+    @if($requisition->canBeCancelled() && ($isKeeper || $requisition->requested_by === auth()->id()))
         <form method="POST" action="{{ route('economat.requisitions.cancel', $requisition) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce bon de réquisition ?');" class="mt-3 text-right">
             @csrf
             <button type="submit" class="text-xs text-red-500 hover:text-red-700 hover:underline">

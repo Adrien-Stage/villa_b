@@ -162,6 +162,7 @@
             text-transform: uppercase;
         }
 
+        .status-awaiting { background: #fef3c7; color: #92400e; }
         .status-pending { background: #dbeafe; color: #1e40af; }
         .status-approved { background: #e0e7ff; color: #3730a3; }
         .status-delivered { background: #dcfce7; color: #166534; }
@@ -229,7 +230,7 @@
         }
 
         .signatures-table td {
-            width: 33.33%;
+            width: 25%;
             border: 1px solid #cbd5e1;
             padding: 10px;
             vertical-align: top;
@@ -325,6 +326,7 @@
                     <span class="meta-label">Statut du bon :</span>
                     @php
                         $statusClass = match($requisition->status) {
+                            'awaiting_endorsement' => 'status-awaiting',
                             'pending'   => 'status-pending',
                             'approved'  => 'status-approved',
                             'delivered' => 'status-delivered',
@@ -338,6 +340,16 @@
                     <span class="meta-label">Demandé par :</span>
                     <span class="meta-value">{{ $requisition->requestedBy?->name ?? '—' }}</span>
                     <span style="font-size: 8.5px; color: #64748b;">({{ $requisition->requestedBy?->email ?? '' }})</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Visa du chef de service :</span>
+                    <span class="meta-value">
+                        @if($requisition->endorsedBy)
+                            {{ $requisition->refuseeAuVisa() ? 'Refusée par' : '' }} {{ $requisition->endorsedBy->name }} le {{ $requisition->endorsed_at?->format('d/m/Y à H:i') }}
+                        @else
+                            En attente du visa
+                        @endif
+                    </span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Validation Économat :</span>
@@ -469,6 +481,20 @@
                     <div class="sig-meta">
                         ✓ Signé électroniquement le {{ $requisition->created_at->format('d/m/Y à H:i') }}
                     </div>
+                </td>
+                <td>
+                    <div class="sig-title">Le Chef de service</div>
+                    <div class="sig-note">Visa du service demandeur</div>
+                    @if($requisition->endorsedBy && !$requisition->refuseeAuVisa())
+                        <div class="sig-note" style="margin-top: 4px;">Nom : <strong>{{ $requisition->endorsedBy->name }}</strong></div>
+                        <div style="margin-top: 4px;">
+                            <span class="sig-handwritten">{{ $requisition->endorsedBy->signatureName() }}</span>
+                        </div>
+                        <div class="sig-meta">✓ Visé électroniquement le {{ $requisition->endorsed_at?->format('d/m/Y à H:i') }}</div>
+                    @else
+                        <div class="sig-note" style="margin-top: 25px;">Nom : ....................................</div>
+                        <div class="sig-note">Date & Signature :</div>
+                    @endif
                 </td>
                 <td>
                     <div class="sig-title">L'Économe / Magasinier</div>

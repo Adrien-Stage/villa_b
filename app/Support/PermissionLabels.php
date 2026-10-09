@@ -165,6 +165,7 @@ class PermissionLabels
         'economat.requisitions.deliver' => ['Bons de réquisition', 'Livrer'],
         'economat.requisitions.cancel' => ['Bons de réquisition', 'Annuler'],
         'economat.requisitions.export' => ['Bons de réquisition', 'Exporter'],
+        'economat.requisitions.endorse' => ['Bons de réquisition', 'Viser (chef de service)'],
         'economat.stock_counts.voir' => ['Inventaires du magasin', 'Consulter'],
         'economat.stock_counts.creer' => ['Inventaires du magasin', 'Ouvrir un inventaire'],
         'economat.stock_counts.modifier' => ['Inventaires du magasin', 'Saisir le comptage'],

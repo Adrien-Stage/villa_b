@@ -240,6 +240,13 @@ produits et les demandes à l'économat.
 les comptages. Il ne reçoit pas sans bon de commande : recevoir sans commande engage
 une dépense, que l'économe décide.
 
+**Demandes internes** — chaque membre d'un service (réceptionniste, valet, cuisinier,
+serveur, vendeur, comptable) peut demander des articles à l'économat pour son service.
+Son chef vise la demande avant qu'elle arrive chez l'économe : chef de réception,
+gouvernante, chef cuisinier ou responsable restaurant, responsable boutique, RAF. La
+direction vise à la place d'un chef absent. Une demande faite par un chef porte déjà
+son visa.
+
 ### Comptabilité et finances
 
 **Responsable administratif et financier** et **Comptable** — les mêmes droits.
