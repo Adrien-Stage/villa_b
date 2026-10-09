@@ -162,6 +162,29 @@ Chaque étape déclenche une notification
 ([`StockRequisitionSubmitted`](../app/Notifications/StockRequisitionSubmitted.php),
 [`StockRequisitionUpdated`](../app/Notifications/StockRequisitionUpdated.php)).
 
+#### Sortie hors établissement
+
+Un matériel quitte parfois le magasin sans servir l'hôtel : prêt, envoi en réparation,
+don, cession, transfert vers un autre établissement, restitution à son propriétaire.
+L'économe enregistre et valide ces sorties dans **Économat › Sorties hors
+établissement** (`/economat/sorties-externes`, droit `economat.external_issues.creer`).
+
+- Le bon (`ExternalIssue`, numéro BSE-AAAA-NNNN) garde la personne qui emporte le
+  matériel : nom (obligatoire), structure ou qualité, téléphone, pièce d'identité. Sa
+  signature est tirée de son nom, comme celle d'un demandeur interne ; l'économe signe
+  aussi. Pour un prêt ou une réparation, une date de retour prévue peut être notée.
+- La validation sort les articles du stock au coût moyen
+  (source `external_issue`), sous le gel d'inventaire comme toute sortie ; chaque ligne
+  garde son coût. L'annulation, motivée, les fait revenir au même coût sans toucher au
+  dernier prix d'achat (`StockService::reverseOut`).
+- Au night audit, la sortie passe en charge du magasin (603x, centre économat) sous le
+  libellé « Sorties hors établissement ». Un don ou une cession peut demander au
+  comptable un reclassement.
+- La liste se filtre par date ou par période, motif, statut, article, nom ou
+  téléphone, et montre les retours en retard ; elle s'imprime et s'exporte (PDF, Excel,
+  Word). Le bon s'imprime avec les signatures. L'édition « Sorties hors établissement »
+  et la recherche de pièce des Éditions les retrouvent aussi.
+
 ### 3. Correction — l'ajustement
 
 `POST /economat/articles/{item}/ajustement` — correction manuelle après inventaire ou
@@ -192,6 +215,21 @@ hors inventaire, quantité illisible, doublon) est listée à l'écran.
 Avec « clôturer aussitôt » (droit de clôture), l'import clôture l'inventaire et ajuste le
 stock, à condition qu'aucune ligne n'ait été refusée : sinon l'inventaire reste ouvert
 pour correction.
+
+#### Fiches de comptage
+
+`GET /economat/fiches-comptage` imprime une fiche par service (économat, garde-manger de
+chaque restaurant, boutique, chaque dépôt), à l'aveugle ou avec le théorique. On choisit
+les articles listés ([`CountSheetService::SELECTIONS`](../app/Services/CountSheetService.php)) :
+
+- tous les articles actifs ;
+- uniquement les articles en stock (stock différent de 0 : un stock négatif au
+  garde-manger se compte aussi) ;
+- les articles en stock, et ceux tombés à 0 après un mouvement depuis une date. Sans
+  date, la période part du dernier inventaire clôturé du service, à défaut du début du
+  mois. Pour la boutique, qui n'a pas de journal, un produit a bougé s'il a été vendu.
+
+La fiche imprimée rappelle le choix fait.
 
 ### 5. Mouvements de stock
 

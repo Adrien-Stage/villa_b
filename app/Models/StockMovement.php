@@ -25,6 +25,7 @@ class StockMovement extends Model
     public const SOURCE_MANUAL         = 'manual';
     public const SOURCE_STOCK_COUNT    = 'stock_count';
     public const SOURCE_OPENING        = 'opening';
+    public const SOURCE_EXTERNAL_ISSUE = 'external_issue';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -33,6 +34,7 @@ class StockMovement extends Model
         self::SOURCE_MANUAL         => 'Saisie manuelle',
         self::SOURCE_STOCK_COUNT    => 'Inventaire physique',
         self::SOURCE_OPENING        => 'Reprise du stock initial',
+        self::SOURCE_EXTERNAL_ISSUE => 'Sortie hors établissement',
     ];
 
     public const TYPES = [

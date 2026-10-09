@@ -683,6 +683,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
             Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
 
+            // Sorties de matériel hors de l'établissement (prêt, réparation, don…)
+            Route::get('/sorties-externes', [$eco . 'ExternalIssueController', 'index'])->name('external_issues.index');
+            Route::get('/sorties-externes/export', [$eco . 'ExternalIssueController', 'export'])->name('external_issues.export');
+            Route::get('/sorties-externes/nouvelle', [$eco . 'ExternalIssueController', 'create'])->name('external_issues.create');
+            Route::post('/sorties-externes', [$eco . 'ExternalIssueController', 'store'])->name('external_issues.store');
+            Route::get('/sorties-externes/{sortie}', [$eco . 'ExternalIssueController', 'show'])->whereNumber('sortie')->name('external_issues.show');
+            Route::get('/sorties-externes/{sortie}/imprimer', [$eco . 'ExternalIssueController', 'print'])->whereNumber('sortie')->name('external_issues.print');
+            Route::post('/sorties-externes/{sortie}/annuler', [$eco . 'ExternalIssueController', 'cancel'])->whereNumber('sortie')->name('external_issues.cancel');
+
             // Mouvements de stock : tous les articles, ou la fiche de stock d'un seul
             Route::get('/mouvements', [$eco . 'StockMovementController', 'index'])->name('movements.index');
             Route::get('/mouvements/export', [$eco . 'StockMovementController', 'export'])->name('movements.export');

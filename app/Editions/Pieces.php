@@ -3,6 +3,7 @@
 namespace App\Editions;
 
 use App\Models\Booking;
+use App\Models\ExternalIssue;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
@@ -90,6 +91,9 @@ class Pieces
             ['sorte' => 'Bon de réquisition', 'modele' => StockRequisition::class, 'colonne' => 'number', 'date' => 'created_at',
                 'route' => 'economat.requisitions.print', 'droit' => 'economat.requisitions.voir',
                 'detail' => fn (StockRequisition $r) => (StockRequisition::DEPARTMENTS[$r->department] ?? $r->department) . ' — ' . $r->statusLabel()],
+            ['sorte' => 'Bon de sortie hors établissement', 'modele' => ExternalIssue::class, 'colonne' => 'number', 'date' => 'issued_at',
+                'route' => 'economat.external_issues.print', 'droit' => 'economat.external_issues.voir',
+                'detail' => fn (ExternalIssue $s) => $s->beneficiaire . ' — ' . $s->reasonLabel()],
             ['sorte' => 'Vente au comptoir', 'modele' => ReceptionSale::class, 'colonne' => 'sale_number', 'date' => 'created_at',
                 'route' => 'reception.pos.receipt', 'droit' => 'reception.pos.receipt',
                 'detail' => fn (ReceptionSale $v) => ($v->customer_name ?: '') . ' — ' . number_format(((int) $v->total_amount) / 100, 0, ',', ' ') . ' FCFA'],

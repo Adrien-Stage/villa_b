@@ -558,6 +558,9 @@
                                     {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Bons de réquisition' }}
                                 </x-sidebar-link>
                             @endunless
+                            @droit('economat.external_issues.voir')
+                                <x-sidebar-link route="economat.external_issues.index" icon="log-out">Sorties hors établissement</x-sidebar-link>
+                            @enddroit
                             @droit('economat.control.voir')
                                 <x-sidebar-link route="economat.control.index" icon="pie-chart">Contrôle & Ratios</x-sidebar-link>
                             @enddroit

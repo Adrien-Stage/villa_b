@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ExternalIssue;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\StockCount;
@@ -36,7 +37,8 @@ class StockMovementJournal
             ->when($filtres['categorie'] ?? null, fn ($q, $id) => $q->whereHas('item', fn ($i) => $i->where('stock_category_id', $id)))
             ->when($filtres['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($filtres['source'] ?? null, fn ($q, $source) => $q->where('source_type', $source))
-            ->when(trim((string) ($filtres['recherche'] ?? '')), fn ($q, $texte) => $q->where('reason', 'like', '%' . $texte . '%'));
+            // Sans tenir compte de la casse : LIKE la distingue sous PostgreSQL.
+            ->when(trim((string) ($filtres['recherche'] ?? '')), fn ($q, $texte) => $q->whereRaw('LOWER(reason) LIKE ?', ['%' . mb_strtolower($texte) . '%']));
     }
 
     /** Totaux de la sélection : nombre de mouvements et valeurs par nature. */
@@ -103,6 +105,7 @@ class StockMovementJournal
             StockMovement::SOURCE_PURCHASE_ORDER => [PurchaseOrder::class, 'number', 'economat.orders.show'],
             StockMovement::SOURCE_REQUISITION    => [StockRequisition::class, 'number', 'economat.requisitions.show'],
             StockMovement::SOURCE_STOCK_COUNT    => [StockCount::class, 'reference', 'economat.stock_counts.show'],
+            StockMovement::SOURCE_EXTERNAL_ISSUE => [ExternalIssue::class, 'number', 'economat.external_issues.show'],
         ];
 
         $documents = [];

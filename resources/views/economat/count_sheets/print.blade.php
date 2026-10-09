@@ -106,6 +106,7 @@
                                     @if($identite !== '')<div class="identite">{{ $identite }}</div>@endif
                                     <h1>Fiche de comptage — {{ $sheet['title'] }}</h1>
                                     @if($sheet['subtitle'])<div class="muted">{{ $sheet['subtitle'] }}</div>@endif
+                                    @if($sheet['selection'] ?? null)<div class="muted">{{ $sheet['selection'] }}</div>@endif
                                     <div>
                                         @if($sheet['reference'])<span class="ref">Inventaire {{ $sheet['reference'] }}</span>@endif
                                         <span class="fige">

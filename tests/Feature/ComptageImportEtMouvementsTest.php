@@ -198,6 +198,10 @@ test("la rubrique Mouvements montre tous les articles, ou la fiche de stock d'un
     $this->travelTo(CarbonImmutable::parse('2026-10-12 09:00'));
     $stock->adjust($this->biere, 25, 'Recomptage');
 
+    // La recherche par motif ne tient pas compte de la casse.
+    expect($this->get(route('economat.movements.index', ['du' => '2026-10-01', 'au' => '2026-10-31', 'recherche' => 'service BAR']))
+        ->viewData('lignes')->pluck('motif')->all())->toBe(['Service bar']);
+
     $this->get(route('economat.movements.index', ['du' => '2026-10-01', 'au' => '2026-10-31']))->assertOk()
         ->assertSee('Mouvements de stock')
         ->assertSee('Bière 65 cl')
