@@ -317,6 +317,9 @@ class StockService
             'stock_item_id' => $item->id,
             'type'          => $type,
             'quantity'      => $signedQuantity,
+            // Le stock initial du mouvement : pour un ajustement, le stock
+            // avant comptage ; le stock après est le stock compté.
+            'stock_before'  => round((float) $item->current_stock - $signedQuantity, 3),
             'stock_after'   => $item->current_stock,
             'unit_cost'     => $unitCost,
             'stock_account' => $item->stockAccount(),

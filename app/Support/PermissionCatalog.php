@@ -137,6 +137,7 @@ class PermissionCatalog
         'economat.requisitions.cancel',
         'economat.requisitions.creer',
         'economat.requisitions.deliver',
+        'economat.requisitions.endorse',
         'economat.requisitions.reject',
         'economat.suppliers.creer',
         'economat.suppliers.modifier',
@@ -154,6 +155,7 @@ class PermissionCatalog
         'economat.stock_counts.cancel',
         'economat.stock_counts.close',
         'economat.stock_counts.creer',
+        'economat.stock_counts.import',
         'economat.stock_counts.modifier',
         'groups.addRoom',
         'groups.cancel',
@@ -720,6 +722,9 @@ class PermissionCatalog
             // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
             'economat.orders.transmit' => ['econome'],
             'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Le journal des mouvements : qui consulte le stock le lit.
+            'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.purchase_requests.approve' => ['manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.purchase_requests.convert' => ['econome'],
@@ -734,11 +739,13 @@ class PermissionCatalog
             'economat.receipts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            // Chaque membre d'un service demande ; son chef vise avant l'économat.
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
+            'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
             'economat.suppliers.creer' => ['econome'],
@@ -761,6 +768,9 @@ class PermissionCatalog
             'economat.stock_counts.cancel' => ['econome'],
             'economat.stock_counts.close' => ['econome'],
             'economat.stock_counts.creer' => ['econome'],
+            // Le fichier de comptage : qui compte le télécharge et l'importe.
+            'economat.stock_counts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stock_counts.import' => ['econome', 'storekeeper'],
             'economat.stock_counts.modifier' => ['econome', 'storekeeper'],
             'economat.stock_counts.report' => ['controller', 'econome', 'manager'],
             'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],

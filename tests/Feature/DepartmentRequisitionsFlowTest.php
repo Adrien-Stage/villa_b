@@ -57,7 +57,8 @@ test('tous les services (hebergement, housekeeping, restaurant, boutique, compta
     expect($bonCompta)->not->toBeNull()
         ->and($bonCompta->department)->toBe('comptabilite')
         ->and($bonCompta->departmentLabel())->toBe('Comptabilité / Finances')
-        ->and($bonCompta->status)->toBe(StockRequisition::STATUS_PENDING)
+        // Le comptable n'est pas chef : son RAF vise avant l'économat.
+        ->and($bonCompta->status)->toBe(StockRequisition::STATUS_AWAITING_ENDORSEMENT)
         ->and($bonCompta->lines)->toHaveCount(1);
 
     // 2. Hébergement / Réception émet un bon

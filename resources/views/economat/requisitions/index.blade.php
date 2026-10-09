@@ -5,6 +5,7 @@
 @section('content')
 @php
     $statusStyles = [
+        'awaiting_endorsement' => 'bg-amber-50 text-amber-800 border border-amber-200',
         'pending'   => 'bg-blue-50 text-blue-700 border border-blue-200',
         'approved'  => 'bg-indigo-50 text-indigo-700 border border-indigo-200',
         'rejected'  => 'bg-red-50 text-red-700 border border-red-200',
@@ -44,12 +45,20 @@
 
     {{-- 4 Cartes KPI Synthèse des Bons --}}
     @if(isset($stats))
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="grid grid-cols-2 {{ $viseur && !$isKeeper ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-3 sm:gap-4 mb-6">
             <div class="bg-white rounded-xl border border-secondary/20 p-4 shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/50">Total des bons</p>
                 <p class="text-2xl font-bold font-mono text-primary mt-1">{{ $stats['total'] }}</p>
                 <p class="text-xs text-primary/45 mt-1">Bons émis sur le périmètre</p>
             </div>
+
+            @if($viseur && !$isKeeper)
+                <a href="{{ route('economat.requisitions.index', ['statut' => 'awaiting_endorsement']) }}" class="bg-white rounded-xl border p-4 shadow-sm transition-colors {{ $stats['a_viser'] > 0 ? 'border-amber-300 hover:bg-amber-50' : 'border-secondary/20' }}">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">À viser</p>
+                    <p class="text-2xl font-bold font-mono text-amber-800 mt-1">{{ $stats['a_viser'] }}</p>
+                    <p class="text-xs text-amber-700/70 mt-1">Demandes de votre service à viser</p>
+                </a>
+            @endif
 
             <div class="bg-white rounded-xl border border-secondary/20 p-4 shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-blue-600">En attente d'arbitrage</p>

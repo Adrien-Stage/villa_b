@@ -76,6 +76,9 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
     $actesDeSupervision = [
         'economat.purchase_requests.approve',
         'economat.purchase_requests.reject',
+        // Viser une demande interne quand le chef du service est absent :
+        // le même acte de supervision, avant la décision de l'économe.
+        'economat.requisitions.endorse',
         // Créer un restaurant, ses salles, composer son équipe : c'est la
         // structure de l'hôtel, que la direction décide — pas la saisie de
         // l'exploitation à la place du responsable de restaurant.

@@ -42,13 +42,14 @@ class StockMovement extends Model
     ];
 
     protected $fillable = [
-        'stock_item_id', 'type', 'quantity', 'stock_after', 'unit_cost', 'stock_account',
+        'stock_item_id', 'type', 'quantity', 'stock_before', 'stock_after', 'unit_cost', 'stock_account',
         'source_type', 'source_id', 'reason', 'user_id', 'occurred_at', 'tenant_id',
     ];
 
     protected $casts = [
-        'quantity'    => 'decimal:3',
-        'stock_after' => 'decimal:3',
+        'quantity'     => 'decimal:3',
+        'stock_before' => 'decimal:3',
+        'stock_after'  => 'decimal:3',
         'unit_cost'   => 'integer',
         'occurred_at' => 'datetime',
     ];
@@ -66,5 +67,24 @@ class StockMovement extends Model
     public function typeLabel(): string
     {
         return self::TYPES[$this->type] ?? $this->type;
+    }
+
+    public function sourceLabel(): string
+    {
+        return self::SOURCES[$this->source_type] ?? (string) $this->source_type;
+    }
+
+    /** Stock avant le mouvement : écrit avec lui, ou déduit pour un mouvement ancien. */
+    public function stockAvant(): float
+    {
+        return $this->stock_before !== null
+            ? (float) $this->stock_before
+            : round((float) $this->stock_after - (float) $this->quantity, 3);
+    }
+
+    /** Valeur du mouvement, signée comme la quantité (centimes FCFA). */
+    public function valeur(): int
+    {
+        return (int) round((float) $this->quantity * (int) $this->unit_cost);
     }
 }

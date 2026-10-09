@@ -623,6 +623,23 @@
  "economat.items.update": [
   "econome"
  ],
+ "economat.movements.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.movements.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.orders.cancel": [
   "econome"
  ],
@@ -798,10 +815,14 @@
  "economat.requisitions.cancel": [
   "econome",
   "housekeeping_leader",
+  "housekeeping_staff",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager"
  ],
  "economat.requisitions.create": [
@@ -809,15 +830,28 @@
   "econome",
   "finance_manager",
   "housekeeping_leader",
+  "housekeeping_staff",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager"
  ],
  "economat.requisitions.deliver": [
   "econome",
   "storekeeper"
+ ],
+ "economat.requisitions.endorse": [
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager"
  ],
  "economat.requisitions.export": [
   "admin",
@@ -840,12 +874,16 @@
   "econome",
   "finance_manager",
   "housekeeping_leader",
+  "housekeeping_staff",
   "manager",
   "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager",
   "storekeeper",
   "support"
@@ -857,12 +895,16 @@
   "econome",
   "finance_manager",
   "housekeeping_leader",
+  "housekeeping_staff",
   "manager",
   "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager",
   "storekeeper",
   "support"
@@ -877,12 +919,16 @@
   "econome",
   "finance_manager",
   "housekeeping_leader",
+  "housekeeping_staff",
   "manager",
   "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager",
   "storekeeper",
   "support"
@@ -892,10 +938,14 @@
   "econome",
   "finance_manager",
   "housekeeping_leader",
+  "housekeeping_staff",
   "reception",
   "reception_chief",
   "restaurant_chief",
+  "restaurant_cook",
   "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
   "shop_manager"
  ],
  "economat.stock_counts.cancel": [
@@ -906,6 +956,18 @@
  ],
  "economat.stock_counts.create": [
   "econome"
+ ],
+ "economat.stock_counts.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.stock_counts.import": [
+  "econome",
+  "storekeeper"
  ],
  "economat.stock_counts.index": [
   "admin",

@@ -54,10 +54,13 @@
 
     {{-- Journal des mouvements --}}
     <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-        <div class="px-5 py-3 border-b border-secondary/20">
+        <div class="px-5 py-3 border-b border-secondary/20 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-sm font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="history" class="w-4 h-4 text-primary/50"></i> Historique des mouvements
             </h2>
+            @droit('economat.movements.voir')
+                <a href="{{ route('economat.movements.index', ['article' => $item->id, 'du' => '', 'au' => '']) }}" class="text-xs font-semibold text-primary/70 underline hover:text-primary">Fiche de stock complète</a>
+            @enddroit
         </div>
         @if($movements->isEmpty())
             <p class="px-5 py-10 text-center text-sm text-primary/40">Aucun mouvement enregistré pour cet article.</p>
@@ -68,6 +71,7 @@
                         <tr>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock avant</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Quantité</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock après</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Motif</th>
@@ -84,6 +88,7 @@
                                         {{ $m->typeLabel() }}
                                     </span>
                                 </td>
+                                <td class="px-5 py-2.5 text-right text-primary/60">{{ rtrim(rtrim(number_format($m->stockAvant(), 3, ',', ' '), '0'), ',') }}</td>
                                 <td class="px-5 py-2.5 text-right font-medium {{ $m->quantity > 0 ? 'text-green-700' : 'text-red-700' }}">
                                     {{ $m->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($m->quantity, 3, ',', ' '), '0'), ',') }}
                                 </td>

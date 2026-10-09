@@ -31,8 +31,9 @@ class StockRequisitionUpdated extends Notification
     private function headline(): string
     {
         return match ($this->requisition->status) {
+            StockRequisition::STATUS_PENDING   => 'Demande visée',
             StockRequisition::STATUS_APPROVED  => 'Demande validée',
-            StockRequisition::STATUS_REJECTED  => 'Demande refusée',
+            StockRequisition::STATUS_REJECTED  => $this->requisition->refuseeAuVisa() ? 'Demande refusée au visa' : 'Demande refusée',
             StockRequisition::STATUS_DELIVERED => 'Matériel livré',
             default                            => 'Demande mise à jour',
         };
@@ -40,9 +41,13 @@ class StockRequisitionUpdated extends Notification
 
     private function detail(): string
     {
-        $notes = trim((string) $this->requisition->review_notes);
+        $notes = trim((string) ($this->requisition->refuseeAuVisa()
+            ? $this->requisition->endorsement_notes
+            : $this->requisition->review_notes));
 
         return match ($this->requisition->status) {
+            StockRequisition::STATUS_PENDING   => "Votre demande {$this->requisition->number} est visée par votre chef de service :"
+                . " elle part à l'économat.",
             StockRequisition::STATUS_APPROVED  => "Votre demande {$this->requisition->number} est validée."
                 . ($notes ? " Note : {$notes}" : ' Le matériel sera préparé.'),
             StockRequisition::STATUS_REJECTED  => "Votre demande {$this->requisition->number} a été refusée."

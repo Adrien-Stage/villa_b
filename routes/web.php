@@ -683,6 +683,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
             Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
 
+            // Mouvements de stock : tous les articles, ou la fiche de stock d'un seul
+            Route::get('/mouvements', [$eco . 'StockMovementController', 'index'])->name('movements.index');
+            Route::get('/mouvements/export', [$eco . 'StockMovementController', 'export'])->name('movements.export');
+
             // Catégories d'articles et leur compte de stock
             Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
             Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');
@@ -749,6 +753,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Inventaires physiques & PV d'écarts
             Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');
             Route::get('/inventaires/nouveau', [$eco . 'StockCountController', 'create'])->name('stock_counts.create');
+            // Fichier de comptage (Excel) à remplir après le comptage, puis à importer.
+            Route::get('/inventaires/fichier-comptage', [$eco . 'StockCountController', 'fichier'])->name('stock_counts.export');
+            Route::post('/inventaires/{stockCount}/import', [$eco . 'StockCountController', 'import'])->whereNumber('stockCount')->name('stock_counts.import');
             Route::post('/inventaires', [$eco . 'StockCountController', 'store'])->name('stock_counts.store');
             Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')->name('stock_counts.show');
             Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])->whereNumber('stockCount')->name('stock_counts.update');
@@ -783,6 +790,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
             Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])->whereNumber('requisition')->name('requisitions.print');
             Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
+            // Visa du chef de service avant l'économat (le contrôleur vérifie le service).
+            Route::post('/demandes/{requisition}/viser', [$eco . 'StockRequisitionController', 'endorse'])->whereNumber('requisition')->name('requisitions.endorse');
         });
     });
 

@@ -39,7 +39,7 @@
         <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-5 shadow-sm">
             <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Service émetteur & Motif</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                 x-data="{ service: @js(old('department', array_key_first($departments))), depots: @js($stores), depot: @js(old('service_store_id', '')) }">
+                 x-data="{ service: @js(old('department', array_key_first($departments))), depots: @js($stores), depot: @js(old('service_store_id', '')), avecVisa: @js($avecVisa) }">
                 <div>
                     <label for="requisition-service" class="block text-xs font-semibold text-primary/70 mb-1.5">
                         Service émetteur <span class="text-red-500">*</span>
@@ -50,7 +50,11 @@
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="text-[10px] text-primary/50 mt-1">Sélectionnez le service rattaché à ce besoin.</p>
+                    <p class="text-[10px] text-primary/50 mt-1" x-show="!avecVisa.includes(service)">Sélectionnez le service rattaché à ce besoin.</p>
+                    <p class="text-[11px] text-amber-800 mt-1 flex items-start gap-1" x-show="avecVisa.includes(service)" x-cloak>
+                        <i data-lucide="stamp" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+                        <span>Votre chef de service visera d'abord la demande ; elle partira ensuite à l'économat.</span>
+                    </p>
                 </div>
 
                 <div x-show="depots.some(d => d.department === service)" x-cloak>
