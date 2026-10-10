@@ -225,7 +225,7 @@
             font-style: normal;
             font-weight: 400;
             font-display: swap;
-            src: url('{{ asset('fonts/qwigley/qwigley-regular.ttf') }}') format('truetype');
+            src: url('{{ asset('fonts/Qwigley-Regular.woff2') }}') format('woff2'), url('{{ asset('fonts/Qwigley-Regular.ttf') }}') format('truetype');
         }
 
         .sig-handwritten {
@@ -278,7 +278,7 @@
     <table class="header-table">
         <tr>
             <td style="vertical-align: top;">
-                <div class="etab-name">{{ config('app.name', 'Établissement Hôtelier') }}</div>
+                <div class="etab-name">{{ $tenant?->name ?? config('app.name', 'Établissement Hôtelier') }}</div>
                 <div class="etab-sub">Département Contrôle de Gestion & Économat Central</div>
                 <div class="etab-sub">Service Réceptions & Comptabilité Matière</div>
             </td>

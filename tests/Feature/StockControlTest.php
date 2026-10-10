@@ -197,6 +197,28 @@ test('la creation de demande d achat depuis les propositions genere une vraie Pu
     expect($purchaseRequest->total_estimated_amount)->toBe($expectedTotal);
 });
 
+test('seules les propositions cochées entrent dans la demande d achat', function () {
+    createTestUser('econome');
+    $riz = StockItem::create(['name' => 'Riz Parfumé 25kg', 'unit' => 'sac', 'current_stock' => 1, 'min_stock' => 5, 'average_cost' => 1800000, 'is_active' => true]);
+    $huile = StockItem::create(['name' => 'Huile Olive 1L', 'unit' => 'bouteille', 'current_stock' => 2, 'min_stock' => 6, 'average_cost' => 700000, 'is_active' => true]);
+
+    // La ligne de l'huile est décochée : sa quantité et sa note partent quand même.
+    test()->post(route('economat.control.suggestions.store'), [
+        'priority' => 'normal',
+        'items'    => [
+            ['item_id' => $riz->id, 'quantity' => 9, 'notes' => ''],
+            ['quantity' => 10, 'notes' => ''],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    expect(PurchaseRequest::sole()->lines->pluck('stock_item_id')->all())->toBe([$riz->id]);
+
+    // Rien de coché : la demande n'est pas créée.
+    test()->post(route('economat.control.suggestions.store'), ['items' => [['quantity' => 10]]])
+        ->assertSessionHasErrors('items');
+    expect(PurchaseRequest::count())->toBe(1);
+});
+
 test('l analyse des ecarts d inventaire calcule les pertes et surplus pour les inventaires clotures', function () {
     $user = createTestUser('econome');
 
@@ -236,6 +258,27 @@ test('l analyse des ecarts d inventaire calcule les pertes et surplus pour les i
         ->and($variances['economat']['loss_value'])->toBe(5000000)
         ->and($variances['economat']['variance_value'])->toBe(-5000000)
         ->and($variances['total_loss_value'])->toBe(5000000);
+});
+
+test("un inventaire ouvert sans établissement sur l utilisateur paraît dans l audit des écarts", function () {
+    // L'utilisateur n'a pas d'établissement : le contrôle lit celui de la base.
+    \App\Models\Tenant::create(['name' => 'Hôtel', 'slug' => 'hotel', 'currency' => 'XAF', 'settings' => []]);
+    $user = createTestUser('econome');
+
+    $item = StockItem::create(['name' => 'Ecrou de 10', 'unit' => 'pièce', 'is_active' => true]);
+    app(\App\Services\StockService::class)->recordOpening($item, 100, 5000);
+
+    $counts = app(\App\Services\StockCountService::class);
+    $inventaire = $counts->open([], $user);
+    $ligne = $inventaire->lines()->sole();
+    $counts->updateCounts($inventaire, [$ligne->id => ['counted_quantity' => 90, 'reason' => 'waste']]);
+    $counts->close($inventaire->fresh(), $user);
+
+    expect($inventaire->fresh()->tenant_id)->toBe(\App\Models\Tenant::first()->id);
+
+    test()->get(route('economat.control.variances.index'))->assertOk()
+        ->assertViewHas('variances', fn ($v) => $v['economat']['count'] === 1 && $v['economat']['loss_value'] === 50000)
+        ->assertSee('Ecrou de 10');
 });
 
 test('le rapport consolide calcule le ratio food cost reel avec CA et pertes', function () {

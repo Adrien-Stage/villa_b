@@ -253,7 +253,10 @@ class PurchaseOrderController extends Controller
     {
         $order->load(['supplier', 'lines.item.category', 'createdBy', 'purchaseRequest']);
 
-        return view('economat.orders.print', compact('order'));
+        return view('economat.orders.print', [
+            'order'  => $order,
+            'tenant' => \App\Models\Tenant::first(),
+        ]);
     }
 
     /** Envoi du bon par email au fournisseur. */

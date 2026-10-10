@@ -259,6 +259,7 @@ class GoodsReceiptController extends Controller
 
         return view('economat.receipts.print', [
             'receipt' => $receipt,
+            'tenant'  => \App\Models\Tenant::first(),
         ]);
     }
 

@@ -118,6 +118,7 @@ class PurchaseOrderService
             }
 
             $order->load('lines.item');
+            $recu = false;
 
             foreach ($order->lines as $line) {
                 $qty = (float) ($received[$line->id] ?? 0);
@@ -144,6 +145,13 @@ class PurchaseOrderService
                 $line->update([
                     'quantity_received' => (float) $line->quantity_received + $qty,
                 ]);
+                $recu = true;
+            }
+
+            // Un formulaire laissé vide n'est pas une réception : le dire,
+            // plutôt que d'annoncer une réception qui n'a rien fait entrer.
+            if (!$recu) {
+                throw new \RuntimeException('Aucune quantité reçue : saisissez les quantités réellement livrées.');
             }
 
             $order->update(['received_by' => auth()->id()]);

@@ -277,8 +277,9 @@ class StockCountController extends Controller
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
 
         return view('economat.stock_counts.report', [
-            'count' => $stockCount,
-            'lines' => $lines,
+            'count'  => $stockCount,
+            'lines'  => $lines,
+            'tenant' => \App\Models\Tenant::first(),
         ]);
     }
 }

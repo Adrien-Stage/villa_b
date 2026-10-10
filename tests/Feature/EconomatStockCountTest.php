@@ -366,12 +366,14 @@ test('les routes http d inventaire et le rapport PV fonctionnent et respectent l
     expect($stockCount->fresh()->status)->toBe(StockCount::STATUS_CLOSED)
         ->and((float) $item->fresh()->current_stock)->toBe(48.0);
 
-    // 7. Consultation du PV officiel imprimable
+    // 7. Consultation du PV officiel imprimable, au nom de l'établissement
+    \App\Models\Tenant::create(['name' => 'Hôtel des Cocotiers', 'slug' => 'cocotiers', 'currency' => 'XAF', 'settings' => []]);
     $response = test()->get(route('economat.stock_counts.report', $stockCount));
     $response->assertOk()
         ->assertViewIs('economat.stock_counts.report')
         ->assertSee($stockCount->reference)
         ->assertSee('Procès-Verbal', false)
         ->assertSee('Inventaire Physique')
+        ->assertSee('Hôtel des Cocotiers')
         ->assertSee('Jus d Ananas Frais');
 });
