@@ -106,6 +106,7 @@ class StockMovementJournal
             StockMovement::SOURCE_REQUISITION    => [StockRequisition::class, 'number', 'economat.requisitions.show'],
             StockMovement::SOURCE_STOCK_COUNT    => [StockCount::class, 'reference', 'economat.stock_counts.show'],
             StockMovement::SOURCE_EXTERNAL_ISSUE => [ExternalIssue::class, 'number', 'economat.external_issues.show'],
+            StockMovement::SOURCE_CUT            => [\App\Models\StockCut::class, 'number', 'economat.cuts.show'],
         ];
 
         $documents = [];

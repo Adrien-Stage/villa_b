@@ -532,8 +532,9 @@ class LedgerPostingService
             }
 
             // Le stock change de magasin, il ne se consomme pas : la charge
-            // naîtra à la sortie du garde-manger (coût matière).
-            if ($requisition?->department === 'restaurant') {
+            // naîtra à la sortie du garde-manger (coût matière). Une découpe
+            // verse elle aussi ses portions au garde-manger.
+            if ($requisition?->department === 'restaurant' || $mouvement->source_type === StockMovement::SOURCE_CUT) {
                 if ($stock !== Account::STOCK_KITCHEN) {
                     $this->imputer($imputations, Account::STOCK_KITCHEN, 'Transferts vers la cuisine', $valeur, 0);
                     $this->imputer($imputations, $stock, 'Transferts vers la cuisine', 0, $valeur);

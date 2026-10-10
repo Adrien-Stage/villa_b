@@ -28,7 +28,20 @@ class StockItemTransformationController extends Controller
     {
         $item->load('packagings', 'category');
 
+        // La découpe verse au garde-manger d'un restaurant : il en faut un.
+        $restaurants = \App\Support\TenantModules::has('restaurant')
+            ? \App\Models\PointOfSale::query()->restaurants()->active()->orderBy('name')->get()
+                ->filter(fn ($r) => $r->offre(\App\Models\PointOfSale::SERVICE_STOCK))->values()
+            : collect();
+        $portions = \App\Models\RestaurantPantryItem::query()->active()
+            ->whereIn('point_of_sale_id', $restaurants->pluck('id'))->orderBy('name')
+            ->get(['id', 'name', 'unit', 'point_of_sale_id'])->groupBy('point_of_sale_id');
+
         return view('economat.items.transformation', [
+            'restaurants' => $restaurants,
+            'portions'    => $portions,
+            'decoupes'    => \App\Models\StockCut::query()->where('stock_item_id', $item->id)->with('restaurant')
+                ->latest('cut_at')->latest('id')->take(10)->get(),
             'item'       => $item,
             'etat'       => $conditionnements->etatDe($item),
             // Une unité mise hors service depuis reste proposée là où elle sert.
@@ -61,6 +74,40 @@ class StockItemTransformationController extends Controller
 
         return redirect()->route('economat.items.transformation.show', $item)
             ->with('success', $niveaux === [] ? 'Conditionnements retirés.' : 'Conditionnements enregistrés.');
+    }
+
+    /**
+     * Découpe : une quantité de l'article sort de l'économat et se répartit en
+     * portions au garde-manger d'un restaurant, valorisées au poids.
+     */
+    public function cut(Request $request, StockItem $item, \App\Services\StockCutService $decoupes): RedirectResponse
+    {
+        $data = $request->validate([
+            'point_of_sale_id'       => ['required', 'integer'],
+            'quantity'               => ['required', 'numeric', 'gt:0', 'max:99999999'],
+            'notes'                  => ['nullable', 'string', 'max:500'],
+            'lines'                  => ['required', 'array', 'min:1', 'max:30'],
+            'lines.*.pantry_item_id' => ['nullable', 'integer'],
+            'lines.*.nom'            => ['nullable', 'string', 'max:120'],
+            'lines.*.quantity'       => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+        ], [
+            'point_of_sale_id.required' => 'Choisissez le restaurant qui reçoit les portions.',
+            'quantity.gt'               => 'Indiquez la quantité prise.',
+            'lines.required'            => 'Indiquez au moins une portion.',
+        ]);
+
+        try {
+            $decoupe = $decoupes->decouper($item, $data, Auth::user());
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        AuditLog::record(Auth::id(), 'decoupe', "Découpe {$decoupe->number} — "
+            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " de {$item->name} vers {$decoupe->restaurant->name}",
+            'economat', ['stock_cut_id' => $decoupe->id]);
+
+        return redirect()->route('economat.cuts.show', $decoupe)
+            ->with('success', "Découpe {$decoupe->number} enregistrée : les portions sont au garde-manger de {$decoupe->restaurant->name}.");
     }
 
     public function open(Request $request, StockItem $item, StockService $stock): RedirectResponse

@@ -30,6 +30,8 @@ class StockMovement extends Model
     public const SOURCE_EXTERNAL_ISSUE = 'external_issue';
     /** Conditionnements définis ou unités ouvertes à la main : le stock ne change pas. */
     public const SOURCE_PACKAGING      = 'packaging';
+    /** Découpe vers le garde-manger d'un restaurant (bon de découpe). */
+    public const SOURCE_CUT            = 'cut';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -40,6 +42,7 @@ class StockMovement extends Model
         self::SOURCE_OPENING        => 'Reprise du stock initial',
         self::SOURCE_EXTERNAL_ISSUE => 'Sortie hors établissement',
         self::SOURCE_PACKAGING      => 'Conditionnement',
+        self::SOURCE_CUT            => 'Découpe',
     ];
 
     public const TYPES = [

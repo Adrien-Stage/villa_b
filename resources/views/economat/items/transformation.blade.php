@@ -139,6 +139,112 @@
         @enddroit
     @endif
 
+    {{-- Découpe vers le garde-manger --}}
+    @droit('economat.items.transformation.cut')
+        @if($restaurants->isNotEmpty())
+            <div class="bg-white border border-secondary/20 rounded-xl shadow-sm"
+                 x-data="decoupe({{ Js::from([
+                     'stock'    => (float) $item->current_stock,
+                     'cout'     => (int) $item->average_cost,
+                     'unite'    => $item->unit,
+                     'portions' => $portions->map(fn ($liste) => $liste->map(fn ($p) => ['id' => $p->id, 'nom' => $p->name, 'unite' => $p->unit])->values()),
+                     'restaurant' => old('point_of_sale_id', $restaurants->first()->id),
+                     'quantite' => old('quantity', ''),
+                     'lignes'   => old('lines', [['pantry_item_id' => '', 'nom' => '', 'quantity' => '']]),
+                 ]) }})">
+                <div class="px-6 py-4 border-b border-secondary/15">
+                    <h2 class="font-heading font-semibold text-primary">Découpe vers le garde-manger</h2>
+                    <p class="text-xs text-primary/60 mt-1">
+                        Prenez une partie du stock et répartissez-la en portions pour la cuisine : 30 kg de poulet donnent 10 kg de quarts,
+                        8 kg de demis, 7 kg d'entiers et 5 kg de carcasses. La quantité prise sort de l'économat au coût moyen ;
+                        sa valeur se partage au poids entre les portions, qui entrent au garde-manger du restaurant choisi.
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('economat.items.transformation.cut', $item) }}" class="p-6 space-y-4">
+                    @csrf
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="decoupe-quantite" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Quantité prise ({{ $item->unit }})</label>
+                            <input id="decoupe-quantite" type="number" step="0.001" min="0.001" max="{{ (float) $item->current_stock }}" name="quantity" x-model.number="quantite" required class="{{ $champ }} font-mono text-right">
+                            <p class="text-[11px] text-primary/50 mt-1">Disponible : {{ Conditionnement::libelle((float) $item->current_stock, $item->unit) }} · coût moyen {{ number_format($item->average_cost / 100, 0, ',', ' ') }} F</p>
+                        </div>
+                        <div>
+                            <label for="decoupe-restaurant" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Garde-manger du restaurant</label>
+                            <select id="decoupe-restaurant" name="point_of_sale_id" x-model.number="restaurant" required class="{{ $champ }}">
+                                @foreach($restaurants as $r)
+                                    <option value="{{ $r->id }}">{{ $r->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-[11px] font-semibold uppercase text-primary/50">Portions</p>
+                        <template x-for="(ligne, i) in lignes" :key="ligne.cle">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <div class="col-span-12 sm:col-span-5">
+                                    <label :for="'portion-' + ligne.cle" class="sr-only">Portion</label>
+                                    <select :id="'portion-' + ligne.cle" :name="`lines[${i}][pantry_item_id]`" x-model="ligne.pantry_item_id" class="{{ $champ }}">
+                                        <option value="">Nouvelle portion…</option>
+                                        <template x-for="p in portionsDu(restaurant)" :key="p.id">
+                                            <option :value="p.id" x-text="p.nom + ' (' + p.unite + ')'" :selected="String(p.id) === String(ligne.pantry_item_id)"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div class="col-span-7 sm:col-span-3">
+                                    <label :for="'portion-nom-' + ligne.cle" class="sr-only">Nom de la nouvelle portion</label>
+                                    <input :id="'portion-nom-' + ligne.cle" type="text" :name="`lines[${i}][nom]`" x-model="ligne.nom" x-show="!ligne.pantry_item_id" maxlength="120"
+                                           placeholder="Ex : Quart de poulet" class="{{ $champ }}">
+                                </div>
+                                <div class="col-span-4 sm:col-span-2">
+                                    <label :for="'portion-qte-' + ligne.cle" class="sr-only">Quantité ({{ $item->unit }})</label>
+                                    <input :id="'portion-qte-' + ligne.cle" type="number" step="0.001" min="0" :name="`lines[${i}][quantity]`" x-model.number="ligne.quantity"
+                                           placeholder="{{ $item->unit }}" class="{{ $champ }} font-mono text-right">
+                                </div>
+                                <div class="col-span-1 sm:col-span-1 text-right text-[11px] font-mono text-primary/60" x-text="part(ligne)"></div>
+                                <div class="col-span-12 sm:col-span-1 text-right">
+                                    <button type="button" @click="lignes.splice(i, 1)" x-show="lignes.length > 1" class="p-2 text-red-500 hover:bg-red-50 rounded-lg" aria-label="Retirer cette portion">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-lg">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une portion
+                        </button>
+                    </div>
+
+                    <div class="rounded-lg bg-surface-light/60 border border-secondary/15 px-4 py-3 text-xs text-primary/70 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <p>Réparti : <strong class="font-mono" :class="reparti() > quantite ? 'text-red-600' : 'text-primary'" x-text="nombre(reparti()) + ' ' + unite"></strong></p>
+                        <p>Freinte (non répartie) : <strong class="font-mono" x-text="nombre(Math.max(0, quantite - reparti())) + ' ' + unite"></strong></p>
+                        <p>Valeur prise : <strong class="font-mono" x-text="argent(quantite * cout)"></strong></p>
+                    </div>
+
+                    <div>
+                        <label for="decoupe-notes" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Observations</label>
+                        <input id="decoupe-notes" type="text" name="notes" maxlength="500" value="{{ old('notes') }}" placeholder="Ex : découpe pour le service du week-end, en présence du chef" class="{{ $champ }}">
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Valider la découpe</button>
+                    </div>
+                </form>
+
+                @if($decoupes->isNotEmpty())
+                    <ul class="border-t border-secondary/15 divide-y divide-secondary/10">
+                        @foreach($decoupes as $d)
+                            <li class="px-6 py-2.5 text-xs flex flex-wrap justify-between gap-2">
+                                <a href="{{ route('economat.cuts.show', $d) }}" class="font-mono font-semibold text-primary hover:underline">{{ $d->number }}</a>
+                                <span class="text-primary/70">{{ Conditionnement::libelle((float) $d->quantity, $item->unit) }} → {{ $d->restaurant?->name }}</span>
+                                <span class="text-primary/50">{{ $d->cut_at->format('d/m/Y H:i') }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        @endif
+    @enddroit
+
     {{-- Historique --}}
     @if($historique->isNotEmpty())
         <div class="bg-white border border-secondary/20 rounded-xl shadow-sm overflow-hidden">
@@ -158,6 +264,29 @@
 
 @push('scripts')
 <script>
+    function decoupe(d) {
+        let cle = 1;
+        return {
+            quantite: Number(d.quantite) || '',
+            restaurant: Number(d.restaurant),
+            unite: d.unite,
+            cout: d.cout,
+            portions: d.portions,
+            lignes: (d.lignes || []).map(l => ({ cle: cle++, pantry_item_id: l.pantry_item_id || '', nom: l.nom || '', quantity: Number(l.quantity) || '' })),
+            ajouter() { this.lignes.push({ cle: cle++, pantry_item_id: '', nom: '', quantity: '' }); },
+            portionsDu(id) { return this.portions[id] || []; },
+            reparti() { return this.lignes.reduce((s, l) => s + (Number(l.quantity) || 0), 0); },
+            // Part de la valeur, au poids : comme le calcul du serveur.
+            part(l) {
+                const total = this.reparti();
+                if (!total || !l.quantity || !this.quantite) return '';
+                return this.argent(this.quantite * this.cout * l.quantity / total);
+            },
+            nombre(v) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(v || 0); },
+            argent(centimes) { return new Intl.NumberFormat('fr-FR').format(Math.round((centimes || 0) / 100)) + ' F'; },
+        };
+    }
+
     function conditionnements(saisie, unite) {
         let cle = 1;
         return {

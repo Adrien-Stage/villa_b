@@ -122,6 +122,7 @@ class PermissionCatalog
         'economat.items.modifier',
         'economat.items.opening',
         'economat.items.supprimer',
+        'economat.items.transformation.cut',
         'economat.items.transformation.open',
         'economat.items.transformation.packagings',
         'economat.orders.cancel',
@@ -728,6 +729,9 @@ class PermissionCatalog
             'economat.items.transformation.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.items.transformation.packagings' => ['econome'],
             'economat.items.transformation.open' => ['econome', 'storekeeper'],
+            // La découpe vers le garde-manger : l'économe la saisit, en présence du chef.
+            'economat.items.transformation.cut' => ['econome'],
+            'economat.cuts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.orders.cancel' => ['econome'],
             'economat.orders.creer' => ['econome'],
             'economat.orders.export' => ['controller', 'econome', 'manager'],

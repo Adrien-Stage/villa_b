@@ -94,6 +94,10 @@ class Pieces
             ['sorte' => 'Bon de sortie hors établissement', 'modele' => ExternalIssue::class, 'colonne' => 'number', 'date' => 'issued_at',
                 'route' => 'economat.external_issues.print', 'droit' => 'economat.external_issues.voir',
                 'detail' => fn (ExternalIssue $s) => $s->beneficiaire . ' — ' . $s->reasonLabel()],
+            ['sorte' => 'Bon de découpe', 'modele' => \App\Models\StockCut::class, 'colonne' => 'number', 'date' => 'cut_at',
+                'route' => 'economat.cuts.print', 'droit' => 'economat.cuts.voir',
+                'detail' => fn (\App\Models\StockCut $d) => \App\Support\Conditionnement::libelle((float) $d->quantity, (string) $d->item?->unit)
+                    . ' de ' . ($d->item?->name ?? '—') . ' → ' . ($d->restaurant?->name ?? '—')],
             ['sorte' => 'Vente au comptoir', 'modele' => ReceptionSale::class, 'colonne' => 'sale_number', 'date' => 'created_at',
                 'route' => 'reception.pos.receipt', 'droit' => 'reception.pos.receipt',
                 'detail' => fn (ReceptionSale $v) => ($v->customer_name ?: '') . ' — ' . number_format(((int) $v->total_amount) / 100, 0, ',', ' ') . ' FCFA'],

@@ -570,6 +570,24 @@
   "storekeeper",
   "support"
  ],
+ "economat.cuts.print": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.cuts.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.external_issues.cancel": [
   "econome"
  ],
@@ -662,6 +680,9 @@
   "support"
  ],
  "economat.items.store": [
+  "econome"
+ ],
+ "economat.items.transformation.cut": [
   "econome"
  ],
  "economat.items.transformation.open": [
