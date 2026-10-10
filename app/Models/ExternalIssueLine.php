@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** Une ligne d'un bon de sortie hors établissement : l'article, la quantité et son coût à la sortie. */
 class ExternalIssueLine extends Model
 {
-    protected $fillable = ['external_issue_id', 'stock_item_id', 'quantity', 'unit_cost', 'total_cost', 'notes'];
+    use \App\Models\Concerns\SaisiEnConditionnement;
+
+    protected $fillable = ['external_issue_id', 'stock_item_id', 'quantity', 'packaging_name', 'unit_cost', 'total_cost', 'notes'];
 
     protected $casts = [
         'quantity'   => 'decimal:3',

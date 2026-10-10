@@ -11,6 +11,9 @@
          'stock'    => (float) $i->current_stock,
          'category' => $i->category?->name ?? 'Général',
          'price'    => (int) ($i->average_cost ?: $i->last_purchase_price ?: 0),
+         // Paquets, cartons… : on peut demander dans chacun.
+         'unites'   => $i->unitesDeSaisie(),
+         'decompose' => $i->stockDecompose(),
      ])->values()) }})">
 
     <div class="flex items-center justify-between gap-4 mb-4">
@@ -121,11 +124,11 @@
                             {{-- Sélection de l'article --}}
                             <div class="col-span-12 md:col-span-6">
                                 <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Désignation de l'article</label>
-                                <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" required
+                                <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" @change="line.packaging = getItemUnit(line.itemId)" required
                                     class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                     <option value="">Sélectionner un article...</option>
                                     <template x-for="it in items" :key="it.id">
-                                        <option :value="it.id" x-text="`[${it.category}] ${it.name} (${formatStock(it.stock)} ${it.unit} dispo)`"></option>
+                                        <option :value="it.id" x-text="`[${it.category}] ${it.name} (${it.decompose || (formatStock(it.stock) + ' ' + it.unit)} dispo)`"></option>
                                     </template>
                                 </select>
                             </div>
@@ -137,8 +140,18 @@
                                     <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`"
                                         x-model.number="line.qty" placeholder="Quantité" required
                                         class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary font-mono font-bold text-right outline-none focus:border-primary">
-                                    <span class="ml-2 text-xs text-primary/60 font-medium" x-text="getItemUnit(line.itemId)"></span>
+                                    {{-- Un article conditionné se demande en pièces, en paquets ou en cartons. --}}
+                                    <template x-if="getUnites(line.itemId).length > 1">
+                                        <select :name="`lines[${idx}][packaging]`" x-model="line.packaging" :aria-label="'Unité de la ligne ' + (idx + 1)"
+                                            class="ml-2 px-1.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                            <template x-for="u in getUnites(line.itemId)" :key="u.nom">
+                                                <option :value="u.nom" x-text="u.nom" :selected="u.nom === line.packaging"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+                                    <span x-show="getUnites(line.itemId).length <= 1" class="ml-2 text-xs text-primary/60 font-medium" x-text="getItemUnit(line.itemId)"></span>
                                 </div>
+                                <p x-show="getFactor(line) > 1" class="mt-1 text-[10px] text-primary/50" x-text="`= ${formatStock(line.qty * getFactor(line))} ${accorde(getItemUnit(line.itemId), line.qty * getFactor(line))}`"></p>
                             </div>
 
                             {{-- Estimation financière --}}
@@ -191,7 +204,7 @@
             lines: [],
             nextKey: 1,
             addLine() {
-                this.lines.push({ key: this.nextKey++, itemId: '', qty: 1 });
+                this.lines.push({ key: this.nextKey++, itemId: '', qty: 1, packaging: '' });
             },
             removeLine(idx) {
                 if (this.lines.length > 1) {
@@ -205,13 +218,30 @@
                 const it = this.getItem(id);
                 return it ? it.unit : '';
             },
+            getUnites(id) {
+                const it = this.getItem(id);
+                return it && it.unites ? it.unites : [];
+            },
+            // Unités de l'article dans l'unité choisie : 10 pour un paquet de 10.
+            getFactor(line) {
+                const u = this.getUnites(line.itemId).find(u => u.nom === line.packaging);
+                return u ? Number(u.facteur) : 1;
+            },
             getLineTotal(line) {
                 const it = this.getItem(line.itemId);
                 if (!it || !line.qty) return 0;
-                return Math.round(line.qty * it.price);
+                return Math.round(line.qty * this.getFactor(line) * it.price);
             },
             getTotal() {
                 return this.lines.reduce((sum, l) => sum + this.getLineTotal(l), 0);
+            },
+            // « 30 pièces », « 2,5 kg » : comme App\Support\Conditionnement::accorde.
+            accorde(unite, n) {
+                const invariables = ['kg', 'g', 'mg', 'l', 'cl', 'ml', 'dl', 'm', 'cm', 'mm', 'm2', 'm3', 'u'];
+                if (Math.abs(n) < 2 || !unite || invariables.includes(unite.toLowerCase()) || /[sxz]$/i.test(unite)) return unite;
+                const mots = unite.split(' ');
+                mots[0] += /au$/.test(mots[0]) ? 'x' : 's';
+                return mots.join(' ');
             },
             formatStock(v) {
                 return new Intl.NumberFormat('fr-FR').format(v);

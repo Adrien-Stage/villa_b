@@ -203,6 +203,9 @@
                             </td>
                             <td class="px-3 py-3 text-right font-mono font-bold text-emerald-800">
                                 {{ rtrim(rtrim(number_format($line->quantity_accepted, 3, ',', ' '), '0'), ',') }}
+                                @if($line->packaging_name)
+                                    <span class="block text-[10px] font-sans font-normal text-primary/55">{{ $line->enConditionnement((float) $line->quantity_accepted) }}</span>
+                                @endif
                             </td>
                             <td class="px-3 py-3 text-right font-mono font-bold {{ $line->quantity_rejected > 0 ? 'text-rose-600' : 'text-primary/40' }}">
                                 {{ rtrim(rtrim(number_format($line->quantity_rejected, 3, ',', ' '), '0'), ',') }}

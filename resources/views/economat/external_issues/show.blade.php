@@ -101,7 +101,10 @@
                     @foreach($sortie->lines as $ligne)
                         <tr>
                             <td class="px-4 py-2.5 font-medium text-primary">{{ $ligne->item?->name ?? '—' }}</td>
-                            <td class="px-4 py-2.5 text-right font-mono">{{ $qte($ligne->quantity) }} <span class="text-xs text-primary/50">{{ $ligne->item?->unit }}</span></td>
+                            <td class="px-4 py-2.5 text-right font-mono">
+                                {{ $qte($ligne->quantity) }} <span class="text-xs text-primary/50">{{ $ligne->item?->unit }}</span>
+                                @if($ligne->packaging_name)<span class="block text-[10px] font-sans text-primary/55">{{ $ligne->enConditionnement((float) $ligne->quantity) }}</span>@endif
+                            </td>
                             <td class="px-4 py-2.5 text-right font-mono text-primary/70">{{ $fcfa((int) $ligne->unit_cost) }} F</td>
                             <td class="px-4 py-2.5 text-right font-mono font-semibold">{{ $fcfa((int) $ligne->total_cost) }} F</td>
                             <td class="px-4 py-2.5 text-xs text-primary/60">{{ $ligne->notes ?? '' }}</td>

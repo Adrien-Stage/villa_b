@@ -50,6 +50,12 @@ class StockItem extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    /** Conditionnements de l'article, du plus petit au plus grand. */
+    public function packagings(): HasMany
+    {
+        return $this->hasMany(StockItemPackaging::class)->orderBy('factor');
+    }
+
     public function pantryItems(): HasMany
     {
         return $this->hasMany(RestaurantPantryItem::class);
@@ -134,5 +140,51 @@ class StockItem extends Model
     public function availableFor(float $requested): float
     {
         return min($requested, max(0, (float) $this->current_stock));
+    }
+
+    // ── Conditionnements ─────────────────────────────────────────────────────
+
+    public function aDesConditionnements(): bool
+    {
+        return $this->relationLoaded('packagings') ? $this->packagings->isNotEmpty() : $this->packagings()->exists();
+    }
+
+    /** Unités de l'article contenues dans un conditionnement ; 1 pour l'unité de l'article. */
+    public function facteurDe(?string $conditionnement): float
+    {
+        if ($conditionnement === null || $conditionnement === '' || $conditionnement === $this->unit) {
+            return 1.0;
+        }
+
+        $niveau = $this->packagings->firstWhere('name', $conditionnement);
+        if ($niveau === null) {
+            throw new \InvalidArgumentException("« {$this->name} » n'a pas de conditionnement « {$conditionnement} ».");
+        }
+
+        return (float) $niveau->factor;
+    }
+
+    /** Stock décomposé en unités fermées : « 4 cartons · 19 paquets · 5 pièces ». Null sans conditionnement. */
+    public function stockDecompose(): ?string
+    {
+        $etat = app(\App\Services\Conditionnements::class)->etatDe($this);
+
+        return $etat === null ? null : \App\Support\Conditionnement::decomposition($etat, (string) $this->unit);
+    }
+
+    /**
+     * Les unités dans lesquelles on peut demander ou sortir cet article : la
+     * sienne, puis ses conditionnements. Pour les formulaires.
+     *
+     * @return list<array{nom: string, facteur: float, fermes: int|null}>
+     */
+    public function unitesDeSaisie(): array
+    {
+        $unites = [['nom' => (string) $this->unit, 'facteur' => 1.0, 'fermes' => null]];
+        foreach ($this->packagings as $niveau) {
+            $unites[] = ['nom' => $niveau->name, 'facteur' => (float) $niveau->factor, 'fermes' => (int) $niveau->closed_count];
+        }
+
+        return $unites;
     }
 }

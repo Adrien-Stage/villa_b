@@ -170,9 +170,11 @@ class StockRequisitionService
                 }
 
                 // Par défaut on sert ce qui a été demandé ; l'économe peut
-                // réduire, mais jamais servir plus que le stock présent.
+                // réduire, mais jamais servir plus que le stock présent. La
+                // quantité servie se saisit dans le conditionnement demandé
+                // (2 paquets) : on la ramène à l'unité de l'article.
                 $qty = array_key_exists($line->id, $issued)
-                    ? (float) $issued[$line->id]
+                    ? round((float) $issued[$line->id] * $line->facteur(), 3)
                     : (float) $line->quantity_requested;
 
                 $qty = $line->item->availableFor($qty);
@@ -181,12 +183,15 @@ class StockRequisitionService
                     continue;
                 }
 
+                // Demandé en paquets : on sert d'abord des paquets fermés, et
+                // l'économat ouvre de lui-même un carton s'il le faut.
                 $movement = $this->stock->recordOut(
                     $line->item,
                     $qty,
                     StockMovement::SOURCE_REQUISITION,
                     $requisition->id,
-                    "Demande {$requisition->number} — {$requisition->departmentLabel()}"
+                    "Demande {$requisition->number} — {$requisition->departmentLabel()}",
+                    $line->packaging_name
                 );
 
                 $line->update(['quantity_issued' => $qty]);

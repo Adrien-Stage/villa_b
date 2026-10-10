@@ -347,7 +347,10 @@
                     </td>
                     <td class="text-right font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
                     <td class="text-right font-mono">{{ rtrim(rtrim(number_format($line->quantity_delivered, 3, ',', ' '), '0'), ',') }}</td>
-                    <td class="text-right font-mono font-bold">{{ rtrim(rtrim(number_format($line->quantity_accepted, 3, ',', ' '), '0'), ',') }}</td>
+                    <td class="text-right font-mono font-bold">
+                        {{ rtrim(rtrim(number_format($line->quantity_accepted, 3, ',', ' '), '0'), ',') }}
+                        @if($line->packaging_name)<div style="font-weight:400;font-size:8px;color:#475569">{{ $line->enConditionnement((float) $line->quantity_accepted) }}</div>@endif
+                    </td>
                     <td class="text-right font-mono {{ $line->quantity_rejected > 0 ? 'text-red font-bold' : '' }}">
                         {{ rtrim(rtrim(number_format($line->quantity_rejected, 3, ',', ' '), '0'), ',') }}
                     </td>

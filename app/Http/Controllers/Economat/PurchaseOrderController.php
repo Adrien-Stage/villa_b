@@ -240,7 +240,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $order): View
     {
-        $order->load(['supplier', 'lines.item.category', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'invoices']);
+        $order->load(['supplier', 'lines.item.category', 'lines.item.packagings', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'invoices']);
 
         return view('economat.orders.show', compact('order'));
     }
@@ -306,13 +306,15 @@ class PurchaseOrderController extends Controller
     public function receive(Request $request, PurchaseOrder $order, PurchaseOrderService $service): RedirectResponse
     {
         $validated = $request->validate([
-            'received'   => ['required', 'array'],
-            'received.*' => ['nullable', 'numeric', 'min:0'],
+            'received'             => ['required', 'array'],
+            'received.*'           => ['nullable', 'numeric', 'min:0'],
+            'received_packaging'   => ['nullable', 'array'],
+            'received_packaging.*' => ['nullable', 'string', 'max:40'],
         ]);
 
         try {
-            $service->receive($order, array_map('floatval', $validated['received']));
-        } catch (\RuntimeException $e) {
+            $service->receive($order, array_map('floatval', $validated['received']), $validated['received_packaging'] ?? []);
+        } catch (\RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 

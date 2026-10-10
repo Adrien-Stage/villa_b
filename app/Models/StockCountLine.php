@@ -31,6 +31,7 @@ class StockCountLine extends Model
         'stock_item_id',
         'theoretical_quantity',
         'counted_quantity',
+        'packaging_counts',
         'variance_quantity',
         'unit_cost',
         'theoretical_value',
@@ -48,6 +49,7 @@ class StockCountLine extends Model
         'theoretical_value'    => 'integer',
         'counted_value'        => 'integer',
         'variance_value'       => 'integer',
+        'packaging_counts'     => 'array',
     ];
 
     public function stockCount(): BelongsTo

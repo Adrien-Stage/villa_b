@@ -96,16 +96,47 @@
                                 accepted: 0,
                                 rejected: 0,
                                 unitPrice: {{ $line->unit_price }},
+                                {{-- Reçu en cartons ou en paquets : les quantités se saisissent dans l'unité choisie. --}}
+                                unites: {{ Js::from($line->item?->unitesDeSaisie() ?? []) }},
+                                unite: @js((string) $line->item?->unit),
+                                facteur() {
+                                    const u = this.unites.find(u => u.nom === this.unite);
+                                    return u ? Number(u.facteur) : 1;
+                                },
+                                restant() {
+                                    return Math.round(this.outstanding / this.facteur() * 1000) / 1000;
+                                },
                                 onDeliveredChange() {
-                                    this.accepted = Math.max(0, Math.min(this.outstanding, this.delivered - this.rejected));
+                                    this.accepted = Math.max(0, Math.min(this.restant(), this.delivered - this.rejected));
                                 },
                                 onRejectedChange() {
-                                    this.accepted = Math.max(0, Math.min(this.outstanding, this.delivered - this.rejected));
+                                    this.accepted = Math.max(0, Math.min(this.restant(), this.delivered - this.rejected));
+                                },
+                                toutRecevoir() {
+                                    this.delivered = this.restant();
+                                    this.rejected = 0;
+                                    this.accepted = this.restant();
+                                },
+                                accorde(mot, n) {
+                                    if (Math.abs(n) < 2 || !mot || ['kg','g','l','cl','ml'].includes(mot.toLowerCase()) || /[sxz]$/i.test(mot)) return mot;
+                                    return mot + 's';
                                 }
-                            }" x-init="registerRow({{ $line->id }}, outstanding)">
+                            }" @tout-recevoir.window="toutRecevoir()">
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
                                     <div class="text-xs text-primary/40 font-mono">P.U. : {{ number_format($line->unit_price / 100, 0, ',', ' ') }} F / {{ $line->item?->unit }}</div>
+                                    <template x-if="unites.length > 1">
+                                        <label class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-primary/60">
+                                            Reçu en
+                                            <select :name="'lines[' + id + '][packaging]'" x-model="unite" @change="onDeliveredChange()"
+                                                class="px-1.5 py-0.5 text-[11px] border border-secondary/30 rounded bg-white text-primary">
+                                                <template x-for="u in unites" :key="u.nom">
+                                                    <option :value="u.nom" x-text="u.nom" :selected="u.nom === unite"></option>
+                                                </template>
+                                            </select>
+                                        </label>
+                                    </template>
+                                    <p x-show="facteur() > 1" class="text-[10px] text-primary/50" x-text="'1 ' + unite + ' = ' + facteur() + ' ' + accorde(@js((string) $line->item?->unit), facteur()) + ' · reste ' + restant() + ' ' + accorde(unite, restant())"></p>
                                 </td>
                                 <td class="px-3 py-3 text-right font-mono text-primary/70">
                                     {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
@@ -122,7 +153,7 @@
                                         placeholder="0">
                                 </td>
                                 <td class="px-3 py-3 text-center bg-emerald-50/20">
-                                    <input type="number" step="0.001" min="0" :max="outstanding"
+                                    <input type="number" step="0.001" min="0" :max="restant()"
                                         :name="'lines[' + id + '][quantity_accepted]'"
                                         x-model.number="accepted"
                                         class="w-24 px-2 py-1.5 text-sm border border-emerald-400 bg-emerald-50/50 rounded-lg text-right font-mono font-bold text-emerald-800 focus:outline-none focus:border-emerald-600"
@@ -189,21 +220,9 @@
 <script>
 function goodsReceiptForm() {
     return {
-        rows: {},
-        registerRow(id, outstanding) {
-            this.rows[id] = outstanding;
-        },
+        // Chaque ligne se remplit avec son reste dû, dans l'unité qu'elle affiche.
         receiveAll() {
-            // Remplir automatiquement delivered et accepted à outstanding pour chaque ligne
-            Object.keys(this.rows).forEach(id => {
-                const elDelivered = document.querySelector(`input[name="lines[${id}][quantity_delivered]"]`);
-                const elAccepted = document.querySelector(`input[name="lines[${id}][quantity_accepted]"]`);
-                const elRejected = document.querySelector(`input[name="lines[${id}][quantity_rejected]"]`);
-                const val = this.rows[id];
-                if (elDelivered) { elDelivered.value = val; elDelivered.dispatchEvent(new Event('input')); }
-                if (elAccepted) { elAccepted.value = val; elAccepted.dispatchEvent(new Event('input')); }
-                if (elRejected) { elRejected.value = 0; elRejected.dispatchEvent(new Event('input')); }
-            });
+            window.dispatchEvent(new CustomEvent('tout-recevoir'));
         }
     };
 }

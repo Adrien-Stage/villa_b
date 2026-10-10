@@ -60,7 +60,7 @@ class ExternalIssueController extends Controller
     public function create(): View
     {
         return view('economat.external_issues.create', [
-            'articles' => StockItem::active()->where('current_stock', '>', 0)->orderBy('name')
+            'articles' => StockItem::active()->with('packagings')->where('current_stock', '>', 0)->orderBy('name')
                 ->get(['id', 'name', 'reference', 'unit', 'current_stock', 'average_cost']),
             'motifs'   => ExternalIssue::REASONS,
             'avecRetour' => ExternalIssue::REASONS_AVEC_RETOUR,
@@ -81,6 +81,7 @@ class ExternalIssueController extends Controller
             'lines'                    => ['required', 'array', 'min:1', 'max:100'],
             'lines.*.stock_item_id'    => ['required', 'integer', 'exists:stock_items,id'],
             'lines.*.quantity'         => ['required', 'numeric', 'gt:0', 'max:99999999'],
+            'lines.*.packaging'        => ['nullable', 'string', 'max:40'],
             'lines.*.notes'            => ['nullable', 'string', 'max:255'],
         ], [
             'reason.required'           => 'Indiquez pourquoi le matériel quitte l\'établissement.',
@@ -107,7 +108,7 @@ class ExternalIssueController extends Controller
     public function show(ExternalIssue $sortie): View
     {
         return view('economat.external_issues.show', [
-            'sortie' => $sortie->load(['lines.item', 'issuedBy', 'cancelledBy']),
+            'sortie' => $sortie->load(['lines.item.packagings', 'issuedBy', 'cancelledBy']),
         ]);
     }
 
@@ -115,7 +116,7 @@ class ExternalIssueController extends Controller
     public function print(ExternalIssue $sortie): View
     {
         return view('economat.external_issues.print', [
-            'sortie' => $sortie->load(['lines.item', 'issuedBy', 'cancelledBy']),
+            'sortie' => $sortie->load(['lines.item.packagings', 'issuedBy', 'cancelledBy']),
             'tenant' => \App\Models\Tenant::first(),
         ]);
     }

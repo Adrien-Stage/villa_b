@@ -20,6 +20,11 @@ use Illuminate\Support\Facades\DB;
  */
 class StockService
 {
+    public function __construct(private ?Conditionnements $conditionnements = null)
+    {
+        $this->conditionnements ??= new Conditionnements();
+    }
+
     /**
      * Entrée en stock (réception fournisseur, retour, correction positive).
      *
@@ -33,13 +38,14 @@ class StockService
         int $unitCost,
         string $sourceType = StockMovement::SOURCE_MANUAL,
         ?int $sourceId = null,
-        ?string $reason = null
+        ?string $reason = null,
+        ?string $niveau = null
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité entrée doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau) {
             // Verrou pessimiste : deux réceptions simultanées du même article ne
             // doivent pas se baser sur le même stock de départ.
             $item = StockItem::lockForUpdate()->find($item->id);
@@ -59,8 +65,9 @@ class StockService
                 'average_cost'        => $newAverage,
                 'last_purchase_price' => $unitCost,
             ]);
+            $etat = $this->conditionnements->appliquer($item, $currentQty, $quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason);
+            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
         });
     }
 
@@ -76,7 +83,7 @@ class StockService
      * les entrées suivantes. Au grand livre, cette valeur entre par les
      * à-nouveaux du comptable, pas par le night audit.
      */
-    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null): StockMovement
+    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null, ?string $niveau = null): StockMovement
     {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité reprise doit être positive.');
@@ -86,7 +93,7 @@ class StockService
             throw new \InvalidArgumentException('Le coût unitaire du stock repris est obligatoire.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $reason) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $reason, $niveau) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen(StockMovement::SOURCE_OPENING);
 
@@ -101,6 +108,7 @@ class StockService
                 'average_cost'        => $unitCost,
                 'last_purchase_price' => $item->last_purchase_price ?: $unitCost,
             ]);
+            $etat = $this->conditionnements->appliquer($item, 0.0, $quantity, $niveau);
 
             return $this->log(
                 $item,
@@ -109,7 +117,8 @@ class StockService
                 $unitCost,
                 StockMovement::SOURCE_OPENING,
                 null,
-                $reason ?? 'Reprise du stock initial'
+                $reason ?? 'Reprise du stock initial',
+                $etat
             );
         });
     }
@@ -123,7 +132,8 @@ class StockService
         float $quantity,
         string $sourceType = StockMovement::SOURCE_MANUAL,
         ?int $sourceId = null,
-        ?string $reason = null
+        ?string $reason = null,
+        ?string $niveau = null
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité sortie doit être positive.');
@@ -133,7 +143,7 @@ class StockService
         // qu'une fois le déstockage réellement acquis en base.
         $crossedThreshold = null;
 
-        $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, &$crossedThreshold) {
+        $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, $niveau, &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
@@ -147,8 +157,10 @@ class StockService
             }
 
             $wasAboveThreshold = !$item->isBelowThreshold();
-            $newQty = (float) $item->current_stock - $quantity;
+            $avant = (float) $item->current_stock;
+            $newQty = $avant - $quantity;
             $item->update(['current_stock' => $newQty]);
+            $etat = $this->conditionnements->appliquer($item, $avant, -$quantity, $niveau);
 
             // Seul le franchissement déclenche l'alerte : sans ça, chaque sortie
             // sur un article déjà bas renotifierait l'économe pour rien.
@@ -156,7 +168,7 @@ class StockService
                 $crossedThreshold = $item;
             }
 
-            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId, $reason);
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId, $reason, $etat);
         });
 
         if ($crossedThreshold) {
@@ -184,13 +196,14 @@ class StockService
         int $unitCost,
         string $sourceType,
         ?int $sourceId = null,
-        ?string $reason = null
+        ?string $reason = null,
+        ?string $niveau = null
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
@@ -218,8 +231,9 @@ class StockService
                 'current_stock' => $remainingQty,
                 'average_cost'  => $newAverage,
             ]);
+            $etat = $this->conditionnements->appliquer($item, $currentQty, -$quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason);
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
         });
     }
 
@@ -235,13 +249,14 @@ class StockService
         int $unitCost,
         string $sourceType,
         ?int $sourceId = null,
-        ?string $reason = null
+        ?string $reason = null,
+        ?string $niveau = null
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
@@ -254,8 +269,9 @@ class StockService
                     ? (int) round(($courant * $item->average_cost + $quantity * $unitCost) / $nouveau)
                     : $unitCost,
             ]);
+            $etat = $this->conditionnements->appliquer($item, $courant, $quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason);
+            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
         });
     }
 
@@ -286,7 +302,9 @@ class StockService
             }
 
             $wasAboveThreshold = !$item->isBelowThreshold();
+            $avant = (float) $item->current_stock;
             $item->update(['current_stock' => $countedQuantity]);
+            $etat = $this->conditionnements->appliquer($item, $avant, $delta, null);
 
             // Un comptage physique révèle souvent un manque (casse, perte) :
             // c'est aussi un moment où l'économe doit être prévenu.
@@ -301,7 +319,8 @@ class StockService
                 $item->average_cost,
                 $sourceType,
                 $sourceId,
-                $reason ?? 'Ajustement d\'inventaire'
+                $reason ?? 'Ajustement d\'inventaire',
+                $etat
             );
         });
 
@@ -314,6 +333,83 @@ class StockService
         }
 
         return $movement;
+    }
+
+    /**
+     * Ouvre des unités fermées (cartons, paquets) : leur contenu passe au
+     * conditionnement du dessous ou en vrac. Le stock et sa valeur ne changent
+     * pas ; le mouvement, de quantité nulle, garde la trace de l'ouverture.
+     */
+    public function ouvrirConditionnement(StockItem $item, string $niveau, int $nombre, ?string $motif = null): StockMovement
+    {
+        return DB::transaction(function () use ($item, $niveau, $nombre, $motif) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen(StockMovement::SOURCE_PACKAGING);
+
+            $etat = $this->conditionnements->ouvrir($item, $niveau, $nombre);
+            $texte = ucfirst(\App\Support\Conditionnement::ouvertures($etat['ouverts']));
+
+            return $this->log($item, StockMovement::TYPE_PACKAGING, 0.0, $item->average_cost,
+                StockMovement::SOURCE_PACKAGING, null, $motif ? "{$texte} — {$motif}" : $texte, $etat);
+        });
+    }
+
+    /**
+     * Définit les conditionnements de l'article et ses unités encore fermées.
+     * Le stock ne change pas ; le mouvement garde la trace de la définition.
+     *
+     * @param  list<array{nom: string, contenance: int|float|string, fermes?: int|string|null}>  $niveaux
+     */
+    public function definirConditionnements(StockItem $item, array $niveaux): StockMovement
+    {
+        return DB::transaction(function () use ($item, $niveaux) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen(StockMovement::SOURCE_PACKAGING);
+
+            $etat = $this->conditionnements->definir($item, $niveaux);
+            $texte = $etat['niveaux'] === []
+                ? 'Conditionnements retirés : tout le stock est compté en ' . $item->unit
+                : 'Conditionnements : ' . implode(', ', array_map(
+                    fn ($n) => '1 ' . $n['nom'] . ' = ' . \App\Support\Conditionnement::libelle($n['facteur'], $item->unit),
+                    $etat['niveaux']
+                ));
+
+            return $this->log($item, StockMovement::TYPE_PACKAGING, 0.0, $item->average_cost,
+                StockMovement::SOURCE_PACKAGING, null, $texte, $etat);
+        });
+    }
+
+    /**
+     * Inventaire : cale les unités fermées de l'article sur ce qui a été
+     * compté. Le stock ne change pas ici (l'ajustement l'a déjà fait) ; un
+     * mouvement « Conditionnement » garde la trace quand le détail a bougé.
+     *
+     * @param  array<string, int|string|null>  $fermes
+     */
+    public function recompterConditionnements(
+        StockItem $item,
+        array $fermes,
+        string $motif,
+        string $sourceType = StockMovement::SOURCE_STOCK_COUNT,
+        ?int $sourceId = null
+    ): ?StockMovement {
+        return DB::transaction(function () use ($item, $fermes, $motif, $sourceType, $sourceId) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
+
+            $avant = $this->conditionnements->etatDe($item->load('packagings'));
+            if ($avant === null) {
+                return null;
+            }
+
+            $apres = $this->conditionnements->fixer($item, $fermes);
+            if (array_column($avant['niveaux'], 'fermes', 'nom') === array_column($apres['niveaux'], 'fermes', 'nom')) {
+                return null;
+            }
+
+            return $this->log($item, StockMovement::TYPE_PACKAGING, 0.0, $item->average_cost, $sourceType, $sourceId,
+                $motif . ' — unités fermées comptées : ' . \App\Support\Conditionnement::decomposition($apres, (string) $item->unit), $apres);
+        });
     }
 
     /**
@@ -347,7 +443,8 @@ class StockService
         int $unitCost,
         string $sourceType,
         ?int $sourceId,
-        ?string $reason
+        ?string $reason,
+        ?array $conditionnements = null
     ): StockMovement {
         return StockMovement::create([
             'stock_item_id' => $item->id,
@@ -357,6 +454,8 @@ class StockService
             // avant comptage ; le stock après est le stock compté.
             'stock_before'  => round((float) $item->current_stock - $signedQuantity, 3),
             'stock_after'   => $item->current_stock,
+            // Unités fermées après le mouvement, et celles qu'il a ouvertes.
+            'packaging'     => $conditionnements,
             'unit_cost'     => $unitCost,
             'stock_account' => $item->stockAccount(),
             'source_type'   => $sourceType,

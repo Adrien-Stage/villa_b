@@ -18,6 +18,8 @@ class StockMovement extends Model
     public const TYPE_IN         = 'in';
     public const TYPE_OUT        = 'out';
     public const TYPE_ADJUSTMENT = 'adjustment';
+    /** Conditionnements définis ou unités ouvertes : quantité nulle, stock inchangé. */
+    public const TYPE_PACKAGING  = 'packaging';
 
     public const SOURCE_PURCHASE_ORDER = 'purchase_order';
     public const SOURCE_GOODS_RECEIPT  = 'goods_receipt';
@@ -26,6 +28,10 @@ class StockMovement extends Model
     public const SOURCE_STOCK_COUNT    = 'stock_count';
     public const SOURCE_OPENING        = 'opening';
     public const SOURCE_EXTERNAL_ISSUE = 'external_issue';
+    /** Conditionnements définis ou unités ouvertes à la main : le stock ne change pas. */
+    public const SOURCE_PACKAGING      = 'packaging';
+    /** Découpe vers le garde-manger d'un restaurant (bon de découpe). */
+    public const SOURCE_CUT            = 'cut';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -35,16 +41,19 @@ class StockMovement extends Model
         self::SOURCE_STOCK_COUNT    => 'Inventaire physique',
         self::SOURCE_OPENING        => 'Reprise du stock initial',
         self::SOURCE_EXTERNAL_ISSUE => 'Sortie hors établissement',
+        self::SOURCE_PACKAGING      => 'Conditionnement',
+        self::SOURCE_CUT            => 'Découpe',
     ];
 
     public const TYPES = [
         self::TYPE_IN         => 'Entrée',
         self::TYPE_OUT        => 'Sortie',
         self::TYPE_ADJUSTMENT => 'Ajustement',
+        self::TYPE_PACKAGING  => 'Conditionnement',
     ];
 
     protected $fillable = [
-        'stock_item_id', 'type', 'quantity', 'stock_before', 'stock_after', 'unit_cost', 'stock_account',
+        'stock_item_id', 'type', 'quantity', 'stock_before', 'stock_after', 'packaging', 'unit_cost', 'stock_account',
         'source_type', 'source_id', 'reason', 'user_id', 'occurred_at', 'tenant_id',
     ];
 
@@ -52,6 +61,7 @@ class StockMovement extends Model
         'quantity'     => 'decimal:3',
         'stock_before' => 'decimal:3',
         'stock_after'  => 'decimal:3',
+        'packaging'    => 'array',
         'unit_cost'   => 'integer',
         'occurred_at' => 'datetime',
     ];
@@ -82,6 +92,22 @@ class StockMovement extends Model
         return $this->stock_before !== null
             ? (float) $this->stock_before
             : round((float) $this->stock_after - (float) $this->quantity, 3);
+    }
+
+    /** Stock après le mouvement, décomposé en unités fermées : « 4 cartons · 19 paquets ». */
+    public function stockApresDecompose(): ?string
+    {
+        if (empty($this->packaging['niveaux'])) {
+            return null;
+        }
+
+        return \App\Support\Conditionnement::decomposition($this->packaging, (string) $this->item?->unit);
+    }
+
+    /** Unités ouvertes par le mouvement : « ouverture : 1 carton ». */
+    public function ouvertures(): ?string
+    {
+        return \App\Support\Conditionnement::ouvertures($this->packaging['ouverts'] ?? []) ?: null;
     }
 
     /** Valeur du mouvement, signée comme la quantité (centimes FCFA). */

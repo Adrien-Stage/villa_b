@@ -3,14 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bon de sortie {{ $sortie->number }} — {{ $tenant?->name ?? 'Établissement' }}</title>
+    <title>Bon de découpe {{ $decoupe->number }} — {{ $tenant?->name ?? 'Établissement' }}</title>
     @php
-        $fcfa = fn (int $v) => number_format($v / 100, 0, ',', ' ');
-        $qte = fn ($v) => rtrim(rtrim(number_format((float) $v, 3, ',', ' '), '0'), ',');
+        $fcfa = fn ($v) => number_format((int) round($v) / 100, 0, ',', ' ');
+        $unite = $decoupe->item?->unit ?? '';
+        $reparti = $decoupe->quantiteRepartie();
         $identite = collect([$tenant?->address, $tenant?->phone, $tenant?->email])->filter()->implode(' · ');
     @endphp
     <style>
-        @include('partials.impression', ['haut' => '14mm', 'bas' => '16mm', 'pied' => 'Bon de sortie hors établissement '.$sortie->number])
+        @include('partials.impression', ['haut' => '14mm', 'bas' => '16mm', 'pied' => 'Bon de découpe '.$decoupe->number])
 
         @font-face {
             font-family: 'Qwigley';
@@ -55,7 +56,7 @@
 </head>
 <body>
     <div class="no-print">
-        <span style="font-weight:600;font-size:13px;">Aperçu avant impression — Bon de sortie {{ $sortie->number }}</span>
+        <span style="font-weight:600;font-size:13px;">Aperçu avant impression — Bon de découpe {{ $decoupe->number }}</span>
         <span style="display:flex;gap:10px;align-items:center;">
             <button type="button" onclick="window.print()">Imprimer le bon</button>
             <a href="javascript:window.close()">Fermer</a>
@@ -67,30 +68,26 @@
             <div>
                 <div class="etab">{{ $tenant?->name ?? 'Établissement' }}</div>
                 @if($identite !== '')<div class="muted">{{ $identite }}</div>@endif
-                <h1>Bon de sortie hors établissement</h1>
-                <div class="muted">Matériel sorti du magasin central sans servir l'établissement</div>
+                <h1>Bon de découpe</h1>
+                <div class="muted">Article de l'économat réparti en portions pour le garde-manger</div>
             </div>
             <div class="numero">
-                {{ $sortie->number }}
-                <div class="muted" style="font-weight:400">Sorti le {{ $sortie->issued_at->format('d/m/Y à H:i') }}</div>
-                @if($sortie->isCancelled())<div class="annule">Annulé</div>@endif
+                {{ $decoupe->number }}
+                <div class="muted" style="font-weight:400">Le {{ $decoupe->cut_at->format('d/m/Y à H:i') }}</div>
             </div>
         </div>
 
         <div class="grille">
             <div class="cadre">
-                <h2>Emporté par</h2>
-                <p><strong>{{ $sortie->beneficiary_name }}</strong></p>
-                @if($sortie->beneficiary_organisation)<p>{{ $sortie->beneficiary_organisation }}</p>@endif
-                <p>Téléphone : {{ $sortie->beneficiary_phone ?? '—' }}</p>
-                <p>Pièce d'identité : {{ $sortie->beneficiary_id_document ?? '—' }}</p>
+                <h2>Pris à l'économat</h2>
+                <p><strong>{{ \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $unite) }}</strong> de {{ $decoupe->item?->name ?? '—' }}</p>
+                <p>Coût moyen : {{ $fcfa($decoupe->unit_cost) }} F / {{ $unite }} · valeur {{ $fcfa($decoupe->total_value) }} F</p>
             </div>
             <div class="cadre">
-                <h2>Motif</h2>
-                <p><strong>{{ $sortie->reasonLabel() }}</strong></p>
-                @if($sortie->expected_return_at)<p>Retour prévu le {{ $sortie->expected_return_at->format('d/m/Y') }}</p>@endif
-                @if($sortie->notes)<p class="muted" style="font-size:9.5px">{{ $sortie->notes }}</p>@endif
-                <p>Validé par : {{ $sortie->issuedBy?->name ?? '—' }}</p>
+                <h2>Versé au garde-manger</h2>
+                <p><strong>{{ $decoupe->restaurant?->name ?? '—' }}</strong></p>
+                @if($decoupe->notes)<p class="muted" style="font-size:9.5px">{{ $decoupe->notes }}</p>@endif
+                <p>Saisi par : {{ $decoupe->cutBy?->name ?? '—' }}</p>
             </div>
         </div>
 
@@ -98,58 +95,57 @@
             <thead>
                 <tr>
                     <th style="width:24px">#</th>
-                    <th style="width:80px">Référence</th>
-                    <th>Article</th>
+                    <th>Portion</th>
                     <th class="num">Quantité</th>
-                    <th class="num">Coût unitaire</th>
+                    <th class="num">Part</th>
                     <th class="num">Valeur</th>
-                    <th>Note</th>
+                    <th class="num">Coût unitaire</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($sortie->lines as $i => $ligne)
+                @foreach($decoupe->lines as $i => $ligne)
+                    @php $uniteCuisine = $ligne->pantryItem?->unit ?? $unite; @endphp
                     <tr>
                         <td>{{ $i + 1 }}</td>
-                        <td class="muted">{{ $ligne->item?->reference ?? '' }}</td>
-                        <td>{{ $ligne->item?->name ?? '—' }}</td>
-                        <td class="num">{{ $ligne->packaging_name ? $ligne->enConditionnement((float) $ligne->quantity) : $qte($ligne->quantity) . ' ' . $ligne->item?->unit }}</td>
-                        <td class="num">{{ $fcfa((int) $ligne->unit_cost) }} F</td>
-                        <td class="num">{{ $fcfa((int) $ligne->total_cost) }} F</td>
-                        <td>{{ $ligne->notes ?? '' }}</td>
+                        <td>{{ $ligne->label }}</td>
+                        <td class="num">{{ \App\Support\Conditionnement::libelle((float) $ligne->pantry_quantity, $uniteCuisine) }}</td>
+                        <td class="num">{{ $reparti > 0 ? number_format(100 * (float) $ligne->quantity / $reparti, 1, ',', ' ') : 0 }} %</td>
+                        <td class="num">{{ $fcfa($ligne->value) }} F</td>
+                        <td class="num">{{ $fcfa($ligne->unit_cost) }} F / {{ $uniteCuisine }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5">Valeur totale au coût moyen</td>
-                    <td class="num">{{ $fcfa((int) $sortie->total_value) }} F</td>
+                    <td colspan="2">Total réparti</td>
+                    <td class="num">{{ \App\Support\Conditionnement::libelle($reparti, $unite) }}</td>
+                    <td></td>
+                    <td class="num">{{ $fcfa($decoupe->lines->sum('value')) }} F</td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
 
-        @if($sortie->isCancelled())
-            <p class="mention">Annulé le {{ $sortie->cancelled_at?->format('d/m/Y à H:i') }} par {{ $sortie->cancelledBy?->name ?? '—' }} : {{ $sortie->cancellation_reason }}. Le matériel est revenu en stock.</p>
+        @if($decoupe->freinte() > 0)
+            <p class="mention">Freinte non répartie : {{ \App\Support\Conditionnement::libelle($decoupe->freinte(), $unite) }}. Sa valeur est portée par les portions.</p>
         @endif
 
         <table class="signatures">
             <tr>
                 <td>
-                    <div class="sig-titre">Le demandeur</div>
-                    <div class="muted">Reconnaît avoir reçu le matériel ci-dessus</div>
-                    <div class="sig-main">{{ $sortie->beneficiary_signature }}</div>
-                    <div class="muted">{{ $sortie->beneficiary_name }}</div>
+                    <div class="sig-titre">L'économat</div>
+                    <div class="muted">A sorti la quantité ci-dessus</div>
+                    <div class="sig-main">{{ $decoupe->cutBy ? \App\Models\User::extractSignatureName($decoupe->cutBy->name) : '' }}</div>
+                    <div class="muted">{{ $decoupe->cutBy?->name }}</div>
                 </td>
                 <td>
-                    <div class="sig-titre">L'économe</div>
-                    <div class="muted">Sortie validée</div>
-                    <div class="sig-main">{{ $sortie->issuer_signature }}</div>
-                    <div class="muted">{{ $sortie->issuedBy?->name ?? '' }} — le {{ $sortie->issued_at->format('d/m/Y') }}</div>
+                    <div class="sig-titre">La cuisine</div>
+                    <div class="muted">A reçu les portions ci-dessus</div>
+                    <div class="muted" style="margin-top:46px">Nom : ……………………………</div>
                 </td>
                 <td>
-                    <div class="sig-titre">Sécurité / Contrôle à la sortie</div>
-                    <div class="muted" style="margin-top:28px">Nom : ....................................</div>
-                    <div class="muted">Date et signature :</div>
+                    <div class="sig-titre">Contrôle de gestion</div>
+                    <div class="muted">Visa</div>
                 </td>
             </tr>
         </table>

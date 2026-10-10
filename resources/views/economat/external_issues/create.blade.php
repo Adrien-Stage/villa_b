@@ -11,10 +11,14 @@
         'unit'  => $a->unit,
         'stock' => (float) $a->current_stock,
         'cump'  => (int) $a->average_cost,
+        // Sorti en cartons ou en paquets : on peut saisir dans chacun.
+        'unites' => $a->unitesDeSaisie(),
+        'decompose' => $a->stockDecompose(),
     ])->values();
     $lignesSaisies = collect(old('lines', []))->values()->map(fn ($l) => [
         'itemId' => (int) ($l['stock_item_id'] ?? 0) ?: '',
         'qty'    => $l['quantity'] ?? '',
+        'packaging' => $l['packaging'] ?? '',
         'notes'  => $l['notes'] ?? '',
     ]);
     $champ = 'w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary';
@@ -112,7 +116,7 @@
                     <div class="grid grid-cols-12 gap-2.5 items-end p-3 rounded-lg border border-secondary/20 bg-surface-light/20">
                         <div class="col-span-12 md:col-span-5">
                             <label :for="'article-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Article</label>
-                            <select :id="'article-' + ligne.key" :name="`lines[${idx}][stock_item_id]`" x-model.number="ligne.itemId" required
+                            <select :id="'article-' + ligne.key" :name="`lines[${idx}][stock_item_id]`" x-model.number="ligne.itemId" @change="ligne.packaging = article(ligne)?.unit || ''" required
                                     class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                 <option value="">Choisir un article…</option>
                                 <template x-for="a in articles" :key="a.id">
@@ -122,8 +126,16 @@
                         </div>
                         <div class="col-span-4 md:col-span-2">
                             <label :for="'qte-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Quantité</label>
-                            <input :id="'qte-' + ligne.key" type="number" step="0.001" min="0.001" :max="article(ligne)?.stock" :name="`lines[${idx}][quantity]`" x-model="ligne.qty" required
+                            <input :id="'qte-' + ligne.key" type="number" step="0.001" min="0.001" :max="article(ligne) ? article(ligne).stock / facteur(ligne) : null" :name="`lines[${idx}][quantity]`" x-model="ligne.qty" required
                                    class="w-full px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary text-right font-mono font-bold">
+                            <template x-if="(article(ligne)?.unites || []).length > 1">
+                                <select :name="`lines[${idx}][packaging]`" x-model="ligne.packaging" :aria-label="'Unité de la ligne ' + (idx + 1)"
+                                        class="mt-1 w-full px-2 py-1 text-[11px] border border-secondary/30 rounded-lg bg-white text-primary">
+                                    <template x-for="u in article(ligne).unites" :key="u.nom">
+                                        <option :value="u.nom" x-text="u.nom" :selected="u.nom === ligne.packaging"></option>
+                                    </template>
+                                </select>
+                            </template>
                         </div>
                         <div class="col-span-8 md:col-span-4">
                             <label :for="'note-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Note</label>
@@ -136,7 +148,7 @@
                             </button>
                         </div>
                         <p class="col-span-12 text-[11px] text-primary/55" x-show="article(ligne)">
-                            En stock : <strong class="font-mono" x-text="nombre(article(ligne)?.stock) + ' ' + (article(ligne)?.unit ?? '')"></strong>
+                            En stock : <strong class="font-mono" x-text="article(ligne)?.decompose || (nombre(article(ligne)?.stock) + ' ' + (article(ligne)?.unit ?? ''))"></strong>
                             · valeur de la sortie : <strong class="font-mono" x-text="montant(valeur(ligne)) + ' F'"></strong>
                         </p>
                     </div>
@@ -173,11 +185,13 @@
                 if (this.lignes.length === 0) this.ajouter();
             },
             ajouter() {
-                this.lignes.push({ key: this.cle++, itemId: '', qty: '', notes: '' });
+                this.lignes.push({ key: this.cle++, itemId: '', qty: '', packaging: '', notes: '' });
                 this.$nextTick(() => { if (window.refreshLucideIcons) window.refreshLucideIcons(); });
             },
             article(ligne) { return this.articles.find(a => a.id === ligne.itemId) || null; },
-            valeur(ligne) { const a = this.article(ligne); return a ? (parseFloat(ligne.qty) || 0) * a.cump / 100 : 0; },
+            // Unités de l'article dans l'unité choisie : 200 pour un carton de 200 pièces.
+            facteur(ligne) { const u = (this.article(ligne)?.unites || []).find(u => u.nom === ligne.packaging); return u ? Number(u.facteur) : 1; },
+            valeur(ligne) { const a = this.article(ligne); return a ? (parseFloat(ligne.qty) || 0) * this.facteur(ligne) * a.cump / 100 : 0; },
             get total() { return this.lignes.reduce((s, l) => s + this.valeur(l), 0); },
             // Même règle que le serveur : le premier nom, sans civilité, chaque partie en capitale (« Jean-Paul »).
             signature() {

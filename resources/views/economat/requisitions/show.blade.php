@@ -196,23 +196,39 @@
                                     <span class="font-mono {{ $serviceable ? 'text-primary/70' : 'text-red-600 font-bold' }}">
                                         {{ rtrim(rtrim(number_format($item?->current_stock ?? 0, 3, ',', ' '), '0'), ',') }}
                                     </span>
+                                    @if($line->packaging_name && $item?->stockDecompose())
+                                        <span class="block text-[10px] text-primary/45 font-sans">{{ $item->stockDecompose() }}</span>
+                                    @endif
                                     @unless($serviceable)
                                         <span class="block text-[10px] text-red-500 font-sans">stock insuffisant</span>
                                     @endunless
                                 </td>
                                 <td class="px-4 py-3 text-right font-mono font-bold text-primary">
-                                    {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
+                                    @if($line->packaging_name)
+                                        <span class="font-sans">{{ $line->quantiteDemandee() }}</span>
+                                    @else
+                                        {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
+                                    @endif
                                 </td>
                                 @if($requisition->status === 'delivered')
                                     <td class="px-4 py-3 text-right font-mono font-bold text-green-700">
-                                        {{ rtrim(rtrim(number_format($line->quantity_issued, 3, ',', ' '), '0'), ',') }}
+                                        @if($line->packaging_name)
+                                            <span class="font-sans">{{ $line->quantiteServie() }}</span>
+                                        @else
+                                            {{ rtrim(rtrim(number_format($line->quantity_issued, 3, ',', ' '), '0'), ',') }}
+                                        @endif
                                     </td>
                                 @elseif($isKeeper && $requisition->canBeDelivered())
-                                    <td class="px-4 py-3 text-right">
-                                        <input type="number" step="0.001" min="0" max="{{ $item?->current_stock ?? 0 }}"
+                                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                                        {{-- Servi dans le conditionnement demandé : paquets, cartons… --}}
+                                        <input type="number" step="0.001" min="0" max="{{ round((float) ($item?->current_stock ?? 0) / $line->facteur(), 3) }}"
                                             name="issued[{{ $line->id }}]"
-                                            value="{{ min((float) $line->quantity_requested, (float) ($item?->current_stock ?? 0)) }}"
+                                            value="{{ $line->quantiteServieProposee() }}"
+                                            aria-label="Quantité servie{{ $line->packaging_name ? ' en ' . $line->packaging_name : '' }}"
                                             class="w-24 px-2 py-1 text-xs border border-secondary/30 rounded-lg bg-white text-primary font-mono text-right font-bold focus:border-primary focus:ring-primary">
+                                        @if($line->packaging_name)
+                                            <span class="text-[10px] text-primary/60">{{ $line->packaging_name }}</span>
+                                        @endif
                                     </td>
                                 @endif
                                 <td class="px-4 py-3 text-right font-mono text-primary/60">

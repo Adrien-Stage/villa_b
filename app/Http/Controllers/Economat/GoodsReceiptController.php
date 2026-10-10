@@ -116,7 +116,7 @@ class GoodsReceiptController extends Controller
                 ->with('error', "Ce bon de commande ne peut pas être réceptionné dans son état actuel.");
         }
 
-        $order->load(['supplier', 'lines.item']);
+        $order->load(['supplier', 'lines.item.packagings']);
 
         return view('economat.receipts.create', [
             'order'   => $order,
@@ -134,13 +134,14 @@ class GoodsReceiptController extends Controller
             'lines.*.quantity_delivered' => ['nullable', 'numeric', 'min:0'],
             'lines.*.quantity_accepted'  => ['nullable', 'numeric', 'min:0'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0'],
+            'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
             'lines.*.rejection_reason'   => ['nullable', 'string', 'max:100'],
             'lines.*.notes'              => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
             $receipt = $this->receiptService->receive($order, $validated, Auth::user());
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
 
@@ -159,7 +160,7 @@ class GoodsReceiptController extends Controller
 
         return view('economat.receipts.direct', [
             'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
-            'items'         => StockItem::active()->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
+            'items'         => StockItem::active()->with('packagings')->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
             'unites'        => StockUnit::choix(),
             'motifs'        => PurchaseOrder::MOTIFS_REGULARISATION,
@@ -186,6 +187,7 @@ class GoodsReceiptController extends Controller
             'lines.*.nouvel_article.stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
             'lines.*.rejection_reason'   => ['nullable', Rule::in(array_keys(GoodsReceiptLine::REASONS))],
             // Prix unitaire en FCFA : sans lui, le coût moyen du stock serait faussé.
             'lines.*.unit_price'         => ['required', 'numeric', 'gt:0', 'max:999999999'],
@@ -242,7 +244,7 @@ class GoodsReceiptController extends Controller
 
     public function show(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category']);
+        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings']);
 
         return view('economat.receipts.show', [
             'receipt' => $receipt,
@@ -255,7 +257,7 @@ class GoodsReceiptController extends Controller
      */
     public function print(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category']);
+        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings']);
 
         return view('economat.receipts.print', [
             'receipt' => $receipt,

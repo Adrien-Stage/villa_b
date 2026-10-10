@@ -421,11 +421,19 @@
                         </td>
                         <td class="text-center">{{ $item?->unit ?? 'u' }}</td>
                         <td class="text-right font-mono font-bold">
-                            {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
+                            @if($line->packaging_name)
+                                {{ $line->quantiteDemandee() }}
+                            @else
+                                {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
+                            @endif
                         </td>
                         <td class="text-right font-mono font-bold" style="color: {{ $requisition->status === 'delivered' ? '#15803d' : '#475569' }};">
                             @if($requisition->status === 'delivered')
-                                {{ rtrim(rtrim(number_format($line->quantity_issued, 3, ',', ' '), '0'), ',') }}
+                                @if($line->packaging_name)
+                                    {{ $line->quantiteServie() }}
+                                @else
+                                    {{ rtrim(rtrim(number_format($line->quantity_issued, 3, ',', ' '), '0'), ',') }}
+                                @endif
                             @else
                                 —
                             @endif
