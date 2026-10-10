@@ -188,10 +188,16 @@
                 <x-table.cell align="right" nowrap class="font-mono text-primary/70">{{ $qte($l['avant']) }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono text-green-700">{{ $l['entree'] !== null ? '+' . $qte($l['entree']) : '' }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono text-red-700">{{ $l['sortie'] !== null ? '−' . $qte($l['sortie']) : '' }}</x-table.cell>
-                <x-table.cell align="right" nowrap class="font-mono font-bold text-primary">{{ $qte($l['apres']) }} <span class="text-[10px] font-sans font-normal text-primary/50">{{ $l['unite'] }}</span></x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono font-bold text-primary">
+                    {{ $qte($l['apres']) }} <span class="text-[10px] font-sans font-normal text-primary/50">{{ $l['unite'] }}</span>
+                    @if($l['apres_decompose'])<span class="block text-[10px] font-sans font-normal text-primary/45">{{ $l['apres_decompose'] }}</span>@endif
+                </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $fcfa($l['cout']) }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono {{ $l['valeur'] < 0 ? 'text-red-700' : 'text-green-700' }}">{{ $l['valeur'] < 0 ? '−' : '+' }}{{ $fcfa($l['valeur']) }}</x-table.cell>
-                <x-table.cell hide="2xl" class="max-w-xs text-xs text-primary/60">{{ $l['motif'] }}</x-table.cell>
+                <x-table.cell hide="2xl" class="max-w-xs text-xs text-primary/60">
+                    {{ $l['motif'] }}
+                    @if($l['ouvertures'])<span class="block text-amber-700">{{ ucfirst($l['ouvertures']) }}</span>@endif
+                </x-table.cell>
                 <x-table.cell hide="3xl" class="text-xs text-primary/60">{{ $l['par'] }}</x-table.cell>
             </x-table.row>
         @endforeach

@@ -664,6 +664,22 @@
  "economat.items.store": [
   "econome"
  ],
+ "economat.items.transformation.open": [
+  "econome",
+  "storekeeper"
+ ],
+ "economat.items.transformation.packagings": [
+  "econome"
+ ],
+ "economat.items.transformation.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.items.update": [
   "econome"
  ],

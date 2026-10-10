@@ -22,7 +22,7 @@ class StockItemController extends Controller
     public function index(Request $request): View
     {
         // Le nombre de mouvements dit si l'article peut encore recevoir sa reprise.
-        $query = StockItem::with('category', 'supplier')->withCount('movements');
+        $query = StockItem::with('category', 'supplier', 'packagings')->withCount('movements');
 
         // Filtre rapide sur les articles à traiter.
         if ($request->query('filter') === 'alert') {
@@ -45,10 +45,10 @@ class StockItemController extends Controller
 
     public function show(StockItem $item): View
     {
-        $item->load('category', 'supplier');
+        $item->load('category', 'supplier', 'packagings');
 
         // Historique des mouvements : l'audit de l'article.
-        $movements = $item->movements()->with('user')->latest('occurred_at')->take(50)->get();
+        $movements = $item->movements()->with('user', 'item')->latest('occurred_at')->latest('id')->take(50)->get();
 
         return view('economat.items.show', compact('item', 'movements'));
     }

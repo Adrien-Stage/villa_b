@@ -185,7 +185,7 @@ class StockRequisitionController extends Controller
 
     public function create(): View
     {
-        $items = StockItem::active()->with('category')->orderBy('name')->get();
+        $items = StockItem::active()->with('category', 'packagings')->orderBy('name')->get();
 
         $departments = $this->departementsDe(Auth::user());
 
@@ -226,6 +226,7 @@ class StockRequisitionController extends Controller
             'lines'       => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
             'lines.*.quantity'      => ['required', 'numeric', 'min:0.001'],
+            'lines.*.packaging'     => ['nullable', 'string', 'max:40'],
         ], [
             'department.in'           => "Vous ne pouvez demander que pour votre service.",
             'lines.required'          => 'Ajoutez au moins un article à votre demande.',
@@ -249,37 +250,11 @@ class StockRequisitionController extends Controller
             $restaurant->exiger(\App\Models\PointOfSale::SERVICE_STOCK);
         }
 
-        $requisition = DB::transaction(function () use ($validated, $restaurant) {
-            $user = Auth::user();
-            $signature = $user ? $user->signatureName() : null;
-
-            // Le chef qui demande pour son service porte lui-même le visa.
-            $visaRequis = StockRequisition::visaRequis($user, $validated['department']);
-
-            $requisition = StockRequisition::create([
-                'status'              => $visaRequis ? StockRequisition::STATUS_AWAITING_ENDORSEMENT : StockRequisition::STATUS_PENDING,
-                'endorsed_by'         => $visaRequis ? null : $user->id,
-                'endorsed_at'         => $visaRequis ? null : now(),
-                'department'          => $validated['department'],
-                'service_store_id'    => $validated['service_store_id'] ?? null,
-                'point_of_sale_id'    => $restaurant?->id,
-                'purpose'             => $validated['purpose'] ?? null,
-                'requested_by'        => Auth::id(),
-                'requester_signature' => $signature,
-                'tenant_id'           => Auth::user()->tenant_id
-                    ?? \App\Models\Tenant::current()?->id,
-            ]);
-
-            foreach ($validated['lines'] as $line) {
-                StockRequisitionLine::create([
-                    'stock_requisition_id' => $requisition->id,
-                    'stock_item_id'        => $line['stock_item_id'],
-                    'quantity_requested'   => $line['quantity'],
-                ]);
-            }
-
-            return $requisition;
-        });
+        try {
+            $requisition = $this->enregistrer($validated, $restaurant);
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->withErrors(['lines' => $e->getMessage()]);
+        }
 
         if ($requisition->canBeEndorsed()) {
             // Le chef du service vise d'abord : c'est lui qu'on prévient.
@@ -396,6 +371,53 @@ class StockRequisitionController extends Controller
     }
 
     /** Livraison : déstocke les quantités réellement servies. */
+    /** Crée la demande et ses lignes, en une transaction. */
+    private function enregistrer(array $validated, ?\App\Models\PointOfSale $restaurant): StockRequisition
+    {
+        return DB::transaction(function () use ($validated, $restaurant) {
+            $user = Auth::user();
+            $signature = $user ? $user->signatureName() : null;
+
+            // Le chef qui demande pour son service porte lui-même le visa.
+            $visaRequis = StockRequisition::visaRequis($user, $validated['department']);
+
+            $requisition = StockRequisition::create([
+                'status'              => $visaRequis ? StockRequisition::STATUS_AWAITING_ENDORSEMENT : StockRequisition::STATUS_PENDING,
+                'endorsed_by'         => $visaRequis ? null : $user->id,
+                'endorsed_at'         => $visaRequis ? null : now(),
+                'department'          => $validated['department'],
+                'service_store_id'    => $validated['service_store_id'] ?? null,
+                'point_of_sale_id'    => $restaurant?->id,
+                'purpose'             => $validated['purpose'] ?? null,
+                'requested_by'        => Auth::id(),
+                'requester_signature' => $signature,
+                'tenant_id'           => Auth::user()->tenant_id
+                    ?? \App\Models\Tenant::current()?->id,
+            ]);
+
+            $articles = StockItem::with('packagings')->whereKey(collect($validated['lines'])->pluck('stock_item_id'))->get()->keyBy('id');
+
+            foreach ($validated['lines'] as $line) {
+                // Demandé en paquets ou en cartons : la ligne garde le
+                // conditionnement, et sa quantité dans l'unité de l'article.
+                $article = $articles->get((int) $line['stock_item_id']);
+                $conditionnement = trim((string) ($line['packaging'] ?? ''));
+                $conditionnement = $conditionnement === '' || $conditionnement === $article?->unit ? null : $conditionnement;
+                $facteur = $conditionnement !== null ? $article->facteurDe($conditionnement) : 1.0;
+
+                StockRequisitionLine::create([
+                    'stock_requisition_id' => $requisition->id,
+                    'stock_item_id'        => $line['stock_item_id'],
+                    'quantity_requested'   => round((float) $line['quantity'] * $facteur, 3),
+                    'packaging_name'       => $conditionnement,
+                    'packaging_quantity'   => $conditionnement !== null ? $line['quantity'] : null,
+                ]);
+            }
+
+            return $requisition;
+        });
+    }
+
     public function deliver(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
     {
         $this->authorizeKeeper('economat.requisitions.deliver');

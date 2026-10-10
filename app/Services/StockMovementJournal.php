@@ -140,6 +140,9 @@ class StockMovementJournal
             'entree'    => $quantite > 0 ? $quantite : null,
             'sortie'    => $quantite < 0 ? -$quantite : null,
             'apres'     => (float) $m->stock_after,
+            // Unités fermées après le mouvement, et ce qu'il a ouvert.
+            'apres_decompose' => $m->stockApresDecompose(),
+            'ouvertures' => $m->source_type === StockMovement::SOURCE_PACKAGING ? null : $m->ouvertures(),
             'cout'      => (int) $m->unit_cost,
             'valeur'    => $m->valeur(),
             'motif'     => $m->reason ?: '—',

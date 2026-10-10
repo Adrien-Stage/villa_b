@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 117 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 115 | 90 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
+| Administrateur (`admin`) | 1 | — | 118 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 116 | 90 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 44 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
 | Réceptionniste (`reception`) | 4 | — | 30 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
 | Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 9 | 19 | Économat, Paramètres, Housekeeping, Planning |
@@ -26,13 +26,13 @@
 | Caissier restaurant (`cashier`) | 4 | — | 11 | 7 | Restaurant |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 15 | 21 | Économat, Paramètres, Boutique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 8 | 8 | Économat, Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 29 | 50 | Économat, Planning |
-| Magasinier (`storekeeper`) | 4 | — | 22 | 6 | Économat |
+| Chef économe (`econome`) | 3 | `storekeeper` | 30 | 52 | Économat, Planning |
+| Magasinier (`storekeeper`) | 4 | — | 23 | 7 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 26 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 83 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 66 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 97 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 84 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 67 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 98 | 0 | — |
 
 ## Droit par droit
 
@@ -283,6 +283,9 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.items.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.opening` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.open` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.items.transformation.packagings` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.items.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.movements.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
 | `economat.movements.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |

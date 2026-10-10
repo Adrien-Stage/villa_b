@@ -85,6 +85,9 @@
                         <span class="font-medium text-primary">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
                         <span class="text-xs text-primary/45">{{ $item->unit }}</span>
                     </span>
+                    @if($item->packagings->isNotEmpty())
+                        <span class="block text-[10px] text-primary/50">{{ $item->stockDecompose() }}</span>
+                    @endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ number_format($item->average_cost / 100, 0, ',', ' ') }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-medium">{{ number_format($item->stockValue() / 100, 0, ',', ' ') }}</x-table.cell>
@@ -95,6 +98,9 @@
                             <x-table.action icon="package-plus" x-on:click="openOpening({{ Js::from($openingPayload) }})" title="Reprendre le stock déjà en magasin">Reprise du stock</x-table.action>
                         @enddroit
                     @endif
+                    @droit('economat.items.transformation.voir')
+                        <x-table.action :href="route('economat.items.transformation.show', $item)" icon="boxes">Transformation</x-table.action>
+                    @enddroit
                     <x-table.action icon="scale" x-on:click="openAdjust({{ Js::from($adjustPayload) }})">Ajuster le stock</x-table.action>
                     <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
                 </x-table.actions>

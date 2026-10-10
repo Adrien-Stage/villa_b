@@ -122,6 +122,8 @@ class PermissionCatalog
         'economat.items.modifier',
         'economat.items.opening',
         'economat.items.supprimer',
+        'economat.items.transformation.open',
+        'economat.items.transformation.packagings',
         'economat.orders.cancel',
         'economat.orders.creer',
         'economat.orders.receive',
@@ -721,6 +723,11 @@ class PermissionCatalog
             'economat.items.opening' => ['econome'],
             'economat.items.supprimer' => ['econome'],
             'economat.items.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Transformation : l'économe définit les conditionnements ; le
+            // magasinier peut aussi ouvrir un carton ou un paquet.
+            'economat.items.transformation.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.items.transformation.packagings' => ['econome'],
+            'economat.items.transformation.open' => ['econome', 'storekeeper'],
             'economat.orders.cancel' => ['econome'],
             'economat.orders.creer' => ['econome'],
             'economat.orders.export' => ['controller', 'econome', 'manager'],

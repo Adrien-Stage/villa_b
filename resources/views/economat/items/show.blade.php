@@ -20,12 +20,22 @@
                     @if($item->supplier) · Fournisseur : {{ $item->supplier->name }}@endif
                 </p>
             </div>
-            @php $level = $item->stockLevel(); @endphp
-            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
-                {{ $level === 'out' ? 'bg-red-50 text-red-700' : ($level === 'low' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700') }}">
-                <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}"></span>
-                {{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
-            </span>
+            @php $level = $item->stockLevel(); $decompose = $item->stockDecompose(); @endphp
+            <div class="text-right space-y-2">
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
+                    {{ $level === 'out' ? 'bg-red-50 text-red-700' : ($level === 'low' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700') }}">
+                    <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}"></span>
+                    {{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
+                </span>
+                @if($decompose)
+                    <p class="text-xs text-primary/60">{{ $decompose }}</p>
+                @endif
+                @droit('economat.items.transformation.voir')
+                    <a href="{{ route('economat.items.transformation.show', $item) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30 rounded-lg text-xs font-semibold text-primary hover:bg-gray-50">
+                        <i data-lucide="boxes" class="w-3.5 h-3.5"></i> Transformation
+                    </a>
+                @enddroit
+            </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
@@ -92,8 +102,14 @@
                                 <td class="px-5 py-2.5 text-right font-medium {{ $m->quantity > 0 ? 'text-green-700' : 'text-red-700' }}">
                                     {{ $m->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($m->quantity, 3, ',', ' '), '0'), ',') }}
                                 </td>
-                                <td class="px-5 py-2.5 text-right text-primary/70">{{ rtrim(rtrim(number_format($m->stock_after, 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-2.5 text-primary/50 text-xs">{{ $m->reason }}</td>
+                                <td class="px-5 py-2.5 text-right text-primary/70">
+                                    {{ rtrim(rtrim(number_format($m->stock_after, 3, ',', ' '), '0'), ',') }}
+                                    @if($m->stockApresDecompose())<span class="block text-[10px] text-primary/45">{{ $m->stockApresDecompose() }}</span>@endif
+                                </td>
+                                <td class="px-5 py-2.5 text-primary/50 text-xs">
+                                    {{ $m->reason }}
+                                    @if($m->ouvertures() && $m->source_type !== \App\Models\StockMovement::SOURCE_PACKAGING)<span class="block text-amber-700">{{ ucfirst($m->ouvertures()) }}</span>@endif
+                                </td>
                                 <td class="px-5 py-2.5 text-primary/50 text-xs">{{ $m->user?->name ?? '—' }}</td>
                             </tr>
                         @endforeach

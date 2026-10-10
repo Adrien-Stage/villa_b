@@ -676,6 +676,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
             Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
             Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
+            // Transformation : conditionnements de l'article et ouverture d'unités fermées.
+            Route::get('/articles/{item}/transformation', [$eco . 'StockItemTransformationController', 'show'])->whereNumber('item')->name('items.transformation.show');
+            Route::post('/articles/{item}/conditionnements', [$eco . 'StockItemTransformationController', 'packagings'])->whereNumber('item')->name('items.transformation.packagings');
+            Route::post('/articles/{item}/ouverture', [$eco . 'StockItemTransformationController', 'open'])->whereNumber('item')->name('items.transformation.open');
             Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
 
             // Unités de stockage des articles (réglées dans Paramètres › Économat)
