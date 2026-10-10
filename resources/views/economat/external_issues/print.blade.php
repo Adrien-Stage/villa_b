@@ -112,7 +112,7 @@
                         <td>{{ $i + 1 }}</td>
                         <td class="muted">{{ $ligne->item?->reference ?? '' }}</td>
                         <td>{{ $ligne->item?->name ?? '—' }}</td>
-                        <td class="num">{{ $qte($ligne->quantity) }} {{ $ligne->item?->unit }}</td>
+                        <td class="num">{{ $ligne->packaging_name ? $ligne->enConditionnement((float) $ligne->quantity) : $qte($ligne->quantity) . ' ' . $ligne->item?->unit }}</td>
                         <td class="num">{{ $fcfa((int) $ligne->unit_cost) }} F</td>
                         <td class="num">{{ $fcfa((int) $ligne->total_cost) }} F</td>
                         <td>{{ $ligne->notes ?? '' }}</td>

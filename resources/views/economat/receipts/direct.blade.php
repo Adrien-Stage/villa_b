@@ -10,6 +10,8 @@
         'unit'  => $i->unit ?: 'pièce',
         // Dernier prix payé, sinon coût moyen : une proposition, modifiable.
         'price' => (int) round(($i->last_purchase_price ?: $i->average_cost) / 100),
+        // Reçu en cartons ou en paquets : on peut saisir dans chacun.
+        'unites' => $i->unitesDeSaisie(),
     ])->values();
 
     // Après une erreur de validation, le formulaire revient tel qu'il était saisi.
@@ -23,6 +25,7 @@
         'rejected'  => $l['quantity_rejected'] ?? '',
         'reason'    => $l['rejection_reason'] ?? '',
         'price'     => $l['unit_price'] ?? '',
+        'packaging' => $l['packaging'] ?? '',
         'notes'     => $l['notes'] ?? '',
     ]);
     $nouveauFournisseur = !old('supplier_id') && old('nouveau_fournisseur.name');
@@ -186,6 +189,17 @@
                                 </template>
                             </div>
 
+                            <template x-if="unitesDe(ligne).length > 1">
+                                <div class="col-span-12 md:col-span-2">
+                                    <label :for="'unite-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Reçu en</label>
+                                    <select :id="'unite-' + ligne.key" :name="`lines[${idx}][packaging]`" x-model="ligne.packaging" @change="changerUnite(ligne)"
+                                        class="w-full px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                        <template x-for="u in unitesDe(ligne)" :key="u.nom">
+                                            <option :value="u.nom" x-text="u.nom" :selected="u.nom === ligne.packaging"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </template>
                             <div class="col-span-4 md:col-span-2">
                                 <label :for="'livre-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Livré</label>
                                 <input :id="'livre-' + ligne.key" type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity_delivered]`" x-model="ligne.delivered" required
@@ -197,7 +211,7 @@
                                     class="w-full px-2 py-1.5 text-xs border border-rose-300 bg-rose-50/30 rounded-lg text-rose-800 outline-none focus:border-rose-500 text-right font-mono">
                             </div>
                             <div class="col-span-4 md:col-span-2">
-                                <label :for="'prix-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">P.U. (FCFA)</label>
+                                <label :for="'prix-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase" x-text="'P.U. (FCFA' + (uniteDe(ligne) ? ' / ' + uniteDe(ligne) : '') + ')'">P.U. (FCFA)</label>
                                 <input :id="'prix-' + ligne.key" type="number" step="1" min="1" :name="`lines[${idx}][unit_price]`" x-model="ligne.price" required
                                     class="w-full px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary text-right font-mono">
                             </div>
@@ -284,7 +298,7 @@
                     key: this.prochaineCle++,
                     // Magasin vide : on part d'un nouvel article plutôt que d'une liste sans choix.
                     nouveau: this.articles.length === 0,
-                    itemId: '', name: '', unit: '', category: '',
+                    itemId: '', name: '', unit: '', category: '', packaging: '',
                     delivered: '', rejected: '', reason: '', price: '', notes: '',
                 });
                 this.$nextTick(() => { if (window.refreshLucideIcons) window.refreshLucideIcons(); });
@@ -296,14 +310,29 @@
 
             choisir(ligne) {
                 const article = this.articles.find(a => a.id === ligne.itemId);
+                ligne.packaging = article ? article.unit : '';
                 if (article && !ligne.price && article.price > 0) {
                     ligne.price = article.price;
                 }
             },
 
+            unitesDe(ligne) {
+                if (ligne.nouveau) return [];
+                return this.articles.find(a => a.id === ligne.itemId)?.unites || [];
+            },
+
+            // Reçu en cartons : le prix proposé devient celui du carton.
+            changerUnite(ligne) {
+                const article = this.articles.find(a => a.id === ligne.itemId);
+                const u = this.unitesDe(ligne).find(u => u.nom === ligne.packaging);
+                if (article && u && article.price > 0) {
+                    ligne.price = Math.round(article.price * Number(u.facteur));
+                }
+            },
+
             uniteDe(ligne) {
                 if (ligne.nouveau) return ligne.unit || '';
-                return this.articles.find(a => a.id === ligne.itemId)?.unit || '';
+                return ligne.packaging || this.articles.find(a => a.id === ligne.itemId)?.unit || '';
             },
 
             garde(ligne) {

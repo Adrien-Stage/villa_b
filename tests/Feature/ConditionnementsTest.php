@@ -190,3 +190,116 @@ test("un conditionnement inconnu de l'article est refusé à la demande", functi
 
     expect(StockRequisition::count())->toBe(0);
 });
+
+// ── Réceptions, sorties et inventaires par conditionnement ───────────────────
+
+function bonDeGants($test, float $pieces): \App\Models\PurchaseOrder
+{
+    $fournisseur = \App\Models\Supplier::create(['name' => 'Medisup SARL']);
+    $bon = \App\Models\PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => \App\Models\PurchaseOrder::STATUS_SENT]);
+    \App\Models\PurchaseOrderLine::create(['purchase_order_id' => $bon->id, 'stock_item_id' => $test->gants->id,
+        'quantity_ordered' => $pieces, 'unit_price' => 5000]);
+
+    return $bon->fresh('lines');
+}
+
+test('une livraison reçue en cartons entre en cartons fermés ; son annulation les retire', function () {
+    $this->actingAs(agentConditionnement('econome'));
+    cartonsDeGants($this, 0); // 1 000 pièces en vrac
+    $bon = bonDeGants($this, 2000);
+    $ligne = $bon->lines->first();
+
+    $this->get(route('economat.receipts.create', $bon))->assertOk()->assertSee('Reçu en');
+    $this->post(route('economat.receipts.store', $bon), ['lines' => [$ligne->id => [
+        'packaging' => 'carton', 'quantity_delivered' => 10, 'quantity_rejected' => 1, 'rejection_reason' => 'damaged',
+    ]]])->assertSessionHas('success');
+
+    $recu = \App\Models\GoodsReceipt::sole();
+    $ligneRecue = $recu->lines()->sole();
+    expect((float) $ligneRecue->quantity_accepted)->toBe(1800.0)
+        ->and((float) $ligneRecue->quantity_rejected)->toBe(200.0)
+        ->and($ligneRecue->packaging_name)->toBe('carton')
+        ->and(etatDesGants($this))->toBe('9 cartons · 1 000 pièces');
+
+    $this->get(route('economat.receipts.show', $recu))->assertOk()->assertSee('9 cartons (1 800 pièces)');
+    $this->get(route('economat.receipts.print', $recu))->assertOk()->assertSee('9 cartons (1 800 pièces)');
+
+    $this->post(route('economat.receipts.cancel', $recu))->assertSessionHas('success');
+    expect(etatDesGants($this))->toBe('1 000 pièces');
+});
+
+test('la réception rapide sur le bon accepte des cartons', function () {
+    $this->actingAs(agentConditionnement('econome'));
+    cartonsDeGants($this, 0);
+    $bon = bonDeGants($this, 2000);
+    $ligne = $bon->lines->first();
+
+    $this->post(route('economat.orders.receive', $bon), [
+        'received' => [$ligne->id => 5], 'received_packaging' => [$ligne->id => 'carton'],
+    ])->assertSessionHas('success');
+
+    expect((float) $ligne->fresh()->quantity_received)->toBe(1000.0)
+        ->and(etatDesGants($this))->toBe('5 cartons · 1 000 pièces');
+});
+
+test('la réception directe en cartons compte le prix au carton', function () {
+    $this->actingAs(agentConditionnement('econome'));
+    cartonsDeGants($this, 0);
+    $fournisseur = \App\Models\Supplier::create(['name' => 'Medisup SARL']);
+
+    $this->post(route('economat.receipts.direct.store'), [
+        'supplier_id' => $fournisseur->id,
+        'motif'       => 'achat_comptant',
+        'lines'       => [['stock_item_id' => $this->gants->id, 'packaging' => 'carton', 'quantity_delivered' => 2, 'unit_price' => 10000]],
+    ])->assertSessionHasNoErrors();
+
+    $ligneBon = \App\Models\PurchaseOrderLine::sole();
+    expect((float) $ligneBon->quantity_ordered)->toBe(400.0)
+        ->and((int) $ligneBon->unit_price)->toBe(5000)   // 10 000 F le carton = 50 F la pièce
+        ->and(etatDesGants($this))->toBe('2 cartons · 1 000 pièces');
+});
+
+test('une sortie hors établissement en cartons sort des cartons fermés, et les rend à l’annulation', function () {
+    $this->actingAs(agentConditionnement('econome'));
+    cartonsDeGants($this);
+
+    $this->post(route('economat.external_issues.store'), [
+        'reason' => 'pret', 'beneficiary_name' => 'Samuel Fouda',
+        'lines'  => [['stock_item_id' => $this->gants->id, 'quantity' => 1, 'packaging' => 'carton']],
+    ])->assertSessionHasNoErrors();
+
+    $sortie = \App\Models\ExternalIssue::sole();
+    expect((float) $sortie->lines->first()->quantity)->toBe(200.0)
+        ->and(etatDesGants($this))->toBe('4 cartons');
+    $this->get(route('economat.external_issues.show', $sortie))->assertOk()->assertSee('1 carton (200 pièces)');
+
+    $this->post(route('economat.external_issues.cancel', $sortie), ['cancellation_reason' => 'Prêt annulé'])->assertSessionHas('success');
+    expect(etatDesGants($this))->toBe('5 cartons');
+});
+
+test("l'inventaire se compte par niveau et cale les unités fermées à la clôture", function () {
+    $econome = agentConditionnement('econome');
+    $this->actingAs($econome);
+    cartonsDeGants($this);
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'economat']))->assertOk()->assertSee('cartons fermés')->assertSee('pièces en vrac');
+
+    $inventaire = app(\App\Services\StockCountService::class)->open([], $econome);
+    $ligne = $inventaire->lines()->sole();
+
+    $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()->assertSee('Compter par conditionnement');
+    $this->put(route('economat.stock_counts.update', $inventaire), ['lines' => [$ligne->id => [
+        // 2 cartons fermés, 25 paquets fermés, 7 pièces : 657 pièces.
+        'counted_quantity' => '', 'fermes' => ['carton' => 2, 'paquet' => 25], 'vrac' => 7, 'reason' => 'waste',
+    ]]])->assertSessionHas('success');
+
+    expect((float) $ligne->fresh()->counted_quantity)->toBe(657.0)
+        ->and($ligne->fresh()->packaging_counts)->toBe(['paquet' => 25, 'carton' => 2]);
+
+    $this->post(route('economat.stock_counts.close', $inventaire))->assertRedirect();
+
+    expect((float) $this->gants->fresh()->current_stock)->toBe(657.0)
+        ->and(etatDesGants($this))->toBe('2 cartons · 25 paquets · 7 pièces')
+        ->and(StockMovement::where('source_type', StockMovement::SOURCE_STOCK_COUNT)
+            ->where('type', StockMovement::TYPE_PACKAGING)->exists())->toBeTrue();
+});

@@ -95,7 +95,7 @@ class StockCountService
 
         return DB::transaction(function () use ($stockCount, $linesData) {
             $stockCount = $this->lockDraft($stockCount);
-            $stockCount->load('lines.item');
+            $stockCount->load('lines.item.packagings');
 
             $totalCountedValue = 0;
             $totalVariance = 0;
@@ -112,9 +112,17 @@ class StockCountService
                 $reason = !empty($input['reason']) ? trim((string) $input['reason']) : null;
                 $notes = !empty($input['notes']) ? trim((string) $input['notes']) : null;
 
+                // Compté par niveau (3 cartons, 18 paquets, 5 pièces) : le total
+                // s'en déduit, et le détail calera les unités fermées à la clôture.
+                [$detail, $totalDetail] = $this->detailCompte($line, $input);
+                if ($detail !== null) {
+                    $countedRaw = $totalDetail;
+                }
+
                 if ($countedRaw === null || $countedRaw === '') {
                     $line->update([
                         'counted_quantity'  => null,
+                        'packaging_counts'  => null,
                         'variance_quantity' => 0,
                         'counted_value'     => null,
                         'variance_value'    => 0,
@@ -133,6 +141,7 @@ class StockCountService
 
                 $line->update([
                     'counted_quantity'  => $countedQty,
+                    'packaging_counts'  => $detail,
                     'variance_quantity' => $varianceQty,
                     'counted_value'     => $countedValue,
                     'variance_value'    => $varianceValue,
@@ -176,7 +185,7 @@ class StockCountService
             // Une clôture rejouée appliquerait deux fois les ajustements ; une
             // feuille annulée ne doit jamais toucher au stock.
             $stockCount = $this->lockDraft($stockCount);
-            $stockCount->load('lines.item');
+            $stockCount->load('lines.item.packagings');
 
             $totalCountedValue = 0;
             $totalVariance = 0;
@@ -229,6 +238,17 @@ class StockCountService
                         sourceId: $stockCount->id,
                     );
                 }
+
+                // Compté par niveau : les unités fermées se calent sur le comptage.
+                if (!empty($line->packaging_counts)) {
+                    $this->stockService->recompterConditionnements(
+                        $line->item,
+                        $line->packaging_counts,
+                        "Inventaire {$stockCount->reference}",
+                        StockMovement::SOURCE_STOCK_COUNT,
+                        $stockCount->id,
+                    );
+                }
             }
 
             $stockCount->update([
@@ -276,5 +296,32 @@ class StockCountService
         }
 
         return $stockCount;
+    }
+
+    /**
+     * Le comptage par niveau d'une ligne : [détail, total dans l'unité de
+     * l'article], ou [null, null] quand la ligne est saisie en total.
+     *
+     * @return array{0: ?array<string, int>, 1: ?float}
+     */
+    private function detailCompte(StockCountLine $line, array $input): array
+    {
+        $niveaux = $line->item?->packagings ?? collect();
+        $fermes = array_filter((array) ($input['fermes'] ?? []), fn ($v) => $v !== null && $v !== '');
+        $vrac = $input['vrac'] ?? null;
+
+        if ($niveaux->isEmpty() || ($fermes === [] && ($vrac === null || $vrac === ''))) {
+            return [null, null];
+        }
+
+        $detail = [];
+        $total = max(0.0, (float) $vrac);
+        foreach ($niveaux as $niveau) {
+            $nombre = max(0, (int) ($fermes[$niveau->name] ?? 0));
+            $detail[$niveau->name] = $nombre;
+            $total += $nombre * (float) $niveau->factor;
+        }
+
+        return [$detail, round($total, 3)];
     }
 }

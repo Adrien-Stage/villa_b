@@ -135,14 +135,17 @@ class CountSheetService
 
         // Inventaire ouvert : son théorique figé, limité à son périmètre.
         if ($inventaire !== null) {
-            $lignes = $inventaire->lines()->with('item.category')->get()
+            $lignes = $inventaire->lines()->with('item.category', 'item.packagings')->get()
                 ->filter(fn ($l) => $l->item && (!$categorie || $l->item->stock_category_id === $categorie->id))
-                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name));
+                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name)
+                    + ['conditionnements' => $l->item->packagings->sortByDesc('factor')->pluck('name')->all()]);
         } else {
-            $lignes = StockItem::active()->with('category')
+            $lignes = StockItem::active()->with('category', 'packagings')
                 ->when($categorie, fn ($q) => $q->where('stock_category_id', $categorie->id))
                 ->get()
-                ->map(fn (StockItem $i) => $this->ligne($i->id, $i->reference, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name));
+                ->map(fn (StockItem $i) => $this->ligne($i->id, $i->reference, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name)
+                    // Un article conditionné se compte par niveau : cartons fermés, paquets, vrac.
+                    + ['conditionnements' => $i->packagings->sortByDesc('factor')->pluck('name')->all()]);
         }
 
         $dernierInventaire = StockCount::query()->where('status', StockCount::STATUS_CLOSED)

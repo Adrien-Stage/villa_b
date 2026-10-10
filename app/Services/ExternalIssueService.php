@@ -50,8 +50,12 @@ class ExternalIssueService
             $total = 0;
 
             foreach ($data['lines'] as $ligne) {
-                $item = StockItem::findOrFail($ligne['stock_item_id']);
-                $quantite = round((float) $ligne['quantity'], 3);
+                $item = StockItem::with('packagings')->findOrFail($ligne['stock_item_id']);
+
+                // Sorti en cartons ou en paquets : la quantité se ramène à l'unité de l'article.
+                $conditionnement = trim((string) ($ligne['packaging'] ?? ''));
+                $conditionnement = $conditionnement === '' || $conditionnement === $item->unit ? null : $conditionnement;
+                $quantite = round((float) $ligne['quantity'] * ($conditionnement !== null ? $item->facteurDe($conditionnement) : 1.0), 3);
 
                 // Le moteur refuse une sortie sans stock et pendant un inventaire.
                 $mouvement = $this->stock->recordOut(
@@ -59,7 +63,8 @@ class ExternalIssueService
                     $quantite,
                     StockMovement::SOURCE_EXTERNAL_ISSUE,
                     $sortie->id,
-                    "Sortie hors établissement {$sortie->number} — {$sortie->reasonLabel()} — {$sortie->beneficiaire}"
+                    "Sortie hors établissement {$sortie->number} — {$sortie->reasonLabel()} — {$sortie->beneficiaire}",
+                    $conditionnement
                 );
 
                 $cout = (int) $mouvement->unit_cost;
@@ -69,6 +74,7 @@ class ExternalIssueService
                     'external_issue_id' => $sortie->id,
                     'stock_item_id'     => $item->id,
                     'quantity'          => $quantite,
+                    'packaging_name'    => $conditionnement,
                     'unit_cost'         => $cout,
                     'total_cost'        => $valeur,
                     'notes'             => $this->texte($ligne['notes'] ?? null),
@@ -101,7 +107,9 @@ class ExternalIssueService
                     (int) $ligne->unit_cost,
                     StockMovement::SOURCE_EXTERNAL_ISSUE,
                     $sortie->id,
-                    "Annulation de la sortie {$sortie->number} — {$motif}"
+                    "Annulation de la sortie {$sortie->number} — {$motif}",
+                    // Sortis en cartons : ils reviennent fermés.
+                    $ligne->packaging_name
                 );
             }
 

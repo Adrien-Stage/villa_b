@@ -195,7 +195,7 @@ class StockCountController extends Controller
 
     public function show(StockCount $stockCount): View
     {
-        $stockCount->load(['category', 'openedBy', 'closedBy', 'lines.item.category']);
+        $stockCount->load(['category', 'openedBy', 'closedBy', 'lines.item.category', 'lines.item.packagings']);
 
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
 
@@ -216,6 +216,10 @@ class StockCountController extends Controller
         $validated = $request->validate([
             'lines'                    => ['required', 'array'],
             'lines.*.counted_quantity' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            // Comptage par niveau d'un article conditionné : unités fermées et vrac.
+            'lines.*.fermes'           => ['nullable', 'array'],
+            'lines.*.fermes.*'         => ['nullable', 'integer', 'min:0', 'max:9999999'],
+            'lines.*.vrac'             => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'lines.*.reason'           => ['nullable', 'string', 'max:50'],
             'lines.*.notes'            => ['nullable', 'string', 'max:255'],
         ]);

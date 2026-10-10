@@ -63,7 +63,7 @@ class GoodsReceiptService
             ]);
 
             $totalAcceptedAmount = 0;
-            $order->load('lines.item');
+            $order->load('lines.item.packagings');
 
             foreach ($order->lines as $line) {
                 $lineInput = $data['lines'][$line->id] ?? null;
@@ -71,8 +71,12 @@ class GoodsReceiptService
                     continue;
                 }
 
-                $delivered = max(0, (float) ($lineInput['quantity_delivered'] ?? 0));
-                $rejected  = max(0, (float) ($lineInput['quantity_rejected'] ?? 0));
+                // Saisi en cartons ou en paquets : on ramène à l'unité de l'article.
+                $conditionnement = $this->conditionnementSaisi($line->item, $lineInput['packaging'] ?? null);
+                $facteur = $conditionnement !== null ? $line->item->facteurDe($conditionnement) : 1.0;
+
+                $delivered = round(max(0, (float) ($lineInput['quantity_delivered'] ?? 0)) * $facteur, 3);
+                $rejected  = round(max(0, (float) ($lineInput['quantity_rejected'] ?? 0)) * $facteur, 3);
 
                 if ($delivered <= 0 && $rejected <= 0) {
                     continue;
@@ -80,7 +84,7 @@ class GoodsReceiptService
 
                 // Si la quantité acceptée n'est pas spécifiée explicitement, elle vaut delivered - rejected
                 $accepted = isset($lineInput['quantity_accepted']) && $lineInput['quantity_accepted'] !== ''
-                    ? max(0, (float) $lineInput['quantity_accepted'])
+                    ? round(max(0, (float) $lineInput['quantity_accepted']) * $facteur, 3)
                     : max(0, $delivered - $rejected);
 
                 // Ne pas recevoir plus que le restant dû sur le bon de commande
@@ -103,6 +107,7 @@ class GoodsReceiptService
                     'quantity_delivered'     => $delivered,
                     'quantity_accepted'      => $accepted,
                     'quantity_rejected'      => $rejected,
+                    'packaging_name'         => $conditionnement,
                     'rejection_reason'       => $reason,
                     'unit_cost'              => $unitCost,
                     'total_cost'             => $lineCost,
@@ -123,7 +128,9 @@ class GoodsReceiptService
                         unitCost: $unitCost,
                         sourceType: StockMovement::SOURCE_GOODS_RECEIPT,
                         sourceId: $receipt->id,
-                        reason: "Réception {$receipt->number}{$refBl} sur BC {$order->number}"
+                        reason: "Réception {$receipt->number}{$refBl} sur BC {$order->number}",
+                        // Des cartons reçus entiers entrent comme cartons fermés.
+                        niveau: $conditionnement
                     );
 
                     $totalAcceptedAmount += $lineCost;
@@ -193,17 +200,23 @@ class GoodsReceiptService
 
                 $item = $this->article($ligne, $supplier, $tenantId, $nouveaux);
 
+                // Reçu en cartons à 25 000 F le carton : le bon de régularisation
+                // compte en unités de l'article, au prix de l'unité.
+                $conditionnement = $this->conditionnementSaisi($item->loadMissing('packagings'), $ligne['packaging'] ?? null);
+                $facteur = $conditionnement !== null ? $item->facteurDe($conditionnement) : 1.0;
+
                 $line = PurchaseOrderLine::create([
                     'purchase_order_id' => $order->id,
                     'stock_item_id'     => $item->id,
-                    'quantity_ordered'  => $accepte,
-                    'unit_price'        => (int) round((float) $ligne['unit_price'] * 100),
+                    'quantity_ordered'  => round($accepte * $facteur, 3),
+                    'unit_price'        => (int) round((float) $ligne['unit_price'] * 100 / $facteur),
                 ]);
 
                 $pointage[$line->id] = [
                     'quantity_delivered' => $livre,
                     'quantity_accepted'  => $accepte,
                     'quantity_rejected'  => $refuse,
+                    'packaging'          => $conditionnement,
                     'rejection_reason'   => $ligne['rejection_reason'] ?? null,
                     'notes'              => $ligne['notes'] ?? null,
                 ];
@@ -334,7 +347,9 @@ class GoodsReceiptService
                         unitCost: (int) $line->unit_cost,
                         sourceType: StockMovement::SOURCE_GOODS_RECEIPT,
                         sourceId: $receipt->id,
-                        reason: "Annulation réception {$receipt->number}"
+                        reason: "Annulation réception {$receipt->number}",
+                        // Reçus en cartons : ce sont des cartons fermés qui repartent.
+                        niveau: $line->packaging_name
                     );
 
                     // Déduire de la ligne de commande
@@ -361,5 +376,18 @@ class GoodsReceiptService
 
             return $receipt->fresh();
         });
+    }
+
+    /** Le conditionnement saisi sur une ligne, s'il en est un de l'article ; null pour son unité. */
+    private function conditionnementSaisi(?\App\Models\StockItem $item, ?string $saisi): ?string
+    {
+        $saisi = trim((string) $saisi);
+        if ($item === null || $saisi === '' || $saisi === $item->unit) {
+            return null;
+        }
+
+        $item->facteurDe($saisi); // un conditionnement inconnu de l'article est refusé
+
+        return $saisi;
     }
 }

@@ -100,15 +100,16 @@ class PurchaseOrderService
      * quantité effectivement livrée cette fois-ci. Chaque quantité entre en
      * stock au prix unitaire du bon, et le statut du bon est recalculé.
      *
-     * @param  array<int, float>  $received  [line_id => quantité reçue]
+     * @param  array<int, float>        $received         [line_id => quantité reçue]
+     * @param  array<int, string|null>  $conditionnements [line_id => conditionnement saisi (carton…)]
      */
-    public function receive(PurchaseOrder $order, array $received): void
+    public function receive(PurchaseOrder $order, array $received, array $conditionnements = []): void
     {
         if (!$order->canBeReceived()) {
             throw new \RuntimeException('Ce bon ne peut pas être réceptionné dans son état actuel.');
         }
 
-        DB::transaction(function () use ($order, $received) {
+        DB::transaction(function () use ($order, $received, $conditionnements) {
             // Verrou sur le bon : deux réceptions simultanées liraient le même
             // reste dû et pourraient, ensemble, dépasser la quantité commandée.
             $order = PurchaseOrder::query()->lockForUpdate()->findOrFail($order->id);
@@ -117,11 +118,16 @@ class PurchaseOrderService
                 throw new \RuntimeException('Ce bon ne peut pas être réceptionné dans son état actuel.');
             }
 
-            $order->load('lines.item');
+            $order->load('lines.item.packagings');
             $recu = false;
 
             foreach ($order->lines as $line) {
-                $qty = (float) ($received[$line->id] ?? 0);
+                // Reçu en cartons : la quantité se ramène à l'unité de l'article.
+                $conditionnement = trim((string) ($conditionnements[$line->id] ?? ''));
+                $conditionnement = $conditionnement === '' || $conditionnement === $line->item?->unit ? null : $conditionnement;
+                $facteur = $conditionnement !== null ? $line->item->facteurDe($conditionnement) : 1.0;
+
+                $qty = round((float) ($received[$line->id] ?? 0) * $facteur, 3);
                 if ($qty <= 0) {
                     continue;
                 }
@@ -139,7 +145,8 @@ class PurchaseOrderService
                     $line->unit_price,
                     StockMovement::SOURCE_PURCHASE_ORDER,
                     $order->id,
-                    "Réception bon {$order->number}"
+                    "Réception bon {$order->number}",
+                    $conditionnement
                 );
 
                 $line->update([

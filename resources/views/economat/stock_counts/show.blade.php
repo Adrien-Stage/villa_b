@@ -201,6 +201,17 @@
                                     theo: {{ $theo }},
                                     cump: {{ $cump }},
                                     counted: '{{ $line->counted_quantity !== null ? (float) $line->counted_quantity : '' }}',
+                                    {{-- Article conditionné : on peut compter cartons, paquets et vrac ; le total s'en déduit. --}}
+                                    niveaux: {{ Js::from(($line->item?->packagings ?? collect())->sortByDesc('factor')->map(fn ($n) => ['nom' => $n->name, 'facteur' => (float) $n->factor])->values()) }},
+                                    fermes: {{ Js::from((object) ($line->packaging_counts ?? [])) }},
+                                    vrac: '{{ $line->packaging_counts && $line->counted_quantity !== null
+                                        ? round((float) $line->counted_quantity - collect($line->packaging_counts)->sum(fn ($n, $nom) => $n * (float) ($line->item?->packagings->firstWhere('name', $nom)?->factor ?? 0)), 3)
+                                        : '' }}',
+                                    recompter() {
+                                        let total = parseFloat(this.vrac) || 0;
+                                        this.niveaux.forEach(n => { total += (parseInt(this.fermes[n.nom]) || 0) * n.facteur; });
+                                        this.counted = Math.round(total * 1000) / 1000;
+                                    },
                                     get diffQty() {
                                         if (this.counted === '' || isNaN(parseFloat(this.counted))) return 0;
                                         return Math.round((parseFloat(this.counted) - this.theo) * 1000) / 1000;
@@ -227,10 +238,32 @@
                                             x-model="counted"
                                             placeholder="—"
                                             class="w-28 px-2 py-1 text-xs border rounded-lg bg-white text-right font-mono outline-none focus:border-primary border-secondary/30">
+                                        @if($line->item && $line->item->packagings->isNotEmpty())
+                                            <details class="mt-1 text-left" @if($line->packaging_counts) open @endif>
+                                                <summary class="cursor-pointer text-[10px] text-primary/55">Compter par conditionnement</summary>
+                                                <div class="mt-1 space-y-1">
+                                                    <template x-for="n in niveaux" :key="n.nom">
+                                                        <label class="flex items-center justify-end gap-1 text-[10px] text-primary/60">
+                                                            <span x-text="(/[sxz]$/i.test(n.nom) ? n.nom : n.nom + 's') + ' fermés'"></span>
+                                                            <input type="number" min="0" step="1" :name="'lines[{{ $line->id }}][fermes][' + n.nom + ']'" x-model="fermes[n.nom]" @input="recompter()"
+                                                                class="w-16 px-1.5 py-0.5 text-[11px] border border-secondary/30 rounded text-right font-mono">
+                                                        </label>
+                                                    </template>
+                                                    <label class="flex items-center justify-end gap-1 text-[10px] text-primary/60">
+                                                        <span>{{ $line->item->unit }} en vrac</span>
+                                                        <input type="number" min="0" step="0.001" name="lines[{{ $line->id }}][vrac]" x-model="vrac" @input="recompter()"
+                                                            class="w-16 px-1.5 py-0.5 text-[11px] border border-secondary/30 rounded text-right font-mono">
+                                                    </label>
+                                                </div>
+                                            </details>
+                                        @endif
                                     @else
                                         <span class="font-mono font-medium text-xs {{ $line->isCounted() ? 'text-primary' : 'text-primary/30 italic' }}">
                                             {{ $line->isCounted() ? rtrim(rtrim(number_format((float) $line->counted_quantity, 3, ',', ' '), '0'), ',') : 'Non compté' }}
                                         </span>
+                                        @if($line->packaging_counts)
+                                            <span class="block text-[10px] text-primary/50">{{ collect($line->packaging_counts)->filter()->map(fn ($n, $nom) => \App\Support\Conditionnement::libelle($n, $nom))->implode(' · ') }}</span>
+                                        @endif
                                     @endif
                                 </td>
 

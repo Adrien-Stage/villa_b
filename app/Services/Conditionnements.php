@@ -145,6 +145,27 @@ class Conditionnements
         return $this->etat($this->niveaux($item), (float) $item->current_stock, []);
     }
 
+    /**
+     * Cale les unités fermées sur un comptage : « 3 cartons, 18 paquets ».
+     * Jamais plus d'unités fermées que le stock.
+     *
+     * @param  array<string, int|string|null>  $fermes
+     */
+    public function fixer(StockItem $item, array $fermes): array
+    {
+        $niveaux = $this->niveaux($item);
+        foreach ($niveaux as $niveau) {
+            if (array_key_exists($niveau->name, $fermes)) {
+                $niveau->closed_count = max(0, (int) $fermes[$niveau->name]);
+            }
+        }
+
+        $this->borner($niveaux, (float) $item->current_stock);
+        $this->enregistrer($niveaux);
+
+        return $this->etat($niveaux, (float) $item->current_stock, []);
+    }
+
     /** État courant, sans rien modifier. */
     public function etatDe(StockItem $item): ?array
     {

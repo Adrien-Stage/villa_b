@@ -380,6 +380,39 @@ class StockService
     }
 
     /**
+     * Inventaire : cale les unités fermées de l'article sur ce qui a été
+     * compté. Le stock ne change pas ici (l'ajustement l'a déjà fait) ; un
+     * mouvement « Conditionnement » garde la trace quand le détail a bougé.
+     *
+     * @param  array<string, int|string|null>  $fermes
+     */
+    public function recompterConditionnements(
+        StockItem $item,
+        array $fermes,
+        string $motif,
+        string $sourceType = StockMovement::SOURCE_STOCK_COUNT,
+        ?int $sourceId = null
+    ): ?StockMovement {
+        return DB::transaction(function () use ($item, $fermes, $motif, $sourceType, $sourceId) {
+            $item = StockItem::lockForUpdate()->find($item->id);
+            $this->ensureStoreNotFrozen($sourceType);
+
+            $avant = $this->conditionnements->etatDe($item->load('packagings'));
+            if ($avant === null) {
+                return null;
+            }
+
+            $apres = $this->conditionnements->fixer($item, $fermes);
+            if (array_column($avant['niveaux'], 'fermes', 'nom') === array_column($apres['niveaux'], 'fermes', 'nom')) {
+                return null;
+            }
+
+            return $this->log($item, StockMovement::TYPE_PACKAGING, 0.0, $item->average_cost, $sourceType, $sourceId,
+                $motif . ' — unités fermées comptées : ' . \App\Support\Conditionnement::decomposition($apres, (string) $item->unit), $apres);
+        });
+    }
+
+    /**
      * Inventaire en cours : le magasin est gelé. Le théorique a été relevé à
      * l'ouverture ; un mouvement passé pendant le comptage fausserait l'écart
      * que la clôture va appliquer. Seule la clôture elle-même peut écrire.

@@ -78,6 +78,7 @@
             thead { display: table-header-group; }
             tfoot { display: table-footer-group; }
         }
+        .detail-conditionnement { font-size: 8px; color: #475569; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -161,7 +162,14 @@
                             <tr>
                                 <td class="num">{{ $numero }}</td>
                                 <td class="muted ref-article">{{ $ligne['reference'] }}</td>
-                                <td>{{ $ligne['name'] }}</td>
+                                <td>
+                                    {{ $ligne['name'] }}
+                                    @if(!empty($ligne['conditionnements']))
+                                        <div class="detail-conditionnement">
+                                            @foreach($ligne['conditionnements'] as $nom){{ \App\Support\Conditionnement::accorde($nom, 2) }} fermés …… · @endforeach{{ \App\Support\Conditionnement::accorde((string) $ligne['unit'], 2) }} en vrac ……
+                                        </div>
+                                    @endif
+                                </td>
                                 <td class="muted">{{ $ligne['unit'] }}</td>
                                 @if($showTheoretical)<td class="num {{ $ligne['theoretical'] < 0 ? 'negatif' : '' }}">{{ $qte($ligne['theoretical']) }}</td>@endif
                                 <td class="fill"></td>

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class GoodsReceiptLine extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\SaisiEnConditionnement;
 
     public const REASONS = [
         'damaged'       => 'Avarie / Casse au transport',
@@ -31,6 +32,7 @@ class GoodsReceiptLine extends Model
         'quantity_delivered',
         'quantity_accepted',
         'quantity_rejected',
+        'packaging_name',
         'rejection_reason',
         'unit_cost',
         'total_cost',

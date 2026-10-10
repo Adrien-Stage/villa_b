@@ -263,9 +263,18 @@
                                 @if($order->canBeReceived())
                                     <td class="px-5 py-3 text-right">
                                         @if($line->outstanding() > 0)
-                                            <input type="number" step="0.001" min="0" max="{{ $line->outstanding() }}" name="received[{{ $line->id }}]"
+                                            <input type="number" step="0.001" min="0" name="received[{{ $line->id }}]"
                                                 placeholder="0" aria-label="Quantité reçue — {{ $line->item?->name }}"
                                                 class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
+                                            {{-- Un article conditionné se reçoit en cartons ou en paquets ; des cartons entiers restent fermés. --}}
+                                            @if($line->item && $line->item->packagings->isNotEmpty())
+                                                <select name="received_packaging[{{ $line->id }}]" aria-label="Unité reçue — {{ $line->item->name }}"
+                                                    class="ml-1 px-1.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                                    @foreach($line->item->unitesDeSaisie() as $u)
+                                                        <option value="{{ $u['nom'] }}">{{ $u['nom'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @endif
                                             {{-- Le reste dû s'affiche à côté, pas dans le champ : un chiffre grisé dans le champ se prend pour une saisie. --}}
                                             <span class="block text-[10px] text-primary/45 mt-0.5">reste {{ rtrim(rtrim(number_format($line->outstanding(), 3, ',', ' '), '0'), ',') }}</span>
                                         @else
