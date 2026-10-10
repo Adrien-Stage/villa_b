@@ -291,7 +291,7 @@
     <table class="header-table">
         <tr>
             <td style="vertical-align: top;">
-                <div class="etab-name">{{ config('app.name', 'Établissement Hôtelier') }}</div>
+                <div class="etab-name">{{ $tenant?->name ?? config('app.name', 'Établissement Hôtelier') }}</div>
                 <div class="etab-sub">Direction Administrative & Financière</div>
                 <div class="etab-sub">Service Approvisionnements & Économat Central</div>
             </td>

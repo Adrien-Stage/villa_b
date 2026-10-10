@@ -65,19 +65,28 @@ class StockControlController extends Controller
      */
     public function generatePurchaseRequest(Request $request): RedirectResponse
     {
+        // Une ligne décochée envoie encore sa quantité et sa note, mais pas
+        // son article : elle n'est pas retenue.
+        $request->merge(['items' => array_values(array_filter(
+            (array) $request->input('items', []),
+            fn ($ligne) => is_array($ligne) && !empty($ligne['item_id'])
+        ))]);
+
         $validated = $request->validate([
             'items'            => ['required', 'array', 'min:1'],
             'items.*.item_id'  => ['required', 'integer', 'exists:stock_items,id'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.notes'    => ['nullable', 'string', 'max:255'],
             'priority'         => ['nullable', 'string', 'in:low,normal,urgent'],
+        ], [
+            'items.required' => 'Cochez au moins un article à commander.',
         ]);
 
         try {
             $purchaseRequest = $this->controlService->createPurchaseRequestFromSuggestions(
                 selectedItems: $validated['items'],
                 user: Auth::user(),
-                tenantId: Auth::user()?->tenant_id,
+                tenantId: Auth::user()?->tenant_id ?? Tenant::first()?->id,
                 priority: $validated['priority'] ?? 'normal'
             );
         } catch (RuntimeException $e) {

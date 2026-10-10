@@ -10,7 +10,7 @@
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('{{ asset('fonts/qwigley/qwigley-regular.ttf') }}') format('truetype');
+    src: url('{{ asset('fonts/Qwigley-Regular.woff2') }}') format('woff2'), url('{{ asset('fonts/Qwigley-Regular.ttf') }}') format('truetype');
 }
 .font-signature {
     font-family: 'Qwigley', cursive, 'Brush Script MT', sans-serif;
@@ -67,11 +67,13 @@
         </div>
 
         {{-- Alerte d'envoi ou confirmation --}}
-        @if($order->status === 'sent' && $order->send_error)
+        @if($order->send_error)
+            {{-- L'échec reste dit même après la livraison : le bon n'a jamais été reçu par email. --}}
             <div class="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
                 <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
                 <div>
-                    <strong>Échec de distribution par email :</strong> {{ $order->send_error }}. Vous pouvez réitérer l'envoi ou imprimer directement le document.
+                    <strong>Échec de distribution par email :</strong> {{ $order->send_error }}.
+                    @if($order->status === 'sent') Vous pouvez réitérer l'envoi ou imprimer directement le document. @endif
                 </div>
             </div>
         @elseif($order->isRegularisation())
@@ -262,8 +264,10 @@
                                     <td class="px-5 py-3 text-right">
                                         @if($line->outstanding() > 0)
                                             <input type="number" step="0.001" min="0" max="{{ $line->outstanding() }}" name="received[{{ $line->id }}]"
-                                                placeholder="{{ rtrim(rtrim(number_format($line->outstanding(), 3, ',', ' '), '0'), ',') }}"
+                                                placeholder="0" aria-label="Quantité reçue — {{ $line->item?->name }}"
                                                 class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
+                                            {{-- Le reste dû s'affiche à côté, pas dans le champ : un chiffre grisé dans le champ se prend pour une saisie. --}}
+                                            <span class="block text-[10px] text-primary/45 mt-0.5">reste {{ rtrim(rtrim(number_format($line->outstanding(), 3, ',', ' '), '0'), ',') }}</span>
                                         @else
                                             <span class="text-green-600 text-xs font-semibold">Soldé</span>
                                         @endif

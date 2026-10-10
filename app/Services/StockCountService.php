@@ -40,6 +40,9 @@ class StockCountService
                 'count_date'        => $countDate,
                 'notes'             => $data['notes'] ?? null,
                 'opened_by'         => $user?->id ?? Auth::id(),
+                // Le contrôle des stocks lit les écarts de l'établissement : un
+                // inventaire sans établissement n'y paraîtrait jamais.
+                'tenant_id'         => ($user ?? Auth::user())?->tenant_id ?? \App\Models\Tenant::current()?->id,
             ]);
 
             $query = StockItem::query()->active()->orderBy('name');

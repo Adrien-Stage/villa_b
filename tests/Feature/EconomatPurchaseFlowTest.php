@@ -422,6 +422,8 @@ test('le statut de facturation et le rapprochement comptable fonctionnent', func
 
 test('les routes d impression BC et BR respectent les standards', function () {
     $econome = createStaffUser('econome');
+    // Les pièces portent le nom de l'établissement, pas celui de l'application.
+    \App\Models\Tenant::create(['name' => 'Hôtel des Cocotiers', 'slug' => 'cocotiers', 'currency' => 'XAF', 'settings' => []]);
 
     $supplier = Supplier::create(['name' => 'Grossiste Test']);
     $item = StockItem::create([
@@ -449,6 +451,7 @@ test('les routes d impression BC et BR respectent les standards', function () {
         ->assertViewIs('economat.orders.print')
         ->assertSee($order->number)
         ->assertSee('Bon de Commande Fournisseur')
+        ->assertSee('Hôtel des Cocotiers')
         ->assertSee('Article Imprimable');
 
     // 2. Impression Bon de Réception
@@ -477,5 +480,6 @@ test('les routes d impression BC et BR respectent les standards', function () {
         ->assertViewIs('economat.receipts.print')
         ->assertSee($receipt->number)
         ->assertSee('Bordereau Officiel de Réception')
+        ->assertSee('Hôtel des Cocotiers')
         ->assertSee('Article Imprimable');
 });

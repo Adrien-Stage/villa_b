@@ -353,3 +353,24 @@ test('un bon individuel peut etre consulte en detail et imprime au format offici
     $resPrint->assertSee('Qwigley');
     $resPrint->assertSee('L\'Économe / Responsable des Achats', false);
 });
+
+test('la réception rapide sur le bon refuse un formulaire vide, et fait entrer ce qui est saisi', function () {
+    makeReplenishmentEconomeUser();
+    $fournisseur = Supplier::create(['name' => 'SOCOICAM SARL', 'is_active' => true]);
+    $tuyau = StockItem::create(['name' => 'Tuyau PVC Ø200', 'unit' => 'barre', 'current_stock' => 0, 'is_active' => true]);
+    $bon = PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => PurchaseOrder::STATUS_SENT]);
+    $ligne = PurchaseOrderLine::create(['purchase_order_id' => $bon->id, 'stock_item_id' => $tuyau->id, 'quantity_ordered' => 7, 'unit_price' => 4700000]);
+
+    // Le reste dû s'affiche à côté du champ, pas dedans.
+    test()->get(route('economat.orders.show', $bon))->assertOk()->assertSee('reste 7');
+
+    // Rien de saisi : ce n'est pas une réception.
+    test()->post(route('economat.orders.receive', $bon), ['received' => [$ligne->id => '']])
+        ->assertSessionHas('error', 'Aucune quantité reçue : saisissez les quantités réellement livrées.');
+    expect($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_SENT)
+        ->and((float) $tuyau->fresh()->current_stock)->toBe(0.0);
+
+    test()->post(route('economat.orders.receive', $bon), ['received' => [$ligne->id => '7']])->assertSessionHas('success');
+    expect($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_RECEIVED)
+        ->and((float) $tuyau->fresh()->current_stock)->toBe(7.0);
+});
