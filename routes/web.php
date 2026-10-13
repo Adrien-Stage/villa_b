@@ -72,9 +72,11 @@ Route::prefix('portal')->name('portal.')->middleware('module:restaurant')->group
 // Toutes les routes de l'app nécessitent d'être connecté et vérifié
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // --- DASHBOARD ---
+    // --- DASHBOARD & LANCEUR D'APPLICATIONS ---
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+    Route::get('/dashboard/activite', [DashboardController::class, 'overview'])
+        ->name('dashboard.overview');
 
     // --- PARAMETRES ---
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])

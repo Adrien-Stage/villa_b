@@ -3,6 +3,12 @@
 @section('title', 'Tableau de bord')
 
 @section('content')
+<div class="mb-3">
+    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>Retour aux applications</span>
+    </a>
+</div>
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
         <h1 class="font-heading text-2xl sm:text-3xl font-bold text-primary">Tableau de bord</h1>
