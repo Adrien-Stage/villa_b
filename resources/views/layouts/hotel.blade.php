@@ -15,6 +15,10 @@
     if (empty($initials)) {
         $initials = 'ET';
     }
+
+    $activeGroup = \App\Support\Navigation::getActiveGroup();
+    $isLauncherRoute = request()->routeIs('dashboard') && request('view') !== 'kpi';
+    $hasSidebar = !$isLauncherRoute && $activeGroup && $activeGroup['type'] === \App\Support\Navigation::TYPE_SIDEBAR;
 @endphp
 <!DOCTYPE html>
 <html lang="fr" class="h-full lg:overflow-hidden">
@@ -225,7 +229,7 @@
 
     <div id="mobile-sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden print:hidden" onclick="closeMobileSidebar()"></div>
 
-    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full print:hidden">
+    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary {{ $hasSidebar ? 'lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full' : 'lg:hidden' }} print:hidden">
         <div class="flex h-full w-full flex-col">
             <div class="sidebar-entete px-4 py-5 border-b border-surface-dark">
                 <div class="flex items-center gap-3">
@@ -245,6 +249,17 @@
                     </div>
                 </div>
             </div>
+
+            @if($hasSidebar)
+                <div class="px-3 py-2 border-b border-surface-dark">
+                    <a href="{{ route('dashboard') }}"
+                       title="Toutes les applications"
+                       class="sidebar-lien flex items-center gap-2 px-2.5 py-2 rounded-xl bg-surface-dark/90 hover:bg-surface-dark text-text-on-dark hover:text-white transition-all text-xs font-semibold">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-accent flex-shrink-0"></i>
+                        <span class="sidebar-libelle truncate">Applications</span>
+                    </a>
+                </div>
+            @endif
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
             @php
@@ -275,8 +290,11 @@
                     || $droits->allows($utilisateur, 'economat.suppliers.voir')
                     || $droits->allows($utilisateur, 'economat.requisitions.voir')
                     || $droits->allows($utilisateur, 'economat.stock_counts.voir');
+
+                $activeGroupId = $activeGroup['id'] ?? null;
             @endphp
 
+                @if(!$hasSidebar)
                 <div>
                     <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
@@ -300,7 +318,9 @@
                     </div>
                     @endmodule
                 @endundroit
+                @endif
 
+                @if(!$hasSidebar || $activeGroupId === 'hotel')
                 @unless($estComptable)
                     @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
                         <div>
@@ -382,7 +402,9 @@
                         </div>
                     @endundroit
                 @endunless
+                @endif
 
+                @if(!$hasSidebar || $activeGroupId === 'restaurant')
                 @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier')
                     @module('restaurant')
                     @php
@@ -483,7 +505,9 @@
                     </div>
                     @endmodule
                 @endpour
+                @endif
 
+                @if(!$hasSidebar)
                 @pour('manager','reception','cashier')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
@@ -516,7 +540,9 @@
                     </div>
                     @endmodule
                 @endpour
+                @endif
 
+                @if(!$hasSidebar || $activeGroupId === 'economat')
                 @if($afficheEconomat)
                 @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
                     <div>
@@ -574,8 +600,10 @@
                     </div>
                 @endundroit
                 @endif
+                @endif
 
 
+                @if(!$hasSidebar || $activeGroupId === 'accounting')
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
@@ -594,16 +622,18 @@
                             @endif
 
                             {{-- Fiche technique : prix de revient d'une nuitée et
-                                 marge par type de chambre. C'est de la
-                                 comptabilité analytique, d'où sa place ici. Le
-                                 manager la voit déjà dans la section Hôtel. --}}
+                                  marge par type de chambre. C'est de la
+                                  comptabilité analytique, d'où sa place ici. Le
+                                  manager la voit déjà dans la section Hôtel. --}}
                             @pour('accountant','admin')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
                             @endpour
                         </ul>
                     </div>
                 @endundroit
+                @endif
 
+                @if(!$hasSidebar)
                 {{-- Administration : le service informatique (rôles et droits,
                      interventions, journal) ; le manager y suit les interventions
                      et les sessions du support. Chaque lien pose son droit. --}}
@@ -635,8 +665,10 @@
                         </ul>
                     </div>
                 @endif
+                @endif
             </nav>
 
+            @if(!$hasSidebar)
             @module('discussions')
             <div class="sidebar-bloc px-3 pb-3">
                 @php $isDiscussionActive = request()->routeIs('discussions.*'); @endphp
@@ -653,6 +685,7 @@
                 </a>
             </div>
             @endmodule
+            @endif
 
             <div class="sidebar-bloc px-3 py-4 border-t border-surface-dark">
                 <div class="sidebar-pied flex items-center justify-between gap-2">
@@ -686,7 +719,7 @@
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
         <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0 print:hidden">
             <div class="flex items-center gap-3">
-                <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary lg:hidden">
+                <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary {{ $hasSidebar ? 'lg:hidden' : 'hidden' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -697,7 +730,7 @@
                      plus la place d'accueillir une commande atteignable. --}}
                 <button type="button" onclick="basculerSidebar()"
                         aria-controls="mobile-sidebar"
-                        class="hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors lg:inline-flex">
+                        class="{{ $hasSidebar ? 'lg:inline-flex' : 'hidden' }} hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors">
                     <svg id="sidebar-bascule-fermer" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <title>Réduire la barre latérale</title>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4z" />
@@ -709,7 +742,24 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M14 10l3 2-3 2" />
                     </svg>
                 </button>
-                <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
+
+                {{-- Bouton universel Applications (Grille 3x3) --}}
+                <a href="{{ route('dashboard') }}"
+                   title="Toutes les applications"
+                   class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary hover:bg-accent/30 transition-all shadow-xs"
+                   aria-label="Applications">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </a>
+
+                @if($activeGroup)
+                    <div class="flex items-center gap-2 text-xs">
+                        <a href="{{ $activeGroup['url'] ?? '#' }}" class="font-bold text-primary/70 hover:text-primary transition hidden sm:inline">{{ $activeGroup['title'] }}</a>
+                        <span class="text-primary/30 hidden sm:inline">/</span>
+                        <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
+                    </div>
+                @else
+                    <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
+                @endif
             </div>
             <div class="flex items-center gap-4">
                 {{-- Bouton d'activation des notifications push (visible tant que la
@@ -933,6 +983,8 @@
                 </form>
             </div>
         </header>
+
+        @include('partials.group-tabs')
 
         @if(session('assistance_mode'))
             {{-- Bannière permanente : session ouverte par le support technique (PMS) --}}

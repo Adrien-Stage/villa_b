@@ -70,7 +70,7 @@ test('le tableau de bord du manager affiche l\'ensemble des widgets exécutifs',
         'is_active' => true,
     ]);
 
-    $response = $this->actingAs($manager)->get('/dashboard');
+    $response = $this->actingAs($manager)->get(route('dashboard.overview'));
 
     $response->assertOk();
 

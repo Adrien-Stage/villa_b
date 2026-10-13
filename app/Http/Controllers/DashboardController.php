@@ -12,14 +12,74 @@ use App\Models\RestaurantPantryItem;
 use App\Models\StockItem;
 use App\Models\StockRequisition;
 use App\Models\Room;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use App\Support\Navigation;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
+    {
+        if ($request->query('view') === 'kpi') {
+            return $this->overview();
+        }
+
+        return $this->launcherView(Auth::user());
+    }
+
+    protected function launcherView($user): View
+    {
+        $isEconome = $user && $user->exerce(['storekeeper']);
+        $cards = [];
+        $panels = [];
+
+        if ($isEconome && Schema::hasTable('stock_items')) {
+            $articles = StockItem::active()->get();
+            $rupture = $articles->filter->isOutOfStock()->count();
+            $sousSeuil = $articles->filter->isBelowThreshold()->count();
+            $stockValue = (int) $articles->sum(fn ($i) => (float) $i->current_stock * (float) $i->average_cost);
+            $stockArticlesCount = $articles->count();
+
+            $cards[] = [
+                'label'    => 'Articles sous seuil',
+                'value'    => $sousSeuil,
+                'subtitle' => $rupture > 0 ? "dont {$rupture} en rupture" : 'aucune rupture',
+                'icon'     => 'package-minus',
+                'href'     => route('economat.items.index'),
+            ];
+            $cards[] = [
+                'label'    => 'Valeur du stock',
+                'value'    => number_format($stockValue / 100, 0, ',', ' ') . ' FCFA',
+                'subtitle' => $stockArticlesCount . ' article(s) actifs',
+                'icon'     => 'warehouse',
+                'href'     => route('economat.index'),
+            ];
+            if (Schema::hasTable('stock_requisitions')) {
+                $cards[] = [
+                    'label'    => 'Demandes en attente',
+                    'value'    => StockRequisition::pending()->count(),
+                    'subtitle' => 'à servir',
+                    'icon'     => 'inbox',
+                    'href'     => route('economat.requisitions.index'),
+                ];
+            }
+            $panels['economat_alerts'] = StockItem::active()->belowThreshold()
+                ->orderBy('current_stock')
+                ->take(5)
+                ->get();
+        }
+
+        return view('apps.launcher', [
+            'launcherGroups' => Navigation::getLauncherGroups($user),
+            'cards'          => $cards,
+            'panels'         => $panels,
+        ]);
+    }
+
+    public function overview(): View
     {
         $user = Auth::user();
 
