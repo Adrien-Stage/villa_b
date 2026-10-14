@@ -79,9 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard.overview');
 
     // --- PARAMETRES ---
+    // Visible par tous : le contrôleur et la vue n'ouvrent que les onglets que
+    // le rôle permet, et renvoient au profil la personne sans onglet à régler.
+    // L'écriture (settings.update, export, import) reste sous « permission ».
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])
-        ->name('settings.index')
-        ->middleware('permission');
+        ->name('settings.index');
     Route::post('/settings', [App\Http\Controllers\SettingsController::class, 'update'])
         ->name('settings.update')
         ->middleware('permission');

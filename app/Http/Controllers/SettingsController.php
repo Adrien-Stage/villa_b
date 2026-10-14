@@ -15,11 +15,13 @@ class SettingsController extends Controller
         $user = Auth::user();
 
         // Les paramètres se règlent par onglet : la direction, et le chef du
-        // service concerné (SettingsTabs). Sans onglet à régler, rien à voir.
+        // service concerné (SettingsTabs). Sans onglet d'établissement à
+        // régler, la personne garde ses paramètres personnels : la tuile
+        // Paramètres l'amène alors à son profil (compte et sécurité).
         $defaultTab = SettingsTabs::parDefaut($user);
 
         if ($defaultTab === null) {
-            abort(403, 'Accès non autorisé aux paramètres.');
+            return redirect()->route('profile.edit');
         }
 
         $tab = $request->query('tab', $defaultTab);
