@@ -165,8 +165,9 @@ class CheckOutService
             'source_id'   => $booking->id,
         ]);
 
-        // Lignes du folio (extras)
-        foreach ($booking->folioItems()->where('type', '!=', FolioItem::TYPE_PAYMENT)->get() as $item) {
+        // Lignes du folio (extras). La ligne d'hébergement du folio est déjà
+        // portée par la ligne ci-dessus : la reprendre ferait payer la chambre deux fois à l'écran.
+        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM])->get() as $item) {
             InvoiceItem::create([
                 'invoice_id'  => $invoice->id,
                 'description' => $item->description,
