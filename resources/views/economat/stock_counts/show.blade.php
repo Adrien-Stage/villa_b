@@ -205,7 +205,7 @@
                                     niveaux: {{ Js::from(($line->item?->packagings ?? collect())->sortByDesc('factor')->map(fn ($n) => ['nom' => $n->name, 'facteur' => (float) $n->factor])->values()) }},
                                     fermes: {{ Js::from((object) ($line->packaging_counts ?? [])) }},
                                     vrac: '{{ $line->packaging_counts && $line->counted_quantity !== null
-                                        ? round((float) $line->counted_quantity - collect($line->packaging_counts)->sum(fn ($n, $nom) => $n * (float) ($line->item?->packagings->firstWhere('name', $nom)?->factor ?? 0)), 3)
+                                        ? round((float) $line->counted_quantity - collect($line->packaging_counts)->map(fn ($n, $nom) => $n * (float) ($line->item?->packagings->firstWhere('name', $nom)?->factor ?? 0))->sum(), 3)
                                         : '' }}',
                                     recompter() {
                                         let total = parseFloat(this.vrac) || 0;
