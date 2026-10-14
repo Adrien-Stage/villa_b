@@ -303,15 +303,15 @@
                         <div class="space-y-2 text-xs">
                             <div class="flex justify-between py-1 border-b border-secondary/10">
                                 <span class="text-primary/70">
-                                    Tarif hébergement ({{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }} × {{ number_format($booking->price_per_night, 0, ',', ' ') }} FCFA)
+                                    Tarif hébergement ({{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }} × {{ number_format($booking->price_per_night / 100, 0, ',', ' ') }} FCFA)
                                 </span>
-                                <span class="font-semibold text-primary">{{ number_format($booking->total_room_amount, 0, ',', ' ') }} FCFA</span>
+                                <span class="font-semibold text-primary">{{ number_format($booking->total_room_amount / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
 
                             @if($booking->package_amount > 0)
                                 <div class="flex justify-between py-1 border-b border-secondary/10">
                                     <span class="text-primary/70">Formule / Prestations associées</span>
-                                    <span class="font-semibold text-primary">+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                                    <span class="font-semibold text-primary">+ {{ number_format($booking->package_amount / 100, 0, ',', ' ') }} FCFA</span>
                                 </div>
                             @endif
 
@@ -348,20 +348,20 @@
                             @if($booking->tax_amount > 0)
                                 <div class="flex justify-between py-1 border-b border-secondary/10">
                                     <span class="text-primary/70">Taxe de séjour</span>
-                                    <span class="font-semibold text-primary">+ {{ number_format($booking->tax_amount, 0, ',', ' ') }} FCFA</span>
+                                    <span class="font-semibold text-primary">+ {{ number_format($booking->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
                                 </div>
                             @endif
 
                             @if($booking->discount_amount > 0)
                                 <div class="flex justify-between py-1 border-b border-secondary/10 text-emerald-700">
                                     <span>Remise appliquée</span>
-                                    <span class="font-semibold">- {{ number_format($booking->discount_amount, 0, ',', ' ') }} FCFA</span>
+                                    <span class="font-semibold">- {{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} FCFA</span>
                                 </div>
                             @endif
 
                             <div class="flex justify-between py-2 text-sm font-bold text-primary bg-accent/20 px-3 rounded-xl mt-2">
                                 <span>Montant Total du Séjour (TTC)</span>
-                                <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
+                                <span>{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
                         </div>
 
@@ -391,7 +391,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <span class="text-sm font-bold text-emerald-700">
-                                                    {{ number_format($payment->amount, 0, ',', ' ') }} FCFA
+                                                    {{ number_format($payment->amount / 100, 0, ',', ' ') }} FCFA
                                                 </span>
                                             </div>
                                         </div>
@@ -407,7 +407,7 @@
                             <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
                                 <span class="text-[10px] uppercase font-bold text-emerald-700 tracking-wider block">Acompte / Total versé</span>
                                 <span class="text-lg font-bold text-emerald-900 mt-0.5 block">
-                                    {{ number_format($booking->paid_amount, 0, ',', ' ') }} FCFA
+                                    {{ number_format($booking->paid_amount / 100, 0, ',', ' ') }} FCFA
                                 </span>
                             </div>
 
@@ -416,7 +416,7 @@
                                     Solde restant dû
                                 </span>
                                 <span class="text-lg font-bold @if($booking->balance_due > 0) text-amber-900 @else text-gray-700 @endif mt-0.5 block">
-                                    {{ number_format($booking->balance_due, 0, ',', ' ') }} FCFA
+                                    {{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA
                                 </span>
                             </div>
                         </div>
@@ -688,10 +688,10 @@
                     {{ $booking->total_nights }}
                 </div>
                 <div class="col-span-2 text-xs text-primary/70 text-right">
-                    {{ number_format($booking->price_per_night, 0, ',', ' ') }} F
+                    {{ number_format($booking->price_per_night / 100, 0, ',', ' ') }} F
                 </div>
                 <div class="col-span-2 text-sm font-semibold text-primary text-right">
-                    {{ number_format($booking->total_room_amount, 0, ',', ' ') }} F
+                    {{ number_format($booking->total_room_amount / 100, 0, ',', ' ') }} F
                 </div>
             </div>
 
@@ -703,10 +703,10 @@
                     </div>
                     <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
                     <div class="col-span-2 text-xs text-primary/70 text-right">
-                        {{ number_format($booking->package_amount, 0, ',', ' ') }} F
+                        {{ number_format($booking->package_amount / 100, 0, ',', ' ') }} F
                     </div>
                     <div class="col-span-2 text-sm font-semibold text-primary text-right">
-                        {{ number_format($booking->package_amount, 0, ',', ' ') }} F
+                        {{ number_format($booking->package_amount / 100, 0, ',', ' ') }} F
                     </div>
                 </div>
             @endif
@@ -768,10 +768,10 @@
                     </div>
                     <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
                     <div class="col-span-2 text-xs text-primary/70 text-right">
-                        {{ number_format($booking->tax_amount, 0, ',', ' ') }} F
+                        {{ number_format($booking->tax_amount / 100, 0, ',', ' ') }} F
                     </div>
                     <div class="col-span-2 text-sm font-semibold text-primary text-right">
-                        {{ number_format($booking->tax_amount, 0, ',', ' ') }} F
+                        {{ number_format($booking->tax_amount / 100, 0, ',', ' ') }} F
                     </div>
                 </div>
             @endif
@@ -784,10 +784,10 @@
                     </div>
                     <div class="col-span-1 text-center">1</div>
                     <div class="col-span-2 text-right">
-                        -{{ number_format($booking->discount_amount, 0, ',', ' ') }} F
+                        -{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} F
                     </div>
                     <div class="col-span-2 text-sm font-semibold text-right">
-                        -{{ number_format($booking->discount_amount, 0, ',', ' ') }} F
+                        -{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} F
                     </div>
                 </div>
             @endif
@@ -798,12 +798,12 @@
             <div class="ml-auto w-72 space-y-2">
                 <div class="flex justify-between text-xs text-primary/60">
                     <span>Hébergement brut</span>
-                    <span>{{ number_format($booking->total_room_amount, 0, ',', ' ') }} FCFA</span>
+                    <span>{{ number_format($booking->total_room_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @if($booking->package_amount > 0)
                     <div class="flex justify-between text-xs text-primary/60">
                         <span>Formule</span>
-                        <span>+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                        <span>+ {{ number_format($booking->package_amount / 100, 0, ',', ' ') }} FCFA</span>
                     </div>
                 @endif
                 @if($booking->extras_amount > 0)
@@ -827,24 +827,24 @@
                 @if($booking->discount_amount > 0)
                     <div class="flex justify-between text-xs text-emerald-700">
                         <span>Remise</span>
-                        <span>- {{ number_format($booking->discount_amount, 0, ',', ' ') }} FCFA</span>
+                        <span>- {{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} FCFA</span>
                     </div>
                 @endif
                 <div class="flex justify-between text-sm font-bold text-primary pt-2 border-t border-secondary/20">
                     <span>Total séjour (TTC)</span>
-                    <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
+                    <span>{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
 
                 {{-- Acompte versé --}}
                 <div class="flex justify-between text-xs font-semibold text-emerald-700 pt-1">
                     <span>Acompte versé</span>
-                    <span>{{ number_format($booking->paid_amount, 0, ',', ' ') }} FCFA</span>
+                    <span>{{ number_format($booking->paid_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @if($booking->payments->isNotEmpty())
                     @foreach($booking->payments as $p)
                         <div class="flex justify-between text-[11px] text-primary/60 pl-2">
                             <span>↳ {{ $p->methodLabel() }} ({{ $p->created_at->format('d/m/Y') }})</span>
-                            <span>{{ number_format($p->amount, 0, ',', ' ') }} F</span>
+                            <span>{{ number_format($p->amount / 100, 0, ',', ' ') }} F</span>
                         </div>
                     @endforeach
                 @endif
@@ -852,7 +852,7 @@
                 <div class="flex justify-between text-sm font-bold pt-2 border-t border-secondary/15
                             {{ $booking->balance_due > 0 ? 'text-amber-900' : 'text-emerald-700' }}">
                     <span>Solde restant dû</span>
-                    <span>{{ number_format($booking->balance_due, 0, ',', ' ') }} FCFA</span>
+                    <span>{{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
             </div>
         </div>
@@ -1006,8 +1006,8 @@
                                 <p class="text-sm font-medium text-primary">Hébergement Chambre {{ $booking->room->number }}</p>
                             </div>
                             <div class="col-span-1 text-xs text-primary/70 text-center">{{ $booking->total_nights }}</div>
-                            <div class="col-span-2 text-xs text-primary/70 text-right">{{ number_format($booking->price_per_night, 0, ',', ' ') }} F</div>
-                            <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ number_format($booking->total_room_amount, 0, ',', ' ') }} F</div>
+                            <div class="col-span-2 text-xs text-primary/70 text-right">{{ number_format($booking->price_per_night / 100, 0, ',', ' ') }} F</div>
+                            <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ number_format($booking->total_room_amount / 100, 0, ',', ' ') }} F</div>
                         </div>
 
                         @if($booking->package_amount > 0)
@@ -1016,8 +1016,8 @@
                                     <p class="text-sm font-medium text-primary">Formule — {{ $booking->roomPackage?->name }}</p>
                                 </div>
                                 <div class="col-span-1 text-xs text-primary/70 text-center">1</div>
-                                <div class="col-span-2 text-xs text-primary/70 text-right">{{ number_format($booking->package_amount, 0, ',', ' ') }} F</div>
-                                <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ number_format($booking->package_amount, 0, ',', ' ') }} F</div>
+                                <div class="col-span-2 text-xs text-primary/70 text-right">{{ number_format($booking->package_amount / 100, 0, ',', ' ') }} F</div>
+                                <div class="col-span-2 text-sm font-semibold text-primary text-right">{{ number_format($booking->package_amount / 100, 0, ',', ' ') }} F</div>
                             </div>
                         @endif
 
@@ -1061,8 +1061,8 @@
                             <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center text-xs text-emerald-700">
                                 <div class="col-span-7">Remise commerciale</div>
                                 <div class="col-span-1 text-center">1</div>
-                                <div class="col-span-2 text-right">-{{ number_format($booking->discount_amount, 0, ',', ' ') }} F</div>
-                                <div class="col-span-2 text-sm font-semibold text-right">-{{ number_format($booking->discount_amount, 0, ',', ' ') }} F</div>
+                                <div class="col-span-2 text-right">-{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} F</div>
+                                <div class="col-span-2 text-sm font-semibold text-right">-{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} F</div>
                             </div>
                         @endif
                     </div>
@@ -1071,12 +1071,12 @@
                         <div class="ml-auto w-72 space-y-2">
                             <div class="flex justify-between text-xs text-primary/60">
                                 <span>Hébergement brut</span>
-                                <span>{{ number_format($booking->total_room_amount, 0, ',', ' ') }} FCFA</span>
+                                <span>{{ number_format($booking->total_room_amount / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
                             @if($booking->package_amount > 0)
                                 <div class="flex justify-between text-xs text-primary/60">
                                     <span>Formule</span>
-                                    <span>+ {{ number_format($booking->package_amount, 0, ',', ' ') }} FCFA</span>
+                                    <span>+ {{ number_format($booking->package_amount / 100, 0, ',', ' ') }} FCFA</span>
                                 </div>
                             @endif
                             @if($booking->extras_amount > 0)
@@ -1100,21 +1100,21 @@
                             @if($booking->discount_amount > 0)
                                 <div class="flex justify-between text-xs text-emerald-700">
                                     <span>Remise</span>
-                                    <span>- {{ number_format($booking->discount_amount, 0, ',', ' ') }} FCFA</span>
+                                    <span>- {{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} FCFA</span>
                                 </div>
                             @endif
                             <div class="flex justify-between text-sm font-bold text-primary pt-2 border-t border-secondary/20">
                                 <span>Total séjour (TTC)</span>
-                                <span>{{ number_format($booking->total_amount, 0, ',', ' ') }} FCFA</span>
+                                <span>{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
                             <div class="flex justify-between text-xs font-semibold text-emerald-700">
                                 <span>Acompte versé</span>
-                                <span>{{ number_format($booking->paid_amount, 0, ',', ' ') }} FCFA</span>
+                                <span>{{ number_format($booking->paid_amount / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
                             <div class="flex justify-between text-sm font-bold pt-2 border-t border-secondary/15
                                         {{ $booking->balance_due > 0 ? 'text-amber-900' : 'text-emerald-700' }}">
                                 <span>Solde restant dû</span>
-                                <span>{{ number_format($booking->balance_due, 0, ',', ' ') }} FCFA</span>
+                                <span>{{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
                             </div>
                         </div>
                     </div>
