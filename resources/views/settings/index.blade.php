@@ -10,7 +10,7 @@
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
-        @if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'shop']))
+        @if(in_array($tab, ['general', 'hebergement', 'taxes']))
             <a href="{{ route('settings.export', ['tab' => $tab]) }}"
                class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
                title="Exporter les réglages de cet onglet en CSV">
@@ -567,33 +567,16 @@
                         </div>
                     </div>
 
+                    {{-- Les règles de la fidélité sont celles de l'application (LoyaltyService) : elles se lisent ici, elles ne se règlent pas. --}}
                     <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                            <div>
-                                <h3 class="text-sm font-semibold text-primary">Programme de Fidélisation</h3>
-                                <p class="text-xs text-primary/60">Récompensez vos clients réguliers avec un système de points.</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" value="" class="sr-only peer" checked>
-                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-secondary/20 pt-4 mt-2">
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Montant dépensé pour 1 point</label>
-                                <div class="relative">
-                                    <input type="number" value="10000" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
-                                    <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Valeur d'un point en réduction</label>
-                                <div class="relative">
-                                    <input type="number" value="500" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-12">
-                                    <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
-                                </div>
-                            </div>
-                        </div>
+                        <h3 class="text-sm font-semibold text-primary">Programme de fidélité</h3>
+                        <p class="mt-1 text-xs text-primary/60">Les règles sont fixées par l'application ; elles ne se règlent pas ici.</p>
+                        <ul class="mt-3 list-disc space-y-1 pl-5 text-xs text-primary/70">
+                            <li>1 point pour chaque tranche de 1 000 FCFA du séjour (hors prestations offertes).</li>
+                            <li>Points multipliés selon le niveau : Bronze × 1, Silver × 1,25, Gold × 1,5, Platinum × 2.</li>
+                            <li>Niveaux atteints à 5 000 000 (Silver), 20 000 000 (Gold) et 50 000 000 FCFA (Platinum) dépensés.</li>
+                            <li>+ 20 % pour un séjour de 7 nuits et plus ; + 10 % si le séjour inclut un samedi.</li>
+                        </ul>
                     </div>
 
                     <div class="p-4 bg-primary/5 rounded-xl border border-secondary/25">
@@ -763,45 +746,14 @@
         {{-- ONGLET: HOUSEKEEPING (Leader & Manager) --}}
         @if($tab === 'housekeeping' && \App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
             <div class="max-w-3xl">
-                <h2 class="text-lg font-semibold text-primary mb-4">Paramètres Housekeeping</h2>
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <div>
-                            <h3 class="text-sm font-semibold text-primary">Passage Automatique "Sale"</h3>
-                            <p class="text-xs text-primary/60">Passer automatiquement une chambre au statut "Sale" lors du Check-out.</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" value="" class="sr-only peer" checked>
-                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
-                    </div>
-
-                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <h3 class="text-sm font-semibold text-primary mb-4">Temps alloué par tâche (Minutes)</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Nettoyage standard</label>
-                                <input type="number" value="30" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Nettoyage à fond</label>
-                                <input type="number" value="60" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Inspection</label>
-                                <input type="number" value="10" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-8 flex justify-end">
-                    <button type="button" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
-                        Enregistrer
-                    </button>
+                <h2 class="text-lg font-semibold text-primary mb-2">Housekeeping</h2>
+                <p class="mb-4 text-sm text-primary/60">Le housekeeping n'a pas de réglage propre : il suit des règles fixes de l'application.</p>
+                <div class="space-y-4 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
+                    <p>Au <strong>check-out</strong>, la chambre passe d'elle-même à « À nettoyer ». Le ménage se suit ensuite dans l'application Hôtel › Housekeeping : affectation, nettoyage, contrôle.</p>
+                    <p>Le temps laissé à l'équipe avant que la chambre redevienne vendable se règle dans <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}" class="font-semibold underline">Paramètres › Hébergement</a>, rubrique « Remise en vente après départ ».</p>
                 </div>
             </div>
         @endif
-
         {{-- ONGLET : RESTAURANT — les restaurants de l'hôtel, leurs services,
              leurs salles et leurs équipes. Le règle qui en a le droit ; le
              consulte qui peut voir les restaurants. --}}
@@ -822,21 +774,11 @@
         {{-- ONGLET: BOUTIQUE (Shop Manager & Manager) --}}
         @if($tab === 'shop' && \App\Support\SettingsTabs::peutRegler($user, 'shop'))
             <div class="max-w-3xl">
-                <h2 class="text-lg font-semibold text-primary mb-4">Paramètres de la Boutique</h2>
-                <div class="space-y-6">
-                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20">
-                        <h3 class="text-sm font-semibold text-primary mb-4">Alertes de Stock</h3>
-                        <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1">Seuil d'alerte global (Rupture de stock imminente)</label>
-                            <input type="number" value="5" class="w-full md:w-1/2 rounded-lg border-secondary/20 bg-white text-sm p-2.5">
-                            <p class="text-[10px] text-primary/50 mt-1">Vous recevrez une alerte sur le tableau de bord quand le stock d'un produit atteint ce seuil.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-8 flex justify-end">
-                    <button type="button" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
-                        Enregistrer
-                    </button>
+                <h2 class="text-lg font-semibold text-primary mb-2">Boutique</h2>
+                <p class="mb-4 text-sm text-primary/60">La boutique n'a pas de réglage d'établissement : chaque article porte les siens.</p>
+                <div class="space-y-4 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
+                    <p>Le <strong>niveau de réassort</strong> se règle article par article (Boutique › Articles). Quand une vente fait passer un article sous son niveau, le responsable boutique et le manager sont prévenus.</p>
+                    <p>Les prix sont toutes taxes comprises ; la TVA se règle dans <a href="{{ route('settings.index', ['tab' => 'taxes']) }}" class="font-semibold underline">Paramètres › Taxes &amp; Tarifs</a>.</p>
                 </div>
             </div>
         @endif
@@ -2192,7 +2134,7 @@
             </div>
         @endif
 
-@if(in_array($tab, ['general', 'hebergement', 'taxes', 'housekeeping', 'shop']))
+@if(in_array($tab, ['general', 'hebergement', 'taxes']))
     <x-csv-import-modal
         id="modal-import-settings-{{ $tab }}"
         title="Importer les paramètres (CSV)"

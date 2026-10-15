@@ -44,40 +44,23 @@ class SettingsCsvController extends Controller
      */
     private const SETTINGS_KEYS_MAP = [
         'general' => [
-            'phone'    => ['type' => 'string',  'label' => 'Téléphone de contact'],
-            'email'    => ['type' => 'string',  'label' => 'Email de contact'],
-            'address'  => ['type' => 'string',  'label' => 'Adresse physique'],
-            'city'     => ['type' => 'string',  'label' => 'Ville'],
-            'country'  => ['type' => 'string',  'label' => 'Pays'],
-            'website'  => ['type' => 'string',  'label' => 'Site internet'],
+            'mail_from_address' => ['type' => 'string', 'label' => "Adresse d'expédition des courriels aux clients"],
+            'mail_from_name'    => ['type' => 'string', 'label' => "Nom affiché de l'expéditeur"],
+            'mail_reply_to'     => ['type' => 'string', 'label' => 'Adresse de réponse'],
         ],
         'hebergement' => [
-            'checkin_time'                  => ['type' => 'string',  'label' => "Heure d'arrivée par défaut"],
-            'checkout_time'                 => ['type' => 'string',  'label' => 'Heure de départ par défaut'],
+            'check_in_time'                 => ['type' => 'string',  'label' => "Heure d'arrivée (HH:MM)"],
+            'check_out_time'                => ['type' => 'string',  'label' => 'Heure limite de départ (HH:MM)'],
             'min_deposit_percentage'        => ['type' => 'integer', 'label' => 'Acompte minimum (%)'],
             'max_discount_percentage'       => ['type' => 'integer', 'label' => 'Remise maximale réception (%)'],
-            'capacity_surcharge_percentage' => ['type' => 'integer', 'label' => 'Surcharge capacité (%)'],
-            'turnaround_time_minutes'       => ['type' => 'integer', 'label' => 'Temps de remise en vente (min)'],
+            'capacity_surcharge_percentage' => ['type' => 'integer', 'label' => 'Surcharge capacité dépassée (%)'],
+            'default_extra_bed_price'       => ['type' => 'integer', 'label' => "Lit d'appoint (FCFA par nuit)"],
         ],
         'taxes' => [
-            'vat_rate'               => ['type' => 'decimal', 'label' => 'Taux de TVA (%)'],
-            'tourist_tax_per_night'  => ['type' => 'integer', 'label' => 'Taxe de séjour (FCFA/nuit)'],
-            'service_charge_rate'    => ['type' => 'decimal', 'label' => 'Frais de service (%)'],
-        ],
-        'housekeeping' => [
-            'cleaning_duration_minutes'  => ['type' => 'integer', 'label' => 'Durée de nettoyage (min)'],
-            'inspection_required'        => ['type' => 'boolean', 'label' => 'Contrôle qualité obligatoire (oui/non)'],
-            'linen_change_interval_days' => ['type' => 'integer', 'label' => 'Intervalle linge (jours)'],
-        ],
-        'restaurant' => [
-            'opening_time'      => ['type' => 'string',  'label' => 'Heure ouverture restaurant'],
-            'closing_time'      => ['type' => 'string',  'label' => 'Heure fermeture restaurant'],
-            'table_count'       => ['type' => 'integer', 'label' => 'Nombre de tables'],
-            'allow_room_charge' => ['type' => 'boolean', 'label' => 'Facturation sur chambre (oui/non)'],
-        ],
-        'shop' => [
-            'max_discount_percentage' => ['type' => 'integer', 'label' => 'Remise maximale boutique (%)'],
-            'allow_room_charge'       => ['type' => 'boolean', 'label' => 'Facturation sur chambre (oui/non)'],
+            'vat_enabled'          => ['type' => 'boolean', 'label' => 'TVA activée (oui/non)'],
+            'tourist_tax_enabled'  => ['type' => 'boolean', 'label' => 'Taxe de séjour activée (oui/non)'],
+            'classification'       => ['type' => 'string',  'label' => "Classement de l'établissement (code)"],
+            'tourist_tax_basis'    => ['type' => 'string',  'label' => 'Base de la taxe de séjour (room ou person)'],
         ],
     ];
 
