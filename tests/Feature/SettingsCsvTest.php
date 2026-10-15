@@ -219,3 +219,10 @@ test("le classement enregistré reste sélectionné dans l'onglet Taxes", functi
     $this->get(route('settings.index', ['tab' => 'taxes']))->assertOk()
         ->assertSee('<option value="3" selected>', false);
 });
+
+test("une adresse d'expédition mal formée est refusée en français", function () {
+    $this->actingAs(settingsManager());
+
+    $this->post(route('settings.update', ['tab' => 'general']), ['settings' => ['mail_from_address' => 'pas-un-courriel']])
+        ->assertSessionHasErrors(['settings.mail_from_address' => "L'adresse d'expédition n'est pas une adresse de courriel valide."]);
+});

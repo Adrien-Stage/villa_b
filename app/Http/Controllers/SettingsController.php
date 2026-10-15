@@ -242,7 +242,13 @@ class SettingsController extends Controller
             'settings.mail_from_address' => ['nullable', 'email:rfc', 'max:255'],
             'settings.mail_from_name'    => ['nullable', 'string', 'max:120'],
             'settings.mail_reply_to'     => ['nullable', 'email:rfc', 'max:255'],
-        ], [], [
+        ], [
+            'settings.mail_from_address.email' => "L'adresse d'expédition n'est pas une adresse de courriel valide.",
+            'settings.mail_reply_to.email'     => "L'adresse de réponse n'est pas une adresse de courriel valide.",
+            'settings.mail_from_address.max'   => "L'adresse d'expédition est trop longue (255 caractères au plus).",
+            'settings.mail_reply_to.max'       => "L'adresse de réponse est trop longue (255 caractères au plus).",
+            'settings.mail_from_name.max'      => "Le nom de l'expéditeur est trop long (120 caractères au plus).",
+        ], [
             'settings.mail_from_address' => "adresse d'expédition",
             'settings.mail_from_name'    => "nom de l'expéditeur",
             'settings.mail_reply_to'     => 'adresse de réponse',
