@@ -329,14 +329,28 @@ class ShopOrderController extends Controller
             return back()->withErrors('Seules les commandes payées peuvent être remboursées');
         }
 
-        // Remboursement et restauration du stock
-        foreach ($order->items as $item) {
-            $item->product->increment('stock_quantity', $item->quantity);
+        // Une vente portée sur une chambre vit dans le folio du séjour : la
+        // rembourser sans la retirer du folio laisserait le client la payer.
+        $sejour = $order->folio_item_id ? $order->booking : null;
+        if ($order->folio_item_id && $sejour && $sejour->status !== BookingStatus::CHECKED_IN) {
+            return back()->withErrors("Le séjour n'est plus en cours : cette vente est déjà sur la facture du client, son remboursement se règle avec la réception.");
         }
 
-        $order->update([
-            'payment_status' => 'refunded',
-        ]);
+        DB::transaction(function () use ($order, $sejour) {
+            // Remboursement et restauration du stock
+            foreach ($order->items as $item) {
+                $item->product->increment('stock_quantity', $item->quantity);
+            }
+
+            $order->update([
+                'payment_status' => 'refunded',
+            ]);
+
+            if ($order->folio_item_id && $sejour) {
+                FolioItem::whereKey($order->folio_item_id)->delete();
+                app(CheckOutService::class)->recalculateTotals($sejour->fresh());
+            }
+        });
 
         \App\Models\AuditLog::record(
             Auth::id(),

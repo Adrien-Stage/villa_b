@@ -107,3 +107,28 @@ test("le manager consulte une commande sans les boutons d'encaissement ni d'ouve
     $this->actingAs($gerant)->get(route('shop.orders.show', $commande))->assertSee('Marquer payée');
     $this->actingAs($gerant)->get(route('shop.orders.index'))->assertSee('Ouvrir la caisse');
 });
+
+test("rembourser une vente portée sur une chambre la retire du folio du séjour", function () {
+    \App\Models\Tenant::updateOrCreate(['slug' => 'wetchah-app'], ['name' => 'Hôtel de test', 'is_active' => true]);
+    $gerant = gerantBoutique();
+    $article = articleBoutique();
+    $rt = \App\Models\RoomType::create(['name' => 'Standard', 'code' => 'STD', 'base_price' => 3500000, 'base_capacity' => 2, 'max_capacity' => 3, 'is_active' => true]);
+    $room = \App\Models\Room::create(['room_type_id' => $rt->id, 'number' => '203', 'status' => 'occupied', 'is_active' => true]);
+    $client = \App\Models\Customer::create(['first_name' => 'Paul', 'last_name' => 'Mbarga', 'email' => 'paul@demo.test', 'phone' => '+237 600 00 00 00', 'nationality' => 'CM', 'loyalty_points' => 0, 'total_nights' => 0]);
+    $sejour = \App\Models\Booking::create(['room_id' => $room->id, 'customer_id' => $client->id, 'status' => 'checked_in', 'check_in' => now()->toDateString(), 'check_out' => now()->addDays(2)->toDateString(),
+        'adults_count' => 2, 'total_nights' => 2, 'price_per_night' => 3500000, 'total_room_amount' => 7000000, 'total_amount' => 7000000, 'paid_amount' => 0, 'balance_due' => 7000000, 'booking_number' => 'VB-1']);
+    \App\Models\CashRegisterSession::create(['user_id' => $gerant->id, 'module' => 'shop', 'opening_amount' => 0, 'opened_at' => now()]);
+
+    $this->actingAs($gerant)->post(route('shop.orders.store'), ['payment_method' => 'room_charge', 'booking_id' => $sejour->id,
+        'items' => [['product_id' => $article->id, 'quantity' => 2]]])->assertSessionHas('success');
+    $commande = ShopOrder::latest('id')->first();
+    expect($sejour->fresh()->total_amount)->toBe(8000000)
+        ->and($article->fresh()->stock_quantity)->toBe(8);
+
+    $this->actingAs($gerant)->patch(route('shop.orders.refund', $commande))->assertSessionHas('success');
+
+    expect($commande->fresh()->payment_status)->toBe('refunded')
+        ->and(\App\Models\FolioItem::where('booking_id', $sejour->id)->where('type', \App\Models\FolioItem::TYPE_SHOP)->count())->toBe(0)
+        ->and($sejour->fresh()->total_amount)->toBe(7000000)
+        ->and($article->fresh()->stock_quantity)->toBe(10);
+});
