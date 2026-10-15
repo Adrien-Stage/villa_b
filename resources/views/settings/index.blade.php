@@ -696,7 +696,7 @@
                                 <select name="settings[classification]" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                                     <option value="">— Non renseigné —</option>
                                     @foreach(\App\Models\TouristTaxBracket::CLASSIFICATIONS as $code => $libelle)
-                                        <option value="{{ $code }}" @selected($classement === $code)>{{ $libelle }}</option>
+                                        <option value="{{ $code }}" @selected((string) $classement === (string) $code)>{{ $libelle }}</option>
                                     @endforeach
                                 </select>
                             </div>

@@ -209,3 +209,13 @@ test("les onglets Housekeeping et Boutique n'affichent plus de réglage factice"
         ->assertSee('fixées par')
         ->assertDontSee('Montant dépensé pour 1 point');
 });
+
+test("le classement enregistré reste sélectionné dans l'onglet Taxes", function () {
+    $this->actingAs(settingsManager());
+
+    $this->post(route('settings.update', ['tab' => 'taxes']), ['settings' => ['vat_enabled' => 1, 'tourist_tax_enabled' => 1, 'classification' => '3', 'tourist_tax_basis' => 'room']])
+        ->assertSessionHas('success');
+
+    $this->get(route('settings.index', ['tab' => 'taxes']))->assertOk()
+        ->assertSee('<option value="3" selected>', false);
+});
