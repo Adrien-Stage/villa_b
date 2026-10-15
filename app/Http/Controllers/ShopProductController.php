@@ -6,11 +6,24 @@ use App\Models\ShopCategory;
 use App\Models\ShopProduct;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ShopProductController extends Controller
 {
+    private const MESSAGES = [
+        'sku.unique' => 'Ce code article est déjà utilisé : choisissez-en un autre.',
+        'shop_category_id.required' => 'Choisissez une catégorie.',
+        'name.required' => "Indiquez le nom de l'article.",
+        'price.required' => 'Indiquez le prix en FCFA.',
+        'stock_quantity.required' => 'Indiquez la quantité en stock.',
+        'reorder_level.required' => 'Indiquez le niveau de réassort.',
+        'image.max' => "L'image ne doit pas dépasser 2 Mo.",
+        'image.image' => 'Le fichier choisi doit être une image.',
+        'image.mimes' => "L'image doit être au format JPG, PNG ou WebP.",
+    ];
+
     public function index(Request $request): View
     {
         $tenant = \App\Models\Tenant::current();
@@ -80,7 +93,7 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-        ]);
+        ], self::MESSAGES);
 
         // Vérifier que la catégorie appartient au tenant
         ShopCategory::query()
@@ -136,7 +149,7 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-        ]);
+        ], self::MESSAGES);
 
         // Vérifier que la catégorie appartient au tenant
         ShopCategory::query()
@@ -198,17 +211,14 @@ class ShopProductController extends Controller
      */
     private function generateSku(int $tenantId): string
     {
-        $lastProduct = ShopProduct::query()
+        // Le plus grand numéro est cherché ici plutôt que par une requête
+        // propre à un moteur : même résultat sous PostgreSQL et SQLite.
+        $dernier = ShopProduct::query()
             ->where('sku', 'like', 'ART-%')
-            ->orderByRaw("CAST(SUBSTRING(sku FROM 5) AS INTEGER) DESC")
-            ->first();
+            ->pluck('sku')
+            ->map(fn (string $sku) => preg_match('/^ART-(\d+)$/', $sku, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
 
-        if ($lastProduct && preg_match('/^ART-(\d+)$/', $lastProduct->sku, $matches)) {
-            $nextNumber = (int) $matches[1] + 1;
-        } else {
-            $nextNumber = 1;
-        }
-
-        return 'ART-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        return 'ART-' . str_pad($dernier + 1, 6, '0', STR_PAD_LEFT);
     }
 }

@@ -15,6 +15,9 @@ class ServiceStoreMovement extends Model
     public const SOURCE_REQUISITION = 'requisition';
     public const SOURCE_STOCK_COUNT = 'stock_count';
 
+    /** Sortie vers le mini-bar d'une chambre (réapprovisionnement). */
+    public const SOURCE_MINIBAR = 'minibar';
+
     public const TYPES = [
         self::TYPE_IN         => 'Entrée',
         self::TYPE_OUT        => 'Sortie',

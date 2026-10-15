@@ -139,6 +139,7 @@
                 <!-- Actions -->
                 <div class="border-t border-gray-200 pt-6 space-y-3">
                     @if ($order->payment_status === 'unpaid')
+                      @droit('shop.orders.paid')
                         <form action="{{ route('shop.orders.paid', $order) }}" method="POST">
                             @csrf
                             @method('PATCH')
@@ -146,9 +147,11 @@
                                 <i data-lucide="check" class="w-4 h-4 inline mr-2"></i> Marquer payée
                             </button>
                         </form>
+                      @enddroit
                     @endif
 
                     @if ($order->payment_status === 'paid')
+                      @droit('shop.orders.refund')
                         <form action="{{ route('shop.orders.refund', $order) }}" method="POST" onsubmit="return confirm('Confirmer le remboursement ?');">
                             @csrf
                             @method('PATCH')
@@ -156,6 +159,7 @@
                                 <i data-lucide="undo" class="w-4 h-4 inline mr-2"></i> Rembourser
                             </button>
                         </form>
+                      @enddroit
                     @endif
 
                     <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">

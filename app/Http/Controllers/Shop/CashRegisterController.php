@@ -41,7 +41,7 @@ class CashRegisterController extends Controller
     {
         $request->validate([
             'opening_amount' => 'required|numeric|min:0',
-        ]);
+        ], ['opening_amount.required' => 'Indiquez le fond de caisse initial.', 'opening_amount.numeric' => 'Le fond de caisse doit être un montant en FCFA.']);
 
         $activeSession = CashRegisterSession::where('user_id', auth()->id())
             
@@ -101,7 +101,7 @@ class CashRegisterController extends Controller
         $request->validate([
             'actual_closing_amount' => 'required|numeric|min:0',
             'closing_notes' => 'nullable|string',
-        ]);
+        ], ['actual_closing_amount.required' => 'Indiquez le montant compté dans le tiroir-caisse.', 'actual_closing_amount.numeric' => 'Le montant compté doit être un nombre en FCFA.']);
 
         // Même circuit que toutes les caisses (CashRegisterCircuit) : le
         // solde théorique est recalculé, jamais reçu de la requête, et la
@@ -136,7 +136,7 @@ class CashRegisterController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:1',
             'reason' => 'required|string|max:255',
-        ]);
+        ], ['amount.required' => 'Indiquez le montant de la sortie.', 'amount.min' => 'Le montant de la sortie doit être positif.', 'reason.required' => 'Indiquez le motif de la sortie.']);
 
         CashRegisterDisbursement::create([
             'cash_register_session_id' => $session->id,

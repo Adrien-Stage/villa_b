@@ -242,21 +242,24 @@ class Navigation
         }
 
         // 11. PARAMÈTRES — Pleine page
-        if (\App\Support\SettingsTabs::parDefaut($user) !== null) {
-            $groups[] = [
-                'id'          => 'settings',
-                'title'       => 'Paramètres',
-                'subtitle'    => 'Configuration de l’établissement',
-                'icon'        => 'settings',
-                'color'       => 'zinc',
-                'bg_gradient' => 'from-zinc-500 to-zinc-700',
-                'text_color'  => 'text-zinc-600',
-                'bg_soft'     => 'bg-zinc-100',
-                'border_color'=> 'border-zinc-200',
-                'url'         => route('settings.index'),
-                'type'        => self::TYPE_STANDALONE,
-            ];
-        }
+        // Visible par tous : le contenu s'adapte au rôle et aux accès. La
+        // direction et les chefs de service règlent les onglets de
+        // l'établissement ; les autres y trouvent leurs paramètres personnels
+        // (le contrôleur les mène à leur profil, faute d'onglet à régler).
+        $regleLEtablissement = \App\Support\SettingsTabs::parDefaut($user) !== null;
+        $groups[] = [
+            'id'          => 'settings',
+            'title'       => 'Paramètres',
+            'subtitle'    => $regleLEtablissement ? 'Configuration de l’établissement' : 'Mon compte & sécurité',
+            'icon'        => 'settings',
+            'color'       => 'zinc',
+            'bg_gradient' => 'from-zinc-500 to-zinc-700',
+            'text_color'  => 'text-zinc-600',
+            'bg_soft'     => 'bg-zinc-100',
+            'border_color'=> 'border-zinc-200',
+            'url'         => route('settings.index'),
+            'type'        => self::TYPE_STANDALONE,
+        ];
 
         // 12. DISCUSSIONS — Pleine page
         if (TenantModules::has('discussions')) {

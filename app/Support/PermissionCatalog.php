@@ -98,6 +98,8 @@ class PermissionCatalog
         'bookings.cash_register.open.creer',
         'bookings.checkIn',
         'bookings.checkOut',
+        'bookings.minibar.request',
+        'invoices.payments.creer',
         'bookings.checkin_code.send',
         'bookings.confirm',
         'bookings.creer',
@@ -178,6 +180,14 @@ class PermissionCatalog
         'housekeeping.issue',
         'housekeeping.ready',
         'housekeeping.reject',
+        'housekeeping.stayover',
+        'housekeeping.minibar.articles.creer',
+        'housekeeping.minibar.articles.modifier',
+        'housekeeping.minibar.check',
+        'housekeeping.minibar.depot',
+        'housekeeping.minibar.restock',
+        'housekeeping.minibar.rooms.modifier',
+        'housekeeping.minibar.standards.modifier',
         'housekeeping.teams.creer',
         'planning.affectations.creer',
         'planning.affectations.supprimer',
@@ -352,7 +362,7 @@ class PermissionCatalog
     /** Toutes les fonctions de l'établissement, hors administration et support. */
     private const TOUT_LE_PERSONNEL = [
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-        'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'quality_auditor', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper',
     ];
@@ -687,6 +697,9 @@ class PermissionCatalog
             'bookings.cash_register.voir' => ['controller', 'manager', 'reception'],
             'bookings.checkIn' => ['manager', 'reception'],
             'bookings.checkOut' => ['manager', 'reception'],
+            // Au départ, la réception demande le relevé du mini-bar avant de
+            // clore la note.
+            'bookings.minibar.request' => ['manager', 'reception'],
             'bookings.checkin_code.send' => ['manager', 'reception'],
             'bookings.confirm' => ['manager', 'reception'],
             'bookings.creer' => ['manager', 'reception'],
@@ -758,12 +771,12 @@ class PermissionCatalog
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
             // Chaque membre d'un service demande ; son chef vise avant l'économat.
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
             'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
             'economat.suppliers.creer' => ['econome'],
@@ -877,15 +890,35 @@ class PermissionCatalog
             'groups.voir' => ['controller', 'manager', 'reception'],
 
             // ── Housekeeping ──
-            'housekeeping.assignments.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.available' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.clean' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.inspect' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.issue' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.ready' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.reject' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            // Le responsable des étages compose les équipes ; la gouvernante
+            // affecte les chambres, contrôle et remet en vente. Contrôler reste
+            // ouvert à l'équipe : son chef d'équipe valide les chambres qu'elle
+            // a faites (HousekeepingController::ensureCanValidate).
+            'housekeeping.assignments.creer' => ['housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.available' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.clean' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.inspect' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.issue' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.ready' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.reject' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.stayover' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             'housekeeping.teams.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            // Qui a nettoyé, contrôlé, rechargé quelle chambre, et à quelle heure.
+            'housekeeping.journal.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            // Mini-bars : le responsable des étages règle articles, prix, dépôt
+            // et dotations ; l'équipe relève les consommations ; la gouvernante
+            // recharge depuis le dépôt. Les montants restent hors de vue de
+            // l'équipe : la page des réglages ne lui est pas ouverte.
+            'housekeeping.minibar.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.depot' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.articles.creer' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.articles.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.standards.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.rooms.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.rooms.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.check' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.restock' => ['housekeeping_leader', 'housekeeping_supervisor', 'manager'],
 
             // ── Clients ──
             'customers.creer' => ['manager', 'reception'],
@@ -931,6 +964,8 @@ class PermissionCatalog
 
             // ── Factures ──
             'invoices.voir' => ['controller', 'manager', 'reception'],
+            // La facture complémentaire s'encaisse comme le séjour.
+            'invoices.payments.creer' => ['manager', 'reception'],
 
             // ── Éditions ──
             // La rubrique s'ouvre à tout le personnel ; chaque édition y pose

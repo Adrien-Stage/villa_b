@@ -33,6 +33,7 @@ class Room extends Model
         'notes',
         'is_active',
         'tenant_id',
+        'minibar_due_booking_id',
     ];
 
     protected $casts = [
@@ -89,6 +90,42 @@ class Room extends Model
     public function latestHousekeepingAssignment(): HasOne
     {
         return $this->hasOne(HousekeepingAssignment::class)->latestOfMany();
+    }
+
+    /** Le mini-bar de la chambre : dotation et contenu, article par article. */
+    public function minibarLines(): HasMany
+    {
+        return $this->hasMany(RoomMinibarLine::class);
+    }
+
+    /** Séjour parti sans relevé de départ : son relevé du mini-bar reste dû. */
+    public function minibarDueBooking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class, 'minibar_due_booking_id');
+    }
+
+    /** La chambre a-t-elle un mini-bar (une dotation ou du contenu) ? */
+    public function aUnMiniBar(): bool
+    {
+        $lignes = $this->relationLoaded('minibarLines') ? $this->minibarLines : $this->minibarLines()->get();
+
+        return $lignes->contains(fn (RoomMinibarLine $l) => $l->standard_quantity > 0 || $l->quantity > 0);
+    }
+
+    /** Le mini-bar contient-il toute sa dotation ? */
+    public function miniBarComplet(): bool
+    {
+        $lignes = $this->relationLoaded('minibarLines') ? $this->minibarLines : $this->minibarLines()->get();
+
+        return $lignes->every(fn (RoomMinibarLine $l) => $l->quantity >= $l->standard_quantity);
+    }
+
+    /** Le client a-t-il vidé le mini-bar ? Rien dedans, alors qu'il a une dotation. */
+    public function miniBarVide(): bool
+    {
+        $lignes = $this->relationLoaded('minibarLines') ? $this->minibarLines : $this->minibarLines()->get();
+
+        return $lignes->sum('standard_quantity') > 0 && $lignes->sum('quantity') === 0;
     }
 
     /**

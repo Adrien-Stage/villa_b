@@ -43,7 +43,7 @@
                     </button>
                 @endpour
 
-                @pour('housekeeping_leader', 'housekeeping', 'housekeeping_staff')
+                @pour('housekeeping_leader', 'housekeeping_supervisor', 'housekeeping', 'housekeeping_staff')
                     <button onclick="sendAiMessage('Combien de chambres sont sales en ce moment ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
                         Chambres à nettoyer ?
                     </button>

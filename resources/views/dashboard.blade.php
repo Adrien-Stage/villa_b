@@ -99,7 +99,7 @@
             </a>
         @endif
 
-        @if(($isManager || Auth::user()->exerce(['housekeeping_leader', 'housekeeping', 'housekeeping_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'housekeeping.voir'))
+        @if(($isManager || Auth::user()->exerce(['housekeeping_leader', 'housekeeping_supervisor', 'housekeeping', 'housekeeping_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'housekeeping.voir'))
             <a href="{{ route('housekeeping.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> Accéder au Housekeeping
             </a>

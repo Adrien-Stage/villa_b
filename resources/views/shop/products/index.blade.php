@@ -3,6 +3,12 @@
 @section('title', 'Articles Boutique')
 
 @section('content')
+@php
+    // Le manager et le contrôle consultent : les actions d'écriture ne leur sont pas montrées.
+    $droits = app(\App\Services\PermissionResolver::class);
+    $peutModifier = $droits->allows(auth()->user(), 'shop.products.modifier');
+    $peutSupprimer = $droits->allows(auth()->user(), 'shop.products.supprimer');
+@endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div>
@@ -142,7 +148,11 @@
                             </div>
                         @endif
                         <div class="min-w-0">
-                            <a href="{{ route('shop.products.edit', $product) }}" class="block truncate font-medium text-primary hover:underline">{{ $product->name }}</a>
+                            @if($peutModifier)
+                                <a href="{{ route('shop.products.edit', $product) }}" class="block truncate font-medium text-primary hover:underline">{{ $product->name }}</a>
+                            @else
+                                <span class="block truncate font-medium text-primary">{{ $product->name }}</span>
+                            @endif
                             <p class="text-xs text-primary/50">{{ $product->sku }}</p>
                         </div>
                     </div>
@@ -165,11 +175,17 @@
                         <span class="rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700">Inactif</span>
                     @endif
                 </x-table.cell>
-                <x-table.actions :label="'Actions pour '.$product->name">
-                    <x-table.action :href="route('shop.products.edit', $product)" icon="pencil">Modifier</x-table.action>
-                    <x-table.action :action="route('shop.products.destroy', $product)" method="DELETE" icon="trash-2" tone="danger"
-                        :confirm="'Supprimer '.$product->name.' ?'">Supprimer</x-table.action>
-                </x-table.actions>
+                @if($peutModifier || $peutSupprimer)
+                    <x-table.actions :label="'Actions pour '.$product->name">
+                        @if($peutModifier)
+                            <x-table.action :href="route('shop.products.edit', $product)" icon="pencil">Modifier</x-table.action>
+                        @endif
+                        @if($peutSupprimer)
+                            <x-table.action :action="route('shop.products.destroy', $product)" method="DELETE" icon="trash-2" tone="danger"
+                                :confirm="'Supprimer '.$product->name.' ?'">Supprimer</x-table.action>
+                        @endif
+                    </x-table.actions>
+                @endif
             </x-table.row>
         @endforeach
     </x-table>
@@ -216,13 +232,17 @@
                             </div>
 
                             {{-- Actions overlay --}}
+                            @if($peutModifier || $peutSupprimer)
                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-end p-3">
                                 <div class="flex gap-1.5">
+                                    @if($peutModifier)
                                     <a href="{{ route('shop.products.edit', $product) }}"
                                        class="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-primary hover:bg-white transition-colors shadow-sm"
                                        title="Modifier">
                                         <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                                     </a>
+                                    @endif
+                                    @if($peutSupprimer)
                                     <form action="{{ route('shop.products.destroy', $product) }}" method="POST"
                                           onsubmit="return confirm('Supprimer {{ addslashes($product->name) }} ?');">
                                         @csrf
@@ -233,8 +253,10 @@
                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </div>
+                            @endif
                         </div>
 
                         {{-- Infos --}}

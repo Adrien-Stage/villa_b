@@ -33,6 +33,8 @@ class Account extends Model
     public const REVENUE_ACCOMMODATION = '706000';
     public const REVENUE_RESTAURANT = '706100';
     public const REVENUE_SHOP = '701000';
+    /** Ventes du mini-bar : des marchandises, comme la boutique. */
+    public const REVENUE_MINIBAR = '701000';
 
     /** Comptes de stocks (inventaire permanent). */
     public const STOCK_KITCHEN = '321000';

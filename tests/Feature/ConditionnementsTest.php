@@ -296,7 +296,15 @@ test("l'inventaire se compte par niveau et cale les unités fermées à la clôt
     expect((float) $ligne->fresh()->counted_quantity)->toBe(657.0)
         ->and($ligne->fresh()->packaging_counts)->toBe(['paquet' => 25, 'carton' => 2]);
 
+    // Rouvrir la feuille après la saisie : le détail compté se relit (cartons, paquets, vrac).
+    $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()
+        ->assertSee("vrac: '7'", false);
+
     $this->post(route('economat.stock_counts.close', $inventaire))->assertRedirect();
+
+    // Une fois clôturée, la feuille relit aussi le détail compté.
+    $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()
+        ->assertSee('25 paquets · 2 cartons');
 
     expect((float) $this->gants->fresh()->current_stock)->toBe(657.0)
         ->and(etatDesGants($this))->toBe('2 cartons · 25 paquets · 7 pièces')

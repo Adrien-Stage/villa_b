@@ -22,6 +22,13 @@
         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $style['chip'] }}">{{ $style['label'] }}</span>
     </div>
 
+    @php $passage = $room->latestHousekeepingAssignment; @endphp
+    @if($s === 'cleaning' && $passage?->started_at)
+        <p class="mb-3 text-xs text-primary/60">Commencée à {{ $passage->started_at->format('H:i') }}@if($passage->startedBy) par {{ $passage->startedBy->name }}@endif</p>
+    @elseif(in_array($s, ['clean', 'inspected'], true) && $passage?->completed_at)
+        <p class="mb-3 text-xs text-primary/60">Nettoyée à {{ $passage->completed_at->format('H:i') }}@if($passage->completedBy) par {{ $passage->completedBy->name }}@endif</p>
+    @endif
+
     <div class="mt-auto">
         @if($s === 'dirty')
             <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
@@ -33,12 +40,20 @@
 
         @elseif($s === 'cleaning')
             <div class="flex gap-2">
+                @if(\App\Services\MinibarService::releveDuAuMenage($room))
+                    {{-- Client parti sans relevé : le mini-bar se relève avant tout. --}}
+                    <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
+                    </a>
+                @else
                 <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
                     @csrf
                     <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i> Marquer nettoyée
                     </button>
                 </form>
+                @endif
                 <form method="POST" action="{{ route('housekeeping.issue', $room) }}"
                       onsubmit="const n = prompt('Décrire le problème :'); if(!n){return false;} this.issue_notes.value = n;">
                     @csrf
@@ -50,7 +65,13 @@
             </div>
 
         @elseif($s === 'clean')
-            @if($canValidate)
+            @if($canValidate && $room->aUnMiniBar() && !$room->miniBarComplet())
+                {{-- Le prochain client trouve un mini-bar complet. --}}
+                <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                   class="w-full py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger le mini-bar
+                </a>
+            @elseif($canValidate)
                 <div class="flex gap-2">
                     <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                         @csrf
@@ -67,7 +88,7 @@
                     </form>
                 </div>
             @else
-                <p class="text-xs text-purple-700/80 text-center py-2">En attente du contrôle du chef d'équipe.</p>
+                <p class="text-xs text-purple-700/80 text-center py-2">En attente du contrôle de la gouvernante.</p>
             @endif
 
         @elseif($s === 'inspected')

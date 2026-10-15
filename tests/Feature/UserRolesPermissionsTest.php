@@ -214,3 +214,21 @@ test('la réception consulte le restaurant et la boutique sans jamais y écrire'
         // Son propre service reste en écriture.
         ->and($droits->allows($receptionniste, 'bookings.creer'))->toBeTrue();
 });
+
+test("le contrôleur de gestion consulte le personnel sans pouvoir en ajouter", function () {
+    seedRolesAndModules();
+    $controleur = User::factory()->create(['role' => 'controller']);
+    $controleur->roles()->sync(Role::where('slug', 'controller')->pluck('id'));
+    $this->actingAs($controleur);
+
+    $this->get(route('users.index'))
+        ->assertOk()
+        ->assertDontSee('Ajouter un membre');
+});
+
+test("le manager voit le bouton d'ajout d'un membre", function () {
+    seedRolesAndModules();
+    $this->actingAs(User::factory()->create(['role' => 'manager']));
+
+    $this->get(route('users.index'))->assertOk()->assertSee('Ajouter un membre');
+});

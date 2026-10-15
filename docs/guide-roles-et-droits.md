@@ -73,7 +73,7 @@ Les rôles sont rangés par niveau. Un chef (niveau 3) **inclut** ses membres
 Niveau 1  Administrateur ............................ service informatique de l'hôtel
 Niveau 2  Manager ................................... direction des opérations
 Niveau 3  Chef de réception ─────────── inclut ── Réceptionniste
-          Gouvernant(e) général(e) ──── inclut ── Valet / Femme de chambre
+          Responsable des étages ────── inclut ── Gouvernante, Valet / Femme de chambre
           Responsable de restaurant ─── inclut ── Serveur, Caissier restaurant
           Chef de cuisine ───────────── inclut ── Cuisinier
           Responsable boutique ──────── inclut ── Vendeur-caissier
@@ -142,24 +142,63 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
   - POS de la réception ;
   - sa caisse : ouvrir, sortie de caisse, compter ;
   - statut des chambres ;
+  - au départ d'un client, demander le relevé du mini-bar avant de clore la note ;
+  - encaisser une facture complémentaire (mini-bar consommé après le départ) ;
   - demandes à l'économat.
+- *Reçoit* : chaque relevé du mini-bar (montant ajouté au folio, ou consommé
+  après le départ et à facturer) et chaque chambre nettoyée.
 - *Consulte* : les notes de restaurant que des résidents ont reportées sur leur
   séjour, dans tous les restaurants.
 - *Ne fait pas* : encaisser au restaurant ou à la boutique.
 
 ### Housekeeping
 
-**Gouvernant(e) général(e)** — dirige les étages.
+Trois échelons : le responsable des étages dirige, la gouvernante encadre les
+équipes, le valet ou la femme de chambre nettoie. La gouvernante est au même
+niveau que l'équipe (niveau 4) mais reçoit ses droits propres.
 
-- *Fait* : tout ce que fait le valet, plus composer les équipes, affecter les
-  chambres, régler les paramètres du housekeeping et faire les demandes à
-  l'économat.
+**Responsable des étages** — dirige le housekeeping, direction et exécution.
 
-**Valet / Femme de chambre** — remise en état des chambres.
+- *Fait* : tout ce que font la gouvernante et le valet, plus composer les
+  équipes, régler les paramètres du housekeeping et viser les demandes du
+  service à l'économat.
+- *Règle les mini-bars* : les articles (un article de l'économat et son prix au
+  client), le dépôt d'où ils sortent, la dotation de chaque type de chambre et
+  celle d'une chambre en particulier.
+- *Suit* : qui a nettoyé, contrôlé ou remis en vente chaque chambre, et à quelle
+  heure (« Suivi des chambres »).
 
-- *Fait* : nettoyer, signaler une chambre prête ou un incident, inspecter et
-  rejeter.
-- *Ne voit pas* : les montants.
+**Gouvernante** — encadre les équipes de nettoyage.
+
+- *Fait* : affecter les chambres aux équipes (ménage de départ et recouche),
+  contrôler les chambres nettoyées, les refuser ou les remettre en vente, faire
+  les demandes à l'économat. Elle peut aussi faire le travail de l'équipe.
+- *Recharge les mini-bars* depuis le dépôt du mini-bar : après chaque départ,
+  avant de contrôler la chambre ; pendant un séjour, seulement quand le client
+  a vidé le mini-bar. Si le dépôt manque d'un article, elle contrôle quand même
+  la chambre en indiquant pourquoi.
+- *Suit* : le travail de chaque équipe dans « Suivi des chambres ».
+- *Reçoit* : l'alerte de chaque chambre nettoyée à contrôler.
+- *Ne fait pas* : composer les équipes.
+
+**Valet / Femme de chambre** — nettoyage des chambres.
+
+- *Fait* : commencer et terminer le nettoyage des chambres confiées à son
+  équipe, faire les recouches des chambres occupées, signaler un incident. Le
+  chef d'équipe contrôle les chambres de son équipe.
+- *Relève le mini-bar*, article par article, 0 compris : à chaque recouche, au
+  départ quand la réception le demande, et au ménage d'une chambre dont le
+  client est parti sans relevé. Sans relevé, la recouche ne se termine pas et la
+  chambre ne se marque pas nettoyée.
+- *Ne voit pas* : les montants, prix du mini-bar compris.
+
+Quand une chambre est marquée nettoyée, la gouvernante et le responsable des
+étages reçoivent l'alerte « à contrôler », et la réception sait que la chambre
+sera bientôt vendable.
+
+Le mini-bar : ce que l'équipe relève consommé part au folio du client pendant le
+séjour ; s'il est déjà parti, la consommation part sur une facture
+complémentaire, que la réception encaisse quand le client la règle.
 
 ### Restaurant
 

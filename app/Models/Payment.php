@@ -25,6 +25,7 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
+        'invoice_id',           // Facture soldée, quand l'encaissement en vise une (facture complémentaire)
         'customer_id',          // Pour les paiements hors réservation (ex: client walk-in restaurant)
         'cash_register_session_id',
         

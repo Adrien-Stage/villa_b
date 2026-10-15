@@ -96,6 +96,8 @@ class Booking extends Model
         'approved_by',          // Qui a validé la gratuité
         'approved_at',
         'tenant_id',
+        'minibar_check_requested_at',
+        'minibar_check_requested_by',
     ];
 
     protected $casts = [
@@ -125,6 +127,7 @@ class Booking extends Model
         'deposit_amount' => 'integer',
         'paid_amount' => 'integer',
         'balance_due' => 'integer',
+        'minibar_check_requested_at' => 'datetime',
     ];
 
     /**
@@ -234,7 +237,14 @@ class Booking extends Model
 
     public function invoice(): HasOne
     {
-        return $this->hasOne(Invoice::class);
+        // La facture du séjour : les factures complémentaires vivent à part.
+        return $this->hasOne(Invoice::class)->where('kind', Invoice::KIND_SEJOUR);
+    }
+
+    /** Factures complémentaires : consommé au mini-bar après la clôture de la note. */
+    public function complementaryInvoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->where('kind', Invoice::KIND_COMPLEMENTAIRE);
     }
 
     public function restaurantNotes(): HasMany

@@ -25,7 +25,7 @@ class AnnexeDesDroits extends Command
     private const COURTS = [
         'admin' => 'Admin', 'manager' => 'Manager',
         'reception_chief' => 'Chef réc.', 'reception' => 'Récep.',
-        'housekeeping_leader' => 'Gouv.', 'housekeeping_staff' => 'Valet',
+        'housekeeping_leader' => 'Resp. étages', 'housekeeping_supervisor' => 'Gouv.', 'housekeeping_staff' => 'Valet',
         'restaurant_manager' => 'Resp. resto', 'restaurant_chief' => 'Chef cuis.', 'restaurant_staff' => 'Serveur',
         'restaurant_cook' => 'Cuisinier', 'cashier' => 'Caissier',
         'shop_manager' => 'Resp. bout.', 'shop_cashier' => 'Vendeur',

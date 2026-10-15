@@ -32,9 +32,9 @@ test('l\'importation CSV met a jour le champ settings JSON du tenant pour l\'ong
 
     $csvContent = implode("\n", [
         "cle_parametre;valeur;type;description",
-        "phone;+237 690000000;string;Téléphone de contact",
-        "email;hotel@example.com;string;Email de contact",
-        "city;Douala;string;Ville",
+        "mail_from_address;reservations@hotel.test;string;Adresse d'expédition",
+        "mail_from_name;Hôtel de démonstration;string;Nom affiché",
+        "mail_reply_to;accueil@hotel.test;string;Adresse de réponse",
     ]);
 
     $file = UploadedFile::fake()->createWithContent('settings_general.csv', $csvContent);
@@ -44,9 +44,9 @@ test('l\'importation CSV met a jour le champ settings JSON du tenant pour l\'ong
     $response->assertSessionHas('success');
 
     $tenant = Tenant::first();
-    expect($tenant->settings['general']['phone'] ?? null)->toBe('+237 690000000')
-        ->and($tenant->settings['general']['email'] ?? null)->toBe('hotel@example.com')
-        ->and($tenant->settings['general']['city'] ?? null)->toBe('Douala');
+    expect($tenant->settings['general']['mail_from_address'] ?? null)->toBe('reservations@hotel.test')
+        ->and($tenant->settings['general']['mail_from_name'] ?? null)->toBe('Hôtel de démonstration')
+        ->and($tenant->settings['general']['mail_reply_to'] ?? null)->toBe('accueil@hotel.test');
 });
 
 test('une cle non autorisee dans l\'onglet de parametres est rejetee par la whitelist', function () {
@@ -168,4 +168,69 @@ test('le sanitizer de formule neutralise les caracteres dangereux', function () 
         ->and(CsvSanitizer::sanitizeCell('+cmd|/c calc'))->toBe("'+cmd|/c calc")
         ->and(CsvSanitizer::sanitizeCell('+237 600000000'))->toBe('+237 600000000')
         ->and(CsvSanitizer::sanitizeCell('Texte normal'))->toBe('Texte normal');
+});
+
+test("les clés importables sont celles que l'application relit vraiment", function () {
+    $this->actingAs(settingsManager());
+
+    $csv = implode("\n", [
+        'cle_parametre;valeur;type;description',
+        'check_in_time;15:00;string;Heure d\'arrivée',
+        'check_out_time;11:30;string;Heure limite de départ',
+        'min_deposit_percentage;40;integer;Acompte minimum',
+    ]);
+    $this->post(route('settings.import', ['tab' => 'hebergement']), ['csv_file' => UploadedFile::fake()->createWithContent('h.csv', $csv)])->assertSessionHas('success');
+
+    $reglages = app(\App\Services\RoomAvailabilityService::class);
+    expect($reglages->checkInTime())->toBe('15:00')
+        ->and($reglages->checkOutTime())->toBe('11:30');
+
+    $csvTaxes = implode("\n", ['cle_parametre;valeur;type;description', 'vat_enabled;oui;boolean;TVA activée']);
+    $this->post(route('settings.import', ['tab' => 'taxes']), ['csv_file' => UploadedFile::fake()->createWithContent('t.csv', $csvTaxes)])->assertSessionHas('success');
+    expect(app(\App\Services\TaxationService::class)->vatEnabled())->toBeTrue();
+
+    // Les anciennes clés, que rien ne relisait, sont refusées.
+    $csvFantome = implode("\n", ['cle_parametre;valeur;type;description', 'vat_rate;19;decimal;Taux']);
+    $this->post(route('settings.import', ['tab' => 'taxes']), ['csv_file' => UploadedFile::fake()->createWithContent('f.csv', $csvFantome)])->assertSessionHas('import_errors');
+});
+
+test("les onglets Housekeeping et Boutique n'affichent plus de réglage factice", function () {
+    $this->actingAs(settingsManager());
+
+    $this->get(route('settings.index', ['tab' => 'housekeeping']))->assertOk()
+        ->assertSee('pas de réglage propre')
+        ->assertDontSee('Temps alloué par tâche');
+
+    $this->get(route('settings.index', ['tab' => 'shop']))->assertOk()
+        ->assertSee('niveau de réassort')
+        ->assertDontSee('alerte global');
+
+    $this->get(route('settings.index', ['tab' => 'hebergement']))->assertOk()
+        ->assertSee('fixées par')
+        ->assertDontSee('Montant dépensé pour 1 point');
+});
+
+test("le classement enregistré reste sélectionné dans l'onglet Taxes", function () {
+    $this->actingAs(settingsManager());
+
+    $this->post(route('settings.update', ['tab' => 'taxes']), ['settings' => ['vat_enabled' => 1, 'tourist_tax_enabled' => 1, 'classification' => '3', 'tourist_tax_basis' => 'room']])
+        ->assertSessionHas('success');
+
+    $this->get(route('settings.index', ['tab' => 'taxes']))->assertOk()
+        ->assertSee('<option value="3" selected>', false);
+});
+
+test("une adresse d'expédition mal formée est refusée en français", function () {
+    $this->actingAs(settingsManager());
+
+    $this->post(route('settings.update', ['tab' => 'general']), ['settings' => ['mail_from_address' => 'pas-un-courriel']])
+        ->assertSessionHasErrors(['settings.mail_from_address' => "L'adresse d'expédition n'est pas une adresse de courriel valide."]);
+});
+
+test("l'onglet Partenaires dit ce qui s'applique vraiment d'une convention", function () {
+    $this->actingAs(settingsManager());
+
+    $this->get(route('settings.index', ['tab' => 'partners']))->assertOk()
+        ->assertSee("à honorer à la main")
+        ->assertDontSee('sont appliqués automatiquement');
 });

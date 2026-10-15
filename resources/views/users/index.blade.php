@@ -12,12 +12,14 @@
         </p>
     </div>
 
-    <button type="button"
-        onclick="openCreateModal()"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
-        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-        Ajouter un membre
-    </button>
+    @droit('users.creer')
+        <button type="button"
+            onclick="openCreateModal()"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            Ajouter un membre
+        </button>
+    @enddroit
 </div>
 
 @php

@@ -141,6 +141,10 @@ class AccountingController extends Controller
 
     public function updateExpense(Request $request, Expense $expense): RedirectResponse
     {
+        if ($refus = $this->refusSiComptabilisee($expense, $request)) {
+            return $refus;
+        }
+
         $data = $this->validateExpense($request);
 
         $attributes = $this->expenseAttributes($request, $data, $expense);
@@ -153,6 +157,10 @@ class AccountingController extends Controller
 
     public function destroyExpense(Request $request, Expense $expense): RedirectResponse
     {
+        if ($refus = $this->refusSiComptabilisee($expense, $request)) {
+            return $refus;
+        }
+
         if ($expense->receipt_path) {
             Storage::disk('public')->delete($expense->receipt_path);
         }
@@ -161,6 +169,22 @@ class AccountingController extends Controller
         return redirect()
             ->route('accounting.expenses', ['month' => $request->input('month')])
             ->with('success', 'Dépense supprimée.');
+    }
+
+    /**
+     * Une dépense passée au grand livre ne se modifie ni ne se supprime ici :
+     * l'écriture resterait, désaccordée du cahier des dépenses. La correction
+     * passe par la contre-passation de l'écriture (comptabilité générale).
+     */
+    private function refusSiComptabilisee(Expense $expense, Request $request): ?RedirectResponse
+    {
+        if (app(\App\Services\LedgerService::class)->findBySource($expense, \App\Services\LedgerPostingService::SCHEMA_EXPENSE) === null) {
+            return null;
+        }
+
+        return redirect()
+            ->route('accounting.expenses', ['month' => $request->input('month')])
+            ->withErrors(['expense' => 'Cette dépense est déjà comptabilisée : elle ne se modifie plus. Corrigez-la par une contre-passation de son écriture (Comptabilité générale › Journaux).']);
     }
 
     private function validateExpense(Request $request): array

@@ -61,6 +61,17 @@ class CheckOutService
                 Auth::id()
             );
 
+            // Une recouche prévue n'a plus lieu : le client est parti, la
+            // chambre attend son ménage de départ.
+            \App\Models\HousekeepingAssignment::query()
+                ->where('room_id', $booking->room_id)
+                ->where('kind', \App\Models\HousekeepingAssignment::KIND_RECOUCHE)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->update(['status' => 'cancelled', 'notes' => "Départ du client ({$booking->booking_number})"]);
+
+            // Sans relevé du mini-bar au départ, il reste dû au ménage qui suit.
+            app(MinibarService::class)->auDepart($booking->fresh('room'));
+
             // 4. Attribue les points fidélité
             $this->loyaltyService->awardPoints($booking);
 
@@ -165,8 +176,9 @@ class CheckOutService
             'source_id'   => $booking->id,
         ]);
 
-        // Lignes du folio (extras)
-        foreach ($booking->folioItems()->where('type', '!=', FolioItem::TYPE_PAYMENT)->get() as $item) {
+        // Lignes du folio (extras). La ligne d'hébergement du folio est déjà
+        // portée par la ligne ci-dessus : la reprendre ferait payer la chambre deux fois à l'écran.
+        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM])->get() as $item) {
             InvoiceItem::create([
                 'invoice_id'  => $invoice->id,
                 'description' => $item->description,
@@ -196,18 +208,7 @@ class CheckOutService
      */
     private function generateInvoiceNumber(): string
     {
-        $year = now()->year;
-
-        $lastInvoice = Invoice::withoutGlobalScopes()
-            ->whereYear('invoice_date', $year)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        $sequence = $lastInvoice
-            ? (int) substr($lastInvoice->invoice_number, -6) + 1
-            : 1;
-
-        return sprintf('F-%d-%06d', $year, $sequence);
+        return Invoice::prochainNumero();
     }
 
     public function recalculateTotals(Booking $booking): void
