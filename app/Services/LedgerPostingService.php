@@ -97,9 +97,10 @@ class LedgerPostingService
                 }
             });
 
-        // Consommations du mini-bar portées au folio : la créance naît au relevé.
+        // Consommations du mini-bar portées au folio, ou facturées à part après
+        // le départ : la créance naît au relevé.
         \App\Models\MinibarCheck::query()
-            ->where('billing', \App\Models\MinibarCheck::BILLING_FOLIO)
+            ->whereIn('billing', [\App\Models\MinibarCheck::BILLING_FOLIO, \App\Models\MinibarCheck::BILLING_A_FACTURER])
             ->whereBetween('checked_at', [$start, $end])
             ->with('booking.customer')
             ->get()
@@ -187,6 +188,12 @@ class LedgerPostingService
     public function postInvoice(Invoice $invoice): ?JournalEntry
     {
         if ($this->dejaComptabilise($invoice, self::SCHEMA_INVOICE)) {
+            return null;
+        }
+
+        // Facture complémentaire : des consommations du mini-bar, déjà
+        // comptabilisées au relevé qui les a constatées.
+        if ($invoice->isComplementaire()) {
             return null;
         }
 
@@ -679,8 +686,9 @@ class LedgerPostingService
     }
 
     /**
-     * Consommation du mini-bar portée au folio : la vente d'une marchandise,
-     * comme à la boutique, dont la créance sera soldée avec le séjour.
+     * Consommation du mini-bar : la vente d'une marchandise, comme à la
+     * boutique. Portée au folio, la créance se solde avec le séjour ; relevée
+     * après le départ, avec la facture complémentaire.
      *
      *   D 411000  TTC   (auxiliaire : le client)
      *     C 701000  base hors taxes   [hébergement]
@@ -688,7 +696,7 @@ class LedgerPostingService
      */
     public function postMinibarSale(\App\Models\MinibarCheck $check): ?JournalEntry
     {
-        if ($check->billing !== \App\Models\MinibarCheck::BILLING_FOLIO) {
+        if (!in_array($check->billing, [\App\Models\MinibarCheck::BILLING_FOLIO, \App\Models\MinibarCheck::BILLING_A_FACTURER], true)) {
             return null;
         }
 

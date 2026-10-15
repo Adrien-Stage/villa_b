@@ -13,6 +13,7 @@ class InvoiceController extends Controller
             'booking.room.roomType',
             'customer',
             'items',
+            'payments',
         ]);
 
         // Une base ne contient qu'un établissement. La relation par

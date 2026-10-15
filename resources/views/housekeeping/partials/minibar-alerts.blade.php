@@ -8,7 +8,7 @@
 @endphp
 
 @if($aRelever > 0 || $aRemplir > 0)
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+<div class="grid grid-cols-1 {{ $aRelever > 0 && $aRemplir > 0 ? 'lg:grid-cols-2' : '' }} gap-4 mb-6">
     @if($aRelever > 0)
         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
             <h2 class="font-heading font-semibold text-red-900 text-sm flex items-center gap-2 mb-3">

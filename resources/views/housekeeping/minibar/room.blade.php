@@ -30,7 +30,7 @@
             </p>
         </div>
         <a href="{{ route('housekeeping.index') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Housekeeping
         </a>
     </div>

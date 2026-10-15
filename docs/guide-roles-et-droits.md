@@ -143,6 +143,7 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
   - sa caisse : ouvrir, sortie de caisse, compter ;
   - statut des chambres ;
   - au départ d'un client, demander le relevé du mini-bar avant de clore la note ;
+  - encaisser une facture complémentaire (mini-bar consommé après le départ) ;
   - demandes à l'économat.
 - *Reçoit* : chaque relevé du mini-bar (montant ajouté au folio, ou consommé
   après le départ et à facturer) et chaque chambre nettoyée.
@@ -196,8 +197,8 @@ Quand une chambre est marquée nettoyée, la gouvernante et le responsable des
 sera bientôt vendable.
 
 Le mini-bar : ce que l'équipe relève consommé part au folio du client pendant le
-séjour ; s'il est déjà parti, la consommation reste à lui facturer et la
-réception en est avertie.
+séjour ; s'il est déjà parti, la consommation part sur une facture
+complémentaire, que la réception encaisse quand le client la règle.
 
 ### Restaurant
 

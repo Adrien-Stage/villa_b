@@ -1459,6 +1459,11 @@
  "interventions.terminer": [
   "admin"
  ],
+ "invoices.payments.store": [
+  "manager",
+  "reception",
+  "reception_chief"
+ ],
  "invoices.show": [
   "admin",
   "controller",

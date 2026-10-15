@@ -33,14 +33,15 @@ class MinibarCheckRecorded extends Notification
 
     private function message(): string
     {
-        $check = $this->check->loadMissing('room', 'user', 'lines');
+        $check = $this->check->loadMissing('room', 'user', 'lines', 'invoice');
         $montant = number_format($check->total_amount / 100, 0, ',', ' ') . ' F';
         $debut = "Mini-bar de la chambre {$check->room?->number} relevé"
             . ($check->user ? " par {$check->user->name}" : '') . ' : ' . $check->resume();
 
         return match ($check->billing) {
             MinibarCheck::BILLING_FOLIO      => "{$debut} — {$montant} ajoutés au folio.",
-            MinibarCheck::BILLING_A_FACTURER => "{$debut} — {$montant} consommés après le départ du client, à lui facturer.",
+            MinibarCheck::BILLING_A_FACTURER => "{$debut} — {$montant} consommés après le départ du client"
+                . ($check->invoice ? " : facture complémentaire {$check->invoice->invoice_number} à encaisser." : ', à lui facturer.'),
             default                          => "{$debut}.",
         };
     }

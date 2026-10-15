@@ -14,9 +14,9 @@
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
 | Administrateur (`admin`) | 1 | — | 122 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 120 | 99 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
-| Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 45 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
-| Réceptionniste (`reception`) | 4 | — | 30 | 29 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
+| Manager (`manager`) | 2 | — | 120 | 100 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
+| Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 46 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Factures, Planning |
+| Réceptionniste (`reception`) | 4 | — | 30 | 30 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Factures |
 | Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 12 | 27 | Économat, Paramètres, Housekeeping, Planning |
 | Gouvernante (`housekeeping_supervisor`) | 4 | — | 8 | 12 | Économat, Housekeeping |
 | Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 6 | 10 | Économat, Housekeeping |
@@ -142,6 +142,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `invoices.payments.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
 | `invoices.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Housekeeping

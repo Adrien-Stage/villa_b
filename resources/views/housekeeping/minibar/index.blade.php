@@ -23,7 +23,7 @@
             </p>
         </div>
         <a href="{{ route('housekeeping.index') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="sparkles" class="w-4 h-4"></i> Housekeeping
         </a>
     </div>
@@ -204,7 +204,7 @@
                                 @elseif($chambre->minibar_due_booking_id)
                                     <span class="px-2 py-0.5 rounded-full border text-[11px] bg-red-50 text-red-700 border-red-200">Relevé dû</span>
                                 @elseif($chambre->miniBarVide())
-                                    <span class="px-2 py-0.5 rounded-full border text-[11px] bg-amber-50 text-amber-800 border-amber-200">Vide</span>
+                                    <span class="px-2 py-0.5 rounded-full border text-[11px] bg-amber-50 text-amber-800 border-amber-200">{{ $chambre->status === \App\Enums\RoomStatus::OCCUPIED ? 'Vidé par le client' : 'À remplir' }}</span>
                                 @elseif(!$chambre->miniBarComplet())
                                     <span class="px-2 py-0.5 rounded-full border text-[11px] bg-amber-50 text-amber-800 border-amber-200">Incomplet</span>
                                 @else

@@ -1,6 +1,6 @@
 @extends('layouts.hotel')
 
-@section('title', 'Facture ' . $invoice->invoice_number)
+@section('title', ($invoice->isComplementaire() ? 'Facture complémentaire ' : 'Facture ') . $invoice->invoice_number)
 
 @section('content')
 
@@ -13,10 +13,13 @@
             Retour à la réservation
         </a>
         <h1 class="font-heading text-2xl font-semibold text-primary">
-            Facture {{ $invoice->invoice_number }}
+            {{ $invoice->isComplementaire() ? 'Facture complémentaire' : 'Facture' }} {{ $invoice->invoice_number }}
         </h1>
         <p class="text-sm text-primary/50 mt-0.5">
             Émise le {{ $invoice->invoice_date->locale('fr')->isoFormat('D MMMM YYYY') }}
+            @if($invoice->isComplementaire())
+                · consommations du mini-bar relevées après le départ du client
+            @endif
         </p>
     </div>
 
@@ -29,6 +32,40 @@
         </button>
     </div>
 </div>
+
+@if($errors->any())
+<div class="no-print mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg max-w-3xl">{{ $errors->first() }}</div>
+@endif
+@if(session('success'))
+<div class="no-print mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg max-w-3xl">{{ session('success') }}</div>
+@endif
+
+{{-- Facture complémentaire : le client règle plus tard ce qu'il a consommé. --}}
+@if($invoice->isComplementaire() && $invoice->balance_due > 0)
+    @droit('invoices.payments.creer')
+    <form method="POST" action="{{ route('invoices.payments.store', $invoice) }}"
+          class="no-print mb-6 max-w-3xl bg-white rounded-xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-end gap-3">
+        @csrf
+        <label class="block">
+            <span class="block text-xs text-primary/50 mb-1.5">Montant encaissé (FCFA)</span>
+            <input type="number" name="amount" min="1" step="1" required value="{{ intdiv($invoice->balance_due, 100) }}"
+                   class="w-40 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+        </label>
+        <label class="block">
+            <span class="block text-xs text-primary/50 mb-1.5">Moyen</span>
+            <select name="method" required class="px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                <option value="cash">Espèces</option>
+                <option value="orange_money">Orange Money</option>
+                <option value="mtn_momo">MTN MoMo</option>
+                <option value="bank_transfer">Virement</option>
+                <option value="stripe">Carte</option>
+            </select>
+        </label>
+        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Encaisser</button>
+        <p class="text-xs text-primary/45 sm:ml-auto">Caisse de la réception ouverte requise.</p>
+    </form>
+    @enddroit
+@endif
 
 {{-- Corps de la facture --}}
 <div class="bg-white rounded-xl shadow-sm overflow-hidden max-w-3xl" id="invoice-print">
@@ -61,7 +98,17 @@
                 @endif
             </div>
 
-            {{-- Numéro et statut ... --}}
+            {{-- Numéro et statut : une facture imprimée porte son numéro légal. --}}
+            <div class="text-right">
+                <p class="text-xs font-semibold uppercase tracking-widest text-primary/40">
+                    {{ $invoice->isComplementaire() ? 'Facture complémentaire' : 'Facture' }}
+                </p>
+                <p class="font-heading text-lg font-bold text-primary">{{ $invoice->invoice_number }}</p>
+                <p class="text-xs text-primary/50">du {{ $invoice->invoice_date->locale('fr')->isoFormat('D MMMM YYYY') }}</p>
+                <span class="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-semibold {{ $invoice->balance_due > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700' }}">
+                    {{ $invoice->balance_due > 0 ? 'À régler' : 'Réglée' }}
+                </span>
+            </div>
         </div>
     </div>
     {{-- Infos client + séjour --}}

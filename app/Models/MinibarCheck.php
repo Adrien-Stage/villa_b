@@ -38,7 +38,7 @@ class MinibarCheck extends Model
 
     protected $fillable = [
         'room_id', 'booking_id', 'housekeeping_assignment_id', 'occasion', 'billing',
-        'total_amount', 'user_id', 'checked_at', 'notes',
+        'total_amount', 'user_id', 'checked_at', 'notes', 'invoice_id',
     ];
 
     protected $casts = [
@@ -64,6 +64,12 @@ class MinibarCheck extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Facture complémentaire, quand le client était parti. */
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function occasionLabel(): string

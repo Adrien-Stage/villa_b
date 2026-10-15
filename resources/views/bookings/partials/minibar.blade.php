@@ -6,7 +6,7 @@
     $chambreMinibar = $booking->room;
     $avecMinibar = $chambreMinibar && $chambreMinibar->aUnMiniBar();
     $relevesDuSejour = $avecMinibar
-        ? \App\Models\MinibarCheck::query()->with('user', 'lines')->where('booking_id', $booking->id)->latest('checked_at')->latest('id')->get()
+        ? \App\Models\MinibarCheck::query()->with('user', 'lines', 'invoice')->where('booking_id', $booking->id)->latest('checked_at')->latest('id')->get()
         : collect();
     $releveDepart = $relevesDuSejour->firstWhere('occasion', \App\Models\MinibarCheck::OCCASION_DEPART);
     $apresDepart = $relevesDuSejour->where('billing', \App\Models\MinibarCheck::BILLING_A_FACTURER);
@@ -51,9 +51,20 @@
         @endif
 
         @foreach($apresDepart as $releve)
-            <p class="text-red-700">
+            <p class="{{ $releve->invoice && $releve->invoice->balance_due === 0 ? 'text-emerald-800' : 'text-red-700' }}">
                 Consommé après le départ (relevé du {{ $releve->checked_at->format('d/m à H:i') }}) : {{ $releve->resume() }} —
-                <strong>{{ $fcfaMinibar($releve->total_amount) }} à facturer au client</strong>.
+                @if($releve->invoice)
+                    facture complémentaire
+                    @droit('invoices.voir')
+                        <a href="{{ route('invoices.show', $releve->invoice) }}" class="underline font-semibold">{{ $releve->invoice->invoice_number }}</a>
+                    @else
+                        {{ $releve->invoice->invoice_number }}
+                    @enddroit
+                    de {{ $fcfaMinibar($releve->invoice->total_amount) }},
+                    <strong>{{ $releve->invoice->balance_due > 0 ? 'reste ' . $fcfaMinibar($releve->invoice->balance_due) . ' à encaisser' : 'soldée' }}</strong>.
+                @else
+                    <strong>{{ $fcfaMinibar($releve->total_amount) }} à facturer au client</strong>.
+                @endif
             </p>
         @endforeach
 

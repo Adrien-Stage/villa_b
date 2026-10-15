@@ -22,7 +22,14 @@ class Invoice extends Model
 {
     use HasFactory;
 
+    /** Facture du séjour, émise au check-out. */
+    public const KIND_SEJOUR = 'sejour';
+
+    /** Facture complémentaire : consommé au mini-bar après la clôture de la note. */
+    public const KIND_COMPLEMENTAIRE = 'complementaire';
+
     protected $fillable = [
+        'kind',
         'booking_id',
         'customer_id',
         
@@ -76,5 +83,34 @@ class Invoice extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    /** Encaissements qui soldent cette facture. */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function isComplementaire(): bool
+    {
+        return $this->kind === self::KIND_COMPLEMENTAIRE;
+    }
+
+    /**
+     * Numéro suivant, séquentiel par année : F-2026-000001. Une base ne
+     * contient qu'un établissement : la séquence lui est propre.
+     */
+    public static function prochainNumero(): string
+    {
+        $year = now()->year;
+
+        $derniere = self::withoutGlobalScopes()
+            ->whereYear('invoice_date', $year)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $derniere ? (int) substr($derniere->invoice_number, -6) + 1 : 1;
+
+        return sprintf('F-%d-%06d', $year, $sequence);
     }
 }

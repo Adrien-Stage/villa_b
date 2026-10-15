@@ -99,6 +99,7 @@ class PermissionCatalog
         'bookings.checkIn',
         'bookings.checkOut',
         'bookings.minibar.request',
+        'invoices.payments.creer',
         'bookings.checkin_code.send',
         'bookings.confirm',
         'bookings.creer',
@@ -963,6 +964,8 @@ class PermissionCatalog
 
             // ── Factures ──
             'invoices.voir' => ['controller', 'manager', 'reception'],
+            // La facture complémentaire s'encaisse comme le séjour.
+            'invoices.payments.creer' => ['manager', 'reception'],
 
             // ── Éditions ──
             // La rubrique s'ouvre à tout le personnel ; chaque édition y pose

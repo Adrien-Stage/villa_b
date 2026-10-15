@@ -237,7 +237,14 @@ class Booking extends Model
 
     public function invoice(): HasOne
     {
-        return $this->hasOne(Invoice::class);
+        // La facture du séjour : les factures complémentaires vivent à part.
+        return $this->hasOne(Invoice::class)->where('kind', Invoice::KIND_SEJOUR);
+    }
+
+    /** Factures complémentaires : consommé au mini-bar après la clôture de la note. */
+    public function complementaryInvoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->where('kind', Invoice::KIND_COMPLEMENTAIRE);
     }
 
     public function restaurantNotes(): HasMany

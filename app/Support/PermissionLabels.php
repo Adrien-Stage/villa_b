@@ -238,6 +238,7 @@ class PermissionLabels
 
         // ── Factures, POS réception ──
         'invoices.voir' => ['Factures', 'Consulter'],
+        'invoices.payments.creer' => ['Factures', 'Encaisser une facture complémentaire'],
         'reception.pos.voir' => ['POS Réception', 'Consulter'],
         'reception.pos.sales.creer' => ['POS Réception', 'Encaisser une vente'],
         'reception.pos.receipt' => ['POS Réception', 'Imprimer un ticket'],

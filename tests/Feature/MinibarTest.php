@@ -233,10 +233,10 @@ test('client parti sans relevé : le relevé est dû avant de marquer la chambre
         ->and($releve->total_amount)->toBe(250000)
         ->and(FolioItem::where('type', FolioItem::TYPE_MINIBAR)->count())->toBe(0)
         ->and($this->room->fresh()->minibar_due_booking_id)->toBeNull()
-        ->and($this->reception->notifications()->first()?->data['message'])->toContain('à lui facturer');
+        ->and($this->reception->notifications()->first()?->data['message'])->toContain('facture complémentaire');
 
     $this->actingAs($this->valet)->post(route('housekeeping.ready', $this->room))->assertSessionHasNoErrors();
-    $this->actingAs($this->reception)->get(route('bookings.show', $sejour))->assertSee('à facturer au client');
+    $this->actingAs($this->reception)->get(route('bookings.show', $sejour))->assertSee('facture complémentaire');
 });
 
 test('un dépôt en rupture laisse contrôler la chambre sur motif', function () {
@@ -288,4 +288,47 @@ test("les réglages du mini-bar sont au responsable ; l'équipe relève, la gouv
         ->assertSessionHas('access_denied_popup', true);
     $this->actingAs($this->responsable)->get(route('housekeeping.minibar.index'))->assertOk()
         ->assertSee('Ajouter un article');
+});
+
+test('consommé après le départ : une facture complémentaire, encaissée plus tard à la réception', function () {
+    $sejour = mbSejour($this->room);
+    $factureSejour = app(CheckOutService::class)->process($sejour->fresh());
+
+    $this->actingAs($this->valet)->post(route('housekeeping.minibar.check', $this->room), [
+        'consommes' => [$this->aCoca->id => 1, $this->aChips->id => 1],
+    ])->assertSessionHas('success');
+
+    $complement = \App\Models\Invoice::where('kind', \App\Models\Invoice::KIND_COMPLEMENTAIRE)->with('items')->sole();
+    expect($complement->booking_id)->toBe($sejour->id)
+        ->and($complement->total_amount)->toBe(250000)
+        ->and($complement->balance_due)->toBe(250000)
+        ->and($complement->invoice_number)->not->toBe($factureSejour->invoice_number)
+        ->and($complement->items->pluck('description')->all())->toBe(['Mini-bar — Chips', 'Mini-bar — Coca-Cola'])
+        ->and(MinibarCheck::sole()->invoice_id)->toBe($complement->id)
+        ->and($sejour->fresh()->invoice->id)->toBe($factureSejour->id)
+        ->and($this->reception->notifications()->first()?->data['message'])->toContain($complement->invoice_number);
+
+    // Comptabilisée une fois, au relevé : pas comme un hébergement.
+    app(LedgerPostingService::class)->postDay(\Illuminate\Support\Carbon::parse('2026-10-15'));
+    expect(JournalEntry::where('schema', LedgerPostingService::SCHEMA_MINIBAR_SALE)->with('lines')->sole()->lines->sum('debit'))->toBe(250000)
+        ->and(JournalEntry::where('schema', LedgerPostingService::SCHEMA_INVOICE)->where('source_id', $complement->id)->exists())->toBeFalse();
+
+    // La réception encaisse, caisse ouverte.
+    \App\Models\CashRegisterSession::create(['user_id' => $this->reception->id, 'module' => 'reception', 'opening_amount' => 0, 'opened_at' => now()]);
+    $this->actingAs($this->reception);
+    $this->get(route('invoices.show', $complement))->assertOk()->assertSee('Facture complémentaire')->assertSee('Encaisser');
+    $this->get(route('bookings.show', $sejour))->assertSee($complement->invoice_number)->assertSee('reste 2 500 FCFA à encaisser');
+
+    $this->post(route('invoices.payments.store', $complement), ['amount' => 3000, 'method' => 'cash'])->assertSessionHasErrors('payment');
+    $this->post(route('invoices.payments.store', $complement), ['amount' => 1000, 'method' => 'cash'])->assertSessionHasNoErrors();
+    $this->post(route('invoices.payments.store', $complement), ['amount' => 1500, 'method' => 'orange_money'])->assertSessionHasNoErrors();
+
+    $complement->refresh();
+    expect($complement->balance_due)->toBe(0)
+        ->and($complement->status)->toBe('paid')
+        ->and(\App\Models\Payment::where('invoice_id', $complement->id)->sum('amount'))->toBe(250000);
+
+    // Soldée : plus rien à encaisser ; la facture du séjour ne s'encaisse pas ici.
+    $this->post(route('invoices.payments.store', $complement), ['amount' => 100, 'method' => 'cash'])->assertSessionHasErrors('payment');
+    $this->post(route('invoices.payments.store', $factureSejour), ['amount' => 100, 'method' => 'cash'])->assertSessionHasErrors('payment');
 });

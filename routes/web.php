@@ -536,6 +536,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('invoices')->name('invoices.')->middleware('permission')->group(function () {
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
+        // Facture complémentaire (mini-bar relevé après le départ), réglée
+        // plus tard à la caisse de la réception.
+        Route::post('/{invoice}/encaissement', [App\Http\Controllers\InvoicePaymentController::class, 'store'])
+            ->middleware('caisse')->name('payments.store');
     });
 
     // --- ÉDITIONS ---

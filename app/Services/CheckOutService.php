@@ -208,18 +208,7 @@ class CheckOutService
      */
     private function generateInvoiceNumber(): string
     {
-        $year = now()->year;
-
-        $lastInvoice = Invoice::withoutGlobalScopes()
-            ->whereYear('invoice_date', $year)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        $sequence = $lastInvoice
-            ? (int) substr($lastInvoice->invoice_number, -6) + 1
-            : 1;
-
-        return sprintf('F-%d-%06d', $year, $sequence);
+        return Invoice::prochainNumero();
     }
 
     public function recalculateTotals(Booking $booking): void

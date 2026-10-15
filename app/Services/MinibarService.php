@@ -6,6 +6,8 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\FolioItem;
 use App\Models\HousekeepingLog;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\MinibarArticle;
 use App\Models\MinibarCheck;
 use App\Models\MinibarMovement;
@@ -331,6 +333,12 @@ class MinibarService
                 app(CheckOutService::class)->recalculateTotals($booking->fresh());
             }
 
+            // La note du séjour est close : la consommation part sur une
+            // facture complémentaire, à encaisser plus tard.
+            if ($billing === MinibarCheck::BILLING_A_FACTURER) {
+                $this->facturerApresDepart($releve->load('lines'), $booking);
+            }
+
             // Le relevé dû après le départ est fait : la chambre peut être
             // marquée nettoyée.
             if ($occasion === MinibarCheck::OCCASION_APRES_DEPART) {
@@ -358,6 +366,47 @@ class MinibarService
         }
 
         return $releve;
+    }
+
+    /** Facture complémentaire des consommations relevées après le départ. */
+    private function facturerApresDepart(MinibarCheck $releve, Booking $booking): Invoice
+    {
+        $decomposition = app(TaxationService::class)->breakdown($releve->total_amount);
+
+        $facture = Invoice::create([
+            'kind'           => Invoice::KIND_COMPLEMENTAIRE,
+            'booking_id'     => $booking->id,
+            'customer_id'    => $booking->customer_id,
+            'invoice_number' => Invoice::prochainNumero(),
+            'invoice_date'   => now(),
+            'subtotal'       => $decomposition->ht,
+            'tax_amount'     => $decomposition->vat,
+            'total_amount'   => $releve->total_amount,
+            'paid_amount'    => 0,
+            'balance_due'    => $releve->total_amount,
+            'status'         => 'sent',
+            'legal_notes'    => 'République du Cameroun',
+            'internal_notes' => "Consommations du mini-bar relevées après le départ (relevé n° {$releve->id}, séjour {$booking->booking_number}).",
+        ]);
+
+        foreach ($releve->lines->where('consumed', '>', 0) as $ligne) {
+            InvoiceItem::create([
+                'invoice_id'  => $facture->id,
+                'description' => "Mini-bar — {$ligne->label}",
+                'quantity'    => $ligne->consumed,
+                'unit_price'  => $ligne->unit_price,
+                'total_price' => $ligne->total_price,
+                'tax_rate'    => 0.0,
+                'tax_amount'  => 0,
+                'category'    => FolioItem::TYPE_MINIBAR,
+                'source_type' => \App\Models\MinibarCheckLine::class,
+                'source_id'   => $ligne->id,
+            ]);
+        }
+
+        $releve->update(['invoice_id' => $facture->id]);
+
+        return $facture;
     }
 
     /** Un relevé est-il dû avant de marquer la chambre nettoyée ? */

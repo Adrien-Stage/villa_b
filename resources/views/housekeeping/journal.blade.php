@@ -20,7 +20,7 @@
 @endphp
 
 <div class="max-w-7xl mx-auto space-y-5">
-    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-heading font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="list-checks" class="w-7 h-7 text-primary"></i>
@@ -31,7 +31,7 @@
             </p>
         </div>
         <a href="{{ route('housekeeping.index') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="sparkles" class="w-4 h-4"></i> Housekeeping
         </a>
     </div>

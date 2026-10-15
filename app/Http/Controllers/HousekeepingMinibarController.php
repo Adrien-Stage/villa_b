@@ -215,7 +215,7 @@ class HousekeepingMinibarController extends Controller
 
         $message = "Relevé du mini-bar de la chambre {$room->number} enregistré : {$releve->resume()}.";
         if ($releve->billing === MinibarCheck::BILLING_A_FACTURER) {
-            $message .= ' Le client est parti : la réception est prévenue.';
+            $message .= ' Le client est parti : la consommation lui est facturée à part et la réception est prévenue.';
         }
 
         return redirect()->route('housekeeping.index')->with('success', $message);
