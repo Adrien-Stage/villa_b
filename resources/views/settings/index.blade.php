@@ -1802,8 +1802,8 @@
                         <h2 class="text-lg font-semibold text-primary">Organisations partenaires</h2>
                         <p class="text-sm text-primary/60 mt-1 max-w-2xl">
                             Entreprises, ONG, ambassades ou agences avec lesquelles vous avez une convention.
-                            Les privilèges définis ici sont appliqués automatiquement dès qu'un client déclaré
-                            membre effectue une réservation.
+                            La remise sur l'hébergement est appliquée automatiquement quand un client déclaré
+                            membre réserve ; les autres privilèges sont les conditions de la convention, à honorer à la main.
                         </p>
                     </div>
                     <button type="button" @click="openCreate()"
@@ -1999,7 +1999,7 @@
                                         Privilèges accordés aux membres
                                     </h4>
                                     <p class="text-[11px] text-primary/40 mb-4">
-                                        Appliqués automatiquement dès qu'un client rattaché à cette organisation réserve.
+                                        Seule la remise sur l'hébergement s'applique d'elle-même à la réservation ; le reste est consigné pour la réception.
                                     </p>
 
                                     {{-- Hébergement --}}

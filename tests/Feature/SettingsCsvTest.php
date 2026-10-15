@@ -226,3 +226,11 @@ test("une adresse d'expédition mal formée est refusée en français", function
     $this->post(route('settings.update', ['tab' => 'general']), ['settings' => ['mail_from_address' => 'pas-un-courriel']])
         ->assertSessionHasErrors(['settings.mail_from_address' => "L'adresse d'expédition n'est pas une adresse de courriel valide."]);
 });
+
+test("l'onglet Partenaires dit ce qui s'applique vraiment d'une convention", function () {
+    $this->actingAs(settingsManager());
+
+    $this->get(route('settings.index', ['tab' => 'partners']))->assertOk()
+        ->assertSee("à honorer à la main")
+        ->assertDontSee('sont appliqués automatiquement');
+});
