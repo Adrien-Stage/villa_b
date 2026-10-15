@@ -178,6 +178,7 @@ class PermissionCatalog
         'housekeeping.issue',
         'housekeeping.ready',
         'housekeeping.reject',
+        'housekeeping.stayover',
         'housekeeping.teams.creer',
         'planning.affectations.creer',
         'planning.affectations.supprimer',
@@ -352,7 +353,7 @@ class PermissionCatalog
     /** Toutes les fonctions de l'établissement, hors administration et support. */
     private const TOUT_LE_PERSONNEL = [
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-        'housekeeping_staff', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'quality_auditor', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper',
     ];
@@ -758,12 +759,12 @@ class PermissionCatalog
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
             // Chaque membre d'un service demande ; son chef vise avant l'économat.
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
             'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
             'economat.suppliers.creer' => ['econome'],
@@ -877,15 +878,22 @@ class PermissionCatalog
             'groups.voir' => ['controller', 'manager', 'reception'],
 
             // ── Housekeeping ──
-            'housekeeping.assignments.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.available' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.clean' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.inspect' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.issue' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.ready' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
-            'housekeeping.reject' => ['housekeeping_leader', 'housekeeping_staff', 'manager'],
+            // Le responsable des étages compose les équipes ; la gouvernante
+            // affecte les chambres, contrôle et remet en vente. Contrôler reste
+            // ouvert à l'équipe : son chef d'équipe valide les chambres qu'elle
+            // a faites (HousekeepingController::ensureCanValidate).
+            'housekeeping.assignments.creer' => ['housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.available' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.clean' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.inspect' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.issue' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.ready' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.reject' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.stayover' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             'housekeeping.teams.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'manager'],
+            'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            // Qui a nettoyé, contrôlé, rechargé quelle chambre, et à quelle heure.
+            'housekeeping.journal.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
 
             // ── Clients ──
             'customers.creer' => ['manager', 'reception'],

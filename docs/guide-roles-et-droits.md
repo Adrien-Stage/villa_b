@@ -73,7 +73,7 @@ Les rôles sont rangés par niveau. Un chef (niveau 3) **inclut** ses membres
 Niveau 1  Administrateur ............................ service informatique de l'hôtel
 Niveau 2  Manager ................................... direction des opérations
 Niveau 3  Chef de réception ─────────── inclut ── Réceptionniste
-          Gouvernant(e) général(e) ──── inclut ── Valet / Femme de chambre
+          Responsable des étages ────── inclut ── Gouvernante, Valet / Femme de chambre
           Responsable de restaurant ─── inclut ── Serveur, Caissier restaurant
           Chef de cuisine ───────────── inclut ── Cuisinier
           Responsable boutique ──────── inclut ── Vendeur-caissier
@@ -149,17 +149,37 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
 
 ### Housekeeping
 
-**Gouvernant(e) général(e)** — dirige les étages.
+Trois échelons : le responsable des étages dirige, la gouvernante encadre les
+équipes, le valet ou la femme de chambre nettoie. La gouvernante est au même
+niveau que l'équipe (niveau 4) mais reçoit ses droits propres.
 
-- *Fait* : tout ce que fait le valet, plus composer les équipes, affecter les
-  chambres, régler les paramètres du housekeeping et faire les demandes à
-  l'économat.
+**Responsable des étages** — dirige le housekeeping, direction et exécution.
 
-**Valet / Femme de chambre** — remise en état des chambres.
+- *Fait* : tout ce que font la gouvernante et le valet, plus composer les
+  équipes, régler les paramètres du housekeeping et viser les demandes du
+  service à l'économat.
+- *Suit* : qui a nettoyé, contrôlé ou remis en vente chaque chambre, et à quelle
+  heure (« Suivi des chambres »).
 
-- *Fait* : nettoyer, signaler une chambre prête ou un incident, inspecter et
-  rejeter.
+**Gouvernante** — encadre les équipes de nettoyage.
+
+- *Fait* : affecter les chambres aux équipes (ménage de départ et recouche),
+  contrôler les chambres nettoyées, les refuser ou les remettre en vente, faire
+  les demandes à l'économat. Elle peut aussi faire le travail de l'équipe.
+- *Suit* : le travail de chaque équipe dans « Suivi des chambres ».
+- *Reçoit* : l'alerte de chaque chambre nettoyée à contrôler.
+- *Ne fait pas* : composer les équipes.
+
+**Valet / Femme de chambre** — nettoyage des chambres.
+
+- *Fait* : commencer et terminer le nettoyage des chambres confiées à son
+  équipe, faire les recouches des chambres occupées, signaler un incident. Le
+  chef d'équipe contrôle les chambres de son équipe.
 - *Ne voit pas* : les montants.
+
+Quand une chambre est marquée nettoyée, la gouvernante et le responsable des
+étages reçoivent l'alerte « à contrôler », et la réception sait que la chambre
+sera bientôt vendable.
 
 ### Restaurant
 

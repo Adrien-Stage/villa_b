@@ -61,6 +61,14 @@ class CheckOutService
                 Auth::id()
             );
 
+            // Une recouche prévue n'a plus lieu : le client est parti, la
+            // chambre attend son ménage de départ.
+            \App\Models\HousekeepingAssignment::query()
+                ->where('room_id', $booking->room_id)
+                ->where('kind', \App\Models\HousekeepingAssignment::KIND_RECOUCHE)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->update(['status' => 'cancelled', 'notes' => "Départ du client ({$booking->booking_number})"]);
+
             // 4. Attribue les points fidélité
             $this->loyaltyService->awardPoints($booking);
 

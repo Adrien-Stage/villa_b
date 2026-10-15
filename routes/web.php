@@ -355,6 +355,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- HOUSEKEEPING ---
     Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping'])->group(function () {
         Route::get('/',                    [HousekeepingController::class, 'index'])->name('index');
+        // Qui a nettoyé, contrôlé, rechargé quelle chambre, et à quelle heure.
+        Route::get('/suivi',               [HousekeepingController::class, 'journal'])->name('journal.index');
         Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('permission')->name('teams.store');
         Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('permission')->name('assignments.store');
         Route::post('/{room}/clean',       [HousekeepingController::class, 'markCleaning'])->name('clean');
@@ -363,6 +365,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{room}/available',   [HousekeepingController::class, 'markAvailable'])->name('available');
         Route::post('/{room}/reject',      [HousekeepingController::class, 'rejectCleaning'])->name('reject');
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
+        // Recouche d'une chambre occupée : le client la garde.
+        Route::post('/{room}/recouche',    [HousekeepingController::class, 'markStayoverDone'])->name('stayover');
     });
 
     // --- RESTAURANT (menus) ---

@@ -96,18 +96,30 @@ class RoleCatalog
             ],
 
             // ── Housekeeping ──
+            // Trois échelons : le responsable des étages dirige le service, la
+            // gouvernante encadre les équipes et contrôle les chambres, les
+            // valets et femmes de chambre nettoient. La gouvernante et l'équipe
+            // sont toutes deux au niveau 4 : elle n'inclut pas leurs droits
+            // mais en reçoit les siens propres (PermissionCatalog).
             [
-                'name' => 'Gouvernant(e) général(e)',
+                'name' => 'Responsable des étages',
                 'slug' => 'housekeeping_leader',
-                'description' => 'Dirige les étages : affectation des chambres, contrôle de la propreté, incidents',
+                'description' => 'Dirige le housekeeping : équipes, affectation des chambres, mini-bars, suivi de chaque chambre',
                 'module' => 'housekeeping', 'icon' => 'sparkles', 'sort_order' => 20, 'is_assignable' => true,
-                'level' => 3, 'includes' => ['housekeeping_staff'], 'statut' => self::ACTIF,
+                'level' => 3, 'includes' => ['housekeeping_supervisor', 'housekeeping_staff'], 'statut' => self::ACTIF,
+            ],
+            [
+                'name' => 'Gouvernante',
+                'slug' => 'housekeeping_supervisor',
+                'description' => 'Encadre les équipes de nettoyage : contrôle des chambres et réapprovisionnement des mini-bars',
+                'module' => 'housekeeping', 'icon' => 'clipboard-check', 'sort_order' => 21, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
             ],
             [
                 'name' => 'Valet / Femme de chambre',
                 'slug' => 'housekeeping_staff',
-                'description' => 'Nettoyage et remise en état des chambres',
-                'module' => 'housekeeping', 'icon' => 'brush-cleaning', 'sort_order' => 21, 'is_assignable' => true,
+                'description' => 'Nettoyage des chambres et relevé des mini-bars',
+                'module' => 'housekeeping', 'icon' => 'brush-cleaning', 'sort_order' => 22, 'is_assignable' => true,
                 'level' => 4, 'statut' => self::ACTIF,
             ],
 

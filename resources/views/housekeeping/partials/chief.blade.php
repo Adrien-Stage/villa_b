@@ -41,16 +41,25 @@
     </div>
 @endif
 
-<div class="flex flex-col gap-2 mb-6">
-    <h1 class="font-heading text-2xl font-semibold text-primary">Housekeeping</h1>
-    <p class="text-sm text-primary/50">Pilotage du nettoyage : priorisation, affectation des équipes et suivi du cycle des chambres.</p>
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+    <div class="flex flex-col gap-2">
+        <h1 class="font-heading text-2xl font-semibold text-primary">Housekeeping</h1>
+        <p class="text-sm text-primary/50">Pilotage du nettoyage : priorisation, affectation des équipes et suivi du cycle des chambres.</p>
+    </div>
+    @droit('housekeeping.journal.voir')
+        <a href="{{ route('housekeeping.journal.index') }}"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-lucide="list-checks" class="w-4 h-4"></i> Suivi des chambres
+        </a>
+    @enddroit
 </div>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+<div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
     <x-stat-card label="À nettoyer" :value="$stats['dirty_rooms']" subtitle="à affecter" color="red" />
     <x-stat-card label="En nettoyage" :value="$stats['cleaning']" subtitle="en cours" color="yellow" />
     <x-stat-card label="À contrôler" :value="$stats['to_inspect']" subtitle="nettoyées" color="purple" />
     <x-stat-card label="Contrôlées" :value="$stats['inspected']" subtitle="à libérer" color="emerald" />
+    <x-stat-card label="Recouches" :value="$stats['stayovers']" subtitle="à faire ou en cours" color="blue" />
     <x-stat-card label="Équipes" :value="$stats['teams']" subtitle="actives" color="blue" />
     <x-stat-card label="Terminées" :value="$stats['completed_today']" subtitle="aujourd'hui" color="emerald" />
 </div>
@@ -136,7 +145,13 @@
                             </span>
                         </div>
                         @if($room->activeHousekeepingAssignment)
-                            <div class="mb-4 text-xs text-yellow-900/80">En charge : <span class="font-semibold px-2 py-0.5 bg-yellow-200/50 rounded-md">{{ $room->activeHousekeepingAssignment->team->name }}</span></div>
+                            @php $enCours = $room->activeHousekeepingAssignment; @endphp
+                            <div class="mb-4 text-xs text-yellow-900/80">
+                                En charge : <span class="font-semibold px-2 py-0.5 bg-yellow-200/50 rounded-md">{{ $enCours->team->name }}</span>
+                                @if($enCours->started_at)
+                                    <span class="block mt-1">Commencée à {{ $enCours->started_at->format('H:i') }}@if($enCours->startedBy) par {{ $enCours->startedBy->name }}@endif</span>
+                                @endif
+                            </div>
                         @endif
                         <div class="mt-auto flex gap-2">
                             <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
@@ -166,7 +181,14 @@
                             </div>
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-200 text-purple-800 uppercase tracking-widest">À contrôler</span>
                         </div>
-                        <div class="mb-4 text-xs text-purple-800/80">Nettoyage terminé, en attente de contrôle qualité.</div>
+                        @php
+                            $fait = $room->latestHousekeepingAssignment;
+                            $quand = trim(($fait?->completed_at ? ' à ' . $fait->completed_at->format('H:i') : '')
+                                . ($fait?->completedBy ? ' par ' . $fait->completedBy->name : ''));
+                        @endphp
+                        <div class="mb-4 text-xs text-purple-800/80">
+                            Nettoyage terminé{{ $quand !== '' ? ' ' . $quand : '' }}, en attente de contrôle.
+                        </div>
                         <div class="mt-auto flex gap-2">
                             <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                                 @csrf
@@ -206,6 +228,72 @@
                 @endif
             @endforeach
         </div>
+    @endif
+</div>
+
+{{-- ═══ Recouches : chambres occupées, refaites pendant le séjour ═══ --}}
+<div class="mb-6">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="font-heading font-semibold text-primary text-lg">Recouches</h2>
+            <p class="text-xs text-primary/50">Chambres occupées : le client garde sa chambre, l'équipe la refait pendant le séjour.</p>
+        </div>
+        <span class="text-xs text-primary/40">{{ $occupiedRooms->count() }} chambre{{ $occupiedRooms->count() > 1 ? 's' : '' }} occupée{{ $occupiedRooms->count() > 1 ? 's' : '' }}</span>
+    </div>
+
+    @if($occupiedRooms->isEmpty())
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center text-sm text-primary/40 border border-dashed border-secondary/30">
+            Aucune chambre occupée.
+        </div>
+    @else
+        @php
+            $aFaire = $occupiedRooms->filter(fn ($r) => $r->activeHousekeepingAssignment);
+            $libres = $occupiedRooms->reject(fn ($r) => $r->activeHousekeepingAssignment);
+        @endphp
+
+        @if($aFaire->isNotEmpty())
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-4">
+                @foreach($aFaire as $room)
+                    @include('housekeeping.partials.stayover-card', ['room' => $room])
+                @endforeach
+            </div>
+        @endif
+
+        @if($libres->isNotEmpty())
+            <div class="bg-white rounded-xl shadow-sm p-5">
+                @if($teams->isEmpty())
+                    <p class="text-sm text-primary/40 text-center">Créez une équipe pour lui confier des recouches.</p>
+                @else
+                    <form method="POST" action="{{ route('housekeeping.assignments.store') }}" class="space-y-3">
+                        @csrf
+                        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs text-primary/50 mb-1.5">Confier la recouche à</label>
+                                <select name="housekeeping_team_id" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary focus:outline-none focus:border-secondary">
+                                    <option value="">Choisir une équipe…</option>
+                                    @foreach($teams as $team)
+                                        <option value="{{ $team->id }}">{{ $team->name }}{{ $team->leader ? ' — ' . $team->leader->name : '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Affecter</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($libres as $room)
+                                @php $derniere = $room->latestHousekeepingAssignment; @endphp
+                                <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary/20 text-xs text-primary hover:bg-accent/5 cursor-pointer">
+                                    <input type="checkbox" name="room_ids[]" value="{{ $room->id }}" class="rounded border-secondary/40 text-primary focus:ring-primary">
+                                    <span class="font-semibold">{{ $room->number }}</span>
+                                    @if($derniere?->isRecouche() && $derniere->status === 'completed' && $derniere->completed_at?->isToday())
+                                        <span class="text-emerald-700">faite à {{ $derniere->completed_at->format('H:i') }}@if($derniere->completedBy) par {{ $derniere->completedBy->name }}@endif</span>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                    </form>
+                @endif
+            </div>
+        @endif
     @endif
 </div>
 
@@ -266,7 +354,8 @@
 </div>
 
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-    {{-- ═══ Création d'équipe ═══ --}}
+    {{-- ═══ Création d'équipe : le responsable des étages compose les équipes ═══ --}}
+    @droit('housekeeping.teams.creer')
     <div class="bg-white rounded-xl shadow-sm p-5">
         <h2 class="font-heading font-semibold text-primary text-sm mb-4">Créer une équipe</h2>
         <form method="POST" action="{{ route('housekeeping.teams.store') }}" class="space-y-4">
@@ -307,6 +396,7 @@
             <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Enregistrer l'équipe</button>
         </form>
     </div>
+    @enddroit
 
     {{-- ═══ Équipes existantes ═══ --}}
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -323,7 +413,7 @@
                         <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
                             <div>
                                 <p class="font-heading font-semibold text-primary">{{ $team->name }}</p>
-                                <p class="text-xs text-primary/50">Chef : {{ $team->leader?->name ?? 'non défini' }}</p>
+                                <p class="text-xs text-primary/50">Chef d'équipe : {{ $team->leader?->name ?? 'non défini' }}</p>
                             </div>
                             <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/10 text-primary/70">{{ $team->activeAssignments->count() }} ch.</span>
                         </div>
@@ -360,9 +450,11 @@
                 <div class="px-5 py-3">
                     <div class="flex items-center justify-between gap-3">
                         <p class="text-sm font-medium text-primary">Chambre {{ $assignment->room->number }} — {{ $assignment->team?->name }}</p>
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium">Nettoyée</span>
+                        <span class="px-2 py-0.5 rounded-full {{ $assignment->isRecouche() ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700' }} text-[11px] font-medium">{{ $assignment->isRecouche() ? 'Recouche' : 'Nettoyée' }}</span>
                     </div>
-                    <p class="text-xs text-primary/45">{{ optional($assignment->completed_at)->locale('fr')->diffForHumans() }}</p>
+                    <p class="text-xs text-primary/45">
+                        {{ optional($assignment->completed_at)->format('H:i') }}@if($assignment->completedBy) · {{ $assignment->completedBy->name }}@endif
+                    </p>
                 </div>
             @empty
                 <div class="px-5 py-3 text-xs text-primary/35">Aucun nettoyage terminé aujourd'hui.</div>

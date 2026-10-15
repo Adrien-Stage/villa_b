@@ -897,6 +897,7 @@
   "econome",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -912,6 +913,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -956,6 +958,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -977,6 +980,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1001,6 +1005,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1020,6 +1025,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -1168,6 +1174,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1189,6 +1196,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1211,6 +1219,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1233,6 +1242,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",
@@ -1315,16 +1325,19 @@
  ],
  "housekeeping.assignments.store": [
   "housekeeping_leader",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.available": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.clean": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.index": [
@@ -1332,6 +1345,7 @@
   "controller",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "support"
@@ -1339,21 +1353,40 @@
  "housekeeping.inspect": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.issue": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
+ ],
+ "housekeeping.journal.index": [
+  "admin",
+  "controller",
+  "housekeeping_leader",
+  "housekeeping_supervisor",
+  "manager",
+  "quality_auditor",
+  "support"
  ],
  "housekeeping.ready": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.reject": [
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager"
+ ],
+ "housekeeping.stayover": [
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.teams.store": [
@@ -1409,6 +1442,7 @@
   "finance_manager",
   "housekeeping_leader",
   "housekeeping_staff",
+  "housekeeping_supervisor",
   "manager",
   "quality_auditor",
   "reception",

@@ -217,12 +217,14 @@ class PermissionLabels
         'housekeeping.voir' => ['Housekeeping', 'Consulter'],
         'housekeeping.assignments.creer' => ['Housekeeping', 'Affecter les chambres'],
         'housekeeping.teams.creer' => ['Housekeeping', 'Composer les équipes'],
-        'housekeeping.clean' => ['Housekeeping', 'Signaler une chambre nettoyée'],
-        'housekeeping.inspect' => ['Housekeeping', 'Inspecter une chambre'],
-        'housekeeping.ready' => ['Housekeeping', 'Valider une chambre prête'],
+        'housekeeping.clean' => ['Housekeeping', 'Commencer le nettoyage d’une chambre'],
+        'housekeeping.inspect' => ['Housekeeping', 'Contrôler une chambre nettoyée'],
+        'housekeeping.ready' => ['Housekeeping', 'Marquer une chambre nettoyée'],
         'housekeeping.reject' => ['Housekeeping', 'Refuser une chambre'],
         'housekeeping.available' => ['Housekeeping', 'Remettre une chambre en vente'],
         'housekeeping.issue' => ['Housekeeping', 'Signaler un problème'],
+        'housekeeping.stayover' => ['Housekeeping', 'Terminer une recouche'],
+        'housekeeping.journal.voir' => ['Housekeeping', 'Consulter le suivi des chambres'],
 
         // ── Factures, POS réception ──
         'invoices.voir' => ['Factures', 'Consulter'],

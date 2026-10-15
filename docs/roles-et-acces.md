@@ -31,13 +31,14 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | 1 | `admin` — Administrateur | informatique | — | actif, créé depuis la console |
 | 2 | `manager` — Manager | direction | — | actif, privilégié |
 | 3 | `reception_chief` — Chef de réception | hébergement | `reception` | actif |
-| 3 | `housekeeping_leader` — Gouvernant(e) général(e) | housekeeping | `housekeeping_staff` | actif |
+| 3 | `housekeeping_leader` — Responsable des étages | housekeeping | `housekeeping_supervisor`, `housekeeping_staff` | actif |
 | 3 | `restaurant_manager` — Responsable de restaurant | restaurant | `restaurant_staff`, `cashier` | actif |
 | 3 | `restaurant_chief` — Chef de cuisine (cuisine seule) | restaurant | `restaurant_cook` | actif |
 | 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
 | 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
 | 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
 | 4 | `reception` — Réceptionniste (encaisse) | hébergement | — | actif |
+| 4 | `housekeeping_supervisor` — Gouvernante | housekeeping | — | actif |
 | 4 | `housekeeping_staff` — Valet / Femme de chambre | housekeeping | — | actif |
 | 4 | `restaurant_staff` — Serveur, `restaurant_cook` — Cuisinier | restaurant | — | actif |
 | 4 | `cashier` — Caissier restaurant | restaurant | — | actif |

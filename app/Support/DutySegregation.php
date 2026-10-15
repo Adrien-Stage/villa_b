@@ -47,7 +47,7 @@ class DutySegregation
      */
     private const OPERATIONNELS = [
         'reception_chief', 'reception',
-        'housekeeping_leader', 'housekeeping_staff',
+        'housekeeping_leader', 'housekeeping_supervisor', 'housekeeping_staff',
         'restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier',
         'shop_manager', 'shop_cashier',
         'econome', 'storekeeper',

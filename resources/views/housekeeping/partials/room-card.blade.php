@@ -22,6 +22,13 @@
         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $style['chip'] }}">{{ $style['label'] }}</span>
     </div>
 
+    @php $passage = $room->latestHousekeepingAssignment; @endphp
+    @if($s === 'cleaning' && $passage?->started_at)
+        <p class="mb-3 text-xs text-primary/60">Commencée à {{ $passage->started_at->format('H:i') }}@if($passage->startedBy) par {{ $passage->startedBy->name }}@endif</p>
+    @elseif(in_array($s, ['clean', 'inspected'], true) && $passage?->completed_at)
+        <p class="mb-3 text-xs text-primary/60">Nettoyée à {{ $passage->completed_at->format('H:i') }}@if($passage->completedBy) par {{ $passage->completedBy->name }}@endif</p>
+    @endif
+
     <div class="mt-auto">
         @if($s === 'dirty')
             <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
@@ -67,7 +74,7 @@
                     </form>
                 </div>
             @else
-                <p class="text-xs text-purple-700/80 text-center py-2">En attente du contrôle du chef d'équipe.</p>
+                <p class="text-xs text-purple-700/80 text-center py-2">En attente du contrôle de la gouvernante.</p>
             @endif
 
         @elseif($s === 'inspected')

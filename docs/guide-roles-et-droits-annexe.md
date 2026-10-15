@@ -13,12 +13,13 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 119 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 117 | 90 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
+| Administrateur (`admin`) | 1 | — | 120 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 118 | 91 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 44 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
 | Réceptionniste (`reception`) | 4 | — | 30 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
-| Gouvernant(e) général(e) (`housekeeping_leader`) | 3 | `housekeeping_staff` | 9 | 19 | Économat, Paramètres, Housekeeping, Planning |
-| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 5 | 8 | Économat, Housekeeping |
+| Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 10 | 20 | Économat, Paramètres, Housekeeping, Planning |
+| Gouvernante (`housekeeping_supervisor`) | 4 | — | 6 | 10 | Économat, Housekeeping |
+| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 5 | 9 | Économat, Housekeeping |
 | Responsable de restaurant (`restaurant_manager`) | 3 | `restaurant_staff`, `cashier` | 27 | 41 | Restaurant, Économat, Paramètres, Planning |
 | Chef de cuisine (`restaurant_chief`) | 3 | `restaurant_cook` | 23 | 39 | Restaurant, Économat, Paramètres, Planning |
 | Serveur (salle) (`restaurant_staff`) | 4 | — | 12 | 10 | Restaurant, Économat |
@@ -30,9 +31,9 @@
 | Magasinier (`storekeeper`) | 4 | — | 24 | 7 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 26 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 85 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 68 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 99 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 86 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 69 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 100 | 0 | — |
 
 ## Droit par droit
 
@@ -144,17 +145,19 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 ### Housekeeping
 
-| Droit | Nature | Admin | Manager | Gouv. | Valet | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `housekeeping.assignments.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |
-| `housekeeping.available` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.clean` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.inspect` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.issue` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.ready` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.reject` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.teams.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |
-| `housekeeping.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Droit | Nature | Admin | Manager | Resp. étages | Gouv. | Valet | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `housekeeping.assignments.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |
+| `housekeeping.available` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.clean` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.inspect` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.issue` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.journal.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
+| `housekeeping.ready` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.reject` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.stayover` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.teams.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Restaurant
 
@@ -261,87 +264,87 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 ### Économat
 
-| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `economat.categories.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.categories.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.categories.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.categories.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.control.suggestions.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.control.suggestions.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.control.variances.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.control.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.count_sheets.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.cuts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.external_issues.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.external_issues.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.external_issues.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.external_issues.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.items.adjust` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.items.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.opening` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.transformation.cut` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.transformation.open` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.items.transformation.packagings` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.transformation.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.items.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.movements.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.movements.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.orders.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ |  |
-| `economat.orders.receive` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.orders.send` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.transmit` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.purchase_requests.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `economat.purchase_requests.cancel` | **agit** |  |  | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.convert` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.creer` | **agit** |  |  | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.reject` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `economat.purchase_requests.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.receipts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.receipts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.receipts.direct.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.receipts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.receipts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.requisitions.approve` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.requisitions.cancel` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |  |
-| `economat.requisitions.creer` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |  |
-| `economat.requisitions.deliver` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.requisitions.endorse` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  |  |  |
-| `economat.requisitions.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.requisitions.reject` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.requisitions.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `economat.stock_counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stock_counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stock_counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stock_counts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.stock_counts.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.stock_counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.stock_counts.report` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.stock_counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.stores.counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.stores.counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.stores.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.suppliers.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.suppliers.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.suppliers.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.suppliers.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.units.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.units.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.units.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `economat.categories.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.control.suggestions.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.control.suggestions.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
+| `economat.control.variances.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
+| `economat.control.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
+| `economat.count_sheets.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.cuts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.external_issues.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.external_issues.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.external_issues.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.external_issues.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.items.adjust` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.items.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.opening` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.cut` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.open` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.items.transformation.packagings` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.items.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.movements.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.movements.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.orders.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ |  |
+| `economat.orders.receive` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.orders.send` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.transmit` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.purchase_requests.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `economat.purchase_requests.cancel` | **agit** |  |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.convert` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.creer` | **agit** |  |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.reject` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `economat.purchase_requests.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
+| `economat.receipts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.receipts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.receipts.direct.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.receipts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.receipts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.requisitions.approve` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.cancel` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.creer` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |  |
+| `economat.requisitions.deliver` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.requisitions.endorse` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  |  |  |
+| `economat.requisitions.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.requisitions.reject` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `economat.stock_counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.stock_counts.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stock_counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stock_counts.report` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
+| `economat.stock_counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.stores.counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stores.counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.stores.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.suppliers.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.units.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Comptabilité
 
@@ -395,24 +398,24 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 ### Éditions
 
-| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `editions.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |
-| `editions.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `editions.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| `editions.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Planning
 
-| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `planning.affectations.creer` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.affectations.supprimer` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.publier` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.recopier` | **agit** |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `planning.affectations.creer` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.affectations.supprimer` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.publier` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.recopier` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Paramètres
 
-| Droit | Nature | Admin | Manager | Chef réc. | Gouv. | Resp. resto | Chef cuis. | Resp. bout. | Économe | Contrôleur | Auditeur | Support |
+| Droit | Nature | Admin | Manager | Chef réc. | Resp. étages | Resp. resto | Chef cuis. | Resp. bout. | Économe | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `settings.cancellation_policies.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.cancellation_policies.default` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |

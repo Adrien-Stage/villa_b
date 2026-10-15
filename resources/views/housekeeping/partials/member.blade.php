@@ -17,7 +17,7 @@
     <div class="bg-white rounded-xl shadow-sm p-10 text-center border border-dashed border-secondary/30">
         <i data-lucide="users" class="w-8 h-8 mx-auto text-primary/20 mb-3"></i>
         <p class="text-sm text-primary/50">Vous n'êtes pas encore rattaché à une équipe de nettoyage.</p>
-        <p class="text-xs text-primary/40 mt-1">Rapprochez-vous du chef de service.</p>
+        <p class="text-xs text-primary/40 mt-1">Rapprochez-vous du responsable des étages.</p>
     </div>
 @else
     {{-- ═══ Mon / mes équipe(s) ═══ --}}
@@ -47,6 +47,21 @@
             </div>
         @endforeach
     </div>
+
+    {{-- ═══ Mes recouches : chambres occupées à refaire ═══ --}}
+    @if($myStayovers->isNotEmpty())
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+            <div class="px-5 py-4 border-b border-secondary/20 flex items-center justify-between">
+                <h2 class="font-heading font-semibold text-primary text-sm">Recouches — chambres occupées</h2>
+                <span class="text-xs text-primary/40">{{ $myStayovers->count() }} chambre{{ $myStayovers->count() > 1 ? 's' : '' }}</span>
+            </div>
+            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                @foreach($myStayovers as $room)
+                    @include('housekeeping.partials.stayover-card', ['room' => $room])
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- ═══ Mes chambres ═══ --}}
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
