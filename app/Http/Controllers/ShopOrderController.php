@@ -105,6 +105,14 @@ class ShopOrderController extends Controller
             'items.*.product_id' => 'required|exists:shop_products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
+        ], [
+            'payment_method.required' => 'Choisissez la méthode de règlement.',
+            'payment_method.in' => 'Cette méthode de règlement n\'existe pas.',
+            'items.required' => 'Ajoutez au moins un article à la commande.',
+            'items.min' => 'Ajoutez au moins un article à la commande.',
+            'items.*.product_id.required' => 'Choisissez un article sur chaque ligne.',
+            'items.*.quantity.required' => 'Indiquez la quantité de chaque article.',
+            'items.*.quantity.min' => 'La quantité de chaque article doit être d\'au moins 1.',
         ]);
 
         // Si room_charge, le booking_id est obligatoire

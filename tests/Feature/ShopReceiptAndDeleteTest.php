@@ -66,3 +66,28 @@ test("le code d'un article laissé vide est généré à la suite du dernier", f
     expect(ShopProduct::where('name', 'Collier')->value('sku'))->toBe('ART-000002');
     $this->actingAs($gerant)->get(route('shop.products.create'))->assertOk()->assertSee('ART-000003');
 });
+
+test("un code article déjà pris est refusé en français", function () {
+    $gerant = gerantBoutique();
+    $article = articleBoutique();
+
+    $this->actingAs($gerant)->post(route('shop.products.store'), ['shop_category_id' => $article->shop_category_id, 'name' => 'Bague',
+        'sku' => 'ART-000001', 'price' => 1000, 'stock_quantity' => 1, 'reorder_level' => 0])
+        ->assertSessionHasErrors(['sku' => 'Ce code article est déjà utilisé : choisissez-en un autre.']);
+});
+
+test("le manager consulte les articles sans voir les actions d'écriture", function () {
+    articleBoutique();
+    $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+    $manager->roles()->sync(Role::where('slug', 'manager')->pluck('id'));
+
+    $this->actingAs($manager)->get(route('shop.products.index'))
+        ->assertOk()
+        ->assertSee('Bracelet artisanal')
+        ->assertDontSee('Supprimer')
+        ->assertDontSee('Modifier');
+
+    $this->actingAs(gerantBoutique())->get(route('shop.products.index'))
+        ->assertSee('Supprimer')
+        ->assertSee('Modifier');
+});

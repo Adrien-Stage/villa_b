@@ -12,6 +12,18 @@ use Illuminate\View\View;
 
 class ShopProductController extends Controller
 {
+    private const MESSAGES = [
+        'sku.unique' => 'Ce code article est déjà utilisé : choisissez-en un autre.',
+        'shop_category_id.required' => 'Choisissez une catégorie.',
+        'name.required' => "Indiquez le nom de l'article.",
+        'price.required' => 'Indiquez le prix en FCFA.',
+        'stock_quantity.required' => 'Indiquez la quantité en stock.',
+        'reorder_level.required' => 'Indiquez le niveau de réassort.',
+        'image.max' => "L'image ne doit pas dépasser 2 Mo.",
+        'image.image' => 'Le fichier choisi doit être une image.',
+        'image.mimes' => "L'image doit être au format JPG, PNG ou WebP.",
+    ];
+
     public function index(Request $request): View
     {
         $tenant = \App\Models\Tenant::current();
@@ -81,7 +93,7 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-        ]);
+        ], self::MESSAGES);
 
         // Vérifier que la catégorie appartient au tenant
         ShopCategory::query()
@@ -137,7 +149,7 @@ class ShopProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
-        ]);
+        ], self::MESSAGES);
 
         // Vérifier que la catégorie appartient au tenant
         ShopCategory::query()
