@@ -91,3 +91,19 @@ test("le manager consulte les articles sans voir les actions d'écriture", funct
         ->assertSee('Supprimer')
         ->assertSee('Modifier');
 });
+
+test("le manager consulte une commande sans les boutons d'encaissement ni d'ouverture de caisse", function () {
+    $gerant = gerantBoutique();
+    $article = articleBoutique();
+    $commande = ShopOrder::create(['order_number' => 'SHOP-9', 'customer_name' => 'Client de passage', 'total_items' => 1, 'subtotal' => 500000,
+        'tax_amount' => 77500, 'total_amount' => 500000, 'payment_status' => 'unpaid', 'payment_method' => 'cash', 'created_by' => $gerant->id]);
+    $commande->items()->create(['shop_product_id' => $article->id, 'quantity' => 1, 'unit_price' => 500000, 'item_total' => 500000]);
+    $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+    $manager->roles()->sync(Role::where('slug', 'manager')->pluck('id'));
+
+    $this->actingAs($manager)->get(route('shop.orders.show', $commande))->assertOk()->assertDontSee('Marquer payée');
+    $this->actingAs($manager)->get(route('shop.orders.index'))->assertOk()->assertDontSee('Ouvrir la caisse');
+
+    $this->actingAs($gerant)->get(route('shop.orders.show', $commande))->assertSee('Marquer payée');
+    $this->actingAs($gerant)->get(route('shop.orders.index'))->assertSee('Ouvrir la caisse');
+});
