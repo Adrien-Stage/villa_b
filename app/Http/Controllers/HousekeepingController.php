@@ -48,9 +48,47 @@ class HousekeepingController extends Controller
     {
         // L'encadrement voit tout le pilotage ; un agent de terrain ne voit
         // que son équipe et ses chambres — deux écrans distincts.
-        return $this->isEncadrement()
+        $vue = $this->isEncadrement()
             ? $this->chiefDashboard()
             : $this->memberDashboard();
+
+        return $vue->with('minibar', $this->alertesMinibar());
+    }
+
+    /**
+     * Ce que les mini-bars attendent : relevés demandés par la réception au
+     * départ, relevés dus après un départ sans relevé ; pour l'encadrement,
+     * mini-bars vidés pendant le séjour et mini-bars à recharger.
+     */
+    private function alertesMinibar(): array
+    {
+        $demandes = \App\Models\Booking::query()
+            ->with('room')
+            ->where('status', \App\Enums\BookingStatus::CHECKED_IN)
+            ->whereNotNull('minibar_check_requested_at')
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('minibar_checks')
+                ->whereColumn('minibar_checks.booking_id', 'bookings.id')
+                ->where('minibar_checks.occasion', \App\Models\MinibarCheck::OCCASION_DEPART))
+            ->orderBy('minibar_check_requested_at')
+            ->get();
+
+        $dus = Room::query()->with('roomType')->whereNotNull('minibar_due_booking_id')->orderBy('number')->get();
+
+        $vides = collect();
+        $aRecharger = collect();
+        if ($this->isEncadrement()) {
+            $equipees = Room::query()
+                ->with(['roomType', 'minibarLines'])
+                ->where('is_active', true)
+                ->whereHas('minibarLines', fn ($q) => $q->where('standard_quantity', '>', 0))
+                ->orderBy('number')
+                ->get();
+
+            $vides = $equipees->filter(fn (Room $r) => $r->status === RoomStatus::OCCUPIED && $r->miniBarVide())->values();
+            $aRecharger = $equipees->filter(fn (Room $r) => $r->status !== RoomStatus::OCCUPIED && !$r->miniBarComplet())->values();
+        }
+
+        return compact('demandes', 'dus', 'vides', 'aRecharger');
     }
 
     /** Tableau de bord du chef de service : pipeline, affectation, équipes. */
@@ -94,7 +132,7 @@ class HousekeepingController extends Controller
             ->get();
 
         $pipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team', 'activeHousekeepingAssignment.startedBy',
-                'latestHousekeepingAssignment.completedBy'])
+                'latestHousekeepingAssignment.completedBy', 'minibarLines'])
             ->whereIn('status', self::CYCLE_STATUSES)
             ->orderByRaw("CASE status
                 WHEN 'dirty' THEN 1 WHEN 'cleaning' THEN 2
@@ -114,7 +152,7 @@ class HousekeepingController extends Controller
 
         $myRooms = $myTeamIds->isEmpty()
             ? collect()
-            : Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy'])
+            : Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
                 ->whereIn('id', HousekeepingAssignment::whereIn('housekeeping_team_id', $myTeamIds)
                     ->where('kind', HousekeepingAssignment::KIND_DEPART)
                     ->pluck('room_id')->unique())
@@ -133,6 +171,8 @@ class HousekeepingController extends Controller
                 'activeHousekeepingAssignment.startedBy',
                 'latestHousekeepingAssignment.completedBy',
                 'latestHousekeepingAssignment.team',
+                'activeHousekeepingAssignment.minibarChecks',
+                'minibarLines',
             ])
             ->where('status', RoomStatus::OCCUPIED)
             ->orderBy('floor')
@@ -185,7 +225,7 @@ class HousekeepingController extends Controller
             ->where('kind', HousekeepingAssignment::KIND_DEPART)
             ->pluck('room_id')->unique();
 
-        $myRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy'])
+        $myRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
             ->whereIn('id', $roomIds)
             ->whereIn('status', self::CYCLE_STATUSES)
             ->orderByRaw("CASE status
@@ -215,7 +255,8 @@ class HousekeepingController extends Controller
     /** Recouches à faire ou en cours, confiées à ces équipes. */
     private function recouchesDesEquipes(Collection $teamIds): Collection
     {
-        return Room::with(['roomType', 'activeHousekeepingAssignment.team', 'activeHousekeepingAssignment.startedBy'])
+        return Room::with(['roomType', 'activeHousekeepingAssignment.team', 'activeHousekeepingAssignment.startedBy',
+                'activeHousekeepingAssignment.minibarChecks', 'minibarLines'])
             ->where('status', RoomStatus::OCCUPIED)
             ->whereHas('activeHousekeepingAssignment', fn ($q) => $q
                 ->where('kind', HousekeepingAssignment::KIND_RECOUCHE)
@@ -452,6 +493,12 @@ class HousekeepingController extends Controller
             return back()->withErrors(['status' => "La chambre {$room->number} n'est plus occupée : la recouche n'a plus lieu d'être."]);
         }
 
+        // Le relevé du mini-bar fait partie de la recouche : ce que le client
+        // a consommé part à son folio.
+        if ($room->aUnMiniBar() && !\App\Models\MinibarCheck::query()->where('housekeeping_assignment_id', $assignment->id)->exists()) {
+            return back()->withErrors(['status' => "Faites d'abord le relevé du mini-bar de la chambre {$room->number}."]);
+        }
+
         DB::transaction(function () use ($room, $assignment) {
             $assignment->update([
                 'status' => 'completed',
@@ -478,6 +525,12 @@ class HousekeepingController extends Controller
 
         if ($assignment->isRecouche()) {
             return back()->withErrors(['status' => "La chambre {$room->number} est en recouche : terminez la recouche."]);
+        }
+
+        // Le client est parti sans relevé de départ : sa consommation n'est
+        // connue que par ce relevé, à faire avant que la chambre change de main.
+        if (\App\Services\MinibarService::releveDuAuMenage($room)) {
+            return back()->withErrors(['status' => "Faites d'abord le relevé du mini-bar de la chambre {$room->number} : le client est parti sans relevé."]);
         }
 
         if (!$room->status->canTransitionTo(RoomStatus::CLEAN)) {
@@ -529,12 +582,20 @@ class HousekeepingController extends Controller
             return back()->withErrors(['status' => 'Cette chambre doit être nettoyée avant contrôle.']);
         }
 
-        DB::transaction(function () use ($room) {
+        // Le prochain client trouve un mini-bar complet. Si le dépôt manque
+        // d'un article, la gouvernante valide quand même en le motivant.
+        $motif = trim((string) $request->input('motif_minibar'));
+        if ($room->aUnMiniBar() && !$room->miniBarComplet() && $motif === '') {
+            return back()->withErrors(['status' => "Rechargez d'abord le mini-bar de la chambre {$room->number}, ou validez en indiquant pourquoi il reste incomplet."]);
+        }
+
+        DB::transaction(function () use ($room, $motif) {
             $room->updateStatus(RoomStatus::INSPECTED, 'Contrôle qualité validé', Auth::id());
 
             $assignment = $room->latestHousekeepingAssignment;
             $assignment?->update(['inspected_by' => Auth::id(), 'inspected_at' => now()]);
-            HousekeepingLog::noter($room, HousekeepingLog::INSPECTED, null, $assignment);
+            HousekeepingLog::noter($room, HousekeepingLog::INSPECTED,
+                $motif !== '' ? 'Mini-bar incomplet : ' . $motif : null, $assignment);
         });
 
         return back()->with('success', "Chambre {$room->number} contrôlée.");

@@ -85,6 +85,7 @@ class PermissionLabels
         'bookings.cancellation_receipt' => ['Réservations', "Imprimer l'avis d'annulation"],
         'bookings.checkIn' => ['Séjours', 'Enregistrer une arrivée'],
         'bookings.checkOut' => ['Séjours', 'Enregistrer un départ'],
+        'bookings.minibar.request' => ['Séjours', 'Demander le relevé du mini-bar au départ'],
         'bookings.checkin_code.send' => ['Séjours', "Envoyer le code d'arrivée"],
         'bookings.folio.add' => ['Folio du séjour', 'Ajouter une prestation'],
         'bookings.folio.remove' => ['Folio du séjour', 'Retirer une prestation'],
@@ -225,6 +226,15 @@ class PermissionLabels
         'housekeeping.issue' => ['Housekeeping', 'Signaler un problème'],
         'housekeeping.stayover' => ['Housekeeping', 'Terminer une recouche'],
         'housekeeping.journal.voir' => ['Housekeeping', 'Consulter le suivi des chambres'],
+        'housekeeping.minibar.voir' => ['Mini-bars', 'Consulter les réglages et les montants'],
+        'housekeeping.minibar.depot' => ['Mini-bars', 'Choisir le dépôt du mini-bar'],
+        'housekeeping.minibar.articles.creer' => ['Mini-bars', 'Ajouter un article'],
+        'housekeeping.minibar.articles.modifier' => ['Mini-bars', 'Modifier un article et son prix'],
+        'housekeeping.minibar.standards.modifier' => ['Mini-bars', 'Régler la dotation d’un type de chambre'],
+        'housekeeping.minibar.rooms.voir' => ['Mini-bars', 'Consulter le mini-bar d’une chambre'],
+        'housekeeping.minibar.rooms.modifier' => ['Mini-bars', 'Régler la dotation d’une chambre'],
+        'housekeeping.minibar.check' => ['Mini-bars', 'Relever les consommations'],
+        'housekeeping.minibar.restock' => ['Mini-bars', 'Recharger un mini-bar'],
 
         // ── Factures, POS réception ──
         'invoices.voir' => ['Factures', 'Consulter'],

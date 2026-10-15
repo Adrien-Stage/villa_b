@@ -309,6 +309,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
         Route::get('/{booking}/cancellation-receipt', [BookingController::class, 'cancellationReceipt'])->name('cancellation_receipt');
 
+        // Départ du client : la réception demande le relevé du mini-bar avant
+        // de clore la note. Rien n'est encaissé : la caisse n'est pas exigée.
+        Route::post('/{booking}/mini-bar',     [App\Http\Controllers\BookingMinibarController::class, 'request'])->name('minibar.request');
+
         // Actions métier : impossibles tant que la caisse n'est pas ouverte
         Route::middleware('caisse')->group(function () {
             Route::put('/{booking}',               [BookingController::class, 'update'])->name('update');
@@ -367,6 +371,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
         // Recouche d'une chambre occupée : le client la garde.
         Route::post('/{room}/recouche',    [HousekeepingController::class, 'markStayoverDone'])->name('stayover');
+
+        // Mini-bars : réglages (articles, prix, dépôt, dotations), puis le
+        // mini-bar de chaque chambre — relevé des consommations et rechargement.
+        Route::get('/mini-bars',                        [App\Http\Controllers\HousekeepingMinibarController::class, 'index'])->name('minibar.index');
+        Route::post('/mini-bars/depot',                 [App\Http\Controllers\HousekeepingMinibarController::class, 'depot'])->name('minibar.depot');
+        Route::post('/mini-bars/articles',              [App\Http\Controllers\HousekeepingMinibarController::class, 'storeArticle'])->name('minibar.articles.store');
+        Route::put('/mini-bars/articles/{article}',     [App\Http\Controllers\HousekeepingMinibarController::class, 'updateArticle'])->whereNumber('article')->name('minibar.articles.update');
+        Route::put('/mini-bars/dotations/{roomType}',   [App\Http\Controllers\HousekeepingMinibarController::class, 'updateStandards'])->whereNumber('roomType')->name('minibar.standards.update');
+        Route::get('/{room}/mini-bar',                  [App\Http\Controllers\HousekeepingMinibarController::class, 'show'])->whereNumber('room')->name('minibar.rooms.show');
+        Route::put('/{room}/mini-bar/dotation',         [App\Http\Controllers\HousekeepingMinibarController::class, 'updateRoom'])->whereNumber('room')->name('minibar.rooms.update');
+        Route::post('/{room}/mini-bar/releve',          [App\Http\Controllers\HousekeepingMinibarController::class, 'check'])->whereNumber('room')->name('minibar.check');
+        Route::post('/{room}/mini-bar/recharge',        [App\Http\Controllers\HousekeepingMinibarController::class, 'restock'])->whereNumber('room')->name('minibar.restock');
     });
 
     // --- RESTAURANT (menus) ---

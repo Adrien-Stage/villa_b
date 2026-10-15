@@ -13,13 +13,13 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 120 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 118 | 91 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
-| Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 44 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
-| Réceptionniste (`reception`) | 4 | — | 30 | 28 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
-| Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 10 | 20 | Économat, Paramètres, Housekeeping, Planning |
-| Gouvernante (`housekeeping_supervisor`) | 4 | — | 6 | 10 | Économat, Housekeeping |
-| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 5 | 9 | Économat, Housekeeping |
+| Administrateur (`admin`) | 1 | — | 122 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 120 | 99 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Planning |
+| Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 45 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Planning |
+| Réceptionniste (`reception`) | 4 | — | 30 | 29 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception |
+| Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 12 | 27 | Économat, Paramètres, Housekeeping, Planning |
+| Gouvernante (`housekeeping_supervisor`) | 4 | — | 8 | 12 | Économat, Housekeeping |
+| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 6 | 10 | Économat, Housekeeping |
 | Responsable de restaurant (`restaurant_manager`) | 3 | `restaurant_staff`, `cashier` | 27 | 41 | Restaurant, Économat, Paramètres, Planning |
 | Chef de cuisine (`restaurant_chief`) | 3 | `restaurant_cook` | 23 | 39 | Restaurant, Économat, Paramètres, Planning |
 | Serveur (salle) (`restaurant_staff`) | 4 | — | 12 | 10 | Restaurant, Économat |
@@ -31,9 +31,9 @@
 | Magasinier (`storekeeper`) | 4 | — | 24 | 7 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 26 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 86 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 69 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 100 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 88 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 71 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 102 | 0 | — |
 
 ## Droit par droit
 
@@ -92,6 +92,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `bookings.drafts.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `bookings.folio.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
 | `bookings.folio.remove` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `bookings.minibar.request` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
 | `bookings.modifier` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
 | `bookings.payment.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
 | `bookings.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -153,6 +154,15 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `housekeeping.inspect` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.issue` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.journal.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
+| `housekeeping.minibar.articles.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.articles.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.check` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.minibar.depot` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.restock` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |
+| `housekeeping.minibar.rooms.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.rooms.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `housekeeping.minibar.standards.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
 | `housekeeping.ready` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.reject` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.stayover` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |

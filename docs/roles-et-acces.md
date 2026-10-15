@@ -344,6 +344,11 @@ La **gestion** du magasin (articles, fournisseurs, bons, validation) reste rése
 données financières. Le personnel de ménage en est absent : il voit les chambres et
 leur état, jamais les tarifs ni les soldes.
 
+Seule exception : le prix de vente des articles du mini-bar, que le responsable
+des étages fixe et que la gouvernante consulte (« Mini-bars »). Le valet relève
+les quantités consommées sans voir les prix ; la réception voit les montants
+portés au folio.
+
 ## Pour aller plus loin
 
 - [Architecture](architecture.md) — modules et catalogue

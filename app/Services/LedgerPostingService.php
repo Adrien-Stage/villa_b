@@ -47,6 +47,8 @@ class LedgerPostingService
     public const SCHEMA_PANTRY_STOCK = 'pantry_stock';
     public const SCHEMA_STOCK_RECLASS = 'stock_reclass';
     public const SCHEMA_SERVICE_STORE = 'service_store_stock';
+    public const SCHEMA_MINIBAR_SALE = 'minibar_sale';
+    public const SCHEMA_MINIBAR_STOCK = 'minibar_stock';
 
     public function __construct(
         private readonly LedgerService $ledger,
@@ -77,6 +79,8 @@ class LedgerPostingService
             self::SCHEMA_ECONOMAT_STOCK  => 0,
             self::SCHEMA_PANTRY_STOCK    => 0,
             self::SCHEMA_SERVICE_STORE   => 0,
+            self::SCHEMA_MINIBAR_SALE    => 0,
+            self::SCHEMA_MINIBAR_STOCK   => 0,
         ];
 
         // Produits d'abord, encaissements ensuite : un règlement solde une
@@ -90,6 +94,18 @@ class LedgerPostingService
             ->each(function (Invoice $invoice) use (&$compte) {
                 if ($this->postInvoice($invoice)) {
                     $compte[self::SCHEMA_INVOICE]++;
+                }
+            });
+
+        // Consommations du mini-bar portées au folio : la créance naît au relevé.
+        \App\Models\MinibarCheck::query()
+            ->where('billing', \App\Models\MinibarCheck::BILLING_FOLIO)
+            ->whereBetween('checked_at', [$start, $end])
+            ->with('booking.customer')
+            ->get()
+            ->each(function (\App\Models\MinibarCheck $check) use (&$compte) {
+                if ($this->postMinibarSale($check)) {
+                    $compte[self::SCHEMA_MINIBAR_SALE]++;
                 }
             });
 
@@ -149,6 +165,10 @@ class LedgerPostingService
             $compte[self::SCHEMA_SERVICE_STORE]++;
         }
 
+        if ($this->postMinibarStock($start)) {
+            $compte[self::SCHEMA_MINIBAR_STOCK]++;
+        }
+
         return $compte;
     }
 
@@ -160,7 +180,8 @@ class LedgerPostingService
      *     C 443100  TVA collectée
      *
      * Seul l'hébergement est porté : les extras du folio proviennent du
-     * restaurant et de la boutique, déjà comptabilisés à leur propre source.
+     * restaurant, de la boutique et du mini-bar, déjà comptabilisés à leur
+     * propre source.
      * Les additionner ici les compterait deux fois.
      */
     public function postInvoice(Invoice $invoice): ?JournalEntry
@@ -652,6 +673,83 @@ class LedgerPostingService
             journalCode: Journal::MISC,
             date: $start,
             label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
+            lines: array_values($imputations),
+            schema: $schema,
+        );
+    }
+
+    /**
+     * Consommation du mini-bar portée au folio : la vente d'une marchandise,
+     * comme à la boutique, dont la créance sera soldée avec le séjour.
+     *
+     *   D 411000  TTC   (auxiliaire : le client)
+     *     C 701000  base hors taxes   [hébergement]
+     *     C 443100  TVA collectée
+     */
+    public function postMinibarSale(\App\Models\MinibarCheck $check): ?JournalEntry
+    {
+        if ($check->billing !== \App\Models\MinibarCheck::BILLING_FOLIO) {
+            return null;
+        }
+
+        return $this->postSale(
+            order: $check,
+            ttc: (int) $check->total_amount,
+            revenueAccount: Account::REVENUE_MINIBAR,
+            center: JournalEntryLine::CENTER_ACCOMMODATION,
+            schema: self::SCHEMA_MINIBAR_SALE,
+            label: 'Mini-bar — chambre ' . ($check->room?->number ?? '') . ', relevé n° ' . $check->id,
+            date: $check->checked_at,
+            method: 'room_charge',
+            customer: $check->booking?->customer,
+        );
+    }
+
+    /**
+     * Consommations relevées dans les mini-bars de la journée. Les articles y
+     * sont entrés depuis le dépôt sans charge : elle naît ici, au coût auquel
+     * ils sont entrés dans la chambre.
+     *
+     *   D 603x [hébergement]   C 3x
+     */
+    public function postMinibarStock(CarbonInterface $date): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = self::SCHEMA_MINIBAR_STOCK . ':' . $start->toDateString();
+
+        if (JournalEntry::query()->where('schema', $schema)->exists()) {
+            return null;
+        }
+
+        $imputations = [];
+
+        \App\Models\MinibarMovement::query()
+            ->with('item.category')
+            ->where('type', \App\Models\MinibarMovement::TYPE_CONSUMPTION)
+            ->whereBetween('occurred_at', [$start, $end])
+            ->orderBy('id')
+            ->get()
+            ->each(function (\App\Models\MinibarMovement $mouvement) use (&$imputations) {
+                $valeur = (int) round(abs($mouvement->quantity) * $mouvement->unit_cost);
+                if ($valeur <= 0) {
+                    return;
+                }
+
+                $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
+                $libelle = 'Consommations des mini-bars';
+                $this->imputer($imputations, Account::variationFor($stock), $libelle, $valeur, 0, JournalEntryLine::CENTER_ACCOMMODATION);
+                $this->imputer($imputations, $stock, $libelle, 0, $valeur);
+            });
+
+        if ($imputations === []) {
+            return null;
+        }
+
+        return $this->ledger->post(
+            journalCode: Journal::MISC,
+            date: $start,
+            label: 'Consommations des mini-bars du ' . $start->format('d/m/Y'),
             lines: array_values($imputations),
             schema: $schema,
         );

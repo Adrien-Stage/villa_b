@@ -40,12 +40,20 @@
 
         @elseif($s === 'cleaning')
             <div class="flex gap-2">
+                @if(\App\Services\MinibarService::releveDuAuMenage($room))
+                    {{-- Client parti sans relevé : le mini-bar se relève avant tout. --}}
+                    <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
+                    </a>
+                @else
                 <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
                     @csrf
                     <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i> Marquer nettoyée
                     </button>
                 </form>
+                @endif
                 <form method="POST" action="{{ route('housekeeping.issue', $room) }}"
                       onsubmit="const n = prompt('Décrire le problème :'); if(!n){return false;} this.issue_notes.value = n;">
                     @csrf
@@ -57,7 +65,13 @@
             </div>
 
         @elseif($s === 'clean')
-            @if($canValidate)
+            @if($canValidate && $room->aUnMiniBar() && !$room->miniBarComplet())
+                {{-- Le prochain client trouve un mini-bar complet. --}}
+                <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                   class="w-full py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger le mini-bar
+                </a>
+            @elseif($canValidate)
                 <div class="flex gap-2">
                     <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                         @csrf

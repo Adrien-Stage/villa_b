@@ -28,7 +28,13 @@
     @endif
 
     <div class="mt-auto">
-        @if($a?->status === 'in_progress')
+        @if($a?->status === 'in_progress' && $room->aUnMiniBar() && $a->minibarChecks->isEmpty())
+            {{-- Le relevé du mini-bar fait partie de la recouche. --}}
+            <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+               class="w-full py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
+            </a>
+        @elseif($a?->status === 'in_progress')
             <form method="POST" action="{{ route('housekeeping.stayover', $room) }}">
                 @csrf
                 <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1.5">

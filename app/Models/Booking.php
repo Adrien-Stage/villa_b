@@ -96,6 +96,8 @@ class Booking extends Model
         'approved_by',          // Qui a validé la gratuité
         'approved_at',
         'tenant_id',
+        'minibar_check_requested_at',
+        'minibar_check_requested_by',
     ];
 
     protected $casts = [
@@ -125,6 +127,7 @@ class Booking extends Model
         'deposit_amount' => 'integer',
         'paid_amount' => 'integer',
         'balance_due' => 'integer',
+        'minibar_check_requested_at' => 'datetime',
     ];
 
     /**

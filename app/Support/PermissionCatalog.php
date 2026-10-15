@@ -98,6 +98,7 @@ class PermissionCatalog
         'bookings.cash_register.open.creer',
         'bookings.checkIn',
         'bookings.checkOut',
+        'bookings.minibar.request',
         'bookings.checkin_code.send',
         'bookings.confirm',
         'bookings.creer',
@@ -179,6 +180,13 @@ class PermissionCatalog
         'housekeeping.ready',
         'housekeeping.reject',
         'housekeeping.stayover',
+        'housekeeping.minibar.articles.creer',
+        'housekeeping.minibar.articles.modifier',
+        'housekeeping.minibar.check',
+        'housekeeping.minibar.depot',
+        'housekeeping.minibar.restock',
+        'housekeeping.minibar.rooms.modifier',
+        'housekeeping.minibar.standards.modifier',
         'housekeeping.teams.creer',
         'planning.affectations.creer',
         'planning.affectations.supprimer',
@@ -688,6 +696,9 @@ class PermissionCatalog
             'bookings.cash_register.voir' => ['controller', 'manager', 'reception'],
             'bookings.checkIn' => ['manager', 'reception'],
             'bookings.checkOut' => ['manager', 'reception'],
+            // Au départ, la réception demande le relevé du mini-bar avant de
+            // clore la note.
+            'bookings.minibar.request' => ['manager', 'reception'],
             'bookings.checkin_code.send' => ['manager', 'reception'],
             'bookings.confirm' => ['manager', 'reception'],
             'bookings.creer' => ['manager', 'reception'],
@@ -894,6 +905,19 @@ class PermissionCatalog
             'housekeeping.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             // Qui a nettoyé, contrôlé, rechargé quelle chambre, et à quelle heure.
             'housekeeping.journal.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            // Mini-bars : le responsable des étages règle articles, prix, dépôt
+            // et dotations ; l'équipe relève les consommations ; la gouvernante
+            // recharge depuis le dépôt. Les montants restent hors de vue de
+            // l'équipe : la page des réglages ne lui est pas ouverte.
+            'housekeeping.minibar.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.depot' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.articles.creer' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.articles.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.standards.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.rooms.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.rooms.modifier' => ['housekeeping_leader', 'manager'],
+            'housekeeping.minibar.check' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.restock' => ['housekeeping_leader', 'housekeeping_supervisor', 'manager'],
 
             // ── Clients ──
             'customers.creer' => ['manager', 'reception'],

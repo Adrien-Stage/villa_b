@@ -399,6 +399,11 @@
   "reception_chief",
   "support"
  ],
+ "bookings.minibar.request": [
+  "manager",
+  "reception",
+  "reception_chief"
+ ],
  "bookings.payment.add": [
   "manager",
   "reception",
@@ -1370,6 +1375,56 @@
   "manager",
   "quality_auditor",
   "support"
+ ],
+ "housekeeping.minibar.articles.store": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.minibar.articles.update": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.minibar.check": [
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager"
+ ],
+ "housekeeping.minibar.depot": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.minibar.index": [
+  "admin",
+  "controller",
+  "housekeeping_leader",
+  "housekeeping_supervisor",
+  "manager",
+  "quality_auditor",
+  "support"
+ ],
+ "housekeeping.minibar.restock": [
+  "housekeeping_leader",
+  "housekeeping_supervisor",
+  "manager"
+ ],
+ "housekeeping.minibar.rooms.show": [
+  "admin",
+  "controller",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "quality_auditor",
+  "support"
+ ],
+ "housekeeping.minibar.rooms.update": [
+  "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.minibar.standards.update": [
+  "housekeeping_leader",
+  "manager"
  ],
  "housekeeping.ready": [
   "housekeeping_leader",

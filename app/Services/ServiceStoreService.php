@@ -83,4 +83,64 @@ class ServiceStoreService
             ]);
         });
     }
+
+    /**
+     * Sortie du dépôt vers un lieu qui reste du stock de l'hôtel : le mini-bar
+     * d'une chambre. Même article, même compte : aucune charge ici, elle
+     * naîtra à la consommation. L'article sort au coût moyen du dépôt.
+     */
+    public function issue(
+        ServiceStore $store,
+        StockItem $item,
+        float $quantity,
+        string $sourceType,
+        ?int $sourceId = null,
+        ?string $reason = null
+    ): ServiceStoreMovement {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('La quantité sortie doit être positive.');
+        }
+
+        return DB::transaction(function () use ($store, $item, $quantity, $sourceType, $sourceId, $reason) {
+            ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
+
+            if ($inventaire = ServiceStoreCountService::inProgress($store)) {
+                throw new \RuntimeException(
+                    "Inventaire {$inventaire->reference} en cours au dépôt {$store->name} : rien n'en sort avant sa clôture."
+                );
+            }
+
+            $stock = ServiceStoreStock::query()
+                ->where('service_store_id', $store->id)
+                ->where('stock_item_id', $item->id)
+                ->lockForUpdate()
+                ->first();
+
+            $courant = (float) ($stock?->current_stock ?? 0);
+            if ($stock === null || $courant + 0.0001 < $quantity) {
+                throw new \RuntimeException(
+                    "Le dépôt {$store->name} n'a plus que " . rtrim(rtrim(number_format($courant, 3, ',', ' '), '0'), ',')
+                    . " {$item->unit} de {$item->name}."
+                );
+            }
+
+            $nouveau = round($courant - $quantity, 3);
+            $stock->update(['current_stock' => $nouveau]);
+
+            return ServiceStoreMovement::create([
+                'service_store_id' => $store->id,
+                'stock_item_id'    => $item->id,
+                'type'             => ServiceStoreMovement::TYPE_OUT,
+                'quantity'         => -$quantity,
+                'stock_after'      => $nouveau,
+                'unit_cost'        => (int) $stock->average_cost,
+                'stock_account'    => $item->stockAccount(),
+                'source_type'      => $sourceType,
+                'source_id'        => $sourceId,
+                'reason'           => $reason,
+                'user_id'          => Auth::id(),
+                'occurred_at'      => now(),
+            ]);
+        });
+    }
 }

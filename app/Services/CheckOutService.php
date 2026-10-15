@@ -69,6 +69,9 @@ class CheckOutService
                 ->whereIn('status', ['pending', 'in_progress'])
                 ->update(['status' => 'cancelled', 'notes' => "Départ du client ({$booking->booking_number})"]);
 
+            // Sans relevé du mini-bar au départ, il reste dû au ménage qui suit.
+            app(MinibarService::class)->auDepart($booking->fresh('room'));
+
             // 4. Attribue les points fidélité
             $this->loyaltyService->awardPoints($booking);
 

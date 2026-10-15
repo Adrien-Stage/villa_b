@@ -46,12 +46,20 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Housekeeping</h1>
         <p class="text-sm text-primary/50">Pilotage du nettoyage : priorisation, affectation des équipes et suivi du cycle des chambres.</p>
     </div>
-    @droit('housekeeping.journal.voir')
-        <a href="{{ route('housekeeping.journal.index') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">
-            <i data-lucide="list-checks" class="w-4 h-4"></i> Suivi des chambres
-        </a>
-    @enddroit
+    <div class="flex flex-wrap gap-2">
+        @droit('housekeeping.minibar.voir')
+            <a href="{{ route('housekeeping.minibar.index') }}"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-lucide="wine" class="w-4 h-4"></i> Mini-bars
+            </a>
+        @enddroit
+        @droit('housekeeping.journal.voir')
+            <a href="{{ route('housekeeping.journal.index') }}"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-lucide="list-checks" class="w-4 h-4"></i> Suivi des chambres
+            </a>
+        @enddroit
+    </div>
 </div>
 
 <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
@@ -154,12 +162,19 @@
                             </div>
                         @endif
                         <div class="mt-auto flex gap-2">
+                            @if(\App\Services\MinibarService::releveDuAuMenage($room))
+                                <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                                   class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                                    <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
+                                </a>
+                            @else
                             <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
                                 @csrf
                                 <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
                                     <i data-lucide="check" class="w-4 h-4"></i> Marquer nettoyée
                                 </button>
                             </form>
+                            @endif
                             <form method="POST" action="{{ route('housekeeping.issue', $room) }}" class="flex gap-1"
                                   onsubmit="const n = prompt('Décrire le problème :'); if(!n){return false;} this.issue_notes.value = n;">
                                 @csrf
@@ -190,6 +205,12 @@
                             Nettoyage terminé{{ $quand !== '' ? ' ' . $quand : '' }}, en attente de contrôle.
                         </div>
                         <div class="mt-auto flex gap-2">
+                            @if($room->aUnMiniBar() && !$room->miniBarComplet())
+                                <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                                   class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                                    <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger le mini-bar
+                                </a>
+                            @else
                             <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                                 @csrf
                                 <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
@@ -203,6 +224,7 @@
                                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </div>
 

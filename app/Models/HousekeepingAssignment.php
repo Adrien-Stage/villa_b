@@ -102,4 +102,10 @@ class HousekeepingAssignment extends Model
     {
         return $this->belongsTo(User::class, 'released_by');
     }
+
+    /** Relevés du mini-bar faits pendant ce passage. */
+    public function minibarChecks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MinibarCheck::class);
+    }
 }

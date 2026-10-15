@@ -393,6 +393,7 @@
                                 @module('housekeeping')
                                     <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
                                     <x-sidebar-link route="housekeeping.journal.index" icon="list-checks">Suivi des chambres</x-sidebar-link>
+                                    <x-sidebar-link route="housekeeping.minibar.index" icon="wine">Mini-bars</x-sidebar-link>
                                 @endmodule
                             @endpour
 

@@ -465,6 +465,8 @@
     {{-- Colonne centrale : Folio --}}
     <div class="lg:col-span-2 space-y-4">
 
+        @include('bookings.partials.minibar')
+
         {{-- Folio --}}
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
