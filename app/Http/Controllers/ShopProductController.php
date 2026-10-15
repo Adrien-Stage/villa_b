@@ -199,17 +199,14 @@ class ShopProductController extends Controller
      */
     private function generateSku(int $tenantId): string
     {
-        $lastProduct = ShopProduct::query()
+        // Le plus grand numéro est cherché ici plutôt que par une requête
+        // propre à un moteur : même résultat sous PostgreSQL et SQLite.
+        $dernier = ShopProduct::query()
             ->where('sku', 'like', 'ART-%')
-            ->orderByRaw("CAST(SUBSTRING(sku FROM 5) AS INTEGER) DESC")
-            ->first();
+            ->pluck('sku')
+            ->map(fn (string $sku) => preg_match('/^ART-(\d+)$/', $sku, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
 
-        if ($lastProduct && preg_match('/^ART-(\d+)$/', $lastProduct->sku, $matches)) {
-            $nextNumber = (int) $matches[1] + 1;
-        } else {
-            $nextNumber = 1;
-        }
-
-        return 'ART-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        return 'ART-' . str_pad($dernier + 1, 6, '0', STR_PAD_LEFT);
     }
 }

@@ -54,3 +54,15 @@ test("supprimer un article de la boutique aboutit et laisse une trace", function
     expect(ShopProduct::find($article->id))->toBeNull();
     expect(\App\Models\AuditLog::where('action', 'like', '%Bracelet artisanal%')->exists())->toBeTrue();
 });
+
+test("le code d'un article laissé vide est généré à la suite du dernier", function () {
+    \App\Models\Tenant::updateOrCreate(['slug' => 'wetchah-app'], ['name' => 'Hôtel de test', 'is_active' => true]);
+    $gerant = gerantBoutique();
+    $article = articleBoutique(); // ART-000001
+
+    $this->actingAs($gerant)->post(route('shop.products.store'), ['shop_category_id' => $article->shop_category_id, 'name' => 'Collier',
+        'sku' => '', 'price' => 12000, 'stock_quantity' => 3, 'reorder_level' => 1, 'is_active' => 1])->assertSessionHas('success');
+
+    expect(ShopProduct::where('name', 'Collier')->value('sku'))->toBe('ART-000002');
+    $this->actingAs($gerant)->get(route('shop.products.create'))->assertOk()->assertSee('ART-000003');
+});
