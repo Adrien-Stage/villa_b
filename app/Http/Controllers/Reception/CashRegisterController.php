@@ -15,7 +15,7 @@ class CashRegisterController extends Controller
     {
         $sessions = CashRegisterSession::query()
             ->where('module', 'reception')
-            ->with('user')
+            ->with(['user', 'handoverOut'])
             ->orderBy('opened_at', 'desc')
             ->paginate(15);
             
@@ -34,7 +34,25 @@ class CashRegisterController extends Controller
             return redirect()->route('bookings.index')->with('info', 'Vous avez déjà une caisse de réception ouverte.');
         }
 
+        if ($reprise = $this->passationAReprendre()) {
+            return $reprise;
+        }
+
         return view('bookings.cash_register.open');
+    }
+
+    /**
+     * Un tiroir remis en passation attend : on le reprend, après avoir lu ce
+     * que le quart précédent a fait, plutôt que d'ouvrir une caisse à côté.
+     */
+    private function passationAReprendre(): ?\Illuminate\Http\RedirectResponse
+    {
+        $passation = app(\App\Services\PassationService::class)->enAttente()
+            ->first(fn ($p) => $p->from_user_id !== auth()->id());
+
+        return $passation === null ? null : redirect()->route('bookings.handovers.take', $passation)
+            ->with('info', 'Le tiroir de la réception vous attend : prenez connaissance de la passation de '
+                . ($passation->fromUser?->name ?? 'votre collègue') . ' avant d’ouvrir votre caisse.');
     }
 
     public function open(Request $request)
@@ -51,6 +69,10 @@ class CashRegisterController extends Controller
 
         if ($activeSession) {
             return redirect()->route('bookings.index');
+        }
+
+        if ($reprise = $this->passationAReprendre()) {
+            return $reprise;
         }
 
         CashRegisterSession::create([

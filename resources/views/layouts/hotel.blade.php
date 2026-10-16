@@ -353,7 +353,7 @@
                                             <li>
                                                 <a href="{{ route('bookings.index') }}"
                                                     class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                    {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*')
+                                                    {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
                                                     <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
@@ -380,6 +380,18 @@
                                                     Compta Réception
                                                 </a>
                                             </li>
+                                            @droit('bookings.handovers.voir')
+                                            <li>
+                                                <a href="{{ route('bookings.handovers.index') }}"
+                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                    {{ request()->routeIs('bookings.handovers.*')
+                                                        ? 'text-white'
+                                                        : 'text-text-on-dark hover:text-white' }}">
+                                                    <i data-lucide="hand-coins" class="w-3 h-3 flex-shrink-0"></i>
+                                                    Passations
+                                                </a>
+                                            </li>
+                                            @enddroit
                                         </ul>
                                         @endif
                                     </li>
@@ -1002,6 +1014,8 @@
         </header>
 
         @include('partials.group-tabs')
+
+        @include('bookings.handovers.partials.bandeau')
 
         @if(session('assistance_mode'))
             {{-- Bannière permanente : session ouverte par le support technique (PMS) --}}

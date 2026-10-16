@@ -96,6 +96,8 @@ class PermissionCatalog
         'bookings.cash_register.close.creer',
         'bookings.cash_register.disbursements.creer',
         'bookings.cash_register.open.creer',
+        'bookings.handovers.creer',
+        'bookings.handovers.take.creer',
         'bookings.checkIn',
         'bookings.checkOut',
         'bookings.minibar.request',
@@ -415,7 +417,7 @@ class PermissionCatalog
     ];
 
     private const AUDIT_QUALITE_EXCLUS = [
-        'bookings.cash_register.', 'shop.cash_register.', 'restaurant.cash_register.', 'rooms.cost_sheets.', 'customers.export',
+        'bookings.cash_register.', 'bookings.handovers.', 'shop.cash_register.', 'restaurant.cash_register.', 'rooms.cost_sheets.', 'customers.export',
         'bookings.drafts.',
     ];
 
@@ -695,6 +697,13 @@ class PermissionCatalog
             'bookings.cash_register.open' => ['manager', 'reception'],
             'bookings.cash_register.open.creer' => ['manager', 'reception'],
             'bookings.cash_register.voir' => ['controller', 'manager', 'reception'],
+            // Passation de service : le réceptionniste remet le tiroir en fin
+            // de quart et reprend celui de son collègue. La comptabilité, qui
+            // contrôle les caisses, relit les passations.
+            'bookings.handovers.voir' => ['accountant', 'controller', 'manager', 'reception'],
+            'bookings.handovers.creer' => ['manager', 'reception'],
+            'bookings.handovers.take' => ['manager', 'reception'],
+            'bookings.handovers.take.creer' => ['manager', 'reception'],
             'bookings.checkIn' => ['manager', 'reception'],
             'bookings.checkOut' => ['manager', 'reception'],
             // Au départ, la réception demande le relevé du mini-bar avant de

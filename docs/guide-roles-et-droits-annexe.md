@@ -13,10 +13,10 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 122 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
-| Manager (`manager`) | 2 | — | 120 | 100 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
-| Chef de réception (`reception_chief`) | 3 | `reception` | 32 | 46 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Factures, Planning |
-| Réceptionniste (`reception`) | 4 | — | 30 | 30 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Factures |
+| Administrateur (`admin`) | 1 | — | 124 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Manager (`manager`) | 2 | — | 122 | 102 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
+| Chef de réception (`reception_chief`) | 3 | `reception` | 34 | 48 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Factures, Planning |
+| Réceptionniste (`reception`) | 4 | — | 32 | 32 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Factures |
 | Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 12 | 27 | Économat, Paramètres, Housekeeping, Planning |
 | Gouvernante (`housekeeping_supervisor`) | 4 | — | 8 | 12 | Économat, Housekeeping |
 | Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 6 | 10 | Économat, Housekeeping |
@@ -29,11 +29,11 @@
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 8 | 8 | Économat, Boutique |
 | Chef économe (`econome`) | 3 | `storekeeper` | 31 | 53 | Économat, Planning |
 | Magasinier (`storekeeper`) | 4 | — | 24 | 7 | Économat |
-| Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 32 | 26 | Comptabilité, Économat, Chambres, Planning |
-| Comptable (`accountant`) | 4 | — | 32 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 88 | 0 | — |
+| Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 33 | 26 | Comptabilité, Économat, Chambres, Planning |
+| Comptable (`accountant`) | 4 | — | 33 | 21 | Comptabilité, Économat, Chambres |
+| Contrôleur de gestion (`controller`) | transversal | — | 89 | 0 | — |
 | Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 71 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 102 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 104 | 0 | — |
 
 ## Droit par droit
 
@@ -69,33 +69,37 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 ### Réservations
 
-| Droit | Nature | Admin | Manager | Chef réc. | Récep. | Contrôleur | Auditeur | Support |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `bookings.approve` | **agit** |  | ✓ |  |  |  |  |  |
-| `bookings.cancel` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.cancellation_receipt` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `bookings.cash_register.close` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |
-| `bookings.cash_register.close.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.cash_register.disbursements.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.cash_register.open` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |
-| `bookings.cash_register.open.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.cash_register.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `bookings.checkIn` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.checkOut` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.checkin_code.send` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.confirm` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.drafts.continue` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |
-| `bookings.drafts.resume` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |
-| `bookings.drafts.save` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.drafts.supprimer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.drafts.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `bookings.folio.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.folio.remove` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.minibar.request` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.modifier` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.payment.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `bookings.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Droit | Nature | Admin | Manager | Chef réc. | Récep. | RAF | Comptable | Contrôleur | Auditeur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `bookings.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |
+| `bookings.cancel` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cancellation_receipt` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `bookings.cash_register.close` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
+| `bookings.cash_register.close.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.disbursements.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.open` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
+| `bookings.cash_register.open.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ |
+| `bookings.checkIn` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.checkOut` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.checkin_code.send` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.confirm` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.drafts.continue` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
+| `bookings.drafts.resume` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
+| `bookings.drafts.save` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.drafts.supprimer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.drafts.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ |
+| `bookings.folio.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.folio.remove` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.handovers.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.handovers.take` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
+| `bookings.handovers.take.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.handovers.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| `bookings.minibar.request` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.modifier` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.payment.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Groupes
 

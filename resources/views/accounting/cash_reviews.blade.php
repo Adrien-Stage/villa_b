@@ -76,6 +76,22 @@
                     </div>
                 @endif
 
+                {{-- Tiroir passé au quart suivant : le collègue qui l'a repris l'a recompté. --}}
+                @if ($passation = $session->handoverOut)
+                    <div class="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+                        <span class="font-semibold">Remis en passation</span> à {{ $passation->handed_at->format('d/m H:i') }} :
+                        @if ($passation->isPending())
+                            en attente de reprise.
+                        @else
+                            repris par {{ $passation->toUser?->name }} à {{ $passation->taken_at?->format('H:i') }},
+                            {{ $fcfa($passation->received_amount) }} recomptés{{ (int) $passation->discrepancy_amount !== 0 ? ' — écart à la remise : ' . $fcfa($passation->discrepancy_amount) : ', sans écart' }}.
+                        @endif
+                        @droit('bookings.handovers.voir')
+                            <a href="{{ route('bookings.handovers.show', $passation) }}" class="underline font-semibold">Voir la passation</a>
+                        @enddroit
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('accounting.cash_reviews.store', $session) }}"
                       class="mt-4 flex flex-col gap-3 border-t border-secondary/15 pt-4 sm:flex-row sm:items-end">
                     @csrf
