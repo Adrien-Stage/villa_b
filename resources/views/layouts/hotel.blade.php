@@ -278,18 +278,15 @@
                 $estComptable = auth()->check() && auth()->user()->exerce(['accountant']);
 
                 $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
-                $gereEconomat   = $droits->allows($utilisateur, 'economat.items.voir')
-                                  || $droits->allows($utilisateur, 'economat.orders.voir')
-                                  || $droits->allows($utilisateur, 'economat.stock_counts.voir');
-                $tientLesLivres = $droits->allows($utilisateur, 'accounting.voir');
+                $groupeDesDemandes = \App\Support\Navigation::groupeDesDemandes($utilisateur);
 
-                $demandesEnComptabilite = $peutDemander && $tientLesLivres && !$gereEconomat;
-                $afficheEconomat = !$estComptable
-                    || $droits->allows($utilisateur, 'economat.voir')
-                    || $droits->allows($utilisateur, 'economat.items.voir')
-                    || $droits->allows($utilisateur, 'economat.suppliers.voir')
-                    || $droits->allows($utilisateur, 'economat.requisitions.voir')
-                    || $droits->allows($utilisateur, 'economat.stock_counts.voir');
+                $demandesEnComptabilite = $peutDemander && $groupeDesDemandes === 'accounting';
+                // Le libellé dit l'étendue : qui ne consulte que ses propres
+                // demandes lit « Mes demandes à l'économat ».
+                $libelleDemandes = $droits->scopeFor($utilisateur, 'economat.requisitions.voir') === \App\Support\PermissionScope::PROPRE
+                    ? "Mes demandes à l'économat"
+                    : "Demandes à l'économat";
+                $afficheEconomat = \App\Support\Navigation::tientLEconomat($utilisateur);
 
                 $activeGroupId = $activeGroup['id'] ?? null;
             @endphp
@@ -397,6 +394,18 @@
                                 @endmodule
                             @endpour
 
+                            {{-- La réception et le housekeeping adressent leurs
+                                 demandes à l'économat sans le tenir : elles
+                                 partent d'ici, non de l'application Économat. --}}
+                            @if($groupeDesDemandes === 'hotel')
+                                @droit('economat.requisitions.voir')
+                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
+                                @enddroit
+                                @droit('economat.purchase_requests.voir')
+                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                                @enddroit
+                            @endif
+
                             @pour('manager')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
                                 @endpour
@@ -485,6 +494,14 @@
                             @pour('manager','restaurant_manager')
                                 <x-sidebar-link route="restaurant.restaurants.index" icon="store">Restaurants</x-sidebar-link>
                             @endpour
+                            @if($groupeDesDemandes === 'restaurant')
+                                @droit('economat.requisitions.voir')
+                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
+                                @enddroit
+                                @droit('economat.purchase_requests.voir')
+                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                                @enddroit
+                            @endif
                             @php
                                 $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
                             @endphp
@@ -974,15 +991,7 @@
                     {{ ucfirst(\Carbon\Carbon::now()->locale('fr')->isoFormat('ddd. D MMM')) }}
                 </span>
 
-                <form method="POST" action="{{ route('logout') }}" class="inline-flex items-center ml-1 sm:ml-2">
-                    @csrf
-                    <button type="submit"
-                            title="Se déconnecter"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-800 border border-red-200 transition-all shadow-xs">
-                        <i data-lucide="log-out" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                        <span class="hidden sm:inline">Déconnexion</span>
-                    </button>
-                </form>
+                <x-menu-compte />
             </div>
         </header>
 

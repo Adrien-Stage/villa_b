@@ -197,8 +197,10 @@ test("les clés importables sont celles que l'application relit vraiment", funct
 test("les onglets Housekeeping et Boutique n'affichent plus de réglage factice", function () {
     $this->actingAs(settingsManager());
 
+    // L'onglet Housekeeping ne porte que des réglages réels : les mini-bars,
+    // quand le module housekeeping est en service.
     $this->get(route('settings.index', ['tab' => 'housekeeping']))->assertOk()
-        ->assertSee('pas de réglage propre')
+        ->assertSee('check-out')
         ->assertDontSee('Temps alloué par tâche');
 
     $this->get(route('settings.index', ['tab' => 'shop']))->assertOk()

@@ -53,7 +53,11 @@ class Navigation
                 'text_color'  => 'text-indigo-600',
                 'bg_soft'     => 'bg-indigo-50',
                 'border_color'=> 'border-indigo-100',
-                'url'         => route('rooms.index'),
+                // La tuile ouvre le premier écran que la personne peut voir :
+                // le housekeeping n'a pas les Chambres, il arrive à son tableau.
+                'url'         => self::premiereRoutePermise($user, [
+                    'rooms.index', 'bookings.index', 'agenda.index', 'housekeeping.index', 'reception.pos.index',
+                ]) ?? route('rooms.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -74,25 +78,17 @@ class Navigation
                 'text_color'  => 'text-amber-600',
                 'bg_soft'     => 'bg-amber-50',
                 'border_color'=> 'border-amber-100',
-                'url'         => route('restaurant.orders.index'),
+                'url'         => self::premiereRoutePermise($user, [
+                    'restaurant.orders.index', 'restaurant.kitchen.index', 'restaurant.bar.index', 'restaurant.billing.index',
+                    'restaurant.breakfast.index', 'restaurant.banquets.index', 'restaurant.menus.index', 'restaurant.restaurants.index',
+                ]) ?? route('restaurant.orders.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
-        // 3. ÉCONOMAT
-        $peutVoirEconomat = !$estComptable || (
-            $droits->allows($user, 'economat.voir')
-            || $droits->allows($user, 'economat.items.voir')
-            || $droits->allows($user, 'economat.suppliers.voir')
-            || $droits->allows($user, 'economat.requisitions.voir')
-            || $droits->allows($user, 'economat.stock_counts.voir')
-        );
-        $afficheEconomat = $peutVoirEconomat && (
-            $user->isAdmin() ||
-            collect(['economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir'])
-                ->contains(fn ($d) => $droits->allows($user, $d))
-        );
-        if ($afficheEconomat) {
+        // 3. ÉCONOMAT — à qui tient le magasin. Les services qui ne font qu'y
+        // adresser des demandes les font depuis leur propre application.
+        if (self::tientLEconomat($user)) {
             $groups[] = [
                 'id'          => 'economat',
                 'title'       => 'Économat',
@@ -103,7 +99,10 @@ class Navigation
                 'text_color'  => 'text-emerald-600',
                 'bg_soft'     => 'bg-emerald-50',
                 'border_color'=> 'border-emerald-100',
-                'url'         => route('economat.index'),
+                'url'         => self::premiereRoutePermise($user, [
+                    'economat.index', 'economat.items.index', 'economat.orders.index', 'economat.receipts.index',
+                    'economat.stock_counts.index', 'economat.suppliers.index', 'economat.movements.index',
+                ]) ?? route('economat.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -122,7 +121,9 @@ class Navigation
                 'text_color'  => 'text-purple-600',
                 'bg_soft'     => 'bg-purple-50',
                 'border_color'=> 'border-purple-100',
-                'url'         => route('accounting.index'),
+                'url'         => self::premiereRoutePermise($user, [
+                    'accounting.index', 'accounting.ledger.index', 'rooms.cost_sheets.index',
+                ]) ?? route('accounting.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -164,7 +165,8 @@ class Navigation
                 'text_color'  => 'text-rose-600',
                 'bg_soft'     => 'bg-rose-50',
                 'border_color'=> 'border-rose-100',
-                'url'         => route('shop.products.index'),
+                'url'         => self::premiereRoutePermise($user, ['shop.products.index', 'shop.orders.index'])
+                    ?? route('shop.products.index'),
                 'type'        => self::TYPE_TABS,
             ];
         }
@@ -297,6 +299,85 @@ class Navigation
     }
 
     /**
+     * Voit-il le magasin ? L'économe, le magasinier, la direction, le
+     * contrôle, et qui en a reçu une entrée par la matrice des droits. Les
+     * demandes (réquisitions, demandes d'achat) n'en sont pas : les autres
+     * services les adressent depuis leur propre application.
+     */
+    public static function tientLEconomat(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        $droits = app(PermissionResolver::class);
+
+        foreach (PermissionCatalog::droitsDuModule('economat') as $droit) {
+            if (str_starts_with($droit, 'economat.requisitions.') || str_starts_with($droit, 'economat.purchase_requests.')
+                || !PermissionCatalog::estLecture($droit)) {
+                continue;
+            }
+            if ($droits->allows($user, $droit)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Application où vivent les demandes à l'économat de cette personne :
+     * l'Économat pour qui le tient, sinon celle de son service.
+     */
+    public static function groupeDesDemandes(?User $user): string
+    {
+        if ($user === null || self::tientLEconomat($user)) {
+            return 'economat';
+        }
+
+        return match (true) {
+            app(PermissionResolver::class)->allows($user, 'accounting.voir') => 'accounting',
+            $user->exerce(['housekeeping_staff', 'housekeeping_supervisor', 'reception']) => 'hotel',
+            $user->exerce(['restaurant_staff', 'restaurant_cook', 'cashier']) => 'restaurant',
+            $user->exerce(['shop_cashier']) => 'shop',
+            default => 'economat',
+        };
+    }
+
+    /**
+     * Première de ces routes que la personne peut ouvrir — droit et module —,
+     * ou null. Une tuile mène là, plutôt qu'à un écran qui la refuserait.
+     *
+     * @param  list<string>  $routes
+     */
+    public static function premiereRoutePermise(User $user, array $routes): ?string
+    {
+        $droits = app(PermissionResolver::class);
+        $modules = ['housekeeping.' => 'housekeeping', 'restaurant.' => 'restaurant', 'shop.' => 'shop'];
+
+        foreach ($routes as $route) {
+            if (!\Illuminate\Support\Facades\Route::has($route)) {
+                continue;
+            }
+            foreach ($modules as $prefixe => $module) {
+                if (str_starts_with($route, $prefixe) && !TenantModules::has($module)) {
+                    continue 2;
+                }
+            }
+
+            $droit = PermissionCatalog::permissionForRoute($route);
+            if (PermissionCatalog::roles($droit) === [] || $droits->allows($user, $droit)) {
+                return route($route);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Détermine le groupe actif selon la route courante.
      *
      * @return array<string, mixed>|null
@@ -313,9 +394,10 @@ class Navigation
 
         // Groupes avec Sidebar
         if (str_starts_with($routeName, 'economat.')) {
-            // Cas particulier : Mes demandes pour le comptable relève de la comptabilité
-            if ($estComptable && $routeName === 'economat.requisitions.index') {
-                return self::groupInfo('accounting');
+            // Les demandes à l'économat de qui ne le tient pas vivent dans
+            // l'application de son service.
+            if (str_starts_with($routeName, 'economat.requisitions.') || str_starts_with($routeName, 'economat.purchase_requests.')) {
+                return self::groupInfo(self::groupeDesDemandes($user));
             }
             return self::groupInfo('economat');
         }
@@ -538,6 +620,28 @@ class Navigation
                     'icon'   => 'calculator',
                     'active' => request()->routeIs('shop.cash_register.*'),
                 ];
+            }
+            // La boutique adresse ses demandes à l'économat depuis chez elle.
+            if (self::groupeDesDemandes($user) === 'shop') {
+                $droits = app(PermissionResolver::class);
+                if ($droits->allows($user, 'economat.requisitions.voir')) {
+                    $tabs[] = [
+                        'route'  => 'economat.requisitions.index',
+                        'label'  => $droits->scopeFor($user, 'economat.requisitions.voir') === PermissionScope::PROPRE
+                            ? 'Mes demandes à l’économat'
+                            : 'Demandes à l’économat',
+                        'icon'   => 'inbox',
+                        'active' => request()->routeIs('economat.requisitions.*'),
+                    ];
+                }
+                if ($droits->allows($user, 'economat.purchase_requests.voir')) {
+                    $tabs[] = [
+                        'route'  => 'economat.purchase_requests.index',
+                        'label'  => 'Demandes d’achat',
+                        'icon'   => 'file-question',
+                        'active' => request()->routeIs('economat.purchase_requests.*'),
+                    ];
+                }
             }
         } elseif ($groupId === 'admin') {
             $tabs[] = [

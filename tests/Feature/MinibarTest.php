@@ -282,12 +282,20 @@ test('le grand livre porte la vente au client et la consommation du stock', func
 test("les réglages du mini-bar sont au responsable ; l'équipe relève, la gouvernante recharge", function () {
     $this->actingAs($this->valet)->get(route('housekeeping.minibar.index'))->assertRedirect();
     $this->actingAs($this->valet)->post(route('housekeeping.minibar.restock', $this->room))->assertSessionHas('access_denied_popup', true);
+    // Le valet n'a pas de réglage : Paramètres le mène à son profil.
+    $this->actingAs($this->valet)->get(route('settings.index'))->assertRedirect(route('profile.edit'));
+
+    // La gouvernante suit l'état des mini-bars et consulte leurs réglages dans Paramètres › Housekeeping.
     $this->actingAs($this->gouvernante)->get(route('housekeeping.minibar.index'))->assertOk()
-        ->assertSee('Coca-Cola')->assertDontSee('Ajouter un article');
+        ->assertSee('101')->assertSee('Réglages du mini-bar');
+    $this->actingAs($this->gouvernante)->get(route('settings.index'))->assertOk()
+        ->assertSee('Mini-bars')->assertSee('Coca-Cola')->assertSee('Vous consultez ces réglages')
+        ->assertDontSee('Ajouter un article');
     $this->actingAs($this->gouvernante)->put(route('housekeeping.minibar.articles.update', $this->aCoca), ['name' => 'Coca', 'price' => 1])
         ->assertSessionHas('access_denied_popup', true);
-    $this->actingAs($this->responsable)->get(route('housekeeping.minibar.index'))->assertOk()
-        ->assertSee('Ajouter un article');
+
+    $this->actingAs($this->responsable)->get(route('settings.index', ['tab' => 'housekeeping']))->assertOk()
+        ->assertSee('Ajouter un article')->assertDontSee('Vous consultez ces réglages');
 });
 
 test('consommé après le départ : une facture complémentaire, encaissée plus tard à la réception', function () {

@@ -7,7 +7,6 @@ use App\Models\AuditLog;
 use App\Models\MinibarArticle;
 use App\Models\MinibarCheck;
 use App\Models\MinibarRestock;
-use App\Models\MinibarStandard;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\ServiceStore;
@@ -33,11 +32,9 @@ class HousekeepingMinibarController extends Controller
     {
     }
 
-    /** Réglages et état de tous les mini-bars. */
+    /** État de tous les mini-bars ; leurs réglages sont dans Paramètres › Housekeeping. */
     public function index(): View
     {
-        $articles = MinibarArticle::query()->with('item')->ordered()->get();
-
         $chambres = Room::query()
             ->with(['roomType', 'minibarLines'])
             ->where('is_active', true)
@@ -52,17 +49,8 @@ class HousekeepingMinibarController extends Controller
             ->keyBy('room_id');
 
         return view('housekeeping.minibar.index', [
-            'articles'        => $articles,
-            'depot'           => MinibarService::depot(),
-            'depots'          => ServiceStore::query()->active()->orderBy('name')->get(),
-            'types'           => RoomType::query()->orderBy('name')->get(),
-            'standards'       => MinibarStandard::query()->get()->groupBy('room_type_id')
-                ->map(fn ($lignes) => $lignes->pluck('quantity', 'minibar_article_id')),
             'chambres'        => $chambres,
             'derniersReleves' => $derniersReleves,
-            'articlesLibres'  => StockItem::query()->where('is_active', true)
-                ->whereNotIn('id', $articles->pluck('stock_item_id'))
-                ->orderBy('name')->get(['id', 'name', 'unit']),
         ]);
     }
 

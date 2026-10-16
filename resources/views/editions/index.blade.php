@@ -6,6 +6,7 @@
     $icones = [
         \App\Editions\Edition::FINANCES => 'landmark',
         \App\Editions\Edition::HEBERGEMENT => 'bed-double',
+        \App\Editions\Edition::HOUSEKEEPING => 'sparkles',
         \App\Editions\Edition::RESTAURATION => 'utensils',
         \App\Editions\Edition::ACHATS => 'package',
         \App\Editions\Edition::PERSONNEL => 'users',

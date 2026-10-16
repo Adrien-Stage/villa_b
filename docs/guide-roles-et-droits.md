@@ -162,9 +162,10 @@ niveau que l'équipe (niveau 4) mais reçoit ses droits propres.
 - *Fait* : tout ce que font la gouvernante et le valet, plus composer les
   équipes, régler les paramètres du housekeeping et viser les demandes du
   service à l'économat.
-- *Règle les mini-bars* : les articles (un article de l'économat et son prix au
-  client), le dépôt d'où ils sortent, la dotation de chaque type de chambre et
-  celle d'une chambre en particulier.
+- *Règle les mini-bars* (Paramètres › Housekeeping) : les articles (un article
+  de l'économat et son prix au client), le dépôt d'où ils sortent, la dotation
+  de chaque type de chambre ; et depuis la page d'une chambre, sa dotation
+  propre.
 - *Suit* : qui a nettoyé, contrôlé ou remis en vente chaque chambre, et à quelle
   heure (« Suivi des chambres »).
 
@@ -178,6 +179,8 @@ niveau que l'équipe (niveau 4) mais reçoit ses droits propres.
   a vidé le mini-bar. Si le dépôt manque d'un article, elle contrôle quand même
   la chambre en indiquant pourquoi.
 - *Suit* : le travail de chaque équipe dans « Suivi des chambres ».
+- *Consulte* : les réglages des mini-bars (Paramètres › Housekeeping), sans les
+  modifier.
 - *Reçoit* : l'alerte de chaque chambre nettoyée à contrôler.
 - *Ne fait pas* : composer les équipes.
 
@@ -199,6 +202,18 @@ sera bientôt vendable.
 Le mini-bar : ce que l'équipe relève consommé part au folio du client pendant le
 séjour ; s'il est déjà parti, la consommation part sur une facture
 complémentaire, que la réception encaisse quand le client la règle.
+
+Éditions › Housekeeping : feuille de route des équipes (pour tout le service,
+chacun la sienne), rapport d'activité, journal, incidents, état des mini-bars,
+relevés et rechargements (pour l'encadrement).
+
+### Demandes à l'économat
+
+Seuls l'économe, le magasinier, la direction et le contrôle voient
+l'application Économat. Les autres services y adressent leurs demandes
+(réquisitions, et demandes d'achat pour les chefs) depuis leur propre
+application : Hôtel pour la réception et le housekeeping, Restaurant, Boutique,
+Comptabilité pour le comptable.
 
 ### Restaurant
 

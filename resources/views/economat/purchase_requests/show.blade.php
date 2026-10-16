@@ -81,9 +81,17 @@
                 <span class="font-bold text-xs text-emerald-800 uppercase block">Bon(s) de commande fournisseur généré(s) :</span>
                 <div class="flex flex-wrap gap-2">
                     @foreach($request->purchaseOrders as $po)
-                        <a href="{{ route('economat.orders.show', $po) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 rounded-lg text-xs font-mono font-bold hover:bg-emerald-100 transition-colors">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> {{ $po->number }} ({{ $po->supplier?->name ?? 'Fournisseur' }})
-                        </a>
+                        {{-- Le chef de service suit sa demande sans tenir l'économat :
+                             le bon de commande lui est nommé, pas ouvert. --}}
+                        @droit('economat.orders.voir')
+                            <a href="{{ route('economat.orders.show', $po) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 rounded-lg text-xs font-mono font-bold hover:bg-emerald-100 transition-colors">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> {{ $po->number }} ({{ $po->supplier?->name ?? 'Fournisseur' }})
+                            </a>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 rounded-lg text-xs font-mono font-bold">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> {{ $po->number }} ({{ $po->supplier?->name ?? 'Fournisseur' }})
+                            </span>
+                        @enddroit
                     @endforeach
                 </div>
             </div>

@@ -41,7 +41,7 @@ function liens(User $utilisateur): array
     preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
     preg_match_all('#<span class="sidebar-libelle">(.*?)</span>#s', $nav[0] ?? '', $l);
 
-    return array_map('trim', $l[1] ?? []);
+    return array_map(fn ($libelle) => trim(html_entity_decode($libelle, ENT_QUOTES)), $l[1] ?? []);
 }
 
 test("sans droit accordé, le comptable ne voit pas l'économat", function () {
@@ -126,7 +126,7 @@ test("le libellé des demandes dit l'étendue", function () {
     $chef = User::factory()->create(['role' => 'restaurant_chief']);
 
     // Étendue par défaut : il voit les demandes du service.
-    expect(liens($chef))->toContain('Bons de réquisition')->not->toContain('Mes demandes');
+    expect(liens($chef))->toContain("Demandes à l'économat")->not->toContain("Mes demandes à l'économat");
 
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'restaurant_chief',
@@ -135,7 +135,7 @@ test("le libellé des demandes dit l'étendue", function () {
     ]);
     app(PermissionResolver::class)->forget();
 
-    expect(liens($chef))->toContain('Mes demandes');
+    expect(liens($chef))->toContain("Mes demandes à l'économat");
 });
 
 test("le comptable adresse ses demandes depuis sa propre section", function () {
@@ -159,8 +159,12 @@ test("qui tient le magasin garde ses demandes dans la rubrique Économat", funct
         ->and(mb_strpos($nav[0], 'Bons de réquisition'))->toBeGreaterThan(mb_strpos($nav[0], '>Économat<'));
 });
 
-test("un responsable de service qui ne tient pas les livres garde l'entrée sous Économat", function () {
-    // Il n'a pas de section à lui : la lui retirer de l'Économat le priverait
-    // de tout accès à ses demandes.
-    expect(liens(User::factory()->create(['role' => 'restaurant_chief'])))->toContain('Bons de réquisition');
+test("un responsable de service adresse ses demandes depuis son application, sans voir l'Économat", function () {
+    // Il ne tient pas le magasin : ses demandes partent de sa section, et la
+    // rubrique Économat, qui ne lui montrerait rien d'autre, lui reste fermée.
+    $liens = liens(User::factory()->create(['role' => 'restaurant_chief']));
+
+    expect($liens)->toContain("Demandes à l'économat")
+        ->not->toContain('Bons de réquisition')
+        ->not->toContain("Vue d'ensemble");
 });
