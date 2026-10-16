@@ -72,7 +72,9 @@ class CashClosurePolicy
             return false;
         }
 
-        return $user->hasAnyRole(self::ROLES_TEMOINS);
+        // L'administrateur détient tous les droits, sauf celui de contresigner
+        // son propre comptage, comme tout le monde.
+        return $user->isAdmin() || $user->hasAnyRole(self::ROLES_TEMOINS);
     }
 
     /** Libellé lisible du témoin, pour les écrans et les messages. */

@@ -492,6 +492,11 @@ class StockRequisitionController extends Controller
      */
     private function departementsDe(User $user): array
     {
+        // L'administrateur détient tous les droits : il demande pour tout service.
+        if ($user->isAdmin()) {
+            return StockRequisition::DEPARTMENTS;
+        }
+
         $departments = collect(StockRequisition::DEPARTMENT_ROLES)
             ->filter(fn ($roles) => $user->exerce($roles))
             ->keys()

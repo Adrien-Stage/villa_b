@@ -440,9 +440,9 @@ class PermissionCatalog
      * Le gabarit, complété de ce que la hiérarchie et les fonctions de
      * contrôle impliquent :
      *  - un chef détient les droits de ses membres, en chaîne ;
-     *  - l'administrateur consulte tout, règle la configuration et tient
-     *    les comptes. Il n'écrit rien de métier : il administre
-     *    l'application, il ne tient aucun service ;
+     *  - l'administrateur détient tous les droits du PMS. Chacune de ses
+     *    opérations métier est marquée « administrateur » au journal
+     *    d'audit (LogUserActivity) ;
      *  - le support de l'éditeur consulte tout, sans rien extraire ;
      *  - l'auditeur qualité consulte les services d'exploitation.
      *
@@ -456,9 +456,7 @@ class PermissionCatalog
         foreach ($gabarit as $droit => $roles) {
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
-            if (self::estLecture($droit) || in_array($droit, self::ecrituresDeLAdministrateur(), true)) {
-                $roles[] = RoleCatalog::ADMIN;
-            }
+            $roles[] = RoleCatalog::ADMIN;
 
             // Le support diagnostique : il consulte, sans extraire de fichier
             // ni écrire.
@@ -541,7 +539,13 @@ class PermissionCatalog
         return self::CONFIGURATION;
     }
 
-    /** @return list<string> seules écritures de l'administrateur : configuration et comptes */
+    /**
+     * Écritures d'administration : configuration, comptes et droits.
+     * L'administrateur détient aussi toutes les autres ; celles-là ne sont
+     * pas des opérations métier et ne portent pas sa marque au journal.
+     *
+     * @return list<string>
+     */
     public static function ecrituresDeLAdministrateur(): array
     {
         return [...self::CONFIGURATION, ...self::CONFIGURATION_RESTAURANTS, ...self::CONFIGURATION_QUARTS, ...self::PARAMETRES, ...self::ADMINISTRATION];

@@ -162,7 +162,7 @@ class CancellationPolicyService
         ?User $user = null
     ): BookingCancellation {
         $user = $user ?? Auth::user();
-        $waivePenalty = !empty($data['waive_penalty']) && ($user && $user->hasRole('manager'));
+        $waivePenalty = !empty($data['waive_penalty']) && ($user && ($user->hasRole('manager') || $user->isAdmin()));
 
         return DB::transaction(function () use ($booking, $data, $user, $waivePenalty) {
             $now = now();

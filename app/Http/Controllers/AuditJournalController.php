@@ -39,8 +39,10 @@ class AuditJournalController extends Controller
             $requete->where('action', 'like', '%'.$request->string('q').'%');
         }
         if ($request->boolean('interventions')) {
-            // Les actions d'une intervention portent sa référence.
+            // Les opérations de l'administrateur : celles qu'il fait avec ses
+            // droits (marquées « administrateur ») et ses interventions.
             $requete->where(fn ($q) => $q->where('event_type', 'like', 'intervention%')
+                ->orWhere('event_type', 'action_administrateur')
                 ->orWhere('payload', 'like', '%"intervention_id"%'));
         }
 

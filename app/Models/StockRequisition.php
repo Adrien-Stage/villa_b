@@ -205,7 +205,7 @@ class StockRequisition extends Model
     /** @return list<string> services dont cette personne vise les demandes */
     public static function servicesDirigesPar(User $user): array
     {
-        if ($user->exerce(['manager'])) {
+        if ($user->isAdmin() || $user->exerce(['manager'])) {
             return array_keys(self::DEPARTMENTS);
         }
 
@@ -219,7 +219,8 @@ class StockRequisition extends Model
      */
     public static function visaRequis(User $demandeur, string $department): bool
     {
-        return !$demandeur->exerce(['econome', 'manager'])
+        return !$demandeur->isAdmin()
+            && !$demandeur->exerce(['econome', 'manager'])
             && !$demandeur->exerce(self::CHEFS[$department] ?? ['manager']);
     }
 
@@ -230,7 +231,7 @@ class StockRequisition extends Model
             return false;
         }
 
-        if ($user->exerce(['manager'])) {
+        if ($user->isAdmin() || $user->exerce(['manager'])) {
             return true;
         }
 
