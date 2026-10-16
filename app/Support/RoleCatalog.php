@@ -14,8 +14,8 @@ use App\Models\Role;
  *
  * La hiérarchie suit celle d'un hôtel :
  *
- *   1  Administrateur — le service informatique : il administre l'application
- *      et consulte tous les services, sans y saisir d'opération.
+ *   1  Administrateur — le service informatique : il détient tous les droits
+ *      du PMS ; chacune de ses opérations métier est marquée au journal.
  *   2  Manager — la direction des opérations : il supervise tous les services
  *      et valide les décisions qui engagent l'établissement.
  *   3  Chefs de service — ils dirigent leur service et font ce que font leurs
@@ -64,7 +64,7 @@ class RoleCatalog
             [
                 'name' => 'Administrateur',
                 'slug' => self::ADMIN,
-                'description' => 'Service informatique : comptes, rôles, droits et paramètres ; consulte tous les services',
+                'description' => 'Service informatique : tous les droits sur le PMS ; chaque opération métier est marquée au journal d\'audit',
                 'module' => 'it', 'icon' => 'monitor-cog', 'sort_order' => 1, 'is_assignable' => false,
                 'level' => 1, 'statut' => self::ACTIF,
             ],

@@ -13,7 +13,7 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 124 | 28 | Restaurant, Chambres, Paramètres, Rôles & droits, Interventions, Utilisateurs |
+| Administrateur (`admin`) | 1 | — | 124 | 231 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Factures, Planning |
 | Manager (`manager`) | 2 | — | 122 | 102 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 34 | 48 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Factures, Planning |
 | Réceptionniste (`reception`) | 4 | — | 32 | 32 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Factures |
@@ -44,14 +44,14 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | RAF | Comptable | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `rooms.cost_sheets.assumptions` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.assumptions` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
 | `rooms.cost_sheets.document` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |  | ✓ |
 | `rooms.cost_sheets.export` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |  |  |
-| `rooms.cost_sheets.import` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
-| `rooms.cost_sheets.items.creer` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
-| `rooms.cost_sheets.items.modifier` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
-| `rooms.cost_sheets.items.supprimer` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
-| `rooms.cost_sheets.starter` | **agit** |  | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.import` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.items.creer` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.items.modifier` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.items.supprimer` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `rooms.cost_sheets.starter` | **agit** | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  |
 | `rooms.cost_sheets.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |  | ✓ |
 | `rooms.creer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |  |
 | `rooms.export` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |
@@ -64,57 +64,57 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `rooms.types.import` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |  |
 | `rooms.types.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |  |
 | `rooms.types.supprimer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |  |
-| `rooms.updateStatus` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `rooms.updateStatus` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `rooms.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Réservations
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | RAF | Comptable | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `bookings.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |
-| `bookings.cancel` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.approve` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |
+| `bookings.cancel` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.cancellation_receipt` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `bookings.cash_register.close` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
-| `bookings.cash_register.close.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.cash_register.disbursements.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.close.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.disbursements.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.cash_register.open` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
-| `bookings.cash_register.open.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.cash_register.open.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.cash_register.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ |
-| `bookings.checkIn` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.checkOut` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.checkin_code.send` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.confirm` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.checkIn` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.checkOut` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.checkin_code.send` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.confirm` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.drafts.continue` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
 | `bookings.drafts.resume` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
-| `bookings.drafts.save` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.drafts.supprimer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.drafts.save` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.drafts.supprimer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.drafts.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ |
-| `bookings.folio.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.folio.remove` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.handovers.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.folio.add` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.folio.remove` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.handovers.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.handovers.take` | consulte | ✓ | ✓ | ✓ | ✓ |  |  |  |  | ✓ |
-| `bookings.handovers.take.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.handovers.take.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.handovers.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `bookings.minibar.request` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.modifier` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
-| `bookings.payment.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.minibar.request` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.modifier` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `bookings.payment.add` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `bookings.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Groupes
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `groups.addRoom` | **agit** |  | ✓ |  |  |  |  |  |
-| `groups.cancel` | **agit** |  | ✓ |  |  |  |  |  |
-| `groups.checkInAll` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `groups.checkOutAll` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `groups.creer` | **agit** |  | ✓ |  |  |  |  |  |
-| `groups.folio.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `groups.addRoom` | **agit** | ✓ | ✓ |  |  |  |  |  |
+| `groups.cancel` | **agit** | ✓ | ✓ |  |  |  |  |  |
+| `groups.checkInAll` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `groups.checkOutAll` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `groups.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |
+| `groups.folio.add` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `groups.invoice` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |
-| `groups.modifier` | **agit** |  | ✓ |  |  |  |  |  |
-| `groups.payment.add` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `groups.removeRoom` | **agit** |  | ✓ |  |  |  |  |  |
+| `groups.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |
+| `groups.payment.add` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `groups.removeRoom` | **agit** | ✓ | ✓ |  |  |  |  |  |
 | `groups.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Agenda
@@ -127,10 +127,10 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `customers.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `customers.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `customers.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |
-| `customers.import` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
-| `customers.modifier` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `customers.import` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `customers.modifier` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `customers.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### POS Réception
@@ -139,105 +139,105 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `reception.pos.history` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |
 | `reception.pos.receipt` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |
-| `reception.pos.sales.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `reception.pos.sales.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `reception.pos.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Factures
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `invoices.payments.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |
+| `invoices.payments.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `invoices.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Housekeeping
 
 | Droit | Nature | Admin | Manager | Resp. étages | Gouv. | Valet | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `housekeeping.assignments.creer` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |
-| `housekeeping.available` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.clean` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.inspect` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.issue` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.assignments.creer` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
+| `housekeeping.available` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.clean` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.inspect` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.issue` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.journal.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `housekeeping.minibar.articles.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
-| `housekeeping.minibar.articles.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
-| `housekeeping.minibar.check` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.minibar.depot` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
-| `housekeeping.minibar.restock` | **agit** |  | ✓ | ✓ | ✓ |  |  |  |  |
-| `housekeeping.minibar.rooms.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.articles.creer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.articles.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.check` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.minibar.depot` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.restock` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
+| `housekeeping.minibar.rooms.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.minibar.rooms.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `housekeeping.minibar.standards.modifier` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.minibar.standards.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.minibar.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `housekeeping.ready` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.reject` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.stayover` | **agit** |  | ✓ | ✓ | ✓ | ✓ |  |  |  |
-| `housekeeping.teams.creer` | **agit** |  | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.ready` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.reject` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.stayover` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.teams.creer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Restaurant
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `restaurant.banquets.creer` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
-| `restaurant.banquets.modifier` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
-| `restaurant.banquets.payments.creer` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
-| `restaurant.banquets.status` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.banquets.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.banquets.modifier` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.banquets.payments.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.banquets.status` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
 | `restaurant.banquets.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |
 | `restaurant.bar.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.billing.paid` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.billing.paid` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
 | `restaurant.billing.receipt` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  | ✓ | ✓ | ✓ | ✓ |
-| `restaurant.billing.unpaid` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.billing.unpaid` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
 | `restaurant.billing.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  | ✓ | ✓ | ✓ | ✓ |
-| `restaurant.breakfast.serve` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.breakfast.serve` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
 | `restaurant.breakfast.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `restaurant.buffets.close` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
-| `restaurant.buffets.creer` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
-| `restaurant.buffets.entries.creer` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.buffets.close` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.buffets.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.buffets.entries.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
 | `restaurant.buffets.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ |
 | `restaurant.cash_register.close` | consulte | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  | ✓ |
-| `restaurant.cash_register.close.creer` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
-| `restaurant.cash_register.disbursements.creer` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.cash_register.close.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.cash_register.disbursements.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
 | `restaurant.cash_register.open` | consulte | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  | ✓ |
-| `restaurant.cash_register.open.creer` | **agit** |  |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
+| `restaurant.cash_register.open.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  | ✓ |  |  |  |
 | `restaurant.cash_register.voir` | consulte | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ | ✓ |  | ✓ |
 | `restaurant.consumption.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `restaurant.kitchen.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.menus.categories.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
-| `restaurant.menus.categories.modifier` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
-| `restaurant.menus.categories.supprimer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.categories.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.categories.modifier` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.categories.supprimer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
 | `restaurant.menus.export` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |
-| `restaurant.menus.import` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
-| `restaurant.menus.items.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
-| `restaurant.menus.items.modifier` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
-| `restaurant.menus.items.supprimer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.import` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.items.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.items.modifier` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
+| `restaurant.menus.items.supprimer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |  |  |  |
 | `restaurant.menus.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.orders.bar_ready` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.orders.claim` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.orders.creer` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.orders.preparing` | **agit** |  |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
-| `restaurant.orders.ready` | **agit** |  |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
-| `restaurant.orders.reassign` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
-| `restaurant.orders.send_to_kitchen` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.orders.served` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.orders.status` | **agit** |  |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.orders.bar_ready` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.orders.claim` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.orders.creer` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.orders.preparing` | **agit** | ✓ |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
+| `restaurant.orders.ready` | **agit** | ✓ |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
+| `restaurant.orders.reassign` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
+| `restaurant.orders.send_to_kitchen` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.orders.served` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.orders.status` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |  |  |  |
 | `restaurant.orders.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.pantry.categories.creer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.categories.modifier` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.categories.supprimer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.categories.creer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.categories.modifier` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.categories.supprimer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `restaurant.pantry.export` | consulte | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ | ✓ |  |
-| `restaurant.pantry.import` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.items.creer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.items.modifier` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.items.receive` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.items.supprimer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.pantry.movements.creer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.import` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.items.creer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.items.modifier` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.items.receive` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.items.supprimer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.pantry.movements.creer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `restaurant.pantry.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.recipes.creer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.recipes.creer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `restaurant.recipes.export` | consulte | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ | ✓ |  |
-| `restaurant.recipes.import` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.recipes.modifier` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.recipes.produce` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.recipes.supprimer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.recipes.import` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.recipes.modifier` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.recipes.produce` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.recipes.supprimer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `restaurant.recipes.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ | ✓ |
 | `restaurant.restaurants.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |
 | `restaurant.restaurants.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |
@@ -245,14 +245,14 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `restaurant.restaurants.spaces.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |
 | `restaurant.restaurants.team.modifier` | **agit** | ✓ | ✓ |  |  | ✓ |  |  |  |  |  |  |  |
 | `restaurant.restaurants.voir` | consulte | ✓ | ✓ |  |  | ✓ |  |  |  |  | ✓ | ✓ | ✓ |
-| `restaurant.shifts.close` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.shifts.open` | **agit** |  |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
-| `restaurant.stock_counts.close` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.stock_counts.creer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.stock_counts.modifier` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `restaurant.stock_counts.supprimer` | **agit** |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.shifts.close` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.shifts.open` | **agit** | ✓ |  |  |  | ✓ |  | ✓ |  |  |  |  |  |
+| `restaurant.stock_counts.close` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.stock_counts.creer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.stock_counts.modifier` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `restaurant.stock_counts.supprimer` | **agit** | ✓ |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `restaurant.stock_counts.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ | ✓ |
-| `restaurant.waste.creer` | **agit** |  |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
+| `restaurant.waste.creer` | **agit** | ✓ |  |  |  |  | ✓ |  | ✓ |  |  |  |  |
 | `restaurant.waste.voir` | consulte | ✓ | ✓ |  |  | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
 
 ### Boutique
@@ -260,105 +260,105 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. bout. | Vendeur | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `shop.cash_register.close` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |
-| `shop.cash_register.close.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
-| `shop.cash_register.disbursements.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.cash_register.close.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.cash_register.disbursements.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
 | `shop.cash_register.open` | consulte | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |
-| `shop.cash_register.open.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.cash_register.open.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
 | `shop.cash_register.voir` | consulte | ✓ | ✓ |  |  | ✓ |  | ✓ |  | ✓ |
-| `shop.orders.creer` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
-| `shop.orders.paid` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.orders.creer` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.orders.paid` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
 | `shop.orders.receipt` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `shop.orders.refund` | **agit** |  |  |  |  | ✓ | ✓ |  |  |  |
+| `shop.orders.refund` | **agit** | ✓ |  |  |  | ✓ | ✓ |  |  |  |
 | `shop.orders.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `shop.products.creer` | **agit** |  |  |  |  | ✓ |  |  |  |  |
+| `shop.products.creer` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |
 | `shop.products.export` | consulte | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ |  |
-| `shop.products.import` | **agit** |  |  |  |  | ✓ |  |  |  |  |
-| `shop.products.modifier` | **agit** |  |  |  |  | ✓ |  |  |  |  |
-| `shop.products.supprimer` | **agit** |  |  |  |  | ✓ |  |  |  |  |
+| `shop.products.import` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |
+| `shop.products.modifier` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |
+| `shop.products.supprimer` | **agit** | ✓ |  |  |  | ✓ |  |  |  |  |
 | `shop.products.voir` | consulte | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ |
 
 ### Économat
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `economat.categories.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.categories.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.categories.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.categories.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.categories.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.control.suggestions.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.control.suggestions.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.control.suggestions.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.control.variances.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.control.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.count_sheets.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.cuts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.external_issues.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.external_issues.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.external_issues.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.external_issues.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.external_issues.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
 | `economat.external_issues.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.items.adjust` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.adjust` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.items.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.opening` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.transformation.cut` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.items.transformation.open` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.items.transformation.packagings` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.import` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.opening` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.cut` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.items.transformation.open` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.items.transformation.packagings` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.items.transformation.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.items.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.movements.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
 | `economat.movements.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.orders.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.orders.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ |  |
-| `economat.orders.receive` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.orders.send` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.orders.transmit` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.receive` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.orders.send` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.orders.transmit` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.orders.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.purchase_requests.approve` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `economat.purchase_requests.cancel` | **agit** |  |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.convert` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.creer` | **agit** |  |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
-| `economat.purchase_requests.reject` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `economat.purchase_requests.approve` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `economat.purchase_requests.cancel` | **agit** | ✓ |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.convert` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.creer` | **agit** | ✓ |  | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  |  |  |  |
+| `economat.purchase_requests.reject` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `economat.purchase_requests.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
-| `economat.receipts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.receipts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.receipts.direct.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.receipts.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.receipts.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.receipts.direct.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.receipts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
 | `economat.receipts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.requisitions.approve` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.requisitions.cancel` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |  |
-| `economat.requisitions.creer` | **agit** |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |  |
-| `economat.requisitions.deliver` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.requisitions.endorse` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  |  |  |
+| `economat.requisitions.approve` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.cancel` | **agit** | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.creer` | **agit** | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |  |
+| `economat.requisitions.deliver` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.requisitions.endorse` | **agit** | ✓ | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  |  |  | ✓ |  |  |  |  |
 | `economat.requisitions.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.requisitions.reject` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.requisitions.reject` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.requisitions.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `economat.stock_counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stock_counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stock_counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.close` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stock_counts.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.stock_counts.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
-| `economat.stock_counts.import` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
-| `economat.stock_counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stock_counts.import` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stock_counts.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `economat.stock_counts.report` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.stock_counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.stores.counts.cancel` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.close` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.counts.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `economat.stores.counts.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.close` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.counts.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `economat.stores.counts.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.stores.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.stores.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.stores.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.stores.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.suppliers.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.suppliers.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.suppliers.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.suppliers.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.suppliers.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
-| `economat.units.creer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.units.modifier` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
-| `economat.units.supprimer` | **agit** |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.units.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 
 ### Comptabilité
@@ -367,40 +367,40 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|
 | `accounting.cash` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.cash_reviews` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.cash_reviews.creer` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.cash_reviews.creer` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.expenses` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.expenses.creer` | **agit** |  |  | ✓ | ✓ |  |  |
-| `accounting.expenses.modifier` | **agit** |  |  | ✓ | ✓ |  |  |
-| `accounting.expenses.supprimer` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.expenses.creer` | **agit** | ✓ |  | ✓ | ✓ |  |  |
+| `accounting.expenses.modifier` | **agit** | ✓ |  | ✓ | ✓ |  |  |
+| `accounting.expenses.supprimer` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.income_statement` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.journal` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.accounts` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.aged` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.analytic` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.analytic.margins` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.analytic.mirror` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.analytic.mirror` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.auxiliary` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.auxiliary.ledger` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.balance` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.entry` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.entry.reverse` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.entry.reverse` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.general` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.journals` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.ledger.night_audit` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.night_audit.run` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.night_audit.run` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.opening` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.opening.creer` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.opening.creer` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.periods` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.periods.lock` | **agit** |  |  | ✓ | ✓ |  |  |
-| `accounting.ledger.reconcile` | **agit** |  |  | ✓ | ✓ |  |  |
-| `accounting.ledger.reconcile.auto` | **agit** |  |  | ✓ | ✓ |  |  |
-| `accounting.ledger.reconcile.undo` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.periods.lock` | **agit** | ✓ |  | ✓ | ✓ |  |  |
+| `accounting.ledger.reconcile` | **agit** | ✓ |  | ✓ | ✓ |  |  |
+| `accounting.ledger.reconcile.auto` | **agit** | ✓ |  | ✓ | ✓ |  |  |
+| `accounting.ledger.reconcile.undo` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.suppliers` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.suppliers.creer` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.suppliers.creer` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.ledger.suppliers.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `accounting.ledger.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `accounting.ledger.withholding` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
-| `accounting.ledger.years.open` | **agit** |  |  | ✓ | ✓ |  |  |
+| `accounting.ledger.years.open` | **agit** | ✓ |  | ✓ | ✓ |  |  |
 | `accounting.receivables` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.revenue_journal` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `accounting.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -422,41 +422,41 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | RAF | Comptable | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `planning.affectations.creer` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.affectations.supprimer` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.publier` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
-| `planning.recopier` | **agit** |  | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.affectations.creer` | **agit** | ✓ | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.affectations.supprimer` | **agit** | ✓ | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.publier` | **agit** | ✓ | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
+| `planning.recopier` | **agit** | ✓ | ✓ | ✓ |  | ✓ |  |  | ✓ | ✓ |  |  |  | ✓ |  | ✓ |  | ✓ |  |  |  |  |
 | `planning.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Paramètres
 
 | Droit | Nature | Admin | Manager | Chef réc. | Resp. étages | Resp. resto | Chef cuis. | Resp. bout. | Économe | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `settings.cancellation_policies.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.default` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.cancellation_policies.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.default` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.cancellation_policies.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.export` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |  |  |
-| `settings.import` | **agit** |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
+| `settings.import` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
 | `settings.modifier` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
-| `settings.packages.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.packages.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |
-| `settings.packages.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.packages.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.packages.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.partners.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.import` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.packages.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.partners.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ |  |  |
-| `settings.partners.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.partners.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.partners.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.import` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.partners.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.quarts.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.quarts.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.quarts.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.services.creer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.services.export` | consulte | ✓ | ✓ |  |  |  |  |  |  | ✓ | ✓ |  |
-| `settings.services.import` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.services.modifier` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `settings.services.supprimer` | **agit** |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.import` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
+| `settings.services.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
 | `settings.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 
 ### Utilisateurs

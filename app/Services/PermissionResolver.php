@@ -18,8 +18,9 @@ use Illuminate\Support\Facades\Schema;
  *   1. un refus explicite, sur la personne ou sur l'un de ses rôles ;
  *   2. une autorisation explicite, sur la personne ou sur l'un de ses rôles ;
  *   3. le catalogue, qui donne le gabarit par défaut ;
- *   4. pour l'administrateur, une intervention en cours, qui lui ouvre
- *      l'écriture dans les services qu'elle couvre.
+ *   4. pour l'administrateur, une intervention en cours. Il détient
+ *      désormais tous les droits par le catalogue : l'intervention ne sert
+ *      plus qu'à annoncer un travail au manager.
  *
  * Un rôle affecté en lecture seule ne donne que ses droits de consultation,
  * qu'ils viennent du gabarit ou d'une autorisation posée sur ce rôle.

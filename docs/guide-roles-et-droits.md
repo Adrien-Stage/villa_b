@@ -103,9 +103,11 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
   - règle les droits de l'hôtel (rôles et exceptions) ;
   - règle l'onglet Général des paramètres ;
   - décrit les chambres, leurs types, les restaurants et leurs salles ;
-  - consulte tous les services.
-- *Ne fait pas* : encaisser, valider, comptabiliser, servir. Pour agir dans
-  l'exploitation, il déclare une **intervention** (§ 8).
+  - détient **tous les droits du PMS** : il consulte et agit dans tous les
+    services (encaisser, valider, comptabiliser…), sans ouvrir d'intervention.
+- *Tracé* : chacune de ses opérations métier est marquée **« Administrateur »**
+  au journal d'audit (filtre « Opérations de l'administrateur »). Une
+  intervention (§ 8) reste possible pour annoncer un travail au manager.
 - *À savoir* :
   - son compte ne se crée que depuis la console Wetchah ;
   - il ne cumule aucun autre rôle, car celui qui distribue les droits ne doit pas

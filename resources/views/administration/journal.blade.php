@@ -54,7 +54,7 @@
     <div class="sm:col-span-2 lg:col-span-6 flex flex-wrap items-center gap-3">
         <label class="inline-flex items-center gap-1.5 text-xs text-primary/70">
             <input type="checkbox" name="interventions" value="1" @checked(request()->boolean('interventions')) class="rounded border-secondary/40">
-            Interventions seulement
+            Opérations de l'administrateur seulement
         </label>
         <div class="ml-auto flex gap-2">
             <a href="{{ route('audit.index') }}" class="px-3 py-1.5 rounded-lg border border-secondary/30 text-xs text-primary/70 hover:text-primary">Réinitialiser</a>
@@ -72,8 +72,11 @@
     </x-slot:head>
 
     @foreach($journal as $ligne)
-        @php $enIntervention = isset($ligne->payload['intervention_id']) || str_starts_with($ligne->event_type, 'intervention'); @endphp
-        <x-table.row class="{{ $enIntervention ? 'bg-amber-50/60' : '' }}">
+        @php
+            $enIntervention = isset($ligne->payload['intervention_id']) || str_starts_with($ligne->event_type, 'intervention');
+            $parAdministrateur = $ligne->event_type === 'action_administrateur';
+        @endphp
+        <x-table.row class="{{ $enIntervention || $parAdministrateur ? 'bg-amber-50/60' : '' }}">
             <x-table.cell nowrap class="text-xs text-primary/60">{{ $ligne->created_at?->format('d/m/Y H:i:s') }}</x-table.cell>
             <x-table.cell hide="lg">{{ $ligne->user?->name ?? 'Système' }}</x-table.cell>
             <x-table.cell hide="xl" nowrap>
@@ -81,10 +84,12 @@
                 @if($ligne->module)<span class="ml-1 text-[10px] text-primary/45">{{ $ligne->module }}</span>@endif
             </x-table.cell>
             <x-table.cell class="text-primary/80">
-                @if($enIntervention)
+                @if($parAdministrateur)
+                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Administrateur</span>
+                @elseif($enIntervention)
                     <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Intervention</span>
                 @endif
-                {{ $ligne->action }}
+                {{ $parAdministrateur ? \Illuminate\Support\Str::after($ligne->action, '[Administrateur] ') : $ligne->action }}
             </x-table.cell>
         </x-table.row>
     @endforeach

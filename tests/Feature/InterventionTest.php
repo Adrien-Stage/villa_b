@@ -3,11 +3,11 @@
 /**
  * Mode intervention de l'administrateur.
  *
- * L'administrateur — le service informatique — consulte tout et n'écrit que la
- * configuration et les comptes. Il n'écrit dans l'exploitation que pendant une
- * intervention déclarée : motif, durée, services. Le manager est prévenu,
- * chaque action est marquée au journal, la trace part à la console — plus
- * tard, marquée tardive, si elle est injoignable.
+ * L'administrateur — le service informatique — détient tous les droits du PMS ;
+ * chacune de ses opérations métier est marquée « administrateur » au journal.
+ * L'intervention lui sert à annoncer un travail : motif, durée, services. Le
+ * manager est prévenu, chaque action porte la référence de l'intervention, la
+ * trace part à la console — plus tard, marquée tardive, si elle est injoignable.
  */
 
 use App\Models\AuditLog;
@@ -44,15 +44,24 @@ function creerArticle(): void
     test()->post('/economat/articles', ['name' => 'Savon de Marseille', 'unit' => 'pièce']);
 }
 
-test("sans intervention, l'administrateur n'écrit pas dans l'exploitation", function () {
-    $this->actingAs(avecLeRole('admin'));
+test("sans intervention, l'administrateur écrit dans l'exploitation, et le journal le marque", function () {
+    $admin = avecLeRole('admin');
+    $this->actingAs($admin);
 
     creerArticle();
 
-    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
+    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue();
+    $trace = AuditLog::where('event_type', 'action_administrateur')->sole();
+    expect($trace->user_id)->toBe($admin->id)
+        ->and($trace->action)->toStartWith('[Administrateur]')
+        ->and($trace->payload['administrateur'] ?? null)->toBeTrue();
+
+    // Régler l'application n'est pas une opération métier : pas de marque.
+    $this->post(route('rooms.types.store'), ['name' => 'Suite Océan', 'base_price' => 50000, 'max_occupancy' => 2]);
+    expect(AuditLog::where('event_type', 'action_administrateur')->count())->toBe(1);
 });
 
-test("une intervention ouvre l'écriture dans ses services, la trace part à la console et le manager est prévenu", function () {
+test("une intervention s'annonce : chaque action porte sa référence, la trace part à la console et le manager est prévenu", function () {
     Http::fake(['http://console/*' => Http::response(['ok' => true], 201)]);
     $admin = avecLeRole('admin', ['name' => 'Serge Informatique']);
     $manager = avecLeRole('manager');
@@ -72,7 +81,7 @@ test("une intervention ouvre l'écriture dans ses services, la trace part à la 
     expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue();
 
     // Chaque action porte la référence de l'intervention.
-    expect(AuditLog::where('event_type', 'activity')->where('payload->intervention_id', $intervention->id)->exists())->toBeTrue();
+    expect(AuditLog::where('payload->intervention_id', $intervention->id)->exists())->toBeTrue();
 
     expect($manager->notifications()->count())->toBe(1);
 
@@ -83,7 +92,7 @@ test("une intervention ouvre l'écriture dans ses services, la trace part à la 
         && $r['perimetres'] === ['Économat']);
 });
 
-test("l'intervention ne couvre que les services déclarés", function () {
+test("une intervention annonce un travail sans restreindre l'administrateur", function () {
     Http::fake();
     $admin = avecLeRole('admin');
     Intervention::create([
@@ -94,10 +103,10 @@ test("l'intervention ne couvre que les services déclarés", function () {
     $resolveur = app(\App\Services\PermissionResolver::class);
 
     expect($resolveur->allows($admin, 'economat.items.creer'))->toBeTrue()
-        ->and($resolveur->allows($admin, 'restaurant.billing.paid'))->toBeFalse();
+        ->and($resolveur->allows($admin, 'restaurant.billing.paid'))->toBeTrue();
 });
 
-test("terminée, l'intervention referme l'écriture", function () {
+test("terminée, l'intervention est close ; l'administrateur garde ses droits", function () {
     Http::fake();
     $admin = avecLeRole('admin');
     $intervention = Intervention::create([
@@ -109,7 +118,7 @@ test("terminée, l'intervention referme l'écriture", function () {
 
     expect($intervention->fresh()->cloture)->toBe(Intervention::TERMINEE);
     creerArticle();
-    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
+    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue();
     Http::assertSentCount(1);
 });
 

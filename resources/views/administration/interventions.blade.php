@@ -7,9 +7,9 @@
 <div class="mb-6">
     <h1 class="font-heading text-2xl font-semibold text-primary">Interventions de l'administrateur</h1>
     <p class="text-sm text-primary/50 mt-0.5 max-w-3xl">
-        L'administrateur consulte tout et n'écrit que la configuration et les comptes. Encaisser, valider, comptabiliser :
-        il ne le fait que pendant une intervention déclarée — motif, durée, services. Le manager est prévenu, chaque action
-        est marquée au journal, et la trace part à la console d'orchestration.
+        L'administrateur détient tous les droits du PMS : chacune de ses opérations métier est marquée « Administrateur »
+        au journal d'audit. Une intervention reste utile pour annoncer un travail au manager — motif, durée, services :
+        le manager est prévenu et la trace part à la console d'orchestration.
     </p>
 </div>
 

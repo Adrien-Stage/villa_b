@@ -70,7 +70,7 @@ class PlanningService
 
         $requete = Department::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name');
 
-        return $user->hasAnyRole(self::PLANIFIENT_TOUT)
+        return $user->isAdmin() || $user->hasAnyRole(self::PLANIFIENT_TOUT)
             ? $requete->get()
             : $requete->whereKey($user->department_id ?? 0)->get();
     }

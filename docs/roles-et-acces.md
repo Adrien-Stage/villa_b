@@ -50,10 +50,10 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | — | `support` — Support Wetchah, compte technique du mode assistance | informatique | — | actif, privilégié |
 | — | `rh_manager`, `it_support` | — | — | retirés |
 
-- **L'administrateur consulte tout et n'écrit rien de métier, hors intervention
-  déclarée** (voir [Le mode intervention](#le-mode-intervention)). Il administre
-  l'application — configuration et **comptes du personnel**, managers compris — ; il
-  ne tient aucun service. Il ne se cumule avec aucun autre rôle. Ses propres comptes
+- **L'administrateur détient tous les droits du PMS** : configuration, **comptes du
+  personnel** (managers compris) et toutes les opérations métier. Chacune de ses
+  opérations métier est marquée « Administrateur » au journal d'audit
+  (`LogUserActivity`, événement `action_administrateur`). Il ne se cumule avec aucun autre rôle. Ses propres comptes
   ne se créent que depuis la console d'orchestration
   (`POST /api/comptes/administrateurs`) : personne, dans l'établissement, n'accorde un
   niveau égal au sien. Tant qu'il n'y en a pas, le manager gère les comptes du
@@ -109,7 +109,8 @@ Le moteur décide dans cet ordre :
 2. une **autorisation** explicite, sur la personne ou sur l'un de ses rôles ;
 3. le **catalogue** ([`PermissionCatalog`](../app/Support/PermissionCatalog.php)),
    hiérarchie comprise ;
-4. pour l'administrateur, une **intervention** en cours (voir
+4. pour l'administrateur, une **intervention** en cours — sans effet sur ses
+   droits, qu'il détient tous par le catalogue (voir
    [Le mode intervention](#le-mode-intervention)).
 
 Les droits d'une personne ne viennent que de là : ses affectations de rôles, les
@@ -261,13 +262,12 @@ accorde réellement, module par module.
 
 ### Le mode intervention
 
-L'administrateur consulte tout et n'écrit que la configuration (chambres, onglet
-Général des paramètres) et les comptes. **Encaisser, valider, comptabiliser : il ne
-le fait que pendant une intervention** qu'il déclare — motif, durée (15 min à 4 h),
-services concernés ([`Intervention::PERIMETRES`](../app/Models/Intervention.php)).
+L'administrateur détient tous les droits du PMS (décision du 2026-10-16) : il n'a
+plus besoin d'intervention pour agir, et chacune de ses opérations métier est
+marquée « Administrateur » au journal. L'intervention reste un moyen d'**annoncer**
+un travail — motif, durée (15 min à 4 h), services concernés
+([`Intervention::PERIMETRES`](../app/Models/Intervention.php)).
 
-- Le moteur de droits lui ouvre alors l'écriture dans ces services, et eux seuls,
-  jusqu'à la fin (étape 5 de `PermissionResolver`).
 - Un bandeau reste visible tant qu'elle dure — pour lui, qui peut la terminer, et
   pour la direction.
 - Le manager est notifié à l'ouverture et à la clôture.

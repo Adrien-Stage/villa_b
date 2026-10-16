@@ -43,17 +43,11 @@ test("l'administrateur consulte tout", function () {
     expect($aveugle)->toBe([]);
 });
 
-test("l'administrateur n'écrit que la configuration et les comptes, rien de métier", function () {
-    $ecritures = array_values(array_filter(
-        PermissionCatalog::forRole('admin'),
-        fn (string $droit) => !PermissionCatalog::estLecture($droit)
-    ));
+test("l'administrateur détient tous les droits du PMS", function () {
+    $sansAdmin = array_keys(array_filter(PermissionCatalog::all(), fn (array $roles) => !in_array('admin', $roles, true)));
 
-    // Décrire les chambres de l'hôtel n'est pas l'exploiter ; créer les
-    // comptes du personnel n'est pas travailler à sa place.
-    expect(array_diff($ecritures, PermissionCatalog::ecrituresDeLAdministrateur()))->toBe([])
-        ->and($ecritures)->toContain('rooms.types.creer')
-        ->and($ecritures)->toContain('users.creer');
+    expect($sansAdmin)->toBe([])
+        ->and(PermissionCatalog::forRole('admin'))->toContain('rooms.types.creer', 'users.creer', 'economat.items.creer', 'bookings.payment.add');
 });
 
 test('aucun département ne confère admin', function () {
@@ -171,17 +165,17 @@ test("l'administrateur se connecte par la page commune", function () {
     $this->assertAuthenticatedAs($admin);
 });
 
-test("l'administrateur lit l'économat mais n'y crée rien", function () {
+test("l'administrateur écrit à l'économat, et le journal le marque", function () {
     activerModules(['economat', 'comptabilite', 'accounting', 'hebergement']);
 
     $admin = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($admin)->get('/economat/articles')->assertOk();
-
-    // Il administre l'application, il ne tient pas le magasin.
     $this->post('/economat/articles', ['name' => 'Savon de Marseille', 'unit' => 'pièce']);
 
-    expect(\App\Models\StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
+    expect(\App\Models\StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue()
+        ->and(\App\Models\AuditLog::where('event_type', 'action_administrateur')->where('user_id', $admin->id)->sole()->action)
+        ->toStartWith('[Administrateur]');
 });
 
 test('le manager, lui, entre partout', function (string $url) {

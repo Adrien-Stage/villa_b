@@ -58,15 +58,22 @@ class LogUserActivity
             // quel motif.
             $intervention = rescue(fn () => \App\Models\Intervention::enCoursPour(Auth::user()), null, false);
 
+            // L'administrateur détient tous les droits : chacune de ses
+            // opérations métier — hors configuration, comptes et droits —
+            // porte sa marque, pour qu'on sache toujours que c'était lui.
+            $parAdministrateur = $this->operationMetierDeLAdministrateur($request);
+
             AuditLog::record(
                 Auth::id(),
-                'activity',
-                ($intervention ? "[Intervention #{$intervention->id}] " : '') . $this->describe($request),
+                $parAdministrateur ? 'action_administrateur' : 'activity',
+                ($parAdministrateur ? '[Administrateur] ' : '')
+                    . ($intervention ? "[Intervention #{$intervention->id}] " : '') . $this->describe($request),
                 $this->moduleFromPath($path),
                 array_filter([
                     'method' => $request->method(),
                     'path' => $path,
                     'intervention_id' => $intervention?->id,
+                    'administrateur' => $parAdministrateur ?: null,
                 ], static fn ($v) => $v !== null)
             );
         } catch (\Throwable) {
@@ -74,6 +81,23 @@ class LogUserActivity
         }
 
         return $response;
+    }
+
+    /** Opération métier faite par l'administrateur : ni lecture, ni administration. */
+    private function operationMetierDeLAdministrateur(Request $request): bool
+    {
+        $user = Auth::user();
+        $routeName = optional($request->route())->getName();
+
+        if (!$user?->isAdmin() || !$routeName) {
+            return false;
+        }
+
+        $droit = \App\Support\PermissionCatalog::permissionForRoute($routeName);
+
+        return \App\Support\PermissionCatalog::roles($droit) !== []
+            && !\App\Support\PermissionCatalog::estLecture($droit)
+            && !in_array($droit, \App\Support\PermissionCatalog::ecrituresDeLAdministrateur(), true);
     }
 
     /**
