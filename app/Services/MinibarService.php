@@ -56,6 +56,28 @@ class MinibarService
         return $id ? ServiceStore::query()->active()->find($id) : null;
     }
 
+    /**
+     * Ce que montrent les réglages des mini-bars (Paramètres › Housekeeping).
+     *
+     * @return array{articles: Collection, depot: ?ServiceStore, depots: Collection, types: Collection, standards: Collection, articlesLibres: Collection}
+     */
+    public function reglages(): array
+    {
+        $articles = MinibarArticle::query()->with('item')->ordered()->get();
+
+        return [
+            'articles'       => $articles,
+            'depot'          => self::depot(),
+            'depots'         => ServiceStore::query()->active()->orderBy('name')->get(),
+            'types'          => RoomType::query()->orderBy('name')->get(),
+            'standards'      => MinibarStandard::query()->get()->groupBy('room_type_id')
+                ->map(fn ($lignes) => $lignes->pluck('quantity', 'minibar_article_id')),
+            'articlesLibres' => \App\Models\StockItem::query()->where('is_active', true)
+                ->whereNotIn('id', $articles->pluck('stock_item_id'))
+                ->orderBy('name')->get(['id', 'name', 'unit']),
+        ];
+    }
+
     public function choisirDepot(?ServiceStore $store): void
     {
         $tenant = Tenant::first();

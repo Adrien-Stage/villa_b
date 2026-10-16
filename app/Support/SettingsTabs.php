@@ -56,6 +56,9 @@ class SettingsTabs
      */
     private const CONSULTATION = [
         'restaurant' => ['droit' => 'restaurant.restaurants.voir', 'module' => 'restaurant'],
+        // Les réglages des mini-bars : le responsable des étages les règle,
+        // la gouvernante les consulte.
+        'housekeeping' => ['droit' => 'housekeeping.minibar.voir', 'module' => 'housekeeping'],
     ];
 
     /** Ordre de préférence de l'onglet ouvert par défaut. */

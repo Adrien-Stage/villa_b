@@ -70,12 +70,8 @@
                 </span>
             </div>
 
-            {{-- Droite: Utilisateur, Bouton Quitter le mode POS & Déconnexion --}}
+            {{-- Droite: Bouton Quitter le mode POS & menu du compte --}}
             <div class="flex items-center gap-2.5">
-                <div class="hidden sm:flex flex-col text-right pr-2 border-r border-white/20">
-                    <span class="text-xs font-bold text-white">{{ Auth::user()->name }}</span>
-                    <span class="text-[10px] text-text-on-dark uppercase font-semibold">{{ Auth::user()->exerce(['manager']) ? 'Directeur' : (Auth::user()->exerce(['reception_chief']) ? 'Chef de réception' : 'Réceptionniste') }}</span>
-                </div>
 
                 {{-- Bouton Quitter le mode POS (Retour au PMS sans fermer la session) --}}
                 <a href="{{ route('dashboard') }}"
@@ -85,16 +81,8 @@
                     <span class="hidden sm:inline">Quitter le mode POS</span>
                 </a>
 
-                {{-- Bouton Déconnexion bien visible --}}
-                <form method="POST" action="{{ route('logout') }}" class="inline-flex items-center">
-                    @csrf
-                    <button type="submit"
-                            title="Se déconnecter de l'application"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-100 bg-red-600 hover:bg-red-700 transition-all shadow-xs">
-                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                        <span class="hidden sm:inline">Déconnexion</span>
-                    </button>
-                </form>
+                {{-- Profil et déconnexion, comme dans le reste de l'application --}}
+                <x-menu-compte sombre />
             </div>
 
         </div>

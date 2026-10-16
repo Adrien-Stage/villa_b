@@ -57,6 +57,14 @@
         {{ session('success') }}
     </div>
 @endif
+@foreach(['warning' => 'bg-amber-50 border-amber-200 text-amber-800', 'error' => 'bg-red-50 border-red-200 text-red-700'] as $cle => $style)
+    @if(session($cle))
+        <div class="mb-6 px-4 py-3 border text-sm rounded-lg flex items-center gap-2 {{ $style }}" role="alert">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            {{ session($cle) }}
+        </div>
+    @endif
+@endforeach
 
 <div class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
     
@@ -91,7 +99,7 @@
             </a>
         @endif
 
-        @if(\App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
+        @if(\App\Support\SettingsTabs::peutOuvrir($user, 'housekeeping'))
             <a href="{{ route('settings.index', ['tab' => 'housekeeping']) }}"
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'housekeeping' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
@@ -743,15 +751,31 @@
             </form>
         @endif
 
-        {{-- ONGLET: HOUSEKEEPING (Leader & Manager) --}}
-        @if($tab === 'housekeeping' && \App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
-            <div class="max-w-3xl">
-                <h2 class="text-lg font-semibold text-primary mb-2">Housekeeping</h2>
-                <p class="mb-4 text-sm text-primary/60">Le housekeeping n'a pas de réglage propre : il suit des règles fixes de l'application.</p>
-                <div class="space-y-4 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
-                    <p>Au <strong>check-out</strong>, la chambre passe d'elle-même à « À nettoyer ». Le ménage se suit ensuite dans l'application Hôtel › Housekeeping : affectation, nettoyage, contrôle.</p>
-                    <p>Le temps laissé à l'équipe avant que la chambre redevienne vendable se règle dans <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}" class="font-semibold underline">Paramètres › Hébergement</a>, rubrique « Remise en vente après départ ».</p>
+        {{-- ONGLET : HOUSEKEEPING — les mini-bars des chambres. Le responsable
+             des étages et la direction les règlent, la gouvernante et le
+             contrôle les consultent. --}}
+        @if($tab === 'housekeeping' && \App\Support\SettingsTabs::peutOuvrir($user, 'housekeeping'))
+            <div class="space-y-5">
+                <div class="max-w-3xl">
+                    <h2 class="text-lg font-semibold text-primary mb-2">Housekeeping</h2>
+                    @unless(\App\Support\SettingsTabs::peutRegler($user, 'housekeeping'))
+                        <p class="mb-3 text-sm text-primary/60">Vous consultez ces réglages ; le responsable des étages les modifie.</p>
+                    @endunless
+                    <div class="space-y-3 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
+                        <p>Au <strong>check-out</strong>, la chambre passe d'elle-même à « À nettoyer ». Le ménage se suit ensuite dans l'application Hôtel › Housekeeping : affectation, nettoyage, contrôle.</p>
+                        @if(\App\Support\SettingsTabs::peutOuvrir($user, 'hebergement'))
+                            <p>Le temps laissé à l'équipe avant que la chambre redevienne vendable se règle dans <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}" class="font-semibold underline">Paramètres › Hébergement</a>, rubrique « Remise en vente après départ ».</p>
+                        @endif
+                    </div>
                 </div>
+
+                @if(\App\Support\TenantModules::has('housekeeping'))
+                    <h3 class="font-heading text-base font-semibold text-primary pt-2">Mini-bars</h3>
+                    @if($errors->any())
+                        <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg" role="alert">{{ $errors->first() }}</div>
+                    @endif
+                    @include('housekeeping.minibar.partials.reglages')
+                @endif
             </div>
         @endif
         {{-- ONGLET : RESTAURANT — les restaurants de l'hôtel, leurs services,

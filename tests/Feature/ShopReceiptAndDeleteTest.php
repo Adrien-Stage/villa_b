@@ -77,19 +77,21 @@ test("un code article déjà pris est refusé en français", function () {
 });
 
 test("le manager consulte les articles sans voir les actions d'écriture", function () {
-    articleBoutique();
+    $article = articleBoutique();
     $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
     $manager->roles()->sync(Role::where('slug', 'manager')->pluck('id'));
 
+    // « Modifier mon profil », dans le menu du compte, n'est pas une action
+    // sur l'article : on cherche le lien de modification de l'article.
     $this->actingAs($manager)->get(route('shop.products.index'))
         ->assertOk()
         ->assertSee('Bracelet artisanal')
         ->assertDontSee('Supprimer')
-        ->assertDontSee('Modifier');
+        ->assertDontSee(route('shop.products.edit', $article));
 
     $this->actingAs(gerantBoutique())->get(route('shop.products.index'))
         ->assertSee('Supprimer')
-        ->assertSee('Modifier');
+        ->assertSee(route('shop.products.edit', $article));
 });
 
 test("le manager consulte une commande sans les boutons d'encaissement ni d'ouverture de caisse", function () {

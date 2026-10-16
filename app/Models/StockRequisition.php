@@ -52,7 +52,7 @@ class StockRequisition extends Model
      */
     public const DEPARTMENT_ROLES = [
         'hebergement'  => ['reception', 'manager'],
-        'housekeeping' => ['housekeeping_staff', 'manager'],
+        'housekeeping' => ['housekeeping_staff', 'housekeeping_supervisor', 'manager'],
         'restaurant'   => ['restaurant_cook', 'restaurant_staff', 'manager'],
         'boutique'     => ['shop_cashier', 'manager'],
         'comptabilite' => ['accountant', 'manager'],
