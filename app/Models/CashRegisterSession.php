@@ -125,4 +125,10 @@ class CashRegisterSession extends Model
     {
         return $this->hasMany(ReceptionSale::class);
     }
+
+    /** Passation par laquelle ce tiroir a été remis en fin de quart. */
+    public function handoverOut()
+    {
+        return $this->hasOne(ShiftHandover::class, 'from_session_id');
+    }
 }

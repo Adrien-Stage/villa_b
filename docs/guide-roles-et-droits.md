@@ -142,6 +142,10 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
   - POS de la réception ;
   - sa caisse : ouvrir, sortie de caisse, compter ;
   - statut des chambres ;
+  - en fin de quart, remettre son tiroir et ses consignes au réceptionniste
+    suivant (passation de service) ; en prise de service, lire la passation,
+    recompter le tiroir et ouvrir sa caisse avec ce montant — obligatoire tant
+    qu'une passation attend ;
   - au départ d'un client, demander le relevé du mini-bar avant de clore la note ;
   - encaisser une facture complémentaire (mini-bar consommé après le départ) ;
   - demandes à l'économat.
@@ -206,6 +210,18 @@ complémentaire, que la réception encaisse quand le client la règle.
 Éditions › Housekeeping : feuille de route des équipes (pour tout le service,
 chacun la sienne), rapport d'activité, journal, incidents, état des mini-bars,
 relevés et rechargements (pour l'encadrement).
+
+### Passation de service à la réception
+
+En fin de quart, le réceptionniste compte son tiroir et le remet avec ses
+consignes. La passation va d'abord à la personne que le planning attend au
+quart suivant ; si elle est empêchée, un autre réceptionniste la reprend, et la
+passation le dit. Celui qui reprend voit tout ce que le quart a fait —
+encaissements par mode, sorties de caisse, ventes du POS, arrivées, départs,
+réservations, annulations, prestations — et ce qui reste à faire, recompte le
+tiroir et ouvre sa caisse avec ce montant. Un écart à la remise reste inscrit
+avec les deux noms et le chef de réception en est prévenu. La comptabilité voit
+la passation en contrôlant la caisse du quart.
 
 ### Demandes à l'économat
 

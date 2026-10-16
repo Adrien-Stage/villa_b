@@ -25,7 +25,7 @@ class CashClosureReviewController extends Controller
         $enAttente = CashRegisterSession::query()
             ->where('status', CashClosurePolicy::STATUS_PENDING_REVIEW)
             ->whereNull('closed_at')
-            ->with(['user', 'pointOfSale'])
+            ->with(['user', 'pointOfSale', 'handoverOut.toUser'])
             ->orderBy('updated_at')
             ->get();
 

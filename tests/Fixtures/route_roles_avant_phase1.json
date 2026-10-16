@@ -390,6 +390,48 @@
   "reception",
   "reception_chief"
  ],
+ "bookings.handovers.create": [
+  "manager",
+  "reception",
+  "reception_chief"
+ ],
+ "bookings.handovers.index": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
+ "bookings.handovers.show": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
+ "bookings.handovers.store": [
+  "manager",
+  "reception",
+  "reception_chief"
+ ],
+ "bookings.handovers.take": [
+  "admin",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
+ "bookings.handovers.take.store": [
+  "manager",
+  "reception",
+  "reception_chief"
+ ],
  "bookings.index": [
   "admin",
   "controller",

@@ -15,14 +15,41 @@
                 ->where('module', 'reception')
                 ->whereNull('closed_at')
                 ->first();
+            $passationsEnAttente = app(\App\Services\PassationService::class)->enAttente()
+                ->reject(fn ($p) => $p->from_user_id === auth()->id());
         @endphp
         
-        <div>
-            @if ($activeSession)
+        <div class="flex flex-wrap items-center gap-2">
+            @droit('bookings.handovers.voir')
+                <a href="{{ route('bookings.handovers.index') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="history" class="w-4 h-4"></i>
+                    Passations
+                </a>
+            @enddroit
+            @if ($activeSession?->isPendingReview())
+                {{-- Comptée (ou remise en passation) : elle attend le contrôle de la comptabilité. --}}
+                <span class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded-lg">
+                    <i data-lucide="hourglass" class="w-4 h-4"></i>
+                    Comptage en attente de contrôle
+                </span>
+            @elseif ($activeSession)
+                {{-- En fin de quart, le tiroir passe au collègue suivant ; en fin de
+                     journée, la caisse se ferme et part au contrôle. --}}
+                @droit('bookings.handovers.creer')
+                    <a href="{{ route('bookings.handovers.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                        Terminer mon service (passation)
+                    </a>
+                @enddroit
                 {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('bookings.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                     <i data-lucide="lock" class="w-4 h-4"></i>
                     Fermer la caisse
+                </a>
+            @elseif ($passationsEnAttente->isNotEmpty())
+                <a href="{{ route('bookings.handovers.take', $passationsEnAttente->first()) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors shadow-sm">
+                    <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                    Prendre le service
                 </a>
             @else
                 <a href="{{ route('bookings.cash_register.open') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
@@ -76,12 +103,18 @@
                 <x-table.cell nowrap>
                     @if($session->closed_at)
                         <span class="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">Clôturée</span>
+                    @elseif($session->isPendingReview())
+                        {{-- Comptée par son titulaire (en fin de journée ou en passation) :
+                             elle attend la contresignature de la comptabilité. --}}
+                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            {{ $session->handoverOut ? 'Remise en passation' : 'Comptée' }}, à contrôler
+                        </span>
                     @else
                         <span class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">En cours</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="text-primary/70">{{ number_format($session->opening_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
-                @if($session->closed_at)
+                @if($session->closed_at || $session->isPendingReview())
                     @php $gap = $session->discrepancy_amount; @endphp
                     <x-table.cell align="right" hide="lg" nowrap class="font-semibold">{{ number_format($session->theoretical_closing_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
                     <x-table.cell align="right" hide="lg" nowrap class="font-bold">{{ number_format($session->actual_closing_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>

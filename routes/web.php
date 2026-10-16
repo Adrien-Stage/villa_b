@@ -291,6 +291,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
         Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->name('cash_register.close.store');
 
+        // Passation de service : en fin de quart, le réceptionniste remet le
+        // tiroir et ses consignes ; celui qui lui succède les reprend après
+        // avoir lu ce que le quart a fait. Déclarées avant /{booking}.
+        Route::get('/passations', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'index'])->name('handovers.index');
+        Route::middleware('caisse')->group(function () {
+            Route::get('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'create'])->name('handovers.create');
+            Route::post('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'store'])->name('handovers.store');
+        });
+        Route::get('/passations/{handover}', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'show'])->whereNumber('handover')->name('handovers.show');
+        Route::get('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'take'])->whereNumber('handover')->name('handovers.take');
+        Route::post('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'takeStore'])->whereNumber('handover')->name('handovers.take.store');
+
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/summary',       [BookingController::class, 'summary'])->name('summary');
         Route::get('/{booking}/edit',          [BookingController::class, 'edit'])->name('edit');
