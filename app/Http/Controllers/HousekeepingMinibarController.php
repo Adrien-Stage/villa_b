@@ -72,6 +72,12 @@ class HousekeepingMinibarController extends Controller
 
     public function storeArticle(Request $request): RedirectResponse
     {
+        // Sans dépôt, rien ne garnirait les mini-bars.
+        if (MinibarService::depot() === null) {
+            return back()->withInput()->with('error',
+                "Choisissez d'abord le dépôt du mini-bar. S'il n'existe pas encore, demandez à l'économe de créer un dépôt « Mini-bar » dans l'Économat.");
+        }
+
         $data = $request->validate([
             'stock_item_id' => ['required', 'integer', Rule::exists('stock_items', 'id'), Rule::unique('minibar_articles', 'stock_item_id')],
             'name'          => ['nullable', 'string', 'max:120'],

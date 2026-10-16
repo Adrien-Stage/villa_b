@@ -340,3 +340,34 @@ test('consommé après le départ : une facture complémentaire, encaissée plus
     $this->post(route('invoices.payments.store', $complement), ['amount' => 100, 'method' => 'cash'])->assertSessionHasErrors('payment');
     $this->post(route('invoices.payments.store', $factureSejour), ['amount' => 100, 'method' => 'cash'])->assertSessionHasErrors('payment');
 });
+
+test("sans dépôt mini-bar, l'ajout d'articles est fermé et l'économe doit le créer", function () {
+    // Dépôt retiré : le responsable doit le choisir avant tout ajout.
+    app(\App\Services\MinibarService::class)->choisirDepot(null);
+    $eau = StockItem::create(['name' => 'Eau minérale 50 cl', 'unit' => 'bouteille', 'is_active' => true]);
+
+    $this->actingAs($this->responsable);
+    $this->get(route('settings.index', ['tab' => 'housekeeping']))->assertOk()
+        ->assertSee("Le dépôt du mini-bar n'est pas choisi.", false)
+        ->assertSee("demandez à l'économe de le créer", false)
+        ->assertSee("Ajout fermé tant que le dépôt du mini-bar n'est pas choisi.", false)
+        ->assertDontSee('Ajouter au mini-bar');
+    $this->post(route('housekeeping.minibar.articles.store'), ['stock_item_id' => $eau->id, 'price' => 1000])
+        ->assertSessionHas('error');
+    expect(MinibarArticle::where('stock_item_id', $eau->id)->exists())->toBeFalse();
+
+    // Aucun dépôt n'existe : l'économe doit créer le dépôt « Mini-bar ».
+    ServiceStore::query()->update(['is_active' => false]);
+    $this->get(route('settings.index', ['tab' => 'housekeeping']))->assertOk()
+        ->assertSee("Aucun dépôt « Mini-bar » n'existe encore.", false)
+        ->assertSee("Demandez à l'économe de créer un dépôt « Mini-bar »", false);
+    $this->actingAs($this->gouvernante)->get(route('housekeeping.minibar.index'))->assertOk()
+        ->assertSee("demandez à l'économe de créer un dépôt « Mini-bar »", false);
+
+    // Le dépôt choisi rouvre l'ajout.
+    ServiceStore::query()->update(['is_active' => true]);
+    $this->actingAs($this->responsable)->post(route('housekeeping.minibar.depot'), ['service_store_id' => $this->depot->id]);
+    $this->get(route('settings.index', ['tab' => 'housekeeping']))->assertSee('Ajouter au mini-bar');
+    $this->post(route('housekeeping.minibar.articles.store'), ['stock_item_id' => $eau->id, 'price' => 1000])
+        ->assertSessionHas('success');
+});

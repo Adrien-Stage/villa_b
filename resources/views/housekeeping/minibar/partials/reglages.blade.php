@@ -16,9 +16,30 @@
     $champ = 'w-full px-2.5 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary';
     $actifs = $articles->where('is_active', true);
     $peutDoter = app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'housekeeping.minibar.standards.modifier');
+    $peutChoisirDepot = app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'housekeeping.minibar.depot');
 @endphp
 
 <div class="space-y-5">
+{{-- Sans dépôt, rien ne garnit les mini-bars : l'ajout d'articles reste fermé
+     tant que le dépôt n'est pas choisi. Le dépôt se crée à l'économat. --}}
+@if($depot === null)
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 flex items-start gap-3" role="status">
+        <i data-lucide="warehouse" class="w-5 h-5 shrink-0 mt-0.5"></i>
+        <div class="space-y-1">
+            @if($depots->isEmpty())
+                <p class="font-semibold">Aucun dépôt « Mini-bar » n'existe encore.</p>
+                <p>Demandez à l'économe de créer un dépôt « Mini-bar » dans l'Économat (Dépôts de service). Sans ce dépôt, les mini-bars ne peuvent pas être garnis et aucun article ne peut être ajouté.</p>
+            @elseif($peutChoisirDepot)
+                <p class="font-semibold">Le dépôt du mini-bar n'est pas choisi.</p>
+                <p>Choisissez-le ci-dessous avant d'ajouter des articles. S'il n'existe pas encore de dépôt « Mini-bar », demandez à l'économe de le créer dans l'Économat (Dépôts de service).</p>
+            @else
+                <p class="font-semibold">Le dépôt du mini-bar n'est pas choisi.</p>
+                <p>Le responsable des étages le choisit ; s'il n'existe pas encore, l'économe doit créer un dépôt « Mini-bar » dans l'Économat.</p>
+            @endif
+        </div>
+    </div>
+@endif
+
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
     {{-- ═══ Dépôt ═══ --}}
     <div class="bg-white rounded-xl shadow-sm p-5">
@@ -38,7 +59,7 @@
                 <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Enregistrer</button>
             </form>
             @if($depots->isEmpty())
-                <p class="text-xs text-amber-700 mt-3">Aucun dépôt de service : l'économe en crée un (Économat › Dépôts de service).</p>
+                <p class="text-xs text-amber-700 mt-3">Aucun dépôt à choisir : demandez à l'économe de créer un dépôt « Mini-bar ».</p>
             @endif
         @else
             <p class="text-sm text-primary">{{ $depot?->name ?? 'Aucun dépôt choisi' }}</p>
@@ -50,6 +71,11 @@
     <div class="bg-white rounded-xl shadow-sm p-5 xl:col-span-2">
         <h2 class="font-heading font-semibold text-primary text-sm">Ajouter un article</h2>
         <p class="text-xs text-primary/50 mt-0.5 mb-4">Un article de l'économat, compté à l'unité, et son prix de vente au client.</p>
+        @if($depot === null)
+            <p class="rounded-lg border border-dashed border-secondary/30 px-4 py-6 text-center text-sm text-primary/50">
+                Ajout fermé tant que le dépôt du mini-bar n'est pas choisi.
+            </p>
+        @else
         <form method="POST" action="{{ route('housekeeping.minibar.articles.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             @csrf
             <label class="block sm:col-span-2">
@@ -73,6 +99,7 @@
                 <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Ajouter au mini-bar</button>
             </div>
         </form>
+        @endif
     </div>
     @enddroit
 </div>
@@ -84,7 +111,9 @@
         <span class="text-xs text-primary/40">{{ $articles->count() }}</span>
     </div>
     @if($articles->isEmpty())
-        <div class="px-5 py-8 text-sm text-primary/40 text-center">Aucun article : ajoutez-en un ci-dessus.</div>
+        <div class="px-5 py-8 text-sm text-primary/40 text-center">
+            {{ $depot === null ? "Aucun article : le dépôt du mini-bar doit d'abord être choisi." : 'Aucun article : ajoutez-en un ci-dessus.' }}
+        </div>
     @else
         <div class="divide-y divide-secondary/10">
             @foreach($articles as $article)
