@@ -738,11 +738,17 @@
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
         <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0 print:hidden">
             <div class="flex items-center gap-3">
-                <button type="button" onclick="openMobileSidebar()" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary {{ $hasSidebar ? 'lg:hidden' : 'hidden' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+                {{-- Menu de l'application, sur petit écran seulement : sur grand
+                     écran la barre latérale est déjà là, et une page sans barre
+                     latérale n'a rien à ouvrir (la grille mène aux applications). --}}
+                @if($hasSidebar)
+                    <button type="button" onclick="openMobileSidebar()" aria-controls="mobile-sidebar" aria-label="Ouvrir le menu"
+                            class="inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                @endif
 
                 {{-- Largeur de la barre latérale. Le bouton vit dans l'en-tête
                      plutôt que dans la barre : réduite à 60 px, celle-ci n'a

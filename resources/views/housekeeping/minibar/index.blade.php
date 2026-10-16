@@ -27,6 +27,13 @@
 
     @include('housekeeping.partials.flash')
 
+    @if(\App\Services\MinibarService::depot() === null)
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900" role="status">
+            Aucun dépôt du mini-bar n'est choisi : les mini-bars ne peuvent pas être rechargés.
+            S'il n'existe pas encore, demandez à l'économe de créer un dépôt « Mini-bar » dans l'Économat.
+        </div>
+    @endif
+
     {{-- Les réglages (dépôt, articles, prix, dotations) sont dans Paramètres › Housekeeping. --}}
     @if(\App\Support\SettingsTabs::peutOuvrir(auth()->user(), 'housekeeping'))
         <div class="rounded-xl border border-secondary/20 bg-white px-5 py-4 flex flex-wrap items-center justify-between gap-3">

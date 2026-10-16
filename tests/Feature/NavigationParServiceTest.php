@@ -129,3 +129,15 @@ test("les éditions du housekeeping : tout pour l'encadrement, son travail pour 
     $this->get(route('editions.show', 'feuille-route-housekeeping'))->assertOk();
     $this->get(route('editions.show', 'releves-minibar'))->assertForbidden();
 });
+
+test("le bouton de menu n'apparaît que là où il ouvre une barre latérale", function () {
+    $this->actingAs(agentNav('housekeeping_supervisor'));
+
+    // Lanceur et pages pleine largeur : rien à ouvrir, pas de bouton.
+    foreach ([route('dashboard'), route('planning.index'), route('editions.index')] as $url) {
+        $this->get($url)->assertOk()->assertDontSee('onclick="openMobileSidebar()"', false);
+    }
+
+    // Application avec barre latérale : le bouton l'ouvre sur petit écran.
+    $this->get(route('housekeeping.index'))->assertOk()->assertSee('onclick="openMobileSidebar()"', false);
+});
