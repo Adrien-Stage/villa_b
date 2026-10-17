@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Retourner une réponse rejetée pour éviter les callbacks success
                         return Promise.reject(new Error('Access denied'));
                     }
+                    return response;
                 }).catch(() => {
                     // Si pas de JSON, continuer normalement
                     return response;

@@ -97,7 +97,7 @@
                                 <li class="flex flex-wrap items-center justify-between gap-2 text-xs {{ $salle->is_active ? 'text-primary' : 'text-primary/40 line-through' }}">
                                     <span>{{ $salle->name }}@if($salle->capacity) · {{ $salle->capacity }} places @endif</span>
                                     @droit('restaurant.restaurants.spaces.modifier')
-                                        <form method="POST" action="{{ route('restaurant.restaurants.spaces.update', $salle) }}" class="flex items-center gap-1.5">
+                                        <form data-reglages method="POST" action="{{ route('restaurant.restaurants.spaces.update', $salle) }}" class="flex items-center gap-1.5">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="name" value="{{ $salle->name }}">
                                             <input type="hidden" name="capacity" value="{{ $salle->capacity }}">
@@ -112,7 +112,7 @@
                         </ul>
                     @endif
                     @droit('restaurant.restaurants.spaces.creer')
-                        <form method="POST" action="{{ route('restaurant.restaurants.spaces.store', $restaurant) }}" class="mt-3 flex flex-wrap items-end gap-2">
+                        <form data-reglages method="POST" action="{{ route('restaurant.restaurants.spaces.store', $restaurant) }}" class="mt-3 flex flex-wrap items-end gap-2">
                             @csrf
                             <label class="flex-1 min-w-[10rem]">
                                 <span class="sr-only">Nom de la salle</span>
@@ -139,18 +139,18 @@
 </div>
 
 @droit('restaurant.restaurants.creer')
-    <x-modal id="restaurant-create" title="Nouveau restaurant" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.store') }}">
+    <x-modal id="restaurant-create" reglages="Nouveau restaurant" title="Nouveau restaurant" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.store') }}">
         @include('restaurant.restaurants._champs', ['r' => null])
         <x-slot:footer>
             <button type="button" onclick="document.getElementById('restaurant-create').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Créer le restaurant</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Ajouter le restaurant</button>
         </x-slot:footer>
     </x-modal>
 @enddroit
 
 @foreach($restaurants as $restaurant)
     @droit('restaurant.restaurants.modifier')
-        <x-modal id="restaurant-edit-{{ $restaurant->id }}" title="Modifier {{ $restaurant->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.update', $restaurant) }}">
+        <x-modal id="restaurant-edit-{{ $restaurant->id }}" reglages="Restaurant" title="Modifier {{ $restaurant->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.restaurants.update', $restaurant) }}">
             @method('PUT')
             @include('restaurant.restaurants._champs', ['r' => $restaurant])
             <label class="flex items-center gap-2 text-xs text-primary">
@@ -160,13 +160,13 @@
             </label>
             <x-slot:footer>
                 <button type="button" onclick="document.getElementById('restaurant-edit-{{ $restaurant->id }}').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Appliquer</button>
             </x-slot:footer>
         </x-modal>
     @enddroit
 
     @droit('restaurant.restaurants.team.modifier')
-        <x-modal id="restaurant-team-{{ $restaurant->id }}" title="Équipe — {{ $restaurant->name }}" subtitle="Une personne peut travailler dans plusieurs restaurants ; elle ne voit que ceux-là." formAction="{{ route('restaurant.restaurants.team.update', $restaurant) }}">
+        <x-modal id="restaurant-team-{{ $restaurant->id }}" reglages="Équipe du restaurant" title="Équipe — {{ $restaurant->name }}" subtitle="Une personne peut travailler dans plusieurs restaurants ; elle ne voit que ceux-là." formAction="{{ route('restaurant.restaurants.team.update', $restaurant) }}">
             @method('PUT')
             @php $membres = $restaurant->users->pluck('id')->all(); @endphp
             @if($personnel->isEmpty())
@@ -186,7 +186,7 @@
             @endif
             <x-slot:footer>
                 <button type="button" onclick="document.getElementById('restaurant-team-{{ $restaurant->id }}').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer l'équipe</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Appliquer</button>
             </x-slot:footer>
         </x-modal>
     @enddroit

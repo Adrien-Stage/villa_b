@@ -48,7 +48,7 @@
             Le dépôt de service, alimenté par l'économat, d'où sortent les articles pour recharger les chambres.
         </p>
         @droit('housekeeping.minibar.depot')
-            <form method="POST" action="{{ route('housekeeping.minibar.depot') }}" class="space-y-3">
+            <form data-reglages method="POST" action="{{ route('housekeeping.minibar.depot') }}" class="space-y-3">
                 @csrf
                 <select name="service_store_id" class="{{ $champ }}" aria-label="Dépôt du mini-bar">
                     <option value="">Aucun</option>
@@ -76,7 +76,7 @@
                 Ajout fermé tant que le dépôt du mini-bar n'est pas choisi.
             </p>
         @else
-        <form method="POST" action="{{ route('housekeeping.minibar.articles.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <form data-reglages method="POST" action="{{ route('housekeeping.minibar.articles.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             @csrf
             <label class="block sm:col-span-2">
                 <span class="block text-xs text-primary/60 mb-1">Article de l'économat</span>
@@ -118,7 +118,7 @@
         <div class="divide-y divide-secondary/10">
             @foreach($articles as $article)
                 @droit('housekeeping.minibar.articles.modifier')
-                    <form method="POST" action="{{ route('housekeeping.minibar.articles.update', $article) }}"
+                    <form data-reglages method="POST" action="{{ route('housekeeping.minibar.articles.update', $article) }}"
                           class="px-5 py-3 grid grid-cols-2 sm:grid-cols-6 gap-3 items-end {{ $article->is_active ? '' : 'bg-gray-50' }}">
                         @csrf
                         @method('PUT')
@@ -162,7 +162,7 @@
         <div class="divide-y divide-secondary/10">
             @foreach($types as $type)
                 @php $quantites = $standards[$type->id] ?? collect(); @endphp
-                <form method="POST" action="{{ route('housekeeping.minibar.standards.update', $type) }}" class="px-5 py-4 space-y-3">
+                <form data-reglages method="POST" action="{{ route('housekeeping.minibar.standards.update', $type) }}" class="px-5 py-4 space-y-3">
                     @csrf
                     @method('PUT')
                     <p class="text-sm font-semibold text-primary">{{ $type->name }}</p>

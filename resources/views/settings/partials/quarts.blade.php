@@ -24,7 +24,7 @@
         @forelse($quarts as $quart)
             <li class="rounded-xl border border-secondary/20 bg-gray-50 p-4 {{ $quart->is_active ? '' : 'opacity-70' }}">
                 @droit('settings.quarts.modifier')
-                    <form method="POST" action="{{ route('settings.quarts.update', $quart) }}" class="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_7rem_7rem_auto_auto]">
+                    <form data-reglages method="POST" action="{{ route('settings.quarts.update', $quart) }}" class="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_7rem_7rem_auto_auto]">
                         @csrf @method('PUT')
                         <label class="block">
                             <span class="text-xs text-primary/60">Nom</span>
@@ -69,7 +69,7 @@
     </ul>
 
     @droit('settings.quarts.creer')
-        <form method="POST" action="{{ route('settings.quarts.store') }}" class="mt-6 rounded-xl border border-secondary/20 p-4">
+        <form data-reglages method="POST" action="{{ route('settings.quarts.store') }}" class="mt-6 rounded-xl border border-secondary/20 p-4">
             @csrf
             <h3 class="text-sm font-semibold text-primary">Ajouter un quart</h3>
             <div class="mt-3 grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_7rem_7rem_auto]">

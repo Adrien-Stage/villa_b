@@ -140,6 +140,27 @@ le concerne.
 Les onglets **Prestations** et **Partenaires** sont réservés au manager : ces
 catalogues engagent des prix et des remises.
 
+### Un seul bouton « Enregistrer » par onglet
+
+Chaque onglet porte une barre fixe au bas de l'écran, avec un seul bouton
+**Enregistrer** : il envoie toutes les modifications de l'onglet, même longues
+comme Hébergement, sans avoir à remonter. La barre compte les modifications en
+attente et propose de les annuler.
+
+- Les formulaires de réglage portent `data-reglages` : chacun garde sa route et sa
+  validation. `resources/js/reglages.js` envoie ceux qui ont changé, l'un après
+  l'autre, avec l'en-tête `X-Enregistrement-Unifie`. Le middleware
+  `EnregistrementUnifie` traduit alors la redirection et le message flashé de la
+  route en JSON : réussite, erreurs par champ (affichées sous le champ), refus.
+- Les fenêtres d'édition (prestation, pack, politique d'annulation, partenaire,
+  restaurant) portent `data-reglages-fenetre` : **Appliquer** met la modification
+  en attente dans la barre, qui l'envoie au clic sur Enregistrer.
+- Les suppressions et les actions immédiates (« Définir par défaut ») partent tout de suite.
+- Quitter l'onglet, ou supprimer, avec des modifications non enregistrées ouvre une
+  confirmation : enregistrer, abandonner ou rester.
+- Si une partie échoue, le reste est enregistré et les erreurs restent affichées.
+- Sans JavaScript, chaque formulaire garde son propre bouton.
+
 ### Réglages structurants
 
 Deux d'entre eux gouvernent la disponibilité, et méritent d'être connus :

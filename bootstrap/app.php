@@ -44,6 +44,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            // Paramètres : réponses en JSON pour la barre « Enregistrer » unique.
+            \App\Http\Middleware\EnregistrementUnifie::class,
             \App\Http\Middleware\TrackUserOnlineStatus::class,
             \App\Http\Middleware\LogUserActivity::class,
             // Mot de passe provisoire : rien d'autre avant d'avoir choisi le sien.

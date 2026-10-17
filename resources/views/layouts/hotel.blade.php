@@ -748,8 +748,8 @@
     </aside>
 
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
-        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between flex-shrink-0 print:hidden">
-            <div class="flex items-center gap-3">
+        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between gap-2 flex-shrink-0 print:hidden">
+            <div class="flex min-w-0 items-center gap-2 sm:gap-3">
                 {{-- Menu de l'application, sur petit écran seulement : sur grand
                      écran la barre latérale est déjà là, et une page sans barre
                      latérale n'a rien à ouvrir (la grille mène aux applications). --}}
@@ -789,16 +789,16 @@
                 </a>
 
                 @if($activeGroup)
-                    <div class="flex items-center gap-2 text-xs">
+                    <div class="flex min-w-0 items-center gap-2 text-xs">
                         <a href="{{ $activeGroup['url'] ?? '#' }}" class="font-bold text-primary/70 hover:text-primary transition hidden sm:inline">{{ $activeGroup['title'] }}</a>
                         <span class="text-primary/30 hidden sm:inline">/</span>
-                        <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
+                        <p class="min-w-0 text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                     </div>
                 @else
                     <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                 @endif
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 sm:gap-4">
                 {{-- Bouton d'activation des notifications push (visible tant que la
                      permission n'est pas accordée). Requiert un geste utilisateur. --}}
                 <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
@@ -1005,7 +1005,7 @@
                     </a>
                 @endpour
 
-                <span class="text-xs text-primary/50">
+                <span class="hidden sm:inline text-xs text-primary/50">
                     {{ ucfirst(\Carbon\Carbon::now()->locale('fr')->isoFormat('ddd. D MMM')) }}
                 </span>
 
