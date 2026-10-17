@@ -57,6 +57,12 @@
         {{ session('success') }}
     </div>
 @endif
+@if(request()->boolean('enregistre') && ! session('success'))
+    <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2" role="status">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        Les modifications de l'onglet ont été enregistrées.
+    </div>
+@endif
 @foreach(['warning' => 'bg-amber-50 border-amber-200 text-amber-800', 'error' => 'bg-red-50 border-red-200 text-red-700'] as $cle => $style)
     @if(session($cle))
         <div class="mb-6 px-4 py-3 border text-sm rounded-lg flex items-center gap-2 {{ $style }}" role="alert">
@@ -177,8 +183,10 @@
         @endif
     </div>
 
-    {{-- Contenu des onglets --}}
-    <div class="p-6">
+    {{-- Contenu des onglets. Les formulaires de réglage (data-reglages) et les
+         fenêtres d'édition (data-reglages-fenetre) s'enregistrent tous par la
+         barre fixe en bas de l'onglet (resources/js/reglages.js). --}}
+    <div class="p-6" data-reglages-onglet="{{ $tab }}">
         
         {{-- ONGLET: GÉNÉRAL (Uniquement Manager) --}}
         @if($tab === 'general' && \App\Support\SettingsTabs::peutRegler($user, 'general'))
@@ -195,7 +203,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" enctype="multipart/form-data"
+                <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" enctype="multipart/form-data"
                       class="mt-6"
                       x-data="{
                           fileName: '',
@@ -251,7 +259,7 @@
                         retomber sur la configuration du serveur.
                     </p>
 
-                    <form method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" class="mt-5">
+                    <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" class="mt-5">
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -363,7 +371,7 @@
              sous la clé « reception », d'où les lisent BookingController,
              RoomType et RoomAvailabilityService. --}}
         @if($tab === 'hebergement' && \App\Support\SettingsTabs::peutRegler($user, 'hebergement'))
-            <form method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
+            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
                 @csrf
 
                 {{-- Deux boutons pour un même formulaire : cette section est
@@ -631,7 +639,7 @@
                 $exemple       = $fisc->breakdown(5_000_000, $tauxStandard);
             @endphp
 
-            <form method="POST" action="{{ route('settings.update', ['tab' => 'taxes']) }}" class="max-w-3xl">
+            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'taxes']) }}" class="max-w-3xl">
                 @csrf
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h2 class="text-lg font-semibold text-primary">Taxes</h2>
@@ -828,7 +836,7 @@
                 $prochain = $calendrier->next(now());
                 $moisNoms = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
             @endphp
-            <form method="POST" action="{{ route('settings.update', ['tab' => 'inventaire']) }}" class="max-w-3xl"
+            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'inventaire']) }}" class="max-w-3xl"
                   x-data="{ dates: {{ Js::from($datesFixes) }} }">
                 @csrf
                 <h2 class="text-lg font-semibold text-primary mb-1">Inventaires généraux</h2>
@@ -1015,7 +1023,7 @@
                             </button>
                         </div>
 
-                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form data-reglages-fenetre="Prestation" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1078,7 +1086,7 @@
                                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                                 <button type="submit"
                                     class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                                    <span x-text="editing ? 'Enregistrer' : 'Ajouter'"></span>
+                                    <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
                         </form>
@@ -1099,7 +1107,7 @@
                 $delayByType   = (array) ($hebergement['cleaning_delay_by_type'] ?? []);
             @endphp
 
-            <form method="POST" action="{{ route('settings.update', ['tab' => 'hebergement']) }}" class="max-w-3xl mb-10">
+            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'hebergement']) }}" class="max-w-3xl mb-10">
                 @csrf
                 <h2 class="text-lg font-semibold text-primary mb-1">Remise en vente après départ</h2>
                 <p class="text-sm text-primary/60 mb-5 max-w-2xl">
@@ -1308,7 +1316,7 @@
                             </button>
                         </div>
 
-                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form data-reglages-fenetre="Pack" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1530,7 +1538,7 @@
                                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                                 <button type="submit"
                                     class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                                    <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
+                                    <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
                         </form>
@@ -1679,7 +1687,7 @@
                             </button>
                         </div>
 
-                        <form method="POST" :action="formAction" class="p-6 space-y-4 overflow-y-auto">
+                        <form data-reglages-fenetre="Politique d'annulation" method="POST" :action="formAction" class="p-6 space-y-4 overflow-y-auto">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1773,7 +1781,7 @@
                                 </button>
                                 <button type="submit"
                                     class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                                    <span x-text="editing ? 'Enregistrer les modifications' : 'Créer la politique'"></span>
+                                    <span x-text="editing ? 'Appliquer' : 'Ajouter la politique'"></span>
                                 </button>
                             </div>
                         </form>
@@ -1916,7 +1924,7 @@
                             </button>
                         </div>
 
-                        <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form data-reglages-fenetre="Partenaire" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -2149,7 +2157,7 @@
                                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                                 <button type="submit"
                                     class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                                    <span x-text="editing ? 'Enregistrer' : 'Créer'"></span>
+                                    <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
                         </form>
@@ -2157,6 +2165,48 @@
                 </div>
             </div>
         @endif
+    </div>
+</div>
+
+{{-- Barre d'enregistrement : un seul bouton pour tout l'onglet, toujours à
+     portée de main au bas de l'écran. Masquée tant que le script ne l'a pas
+     activée (sans script, chaque formulaire garde son bouton). Sur mobile, la
+     page défile d'un bloc : la barre est fixée à l'écran ; sur grand écran,
+     main défile seul : elle colle à son bas. --}}
+<div id="barre-reglages" hidden
+     class="fixed inset-x-0 bottom-0 z-30 lg:sticky lg:inset-x-auto lg:mt-4 lg:-mx-8 border-t border-secondary/20 bg-white/95 backdrop-blur px-4 lg:px-8 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] print:hidden">
+    <div id="reglages-en-attente" hidden class="mb-2 mr-20 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p class="font-semibold mb-1">En attente d'enregistrement</p>
+        <ul class="space-y-1"></ul>
+    </div>
+    {{-- pr-20 : le bouton flottant de l'assistant occupe le coin bas droit. --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 pr-20">
+        <p data-etat class="text-sm text-primary/60" aria-live="polite">Aucune modification</p>
+        <div class="flex items-center gap-2">
+            <button type="button" data-annuler hidden
+                    class="px-4 py-2 rounded-lg text-sm font-medium border border-secondary/30 bg-white text-primary hover:bg-gray-50 transition-colors">
+                Annuler<span class="hidden sm:inline"> les modifications</span>
+            </button>
+            <button type="button" data-enregistrer disabled
+                    class="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- Quitter l'onglet avec des modifications non enregistrées. --}}
+<div id="dialogue-reglages" hidden class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="dialogue-reglages-titre">
+    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <h2 id="dialogue-reglages-titre" class="font-heading text-lg font-semibold text-primary">Modifications non enregistrées</h2>
+        <p class="mt-2 text-sm text-primary/70">Cet onglet a des modifications non enregistrées. Les enregistrer avant de continuer ?</p>
+        <div class="mt-5 flex flex-wrap justify-end gap-2">
+            <button type="button" data-choix="rester" class="px-4 py-2 rounded-lg text-sm font-medium text-primary/70 hover:text-primary">Rester</button>
+            <button type="button" data-choix="abandonner" class="px-4 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-700 hover:bg-red-50">Abandonner</button>
+            <button type="button" data-choix="enregistrer" class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark">Enregistrer</button>
+        </div>
+    </div>
+</div>
 
 @if(in_array($tab, ['general', 'hebergement', 'taxes']))
     <x-csv-import-modal

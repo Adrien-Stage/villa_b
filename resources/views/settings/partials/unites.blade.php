@@ -29,7 +29,7 @@
             <li class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3 {{ $unite->is_active ? '' : 'opacity-70' }}">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     @droit('economat.units.modifier')
-                        <form method="POST" action="{{ route('economat.units.update', $unite) }}" class="flex flex-1 flex-wrap items-center gap-3">
+                        <form data-reglages method="POST" action="{{ route('economat.units.update', $unite) }}" class="flex flex-1 flex-wrap items-center gap-3">
                             @csrf @method('PUT')
                             <label class="sr-only" for="unite-{{ $unite->id }}">Nom de l'unité</label>
                             <input id="unite-{{ $unite->id }}" type="text" name="name" value="{{ $unite->name }}" required maxlength="20"
@@ -67,7 +67,7 @@
     </ul>
 
     @droit('economat.units.creer')
-        <form method="POST" action="{{ route('economat.units.store') }}" class="mt-6 rounded-xl border border-secondary/20 p-4">
+        <form data-reglages method="POST" action="{{ route('economat.units.store') }}" class="mt-6 rounded-xl border border-secondary/20 p-4">
             @csrf
             <h3 class="text-sm font-semibold text-primary">Ajouter une unité</h3>
             <div class="mt-3 flex flex-wrap items-end gap-3">

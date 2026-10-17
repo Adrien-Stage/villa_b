@@ -130,3 +130,17 @@
         page-break-inside: avoid !important;
     }
 }
+
+/* Paramètres : un seul bouton « Enregistrer » par onglet (resources/js/reglages.js).
+   Les boutons propres à chaque formulaire de réglage s'effacent quand la
+   barre unique prend la main. */
+.reglages-unifies form[data-reglages] button[type="submit"] {
+    display: none;
+}
+
+/* Sur mobile, la barre fixe recouvre le bas de l'onglet : on lui laisse la place. */
+@media (width < 64rem) {
+    .reglages-unifies {
+        padding-bottom: 8rem;
+    }
+}

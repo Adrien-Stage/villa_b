@@ -7,6 +7,9 @@
     'formAction' => null,
     'formMethod' => 'POST',
     'enctype' => null,
+    // Paramètres : libellé de la fenêtre de réglage ; son formulaire met alors
+    // la modification en attente de la barre « Enregistrer » (reglages.js).
+    'reglages' => null,
     'closeAction' => "document.getElementById('id').classList.add('hidden')"
 ])
 
@@ -39,7 +42,7 @@
 
         {{-- Body + Footer --}}
         @if($formAction)
-            <form method="{{ $formMethod }}" action="{{ $formAction }}" class="flex flex-col flex-1 min-h-0 overflow-hidden" {!! $enctype ? 'enctype="'.$enctype.'"' : '' !!}>
+            <form method="{{ $formMethod }}" action="{{ $formAction }}" class="flex flex-col flex-1 min-h-0 overflow-hidden" {!! $enctype ? 'enctype="'.$enctype.'"' : '' !!} @if($reglages) data-reglages-fenetre="{{ $reglages }}" @endif>
                 @csrf
                 <div class="p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
                     {{ $slot }}
