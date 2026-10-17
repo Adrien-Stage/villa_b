@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
 
+require_once __DIR__.'/../Fixtures/code_de_checkin.php';
+
 /**
  * Envoi du code depuis la fenêtre qui suit la création, et habillage du message.
  *
