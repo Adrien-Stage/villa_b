@@ -273,6 +273,64 @@ l'économe.
 Les articles s'importent et s'exportent en CSV (`/economat/articles-export`,
 `/economat/articles-import`).
 
+### Classeur Excel d'un magasin
+
+`/economat/classeur` — un magasin (le magasin central ou un dépôt de service) s'exporte
+en classeur Excel, se gère dans Excel seul, puis se réimporte.
+
+Le classeur ([`ClasseurStockExport`](../app/Services/ClasseurStockExport.php), format
+dans [`ClasseurStock`](../app/Support/ClasseurStock.php)) porte les onglets **Lisez-moi**,
+**Articles**, **Mouvements**, **Fournisseurs**, **Catégories** et **Synthèse**. Il se suffit
+à lui-même :
+
+- listes déroulantes (référence, type, unité, fournisseur, catégorie) ;
+- désignation et unité retrouvées par la référence (`INDEX/MATCH`) ;
+- stock de chaque article recalculé par formule à partir des mouvements (`SUMIFS`) :
+  stock initial + entrées − sorties + retours ± ajustements, coût moyen des arrivées,
+  valeur, alerte « À commander » sous le stock minimum ;
+- stock après chaque mouvement, en rouge s'il devient négatif ;
+- synthèse par catégorie et par type de mouvement.
+
+Les fonctions employées marchent dans Excel, LibreOffice et Google Sheets.
+
+Types de mouvement : **Stock initial**, **Entrée**, **Sortie** (bénéficiaire obligatoire),
+**Retour**, **Ajustement** (quantité signée). Une entrée porte son coût, son fournisseur, son
+document (BL, facture, colis) et son pointage ; tout cela est gardé avec le mouvement
+(`details`) et revient à l'export suivant.
+
+L'import ([`ClasseurStockImport`](../app/Services/ClasseurStockImport.php)) se fait en deux temps :
+
+1. **Aperçu** — le fichier est lu et analysé ; rien n'est écrit. L'écran montre les
+   articles, catégories et fournisseurs à créer, les fiches modifiées, les mouvements dans
+   leur ordre d'application, et chaque erreur à sa ligne. Le stock est simulé article par
+   article : une sortie de trop est refusée.
+2. **Confirmation** — le fichier est relu et réanalysé (le stock a pu bouger), puis appliqué
+   d'un bloc : tout ou rien. Chaque mouvement renvoie à son import (`stock_import_id`).
+
+Règles :
+
+- une ligne qui porte un N° vient de l'application : elle n'est jamais rejouée ; une ligne
+  sans N° déjà importée est reconnue à son empreinte (`import_key`) ;
+- un mouvement enregistré ne se modifie pas par le fichier : on le corrige par un ajustement ;
+- pas de date à venir ; rien avant le dernier inventaire clôturé du magasin ; une ligne datée
+  d'une journée close au night audit est enregistrée à la date du jour, sa date d'origine
+  dans le motif ;
+- aucun import pendant un inventaire (magasin central ou dépôt visé) ;
+- le coût est facultatif : vide, l'arrivée entre à 0 FCFA, l'aperçu le signale ;
+- un classeur numéroté d'un autre magasin est refusé ;
+- pour un article connu, une case vide laisse sa fiche telle quelle ; son unité ne change
+  plus dès qu'il a du stock ; un changement de catégorie reclasse sa valeur comme depuis la fiche.
+
+Vers un **dépôt**, ce qui entre passe par le magasin central puis lui est livré, comme une
+demande livrée : reprise ou entrée au magasin central, livraison au dépôt (source `import`,
+`details.vers_depot`), entrée au dépôt. Au grand livre, la livraison ne coûte rien au service ;
+la sortie vers un bénéficiaire (`ServiceStoreMovement::SOURCE_BENEFICIAIRE`) passe en charge
+du service (D 603x, C 3x), le retour (`SOURCE_RETOUR`) l'annule, l'ajustement se comptabilise
+comme un écart d'inventaire.
+
+Droits : consulter et exporter (`economat.classeur.voir`, `.export`) pour qui suit le stock ;
+déposer et confirmer un import (`economat.classeur.import`, `.confirm`) pour l'économe.
+
 ---
 
 # Boutique

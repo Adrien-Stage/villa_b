@@ -554,8 +554,10 @@ class LedgerPostingService
 
             // Livré à un dépôt de service : même article, même compte de
             // stock, seul le lieu change. La charge naîtra à l'inventaire du
-            // dépôt, qui révèle ce qui a été consommé.
-            if ($requisition?->service_store_id !== null) {
+            // dépôt, qui révèle ce qui a été consommé. Un classeur importé
+            // pour un dépôt y livre de même ce qu'il fait entrer.
+            if ($requisition?->service_store_id !== null
+                || ($mouvement->source_type === StockMovement::SOURCE_IMPORT && !empty($mouvement->details['vers_depot']))) {
                 continue;
             }
 
@@ -764,13 +766,15 @@ class LedgerPostingService
     }
 
     /**
-     * Inventaires des dépôts de service clôturés dans la journée.
+     * Inventaires des dépôts de service clôturés dans la journée, et ce qu'un
+     * dépôt remet à un bénéficiaire ou en reçoit en retour.
      *
      * La livraison au dépôt n'a rien coûté au service : c'est ici, quand le
-     * comptage révèle ce qui a été consommé, que la charge naît.
+     * comptage révèle ce qui a été consommé, ou quand la marchandise sort
+     * vers un bénéficiaire (chantier, artisan), que la charge naît.
      *
-     *   Consommation (manquant)   D 603x [centre du service]   C 3x
-     *   Excédent                  D 3x                         C 603x [centre]
+     *   Consommation (manquant), sortie   D 603x [centre du service]   C 3x
+     *   Excédent, retour en stock         D 3x                         C 603x [centre]
      */
     public function postServiceStoreStock(CarbonInterface $date): ?JournalEntry
     {
@@ -784,7 +788,11 @@ class LedgerPostingService
 
         $mouvements = \App\Models\ServiceStoreMovement::query()
             ->with('store', 'item.category')
-            ->where('type', \App\Models\ServiceStoreMovement::TYPE_ADJUSTMENT)
+            ->where(fn ($q) => $q->where('type', \App\Models\ServiceStoreMovement::TYPE_ADJUSTMENT)
+                ->orWhereIn('source_type', [
+                    \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE,
+                    \App\Models\ServiceStoreMovement::SOURCE_RETOUR,
+                ]))
             ->whereBetween('occurred_at', [$start, $end])
             ->orderBy('id')
             ->get();
@@ -802,12 +810,18 @@ class LedgerPostingService
             $variation = Account::variationFor($stock);
             $centre = $this->centreDuService($mouvement->store->department);
 
+            $nature = match ($mouvement->source_type) {
+                \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE => 'Sorties à des bénéficiaires',
+                \App\Models\ServiceStoreMovement::SOURCE_RETOUR       => 'Retours en stock',
+                default                                                 => null,
+            };
+
             if ((float) $mouvement->quantity < 0) {
-                $libelle = "Consommation — {$mouvement->store->name}";
+                $libelle = ($nature ?? 'Consommation') . " — {$mouvement->store->name}";
                 $this->imputer($imputations, $variation, $libelle, $valeur, 0, $centre);
                 $this->imputer($imputations, $stock, $libelle, 0, $valeur);
             } else {
-                $libelle = "Excédent d’inventaire — {$mouvement->store->name}";
+                $libelle = ($nature ?? 'Excédent d’inventaire') . " — {$mouvement->store->name}";
                 $this->imputer($imputations, $stock, $libelle, $valeur, 0);
                 $this->imputer($imputations, $variation, $libelle, 0, $valeur, $centre);
             }
@@ -820,7 +834,7 @@ class LedgerPostingService
         return $this->ledger->post(
             journalCode: Journal::MISC,
             date: $start,
-            label: 'Inventaires des dépôts de service du ' . $start->format('d/m/Y'),
+            label: 'Consommations des dépôts de service du ' . $start->format('d/m/Y'),
             lines: array_values($imputations),
             schema: $schema,
         );

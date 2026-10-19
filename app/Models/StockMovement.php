@@ -32,6 +32,13 @@ class StockMovement extends Model
     public const SOURCE_PACKAGING      = 'packaging';
     /** Découpe vers le garde-manger d'un restaurant (bon de découpe). */
     public const SOURCE_CUT            = 'cut';
+    /**
+     * Ligne d'un classeur Excel importé (StockImport) : entrée, retour,
+     * ajustement, ou livraison vers le dépôt visé par le classeur. Le stock
+     * initial et les sorties gardent leurs sources propres (reprise, sortie
+     * hors établissement) ; stock_import_id les relie aussi à l'import.
+     */
+    public const SOURCE_IMPORT         = 'import';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -43,6 +50,7 @@ class StockMovement extends Model
         self::SOURCE_EXTERNAL_ISSUE => 'Sortie hors établissement',
         self::SOURCE_PACKAGING      => 'Conditionnement',
         self::SOURCE_CUT            => 'Découpe',
+        self::SOURCE_IMPORT         => 'Import Excel',
     ];
 
     public const TYPES = [
@@ -55,6 +63,7 @@ class StockMovement extends Model
     protected $fillable = [
         'stock_item_id', 'type', 'quantity', 'stock_before', 'stock_after', 'packaging', 'unit_cost', 'stock_account',
         'source_type', 'source_id', 'reason', 'user_id', 'occurred_at', 'tenant_id',
+        'stock_import_id', 'details', 'import_key',
     ];
 
     protected $casts = [
@@ -64,6 +73,7 @@ class StockMovement extends Model
         'packaging'    => 'array',
         'unit_cost'   => 'integer',
         'occurred_at' => 'datetime',
+        'details'     => 'array',
     ];
 
     public function item(): BelongsTo
@@ -74,6 +84,11 @@ class StockMovement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function stockImport(): BelongsTo
+    {
+        return $this->belongsTo(StockImport::class);
     }
 
     public function typeLabel(): string

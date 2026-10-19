@@ -30,7 +30,7 @@ class StockMovementJournal
     public function query(array $filtres): Builder
     {
         return StockMovement::query()
-            ->with(['item:id,name,reference,unit,stock_category_id', 'user:id,name'])
+            ->with(['item:id,name,reference,unit,stock_category_id', 'user:id,name', 'stockImport:id,reference'])
             ->when($filtres['du'] ?? null, fn ($q, $du) => $q->where('occurred_at', '>=', $du->copy()->startOfDay()))
             ->when($filtres['au'] ?? null, fn ($q, $au) => $q->where('occurred_at', '<=', $au->copy()->endOfDay()))
             ->when($filtres['article'] ?? null, fn ($q, $id) => $q->where('stock_item_id', $id))
@@ -107,6 +107,7 @@ class StockMovementJournal
             StockMovement::SOURCE_STOCK_COUNT    => [StockCount::class, 'reference', 'economat.stock_counts.show'],
             StockMovement::SOURCE_EXTERNAL_ISSUE => [ExternalIssue::class, 'number', 'economat.external_issues.show'],
             StockMovement::SOURCE_CUT            => [\App\Models\StockCut::class, 'number', 'economat.cuts.show'],
+            StockMovement::SOURCE_IMPORT         => [\App\Models\StockImport::class, 'reference', 'economat.classeur.show'],
         ];
 
         $documents = [];
@@ -135,7 +136,8 @@ class StockMovementJournal
             'unite'     => $m->item?->unit ?? '',
             'type'      => $m->type,
             'nature'    => $m->typeLabel(),
-            'origine'   => $m->sourceLabel() . ($document ? ' ' . $document['numero'] : ''),
+            'origine'   => $m->sourceLabel() . ($document ? ' ' . $document['numero'] : '')
+                . ($m->stockImport && $m->source_type !== StockMovement::SOURCE_IMPORT ? ' · import ' . $m->stockImport->reference : ''),
             'url'       => $document['url'] ?? null,
             'avant'     => $m->stockAvant(),
             'entree'    => $quantite > 0 ? $quantite : null,

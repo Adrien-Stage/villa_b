@@ -584,6 +584,9 @@
                             @droit('economat.movements.voir')
                                 <x-sidebar-link route="economat.movements.index" icon="arrow-left-right">Mouvements de stock</x-sidebar-link>
                             @enddroit
+                            @droit('economat.classeur.voir')
+                                <x-sidebar-link route="economat.classeur.index" icon="file-spreadsheet">Classeur Excel</x-sidebar-link>
+                            @enddroit
                             @droit('economat.categories.voir')
                                 <x-sidebar-link route="economat.categories.index" icon="tags">Catégories</x-sidebar-link>
                             @enddroit

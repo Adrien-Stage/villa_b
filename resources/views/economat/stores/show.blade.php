@@ -13,9 +13,17 @@
             <h1 class="text-xl font-heading font-semibold text-primary">{{ $store->name }}</h1>
             <p class="text-sm text-primary/60 mt-0.5">{{ $store->departmentLabel() }} @unless($store->is_active)· inactif @endunless</p>
         </div>
+        <div class="flex items-start gap-4">
+        @droit('economat.classeur.voir')
+            <a href="{{ route('economat.classeur.index', ['depot' => $store->id]) }}"
+               class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4" aria-hidden="true"></i> Classeur Excel
+            </a>
+        @enddroit
         <div class="text-right">
             <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/45">Valeur en stock</p>
             <p class="text-xl font-semibold text-primary">{{ number_format($stocks->sum(fn ($s) => $s->stockValue()) / 100, 0, ',', ' ') }} <span class="text-sm font-normal text-primary/50">FCFA</span></p>
+        </div>
         </div>
     </div>
 
@@ -119,7 +127,7 @@
                             <tr>
                                 <td class="px-5 py-3 text-primary/70 text-xs whitespace-nowrap">{{ $mouvement->occurred_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-5 py-3 text-primary">{{ $mouvement->item?->name ?? '—' }}</td>
-                                <td class="px-5 py-3 text-primary/70 text-xs">{{ $mouvement->typeLabel() }}</td>
+                                <td class="px-5 py-3 text-primary/70 text-xs">{{ $mouvement->typeLabel() }}<span class="block text-[10px] text-primary/45">{{ $mouvement->sourceLabel() }}</span></td>
                                 <td class="px-5 py-3 text-right font-mono {{ (float) $mouvement->quantity < 0 ? 'text-red-700' : 'text-green-700' }}">
                                     {{ (float) $mouvement->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format((float) $mouvement->quantity, 3, ',', ' '), '0'), ',') }}
                                 </td>
