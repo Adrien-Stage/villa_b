@@ -18,6 +18,24 @@ class ServiceStoreMovement extends Model
     /** Sortie vers le mini-bar d'une chambre (réapprovisionnement). */
     public const SOURCE_MINIBAR = 'minibar';
 
+    /** Livraison, stock initial ou ajustement venus d'un classeur Excel importé. */
+    public const SOURCE_IMPORT = 'import';
+
+    /** Sortie remise à un bénéficiaire (chantier, artisan…) : consommée, elle porte sa charge. */
+    public const SOURCE_BENEFICIAIRE = 'beneficiaire';
+
+    /** Retour en stock de ce qu'un bénéficiaire n'a pas employé : la charge s'annule. */
+    public const SOURCE_RETOUR = 'retour';
+
+    public const SOURCES = [
+        self::SOURCE_REQUISITION  => "Livraison de l'économat",
+        self::SOURCE_STOCK_COUNT  => 'Inventaire du dépôt',
+        self::SOURCE_MINIBAR      => 'Mini-bar',
+        self::SOURCE_IMPORT       => 'Import Excel',
+        self::SOURCE_BENEFICIAIRE => 'Sortie à un bénéficiaire',
+        self::SOURCE_RETOUR       => 'Retour en stock',
+    ];
+
     public const TYPES = [
         self::TYPE_IN         => 'Entrée',
         self::TYPE_OUT        => 'Sortie',
@@ -27,6 +45,7 @@ class ServiceStoreMovement extends Model
     protected $fillable = [
         'service_store_id', 'stock_item_id', 'type', 'quantity', 'stock_after', 'unit_cost',
         'stock_account', 'source_type', 'source_id', 'reason', 'user_id', 'occurred_at',
+        'stock_import_id', 'details', 'import_key',
     ];
 
     protected $casts = [
@@ -34,6 +53,7 @@ class ServiceStoreMovement extends Model
         'stock_after' => 'decimal:3',
         'unit_cost'   => 'integer',
         'occurred_at' => 'datetime',
+        'details'     => 'array',
     ];
 
     public function store(): BelongsTo
@@ -51,8 +71,18 @@ class ServiceStoreMovement extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function stockImport(): BelongsTo
+    {
+        return $this->belongsTo(StockImport::class);
+    }
+
     public function typeLabel(): string
     {
         return self::TYPES[$this->type] ?? $this->type;
+    }
+
+    public function sourceLabel(): string
+    {
+        return self::SOURCES[$this->source_type] ?? (string) $this->source_type;
     }
 }

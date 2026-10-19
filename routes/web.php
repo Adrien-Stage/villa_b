@@ -739,6 +739,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/sorties-externes/{sortie}/imprimer', [$eco . 'ExternalIssueController', 'print'])->whereNumber('sortie')->name('external_issues.print');
             Route::post('/sorties-externes/{sortie}/annuler', [$eco . 'ExternalIssueController', 'cancel'])->whereNumber('sortie')->name('external_issues.cancel');
 
+            // Classeur Excel d'un magasin (central ou dépôt) : export, import avec aperçu.
+            Route::get('/classeur', [$eco . 'StockWorkbookController', 'index'])->name('classeur.index');
+            Route::get('/classeur/export', [$eco . 'StockWorkbookController', 'export'])->name('classeur.export');
+            Route::post('/classeur/import', [$eco . 'StockWorkbookController', 'import'])->name('classeur.import');
+            Route::get('/classeur/imports/{import}', [$eco . 'StockWorkbookController', 'show'])->whereNumber('import')->name('classeur.show');
+            Route::post('/classeur/imports/{import}/confirmer', [$eco . 'StockWorkbookController', 'confirm'])->whereNumber('import')->name('classeur.confirm');
+
             // Mouvements de stock : tous les articles, ou la fiche de stock d'un seul
             Route::get('/mouvements', [$eco . 'StockMovementController', 'index'])->name('movements.index');
             Route::get('/mouvements/export', [$eco . 'StockMovementController', 'export'])->name('movements.export');

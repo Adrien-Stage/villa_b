@@ -609,6 +609,40 @@
   "admin",
   "econome"
  ],
+ "economat.classeur.confirm": [
+  "admin",
+  "econome"
+ ],
+ "economat.classeur.export": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper"
+ ],
+ "economat.classeur.import": [
+  "admin",
+  "econome"
+ ],
+ "economat.classeur.index": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.classeur.show": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
  "economat.control.index": [
   "admin",
   "controller",

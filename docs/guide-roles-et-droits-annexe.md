@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 124 | 231 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Factures, Planning |
-| Manager (`manager`) | 2 | — | 122 | 102 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
+| Administrateur (`admin`) | 1 | — | 126 | 233 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Factures, Planning |
+| Manager (`manager`) | 2 | — | 124 | 102 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Factures, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 34 | 48 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Factures, Planning |
 | Réceptionniste (`reception`) | 4 | — | 32 | 32 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Factures |
 | Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 12 | 27 | Économat, Paramètres, Housekeeping, Planning |
@@ -27,13 +27,13 @@
 | Caissier restaurant (`cashier`) | 4 | — | 11 | 7 | Restaurant |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 15 | 21 | Économat, Paramètres, Boutique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 8 | 8 | Économat, Boutique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 31 | 53 | Économat, Planning |
-| Magasinier (`storekeeper`) | 4 | — | 24 | 7 | Économat |
+| Chef économe (`econome`) | 3 | `storekeeper` | 33 | 55 | Économat, Planning |
+| Magasinier (`storekeeper`) | 4 | — | 26 | 7 | Économat |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 33 | 26 | Comptabilité, Économat, Chambres, Planning |
 | Comptable (`accountant`) | 4 | — | 33 | 21 | Comptabilité, Économat, Chambres |
-| Contrôleur de gestion (`controller`) | transversal | — | 89 | 0 | — |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 71 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 104 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 91 | 0 | — |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 73 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 105 | 0 | — |
 
 ## Droit par droit
 
@@ -285,6 +285,10 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.categories.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.categories.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.categories.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `economat.classeur.confirm` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.classeur.export` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ |  |
+| `economat.classeur.import` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| `economat.classeur.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
 | `economat.control.suggestions.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `economat.control.suggestions.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |
 | `economat.control.variances.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  | ✓ | ✓ | ✓ |

@@ -117,6 +117,8 @@ class PermissionCatalog
         'economat.categories.creer',
         'economat.categories.modifier',
         'economat.categories.supprimer',
+        'economat.classeur.confirm',
+        'economat.classeur.import',
         'economat.control.suggestions.creer',
         'economat.external_issues.cancel',
         'economat.external_issues.creer',
@@ -732,6 +734,12 @@ class PermissionCatalog
             'economat.categories.modifier' => ['econome'],
             'economat.categories.supprimer' => ['econome'],
             'economat.categories.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Classeur Excel d'un magasin : tous ceux qui suivent le stock le
+            // lisent et l'exportent ; seul l'économe l'importe.
+            'economat.classeur.confirm' => ['econome'],
+            'economat.classeur.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.classeur.import' => ['econome'],
+            'economat.classeur.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.control.suggestions.creer' => ['econome'],
             'economat.count_sheets.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
