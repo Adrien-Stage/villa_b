@@ -64,6 +64,7 @@ class Department extends Model
             'BTQ' => ['shop_cashier'],
             'FIN' => ['accountant'],
             'QLT' => ['quality_auditor'],
+            'TEC' => ['technician'],
         ];
 
         $roles = array_values(array_filter(

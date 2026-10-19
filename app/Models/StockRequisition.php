@@ -27,6 +27,7 @@ class StockRequisition extends Model
         'restaurant'   => 'Restauration / Cuisine & Bar',
         'boutique'     => 'Boutique / Vente',
         'comptabilite' => 'Comptabilité / Finances',
+        'technique'    => 'Technique / Maintenance',
         'autre'        => 'Autre service',
     ];
 
@@ -56,6 +57,7 @@ class StockRequisition extends Model
         'restaurant'   => ['restaurant_cook', 'restaurant_staff', 'manager'],
         'boutique'     => ['shop_cashier', 'manager'],
         'comptabilite' => ['accountant', 'manager'],
+        'technique'    => ['technician', 'manager'],
         'autre'        => ['manager', 'econome', 'controller'],
     ];
 
@@ -70,6 +72,7 @@ class StockRequisition extends Model
         'restaurant'   => ['restaurant_chief', 'restaurant_manager'],
         'boutique'     => ['shop_manager'],
         'comptabilite' => ['finance_manager'],
+        'technique'    => ['tech_manager'],
         'autre'        => ['manager'],
     ];
 

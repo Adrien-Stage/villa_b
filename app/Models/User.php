@@ -77,6 +77,12 @@ class User extends Authenticatable
         return $this->belongsToMany(PointOfSale::class)->withTimestamps();
     }
 
+    /** Spécialités d'un technicien (plomberie, CFO…), réglées par le responsable technique. */
+    public function technicianSpecialties(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TechnicianSpecialty::class);
+    }
+
     /**
      * Affectations de rôles. Le pivot porte le niveau : null ou « write »
      * pour le rôle entier, « read » pour le rôle tenu en lecture seule.

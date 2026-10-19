@@ -78,6 +78,7 @@ Niveau 3  Chef de réception ─────────── inclut ── Ré
           Chef de cuisine ───────────── inclut ── Cuisinier
           Responsable boutique ──────── inclut ── Vendeur-caissier
           Chef économe ──────────────── inclut ── Magasinier
+          Responsable technique ─────── inclut ── Technicien de maintenance   (module Technique)
           Responsable administratif et financier ── inclut ── Comptable
 Transversal (lecture seule) : Contrôleur de gestion, Contrôleur qualité & audit
 Technique : Support Wetchah (lecture seule, ouvert par le mode assistance)
@@ -318,6 +319,27 @@ Son chef vise la demande avant qu'elle arrive chez l'économe : chef de récepti
 gouvernante, chef cuisinier ou responsable restaurant, responsable boutique, RAF. La
 direction vise à la place d'un chef absent. Une demande faite par un chef porte déjà
 son visa.
+
+### Technique (module « technique »)
+
+**Responsable technique** — dirige le service de maintenance.
+
+- *Fait* :
+  - voit toutes les demandes d'intervention, les affecte à un technicien, les
+    requalifie (spécialité, priorité) ;
+  - règle les spécialités de chaque technicien (plomberie, CFO, CFA, froid,
+    climatisation et ventilation, menuiserie, serrurerie, maçonnerie, cuisine) ;
+  - fait tout ce que fait un technicien ;
+  - vise les demandes à l'économat de son service.
+
+**Technicien de maintenance** — intervient sur le terrain : prend une demande libre,
+commence, porte les pièces sorties du dépôt technique, termine avec un compte rendu.
+Il demande à l'économat ce dont le service a besoin.
+
+**Demandes d'intervention** — tout le personnel en fait, par le bouton
+« Intervention » de la barre du haut, et suit les siennes ; un chef de service suit
+celles de son service. Un problème signalé par le housekeeping devient une demande.
+Le demandeur est prévenu de la fin et peut rouvrir pendant 7 jours.
 
 ### Comptabilité et finances
 

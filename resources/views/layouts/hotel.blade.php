@@ -636,6 +636,46 @@
                 @endif
                 @endif
 
+                {{-- Technique : le service de maintenance y travaille ; chacun y
+                     suit les demandes d'intervention qu'il a faites. --}}
+                @if(!$hasSidebar || $activeGroupId === 'technique')
+                @module('technique')
+                @undroit('technique.voir', 'technique.demandes.voir')
+                    <div>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Technique</p>
+                        <ul class="space-y-0.5">
+                            @droit('technique.voir')
+                                <x-sidebar-link route="technique.index" icon="wrench">Tableau technique</x-sidebar-link>
+                            @enddroit
+                            @droit('technique.demandes.voir')
+                                <x-sidebar-link route="technique.demandes.index" icon="clipboard-list">
+                                    {{ $droits->allows($utilisateur, 'technique.voir') ? "Demandes d'intervention" : "Mes demandes d'intervention" }}
+                                </x-sidebar-link>
+                            @enddroit
+                            @droit('technique.demandes.creer')
+                                <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
+                            @enddroit
+                            @droit('technique.equipe.voir')
+                                <x-sidebar-link route="technique.equipe.index" icon="users">Équipe & spécialités</x-sidebar-link>
+                            @enddroit
+                            @droit('technique.depot.voir')
+                                <x-sidebar-link route="technique.depot.index" icon="package">Dépôt technique</x-sidebar-link>
+                            @enddroit
+                            {{-- Le service technique adresse ses demandes à l'économat d'ici. --}}
+                            @if($groupeDesDemandes === 'technique')
+                                @droit('economat.requisitions.voir')
+                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
+                                @enddroit
+                                @droit('economat.purchase_requests.voir')
+                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                                @enddroit
+                            @endif
+                        </ul>
+                    </div>
+                @endundroit
+                @endmodule
+                @endif
+
 
                 @if(!$hasSidebar || $activeGroupId === 'accounting')
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
@@ -812,6 +852,19 @@
                     </svg>
                     <span class="hidden sm:inline">Activer les notifications</span>
                 </button>
+
+                {{-- Une panne, une fuite, une prise morte : tout le personnel
+                     saisit le service technique d'ici. --}}
+                @module('technique')
+                @droit('technique.demandes.creer')
+                    <a href="{{ route('technique.demandes.create') }}"
+                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                       title="Demander une intervention technique">
+                        <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
+                        <span class="hidden sm:inline">Intervention</span>
+                    </a>
+                @enddroit
+                @endmodule
 
                 {{-- Bouton « Suggestion » : ouvert à tout le personnel, quel que
                      soit son rôle. Les tickets partent vers le support technique,

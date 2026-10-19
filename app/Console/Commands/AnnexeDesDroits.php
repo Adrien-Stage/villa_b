@@ -30,6 +30,7 @@ class AnnexeDesDroits extends Command
         'restaurant_cook' => 'Cuisinier', 'cashier' => 'Caissier',
         'shop_manager' => 'Resp. bout.', 'shop_cashier' => 'Vendeur',
         'econome' => 'Économe', 'storekeeper' => 'Magasinier',
+        'tech_manager' => 'Resp. tech.', 'technician' => 'Technicien',
         'finance_manager' => 'RAF', 'accountant' => 'Comptable',
         'controller' => 'Contrôleur', 'quality_auditor' => 'Auditeur', 'support' => 'Support',
     ];
@@ -39,7 +40,7 @@ class AnnexeDesDroits extends Command
         'rooms' => 'Chambres', 'bookings' => 'Réservations', 'groups' => 'Groupes', 'agenda' => 'Agenda',
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
-        'economat' => 'Économat', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
+        'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'analytics' => 'Analytique',
         'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
     ];

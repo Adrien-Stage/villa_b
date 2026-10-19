@@ -429,6 +429,16 @@ class HousekeepingController extends Controller
             Auth::id()
         );
 
+        // Avec le service technique, le signalement devient une demande
+        // d'intervention : les techniciens sont alertés sans attendre.
+        if (\App\Services\MaintenanceService::actif()) {
+            $demande = app(\App\Services\MaintenanceService::class)
+                ->depuisHousekeeping($room->fresh(), $validated['issue_notes'], $assignment->fresh(), Auth::user());
+
+            return redirect()->route('housekeeping.index')
+                ->with('success', "Le problème a été signalé à l’encadrement et au service technique (demande {$demande->reference}).");
+        }
+
         return redirect()->route('housekeeping.index')->with('success', 'Le problème a été signalé à l’encadrement.');
     }
 

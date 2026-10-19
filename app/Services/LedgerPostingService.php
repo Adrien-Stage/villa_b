@@ -792,10 +792,15 @@ class LedgerPostingService
                 ->orWhereIn('source_type', [
                     \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE,
                     \App\Models\ServiceStoreMovement::SOURCE_RETOUR,
+                    \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION,
                 ]))
             ->whereBetween('occurred_at', [$start, $end])
             ->orderBy('id')
             ->get();
+
+        $demandes = \App\Models\MaintenanceRequest::query()
+            ->whereKey($mouvements->where('source_type', \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION)->pluck('source_id')->filter()->unique())
+            ->pluck('department', 'id');
 
         $imputations = [];
 
@@ -808,11 +813,18 @@ class LedgerPostingService
 
             $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
             $variation = Account::variationFor($stock);
-            $centre = $this->centreDuService($mouvement->store->department);
+            // Une pièce employée par une intervention coûte au service où l'on
+            // a réparé : une chambre à l'hébergement, la cuisine au restaurant.
+            $centre = $this->centreDuService(
+                $mouvement->source_type === \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION
+                    ? ($demandes[$mouvement->source_id] ?? $mouvement->store->department)
+                    : $mouvement->store->department
+            );
 
             $nature = match ($mouvement->source_type) {
                 \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE => 'Sorties à des bénéficiaires',
                 \App\Models\ServiceStoreMovement::SOURCE_RETOUR       => 'Retours en stock',
+                \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION => 'Pièces des interventions',
                 default                                                 => null,
             };
 

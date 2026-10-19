@@ -931,7 +931,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "economat.purchase_requests.convert": [
   "admin",
@@ -945,7 +946,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "economat.purchase_requests.index": [
   "admin",
@@ -959,7 +961,8 @@
   "restaurant_chief",
   "restaurant_manager",
   "shop_manager",
-  "support"
+  "support",
+  "tech_manager"
  ],
  "economat.purchase_requests.reject": [
   "admin",
@@ -977,7 +980,8 @@
   "restaurant_chief",
   "restaurant_manager",
   "shop_manager",
-  "support"
+  "support",
+  "tech_manager"
  ],
  "economat.purchase_requests.store": [
   "admin",
@@ -987,7 +991,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "economat.receipts.cancel": [
   "admin",
@@ -1063,7 +1068,9 @@
   "restaurant_manager",
   "restaurant_staff",
   "shop_cashier",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager",
+  "technician"
  ],
  "economat.requisitions.create": [
   "accountant",
@@ -1080,7 +1087,9 @@
   "restaurant_manager",
   "restaurant_staff",
   "shop_cashier",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager",
+  "technician"
  ],
  "economat.requisitions.deliver": [
   "admin",
@@ -1095,7 +1104,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "economat.requisitions.export": [
   "admin",
@@ -1109,7 +1119,8 @@
   "restaurant_chief",
   "restaurant_manager",
   "shop_manager",
-  "storekeeper"
+  "storekeeper",
+  "tech_manager"
  ],
  "economat.requisitions.index": [
   "accountant",
@@ -1131,7 +1142,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "economat.requisitions.print": [
   "accountant",
@@ -1153,7 +1166,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "economat.requisitions.reject": [
   "admin",
@@ -1179,7 +1194,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "economat.requisitions.store": [
   "accountant",
@@ -1196,7 +1213,9 @@
   "restaurant_manager",
   "restaurant_staff",
   "shop_cashier",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager",
+  "technician"
  ],
  "economat.stock_counts.cancel": [
   "admin",
@@ -1367,7 +1386,9 @@
   "restaurant_staff",
   "shop_cashier",
   "shop_manager",
-  "storekeeper"
+  "storekeeper",
+  "tech_manager",
+  "technician"
  ],
  "editions.index": [
   "accountant",
@@ -1390,7 +1411,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "editions.print": [
   "accountant",
@@ -1413,7 +1436,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "editions.show": [
   "accountant",
@@ -1436,7 +1461,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "groups.addRoom": [
   "admin",
@@ -1687,7 +1714,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "planning.affectations.store": [
   "admin",
@@ -1698,7 +1726,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "planning.index": [
   "accountant",
@@ -1721,7 +1750,9 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
-  "support"
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "planning.publier": [
   "admin",
@@ -1732,7 +1763,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "planning.recopier": [
   "admin",
@@ -1743,7 +1775,8 @@
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
-  "shop_manager"
+  "shop_manager",
+  "tech_manager"
  ],
  "reception.pos.history": [
   "admin",
@@ -2724,6 +2757,195 @@
   "admin",
   "manager",
   "support"
+ ],
+ "technique.demandes.assign": [
+  "admin",
+  "manager",
+  "tech_manager"
+ ],
+ "technique.demandes.cancel": [
+  "accountant",
+  "admin",
+  "cashier",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.complete": [
+  "admin",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.create": [
+  "accountant",
+  "admin",
+  "cashier",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.index": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.parts": [
+  "admin",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.reopen": [
+  "accountant",
+  "admin",
+  "cashier",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.show": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.start": [
+  "admin",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.store": [
+  "accountant",
+  "admin",
+  "cashier",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.take": [
+  "admin",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.depot.index": [
+  "admin",
+  "manager",
+  "support",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.equipe.index": [
+  "admin",
+  "manager",
+  "support",
+  "tech_manager"
+ ],
+ "technique.equipe.update": [
+  "admin",
+  "manager",
+  "tech_manager"
+ ],
+ "technique.index": [
+  "admin",
+  "controller",
+  "manager",
+  "support",
+  "tech_manager",
+  "technician"
  ],
  "test-popup": [
   "admin",
