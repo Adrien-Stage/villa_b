@@ -463,6 +463,13 @@
                         <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium">Problème</span>
                     </div>
                     <p class="text-xs text-red-700">{{ $assignment->issue_notes }}</p>
+                    @php($intervention = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('housekeeping_assignment_id', $assignment->id)->latest('id')->first() : null)
+                    @if($intervention)
+                        <a href="{{ route('technique.demandes.show', $intervention) }}" class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 hover:underline">
+                            <i data-lucide="wrench" class="w-3 h-3" aria-hidden="true"></i>
+                            {{ $intervention->reference }} · {{ $intervention->statusLabel() }}{{ $intervention->technician ? ' · ' . $intervention->technician->name : '' }}
+                        </a>
+                    @endif
                 </div>
             @empty
                 <div class="px-5 py-3 text-xs text-primary/35">Aucun problème signalé.</div>

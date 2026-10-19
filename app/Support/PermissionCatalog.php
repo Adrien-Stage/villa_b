@@ -300,6 +300,15 @@ class PermissionCatalog
         'shop.products.import',
         'shop.products.modifier',
         'shop.products.supprimer',
+        'technique.demandes.assign',
+        'technique.demandes.cancel',
+        'technique.demandes.complete',
+        'technique.demandes.creer',
+        'technique.demandes.parts',
+        'technique.demandes.reopen',
+        'technique.demandes.start',
+        'technique.demandes.take',
+        'technique.equipe.modifier',
         'users.creer',
         'users.modifier',
         'users.resetPassword',
@@ -368,13 +377,25 @@ class PermissionCatalog
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
         'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'quality_auditor', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
-        'shop_cashier', 'shop_manager', 'storekeeper',
+        'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
+    ];
+
+    /**
+     * Le personnel qui agit dans l'exploitation : tout le personnel, moins le
+     * contrôle (contrôleur de gestion, auditeur qualité), qui ne participe pas
+     * aux opérations qu'il surveille.
+     */
+    private const PERSONNEL_OPERATIONNEL = [
+        'accountant', 'cashier', 'econome', 'finance_manager', 'housekeeping_leader',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'reception_chief',
+        'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+        'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
 
     /** Ceux qui planifient le personnel : les chefs de service et la direction. */
     private const CHEFS_DE_SERVICE = [
         'econome', 'finance_manager', 'housekeeping_leader', 'manager', 'reception_chief',
-        'restaurant_chief', 'restaurant_manager', 'shop_manager',
+        'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager',
     ];
 
     /**
@@ -518,6 +539,7 @@ class PermissionCatalog
         'analytics' => ['analytics'],
         'utilisateurs' => ['users'],
         'parametres' => ['settings'],
+        'technique' => ['technique'],
     ];
 
     /** @return list<string> droits du module ; vide pour un module sans droit catalogué */
@@ -778,11 +800,11 @@ class PermissionCatalog
             'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.purchase_requests.approve' => ['manager'],
-            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.convert' => ['econome'],
-            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.reject' => ['manager'],
-            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
             // Recevoir sans commande engage une dépense : c'est l'économe qui
@@ -792,14 +814,14 @@ class PermissionCatalog
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
             // Chaque membre d'un service demande ; son chef vise avant l'économat.
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager'],
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
-            'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
             // Extraire une liste n'est pas la consulter : droit distinct.
-            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper'],
+            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
             'economat.suppliers.creer' => ['econome'],
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],
@@ -976,6 +998,24 @@ class PermissionCatalog
             'users.resetPassword' => ['manager'],
             'users.toggleStatus' => ['manager'],
             'users.voir' => ['controller', 'manager'],
+
+            // ── Technique (maintenance) ──
+            // Tout le personnel demande une intervention et suit les siennes
+            // (le contrôleur borne la liste) ; le responsable technique affecte,
+            // les techniciens interviennent et portent leurs pièces.
+            'technique.voir' => ['controller', 'manager', 'tech_manager', 'technician'],
+            'technique.demandes.voir' => self::TOUT_LE_PERSONNEL,
+            'technique.demandes.creer' => self::PERSONNEL_OPERATIONNEL,
+            'technique.demandes.reopen' => self::PERSONNEL_OPERATIONNEL,
+            'technique.demandes.cancel' => self::PERSONNEL_OPERATIONNEL,
+            'technique.demandes.assign' => ['manager', 'tech_manager'],
+            'technique.demandes.take' => ['tech_manager', 'technician'],
+            'technique.demandes.start' => ['tech_manager', 'technician'],
+            'technique.demandes.parts' => ['tech_manager', 'technician'],
+            'technique.demandes.complete' => ['tech_manager', 'technician'],
+            'technique.equipe.voir' => ['manager', 'tech_manager'],
+            'technique.equipe.modifier' => ['manager', 'tech_manager'],
+            'technique.depot.voir' => ['manager', 'tech_manager', 'technician'],
 
             // ── Agenda ──
             'agenda.voir' => ['controller', 'manager', 'reception'],

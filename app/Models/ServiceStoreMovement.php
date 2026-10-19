@@ -27,6 +27,9 @@ class ServiceStoreMovement extends Model
     /** Retour en stock de ce qu'un bénéficiaire n'a pas employé : la charge s'annule. */
     public const SOURCE_RETOUR = 'retour';
 
+    /** Pièce employée par une intervention technique (MaintenanceRequest) : charge du service. */
+    public const SOURCE_INTERVENTION = 'intervention';
+
     public const SOURCES = [
         self::SOURCE_REQUISITION  => "Livraison de l'économat",
         self::SOURCE_STOCK_COUNT  => 'Inventaire du dépôt',
@@ -34,6 +37,7 @@ class ServiceStoreMovement extends Model
         self::SOURCE_IMPORT       => 'Import Excel',
         self::SOURCE_BENEFICIAIRE => 'Sortie à un bénéficiaire',
         self::SOURCE_RETOUR       => 'Retour en stock',
+        self::SOURCE_INTERVENTION => 'Intervention technique',
     ];
 
     public const TYPES = [

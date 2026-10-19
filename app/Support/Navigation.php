@@ -107,6 +107,26 @@ class Navigation
             ];
         }
 
+        // 3 bis. TECHNIQUE — le service de maintenance et la direction. Les
+        // autres services y adressent leurs demandes par le bouton
+        // « Intervention » de la barre du haut.
+        $peutVoirTechnique = TenantModules::has('technique') && ($user->isAdmin() || $droits->allows($user, 'technique.voir'));
+        if ($peutVoirTechnique) {
+            $groups[] = [
+                'id'          => 'technique',
+                'title'       => 'Technique',
+                'subtitle'    => 'Interventions & maintenance',
+                'icon'        => 'wrench',
+                'color'       => 'orange',
+                'bg_gradient' => 'from-orange-500 to-red-600',
+                'text_color'  => 'text-orange-600',
+                'bg_soft'     => 'bg-orange-50',
+                'border_color'=> 'border-orange-100',
+                'url'         => route('technique.index'),
+                'type'        => self::TYPE_SIDEBAR,
+            ];
+        }
+
         // 4. COMPTABILITÉ
         $peutVoirCompta = $user->isAdmin() || collect(['accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir'])
             ->contains(fn ($d) => $droits->allows($user, $d));
@@ -343,6 +363,7 @@ class Navigation
             $user->exerce(['housekeeping_staff', 'housekeeping_supervisor', 'reception']) => 'hotel',
             $user->exerce(['restaurant_staff', 'restaurant_cook', 'cashier']) => 'restaurant',
             $user->exerce(['shop_cashier']) => 'shop',
+            TenantModules::has('technique') && $user->exerce(['technician']) => 'technique',
             default => 'economat',
         };
     }
@@ -356,7 +377,7 @@ class Navigation
     public static function premiereRoutePermise(User $user, array $routes): ?string
     {
         $droits = app(PermissionResolver::class);
-        $modules = ['housekeeping.' => 'housekeeping', 'restaurant.' => 'restaurant', 'shop.' => 'shop'];
+        $modules = ['housekeeping.' => 'housekeeping', 'restaurant.' => 'restaurant', 'shop.' => 'shop', 'technique.' => 'technique'];
 
         foreach ($routes as $route) {
             if (!\Illuminate\Support\Facades\Route::has($route)) {
@@ -400,6 +421,10 @@ class Navigation
                 return self::groupInfo(self::groupeDesDemandes($user));
             }
             return self::groupInfo('economat');
+        }
+
+        if (str_starts_with($routeName, 'technique.')) {
+            return self::groupInfo('technique');
         }
 
         if (str_starts_with($routeName, 'restaurant.') || str_starts_with($routeName, 'portal.restaurant.')) {
@@ -493,6 +518,12 @@ class Navigation
                 'id'       => 'economat',
                 'title'    => 'Économat',
                 'icon'     => 'warehouse',
+                'type'     => self::TYPE_SIDEBAR,
+            ],
+            'technique' => [
+                'id'       => 'technique',
+                'title'    => 'Technique',
+                'icon'     => 'wrench',
                 'type'     => self::TYPE_SIDEBAR,
             ],
             'accounting' => [

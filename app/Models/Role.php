@@ -15,6 +15,7 @@ class Role extends Model
         'restaurant'   => 'Restaurant',
         'boutique'     => 'Boutique',
         'economat'     => 'Économat',
+        'technique'    => 'Technique',
         'comptabilite' => 'Comptabilité',
         'direction'    => 'Direction',
         'portail'      => 'Portail client',

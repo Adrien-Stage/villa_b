@@ -195,6 +195,25 @@ class RoleCatalog
                 'level' => 4, 'statut' => self::ACTIF,
             ],
 
+            // ── Technique (module « technique ») ──
+            // Le responsable technique dirige le service et affecte les
+            // demandes d'intervention ; les techniciens interviennent sur le
+            // terrain, chacun dans ses spécialités.
+            [
+                'name' => 'Responsable technique',
+                'slug' => 'tech_manager',
+                'description' => 'Dirige le service technique : demandes d\'intervention, affectation des techniciens, pièces et réquisitions',
+                'module' => 'technique', 'icon' => 'wrench', 'sort_order' => 55, 'is_assignable' => true,
+                'level' => 3, 'includes' => ['technician'], 'statut' => self::ACTIF,
+            ],
+            [
+                'name' => 'Technicien de maintenance',
+                'slug' => 'technician',
+                'description' => 'Interventions de maintenance : plomberie, électricité, froid, climatisation, ventilation…',
+                'module' => 'technique', 'icon' => 'hammer', 'sort_order' => 56, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
+            ],
+
             // ── Comptabilité & finances ──
             [
                 'name' => 'Responsable administratif et financier',

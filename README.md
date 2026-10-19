@@ -85,6 +85,7 @@ Installation complète : **[docs/installation.md](docs/installation.md)**.
 | **[Hébergement](docs/hebergement.md)** | Chambres, disponibilité, réservations, folio, check-out, factures, housekeeping |
 | **[Restaurant](docs/restaurant.md)** | Carte, commandes, cuisine, garde-manger, fiches techniques, inventaires, portail |
 | **[Économat et boutique](docs/economat-et-boutique.md)** | Magasin central, achats, demandes internes, ventes boutique |
+| **[Technique](docs/technique.md)** | Demandes d'intervention, techniciens et spécialités, dépôt technique, lien housekeeping |
 | **[Comptabilité](docs/comptabilite.md)** | Caisses, comptabilité de caisse, dépenses, états financiers |
 | **[APIs et intégrations](docs/apis-et-integrations.md)** | API publique, API de reporting, mode assistance, PWA, push, IA |
 | **[Développement](docs/developpement.md)** | Cycle de livraison, tests, conventions, dette connue |
