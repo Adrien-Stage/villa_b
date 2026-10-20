@@ -10,6 +10,7 @@
         'open'        => 'border-amber-200 bg-amber-50 text-amber-800',
         'assigned'    => 'border-sky-200 bg-sky-50 text-sky-700',
         'in_progress' => 'border-indigo-200 bg-indigo-50 text-indigo-700',
+        'submitted'   => 'border-purple-200 bg-purple-50 text-purple-700 font-bold',
         'done'        => 'border-green-200 bg-green-50 text-green-700',
         'cancelled'   => 'border-slate-200 bg-slate-50 text-slate-500',
     ];

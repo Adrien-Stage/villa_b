@@ -559,7 +559,7 @@
                                      class="w-full h-full object-cover">
                             @else
                                 <span class="font-heading font-bold text-primary text-base">
-                                    {{ strtoupper(substr($tenant?->name ?? 'ET', 0, 2)) }}
+                                    {{ mb_strtoupper(mb_substr($tenant?->name ?? 'ET', 0, 2)) }}
                                 </span>
                             @endif
                         </div>
@@ -911,7 +911,7 @@
                                                  class="w-full h-full object-cover">
                                         @else
                                             <span class="font-heading font-bold text-primary text-base">
-                                                {{ strtoupper(substr($tenant?->name ?? 'ET', 0, 2)) }}
+                                                {{ mb_strtoupper(mb_substr($tenant?->name ?? 'ET', 0, 2)) }}
                                             </span>
                                         @endif
                                     </div>

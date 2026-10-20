@@ -36,22 +36,28 @@ class MaintenanceRequestController extends Controller
         $user = Auth::user();
         $actives = MaintenanceRequest::query()->active()->with('room', 'technician', 'requester')->parPriorite()->get();
         $mesSpecialites = $user->technicianSpecialties()->pluck('specialty')->all();
+        $estResponsable = $user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager']);
+        $estTechnicien = $user->exerce(MaintenanceService::TECHNICIENS);
 
         return view('technique.index', [
             'aPrendre'     => $actives->where('status', MaintenanceRequest::STATUS_OPEN)
                 ->sortBy(fn ($d) => in_array($d->specialty, $mesSpecialites, true) ? 0 : 1)->values(),
             'miennes'      => $actives->where('assigned_to', $user->id)->values(),
-            'enCours'      => $actives->where('status', '!=', MaintenanceRequest::STATUS_OPEN)->values(),
+            'aViser'       => $actives->where('status', MaintenanceRequest::STATUS_SUBMITTED)->values(),
+            'enCours'      => $actives->whereIn('status', [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS])->values(),
             'terminees'    => MaintenanceRequest::query()->where('status', MaintenanceRequest::STATUS_DONE)
                 ->where('completed_at', '>=', now()->subDays(7))->with('room', 'technician')->latest('completed_at')->take(10)->get(),
             'compteurs'    => [
                 'ouvertes'  => $actives->where('status', MaintenanceRequest::STATUS_OPEN)->count(),
                 'urgentes'  => $actives->where('priority', MaintenanceRequest::PRIORITY_URGENT)->count(),
-                'en_cours'  => $actives->where('status', MaintenanceRequest::STATUS_IN_PROGRESS)->count(),
+                'en_cours'  => $actives->whereIn('status', [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS])->count(),
+                'a_viser'   => $actives->where('status', MaintenanceRequest::STATUS_SUBMITTED)->count(),
                 'terminees' => MaintenanceRequest::query()->where('status', MaintenanceRequest::STATUS_DONE)->where('completed_at', '>=', now()->startOfDay())->count(),
             ],
             'mesSpecialites' => $mesSpecialites,
             'peutPrendre'    => $this->droits->allows($user, 'technique.demandes.take'),
+            'estResponsable' => $estResponsable,
+            'estTechnicien'  => $estTechnicien,
         ]);
     }
 
@@ -143,11 +149,32 @@ class MaintenanceRequestController extends Controller
                     && $this->droits->allows($user, 'technique.demandes.take') && $user->exerce(MaintenanceService::TECHNICIENS),
                 'commencer' => $demande->status === MaintenanceRequest::STATUS_ASSIGNED && $this->intervient($user, $demande, 'technique.demandes.start'),
                 'pieces'    => $demande->isActive() && $demande->assigned_to !== null && $this->intervient($user, $demande, 'technique.demandes.parts'),
+                'soumettre' => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
+                    && $this->intervient($user, $demande, 'technique.demandes.submit'),
+                'viser'     => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
+                    && $this->droits->allows($user, 'technique.demandes.approve')
+                    && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
+                'reprise'   => $demande->status === MaintenanceRequest::STATUS_SUBMITTED
+                    && $this->droits->allows($user, 'technique.demandes.rework')
+                    && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
                 'terminer'  => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS], true)
                     && $this->intervient($user, $demande, 'technique.demandes.complete'),
                 'rouvrir'   => $demande->peutEtreRouverte() && $this->peutRouvrir($user, $demande),
                 'annuler'   => $demande->peutEtreAnnulee() && $this->peutAnnuler($user, $demande),
             ],
+        ]);
+    }
+
+    public function print(MaintenanceRequest $demande): View
+    {
+        $user = Auth::user();
+        abort_unless($this->voit($user, $demande), 403);
+
+        $demande->load(['room', 'requester', 'technician', 'assigner', 'completer', 'events.user', 'parts.item']);
+
+        return view('technique.demandes.print', [
+            'demande' => $demande,
+            'tenant'  => \App\Models\Tenant::first(),
         ]);
     }
 
@@ -189,6 +216,71 @@ class MaintenanceRequestController extends Controller
 
         return $this->etape($demande, fn () => $this->maintenance->employerPieces($demande, ServiceStore::findOrFail($donnees['depot']),
             array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '')), Auth::user()), 'Pièces enregistrées sur l\'intervention.');
+    }
+
+    public function submit(Request $request, MaintenanceRequest $demande): RedirectResponse
+    {
+        abort_unless($this->intervient(Auth::user(), $demande, 'technique.demandes.submit'), 403);
+
+        $donnees = $request->validate([
+            'resolution' => ['required', 'string', 'max:3000'],
+            'depot'      => ['nullable', 'integer', 'exists:service_stores,id'],
+            'pieces'     => ['nullable', 'array'],
+            'pieces.*'   => ['nullable', 'numeric', 'min:0', 'max:100000'],
+        ], [
+            'resolution.required' => 'Détaillez les travaux effectués dans la fiche d\'intervention.',
+        ]);
+
+        $depot = !empty($donnees['depot']) ? ServiceStore::find($donnees['depot']) : null;
+        $pieces = !empty($donnees['pieces']) ? array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '')) : null;
+
+        return $this->etape(
+            $demande,
+            fn () => $this->maintenance->soumettreFiche($demande, $donnees['resolution'], Auth::user(), $depot, $pieces),
+            'Fiche d\'intervention soumise avec succès au responsable pour visa.'
+        );
+    }
+
+    public function approve(Request $request, MaintenanceRequest $demande): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless(
+            $this->droits->allows($user, 'technique.demandes.approve')
+            && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
+            403
+        );
+
+        $donnees = $request->validate([
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        return $this->etape(
+            $demande,
+            fn () => $this->maintenance->viserEtCloturer($demande, $donnees['note'] ?? null, $user),
+            'Fiche d\'intervention visée et clôturée avec succès.'
+        );
+    }
+
+    public function rework(Request $request, MaintenanceRequest $demande): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless(
+            $this->droits->allows($user, 'technique.demandes.rework')
+            && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
+            403
+        );
+
+        $donnees = $request->validate([
+            'motif' => ['required', 'string', 'max:1000'],
+        ], [
+            'motif.required' => 'Précisez la raison de la demande de reprise.',
+        ]);
+
+        return $this->etape(
+            $demande,
+            fn () => $this->maintenance->demanderReprise($demande, $donnees['motif'], $user),
+            'Intervention renvoyée au technicien pour reprise.'
+        );
     }
 
     public function complete(Request $request, MaintenanceRequest $demande): RedirectResponse

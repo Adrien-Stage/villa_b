@@ -23,7 +23,7 @@
 <div class="bg-white rounded-xl shadow-sm p-5 mb-5">
     <div class="flex items-center gap-4">
         <div class="w-14 h-14 rounded-full bg-primary flex items-center justify-center">
-            <span class="text-white font-heading text-lg">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+            <span class="text-white font-heading text-lg">{{ mb_strtoupper(mb_substr($user->name, 0, 2)) }}</span>
         </div>
         <div>
             <h2 class="font-heading text-xl text-primary">{{ $user->name }}</h2>

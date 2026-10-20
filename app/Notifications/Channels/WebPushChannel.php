@@ -29,7 +29,6 @@ class WebPushChannel
         $publicKey  = (string) config('webpush.vapid.public_key');
         $privateKey = (string) config('webpush.vapid.private_key');
         if ($publicKey === '' || $privateKey === '') {
-            Log::warning('[WebPush] Clés VAPID non configurées — notification push ignorée.');
             return;
         }
 
@@ -73,7 +72,10 @@ class WebPushChannel
                 }
             }
         } catch (\Throwable $e) {
-            Log::error('[WebPush] Exception : ' . $e->getMessage());
+            try {
+                Log::error('[WebPush] Exception : ' . $e->getMessage());
+            } catch (\Throwable) {
+            }
         }
     }
 }

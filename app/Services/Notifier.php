@@ -66,12 +66,16 @@ class Notifier
             NotificationFacade::send($collection, $notification);
         } catch (\Throwable $e) {
             // Jamais bloquant : l'action métier a déjà eu lieu.
-            Log::error(sprintf(
-                'Envoi de notification %s échoué (%d destinataire(s)) : %s',
-                class_basename($notification),
-                $collection->count(),
-                $e->getMessage()
-            ));
+            try {
+                Log::error(sprintf(
+                    'Envoi de notification %s échoué (%d destinataire(s)) : %s',
+                    class_basename($notification),
+                    $collection->count(),
+                    $e->getMessage()
+                ));
+            } catch (\Throwable) {
+                // Si la journalisation échoue elle-même, on n'interrompt pas le flux
+            }
         }
     }
 }

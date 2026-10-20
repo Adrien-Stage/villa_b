@@ -381,6 +381,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{room}/available',   [HousekeepingController::class, 'markAvailable'])->name('available');
         Route::post('/{room}/reject',      [HousekeepingController::class, 'rejectCleaning'])->name('reject');
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
+        Route::post('/{room}/transmettre-technique', [HousekeepingController::class, 'escalateToTechnique'])->name('transmettre_technique');
         // Recouche d'une chambre occupée : le client la garde.
         Route::post('/{room}/recouche',    [HousekeepingController::class, 'markStayoverDone'])->name('stayover');
 
@@ -868,10 +869,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/demandes/nouvelle', [$tec . 'MaintenanceRequestController', 'create'])->name('demandes.create');
         Route::post('/demandes', [$tec . 'MaintenanceRequestController', 'store'])->name('demandes.store');
         Route::get('/demandes/{demande}', [$tec . 'MaintenanceRequestController', 'show'])->whereNumber('demande')->name('demandes.show');
+        Route::get('/demandes/{demande}/imprimer', [$tec . 'MaintenanceRequestController', 'print'])->whereNumber('demande')->name('demandes.print');
         Route::post('/demandes/{demande}/affecter', [$tec . 'MaintenanceRequestController', 'assign'])->whereNumber('demande')->name('demandes.assign');
         Route::post('/demandes/{demande}/prendre', [$tec . 'MaintenanceRequestController', 'take'])->whereNumber('demande')->name('demandes.take');
         Route::post('/demandes/{demande}/commencer', [$tec . 'MaintenanceRequestController', 'start'])->whereNumber('demande')->name('demandes.start');
         Route::post('/demandes/{demande}/pieces', [$tec . 'MaintenanceRequestController', 'parts'])->whereNumber('demande')->name('demandes.parts');
+        Route::post('/demandes/{demande}/soumettre', [$tec . 'MaintenanceRequestController', 'submit'])->whereNumber('demande')->name('demandes.submit');
+        Route::post('/demandes/{demande}/viser', [$tec . 'MaintenanceRequestController', 'approve'])->whereNumber('demande')->name('demandes.approve');
+        Route::post('/demandes/{demande}/reprise', [$tec . 'MaintenanceRequestController', 'rework'])->whereNumber('demande')->name('demandes.rework');
         Route::post('/demandes/{demande}/terminer', [$tec . 'MaintenanceRequestController', 'complete'])->whereNumber('demande')->name('demandes.complete');
         Route::post('/demandes/{demande}/rouvrir', [$tec . 'MaintenanceRequestController', 'reopen'])->whereNumber('demande')->name('demandes.reopen');
         Route::post('/demandes/{demande}/annuler', [$tec . 'MaintenanceRequestController', 'cancel'])->whereNumber('demande')->name('demandes.cancel');

@@ -6,7 +6,7 @@
     $words = explode(' ', $tenantName);
     $initials = '';
     foreach ($words as $word) {
-        $initials .= strtoupper(substr($word, 0, 1));
+        $initials .= mb_strtoupper(mb_substr($word, 0, 1));
     }
     $initials = substr($initials, 0, 2) ?: 'VB';
 @endphp

@@ -169,7 +169,7 @@
                 <x-table.cell>
                                     <div class="flex items-start gap-2.5">
                                         <div class="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 mt-0.5">
-                                            {{ strtoupper(substr($supplier->name, 0, 2)) }}
+                                            {{ mb_strtoupper(mb_substr($supplier->name, 0, 2)) }}
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-1.5 flex-wrap">

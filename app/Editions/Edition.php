@@ -23,10 +23,11 @@ abstract class Edition
     public const HOUSEKEEPING = 'Housekeeping';
     public const RESTAURATION = 'Restauration et boutique';
     public const ACHATS = 'Achats et stocks';
+    public const TECHNIQUE = 'Technique et maintenance';
     public const PERSONNEL = 'Personnel';
 
     /** Ordre d'affichage des familles. */
-    public const FAMILLES = [self::FINANCES, self::HEBERGEMENT, self::HOUSEKEEPING, self::RESTAURATION, self::ACHATS, self::PERSONNEL];
+    public const FAMILLES = [self::FINANCES, self::HEBERGEMENT, self::HOUSEKEEPING, self::RESTAURATION, self::ACHATS, self::TECHNIQUE, self::PERSONNEL];
 
     /** Identifiant d'adresse : « journal-encaissements ». */
     abstract public function cle(): string;

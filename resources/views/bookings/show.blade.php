@@ -379,7 +379,7 @@
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
                     <span class="text-white text-sm font-semibold">
-                        {{ strtoupper(substr($booking->customer->first_name, 0, 1) . substr($booking->customer->last_name, 0, 1)) }}
+                        {{ mb_strtoupper(mb_substr($booking->customer->first_name, 0, 1) . mb_substr($booking->customer->last_name, 0, 1)) }}
                     </span>
                 </div>
                 <div>
@@ -414,7 +414,7 @@
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
                     <span class="text-white text-sm font-semibold">
-                        {{ strtoupper(substr($booking->booker->first_name, 0, 1) . substr($booking->booker->last_name, 0, 1)) }}
+                        {{ mb_strtoupper(mb_substr($booking->booker->first_name, 0, 1) . mb_substr($booking->booker->last_name, 0, 1)) }}
                     </span>
                 </div>
                 <div>

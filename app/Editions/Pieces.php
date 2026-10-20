@@ -107,6 +107,9 @@ class Pieces
             ['sorte' => 'Procès-verbal de perte', 'modele' => RestaurantWasteLog::class, 'colonne' => 'reference', 'date' => 'occurred_at',
                 'route' => 'restaurant.waste.print', 'droit' => 'restaurant.waste.voir', 'module' => 'restaurant',
                 'detail' => fn (RestaurantWasteLog $p) => ($p->item?->name ?? '') . ' — ' . ($p->reason ?? '')],
+            ['sorte' => "Fiche d'intervention technique", 'modele' => \App\Models\MaintenanceRequest::class, 'colonne' => 'reference', 'date' => 'created_at',
+                'route' => 'technique.demandes.print', 'droit' => 'technique.demandes.voir', 'module' => 'technique',
+                'detail' => fn (\App\Models\MaintenanceRequest $d) => $d->lieu() . ' — ' . $d->title . ' (' . $d->statusLabel() . ')'],
         ];
     }
 }

@@ -449,7 +449,7 @@ class DiscussionController extends Controller
         return [
             'id' => $conversation->id,
             'title' => $title,
-            'initials' => strtoupper(substr($title, 0, 2)),
+            'initials' => mb_strtoupper(mb_substr($title, 0, 2)),
             'last_body' => $last?->body ?? 'Aucun message pour le moment',
             'last_time' => $last?->created_at?->format('H:i') ?? '',
             'unread' => $unread,

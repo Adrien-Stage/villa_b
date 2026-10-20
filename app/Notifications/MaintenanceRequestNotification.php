@@ -9,7 +9,8 @@ use Illuminate\Notifications\Notification;
 /**
  * Une étape d'une demande d'intervention, annoncée à qui doit agir :
  * signalée (au service technique), affectée (au technicien), terminée
- * (au demandeur), rouverte (au technicien et au responsable).
+ * (au demandeur), rouverte (au technicien et au responsable), annulée (au
+ * technicien qui l'avait reçue et au responsable).
  */
 class MaintenanceRequestNotification extends Notification
 {
@@ -17,8 +18,11 @@ class MaintenanceRequestNotification extends Notification
 
     public const CREATED   = 'created';
     public const ASSIGNED  = 'assigned';
+    public const TAKEN     = 'taken';
+    public const SUBMITTED = 'submitted';
     public const COMPLETED = 'completed';
     public const REOPENED  = 'reopened';
+    public const CANCELLED = 'cancelled';
 
     public function __construct(
         public MaintenanceRequest $demande,
@@ -44,8 +48,11 @@ class MaintenanceRequestNotification extends Notification
         return match ($this->etape) {
             self::CREATED   => "Demande d'intervention{$urgent}",
             self::ASSIGNED  => 'Intervention à faire',
+            self::TAKEN     => 'Intervention prise par un technicien',
+            self::SUBMITTED => 'Fiche d\'intervention à viser',
             self::COMPLETED => 'Intervention terminée',
             self::REOPENED  => 'Intervention rouverte',
+            self::CANCELLED => 'Demande annulée',
             default         => "Demande d'intervention",
         };
     }
@@ -57,8 +64,11 @@ class MaintenanceRequestNotification extends Notification
 
         return match ($this->etape) {
             self::CREATED   => $texte . ' (' . $d->specialtyLabel() . ', ' . mb_strtolower($d->priorityLabel()) . ')',
+            self::TAKEN     => $texte . ($this->note ? ' — ' . $this->note : ' — Prise en charge directe'),
+            self::SUBMITTED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ' — Fiche soumise pour visa'),
             self::COMPLETED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             self::REOPENED  => $texte . ($this->note ? ' — motif : ' . mb_substr($this->note, 0, 120) : ''),
+            self::CANCELLED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             default         => $texte,
         };
     }

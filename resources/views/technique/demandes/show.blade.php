@@ -19,13 +19,16 @@
                 {{ $demande->reference }} · {{ $demande->lieu() }} · {{ $demande->specialtyLabel() }}
             </p>
         </div>
-        <span class="inline-flex flex-wrap gap-1.5">@include('technique.partials.badges')</span>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('technique.demandes.print', $demande) }}" target="_blank"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary/30 bg-white text-primary text-xs font-semibold hover:bg-accent/20 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-4 h-4 text-secondary"></i> Imprimer la fiche
+            </a>
+            <span class="inline-flex flex-wrap gap-1.5">@include('technique.partials.badges')</span>
+        </div>
     </div>
 
     @include('economat.partials.flash')
-    @if($errors->any())
-        <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg" role="alert">{{ $errors->first() }}</div>
-    @endif
 
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- La demande et son histoire --}}
@@ -53,9 +56,23 @@
                 @if($demande->description)
                     <p class="mt-4 text-sm text-primary/80 whitespace-pre-line border-t border-secondary/15 pt-4">{{ $demande->description }}</p>
                 @endif
-                @if($demande->resolution)
+                @if($demande->status === \App\Models\MaintenanceRequest::STATUS_SUBMITTED)
+                    <div class="mt-4 rounded-xl bg-purple-50 border border-purple-200 p-4">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
+                            <p class="text-xs font-bold uppercase tracking-wider text-purple-900">Fiche d'intervention soumise — En attente du visa du responsable</p>
+                        </div>
+                        <p class="text-xs text-purple-800 mb-3">Le technicien a consigné les travaux réalisés et les pièces. Le responsable technique doit vérifier et viser la fiche.</p>
+                        @if($demande->resolution)
+                            <div class="bg-white rounded-lg p-3 border border-purple-150 text-sm text-purple-950 whitespace-pre-line shadow-xs">
+                                <span class="block text-[11px] font-semibold text-purple-700 mb-1">Travaux réalisés déclarés :</span>
+                                {{ $demande->resolution }}
+                            </div>
+                        @endif
+                    </div>
+                @elseif($demande->resolution)
                     <div class="mt-4 rounded-lg bg-green-50 border border-green-200 p-3">
-                        <p class="text-xs font-semibold text-green-800">Compte rendu de l'intervention</p>
+                        <p class="text-xs font-semibold text-green-800">{{ $demande->isDone() ? "Compte rendu de l'intervention" : 'Compte rendu précédent' }}</p>
                         <p class="mt-1 text-sm text-green-900 whitespace-pre-line">{{ $demande->resolution }}</p>
                     </div>
                 @endif
@@ -104,13 +121,89 @@
             </section>
         </div>
 
-        {{-- Ce que l'on peut faire --}}
+        {{-- Actions et fiches --}}
         <aside class="space-y-4">
+            {{-- Visa du responsable technique --}}
+            @if($peut['viser'])
+                <div class="bg-purple-50 rounded-xl border border-purple-200 p-4 space-y-3 shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="check-check" class="w-5 h-5 text-purple-700"></i>
+                        <h2 class="font-heading font-semibold text-purple-900 text-sm">Visa du responsable</h2>
+                    </div>
+                    <p class="text-xs text-purple-800">Vérifier les travaux et pièces déclarés, puis viser pour clôturer définitivement l'intervention.</p>
+                    <form method="POST" action="{{ route('technique.demandes.approve', $demande) }}" class="space-y-3">
+                        @csrf
+                        <input type="text" name="note" placeholder="Observations ou visa (optionnel)…" class="{{ $champ }}">
+                        <button type="submit" class="{{ $bouton }} w-full bg-purple-700 text-white hover:bg-purple-800 shadow-sm">
+                            <i data-lucide="circle-check" class="w-4 h-4"></i> Viser et clôturer l'intervention
+                        </button>
+                    </form>
+
+                    @if($peut['reprise'])
+                        <form method="POST" action="{{ route('technique.demandes.rework', $demande) }}" class="pt-3 border-t border-purple-200/80 space-y-2">
+                            @csrf
+                            <p class="text-xs text-amber-900 font-semibold">Travail incomplet ?</p>
+                            <input type="text" name="motif" required placeholder="Motif du renvoi au technicien…" class="{{ $champ }} text-xs">
+                            <button type="submit" class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 text-xs py-1.5">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Renvoyer pour reprise
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Fiche d'intervention du technicien --}}
+            @if($peut['soumettre'])
+                <div class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3 shadow-xs">
+                    <div>
+                        <h2 class="font-heading font-semibold text-primary text-sm flex items-center gap-2">
+                            <i data-lucide="clipboard-pen-line" class="w-4 h-4 text-secondary"></i> Fiche d'intervention
+                        </h2>
+                        <p class="text-xs text-primary/60 mt-0.5">Décrivez vos travaux et déclarez les pièces sorties, puis remontez la fiche au responsable.</p>
+                    </div>
+
+                    <form method="POST" action="{{ route('technique.demandes.submit', $demande) }}" class="space-y-3" x-data="{ filtre: '' }">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-semibold text-primary mb-1">Travaux réalisés / Résolution <span class="text-red-500">*</span></label>
+                            <textarea name="resolution" rows="4" required maxlength="3000" placeholder="Ce qui a été fait, diagnostic, réparations effectuées…" class="{{ $champ }}">{{ old('resolution', $demande->resolution) }}</textarea>
+                        </div>
+
+                        @if($depots->isNotEmpty())
+                            <div>
+                                <label class="block text-xs font-semibold text-primary mb-1">Pièces sorties du dépôt (optionnel)</label>
+                                @foreach($depots as $depot)
+                                    @php($disponibles = $stocks->get($depot->id, collect())->sortBy(fn ($s) => $s->item->name))
+                                    @if($disponibles->isNotEmpty())
+                                        <input type="hidden" name="depot" value="{{ $depot->id }}">
+                                        <p class="text-[11px] text-primary/50 mb-1">Dépôt : {{ $depot->name }}</p>
+                                        <input type="search" x-model="filtre" placeholder="Filtrer les pièces…" class="{{ $champ }} text-xs mb-1.5">
+                                        <div class="max-h-44 overflow-y-auto divide-y divide-secondary/10 border border-secondary/15 rounded-lg mb-2">
+                                            @foreach($disponibles as $stock)
+                                                <label class="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-accent/5 cursor-pointer" x-show="!filtre || @js(mb_strtolower($stock->item->name . ' ' . $stock->item->reference)).includes(filtre.toLowerCase())">
+                                                    <span class="flex-1 text-primary">{{ $stock->item->name }} <span class="text-primary/45">({{ $qte($stock->current_stock) }} {{ $stock->item->unit }})</span></span>
+                                                    <input type="number" name="pieces[{{ $stock->stock_item_id }}]" min="0" step="any" max="{{ (float) $stock->current_stock }}"
+                                                           class="w-20 rounded border border-secondary/30 px-2 py-1 text-right text-xs" placeholder="0">
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <button type="submit" class="{{ $bouton }} w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+                            <i data-lucide="send" class="w-4 h-4"></i> Soumettre la fiche au responsable
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             @if($peut['prendre'])
                 <form method="POST" action="{{ route('technique.demandes.take', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4">
                     @csrf
-                    <p class="text-sm text-primary/70 mb-3">Personne n'a encore cette demande.</p>
-                    <button type="submit" class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark"><i data-lucide="hand" class="w-4 h-4" aria-hidden="true"></i> Je la prends</button>
+                    <p class="text-sm text-primary/70 mb-3">Personne n'a encore cette intervention.</p>
+                    <button type="submit" class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark"><i data-lucide="hand" class="w-4 h-4" aria-hidden="true"></i> Je prends cette intervention</button>
                 </form>
             @endif
 
@@ -157,23 +250,23 @@
                 </form>
             @endif
 
-            @if($peut['pieces'])
+            @if($peut['pieces'] && !$peut['soumettre'])
                 <div class="bg-white rounded-xl border border-secondary/20 p-4">
                     <h2 class="font-heading font-semibold text-primary text-sm mb-2">Pièces employées</h2>
                     @if($depots->isEmpty())
-                        <p class="text-xs text-primary/60">Aucun dépôt technique : l'économe le crée dans Économat › Dépôts de service, pour le service « Technique / Maintenance ».</p>
+                        <p class="text-xs text-primary/60">Aucun dépôt technique configuré.</p>
                     @else
                         @foreach($depots as $depot)
                             @php($disponibles = $stocks->get($depot->id, collect())->sortBy(fn ($s) => $s->item->name))
                             <form method="POST" action="{{ route('technique.demandes.parts', $demande) }}" class="space-y-2" x-data="{ filtre: '' }">
                                 @csrf
                                 <input type="hidden" name="depot" value="{{ $depot->id }}">
-                                <p class="text-xs text-primary/60">Du dépôt « {{ $depot->name }} » — saisissez la quantité de chaque pièce sortie.</p>
+                                <p class="text-xs text-primary/60">Du dépôt « {{ $depot->name }} »</p>
                                 @if($disponibles->isEmpty())
                                     <p class="text-xs text-primary/50">Ce dépôt est vide.</p>
                                 @else
                                     <input type="search" x-model="filtre" placeholder="Chercher une pièce…" class="{{ $champ }}">
-                                    <div class="max-h-64 overflow-y-auto divide-y divide-secondary/10 border border-secondary/15 rounded-lg">
+                                    <div class="max-h-48 overflow-y-auto divide-y divide-secondary/10 border border-secondary/15 rounded-lg">
                                         @foreach($disponibles as $stock)
                                             <label class="flex items-center gap-2 px-2 py-1.5 text-xs" x-show="!filtre || @js(mb_strtolower($stock->item->name . ' ' . $stock->item->reference)).includes(filtre.toLowerCase())">
                                                 <span class="flex-1 text-primary">{{ $stock->item->name }} <span class="text-primary/45">({{ $qte($stock->current_stock) }} {{ $stock->item->unit }})</span></span>
@@ -188,18 +281,6 @@
                         @endforeach
                     @endif
                 </div>
-            @endif
-
-            @if($peut['terminer'])
-                <form method="POST" action="{{ route('technique.demandes.complete', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3">
-                    @csrf
-                    <h2 class="font-heading font-semibold text-primary text-sm">Terminer</h2>
-                    <textarea name="resolution" rows="4" required maxlength="3000" placeholder="Ce qui a été fait, ce qui reste à surveiller…" class="{{ $champ }}">{{ old('resolution') }}</textarea>
-                    <button type="submit" class="{{ $bouton }} w-full bg-green-600 text-white hover:bg-green-700"><i data-lucide="circle-check" class="w-4 h-4" aria-hidden="true"></i> Intervention terminée</button>
-                    @if($demande->room_blocked)
-                        <p class="text-[11px] text-primary/50">La chambre repassera au ménage (ou au client s'il loge encore).</p>
-                    @endif
-                </form>
             @endif
 
             @if($peut['rouvrir'])

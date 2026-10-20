@@ -9,7 +9,7 @@
     $words = explode(' ', $tenantName);
     $initials = '';
     foreach ($words as $word) {
-        $initials .= strtoupper(substr($word, 0, 1));
+        $initials .= mb_strtoupper(mb_substr($word, 0, 1));
     }
     $initials = substr($initials, 0, 2);
     if (empty($initials)) {
@@ -653,7 +653,9 @@
                                 </x-sidebar-link>
                             @enddroit
                             @droit('technique.demandes.creer')
-                                <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
+                                @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
+                                    <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
+                                @endif
                             @enddroit
                             @droit('technique.equipe.voir')
                                 <x-sidebar-link route="technique.equipe.index" icon="users">Équipe & spécialités</x-sidebar-link>
@@ -768,7 +770,7 @@
                        class="sidebar-lien flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
                         <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                             <span class="text-text-on-light font-semibold text-xs">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                                {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 2)) }}
                             </span>
                         </div>
                         <div class="sidebar-libelle min-w-0">
@@ -857,12 +859,14 @@
                      saisit le service technique d'ici. --}}
                 @module('technique')
                 @droit('technique.demandes.creer')
-                    <a href="{{ route('technique.demandes.create') }}"
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
-                       title="Demander une intervention technique">
-                        <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
-                        <span class="hidden sm:inline">Intervention</span>
-                    </a>
+                    @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
+                        <a href="{{ route('technique.demandes.create') }}"
+                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                           title="Demander une intervention technique">
+                            <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
+                            <span class="hidden sm:inline">Intervention</span>
+                        </a>
+                    @endif
                 @enddroit
                 @endmodule
 

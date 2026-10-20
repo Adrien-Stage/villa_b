@@ -31,7 +31,7 @@
             <x-table.row>
                 <x-table.cell>
                     <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-primary" aria-hidden="true">{{ strtoupper(substr($session->user->name, 0, 2)) }}</div>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($session->user->name, 0, 2)) }}</div>
                         <div>
                             <p class="text-sm font-medium text-primary">{{ $session->user->name }}</p>
                             <p class="text-xs text-primary/50">Ouverte : {{ $session->opened_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
