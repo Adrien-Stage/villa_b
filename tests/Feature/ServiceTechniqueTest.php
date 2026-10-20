@@ -159,11 +159,42 @@ test('le demandeur rouvre une intervention dans les sept jours, pas au-delà', f
         ->and($this->chambre->fresh()->status)->toBe(RoomStatus::MAINTENANCE)
         ->and($this->plombier->notifications()->get()->pluck('data.title'))->toContain('Intervention rouverte');
 
+    // Rouverte, la demande garde l'ancien compte rendu — sans le faire passer pour celui d'une intervention finie.
+    $this->actingAs($this->plombier)->get(route('technique.demandes.show', $demande))->assertOk()
+        ->assertSee('Compte rendu précédent')->assertDontSee("Compte rendu de l'intervention");
+
     $this->actingAs($this->plombier)->post(route('technique.demandes.complete', $demande), ['resolution' => 'Raccord remplacé.']);
     Carbon::setTestNow('2026-11-02 09:00');
     $this->actingAs($this->receptionniste)->post(route('technique.demandes.reopen', $demande), ['motif' => 'Encore.'])
         ->assertSessionHas('error');
     expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_DONE);
+});
+
+test("annulée, la demande prévient le technicien qui l'avait reçue et le responsable, pas son auteur", function () {
+    demanderFuite($this, ['bloquer_chambre' => 0]);
+    $demande = MaintenanceRequest::sole();
+    $this->actingAs($this->responsable)->post(route('technique.demandes.assign', $demande), ['technician_id' => $this->plombier->id]);
+
+    $this->actingAs($this->receptionniste)->post(route('technique.demandes.cancel', $demande), ['motif' => 'Réparée par le client.'])->assertSessionHas('success');
+
+    expect($this->plombier->notifications()->get()->pluck('data.title'))->toContain('Demande annulée')
+        ->and($this->responsable->notifications()->get()->pluck('data.title'))->toContain('Demande annulée')
+        ->and($this->receptionniste->notifications()->get()->pluck('data.title'))->not->toContain('Demande annulée')
+        // L'électricienne n'avait pas cette demande : rien.
+        ->and($this->electricien->notifications()->get()->pluck('data.title'))->not->toContain('Demande annulée');
+});
+
+test("un compte rendu oublié est refusé, et l'erreur ne s'affiche qu'une fois", function () {
+    demanderFuite($this, ['bloquer_chambre' => 0]);
+    $demande = MaintenanceRequest::sole();
+    $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
+
+    $this->from(route('technique.demandes.show', $demande))->post(route('technique.demandes.complete', $demande), ['resolution' => ''])
+        ->assertSessionHasErrors('resolution');
+    $html = $this->get(route('technique.demandes.show', $demande))->getContent();
+
+    expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_ASSIGNED)
+        ->and(substr_count($html, 'Dites ce qui a été fait'))->toBe(1);
 });
 
 test('le housekeeping signale un problème : une demande part au service technique', function () {

@@ -337,6 +337,11 @@ class MaintenanceService
             $this->libererChambre($demande, "Intervention {$demande->reference} annulée", $par);
         });
 
+        // Le technicien qui l'avait reçue ne se déplace pas pour rien ; le responsable le sait.
+        $destinataires = User::query()->active()->havingRole(self::RESPONSABLES)->get()
+            ->push($demande->technician)->filter()->unique('id')->reject(fn ($u) => $u->id === $par->id);
+        $this->notifier->send($destinataires, new Avis($demande, Avis::CANCELLED, $motif));
+
         return $demande;
     }
 

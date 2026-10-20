@@ -23,9 +23,6 @@
     </div>
 
     @include('economat.partials.flash')
-    @if($errors->any())
-        <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg" role="alert">{{ $errors->first() }}</div>
-    @endif
 
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- La demande et son histoire --}}
@@ -55,7 +52,7 @@
                 @endif
                 @if($demande->resolution)
                     <div class="mt-4 rounded-lg bg-green-50 border border-green-200 p-3">
-                        <p class="text-xs font-semibold text-green-800">Compte rendu de l'intervention</p>
+                        <p class="text-xs font-semibold text-green-800">{{ $demande->isDone() ? "Compte rendu de l'intervention" : 'Compte rendu précédent' }}</p>
                         <p class="mt-1 text-sm text-green-900 whitespace-pre-line">{{ $demande->resolution }}</p>
                     </div>
                 @endif

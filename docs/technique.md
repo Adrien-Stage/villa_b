@@ -39,7 +39,8 @@ done ──rouvrir (7 jours, par le demandeur ou son chef)──▶ assigned (ou
 - **Alertes** ([`MaintenanceRequestNotification`](../app/Notifications/MaintenanceRequestNotification.php)) :
   signalée → responsable et techniciens de la spécialité ; affectée → le technicien ;
   terminée → le demandeur (et l'encadrement housekeeping pour un signalement) ;
-  rouverte → le technicien et le responsable.
+  rouverte → le technicien et le responsable ; annulée → le responsable et le technicien
+  qui l'avait reçue.
 
 ### La chambre
 

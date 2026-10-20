@@ -9,7 +9,8 @@ use Illuminate\Notifications\Notification;
 /**
  * Une étape d'une demande d'intervention, annoncée à qui doit agir :
  * signalée (au service technique), affectée (au technicien), terminée
- * (au demandeur), rouverte (au technicien et au responsable).
+ * (au demandeur), rouverte (au technicien et au responsable), annulée (au
+ * technicien qui l'avait reçue et au responsable).
  */
 class MaintenanceRequestNotification extends Notification
 {
@@ -19,6 +20,7 @@ class MaintenanceRequestNotification extends Notification
     public const ASSIGNED  = 'assigned';
     public const COMPLETED = 'completed';
     public const REOPENED  = 'reopened';
+    public const CANCELLED = 'cancelled';
 
     public function __construct(
         public MaintenanceRequest $demande,
@@ -46,6 +48,7 @@ class MaintenanceRequestNotification extends Notification
             self::ASSIGNED  => 'Intervention à faire',
             self::COMPLETED => 'Intervention terminée',
             self::REOPENED  => 'Intervention rouverte',
+            self::CANCELLED => 'Demande annulée',
             default         => "Demande d'intervention",
         };
     }
@@ -59,6 +62,7 @@ class MaintenanceRequestNotification extends Notification
             self::CREATED   => $texte . ' (' . $d->specialtyLabel() . ', ' . mb_strtolower($d->priorityLabel()) . ')',
             self::COMPLETED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             self::REOPENED  => $texte . ($this->note ? ' — motif : ' . mb_substr($this->note, 0, 120) : ''),
+            self::CANCELLED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             default         => $texte,
         };
     }
