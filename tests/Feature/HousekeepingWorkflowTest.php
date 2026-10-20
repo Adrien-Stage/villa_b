@@ -2,6 +2,7 @@
 
 use App\Enums\RoomStatus;
 use App\Models\HousekeepingAssignment;
+use App\Models\HousekeepingLog;
 use App\Models\HousekeepingTeam;
 use App\Models\Room;
 use App\Models\User;
@@ -176,3 +177,41 @@ test('sans équipe, le chef ne voit pas la section « Mes chambres »', function
         ->assertOk()
         ->assertDontSee('Mes chambres');
 });
+
+test('l\'affectation de chambres à une équipe s\'enregistre et se journalise sans erreur 500', function () {
+    $room1 = hkSetup();
+    $room1->update(['status' => RoomStatus::DIRTY]);
+
+    $room2 = Room::where('id', '!=', $room1->id)->first();
+    $room2->update(['status' => RoomStatus::OCCUPIED]);
+
+    $chief = User::factory()->create(['role' => 'housekeeping_leader']);
+    $member = User::factory()->create(['role' => 'housekeeping_staff']);
+
+    $team = HousekeepingTeam::create([
+        'name' => 'Équipe Nord',
+        'leader_id' => $chief->id,
+        'is_active' => true,
+    ]);
+    $team->members()->attach($member->id);
+
+    $this->actingAs($chief);
+
+    $response = $this->post(route('housekeeping.assignments.store'), [
+        'housekeeping_team_id' => $team->id,
+        'room_ids' => [$room1->id, $room2->id],
+        'notes' => 'Nettoyage prioritaire',
+    ]);
+
+    $response->assertRedirect(route('housekeeping.index'));
+    $response->assertSessionHas('success');
+
+    expect($room1->fresh()->activeHousekeepingAssignment)->not->toBeNull()
+        ->and($room1->fresh()->activeHousekeepingAssignment->kind)->toBe(HousekeepingAssignment::KIND_DEPART)
+        ->and($room2->fresh()->activeHousekeepingAssignment)->not->toBeNull()
+        ->and($room2->fresh()->activeHousekeepingAssignment->kind)->toBe(HousekeepingAssignment::KIND_RECOUCHE);
+
+    expect(HousekeepingLog::where('room_id', $room1->id)->where('action', HousekeepingLog::ASSIGNED)->exists())->toBeTrue()
+        ->and(HousekeepingLog::where('room_id', $room2->id)->where('action', HousekeepingLog::ASSIGNED)->exists())->toBeTrue();
+});
+

@@ -14,6 +14,7 @@ use App\Notifications\HousekeepingRoomCleaned;
 use App\Notifications\HousekeepingRoomsAssigned;
 use App\Notifications\HousekeepingRoomToInspect;
 use App\Services\Notifier;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -334,7 +335,10 @@ class HousekeepingController extends Controller
 
         // Une chambre à nettoyer part au ménage de départ ; une chambre occupée
         // à la recouche, que le client garde.
-        if ($rooms->contains(fn ($room) => !in_array($room->status, [RoomStatus::DIRTY, RoomStatus::OCCUPIED], true))) {
+        if ($rooms->contains(function ($room) {
+            $status = $room->status instanceof RoomStatus ? $room->status->value : (string) $room->status;
+            return !in_array($status, [RoomStatus::DIRTY->value, RoomStatus::OCCUPIED->value], true);
+        })) {
             return back()->withErrors([
                 'assignment' => 'Seules les chambres à nettoyer et les chambres occupées (recouche) peuvent être affectées à une équipe.',
             ]);
@@ -342,7 +346,8 @@ class HousekeepingController extends Controller
 
         DB::transaction(function () use ($validated, $team, $rooms) {
             foreach ($rooms as $room) {
-                $kind = $room->status === RoomStatus::OCCUPIED
+                $status = $room->status instanceof RoomStatus ? $room->status->value : (string) $room->status;
+                $kind = $status === RoomStatus::OCCUPIED->value
                     ? HousekeepingAssignment::KIND_RECOUCHE
                     : HousekeepingAssignment::KIND_DEPART;
 
@@ -383,10 +388,20 @@ class HousekeepingController extends Controller
         });
 
         // L'équipe est prévenue de sa feuille de route (hors auteur de l'action).
-        $this->notifier->send(
-            $team->members()->where('users.id', '!=', Auth::id())->get(),
-            new HousekeepingRoomsAssigned($team, $rooms->pluck('number')->all())
-        );
+        try {
+            $destinataires = $team->members()
+                ->when(Auth::id(), fn ($q) => $q->where('users.id', '!=', Auth::id()))
+                ->get();
+
+            if ($destinataires->isNotEmpty()) {
+                $this->notifier->send(
+                    $destinataires,
+                    new HousekeepingRoomsAssigned($team, $rooms->pluck('number')->all())
+                );
+            }
+        } catch (\Throwable $e) {
+            // Un problème d'alerte ne bloque jamais l'affectation enregistrée
+        }
 
         return redirect()->route('housekeeping.index')->with('success', 'Chambres affectées à l\'équipe.');
     }
@@ -422,24 +437,57 @@ class HousekeepingController extends Controller
             HousekeepingLog::noter($room, HousekeepingLog::ISSUE, $validated['issue_notes'], $assignment);
         });
 
-        // La chambre est immobilisée : l'encadrement doit arbitrer vite.
+        // La chambre est immobilisée : l'encadrement (gouvernante, responsable des étages) est alerté.
         $this->notifier->toRoles(
             self::ENCADREMENT,
             new HousekeepingIssueReported($room, $validated['issue_notes'], Auth::user()?->name),
             Auth::id()
         );
 
-        // Avec le service technique, le signalement devient une demande
-        // d'intervention : les techniciens sont alertés sans attendre.
-        if (\App\Services\MaintenanceService::actif()) {
+        // Si c'est l'encadrement qui signale directement et que la technique est active, on transmet au service technique
+        if ($this->isEncadrement() && \App\Services\MaintenanceService::actif()) {
             $demande = app(\App\Services\MaintenanceService::class)
                 ->depuisHousekeeping($room->fresh(), $validated['issue_notes'], $assignment->fresh(), Auth::user());
 
             return redirect()->route('housekeeping.index')
-                ->with('success', "Le problème a été signalé à l’encadrement et au service technique (demande {$demande->reference}).");
+                ->with('success', "Le problème a été signalé et transmis au service technique (demande {$demande->reference}, copie au responsable des étages).");
         }
 
-        return redirect()->route('housekeeping.index')->with('success', 'Le problème a été signalé à l’encadrement.');
+        return redirect()->route('housekeeping.index')->with('success', 'Le problème a été signalé à la gouvernante.');
+    }
+
+    /** La gouvernante ou le responsable des étages qualifie et transmet le problème au service technique. */
+    public function escalateToTechnique(Request $request, Room $room): RedirectResponse
+    {
+        $this->ensureCanValidate($room);
+
+        $validated = $request->validate([
+            'notes'           => ['required', 'string', 'max:1000'],
+            'specialty'       => ['nullable', 'string'],
+            'priority'        => ['nullable', 'string'],
+            'bloquer_chambre' => ['nullable', 'boolean'],
+        ]);
+
+        $assignment = $room->activeHousekeepingAssignment ?? $room->latestHousekeepingAssignment;
+        if (!$assignment) {
+            return back()->withErrors(['status' => 'Aucune affectation trouvée pour cette chambre.']);
+        }
+
+        if (!\App\Services\MaintenanceService::actif()) {
+            return back()->withErrors(['status' => 'Le service technique n\'est pas activé.']);
+        }
+
+        $demande = app(\App\Services\MaintenanceService::class)->depuisHousekeeping(
+            $room,
+            $validated['notes'],
+            $assignment,
+            Auth::user(),
+            $validated['specialty'] ?? null,
+            $validated['priority'] ?? null,
+            (bool) ($validated['bloquer_chambre'] ?? false)
+        );
+
+        return back()->with('success', "Demande d'intervention {$demande->reference} transmise au service technique (copie envoyée au responsable des étages).");
     }
 
     public function markCleaning(Request $request, Room $room)
