@@ -14,14 +14,17 @@ class MaintenanceRequestEvent extends Model
     public const UPDATED_AT = null;
 
     public const LIBELLES = [
-        'created'   => 'Demande signalée',
-        'assigned'  => 'Affectée',
-        'taken'     => 'Prise en charge',
-        'started'   => 'Intervention commencée',
-        'parts'     => 'Pièces employées',
-        'completed' => 'Intervention terminée',
-        'reopened'  => 'Rouverte',
-        'cancelled' => 'Annulée',
+        'created'     => 'Demande signalée',
+        'assigned'    => 'Affectée',
+        'taken'       => 'Prise en charge',
+        'started'     => 'Intervention commencée',
+        'parts'       => 'Pièces employées',
+        'submitted'   => 'Fiche d\'intervention soumise',
+        'approved'    => 'Fiche visée et clôturée',
+        'rework'      => 'Reprise demandée',
+        'completed'   => 'Intervention terminée',
+        'reopened'    => 'Rouverte',
+        'cancelled'   => 'Annulée',
         'requalified' => 'Requalifiée',
     ];
 

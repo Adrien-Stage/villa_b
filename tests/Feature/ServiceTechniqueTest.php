@@ -117,7 +117,16 @@ test("affectée, commencée, avec ses pièces, puis terminée : la chambre repas
     expect((float) ServiceStoreStock::where('service_store_id', $depot->id)->value('current_stock'))->toBe(8.0);
 
     Carbon::setTestNow('2026-10-19 10:30');
-    $this->post(route('technique.demandes.complete', $demande), ['resolution' => 'Joint changé, plus de fuite.'])->assertSessionHas('success');
+    // Le technicien soumet sa fiche d'intervention au responsable
+    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Joint changé, plus de fuite.'])->assertSessionHas('success');
+
+    $demande->refresh();
+    expect($demande->status)->toBe(MaintenanceRequest::STATUS_SUBMITTED)
+        ->and($demande->resolution)->toBe('Joint changé, plus de fuite.')
+        ->and($this->responsable->notifications()->get()->pluck('data.title'))->toContain("Fiche d'intervention à viser");
+
+    // Le responsable technique vise et clôture
+    $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande), ['note' => 'Vérifié par Alain, étanchéité parfaite.'])->assertSessionHas('success');
 
     $demande->refresh();
     expect($demande->status)->toBe(MaintenanceRequest::STATUS_DONE)
@@ -125,7 +134,7 @@ test("affectée, commencée, avec ses pièces, puis terminée : la chambre repas
         ->and($demande->valeurDesPieces())->toBe(100_000)
         ->and($this->chambre->fresh()->status)->toBe(RoomStatus::DIRTY)
         ->and($this->receptionniste->notifications()->first()?->data['title'])->toBe('Intervention terminée')
-        ->and($demande->events()->pluck('event')->all())->toBe(['created', 'assigned', 'started', 'parts', 'completed']);
+        ->and($demande->events()->pluck('event')->all())->toBe(['created', 'assigned', 'started', 'parts', 'submitted', 'approved']);
 
     app(LedgerPostingService::class)->postDay(Carbon::parse('2026-10-19'));
     $charge = JournalEntryLine::query()->where('account_code', Account::variationFor($joint->stockAccount()))->where('debit', '>', 0)->sole();
@@ -133,13 +142,14 @@ test("affectée, commencée, avec ses pièces, puis terminée : la chambre repas
         ->and($charge->analytic_center)->toBe(JournalEntryLine::CENTER_ACCOMMODATION);
 });
 
-test("un technicien prend une demande libre ; elle n'est plus à prendre", function () {
+test("un technicien prend une demande libre ; elle n'est plus à prendre et alerte le responsable", function () {
     demanderFuite($this, ['bloquer_chambre' => 0]);
     $demande = MaintenanceRequest::sole();
 
     $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande))->assertSessionHas('success');
     expect($demande->fresh()->assigned_to)->toBe($this->plombier->id)
-        ->and($this->chambre->fresh()->status)->toBe(RoomStatus::AVAILABLE);
+        ->and($this->chambre->fresh()->status)->toBe(RoomStatus::AVAILABLE)
+        ->and($this->responsable->notifications()->get()->pluck('data.title'))->toContain('Intervention prise par un technicien');
 
     $this->actingAs($this->electricien)->post(route('technique.demandes.take', $demande))->assertSessionHas('error');
     expect($demande->fresh()->assigned_to)->toBe($this->plombier->id);
@@ -149,7 +159,8 @@ test('le demandeur rouvre une intervention dans les sept jours, pas au-delà', f
     demanderFuite($this);
     $demande = MaintenanceRequest::sole();
     $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
-    $this->post(route('technique.demandes.complete', $demande), ['resolution' => 'Serré le raccord.']);
+    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Serré le raccord.']);
+    $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
 
     Carbon::setTestNow('2026-10-22 09:00');
     $this->actingAs($this->receptionniste)->post(route('technique.demandes.reopen', $demande), ['motif' => 'Ça fuit encore.'])
@@ -161,9 +172,10 @@ test('le demandeur rouvre une intervention dans les sept jours, pas au-delà', f
 
     // Rouverte, la demande garde l'ancien compte rendu — sans le faire passer pour celui d'une intervention finie.
     $this->actingAs($this->plombier)->get(route('technique.demandes.show', $demande))->assertOk()
-        ->assertSee('Compte rendu précédent')->assertDontSee("Compte rendu de l'intervention");
+        ->assertSee('Compte rendu précédent')->assertDontSee("Compte rendu de l'intervention (visé)");
 
-    $this->actingAs($this->plombier)->post(route('technique.demandes.complete', $demande), ['resolution' => 'Raccord remplacé.']);
+    $this->actingAs($this->plombier)->post(route('technique.demandes.submit', $demande), ['resolution' => 'Raccord remplacé.']);
+    $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
     Carbon::setTestNow('2026-11-02 09:00');
     $this->actingAs($this->receptionniste)->post(route('technique.demandes.reopen', $demande), ['motif' => 'Encore.'])
         ->assertSessionHas('error');
@@ -197,30 +209,88 @@ test("un compte rendu oublié est refusé, et l'erreur ne s'affiche qu'une fois"
         ->and(substr_count($html, 'Dites ce qui a été fait'))->toBe(1);
 });
 
-test('le housekeeping signale un problème : une demande part au service technique', function () {
+test('le housekeeping signale un problème : la gouvernante transmet au service technique et copie le responsable des étages', function () {
+    $responsableEtages = membreTechnique('Rachel Chef Étages', 'housekeeping_leader');
     $gouvernante = membreTechnique('Eva Gouvernante', 'housekeeping_supervisor');
+    $valet = membreTechnique('Valentin Valet', 'housekeeping_staff');
     $equipe = HousekeepingTeam::create(['name' => 'Étage 1', 'leader_id' => $gouvernante->id, 'is_active' => true]);
-    $equipe->members()->sync([$gouvernante->id]);
+    $equipe->members()->sync([$gouvernante->id, $valet->id]);
     $this->chambre->updateStatus(RoomStatus::CLEANING);
-    HousekeepingAssignment::create(['housekeeping_team_id' => $equipe->id, 'room_id' => $this->chambre->id,
+    $affectation = HousekeepingAssignment::create(['housekeeping_team_id' => $equipe->id, 'room_id' => $this->chambre->id,
         'status' => 'in_progress', 'assigned_at' => now(), 'started_at' => now()]);
 
-    $this->actingAs($gouvernante)->post(route('housekeeping.issue', $this->chambre), ['issue_notes' => 'Prise électrique arrachée'])
-        ->assertSessionHas('success', fn ($m) => str_contains($m, 'DIT-2026-0001'));
+    // 1. Le valet signale un problème : alerte la gouvernante sans créer de DIT directement
+    $this->actingAs($valet)->post(route('housekeeping.issue', $this->chambre), ['issue_notes' => 'Prise électrique arrachée'])
+        ->assertSessionHas('success', 'Le problème a été signalé à la gouvernante.');
+    expect(MaintenanceRequest::count())->toBe(0)
+        ->and($gouvernante->notifications()->count())->toBe(1);
+
+    // 2. La gouvernante transmet au service technique
+    $this->actingAs($gouvernante)->post(route('housekeeping.transmettre_technique', $this->chambre), [
+        'notes' => 'Prise arrachée à remplacer urgemment',
+        'specialty' => 'cfo',
+        'priority' => 'urgent',
+    ])->assertSessionHas('success');
 
     $demande = MaintenanceRequest::sole();
     expect($demande->source)->toBe(MaintenanceRequest::SOURCE_HOUSEKEEPING)
         ->and($demande->department)->toBe('housekeeping')
         ->and($demande->room_id)->toBe($this->chambre->id)
-        // À qualifier : toute l'équipe est alertée.
+        // Les électriciens sont alertés, et le responsable des étages en reçoit copie
         ->and($this->electricien->notifications()->count())->toBe(1)
-        ->and($this->plombier->notifications()->count())->toBe(1);
+        ->and($responsableEtages->notifications()->get()->pluck('data.title'))->toContain("Demande d'intervention urgente");
 
-    // Terminée, l'affectation de ménage reprend.
+    // 3. L'électricienne prend et soumet sa fiche
     $this->actingAs($this->electricien)->post(route('technique.demandes.take', $demande));
-    $this->post(route('technique.demandes.complete', $demande), ['resolution' => 'Prise refixée.']);
+    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Prise refixée et testée conforme.']);
+
+    // 4. Le responsable technique vise : la chambre et le ménage reprennent
+    $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
     expect(HousekeepingAssignment::sole()->status)->toBe('in_progress')
         ->and($gouvernante->notifications()->get()->pluck('data.title'))->toContain('Intervention terminée');
+});
+
+test('le responsable technique peut demander une reprise au technicien', function () {
+    demanderFuite($this);
+    $demande = MaintenanceRequest::sole();
+    $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
+    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Vite fait.']);
+
+    expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_SUBMITTED);
+
+    $this->actingAs($this->responsable)->post(route('technique.demandes.rework', $demande), ['motif' => 'Fuite non étanchée, recommencer.'])
+        ->assertSessionHas('success');
+
+    expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_IN_PROGRESS)
+        ->and($this->plombier->notifications()->get()->pluck('data.title'))->toContain('Intervention rouverte');
+});
+
+test("l'impression de la fiche d'intervention technique est accessible", function () {
+    demanderFuite($this);
+    $demande = MaintenanceRequest::sole();
+
+    $this->actingAs($this->responsable)->get(route('technique.demandes.print', $demande))
+        ->assertOk()
+        ->assertSee("Fiche d'Intervention", false)
+        ->assertSee($demande->reference);
+});
+
+test("l'édition du registre des interventions techniques produit son document", function () {
+    demanderFuite($this);
+    $demande = MaintenanceRequest::sole();
+
+    $edition = new \App\Editions\Documents\RegistreInterventionsTechniques();
+    expect($edition->famille())->toBe(\App\Editions\Edition::TECHNIQUE)
+        ->and($edition->cle())->toBe('registre-interventions-techniques');
+
+    $doc = $edition->document([
+        'periode' => [Carbon::parse('2026-10-01'), Carbon::parse('2026-10-31')],
+        'statut' => 'tous',
+        'specialite' => 'tous',
+    ], $this->responsable);
+
+    expect($doc->lesLignes())->toHaveCount(1)
+        ->and($doc->lesLignes()[0]['reference'])->toBe($demande->reference);
 });
 
 test('sans le module, ni écran technique ni demande au signalement', function () {

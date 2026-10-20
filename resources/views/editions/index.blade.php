@@ -9,6 +9,7 @@
         \App\Editions\Edition::HOUSEKEEPING => 'sparkles',
         \App\Editions\Edition::RESTAURATION => 'utensils',
         \App\Editions\Edition::ACHATS => 'package',
+        \App\Editions\Edition::TECHNIQUE => 'wrench',
         \App\Editions\Edition::PERSONNEL => 'users',
     ];
 @endphp

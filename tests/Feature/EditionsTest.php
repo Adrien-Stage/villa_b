@@ -35,7 +35,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     RoleCatalog::sync();
     PointOfSaleCatalog::sync();
-    activerModules(['restaurant', 'shop', 'economat', 'accounting', 'analytics', 'housekeeping']);
+    activerModules(['restaurant', 'shop', 'economat', 'accounting', 'analytics', 'housekeeping', 'technique']);
     $this->travelTo(CarbonImmutable::parse('2026-10-09 15:00'));
     $this->restaurant = PointOfSale::where('slug', 'restaurant')->sole();
 });

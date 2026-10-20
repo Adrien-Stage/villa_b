@@ -56,6 +56,7 @@ class Catalogue
         Documents\EtatStocks::class,
         Documents\MouvementsStock::class,
         Documents\PlanningQuarts::class,
+        Documents\RegistreInterventionsTechniques::class,
     ];
 
     /**
@@ -73,6 +74,8 @@ class Catalogue
         ['famille' => Edition::ACHATS, 'titre' => "Procès-verbaux d'inventaire", 'description' => 'Les inventaires du magasin et leurs procès-verbaux.', 'route' => 'economat.stock_counts.index', 'droit' => 'economat.stock_counts.voir'],
         ['famille' => Edition::ACHATS, 'titre' => 'Contrôle et ratios (rapport)', 'description' => 'Le rapport de contrôle des stocks et du food cost.', 'route' => 'economat.control.print', 'droit' => 'economat.control.voir'],
         ['famille' => Edition::HEBERGEMENT, 'titre' => 'Fiches techniques des chambres', 'description' => 'Le coût par nuitée et la marge de chaque type de chambre.', 'route' => 'rooms.cost_sheets.index', 'droit' => 'rooms.cost_sheets.voir'],
+        ['famille' => Edition::TECHNIQUE, 'titre' => 'Tableau de bord technique', 'description' => 'Supervision des demandes et suivi opérationnel des interventions.', 'route' => 'technique.index', 'droit' => 'technique.voir', 'module' => 'technique'],
+        ['famille' => Edition::TECHNIQUE, 'titre' => 'Dépôt et matériels de maintenance', 'description' => 'Gestion des stocks de pièces détachées et matériels du service technique.', 'route' => 'technique.depot.index', 'droit' => 'technique.depot.voir', 'module' => 'technique'],
     ];
 
     /** @return Collection<int, Edition> */

@@ -18,6 +18,8 @@ class MaintenanceRequestNotification extends Notification
 
     public const CREATED   = 'created';
     public const ASSIGNED  = 'assigned';
+    public const TAKEN     = 'taken';
+    public const SUBMITTED = 'submitted';
     public const COMPLETED = 'completed';
     public const REOPENED  = 'reopened';
     public const CANCELLED = 'cancelled';
@@ -46,6 +48,8 @@ class MaintenanceRequestNotification extends Notification
         return match ($this->etape) {
             self::CREATED   => "Demande d'intervention{$urgent}",
             self::ASSIGNED  => 'Intervention à faire',
+            self::TAKEN     => 'Intervention prise par un technicien',
+            self::SUBMITTED => 'Fiche d\'intervention à viser',
             self::COMPLETED => 'Intervention terminée',
             self::REOPENED  => 'Intervention rouverte',
             self::CANCELLED => 'Demande annulée',
@@ -60,6 +64,8 @@ class MaintenanceRequestNotification extends Notification
 
         return match ($this->etape) {
             self::CREATED   => $texte . ' (' . $d->specialtyLabel() . ', ' . mb_strtolower($d->priorityLabel()) . ')',
+            self::TAKEN     => $texte . ($this->note ? ' — ' . $this->note : ' — Prise en charge directe'),
+            self::SUBMITTED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ' — Fiche soumise pour visa'),
             self::COMPLETED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             self::REOPENED  => $texte . ($this->note ? ' — motif : ' . mb_substr($this->note, 0, 120) : ''),
             self::CANCELLED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),

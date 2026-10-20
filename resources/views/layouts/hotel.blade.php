@@ -653,7 +653,9 @@
                                 </x-sidebar-link>
                             @enddroit
                             @droit('technique.demandes.creer')
-                                <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
+                                @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
+                                    <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
+                                @endif
                             @enddroit
                             @droit('technique.equipe.voir')
                                 <x-sidebar-link route="technique.equipe.index" icon="users">Équipe & spécialités</x-sidebar-link>
@@ -857,12 +859,14 @@
                      saisit le service technique d'ici. --}}
                 @module('technique')
                 @droit('technique.demandes.creer')
-                    <a href="{{ route('technique.demandes.create') }}"
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
-                       title="Demander une intervention technique">
-                        <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
-                        <span class="hidden sm:inline">Intervention</span>
-                    </a>
+                    @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
+                        <a href="{{ route('technique.demandes.create') }}"
+                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                           title="Demander une intervention technique">
+                            <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
+                            <span class="hidden sm:inline">Intervention</span>
+                        </a>
+                    @endif
                 @enddroit
                 @endmodule
 

@@ -127,17 +127,27 @@ class MaintenanceService
         return $demande;
     }
 
-    /** Un agent du housekeeping signale un problème en chambre : la technique est saisie. */
-    public function depuisHousekeeping(Room $room, string $probleme, HousekeepingAssignment $affectation, User $agent): MaintenanceRequest
+    /** Un agent ou la gouvernante signale un problème en chambre : la technique est saisie, le responsable des étages en reçoit copie. */
+    public function depuisHousekeeping(Room $room, string $probleme, HousekeepingAssignment $affectation, User $gouvernante, ?string $specialite = null, ?string $priorite = null, bool $bloquerChambre = false): MaintenanceRequest
     {
-        return $this->signaler([
-            'title'       => mb_substr(trim(preg_split('/\R/', $probleme)[0]), 0, 150),
-            'description' => $probleme,
-            'specialty'   => 'autre',
-            'priority'    => MaintenanceRequest::PRIORITY_HIGH,
-            'department'  => 'housekeeping',
-            'room_id'     => $room->id,
-        ], $agent, MaintenanceRequest::SOURCE_HOUSEKEEPING, $affectation);
+        $demande = $this->signaler([
+            'title'           => mb_substr(trim(preg_split('/\R/', $probleme)[0]), 0, 150),
+            'description'     => $probleme,
+            'specialty'       => $specialite ?: 'autre',
+            'priority'        => $priorite ?: MaintenanceRequest::PRIORITY_HIGH,
+            'department'      => 'housekeeping',
+            'room_id'         => $room->id,
+            'bloquer_chambre' => $bloquerChambre,
+        ], $gouvernante, MaintenanceRequest::SOURCE_HOUSEKEEPING, $affectation);
+
+        // Envoyer une copie au responsable des étages (housekeeping_leader)
+        $this->notifier->toRoles(
+            ['housekeeping_leader'],
+            new Avis($demande, Avis::CREATED, "Copie information : chambre {$room->number} signalée par le ménage"),
+            $gouvernante->id
+        );
+
+        return $demande;
     }
 
     // ── Affecter, prendre, commencer ─────────────────────────────────────────
@@ -181,10 +191,10 @@ class MaintenanceService
         return $demande->fresh();
     }
 
-    /** Un technicien prend une demande que personne n'a encore. */
+    /** Un technicien prend une demande que personne n'a encore (alerte le responsable technique). */
     public function prendre(MaintenanceRequest $demande, User $technicien): MaintenanceRequest
     {
-        return DB::transaction(function () use ($demande, $technicien) {
+        $demande = DB::transaction(function () use ($demande, $technicien) {
             $demande = MaintenanceRequest::query()->lockForUpdate()->findOrFail($demande->id);
 
             if ($demande->status !== MaintenanceRequest::STATUS_OPEN || $demande->assigned_to !== null) {
@@ -197,10 +207,18 @@ class MaintenanceService
                 'assigned_at' => now(),
                 'status'      => MaintenanceRequest::STATUS_ASSIGNED,
             ]);
-            $this->noter($demande, 'taken', null, $technicien);
+            $this->noter($demande, 'taken', "Prise directe par {$technicien->name}", $technicien);
 
             return $demande;
         });
+
+        // Alerte les responsables techniques (pour que le responsable absent voie ce qui a été pris en son absence)
+        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u->id === $technicien->id);
+        if ($responsables->isNotEmpty()) {
+            $this->notifier->send($responsables, new Avis($demande, Avis::TAKEN, "Prise par {$technicien->name}"));
+        }
+
+        return $demande;
     }
 
     public function commencer(MaintenanceRequest $demande, User $par): MaintenanceRequest
@@ -260,35 +278,122 @@ class MaintenanceService
         });
     }
 
-    // ── Terminer, rouvrir, annuler ───────────────────────────────────────────
+    // ── Soumettre fiche, viser, terminer, rouvrir, annuler ───────────────────
 
-    public function terminer(MaintenanceRequest $demande, string $compteRendu, User $par): MaintenanceRequest
+    /** Le technicien renseigne ses travaux et pièces, et remonte la fiche au responsable pour visa. */
+    public function soumettreFiche(MaintenanceRequest $demande, string $compteRendu, User $technicien, ?ServiceStore $depot = null, ?array $pieces = null): MaintenanceRequest
     {
-        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS], true)) {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
         }
 
-        DB::transaction(function () use ($demande, $compteRendu, $par) {
+        DB::transaction(function () use ($demande, $compteRendu, $technicien, $depot, $pieces) {
+            if ($depot && !empty($pieces)) {
+                $this->employerPieces($demande, $depot, $pieces, $technicien);
+            }
+
+            $demande->update([
+                'status'     => MaintenanceRequest::STATUS_SUBMITTED,
+                'started_at' => $demande->started_at ?? now(),
+                'resolution' => $compteRendu,
+            ]);
+
+            $this->noter($demande, 'submitted', $compteRendu, $technicien);
+        });
+
+        // Alerte les responsables techniques pour visa
+        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u->id === $technicien->id);
+        if ($responsables->isNotEmpty()) {
+            $this->notifier->send($responsables, new Avis($demande->fresh(), Avis::SUBMITTED, $compteRendu));
+        }
+
+        return $demande->fresh();
+    }
+
+    /** Le responsable technique vise la fiche et clôture définitivement l'intervention. */
+    public function viserEtCloturer(MaintenanceRequest $demande, ?string $avisResponsable, User $responsable): MaintenanceRequest
+    {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
+            throw new RuntimeException("La demande {$demande->reference} n'est pas en état d'être visée.");
+        }
+
+        DB::transaction(function () use ($demande, $avisResponsable, $responsable) {
             $demande->update([
                 'status'       => MaintenanceRequest::STATUS_DONE,
                 'started_at'   => $demande->started_at ?? now(),
                 'completed_at' => now(),
-                'completed_by' => $par->id,
-                'resolution'   => $compteRendu,
+                'completed_by' => $responsable->id,
             ]);
-            $this->noter($demande, 'completed', $compteRendu, $par);
-            $this->libererChambre($demande, "Intervention {$demande->reference} terminée", $par);
+
+            $note = $avisResponsable ? "Visé par {$responsable->name} : {$avisResponsable}" : "Fiche visée et clôturée par {$responsable->name}";
+            $this->noter($demande, 'approved', $note, $responsable);
+            $this->libererChambre($demande, "Intervention {$demande->reference} visée et terminée", $responsable);
         });
 
-        $destinataires = collect([$demande->requester])->filter();
-        $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $par->id), new Avis($demande, Avis::COMPLETED, $compteRendu));
+        $destinataires = collect([$demande->requester, $demande->technician])->filter()->unique('id');
+        $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $responsable->id), new Avis($demande->fresh(), Avis::COMPLETED, $demande->resolution));
 
         // Le housekeeping reprend la chambre qu'il avait laissée.
         if ($demande->source === MaintenanceRequest::SOURCE_HOUSEKEEPING) {
-            $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande, Avis::COMPLETED, $compteRendu), $par->id);
+            $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande->fresh(), Avis::COMPLETED, $demande->resolution), $responsable->id);
         }
 
-        return $demande;
+        return $demande->fresh();
+    }
+
+    /** Le responsable technique renvoie la fiche au technicien pour travail incomplet ou compléments. */
+    public function demanderReprise(MaintenanceRequest $demande, string $motif, User $responsable): MaintenanceRequest
+    {
+        if ($demande->status !== MaintenanceRequest::STATUS_SUBMITTED) {
+            throw new RuntimeException("La demande {$demande->reference} n'est pas en attente de visa.");
+        }
+
+        DB::transaction(function () use ($demande, $motif, $responsable) {
+            $demande->update([
+                'status' => MaintenanceRequest::STATUS_IN_PROGRESS,
+            ]);
+            $this->noter($demande, 'rework', $motif, $responsable);
+        });
+
+        if ($demande->technician && $demande->technician->id !== $responsable->id) {
+            $this->notifier->send($demande->technician, new Avis($demande->fresh(), Avis::REOPENED, "Reprise demandée par le responsable : {$motif}"));
+        }
+
+        return $demande->fresh();
+    }
+
+    public function terminer(MaintenanceRequest $demande, string $compteRendu, User $par): MaintenanceRequest
+    {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
+            throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
+        }
+
+        // Si l'utilisateur est le responsable technique ou la direction : visa direct
+        if ($par->exerce([...self::RESPONSABLES, 'manager']) || $par->isAdmin()) {
+            DB::transaction(function () use ($demande, $compteRendu, $par) {
+                $demande->update([
+                    'status'       => MaintenanceRequest::STATUS_DONE,
+                    'started_at'   => $demande->started_at ?? now(),
+                    'completed_at' => now(),
+                    'completed_by' => $par->id,
+                    'resolution'   => $compteRendu ?: $demande->resolution,
+                ]);
+                $this->noter($demande, 'completed', $compteRendu ?: $demande->resolution, $par);
+                $this->libererChambre($demande, "Intervention {$demande->reference} terminée", $par);
+            });
+
+            $destinataires = collect([$demande->requester, $demande->technician])->filter()->unique('id');
+            $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $par->id), new Avis($demande->fresh(), Avis::COMPLETED, $compteRendu));
+
+            if ($demande->source === MaintenanceRequest::SOURCE_HOUSEKEEPING) {
+                $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande->fresh(), Avis::COMPLETED, $compteRendu), $par->id);
+            }
+
+            return $demande->fresh();
+        }
+
+        // Sinon (technicien opérationnel) : c'est une soumission de fiche au responsable
+        return $this->soumettreFiche($demande, $compteRendu, $par);
     }
 
     public function rouvrir(MaintenanceRequest $demande, string $motif, User $par): MaintenanceRequest

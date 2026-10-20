@@ -23,6 +23,7 @@ class MaintenanceRequest extends Model
     public const STATUS_OPEN        = 'open';
     public const STATUS_ASSIGNED    = 'assigned';
     public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_SUBMITTED   = 'submitted';
     public const STATUS_DONE        = 'done';
     public const STATUS_CANCELLED   = 'cancelled';
 
@@ -30,12 +31,13 @@ class MaintenanceRequest extends Model
         self::STATUS_OPEN        => 'Signalée',
         self::STATUS_ASSIGNED    => 'Affectée',
         self::STATUS_IN_PROGRESS => 'En cours',
+        self::STATUS_SUBMITTED   => 'Fiche à viser',
         self::STATUS_DONE        => 'Terminée',
         self::STATUS_CANCELLED   => 'Annulée',
     ];
 
     /** Demandes encore à traiter. */
-    public const ACTIVES = [self::STATUS_OPEN, self::STATUS_ASSIGNED, self::STATUS_IN_PROGRESS];
+    public const ACTIVES = [self::STATUS_OPEN, self::STATUS_ASSIGNED, self::STATUS_IN_PROGRESS, self::STATUS_SUBMITTED];
 
     public const PRIORITY_URGENT = 'urgent';
     public const PRIORITY_HIGH   = 'high';
@@ -202,6 +204,11 @@ class MaintenanceRequest extends Model
     public function isDone(): bool
     {
         return $this->status === self::STATUS_DONE;
+    }
+
+    public function isSubmitted(): bool
+    {
+        return $this->status === self::STATUS_SUBMITTED;
     }
 
     /** Terminée depuis moins de DELAI_REOUVERTURE jours. */
