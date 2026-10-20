@@ -111,7 +111,7 @@
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-3">
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
-                        <span class="text-xs font-semibold text-white">{{ strtoupper(substr($customer->first_name, 0, 1) . substr($customer->last_name, 0, 1)) }}</span>
+                        <span class="text-xs font-semibold text-white">{{ mb_strtoupper(mb_substr($customer->first_name, 0, 1) . mb_substr($customer->last_name, 0, 1)) }}</span>
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5">

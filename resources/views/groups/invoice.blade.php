@@ -118,7 +118,7 @@
                     <div class="flex items-center gap-3">
                         <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                             <span class="text-white text-[10px] font-semibold">
-                                {{ strtoupper(substr($booking->customer->first_name, 0, 1) . substr($booking->customer->last_name, 0, 1)) }}
+                                {{ mb_strtoupper(mb_substr($booking->customer->first_name, 0, 1) . mb_substr($booking->customer->last_name, 0, 1)) }}
                             </span>
                         </div>
                         <div>

@@ -9,7 +9,7 @@
     $words = explode(' ', $tenantName);
     $initials = '';
     foreach ($words as $word) {
-        $initials .= strtoupper(substr($word, 0, 1));
+        $initials .= mb_strtoupper(mb_substr($word, 0, 1));
     }
     $initials = substr($initials, 0, 2);
     if (empty($initials)) {
@@ -768,7 +768,7 @@
                        class="sidebar-lien flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
                         <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                             <span class="text-text-on-light font-semibold text-xs">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                                {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 2)) }}
                             </span>
                         </div>
                         <div class="sidebar-libelle min-w-0">

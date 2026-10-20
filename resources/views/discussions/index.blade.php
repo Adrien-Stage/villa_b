@@ -34,7 +34,7 @@
                              class="px-4 py-3 border-b border-secondary/10 transition-colors {{ $active ? 'bg-white' : 'hover:bg-white/70' }}">
                             <div class="flex items-start gap-3">
                                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-xs font-semibold">
-                                    {{ strtoupper(substr($title, 0, 2)) }}
+                                    {{ mb_strtoupper(mb_substr($title, 0, 2)) }}
                                 </div>
                                 <div class="min-w-0 flex-1 flex items-start justify-between gap-2">
                                     <a href="{{ route('discussions.index', ['conversation' => $conversation->id]) }}" class="min-w-0 flex-1">
@@ -101,7 +101,7 @@
                     @endphp
                     <header class="px-5 py-4 border-b border-secondary/20 flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
-                            {{ strtoupper(substr($title, 0, 2)) }}
+                            {{ mb_strtoupper(mb_substr($title, 0, 2)) }}
                         </div>
                         <div class="flex-1 flex items-center justify-between">
                             <div>

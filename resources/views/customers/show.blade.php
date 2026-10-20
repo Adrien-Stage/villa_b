@@ -117,7 +117,7 @@
         {{-- Identité --}}
         <div class="flex items-center gap-4">
             <div class="w-14 h-14 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-heading font-semibold text-xl shadow-inner">
-                {{ strtoupper(substr($customer->first_name, 0, 1) . substr($customer->last_name, 0, 1)) }}
+                {{ mb_strtoupper(mb_substr($customer->first_name, 0, 1) . mb_substr($customer->last_name, 0, 1)) }}
             </div>
             <div>
                 <div class="flex flex-wrap items-center gap-2 mb-1">

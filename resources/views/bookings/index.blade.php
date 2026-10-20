@@ -150,7 +150,7 @@
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-2">
                     <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
-                        <span class="text-[10px] font-semibold text-white">{{ strtoupper(substr($booking->customer->first_name, 0, 1) . substr($booking->customer->last_name, 0, 1)) }}</span>
+                        <span class="text-[10px] font-semibold text-white">{{ mb_strtoupper(mb_substr($booking->customer->first_name, 0, 1) . mb_substr($booking->customer->last_name, 0, 1)) }}</span>
                     </div>
                     <span class="max-w-56 truncate text-sm text-primary">{{ $booking->customer->full_name }}</span>
                 </div>

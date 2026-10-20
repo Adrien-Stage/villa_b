@@ -144,7 +144,7 @@
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-3">
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
-                        <span class="text-xs font-semibold text-white">{{ strtoupper(substr($staff->name, 0, 2)) }}</span>
+                        <span class="text-xs font-semibold text-white">{{ mb_strtoupper(mb_substr($staff->name, 0, 2)) }}</span>
                     </div>
                     <div class="min-w-0">
                         <p class="truncate text-sm font-medium text-primary">{{ $staff->name }}</p>
@@ -212,7 +212,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <span class="text-white text-xs font-semibold">{{ strtoupper(substr($staff->name, 0, 2)) }}</span>
+                        <span class="text-white text-xs font-semibold">{{ mb_strtoupper(mb_substr($staff->name, 0, 2)) }}</span>
                     </div>
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-primary truncate">{{ $staff->name }}</p>
