@@ -114,12 +114,13 @@
 </div>
 
 {{-- Cartes statistiques globales --}}
-<div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+<div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-4 mb-6">
     <x-stat-card label="À nettoyer" :value="$stats['dirty_rooms']" subtitle="départs à faire" color="red" />
     <x-stat-card label="En nettoyage" :value="$stats['cleaning']" subtitle="en cours" color="yellow" />
     <x-stat-card label="À contrôler" :value="$stats['to_inspect']" subtitle="nettoyées" color="purple" />
     <x-stat-card label="Contrôlées" :value="$stats['inspected']" subtitle="à libérer" color="emerald" />
     <x-stat-card label="Recouches" :value="$stats['stayovers']" subtitle="séjour en cours" color="blue" />
+    <x-stat-card label="En maintenance" :value="$stats['maintenance'] ?? 0" subtitle="bloquées tech" color="orange" />
     <x-stat-card label="Équipes" :value="$stats['teams']" subtitle="actives" color="blue" />
     <x-stat-card label="Terminées" :value="$stats['completed_today']" subtitle="aujourd'hui" color="emerald" />
 </div>
@@ -226,10 +227,11 @@
                 :class="activeTab === 'problemes' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
                 class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
                 <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                <span>Signalements & Historique</span>
-                @if($blockedAssignments->count() > 0)
+                <span>Signalements & Maintenance</span>
+                @php($totalIncidents = $blockedAssignments->count() + (isset($maintenanceRooms) ? $maintenanceRooms->count() : 0))
+                @if($totalIncidents > 0)
                     <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                        {{ $blockedAssignments->count() }}
+                        {{ $totalIncidents }}
                     </span>
                 @endif
             </button>
@@ -789,6 +791,58 @@
          ONGLET 5 : PROBLÈMES & HISTORIQUE DU JOUR
          ═══════════════════════════════════════════════════════════════ --}}
     <div x-show="activeTab === 'problemes'" x-cloak class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {{-- Chambres immobilisées en maintenance technique --}}
+        @if(isset($maintenanceRooms) && $maintenanceRooms->isNotEmpty())
+            <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden lg:col-span-2">
+                <div class="px-5 py-4 bg-red-50/70 border-b border-red-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="font-heading font-semibold text-red-950 text-sm flex items-center gap-2">
+                            <i data-lucide="wrench" class="w-4 h-4 text-red-700"></i>
+                            Chambres en maintenance technique ({{ $maintenanceRooms->count() }})
+                        </h2>
+                        <p class="text-xs text-red-900/60">Immobilisées pour intervention technique — elles redeviendront « À nettoyer » dès clôture des travaux.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                        {{ $maintenanceRooms->count() }} en panne
+                    </span>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    @foreach($maintenanceRooms as $room)
+                        @php($techReq = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('room_id', $room->id)->active()->latest('id')->first() : null)
+                        <div class="p-3.5 rounded-xl border border-red-200 bg-red-50/30 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-2 mb-1.5">
+                                    <div>
+                                        <span class="font-bold text-sm text-red-950">Chambre {{ $room->number }}</span>
+                                        <p class="text-[11px] text-primary/60">{{ $room->roomType->name }} · Étage {{ $room->floor ?? 'RDC' }}</p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700">
+                                        En réparation
+                                    </span>
+                                </div>
+                                @if($room->latestHousekeepingAssignment?->issue_notes)
+                                    <p class="text-xs text-red-950/80 italic mt-1 line-clamp-2">
+                                        « {{ $room->latestHousekeepingAssignment->issue_notes }} »
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-red-100 flex items-center justify-between text-[11px]">
+                                @if($techReq)
+                                    <a href="{{ route('technique.demandes.show', $techReq) }}" class="inline-flex items-center gap-1 font-semibold text-orange-700 hover:text-orange-900 transition">
+                                        <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
+                                        <span>{{ $techReq->reference }} ({{ $techReq->statusLabel() }})</span>
+                                    </a>
+                                @else
+                                    <span class="text-red-700/70 font-medium">Intervention en cours</span>
+                                @endif
+                                <span class="text-primary/40 text-[10px]">Non disponible ménage</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Problèmes signalés & transmission technique --}}
         <div class="bg-white rounded-xl shadow-sm border border-secondary/20 overflow-hidden">
             <div class="px-5 py-4 border-b border-secondary/20 flex items-center justify-between">

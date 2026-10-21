@@ -634,12 +634,14 @@ class Navigation
                         'url'    => route('housekeeping.index'),
                         'active' => request()->routeIs('housekeeping.index'),
                     ];
-                    $tabs[] = [
-                        'label'  => 'Suivi',
-                        'icon'   => 'list-checks',
-                        'url'    => route('housekeeping.journal.index'),
-                        'active' => request()->routeIs('housekeeping.journal.*'),
-                    ];
+                    if ($droits->allows($user, 'housekeeping.journal.voir')) {
+                        $tabs[] = [
+                            'label'  => 'Suivi',
+                            'icon'   => 'list-checks',
+                            'url'    => route('housekeeping.journal.index'),
+                            'active' => request()->routeIs('housekeeping.journal.*'),
+                        ];
+                    }
                     $tabs[] = [
                         'label'  => 'Mini-bars',
                         'icon'   => 'wine',

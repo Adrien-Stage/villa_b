@@ -180,15 +180,26 @@ class HousekeepingController extends Controller
             ->orderBy('number')
             ->get();
 
+        // Chambres immobilisées en maintenance technique : visibles par l'encadrement
+        $maintenanceRooms = Room::with([
+                'roomType',
+                'latestHousekeepingAssignment.team',
+                'latestHousekeepingAssignment.reportedBy',
+            ])
+            ->where('status', RoomStatus::MAINTENANCE)
+            ->orderBy('number')
+            ->get();
+
         $stats = [
-            'dirty_rooms'  => $dirtyRooms->count(),
-            'cleaning'     => ($pipeline['cleaning'] ?? collect())->count(),
-            'to_inspect'   => ($pipeline['clean'] ?? collect())->count(),
-            'inspected'    => ($pipeline['inspected'] ?? collect())->count(),
-            'teams'        => $teams->count(),
-            'blocked'      => $blockedAssignments->count(),
+            'dirty_rooms'     => $dirtyRooms->count(),
+            'cleaning'        => ($pipeline['cleaning'] ?? collect())->count(),
+            'to_inspect'      => ($pipeline['clean'] ?? collect())->count(),
+            'inspected'       => ($pipeline['inspected'] ?? collect())->count(),
+            'teams'           => $teams->count(),
+            'blocked'         => $blockedAssignments->count(),
+            'maintenance'     => $maintenanceRooms->count(),
             'completed_today' => $completedToday->count(),
-            'stayovers'    => $occupiedRooms->filter(fn (Room $r) => $r->activeHousekeepingAssignment)->count(),
+            'stayovers'       => $occupiedRooms->filter(fn (Room $r) => $r->activeHousekeepingAssignment)->count(),
         ];
 
         return view('housekeeping.index', [
@@ -198,6 +209,7 @@ class HousekeepingController extends Controller
             'dirtyRooms'         => $dirtyRooms,
             'priorityRooms'      => $priorityRooms,
             'blockedAssignments' => $blockedAssignments,
+            'maintenanceRooms'   => $maintenanceRooms,
             'completedToday'     => $completedToday,
             'pipeline'           => $pipeline,
             'stats'              => $stats,
@@ -206,7 +218,7 @@ class HousekeepingController extends Controller
         ]);
     }
 
-    /** Écran simple d'un agent de terrain : son équipe et ses chambres. */
+    /** Écran simple d'un agent de terrain : son équipe et ses chambres actives. */
     private function memberDashboard()
     {
         $user = Auth::user();
@@ -221,7 +233,7 @@ class HousekeepingController extends Controller
         // Équipes que l'utilisateur dirige : accès aux actions de contrôle/libération.
         $ledTeamIds = $myTeams->where('leader_id', $user->id)->pluck('id');
 
-        // Chambres dont mes équipes ont la charge, encore dans le cycle.
+        // Chambres dont mes équipes ont la charge, encore dans le cycle actif.
         $roomIds = HousekeepingAssignment::whereIn('housekeeping_team_id', $myTeamIds)
             ->where('kind', HousekeepingAssignment::KIND_DEPART)
             ->pluck('room_id')->unique();
@@ -232,13 +244,6 @@ class HousekeepingController extends Controller
             ->orderByRaw("CASE status
                 WHEN 'dirty' THEN 1 WHEN 'cleaning' THEN 2
                 WHEN 'clean' THEN 3 WHEN 'inspected' THEN 4 ELSE 5 END")
-            ->orderBy('number')
-            ->get();
-
-        // Chambres de mes équipes actuellement immobilisées en maintenance technique
-        $maintenanceRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.reportedBy'])
-            ->whereIn('id', $roomIds)
-            ->where('status', RoomStatus::MAINTENANCE)
             ->orderBy('number')
             ->get();
 
@@ -255,7 +260,7 @@ class HousekeepingController extends Controller
             'myTeams'          => $myTeams,
             'ledTeamIds'       => $ledTeamIds,
             'myRooms'          => $myRooms,
-            'maintenanceRooms' => $maintenanceRooms,
+            'maintenanceRooms' => collect(),
             'myStayovers'      => $this->recouchesDesEquipes($myTeamIds),
             'presence'         => $presence,
         ]);
@@ -446,9 +451,8 @@ class HousekeepingController extends Controller
             ]);
 
             if ($isTechnique) {
-                // Pour un problème technique : passage automatique en maintenance
-                // (sauf si un client est en séjour où la chambre reste occupée pour ne pas le déloger)
-                if ($room->status !== RoomStatus::OCCUPIED && $room->status !== RoomStatus::MAINTENANCE) {
+                // Pour un problème technique : passage automatique et direct en maintenance
+                if ($room->status !== RoomStatus::MAINTENANCE) {
                     $room->updateStatus(RoomStatus::MAINTENANCE, 'Problème technique signalé par housekeeping : ' . $notes, Auth::id());
                 }
 
@@ -561,7 +565,12 @@ class HousekeepingController extends Controller
             (bool) $bloquer
         );
 
+        if ($room->status !== RoomStatus::MAINTENANCE) {
+            $room->updateStatus(RoomStatus::MAINTENANCE, 'Transmis au service technique : ' . $validated['notes'], Auth::id());
+        }
+
         $assignment->update([
+            'status'      => 'blocked',
             'issue_type'  => HousekeepingAssignment::ISSUE_TECHNIQUE,
             'issue_notes' => $validated['notes'],
         ]);
@@ -906,6 +915,10 @@ class HousekeepingController extends Controller
     /** Actions de terrain (nettoyage) : encadrement ou membre de l'équipe. */
     private function ensureCanClean(Room $room): void
     {
+        if ($room->status === RoomStatus::MAINTENANCE) {
+            abort(403, "Cette chambre est actuellement en cours de maintenance technique.");
+        }
+
         if ($this->isEncadrement()) {
             return;
         }

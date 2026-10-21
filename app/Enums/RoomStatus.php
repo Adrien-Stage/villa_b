@@ -66,15 +66,16 @@ enum RoomStatus: string
      * sans passer par le check-in
      */
     public function allowedTransitions(): array
-    {        return match($this) {
-            self::AVAILABLE => [self::OCCUPIED, self::MAINTENANCE, self::OUT_OF_ORDER],
-            self::OCCUPIED => [self::DIRTY],
-            self::DIRTY => [self::CLEANING],
-            self::CLEANING => [self::CLEAN],
-            self::CLEAN => [self::INSPECTED],
-            self::INSPECTED => [self::AVAILABLE],
-            self::MAINTENANCE => [self::AVAILABLE, self::OUT_OF_ORDER],
-            self::OUT_OF_ORDER => [self::AVAILABLE],
+    {
+        return match($this) {
+            self::AVAILABLE   => [self::OCCUPIED, self::MAINTENANCE, self::OUT_OF_ORDER],
+            self::OCCUPIED    => [self::DIRTY, self::MAINTENANCE],
+            self::DIRTY       => [self::CLEANING, self::MAINTENANCE, self::OUT_OF_ORDER],
+            self::CLEANING    => [self::CLEAN, self::MAINTENANCE, self::OUT_OF_ORDER],
+            self::CLEAN       => [self::INSPECTED, self::MAINTENANCE],
+            self::INSPECTED   => [self::AVAILABLE, self::MAINTENANCE],
+            self::MAINTENANCE => [self::DIRTY, self::AVAILABLE, self::OUT_OF_ORDER],
+            self::OUT_OF_ORDER => [self::DIRTY, self::AVAILABLE, self::MAINTENANCE],
         };
     }
 
