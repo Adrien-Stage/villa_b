@@ -178,14 +178,16 @@
                 {{-- Formulaire structuré de soumission de la fiche d'intervention --}}
                 @if($peut['soumettre'])
                     <div x-show="modeEdition" x-cloak>
-                        <form method="POST" action="{{ route('technique.demandes.submit', $demande) }}" class="space-y-4" x-data="{ filtrePiece: '' }">
+                        <form id="form-fiche-intervention" method="POST" action="{{ route('technique.demandes.submit', $demande) }}" class="space-y-4" x-data="{ filtrePiece: '' }">
                             @csrf
 
-                            <div class="bg-indigo-50/60 rounded-lg p-3 border border-indigo-150 text-xs text-indigo-900 mb-2">
-                                <div class="flex items-center gap-1.5 font-semibold text-indigo-950 mb-1">
-                                    <i data-lucide="info" class="w-4 h-4 text-indigo-700"></i> Fiche d'intervention obligatoire
+                            <div class="bg-indigo-50/80 rounded-lg p-3.5 border border-indigo-200 text-xs text-indigo-950 mb-3 shadow-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-indigo-950 mb-1">
+                                    <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-700"></i> Fiche d'intervention obligatoire pour la clôture
                                 </div>
-                                <p>Remplissez les rubriques ci-dessous correspondant à la fiche imprimable. La soumission de cette fiche est obligatoire pour permettre la clôture de l'intervention par le responsable.</p>
+                                <p class="text-indigo-900 leading-relaxed">
+                                    <strong>Règle :</strong> pour clôturer une intervention, il faut obligatoirement renseigner et soumettre cette fiche d'intervention. Remplissez les rubriques ci-dessous fidèlement à l'imprimé officiel.
+                                </p>
                             </div>
 
                             {{-- Rubrique 1 : Diagnostic approfondi & Cause constatée --}}
@@ -292,7 +294,7 @@
                                     </button>
                                 @endif
                                 <button type="submit" class="{{ $bouton }} bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
-                                    <i data-lucide="send" class="w-4 h-4"></i> Soumettre la fiche au responsable pour visa
+                                    <i data-lucide="send" class="w-4 h-4"></i> Soumettre la fiche d'intervention pour clôture
                                 </button>
                             </div>
                         </form>
@@ -369,45 +371,71 @@
 
         {{-- Colonne latérale : Actions, Visa, Dépôt technique --}}
         <aside class="space-y-4">
-            {{-- Visa du Responsable Technique --}}
+            {{-- Visa du Responsable Technique (Fiche soumise) --}}
             @if($peut['viser'])
                 <div class="bg-purple-50 rounded-xl border border-purple-200 p-4 space-y-3 shadow-xs">
                     <div class="flex items-center gap-2">
                         <i data-lucide="shield-check" class="w-5 h-5 text-purple-700"></i>
                         <div>
-                            <h2 class="font-heading font-semibold text-purple-900 text-sm">Visa du responsable</h2>
+                            <h2 class="font-heading font-semibold text-purple-900 text-sm">Visa & Clôture</h2>
                             <p class="text-[11px] text-purple-800">Validation et clôture définitive</p>
                         </div>
                     </div>
 
-                    @if($demande->status === \App\Models\MaintenanceRequest::STATUS_SUBMITTED)
-                        <p class="text-xs text-purple-800">
-                            Vérifiez le rapport d'exécution ci-contre et les pièces employées, puis apposez votre visa pour clôturer l'intervention.
-                        </p>
-                        <form method="POST" action="{{ route('technique.demandes.approve', $demande) }}" class="space-y-2.5">
+                    <p class="text-xs text-purple-800 leading-relaxed">
+                        La fiche d'intervention a été soumise par l'équipe. Vérifiez le rapport d'exécution ci-contre et les pièces employées, puis apposez votre visa pour clôturer l'intervention.
+                    </p>
+                    <form method="POST" action="{{ route('technique.demandes.approve', $demande) }}" class="space-y-2.5">
+                        @csrf
+                        <input type="text" name="note" placeholder="Observations ou visa (optionnel)…" class="{{ $champ }}">
+                        <button type="submit" class="{{ $bouton }} w-full bg-purple-700 text-white hover:bg-purple-800 shadow-sm">
+                            <i data-lucide="check-check" class="w-4 h-4"></i> Viser et clôturer l'intervention
+                        </button>
+                    </form>
+
+                    @if($peut['reprise'])
+                        <form method="POST" action="{{ route('technique.demandes.rework', $demande) }}" class="pt-3 border-t border-purple-200 space-y-2">
                             @csrf
-                            <input type="text" name="note" placeholder="Observations ou visa (optionnel)…" class="{{ $champ }}">
-                            <button type="submit" class="{{ $bouton }} w-full bg-purple-700 text-white hover:bg-purple-800 shadow-sm">
-                                <i data-lucide="check-check" class="w-4 h-4"></i> Viser et clôturer l'intervention
+                            <p class="text-xs text-amber-900 font-semibold">Travail incomplet ou non satisfaisant ?</p>
+                            <input type="text" name="motif" required placeholder="Motif du renvoi au technicien…" class="{{ $champ }} text-xs">
+                            <button type="submit" class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 text-xs py-1.5">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Renvoyer pour reprise
                             </button>
                         </form>
-
-                        @if($peut['reprise'])
-                            <form method="POST" action="{{ route('technique.demandes.rework', $demande) }}" class="pt-3 border-t border-purple-200 space-y-2">
-                                @csrf
-                                <p class="text-xs text-amber-900 font-semibold">Travail incomplet ou non satisfaisant ?</p>
-                                <input type="text" name="motif" required placeholder="Motif du renvoi au technicien…" class="{{ $champ }} text-xs">
-                                <button type="submit" class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 text-xs py-1.5">
-                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Renvoyer pour reprise
-                                </button>
-                            </form>
-                        @endif
-                    @elseif(!$demande->aFicheSoumise())
-                        <div class="bg-amber-50 rounded-lg p-2.5 border border-amber-200 text-xs text-amber-900">
-                            <span class="font-bold block mb-0.5"><i data-lucide="lock" class="w-3.5 h-3.5 inline"></i> Clôture verrouillée :</span>
-                            La fiche d'intervention doit obligatoirement être soumise par le technicien avant de pouvoir viser et clôturer l'intervention.
-                        </div>
                     @endif
+                </div>
+            @elseif($peut['cloture_bloquee'])
+                <div class="bg-amber-50/90 rounded-xl border border-amber-200 p-4 space-y-2 shadow-xs">
+                    <div class="flex items-center gap-2 text-amber-950">
+                        <i data-lucide="lock" class="w-5 h-5 text-amber-700"></i>
+                        <div>
+                            <h2 class="font-heading font-semibold text-amber-950 text-sm">Clôture impossible</h2>
+                            <p class="text-[11px] text-amber-800">Fiche d'intervention obligatoire</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-amber-900 leading-relaxed">
+                        Pour clôturer une intervention, il faut <strong>obligatoirement soumettre la fiche d'intervention</strong>. Tant que la fiche n'est pas renseignée et soumise, la clôture reste verrouillée.
+                    </p>
+                </div>
+            @endif
+
+            {{-- Rappel Clôture pour le Technicien --}}
+            @if($peut['soumettre'] && in_array($demande->status, [\App\Models\MaintenanceRequest::STATUS_ASSIGNED, \App\Models\MaintenanceRequest::STATUS_IN_PROGRESS], true))
+                <div class="bg-indigo-50/80 rounded-xl border border-indigo-200 p-4 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-indigo-950">
+                        <i data-lucide="clipboard-check" class="w-5 h-5 text-indigo-700"></i>
+                        <div>
+                            <h2 class="font-heading font-semibold text-indigo-950 text-sm">Pour clôturer l'intervention</h2>
+                            <p class="text-[11px] text-indigo-800">Fiche d'intervention requise</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-indigo-900 leading-relaxed">
+                        Pour clôturer cette intervention, vous devez obligatoirement remplir et soumettre la fiche d'intervention ci-contre.
+                    </p>
+                    <button type="button" @click="modeEdition = true; document.getElementById('form-fiche-intervention')?.scrollIntoView({ behavior: 'smooth' })"
+                            class="{{ $bouton }} w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-xs py-2">
+                        <i data-lucide="file-pen" class="w-4 h-4"></i> Remplir et soumettre la fiche
+                    </button>
                 </div>
             @endif
 

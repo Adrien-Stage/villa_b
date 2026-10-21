@@ -374,12 +374,12 @@ class MaintenanceService
     /** Le responsable technique vise la fiche et clôture définitivement l'intervention. */
     public function viserEtCloturer(MaintenanceRequest $demande, ?string $avisResponsable, User $responsable): MaintenanceRequest
     {
-        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
-            throw new RuntimeException("La demande {$demande->reference} n'est pas en état d'être visée.");
+        if ($demande->status !== MaintenanceRequest::STATUS_SUBMITTED) {
+            throw new RuntimeException("Pour clôturer une intervention, il faut obligatoirement que la fiche d'intervention ait été soumise.");
         }
 
         if (!$demande->aFicheSoumise()) {
-            throw new RuntimeException("La fiche d'intervention doit obligatoirement être renseignée et soumise avant de pouvoir viser et clôturer l'intervention.");
+            throw new RuntimeException("Pour clôturer une intervention, il faut obligatoirement que la fiche d'intervention ait été renseignée et soumise.");
         }
 
         DB::transaction(function () use ($demande, $avisResponsable, $responsable) {

@@ -155,8 +155,10 @@ class MaintenanceRequestController extends Controller
                 ),
                 'soumettre' => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
                     && $this->intervient($user, $demande, 'technique.demandes.submit'),
-                'viser'     => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
+                'viser'     => $demande->status === MaintenanceRequest::STATUS_SUBMITTED
                     && $this->droits->allows($user, 'technique.demandes.approve')
+                    && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
+                'cloture_bloquee' => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS], true)
                     && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
                 'reprise'   => $demande->status === MaintenanceRequest::STATUS_SUBMITTED
                     && $this->droits->allows($user, 'technique.demandes.rework')
@@ -288,8 +290,8 @@ class MaintenanceRequestController extends Controller
             403
         );
 
-        if (!$demande->aFicheSoumise()) {
-            return back()->with('error', 'La fiche d\'intervention doit être obligatoirement soumise avant d\'être visée et clôturée.');
+        if ($demande->status !== MaintenanceRequest::STATUS_SUBMITTED || !$demande->aFicheSoumise()) {
+            return back()->with('error', 'Pour clôturer une intervention, il faut obligatoirement soumettre la fiche d\'intervention au préalable.');
         }
 
         $donnees = $request->validate([
