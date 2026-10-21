@@ -19,6 +19,9 @@
     $activeGroup = \App\Support\Navigation::getActiveGroup();
     $isLauncherRoute = request()->routeIs('dashboard') && request('view') !== 'kpi';
     $hasSidebar = !$isLauncherRoute && $activeGroup && $activeGroup['type'] === \App\Support\Navigation::TYPE_SIDEBAR;
+    $mobileTabs = ($hasSidebar || ($activeGroup && $activeGroup['type'] === \App\Support\Navigation::TYPE_TABS))
+        ? \App\Support\Navigation::getMobileTabs()
+        : [];
 @endphp
 <!DOCTYPE html>
 <html lang="fr" class="h-full lg:overflow-hidden">
@@ -231,7 +234,7 @@
 
     <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary {{ $hasSidebar ? 'lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full' : 'lg:hidden' }} print:hidden">
         <div class="flex h-full w-full flex-col">
-            <div class="sidebar-entete px-4 py-5 border-b border-surface-dark">
+            <div class="sidebar-entete px-4 py-5 border-b border-surface-dark flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                         @if($tenantLogo)
@@ -248,6 +251,9 @@
                         <p class="text-text-on-dark text-xs font-medium">PMS v1.0</p>
                     </div>
                 </div>
+                <button type="button" onclick="closeMobileSidebar()" class="lg:hidden text-text-on-dark hover:text-white p-1 rounded-md" aria-label="Fermer le menu">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
 
             @if($hasSidebar)
@@ -1117,7 +1123,7 @@
             </div>
         @endif
 
-        <main class="flex-1 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6">
+        <main class="flex-1 overflow-y-auto px-4 py-4 pb-28 lg:px-8 lg:py-6 lg:pb-6">
             {{-- Plusieurs restaurants : les écrans du restaurant disent lequel. --}}
             @if(request()->routeIs('restaurant.*') && auth()->check())
                 <x-restaurant.courant />
@@ -1242,8 +1248,11 @@
     </div>
     @endif
 
-    <!-- Assistant IA (Flottant) -->
-    <x-ai-assistant />
+    {{-- Assistant IA (Flottant) désactivé car non opérationnel --}}
+    {{-- <x-ai-assistant /> --}}
+
+    {{-- Barre de navigation mobile flottante (Style Tab Bar / Dock) --}}
+    @include('layouts.partials.mobile-tab-bar', ['tabs' => $mobileTabs])
 
     <!-- Notification Container -->
     <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>

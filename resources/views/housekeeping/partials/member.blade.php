@@ -8,9 +8,17 @@
     ];
 @endphp
 
-<div class="flex flex-col gap-2 mb-6">
-    <h1 class="font-heading text-2xl font-semibold text-primary">Mon espace housekeeping</h1>
-    <p class="text-sm text-primary/50">Mon équipe et les chambres qui me sont confiées.</p>
+<div class="flex items-center justify-between gap-3 mb-6">
+    <div>
+        <h1 class="font-heading text-xl sm:text-2xl font-semibold text-primary">Mon espace housekeeping</h1>
+        <p class="text-xs sm:text-sm text-primary/50">Mon équipe et les chambres qui me sont confiées.</p>
+    </div>
+    <button type="button" onclick="window.location.reload()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition shadow-2xs"
+            title="Actualiser les chambres">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">Actualiser</span>
+    </button>
 </div>
 
 @if($myTeams->isEmpty())
