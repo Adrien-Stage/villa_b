@@ -14,6 +14,8 @@
     @include('housekeeping.partials.member')
 @endif
 
+@include('housekeeping.partials.issue-modal')
+
 {{-- Bouton flottant de rafraîchissement : remplace l'ancienne actualisation
      automatique qui interrompait la saisie. Placé au-dessus de l'assistant IA. --}}
 <button type="button" onclick="window.location.reload()"

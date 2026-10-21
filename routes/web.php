@@ -381,6 +381,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{room}/available',   [HousekeepingController::class, 'markAvailable'])->name('available');
         Route::post('/{room}/reject',      [HousekeepingController::class, 'rejectCleaning'])->name('reject');
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
+        Route::post('/{room}/resolve-issue', [HousekeepingController::class, 'resolveIssue'])->name('resolve_issue');
         Route::post('/{room}/transmettre-technique', [HousekeepingController::class, 'escalateToTechnique'])->name('transmettre_technique');
         // Recouche d'une chambre occupée : le client la garde.
         Route::post('/{room}/recouche',    [HousekeepingController::class, 'markStayoverDone'])->name('stayover');

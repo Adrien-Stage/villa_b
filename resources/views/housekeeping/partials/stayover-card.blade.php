@@ -27,6 +27,27 @@
         </p>
     @endif
 
+    {{-- Alerte si un incident interne est en attente (savon fini, réassort...) --}}
+    @if($a && $a->status === 'blocked' && $a->isIssueInterne())
+        <div class="mb-3 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
+            <div class="flex items-center justify-between gap-1 mb-1 font-semibold text-[11px] text-amber-800">
+                <span class="inline-flex items-center gap-1">
+                    <i data-lucide="package-search" class="w-3.5 h-3.5"></i> Besoin interne en attente
+                </span>
+                @if($a->reportedBy)
+                    <span class="text-[10px] text-amber-700/80">par {{ $a->reportedBy->name }}</span>
+                @endif
+            </div>
+            <p class="text-[11px] text-amber-950/80 mb-2">{{ $a->issue_notes }}</p>
+            <form method="POST" action="{{ route('housekeeping.resolve_issue', $room) }}">
+                @csrf
+                <button type="submit" class="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1 shadow-2xs">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Incident résolu / Réapprovisionné
+                </button>
+            </form>
+        </div>
+    @endif
+
     <div class="mt-auto">
         @if($a?->status === 'in_progress' && $room->aUnMiniBar() && $a->minibarChecks->isEmpty())
             {{-- Le relevé du mini-bar fait partie de la recouche. --}}
@@ -35,19 +56,35 @@
                 <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
             </a>
         @elseif($a?->status === 'in_progress')
-            <form method="POST" action="{{ route('housekeeping.stayover', $room) }}">
-                @csrf
-                <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1.5">
-                    <i data-lucide="check" class="w-4 h-4"></i> Recouche terminée
+            <div class="flex gap-2">
+                <form method="POST" action="{{ route('housekeeping.stayover', $room) }}" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> Recouche terminée
+                    </button>
+                </form>
+                <button type="button"
+                        @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
+                        class="px-3 py-2 bg-white border border-blue-300 text-blue-800 rounded-lg text-xs hover:bg-blue-100 transition cursor-pointer"
+                        title="Signaler un problème">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 </button>
-            </form>
+            </div>
         @elseif($a)
-            <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
-                @csrf
-                <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1.5">
-                    <i data-lucide="play" class="w-4 h-4"></i> Commencer la recouche
+            <div class="flex gap-2">
+                <form method="POST" action="{{ route('housekeeping.clean', $room) }}" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="play" class="w-4 h-4"></i> Commencer la recouche
+                    </button>
+                </form>
+                <button type="button"
+                        @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
+                        class="px-3 py-2 bg-white border border-blue-300 text-blue-800 rounded-lg text-xs hover:bg-blue-100 transition cursor-pointer"
+                        title="Signaler un problème">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 </button>
-            </form>
+            </div>
         @endif
     </div>
 </div>

@@ -16,6 +16,10 @@ class HousekeepingAssignment extends Model
     /** Recouche : le client garde la chambre, elle reste occupée. */
     public const KIND_RECOUCHE = 'recouche';
 
+    /** Types de problèmes signalés : technique (mise en maintenance) ou interne (géré par housekeeping). */
+    public const ISSUE_TECHNIQUE = 'technique';
+    public const ISSUE_INTERNE   = 'interne';
+
     protected $fillable = [
         'housekeeping_team_id',
         'room_id',
@@ -25,6 +29,7 @@ class HousekeepingAssignment extends Model
         'status',
         'notes',
         'issue_notes',
+        'issue_type',
         'assigned_at',
         'started_at',
         'completed_at',
@@ -53,6 +58,16 @@ class HousekeepingAssignment extends Model
     public function isRecouche(): bool
     {
         return $this->kind === self::KIND_RECOUCHE;
+    }
+
+    public function isIssueTechnique(): bool
+    {
+        return $this->issue_type === self::ISSUE_TECHNIQUE;
+    }
+
+    public function isIssueInterne(): bool
+    {
+        return $this->issue_type === self::ISSUE_INTERNE;
     }
 
     /** Durée du nettoyage en minutes, une fois terminé. */

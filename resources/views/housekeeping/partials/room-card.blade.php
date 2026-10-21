@@ -22,21 +22,50 @@
         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $style['chip'] }}">{{ $style['label'] }}</span>
     </div>
 
-    @php $passage = $room->latestHousekeepingAssignment; @endphp
+    @php $passage = $room->activeHousekeepingAssignment ?? $room->latestHousekeepingAssignment; @endphp
     @if($s === 'cleaning' && $passage?->started_at)
         <p class="mb-3 text-xs text-primary/60">Commencée à {{ $passage->started_at->format('H:i') }}@if($passage->startedBy) par {{ $passage->startedBy->name }}@endif</p>
     @elseif(in_array($s, ['clean', 'inspected'], true) && $passage?->completed_at)
         <p class="mb-3 text-xs text-primary/60">Nettoyée à {{ $passage->completed_at->format('H:i') }}@if($passage->completedBy) par {{ $passage->completedBy->name }}@endif</p>
     @endif
 
-    <div class="mt-auto">
-        @if($s === 'dirty')
-            <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
+    {{-- Alerte si un incident interne est en attente (savon fini, réassort...) --}}
+    @if($passage && $passage->status === 'blocked' && $passage->isIssueInterne())
+        <div class="mb-3 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
+            <div class="flex items-center justify-between gap-1 mb-1 font-semibold text-[11px] text-amber-800">
+                <span class="inline-flex items-center gap-1">
+                    <i data-lucide="package-search" class="w-3.5 h-3.5"></i> Besoin interne en attente
+                </span>
+                @if($passage->reportedBy)
+                    <span class="text-[10px] text-amber-700/80">par {{ $passage->reportedBy->name }}</span>
+                @endif
+            </div>
+            <p class="text-[11px] text-amber-950/80 mb-2">{{ $passage->issue_notes }}</p>
+            <form method="POST" action="{{ route('housekeeping.resolve_issue', $room) }}">
                 @csrf
-                <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-1.5">
-                    <i data-lucide="play" class="w-4 h-4"></i> Commencer le nettoyage
+                <button type="submit" class="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1 shadow-2xs">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Problème résolu / Réapprovisionné
                 </button>
             </form>
+        </div>
+    @endif
+
+    <div class="mt-auto">
+        @if($s === 'dirty')
+            <div class="flex gap-2">
+                <form method="POST" action="{{ route('housekeeping.clean', $room) }}" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="play" class="w-4 h-4"></i> Commencer le nettoyage
+                    </button>
+                </form>
+                <button type="button"
+                        @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
+                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                        title="Signaler un problème">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </button>
+            </div>
 
         @elseif($s === 'cleaning')
             <div class="flex gap-2">
@@ -54,14 +83,12 @@
                     </button>
                 </form>
                 @endif
-                <form method="POST" action="{{ route('housekeeping.issue', $room) }}"
-                      onsubmit="const n = prompt('Décrire le problème :'); if(!n){return false;} this.issue_notes.value = n;">
-                    @csrf
-                    <input type="hidden" name="issue_notes">
-                    <button type="submit" class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition" title="Signaler un problème">
-                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                    </button>
-                </form>
+                <button type="button"
+                        @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
+                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                        title="Signaler un problème">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </button>
             </div>
 
         @elseif($s === 'clean')

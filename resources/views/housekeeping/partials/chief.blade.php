@@ -343,14 +343,12 @@
                                     </button>
                                 </form>
                                 @endif
-                                <form method="POST" action="{{ route('housekeeping.issue', $room) }}" class="flex gap-1"
-                                      onsubmit="const n = prompt('Décrire le problème :'); if(!n){return false;} this.issue_notes.value = n;">
-                                    @csrf
-                                    <input type="hidden" name="issue_notes">
-                                    <button type="submit" class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer" title="Signaler un problème">
-                                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
+                                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                                        title="Signaler un problème">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -809,26 +807,60 @@
             <div class="divide-y divide-secondary/10 max-h-96 overflow-y-auto">
                 @forelse($blockedAssignments as $assignment)
                     <div class="px-5 py-3.5">
-                        <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
-                            <p class="text-sm font-semibold text-primary">Chambre {{ $assignment->room->number }} — {{ $assignment->team?->name }}</p>
-                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium border border-red-200">Problème</span>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-1.5">
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Chambre {{ $assignment->room->number }} — {{ $assignment->team?->name }}</p>
+                                @if($assignment->reportedBy)
+                                    <p class="text-[10px] text-primary/50">Signalé par {{ $assignment->reportedBy->name }}@if($assignment->reported_at) à {{ $assignment->reported_at->format('H:i') }}@endif</p>
+                                @endif
+                            </div>
+                            @if($assignment->isIssueTechnique() || $assignment->room->status->value === 'maintenance')
+                                <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-semibold border border-red-200 inline-flex items-center gap-1">
+                                    <i data-lucide="wrench" class="w-3 h-3"></i> Problème technique
+                                </span>
+                            @elseif($assignment->isIssueInterne())
+                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-semibold border border-amber-300 inline-flex items-center gap-1">
+                                    <i data-lucide="package-search" class="w-3 h-3"></i> Besoin interne étages
+                                </span>
+                            @else
+                                <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium border border-red-200">Incident</span>
+                            @endif
                         </div>
-                        <p class="text-xs text-red-800 bg-red-50/70 p-2 rounded-lg border border-red-100 mt-1 mb-2">{{ $assignment->issue_notes }}</p>
-                        @php($intervention = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('housekeeping_assignment_id', $assignment->id)->latest('id')->first() : null)
-                        @if($intervention)
-                            <a href="{{ route('technique.demandes.show', $intervention) }}" class="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 hover:underline">
-                                <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i>
-                                {{ $intervention->reference }} · {{ $intervention->statusLabel() }}{{ $intervention->technician ? ' · ' . $intervention->technician->name : '' }}
-                            </a>
-                        @elseif(\App\Services\MaintenanceService::actif())
-                            <form method="POST" action="{{ route('housekeeping.transmettre_technique', $assignment->room) }}" class="flex flex-wrap items-center gap-2">
-                                @csrf
-                                <input type="hidden" name="notes" value="{{ $assignment->issue_notes }}">
-                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition shadow-xs cursor-pointer">
-                                    <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i> Transmettre au service technique
-                                </button>
-                            </form>
-                        @endif
+
+                        <p class="text-xs text-primary/80 bg-gray-50 p-2.5 rounded-lg border border-secondary/20 mt-1 mb-2.5">
+                            {{ $assignment->issue_notes }}
+                        </p>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            {{-- Action A : Résolution pour besoin interne (savon, linge, réassort) --}}
+                            @if($assignment->isIssueInterne())
+                                <form method="POST" action="{{ route('housekeeping.resolve_issue', $assignment->room) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-xs cursor-pointer">
+                                        <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i> Marquer résolu / Réapprovisionné
+                                    </button>
+                                </form>
+                            @endif
+
+                            {{-- Action B : Suivi technique ou transmission --}}
+                            @php($intervention = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('housekeeping_assignment_id', $assignment->id)->latest('id')->first() : null)
+                            @if($intervention)
+                                <a href="{{ route('technique.demandes.show', $intervention) }}" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-50 text-orange-800 border border-orange-200 hover:bg-orange-100 transition">
+                                    <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                                    {{ $intervention->reference }} · {{ $intervention->statusLabel() }}{{ $intervention->technician ? ' · ' . $intervention->technician->name : '' }}
+                                </a>
+                            @elseif(\App\Services\MaintenanceService::actif())
+                                <form method="POST" action="{{ route('housekeeping.transmettre_technique', $assignment->room) }}" class="inline-flex items-center">
+                                    @csrf
+                                    <input type="hidden" name="notes" value="{{ $assignment->issue_notes }}">
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-xs cursor-pointer {{ $assignment->isIssueInterne() ? 'bg-secondary/15 hover:bg-secondary/25 text-primary/80' : 'bg-orange-600 text-white hover:bg-orange-700' }}">
+                                        <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                                        <span>{{ $assignment->isIssueInterne() ? 'Requalifier en panne technique' : 'Transmettre au service technique' }}</span>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <div class="px-5 py-8 text-xs text-primary/40 text-center">Aucun problème signalé.</div>
