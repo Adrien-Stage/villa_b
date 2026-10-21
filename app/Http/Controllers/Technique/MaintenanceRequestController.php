@@ -148,11 +148,17 @@ class MaintenanceRequestController extends Controller
                 'prendre'   => $demande->status === MaintenanceRequest::STATUS_OPEN && $demande->assigned_to === null
                     && $this->droits->allows($user, 'technique.demandes.take') && $user->exerce(MaintenanceService::TECHNICIENS),
                 'commencer' => $demande->status === MaintenanceRequest::STATUS_ASSIGNED && $this->intervient($user, $demande, 'technique.demandes.start'),
-                'pieces'    => $demande->isActive() && $demande->assigned_to !== null && $this->intervient($user, $demande, 'technique.demandes.parts'),
+                'pieces'    => $demande->isActive() && (
+                    $user->isAdmin()
+                    || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])
+                    || ($demande->assigned_to === $user->id && $this->droits->allows($user, 'technique.demandes.parts'))
+                ),
                 'soumettre' => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
                     && $this->intervient($user, $demande, 'technique.demandes.submit'),
-                'viser'     => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)
+                'viser'     => $demande->status === MaintenanceRequest::STATUS_SUBMITTED
                     && $this->droits->allows($user, 'technique.demandes.approve')
+                    && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
+                'cloture_bloquee' => in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS], true)
                     && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
                 'reprise'   => $demande->status === MaintenanceRequest::STATUS_SUBMITTED
                     && $this->droits->allows($user, 'technique.demandes.rework')
@@ -206,16 +212,40 @@ class MaintenanceRequestController extends Controller
 
     public function parts(Request $request, MaintenanceRequest $demande): RedirectResponse
     {
-        abort_unless($this->intervient(Auth::user(), $demande, 'technique.demandes.parts'), 403);
+        $user = Auth::user();
+        abort_unless(
+            $demande->isActive() && (
+                $user->isAdmin()
+                || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])
+                || ($demande->assigned_to === $user->id && $this->droits->allows($user, 'technique.demandes.parts'))
+            ),
+            403
+        );
 
         $donnees = $request->validate([
             'depot'      => ['required', 'integer', 'exists:service_stores,id'],
             'pieces'     => ['required', 'array'],
             'pieces.*'   => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'motif'      => ['nullable', 'string', 'max:500'],
         ], ['pieces.required' => 'Indiquez au moins une pièce et sa quantité.']);
 
-        return $this->etape($demande, fn () => $this->maintenance->employerPieces($demande, ServiceStore::findOrFail($donnees['depot']),
-            array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '')), Auth::user()), 'Pièces enregistrées sur l\'intervention.');
+        $piecesFiltrees = array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '' && (float) $q > 0));
+
+        if ($piecesFiltrees === []) {
+            return back()->with('error', 'Indiquez au moins une pièce avec une quantité supérieure à zéro.');
+        }
+
+        return $this->etape(
+            $demande,
+            fn () => $this->maintenance->employerPieces(
+                $demande,
+                ServiceStore::findOrFail($donnees['depot']),
+                $piecesFiltrees,
+                $user,
+                $donnees['motif'] ?? null
+            ),
+            'Matériel du dépôt technique délivré avec succès pour cette intervention.'
+        );
     }
 
     public function submit(Request $request, MaintenanceRequest $demande): RedirectResponse
@@ -223,20 +253,30 @@ class MaintenanceRequestController extends Controller
         abort_unless($this->intervient(Auth::user(), $demande, 'technique.demandes.submit'), 403);
 
         $donnees = $request->validate([
-            'resolution' => ['required', 'string', 'max:3000'],
-            'depot'      => ['nullable', 'integer', 'exists:service_stores,id'],
-            'pieces'     => ['nullable', 'array'],
-            'pieces.*'   => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'diagnostic'       => ['required', 'string', 'min:5', 'max:2000'],
+            'travaux_realises' => ['required', 'string', 'min:5', 'max:3000'],
+            'resultat'         => ['required', Rule::in(array_keys(MaintenanceRequest::RESULTATS))],
+            'recommandations'  => ['nullable', 'string', 'max:2000'],
+            'depot'            => ['nullable', 'integer', 'exists:service_stores,id'],
+            'pieces'           => ['nullable', 'array'],
+            'pieces.*'         => ['nullable', 'numeric', 'min:0', 'max:100000'],
         ], [
-            'resolution.required' => 'Détaillez les travaux effectués dans la fiche d\'intervention.',
+            'diagnostic.required'       => 'Renseignez le diagnostic et la cause constatée de la panne.',
+            'travaux_realises.required' => 'Détaillez les travaux et réparations réalisés dans la fiche d\'intervention.',
+            'resultat.required'         => 'Indiquez le résultat de l\'intervention.',
         ]);
 
         $depot = !empty($donnees['depot']) ? ServiceStore::find($donnees['depot']) : null;
-        $pieces = !empty($donnees['pieces']) ? array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '')) : null;
+        $pieces = !empty($donnees['pieces']) ? array_map('floatval', array_filter($donnees['pieces'], fn ($q) => $q !== null && $q !== '' && (float) $q > 0)) : null;
 
         return $this->etape(
             $demande,
-            fn () => $this->maintenance->soumettreFiche($demande, $donnees['resolution'], Auth::user(), $depot, $pieces),
+            fn () => $this->maintenance->soumettreFiche($demande, [
+                'diagnostic'       => $donnees['diagnostic'],
+                'travaux_realises' => $donnees['travaux_realises'],
+                'resultat'         => $donnees['resultat'],
+                'recommandations'  => $donnees['recommandations'] ?? null,
+            ], Auth::user(), $depot, $pieces),
             'Fiche d\'intervention soumise avec succès au responsable pour visa.'
         );
     }
@@ -249,6 +289,10 @@ class MaintenanceRequestController extends Controller
             && ($user->isAdmin() || $user->exerce([...MaintenanceService::RESPONSABLES, 'manager'])),
             403
         );
+
+        if ($demande->status !== MaintenanceRequest::STATUS_SUBMITTED || !$demande->aFicheSoumise()) {
+            return back()->with('error', 'Pour clôturer une intervention, il faut obligatoirement soumettre la fiche d\'intervention au préalable.');
+        }
 
         $donnees = $request->validate([
             'note' => ['nullable', 'string', 'max:1000'],
@@ -285,14 +329,33 @@ class MaintenanceRequestController extends Controller
 
     public function complete(Request $request, MaintenanceRequest $demande): RedirectResponse
     {
-        abort_unless($this->intervient(Auth::user(), $demande, 'technique.demandes.complete'), 403);
+        $user = Auth::user();
+        abort_unless($this->intervient($user, $demande, 'technique.demandes.complete'), 403);
 
-        $donnees = $request->validate(['resolution' => ['required', 'string', 'max:3000']], [
-            'resolution.required' => 'Dites ce qui a été fait : le demandeur le lira.',
-        ]);
+        if (!$demande->aFicheSoumise()) {
+            $donnees = $request->validate([
+                'diagnostic'       => ['required', 'string', 'min:5', 'max:2000'],
+                'travaux_realises' => ['required', 'string', 'min:5', 'max:3000'],
+                'resultat'         => ['required', Rule::in(array_keys(MaintenanceRequest::RESULTATS))],
+                'recommandations'  => ['nullable', 'string', 'max:2000'],
+            ], [
+                'diagnostic.required'       => 'Renseignez le diagnostic et la cause constatée de la panne.',
+                'travaux_realises.required' => 'Détaillez les travaux réalisés dans la fiche d\'intervention.',
+                'resultat.required'         => 'Indiquez le résultat de l\'intervention.',
+            ]);
 
-        return $this->etape($demande, fn () => $this->maintenance->terminer($demande, $donnees['resolution'], Auth::user()),
-            'Intervention terminée : le demandeur est prévenu.');
+            return $this->etape(
+                $demande,
+                fn () => $this->maintenance->terminer($demande, $donnees, $user),
+                'Fiche d\'intervention enregistrée et intervention clôturée.'
+            );
+        }
+
+        return $this->etape(
+            $demande,
+            fn () => $this->maintenance->viserEtCloturer($demande, $request->input('note'), $user),
+            'Intervention visée et clôturée avec succès.'
+        );
     }
 
     public function reopen(Request $request, MaintenanceRequest $demande): RedirectResponse

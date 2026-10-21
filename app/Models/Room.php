@@ -78,7 +78,7 @@ class Room extends Model
     public function activeHousekeepingAssignment(): HasOne
     {
         return $this->hasOne(HousekeepingAssignment::class)
-            ->whereIn('status', ['pending', 'in_progress'])
+            ->whereIn('status', ['pending', 'in_progress', 'blocked'])
             ->latestOfMany();
     }
 

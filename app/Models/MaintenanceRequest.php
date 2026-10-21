@@ -73,21 +73,34 @@ class MaintenanceRequest extends Model
     /** Jours pendant lesquels le demandeur peut rouvrir une demande terminée. */
     public const DELAI_REOUVERTURE = 7;
 
+    public const RESULTAT_RESOLU     = 'resolu';
+    public const RESULTAT_PARTIEL    = 'partiel';
+    public const RESULTAT_NON_RESOLU = 'non_resolu';
+
+    public const RESULTATS = [
+        self::RESULTAT_RESOLU     => 'Panne résolue / Fonctionnement normal',
+        self::RESULTAT_PARTIEL    => 'Dépannage provisoire / En observation',
+        self::RESULTAT_NON_RESOLU => 'Non résolu / Travaux complémentaires requis',
+    ];
+
     protected $fillable = [
         'reference', 'status', 'priority', 'specialty', 'room_id', 'location', 'title', 'description',
         'department', 'source', 'housekeeping_assignment_id', 'requested_by', 'room_blocked',
         'assigned_to', 'assigned_by', 'assigned_at', 'started_at',
         'completed_by', 'completed_at', 'resolution', 'reopened_count',
         'cancelled_by', 'cancelled_at', 'cancel_reason',
+        'diagnostic', 'travaux_realises', 'resultat', 'recommandations',
+        'fiche_soumise_by', 'fiche_soumise_at',
     ];
 
     protected $casts = [
-        'room_blocked'   => 'boolean',
-        'reopened_count' => 'integer',
-        'assigned_at'    => 'datetime',
-        'started_at'     => 'datetime',
-        'completed_at'   => 'datetime',
-        'cancelled_at'   => 'datetime',
+        'room_blocked'     => 'boolean',
+        'reopened_count'   => 'integer',
+        'assigned_at'      => 'datetime',
+        'started_at'       => 'datetime',
+        'completed_at'     => 'datetime',
+        'cancelled_at'     => 'datetime',
+        'fiche_soumise_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -137,6 +150,11 @@ class MaintenanceRequest extends Model
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    public function submitter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fiche_soumise_by');
+    }
+
     public function housekeepingAssignment(): BelongsTo
     {
         return $this->belongsTo(HousekeepingAssignment::class);
@@ -184,6 +202,27 @@ class MaintenanceRequest extends Model
     public function priorityLabel(): string
     {
         return self::PRIORITIES[$this->priority] ?? $this->priority;
+    }
+
+    public function resultatLabel(): string
+    {
+        return self::RESULTATS[$this->resultat] ?? ($this->resultat ?: 'Non précisé');
+    }
+
+    public function resultatBadgeClass(): string
+    {
+        return match ($this->resultat) {
+            self::RESULTAT_RESOLU     => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+            self::RESULTAT_PARTIEL    => 'bg-amber-50 text-amber-800 border-amber-200',
+            self::RESULTAT_NON_RESOLU => 'bg-rose-50 text-rose-800 border-rose-200',
+            default                   => 'bg-slate-50 text-slate-800 border-slate-200',
+        };
+    }
+
+    /** La fiche d'intervention a-t-elle été soumise / renseignée ? */
+    public function aFicheSoumise(): bool
+    {
+        return $this->fiche_soumise_at !== null || !empty($this->travaux_realises);
     }
 
     public function specialtyLabel(): string

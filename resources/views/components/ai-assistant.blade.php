@@ -1,3 +1,4 @@
+@if(config('services.ai.enabled', false))
 <div id="ai-assistant-wrapper" class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end print:hidden no-print">
     
     <!-- Fenêtre de Chat (Masquée par défaut) -->
@@ -257,3 +258,5 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 </script>
+@endif
+

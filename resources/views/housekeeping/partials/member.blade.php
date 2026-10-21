@@ -8,9 +8,17 @@
     ];
 @endphp
 
-<div class="flex flex-col gap-2 mb-6">
-    <h1 class="font-heading text-2xl font-semibold text-primary">Mon espace housekeeping</h1>
-    <p class="text-sm text-primary/50">Mon équipe et les chambres qui me sont confiées.</p>
+<div class="flex items-center justify-between gap-3 mb-6">
+    <div>
+        <h1 class="font-heading text-xl sm:text-2xl font-semibold text-primary">Mon espace housekeeping</h1>
+        <p class="text-xs sm:text-sm text-primary/50">Mon équipe et les chambres qui me sont confiées.</p>
+    </div>
+    <button type="button" onclick="window.location.reload()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition shadow-2xs"
+            title="Actualiser les chambres">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">Actualiser</span>
+    </button>
 </div>
 
 @if($myTeams->isEmpty())
@@ -58,6 +66,42 @@
             <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 @foreach($myStayovers as $room)
                     @include('housekeeping.partials.stayover-card', ['room' => $room])
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══ Chambres immobilisées en maintenance technique ═══ --}}
+    @if(isset($maintenanceRooms) && $maintenanceRooms->isNotEmpty())
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-red-200">
+            <div class="px-5 py-3.5 bg-red-50/70 border-b border-red-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="wrench" class="w-4 h-4 text-red-700"></i>
+                    <h2 class="font-heading font-semibold text-red-950 text-sm">Chambres en maintenance technique</h2>
+                </div>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                    {{ $maintenanceRooms->count() }} chambre{{ $maintenanceRooms->count() > 1 ? 's' : '' }}
+                </span>
+            </div>
+            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                @foreach($maintenanceRooms as $room)
+                    <div class="p-3 rounded-lg border border-red-200 bg-red-50/40 text-xs text-primary/80 flex flex-col justify-between">
+                        <div class="flex items-start justify-between gap-2 mb-1.5">
+                            <div>
+                                <span class="font-bold text-sm text-red-950">Chambre {{ $room->number }}</span>
+                                <p class="text-[11px] text-primary/50">{{ $room->roomType->name }}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700">En réparation</span>
+                        </div>
+                        @if($room->latestHousekeepingAssignment?->issue_notes)
+                            <p class="text-[11px] text-red-900/80 italic mt-1 line-clamp-2">
+                                « {{ $room->latestHousekeepingAssignment->issue_notes }} »
+                            </p>
+                        @endif
+                        <p class="text-[10px] text-primary/50 mt-2">
+                            Retirée du nettoyage en attendant l'intervention technique.
+                        </p>
+                    </div>
                 @endforeach
             </div>
         </div>

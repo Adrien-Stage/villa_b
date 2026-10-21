@@ -6,6 +6,7 @@ use App\Enums\RoomStatus;
 use App\Models\AuditLog;
 use App\Models\MinibarArticle;
 use App\Models\MinibarCheck;
+use App\Models\MinibarMovement;
 use App\Models\MinibarRestock;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -152,14 +153,21 @@ class HousekeepingMinibarController extends Controller
     {
         $room->load(['roomType', 'minibarLines.article', 'minibarDueBooking']);
         $sejour = MinibarService::sejourEnCours($room);
+        $dernierSejour = MinibarService::dernierSejourRecent($room);
         $resolveur = app(PermissionResolver::class);
+
+        $peutRelever = $sejour !== null
+            || $room->minibar_due_booking_id !== null
+            || (in_array($room->status->value, [RoomStatus::DIRTY->value, RoomStatus::CLEANING->value], true)
+                && $dernierSejour !== null
+                && $dernierSejour->actual_check_out?->diffInHours(now()) <= 48);
 
         return view('housekeeping.minibar.room', [
             'room'          => $room,
             'lignes'        => MinibarService::lignesARelever($room),
             'sejour'        => $sejour,
             'releveDu'      => MinibarService::releveDuAuMenage($room),
-            'peutRelever'   => $sejour !== null || $room->minibar_due_booking_id !== null,
+            'peutRelever'   => $peutRelever,
             'depot'         => MinibarService::depot(),
             'voitMontants'  => $resolveur->allows(Auth::user(), 'housekeeping.minibar.voir'),
             'articles'      => MinibarArticle::query()->active()->ordered()->get(),
@@ -167,6 +175,9 @@ class HousekeepingMinibarController extends Controller
                 ->latest('checked_at')->latest('id')->take(10)->get(),
             'recharges'     => MinibarRestock::query()->with(['user', 'store'])->where('room_id', $room->id)
                 ->latest('restocked_at')->latest('id')->take(10)->get(),
+            'defectueux'    => MinibarMovement::query()->with(['article', 'user'])->where('room_id', $room->id)
+                ->where('type', MinibarMovement::TYPE_DEFECTIVE)
+                ->latest('occurred_at')->latest('id')->take(10)->get(),
             'aControler'    => $room->status === RoomStatus::CLEAN,
         ]);
     }
@@ -227,5 +238,46 @@ class HousekeepingMinibarController extends Controller
         return back()->with($manquants === [] ? 'success' : 'warning',
             "Mini-bar de la chambre {$room->number} rechargé."
             . ($manquants !== [] ? ' Le dépôt n\'avait pas tout : il manque encore ' . implode(', ', $manquants) . '.' : ''));
+    }
+
+    /** Signaler un produit défectueux ou avarié dans le mini-bar. */
+    public function reportDefective(Request $request, Room $room): RedirectResponse
+    {
+        $data = $request->validate([
+            'minibar_article_id' => ['required', 'integer', Rule::exists('minibar_articles', 'id')],
+            'quantity'           => ['required', 'integer', 'min:1', 'max:99'],
+            'reason'             => ['required', 'string', 'max:100'],
+            'notes'              => ['nullable', 'string', 'max:500'],
+        ], [
+            'minibar_article_id.required' => "Choisissez l'article concerné.",
+            'quantity.required'           => 'Indiquez la quantité défectueuse.',
+            'quantity.min'                => 'La quantité doit être au moins de 1.',
+            'reason.required'             => 'Indiquez le motif (ex: Périmé, Cassé, Descellé...).',
+        ]);
+
+        try {
+            $mouvement = $this->minibars->declarerDefectueux(
+                $room,
+                (int) $data['minibar_article_id'],
+                (int) $data['quantity'],
+                $data['reason'],
+                $data['notes'] ?? null,
+                Auth::user()
+            );
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        AuditLog::record(
+            Auth::id(),
+            'minibar_defective',
+            "Produit défectueux dans Ch. {$room->number} : {$data['quantity']} × {$mouvement->article?->name} ({$data['reason']})",
+            'housekeeping'
+        );
+
+        return back()->with(
+            'success',
+            "{$data['quantity']} × {$mouvement->article?->name} retiré(s) du mini-bar de la chambre {$room->number}. Aucune facturation client. La gouvernante a été notifiée pour le remplacement."
+        );
     }
 }

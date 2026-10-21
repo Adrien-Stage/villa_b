@@ -339,16 +339,34 @@
     <div class="content-box">
         <strong>Objet :</strong> {{ $demande->title }}
         @if($demande->description)
-            <br><br><strong>Détails du problème :</strong><br>{{ $demande->description }}
+            <br><br><strong>Signalement initial :</strong><br>{{ $demande->description }}
+        @endif
+        @if($demande->diagnostic)
+            <br><br><strong>Diagnostic & Cause constatée de la panne :</strong><br>{{ $demande->diagnostic }}
         @endif
     </div>
 
     <div class="section-title">2. Rapport d'exécution des travaux (Fiche d'intervention)</div>
     <div class="content-box">
-        @if($demande->resolution)
-            {{ $demande->resolution }}
+        @if($demande->travaux_realises || $demande->resolution)
+            <div style="margin-bottom: 8px;">
+                <strong>Travaux et réparations réalisés :</strong><br>
+                {{ $demande->travaux_realises ?: $demande->resolution }}
+            </div>
+            <div style="margin-bottom: 8px;">
+                <strong>Résultat de l'intervention :</strong>
+                <span class="status-pill" style="background: #e2e8f0; color: #0f172a; font-weight: bold; border: 1px solid #cbd5e1;">
+                    {{ $demande->resultatLabel() }}
+                </span>
+            </div>
+            @if($demande->recommandations)
+                <div style="margin-top: 6px;">
+                    <strong>Consignes & Recommandations préventives :</strong><br>
+                    {{ $demande->recommandations }}
+                </div>
+            @endif
         @else
-            <em>(Intervention en cours d'exécution — Travaux non encore consignés)</em>
+            <em>(Intervention en cours d'exécution — Fiche d'intervention non encore soumise)</em>
         @endif
     </div>
 

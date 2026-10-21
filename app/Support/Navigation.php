@@ -597,6 +597,289 @@ class Navigation
     }
 
     /**
+     * Liste des onglets de navigation mobile (barre inférieure flottante style pilule / dock).
+     * Conforme au design mobile compact : onglet actif sous forme de pilule blanche avec libellé,
+     * et onglets inactifs sous forme d'icônes circulaires.
+     * Particulièrement optimisée pour le travail de terrain (housekeeping, technique, salle restaurant).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getMobileTabs(?User $user = null): array
+    {
+        $user = $user ?? Auth::user();
+        if (!$user || !$user->is_active) {
+            return [];
+        }
+
+        $activeGroup = self::getActiveGroup();
+        if (!$activeGroup) {
+            return [];
+        }
+
+        $groupId = $activeGroup['id'] ?? null;
+        $droits = app(PermissionResolver::class);
+        $tabs = [];
+
+        if ($groupId === 'hotel') {
+            $isHousekeepingStaff = $user->exerce(['housekeeping_staff', 'housekeeping_leader', 'housekeeping_supervisor'])
+                && !$user->isAdmin() && !$user->exerce(['manager', 'reception']);
+            $onHousekeepingRoute = request()->routeIs('housekeeping.*');
+
+            if ($isHousekeepingStaff || $onHousekeepingRoute) {
+                // Housekeeping : Chambres, Suivi, Mini-bars, Réquisitions, Apps
+                if (TenantModules::has('housekeeping') && $droits->allows($user, 'housekeeping.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Chambres',
+                        'icon'   => 'sparkles',
+                        'url'    => route('housekeeping.index'),
+                        'active' => request()->routeIs('housekeeping.index'),
+                    ];
+                    $tabs[] = [
+                        'label'  => 'Suivi',
+                        'icon'   => 'list-checks',
+                        'url'    => route('housekeeping.journal.index'),
+                        'active' => request()->routeIs('housekeeping.journal.*'),
+                    ];
+                    $tabs[] = [
+                        'label'  => 'Mini-bars',
+                        'icon'   => 'wine',
+                        'url'    => route('housekeeping.minibar.index'),
+                        'active' => request()->routeIs('housekeeping.minibar.*'),
+                    ];
+                }
+                if ($droits->allows($user, 'economat.requisitions.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Demandes',
+                        'icon'   => 'inbox',
+                        'url'    => route('economat.requisitions.index'),
+                        'active' => request()->routeIs('economat.requisitions.*'),
+                    ];
+                }
+            } else {
+                // Réception / Direction Hôtel
+                if ($user->isAdmin() || $user->exerce(['manager', 'reception'])) {
+                    if ($user->hasModuleAccess('hebergement')) {
+                        $tabs[] = [
+                            'label'  => 'Chambres',
+                            'icon'   => 'door-closed',
+                            'url'    => route('rooms.index'),
+                            'active' => request()->routeIs('rooms.*'),
+                        ];
+                    }
+                    if ($user->hasModuleAccess('reservations')) {
+                        $tabs[] = [
+                            'label'  => 'Réservations',
+                            'icon'   => 'calendar',
+                            'url'    => route('bookings.index'),
+                            'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
+                        ];
+                        $tabs[] = [
+                            'label'  => 'Agenda',
+                            'icon'   => 'calendar-days',
+                            'url'    => route('agenda.index'),
+                            'active' => request()->routeIs('agenda.*'),
+                        ];
+                        $tabs[] = [
+                            'label'  => 'POS',
+                            'icon'   => 'shopping-cart',
+                            'url'    => route('reception.pos.index'),
+                            'active' => request()->routeIs('reception.pos.*'),
+                        ];
+                    }
+                }
+                if (TenantModules::has('housekeeping') && $droits->allows($user, 'housekeeping.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Housekeeping',
+                        'icon'   => 'sparkles',
+                        'url'    => route('housekeeping.index'),
+                        'active' => request()->routeIs('housekeeping.*'),
+                    ];
+                }
+            }
+        } elseif ($groupId === 'technique') {
+            // Service Technique : Tableau, Interventions, Dépôt, Équipe
+            if ($droits->allows($user, 'technique.voir')) {
+                $tabs[] = [
+                    'label'  => 'Tableau',
+                    'icon'   => 'wrench',
+                    'url'    => route('technique.index'),
+                    'active' => request()->routeIs('technique.index'),
+                ];
+            }
+            if ($droits->allows($user, 'technique.demandes.voir')) {
+                $tabs[] = [
+                    'label'  => 'Interventions',
+                    'icon'   => 'clipboard-list',
+                    'url'    => route('technique.demandes.index'),
+                    'active' => request()->routeIs('technique.demandes.*'),
+                ];
+            }
+            if ($droits->allows($user, 'technique.depot.voir')) {
+                $tabs[] = [
+                    'label'  => 'Dépôt',
+                    'icon'   => 'package',
+                    'url'    => route('technique.depot.index'),
+                    'active' => request()->routeIs('technique.depot.*'),
+                ];
+            }
+            if ($droits->allows($user, 'technique.equipe.voir')) {
+                $tabs[] = [
+                    'label'  => 'Équipe',
+                    'icon'   => 'users',
+                    'url'    => route('technique.equipe.index'),
+                    'active' => request()->routeIs('technique.equipe.*'),
+                ];
+            }
+            if (self::groupeDesDemandes($user) === 'technique' && $droits->allows($user, 'economat.requisitions.voir')) {
+                $tabs[] = [
+                    'label'  => 'Économat',
+                    'icon'   => 'inbox',
+                    'url'    => route('economat.requisitions.index'),
+                    'active' => request()->routeIs('economat.requisitions.*'),
+                ];
+            }
+        } elseif ($groupId === 'restaurant') {
+            // Restaurant : Commandes, Menus, P'tits déj, Bar, Cuisine, Caisse
+            $contexteResto = app(RestaurantContext::class);
+            $serviceOffert = fn (string $service): bool => $contexteResto->offrant($user, $service)->isNotEmpty()
+                || $contexteResto->restaurants()->isEmpty();
+
+            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE)) {
+                $tabs[] = [
+                    'label'  => 'Commandes',
+                    'icon'   => 'receipt',
+                    'url'    => route('restaurant.orders.index'),
+                    'active' => request()->routeIs('restaurant.orders.*'),
+                ];
+            }
+            if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
+                $tabs[] = [
+                    'label'  => 'Menus',
+                    'icon'   => 'book',
+                    'url'    => route('restaurant.menus.index'),
+                    'active' => request()->routeIs('restaurant.menus.*'),
+                ];
+                $tabs[] = [
+                    'label'  => 'P\'tits déj',
+                    'icon'   => 'coffee',
+                    'url'    => route('restaurant.breakfast.index'),
+                    'active' => request()->routeIs('restaurant.breakfast.*'),
+                ];
+            }
+            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR) && $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
+                $tabs[] = [
+                    'label'  => 'Bar',
+                    'icon'   => 'glass-water',
+                    'url'    => route('restaurant.bar.index'),
+                    'active' => request()->routeIs('restaurant.bar.*'),
+                ];
+            }
+            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_CUISINE) && $user->exerce(['restaurant_chief', 'restaurant_cook'])) {
+                $tabs[] = [
+                    'label'  => 'Cuisine',
+                    'icon'   => 'cooking-pot',
+                    'url'    => route('restaurant.kitchen.index'),
+                    'active' => request()->routeIs('restaurant.kitchen.*'),
+                ];
+            }
+            if ($user->exerce(['cashier', 'restaurant_chief', 'manager'])) {
+                $tabs[] = [
+                    'label'  => 'Caisse',
+                    'icon'   => 'calculator',
+                    'url'    => route('restaurant.cash_register.index'),
+                    'active' => request()->routeIs('restaurant.cash_register.*') || request()->routeIs('restaurant.billing.*'),
+                ];
+            }
+        } elseif ($groupId === 'economat') {
+            if ($droits->allows($user, 'economat.items.voir')) {
+                $tabs[] = [
+                    'label'  => 'Articles',
+                    'icon'   => 'boxes',
+                    'url'    => route('economat.items.index'),
+                    'active' => request()->routeIs('economat.items.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.movements.voir')) {
+                $tabs[] = [
+                    'label'  => 'Mouvements',
+                    'icon'   => 'arrow-left-right',
+                    'url'    => route('economat.movements.index'),
+                    'active' => request()->routeIs('economat.movements.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.orders.voir')) {
+                $tabs[] = [
+                    'label'  => 'Bons cde',
+                    'icon'   => 'clipboard-list',
+                    'url'    => route('economat.orders.index'),
+                    'active' => request()->routeIs('economat.orders.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.receipts.voir')) {
+                $tabs[] = [
+                    'label'  => 'Entrées',
+                    'icon'   => 'package-check',
+                    'url'    => route('economat.receipts.index'),
+                    'active' => request()->routeIs('economat.receipts.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.requisitions.voir')) {
+                $tabs[] = [
+                    'label'  => 'Demandes',
+                    'icon'   => 'inbox',
+                    'url'    => route('economat.requisitions.index'),
+                    'active' => request()->routeIs('economat.requisitions.*'),
+                ];
+            }
+        } elseif ($groupId === 'accounting') {
+            if ($droits->allows($user, 'accounting.voir')) {
+                $tabs[] = [
+                    'label'  => 'Compta',
+                    'icon'   => 'wallet',
+                    'url'    => route('accounting.index'),
+                    'active' => request()->routeIs('accounting.index'),
+                ];
+            }
+            if ($droits->allows($user, 'accounting.ledger.voir')) {
+                $tabs[] = [
+                    'label'  => 'Grand livre',
+                    'icon'   => 'book-open',
+                    'url'    => route('accounting.ledger.index'),
+                    'active' => request()->routeIs('accounting.ledger.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.requisitions.voir')) {
+                $tabs[] = [
+                    'label'  => 'Demandes',
+                    'icon'   => 'inbox',
+                    'url'    => route('economat.requisitions.index'),
+                    'active' => request()->routeIs('economat.requisitions.*'),
+                ];
+            }
+        } elseif (in_array($groupId, ['gestion', 'shop', 'admin'], true)) {
+            $groupTabs = self::getGroupTabs($groupId, $user);
+            foreach ($groupTabs as $gTab) {
+                $tabs[] = [
+                    'label'  => $gTab['label'],
+                    'icon'   => $gTab['icon'],
+                    'url'    => route($gTab['route']),
+                    'active' => $gTab['active'] ?? false,
+                ];
+            }
+        }
+
+        // Bouton Applications pour revenir au lanceur global
+        $tabs[] = [
+            'label'  => 'Apps',
+            'icon'   => 'layout-grid',
+            'url'    => route('dashboard'),
+            'active' => request()->routeIs('dashboard'),
+        ];
+
+        return $tabs;
+    }
+
+    /**
      * Liste des onglets horizontaux pour les groupes légers (Gestion, Boutique, Administration).
      *
      * @return array<int, array<string, mixed>>

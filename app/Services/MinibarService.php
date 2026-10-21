@@ -20,8 +20,10 @@ use App\Models\ServiceStore;
 use App\Models\ServiceStoreMovement;
 use App\Models\ServiceStoreStock;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Notifications\MinibarCheckRecorded;
 use App\Notifications\MinibarCheckRequested;
+use App\Notifications\MinibarDefectiveItemReported;
 use App\Notifications\MinibarEmpty;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -199,6 +201,16 @@ class MinibarService
             ->first();
     }
 
+    /** Dernier séjour récent (terminé) dans la chambre. */
+    public static function dernierSejourRecent(Room $room): ?Booking
+    {
+        return $room->bookings()
+            ->whereIn('status', [BookingStatus::CHECKED_OUT, BookingStatus::COMPLETED])
+            ->whereNotNull('actual_check_out')
+            ->latest('actual_check_out')
+            ->first();
+    }
+
     /** Lignes que le relevé doit couvrir : celles qui ont une dotation ou du contenu. */
     public static function lignesARelever(Room $room): Collection
     {
@@ -267,9 +279,15 @@ class MinibarService
                 $booking = Booking::query()->find($room->minibar_due_booking_id);
                 $occasion = MinibarCheck::OCCASION_APRES_DEPART;
             } else {
-                throw new \RuntimeException(
-                    "Aucun client à qui rattacher un relevé dans la chambre {$room->number} : elle n'est pas occupée et aucun relevé n'y est dû."
-                );
+                $dernierSejour = self::dernierSejourRecent($room);
+                if ($dernierSejour !== null && $dernierSejour->actual_check_out && $dernierSejour->actual_check_out->diffInHours(now()) <= 48) {
+                    $booking = $dernierSejour;
+                    $occasion = MinibarCheck::OCCASION_APRES_DEPART;
+                } else {
+                    throw new \RuntimeException(
+                        "Aucun client à qui rattacher un relevé dans la chambre {$room->number} : elle n'est pas occupée et aucun relevé n'y est dû."
+                    );
+                }
             }
 
             $total = 0;
@@ -378,8 +396,12 @@ class MinibarService
 
         $room->refresh()->load('minibarLines');
 
-        // La réception suit ce qui part au folio, ou ce qui reste à facturer.
-        $this->notifier->toRoles(['reception'], new MinibarCheckRecorded($releve), Auth::id());
+        // La réception et la gouvernante suivent les consommations relevées.
+        $rolesANotifier = ['reception'];
+        if ($releve->total_amount > 0 || $releve->lines->contains(fn ($l) => $l->consumed > 0)) {
+            $rolesANotifier = ['reception', 'housekeeping_supervisor', 'housekeeping_leader'];
+        }
+        $this->notifier->toRoles($rolesANotifier, new MinibarCheckRecorded($releve), Auth::id());
 
         // Pendant le séjour, le mini-bar ne se recharge que vide : la
         // gouvernante est appelée quand le client l'a vidé.
@@ -607,5 +629,92 @@ class MinibarService
 
             return [$recharge, $manquants];
         });
+    }
+
+    /**
+     * Signale un produit défectueux, périmé ou avarié dans le mini-bar.
+     * Le produit est déduit du stock du mini-bar SANS AUCUNE facturation au client.
+     * La gouvernante et le chef d'équipe housekeeping sont immédiatement notifiés pour remplacement.
+     */
+    public function declarerDefectueux(
+        Room $room,
+        int $minibarArticleId,
+        int $quantite,
+        string $motif,
+        ?string $remarques = null,
+        ?User $par = null,
+    ): MinibarMovement {
+        if ($quantite <= 0) {
+            throw new \InvalidArgumentException('La quantité défectueuse doit être supérieure à zéro.');
+        }
+
+        $userId = $par?->id ?? Auth::id();
+        $user = $par ?? Auth::user();
+
+        $mouvement = DB::transaction(function () use ($room, $minibarArticleId, $quantite, $motif, $remarques, $userId) {
+            $room = Room::query()->lockForUpdate()->findOrFail($room->id);
+
+            $ligne = RoomMinibarLine::query()
+                ->with('article.item')
+                ->where('room_id', $room->id)
+                ->where('minibar_article_id', $minibarArticleId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($ligne === null) {
+                throw new \InvalidArgumentException("Cet article ne fait pas partie du mini-bar de la chambre {$room->number}.");
+            }
+
+            if ($ligne->quantity < $quantite) {
+                throw new \InvalidArgumentException(
+                    "Impossible de déclarer {$quantite} unité(s) défectueuse(s) : il n'en reste que {$ligne->quantity} dans le mini-bar de la chambre {$room->number}."
+                );
+            }
+
+            $article = $ligne->article;
+            $nouvelleQuantite = $ligne->quantity - $quantite;
+            $ligne->update(['quantity' => $nouvelleQuantite]);
+
+            $sejour = self::sejourEnCours($room);
+            $bookingId = $sejour?->id ?? $room->minibar_due_booking_id;
+            $notesFinales = trim($motif . ($remarques ? ' — ' . $remarques : ''));
+
+            $mouvement = MinibarMovement::create([
+                'room_id'            => $room->id,
+                'minibar_article_id' => $article->id,
+                'stock_item_id'      => $article->stock_item_id,
+                'type'               => MinibarMovement::TYPE_DEFECTIVE,
+                'quantity'           => -$quantite,
+                'quantity_after'     => $nouvelleQuantite,
+                'unit_cost'          => $ligne->unit_cost,
+                'stock_account'      => $article->item?->stockAccount(),
+                'source_type'        => MinibarMovement::SOURCE_DEFECTIVE,
+                'source_id'          => null,
+                'booking_id'         => $bookingId,
+                'user_id'            => $userId,
+                'notes'              => $notesFinales,
+                'occurred_at'        => now(),
+            ]);
+
+            $assignment = $room->activeHousekeepingAssignment ?? $room->latestHousekeepingAssignment;
+            HousekeepingLog::noter(
+                $room,
+                HousekeepingLog::MINIBAR_DEFECTIVE,
+                "Produit défectueux / avarié : {$quantite} × {$article->name} ({$notesFinales}) — retiré sans facturation",
+                $assignment,
+                $bookingId
+            );
+
+            return $mouvement;
+        });
+
+        // Alerter immédiatement la gouvernante générale et les chefs d'équipe
+        $this->notifier->toRoles(
+            ['housekeeping_supervisor', 'housekeeping_leader'],
+            new MinibarDefectiveItemReported($room, $mouvement->article, $quantite, $motif, $remarques, $user),
+            $userId
+        );
+
+        return $mouvement;
     }
 }
