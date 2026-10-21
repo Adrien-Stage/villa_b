@@ -851,25 +851,16 @@
                     <p class="hidden md:block text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                 @endif
             </div>
-            <div class="flex items-center gap-2 sm:gap-4 ml-auto">
-                {{-- Bouton d'activation des notifications push (visible tant que la
-                     permission n'est pas accordée). Requiert un geste utilisateur. --}}
-                <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
-                        class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
-                        title="Activer les notifications système (même hors de l'application)">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span class="hidden sm:inline">Activer les notifications</span>
-                </button>
 
+            {{-- Outils d'intervention et de support : sur mobile alignés à gauche, sur grand écran regroupés avec les utilitaires à droite --}}
+            <div class="flex items-center gap-1.5 sm:gap-2 md:ml-auto">
                 {{-- Une panne, une fuite, une prise morte : tout le personnel
                      saisit le service technique d'ici. --}}
                 @module('technique')
                 @droit('technique.demandes.creer')
                     @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
                         <a href="{{ route('technique.demandes.create') }}"
-                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 bg-white/70 hover:bg-white text-primary/70 hover:text-primary transition-colors text-xs font-medium shadow-2xs"
                            title="Demander une intervention technique">
                             <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
                             <span class="hidden sm:inline">Intervention</span>
@@ -883,7 +874,7 @@
                      qui les traite depuis l'ERP et répond dans le même ticket. --}}
                 <div x-data="supportTicketCenter()" class="relative">
                     <button type="button" @click="ouvrir()"
-                            class="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                            class="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 bg-white/70 hover:bg-white text-primary/70 hover:text-primary transition-colors text-xs font-medium shadow-2xs"
                             title="Signaler un problème ou proposer une amélioration">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -1012,6 +1003,20 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {{-- Notifications, statut de connexion et profil utilisateur : sur mobile calés à droite, sur grand écran en continuité des outils --}}
+            <div class="flex items-center gap-2 sm:gap-4 ml-auto md:ml-0">
+                {{-- Bouton d'activation des notifications push (visible tant que la
+                     permission n'est pas accordée). Requiert un geste utilisateur. --}}
+                <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
+                        class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                        title="Activer les notifications système (même hors de l'application)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="hidden sm:inline">Activer les notifications</span>
+                </button>
 
                 {{-- In-app Notifications Dropdown --}}
                 <div x-data="notificationCenter()" class="relative">
