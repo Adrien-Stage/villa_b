@@ -52,7 +52,7 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Relevé des consommations</h2>
                 <p class="text-xs text-primary/50 mt-0.5">
                     Comptez ce qui manque dans le mini-bar et indiquez-le pour chaque article, 0 si rien n'a été pris.
-                    @if($sejour) La consommation part au folio du client. @endif
+                    Toute consommation est directement inscrite sur la facture / folio du client et la gouvernante est notifiée.
                 </p>
             </div>
             @if(!$peutRelever)
@@ -94,12 +94,90 @@
                     <div>
                         <label for="notes" class="block text-xs text-primary/50 mb-1.5">Remarque (optionnel)</label>
                         <input type="text" id="notes" name="notes" maxlength="500" value="{{ old('notes') }}"
-                               placeholder="Bouteille ouverte, emballage abîmé…"
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                placeholder="Bouteille ouverte, emballage abîmé…"
+                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
                     </div>
                     <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
                         Enregistrer le relevé
                     </button>
+                </form>
+            @endif
+        </div>
+        @enddroit
+
+        {{-- ═══ Signaler un produit défectueux ou avarié ═══ --}}
+        @droit('housekeeping.minibar.defective')
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-amber-200">
+            <div class="px-5 py-4 bg-amber-50/60 border-b border-amber-200/70 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-1.5 rounded-lg bg-amber-100 text-amber-800">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-heading font-semibold text-amber-950 text-sm">Signaler un produit défectueux ou avarié</h2>
+                        <p class="text-xs text-amber-900/70 mt-0.5">
+                            Produit cassé, périmé ou impropre à la consommation ? Il est déduit du stock <strong class="text-amber-950 font-semibold">sans facturation au client</strong>, et la gouvernante est notifiée pour remplacement.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            @php $articlesPresents = $lignes->filter(fn ($l) => $l->quantity > 0); @endphp
+            @if($articlesPresents->isEmpty())
+                <div class="px-5 py-6 text-sm text-primary/50 text-center">
+                    Le mini-bar ne contient aucun produit actuellement : aucun article ne peut être signalé comme défectueux.
+                </div>
+            @else
+                <form method="POST" action="{{ route('housekeeping.minibar.defective', $room) }}" class="p-5 space-y-4">
+                    @csrf
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label for="defective_article" class="block text-xs font-semibold text-primary/70 mb-1.5">Article concerné *</label>
+                            <select id="defective_article" name="minibar_article_id" required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                <option value="">-- Choisir l'article --</option>
+                                @foreach($articlesPresents as $ligne)
+                                    <option value="{{ $ligne->article->id }}" @selected(old('minibar_article_id') == $ligne->article->id)>
+                                        {{ $ligne->article->name }} ({{ $ligne->quantity }} présent{{ $ligne->quantity > 1 ? 's' : '' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="defective_quantity" class="block text-xs font-semibold text-primary/70 mb-1.5">Quantité défectueuse *</label>
+                            <input type="number" id="defective_quantity" name="quantity" min="1" max="99" step="1" required
+                                   value="{{ old('quantity', 1) }}"
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label for="defective_reason" class="block text-xs font-semibold text-primary/70 mb-1.5">Motif du défaut *</label>
+                            <select id="defective_reason" name="reason" required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                <option value="">-- Choisir le motif --</option>
+                                <option value="Produit périmé / DLC dépassée" @selected(old('reason') === 'Produit périmé / DLC dépassée')>Produit périmé / DLC dépassée</option>
+                                <option value="Bouteille cassée / Fuite" @selected(old('reason') === 'Bouteille cassée / Fuite')>Bouteille cassée / Fuite</option>
+                                <option value="Capsule ou bouchon descellé / altéré" @selected(old('reason') === 'Capsule ou bouchon descellé / altéré')>Capsule ou bouchon descellé / altéré</option>
+                                <option value="Emballage souillé ou abîmé" @selected(old('reason') === 'Emballage souillé ou abîmé')>Emballage souillé ou abîmé</option>
+                                <option value="Autre anomalie qualité" @selected(old('reason') === 'Autre anomalie qualité')>Autre anomalie qualité</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="defective_notes" class="block text-xs text-primary/50 mb-1.5">Précisions supplémentaires (optionnel)</label>
+                        <input type="text" id="defective_notes" name="notes" maxlength="500" value="{{ old('notes') }}"
+                               placeholder="Ex : fissure sur le goulot, date lisible 12/08/2026..."
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="flex items-center justify-between pt-2">
+                        <span class="text-xs text-amber-800 font-medium flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-4 h-4 text-amber-600"></i>
+                            Non facturé au client · Notification envoyée à la gouvernante
+                        </span>
+                        <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 transition flex items-center gap-1.5">
+                            <i data-lucide="package-x" class="w-4 h-4"></i>
+                            Déclarer défectueux &amp; retirer
+                        </button>
+                    </div>
                 </form>
             @endif
         </div>
@@ -197,7 +275,7 @@
     @enddroit
 
     {{-- ═══ Historique ═══ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-secondary/20">
                 <h2 class="font-heading font-semibold text-primary text-sm">Derniers relevés</h2>
@@ -233,6 +311,30 @@
                     </li>
                 @empty
                     <li class="px-5 py-6 text-sm text-primary/40 text-center">Aucun rechargement.</li>
+                @endforelse
+            </ul>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-secondary/20 flex items-center justify-between">
+                <h2 class="font-heading font-semibold text-primary text-sm">Produits défectueux retirés</h2>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Non facturés</span>
+            </div>
+            <ul class="divide-y divide-secondary/10">
+                @forelse($defectueux as $def)
+                    <li class="px-5 py-3 text-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="font-medium text-amber-900">{{ $def->occurred_at?->format('d/m H:i') }}</span>
+                            <span class="font-semibold text-xs text-red-700">{{ abs($def->quantity) }} × {{ $def->article?->name }}</span>
+                        </div>
+                        <p class="text-xs text-primary/70 mt-0.5">
+                            {{ $def->user?->name ?? '—' }}
+                            @if($def->notes)
+                                · <span class="italic text-primary/55">« {{ $def->notes }} »</span>
+                            @endif
+                        </p>
+                    </li>
+                @empty
+                    <li class="px-5 py-6 text-sm text-primary/40 text-center">Aucun produit défectueux signalé.</li>
                 @endforelse
             </ul>
         </div>

@@ -255,6 +255,7 @@ class PermissionLabels
         'housekeeping.minibar.rooms.voir' => ['Mini-bars', 'Consulter le mini-bar d’une chambre'],
         'housekeeping.minibar.rooms.modifier' => ['Mini-bars', 'Régler la dotation d’une chambre'],
         'housekeeping.minibar.check' => ['Mini-bars', 'Relever les consommations'],
+        'housekeeping.minibar.defective' => ['Mini-bars', 'Signaler un produit défectueux ou avarié'],
         'housekeeping.minibar.restock' => ['Mini-bars', 'Recharger un mini-bar'],
 
         // ── Factures, POS réception ──

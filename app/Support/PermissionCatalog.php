@@ -190,6 +190,7 @@ class PermissionCatalog
         'housekeeping.minibar.articles.creer',
         'housekeeping.minibar.articles.modifier',
         'housekeeping.minibar.check',
+        'housekeeping.minibar.defective',
         'housekeeping.minibar.depot',
         'housekeeping.minibar.restock',
         'housekeeping.minibar.rooms.modifier',
@@ -968,6 +969,7 @@ class PermissionCatalog
             'housekeeping.minibar.rooms.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             'housekeeping.minibar.rooms.modifier' => ['housekeeping_leader', 'manager'],
             'housekeeping.minibar.check' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
+            'housekeeping.minibar.defective' => ['housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             'housekeeping.minibar.restock' => ['housekeeping_leader', 'housekeeping_supervisor', 'manager'],
 
             // ── Clients ──

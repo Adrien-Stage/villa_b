@@ -397,6 +397,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{room}/mini-bar/dotation',         [App\Http\Controllers\HousekeepingMinibarController::class, 'updateRoom'])->whereNumber('room')->name('minibar.rooms.update');
         Route::post('/{room}/mini-bar/releve',          [App\Http\Controllers\HousekeepingMinibarController::class, 'check'])->whereNumber('room')->name('minibar.check');
         Route::post('/{room}/mini-bar/recharge',        [App\Http\Controllers\HousekeepingMinibarController::class, 'restock'])->whereNumber('room')->name('minibar.restock');
+        Route::post('/{room}/mini-bar/defectueux',      [App\Http\Controllers\HousekeepingMinibarController::class, 'reportDefective'])->whereNumber('room')->name('minibar.defective');
     });
 
     // --- RESTAURANT (menus) ---

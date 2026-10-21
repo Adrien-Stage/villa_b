@@ -48,6 +48,28 @@
         </div>
     @endif
 
+    {{-- Accès direct au mini-bar pour la chambre --}}
+    @if($room->aUnMiniBar())
+        <div class="mb-3 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/70 text-xs">
+            <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}" class="inline-flex items-center gap-1.5 font-medium text-amber-900 hover:text-amber-950 transition">
+                <i data-lucide="wine" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span>Mini-bar</span>
+                @if($room->miniBarComplet())
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">Complet</span>
+                @elseif($room->miniBarVide())
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold">Vide</span>
+                @else
+                    @php $manquant = $room->minibarLines->sum(fn ($l) => $l->manquant()); @endphp
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">{{ $manquant > 0 ? "-{$manquant} article(s)" : 'À vérifier' }}</span>
+                @endif
+            </a>
+            <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}" class="inline-flex items-center gap-1 text-[11px] text-amber-800 hover:text-amber-950 font-semibold underline">
+                <span>Gérer</span>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            </a>
+        </div>
+    @endif
+
     <div class="mt-auto">
         @if($a?->status === 'in_progress' && $room->aUnMiniBar() && $a->minibarChecks->isEmpty())
             {{-- Le relevé du mini-bar fait partie de la recouche. --}}

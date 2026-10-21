@@ -27,6 +27,7 @@ class HousekeepingLog extends Model
     public const MINIBAR_CHECKED    = 'minibar_checked';
     public const MINIBAR_RESTOCKED  = 'minibar_restocked';
     public const MINIBAR_REQUESTED  = 'minibar_requested';
+    public const MINIBAR_DEFECTIVE  = 'minibar_defective';
 
     public const ACTIONS = [
         self::ASSIGNED          => 'Affectée à une équipe',
@@ -41,6 +42,7 @@ class HousekeepingLog extends Model
         self::MINIBAR_CHECKED   => 'Relevé du mini-bar',
         self::MINIBAR_RESTOCKED => 'Mini-bar réapprovisionné',
         self::MINIBAR_REQUESTED => 'Contrôle du mini-bar demandé',
+        self::MINIBAR_DEFECTIVE => 'Produit défectueux / avarié',
     ];
 
     protected $fillable = [
