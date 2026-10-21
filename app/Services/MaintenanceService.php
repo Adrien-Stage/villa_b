@@ -107,12 +107,11 @@ class MaintenanceService
                 'source'                     => $source,
                 'housekeeping_assignment_id' => $affectation?->id,
                 'requested_by'               => $demandeur->id,
-                'room_blocked'               => $room !== null && $room->status === RoomStatus::MAINTENANCE,
+                'room_blocked'               => $room !== null && ($room->status === RoomStatus::MAINTENANCE || !empty($donnees['bloquer_chambre'])),
             ]);
 
-            // Rendre la chambre indisponible pendant l'intervention, sauf si un
-            // client y loge : elle reste la sienne.
-            if ($room && !empty($donnees['bloquer_chambre']) && $room->status !== RoomStatus::OCCUPIED && $room->status !== RoomStatus::MAINTENANCE) {
+            // Rendre la chambre indisponible pendant l'intervention technique
+            if ($room && !empty($donnees['bloquer_chambre']) && $room->status !== RoomStatus::MAINTENANCE) {
                 $room->updateStatus(RoomStatus::MAINTENANCE, "Intervention technique {$demande->reference}", $demandeur->id);
                 $demande->update(['room_blocked' => true]);
             }
@@ -544,19 +543,31 @@ class MaintenanceService
     {
         $room = $demande->room;
 
-        if ($demande->room_blocked && $room && $room->status === RoomStatus::MAINTENANCE) {
+        if ($room && ($demande->room_blocked || $room->status === RoomStatus::MAINTENANCE)) {
             $encoreBloquee = MaintenanceRequest::query()->active()->where('room_id', $room->id)
                 ->where('room_blocked', true)->whereKeyNot($demande->id)->exists();
 
             if (!$encoreBloquee) {
-                $client = Booking::query()->where('room_id', $room->id)->where('status', BookingStatus::CHECKED_IN)->exists();
-                $room->updateStatus($client ? RoomStatus::OCCUPIED : RoomStatus::DIRTY, $motif, $par->id);
+                // Dès lors que l'intervention technique est clôturée, la chambre passe directement à "À nettoyer"
+                $room->updateStatus(RoomStatus::DIRTY, $motif, $par->id);
             }
         }
 
         $affectation = $demande->housekeepingAssignment;
         if ($affectation && $affectation->status === 'blocked') {
-            $affectation->update(['status' => $room?->fresh()->status === RoomStatus::CLEANING ? 'in_progress' : 'pending']);
+            $affectation->update([
+                'status'      => 'cancelled',
+                'released_at' => now(),
+                'released_by' => $par->id,
+            ]);
+            if ($room) {
+                \App\Models\HousekeepingLog::noter(
+                    $room,
+                    \App\Models\HousekeepingLog::RELEASED,
+                    "Intervention technique clôturée ({$demande->reference}) : chambre remise au statut À nettoyer",
+                    $affectation
+                );
+            }
         }
     }
 }

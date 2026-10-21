@@ -8,13 +8,13 @@
 
 @include('housekeeping.partials.minibar-alerts')
 
+@include('housekeeping.partials.issue-modal')
+
 @if($isChief)
     @include('housekeeping.partials.chief')
 @else
     @include('housekeeping.partials.member')
 @endif
-
-@include('housekeeping.partials.issue-modal')
 
 {{-- Bouton flottant de rafraîchissement : remplace l'ancienne actualisation
      automatique qui interrompait la saisie. Placé au-dessus de l'assistant IA. --}}

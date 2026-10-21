@@ -634,18 +634,22 @@ class Navigation
                         'url'    => route('housekeeping.index'),
                         'active' => request()->routeIs('housekeeping.index'),
                     ];
-                    $tabs[] = [
-                        'label'  => 'Suivi',
-                        'icon'   => 'list-checks',
-                        'url'    => route('housekeeping.journal.index'),
-                        'active' => request()->routeIs('housekeeping.journal.*'),
-                    ];
-                    $tabs[] = [
-                        'label'  => 'Mini-bars',
-                        'icon'   => 'wine',
-                        'url'    => route('housekeeping.minibar.index'),
-                        'active' => request()->routeIs('housekeeping.minibar.*'),
-                    ];
+                    if ($droits->allows($user, 'housekeeping.journal.voir')) {
+                        $tabs[] = [
+                            'label'  => 'Suivi',
+                            'icon'   => 'list-checks',
+                            'url'    => route('housekeeping.journal.index'),
+                            'active' => request()->routeIs('housekeeping.journal.*'),
+                        ];
+                    }
+                    if ($droits->allows($user, 'housekeeping.minibar.voir')) {
+                        $tabs[] = [
+                            'label'  => 'Mini-bars',
+                            'icon'   => 'wine',
+                            'url'    => route('housekeeping.minibar.index'),
+                            'active' => request()->routeIs('housekeeping.minibar.*'),
+                        ];
+                    }
                 }
                 if ($droits->allows($user, 'economat.requisitions.voir')) {
                     $tabs[] = [
@@ -658,7 +662,7 @@ class Navigation
             } else {
                 // Réception / Direction Hôtel
                 if ($user->isAdmin() || $user->exerce(['manager', 'reception'])) {
-                    if ($user->hasModuleAccess('hebergement')) {
+                    if ($user->hasModuleAccess('hebergement') && $droits->allows($user, 'rooms.voir')) {
                         $tabs[] = [
                             'label'  => 'Chambres',
                             'icon'   => 'door-closed',
@@ -667,24 +671,30 @@ class Navigation
                         ];
                     }
                     if ($user->hasModuleAccess('reservations')) {
-                        $tabs[] = [
-                            'label'  => 'Réservations',
-                            'icon'   => 'calendar',
-                            'url'    => route('bookings.index'),
-                            'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
-                        ];
-                        $tabs[] = [
-                            'label'  => 'Agenda',
-                            'icon'   => 'calendar-days',
-                            'url'    => route('agenda.index'),
-                            'active' => request()->routeIs('agenda.*'),
-                        ];
-                        $tabs[] = [
-                            'label'  => 'POS',
-                            'icon'   => 'shopping-cart',
-                            'url'    => route('reception.pos.index'),
-                            'active' => request()->routeIs('reception.pos.*'),
-                        ];
+                        if ($droits->allows($user, 'bookings.voir')) {
+                            $tabs[] = [
+                                'label'  => 'Réservations',
+                                'icon'   => 'calendar',
+                                'url'    => route('bookings.index'),
+                                'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
+                            ];
+                        }
+                        if ($droits->allows($user, 'agenda.voir')) {
+                            $tabs[] = [
+                                'label'  => 'Agenda',
+                                'icon'   => 'calendar-days',
+                                'url'    => route('agenda.index'),
+                                'active' => request()->routeIs('agenda.*'),
+                            ];
+                        }
+                        if ($droits->allows($user, 'reception.pos.voir')) {
+                            $tabs[] = [
+                                'label'  => 'POS',
+                                'icon'   => 'shopping-cart',
+                                'url'    => route('reception.pos.index'),
+                                'active' => request()->routeIs('reception.pos.*'),
+                            ];
+                        }
                     }
                 }
                 if (TenantModules::has('housekeeping') && $droits->allows($user, 'housekeeping.voir')) {
@@ -744,7 +754,7 @@ class Navigation
             $serviceOffert = fn (string $service): bool => $contexteResto->offrant($user, $service)->isNotEmpty()
                 || $contexteResto->restaurants()->isEmpty();
 
-            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE)) {
+            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE) && $droits->allows($user, 'restaurant.orders.voir')) {
                 $tabs[] = [
                     'label'  => 'Commandes',
                     'icon'   => 'receipt',
@@ -753,36 +763,44 @@ class Navigation
                 ];
             }
             if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
-                $tabs[] = [
-                    'label'  => 'Menus',
-                    'icon'   => 'book',
-                    'url'    => route('restaurant.menus.index'),
-                    'active' => request()->routeIs('restaurant.menus.*'),
-                ];
-                $tabs[] = [
-                    'label'  => 'P\'tits déj',
-                    'icon'   => 'coffee',
-                    'url'    => route('restaurant.breakfast.index'),
-                    'active' => request()->routeIs('restaurant.breakfast.*'),
-                ];
+                if ($droits->allows($user, 'restaurant.menus.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Menus',
+                        'icon'   => 'book',
+                        'url'    => route('restaurant.menus.index'),
+                        'active' => request()->routeIs('restaurant.menus.*'),
+                    ];
+                }
+                if ($droits->allows($user, 'restaurant.breakfast.voir')) {
+                    $tabs[] = [
+                        'label'  => 'P\'tits déj',
+                        'icon'   => 'coffee',
+                        'url'    => route('restaurant.breakfast.index'),
+                        'active' => request()->routeIs('restaurant.breakfast.*'),
+                    ];
+                }
             }
             if ($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR) && $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
-                $tabs[] = [
-                    'label'  => 'Bar',
-                    'icon'   => 'glass-water',
-                    'url'    => route('restaurant.bar.index'),
-                    'active' => request()->routeIs('restaurant.bar.*'),
-                ];
+                if ($droits->allows($user, 'restaurant.bar.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Bar',
+                        'icon'   => 'glass-water',
+                        'url'    => route('restaurant.bar.index'),
+                        'active' => request()->routeIs('restaurant.bar.*'),
+                    ];
+                }
             }
             if ($serviceOffert(\App\Models\PointOfSale::SERVICE_CUISINE) && $user->exerce(['restaurant_chief', 'restaurant_cook'])) {
-                $tabs[] = [
-                    'label'  => 'Cuisine',
-                    'icon'   => 'cooking-pot',
-                    'url'    => route('restaurant.kitchen.index'),
-                    'active' => request()->routeIs('restaurant.kitchen.*'),
-                ];
+                if ($droits->allows($user, 'restaurant.kitchen.voir')) {
+                    $tabs[] = [
+                        'label'  => 'Cuisine',
+                        'icon'   => 'cooking-pot',
+                        'url'    => route('restaurant.kitchen.index'),
+                        'active' => request()->routeIs('restaurant.kitchen.*'),
+                    ];
+                }
             }
-            if ($user->exerce(['cashier', 'restaurant_chief', 'manager'])) {
+            if ($user->exerce(['cashier', 'restaurant_chief', 'manager']) && $droits->allows($user, 'restaurant.cash_register.voir')) {
                 $tabs[] = [
                     'label'  => 'Caisse',
                     'icon'   => 'calculator',
@@ -892,9 +910,10 @@ class Navigation
         }
 
         $tabs = [];
+        $droits = app(PermissionResolver::class);
 
         if ($groupId === 'gestion') {
-            if (!auth()->check() || $user->hasModuleAccess('clients')) {
+            if ((!auth()->check() || $user->hasModuleAccess('clients')) && $droits->allows($user, 'customers.voir')) {
                 $tabs[] = [
                     'route'  => 'customers.index',
                     'label'  => 'Clients',
@@ -903,7 +922,7 @@ class Navigation
                 ];
             }
             if ($user->isAdmin() || $user->exerce(['manager'])) {
-                if (!auth()->check() || $user->hasModuleAccess('utilisateurs')) {
+                if ((!auth()->check() || $user->hasModuleAccess('utilisateurs')) && $droits->allows($user, 'users.voir')) {
                     $tabs[] = [
                         'route'  => 'users.index',
                         'label'  => 'Utilisateurs',
@@ -913,7 +932,7 @@ class Navigation
                 }
             }
         } elseif ($groupId === 'shop') {
-            if ($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) {
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) && $droits->allows($user, 'shop.products.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.products.index',
                     'label'  => 'Articles',
@@ -921,13 +940,15 @@ class Navigation
                     'active' => request()->routeIs('shop.products.*'),
                 ];
             }
-            $tabs[] = [
-                'route'  => 'shop.orders.index',
-                'label'  => 'Commandes',
-                'icon'   => 'shopping-cart',
-                'active' => request()->routeIs('shop.orders.*'),
-            ];
-            if ($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) {
+            if ($droits->allows($user, 'shop.orders.voir')) {
+                $tabs[] = [
+                    'route'  => 'shop.orders.index',
+                    'label'  => 'Commandes',
+                    'icon'   => 'shopping-cart',
+                    'active' => request()->routeIs('shop.orders.*'),
+                ];
+            }
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) && $droits->allows($user, 'shop.cash_register.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.cash_register.index',
                     'label'  => 'Compta Boutique',
@@ -937,7 +958,6 @@ class Navigation
             }
             // La boutique adresse ses demandes à l'économat depuis chez elle.
             if (self::groupeDesDemandes($user) === 'shop') {
-                $droits = app(PermissionResolver::class);
                 if ($droits->allows($user, 'economat.requisitions.voir')) {
                     $tabs[] = [
                         'route'  => 'economat.requisitions.index',
@@ -958,30 +978,38 @@ class Navigation
                 }
             }
         } elseif ($groupId === 'admin') {
-            $tabs[] = [
-                'route'  => 'droits.index',
-                'label'  => 'Rôles & droits',
-                'icon'   => 'shield-check',
-                'active' => request()->routeIs('droits.*'),
-            ];
-            $tabs[] = [
-                'route'  => 'interventions.index',
-                'label'  => 'Interventions',
-                'icon'   => 'siren',
-                'active' => request()->routeIs('interventions.*'),
-            ];
-            $tabs[] = [
-                'route'  => 'audit.index',
-                'label'  => 'Journal d’audit',
-                'icon'   => 'scroll-text',
-                'active' => request()->routeIs('audit.*'),
-            ];
-            $tabs[] = [
-                'route'  => 'support.sessions.index',
-                'label'  => 'Sessions support',
-                'icon'   => 'life-buoy',
-                'active' => request()->routeIs('support.sessions.*'),
-            ];
+            if ($droits->allows($user, 'droits.voir')) {
+                $tabs[] = [
+                    'route'  => 'droits.index',
+                    'label'  => 'Rôles & droits',
+                    'icon'   => 'shield-check',
+                    'active' => request()->routeIs('droits.*'),
+                ];
+            }
+            if ($droits->allows($user, 'interventions.voir')) {
+                $tabs[] = [
+                    'route'  => 'interventions.index',
+                    'label'  => 'Interventions',
+                    'icon'   => 'siren',
+                    'active' => request()->routeIs('interventions.*'),
+                ];
+            }
+            if ($droits->allows($user, 'audit.voir')) {
+                $tabs[] = [
+                    'route'  => 'audit.index',
+                    'label'  => 'Journal d’audit',
+                    'icon'   => 'scroll-text',
+                    'active' => request()->routeIs('audit.*'),
+                ];
+            }
+            if ($droits->allows($user, 'support.sessions.voir')) {
+                $tabs[] = [
+                    'route'  => 'support.sessions.index',
+                    'label'  => 'Sessions support',
+                    'icon'   => 'life-buoy',
+                    'active' => request()->routeIs('support.sessions.*'),
+                ];
+            }
         }
 
         return $tabs;

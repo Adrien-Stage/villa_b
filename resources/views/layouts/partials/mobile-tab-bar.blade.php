@@ -1,4 +1,4 @@
-@props(['tabs' => []])
+@props(['tabs' => [], 'hasSidebar' => false])
 
 @if(!empty($tabs))
 <nav aria-label="Navigation mobile"
@@ -25,6 +25,7 @@
             @endif
         @endforeach
 
+        @if($hasSidebar)
         {{-- Bouton d'accès au menu complet de la barre latérale --}}
         <button type="button"
                 onclick="openMobileSidebar()"
@@ -34,6 +35,7 @@
                 class="w-10 h-10 min-w-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0 select-none">
             <i data-lucide="menu" class="w-4 h-4 stroke-[1.8]"></i>
         </button>
+        @endif
     </div>
 </nav>
 @endif

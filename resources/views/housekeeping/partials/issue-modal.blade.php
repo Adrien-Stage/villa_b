@@ -4,6 +4,19 @@
     si l'incident est un problème technique (bascule automatique en maintenance)
     ou un besoin interne au service des étages (savon, linge, consommables, etc.).
 --}}
+<script>
+window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defaultType) {
+    window.dispatchEvent(new CustomEvent('open-issue-modal', {
+        detail: {
+            roomId: roomId,
+            roomNumber: String(roomNumber),
+            actionUrl: actionUrl,
+            defaultType: defaultType || 'interne'
+        }
+    }));
+};
+</script>
+
 <div x-data="{
         open: false,
         roomId: null,
@@ -14,6 +27,7 @@
         priority: 'high',
         notes: '',
         openModal(detail) {
+            if (!detail) return;
             this.roomId = detail.roomId;
             this.roomNumber = detail.roomNumber;
             this.actionUrl = detail.actionUrl;
@@ -23,7 +37,8 @@
             this.notes = '';
             this.open = true;
             this.$nextTick(() => {
-                if (window.lucide) window.lucide.createIcons();
+                if (window.refreshLucideIcons) window.refreshLucideIcons();
+                else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                 if (this.$refs.notesField) this.$refs.notesField.focus();
             });
         },
@@ -69,8 +84,8 @@
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center"
                              :class="issueType === 'technique' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'">
-                            <i data-lucide="alert-triangle" class="w-5 h-5" x-show="issueType === 'technique'"></i>
-                            <i data-lucide="sparkles" class="w-5 h-5" x-show="issueType === 'interne'"></i>
+                            <span x-show="issueType === 'technique'"><i data-lucide="alert-triangle" class="w-5 h-5"></i></span>
+                            <span x-show="issueType === 'interne'"><i data-lucide="sparkles" class="w-5 h-5"></i></span>
                         </div>
                         <div>
                             <h3 class="font-heading font-bold text-primary text-base" id="modal-title">

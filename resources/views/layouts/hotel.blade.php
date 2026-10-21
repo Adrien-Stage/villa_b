@@ -407,8 +407,12 @@
                             @pour('manager','housekeeping_leader','housekeeping_supervisor','housekeeping_staff','housekeeping')
                                 @module('housekeeping')
                                     <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
-                                    <x-sidebar-link route="housekeeping.journal.index" icon="list-checks">Suivi des chambres</x-sidebar-link>
-                                    <x-sidebar-link route="housekeeping.minibar.index" icon="wine">Mini-bars</x-sidebar-link>
+                                    @droit('housekeeping.journal.voir')
+                                        <x-sidebar-link route="housekeeping.journal.index" icon="list-checks">Suivi des chambres</x-sidebar-link>
+                                    @enddroit
+                                    @droit('housekeeping.minibar.voir')
+                                        <x-sidebar-link route="housekeeping.minibar.index" icon="wine">Mini-bars</x-sidebar-link>
+                                    @enddroit
                                 @endmodule
                             @endpour
 
@@ -800,13 +804,11 @@
 
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
         <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between gap-2 flex-shrink-0 print:hidden">
-            <div class="flex min-w-0 items-center gap-2 sm:gap-3">
-                {{-- Menu de l'application, sur petit écran seulement : sur grand
-                     écran la barre latérale est déjà là, et une page sans barre
-                     latérale n'a rien à ouvrir (la grille mène aux applications). --}}
+            <div class="hidden md:flex min-w-0 items-center gap-2 sm:gap-3">
+                {{-- Menu de l'application, sur tablette seulement (sur mobile, accessible via la tab bar flottante ; sur grand écran la barre latérale est déjà là) --}}
                 @if($hasSidebar)
                     <button type="button" onclick="openMobileSidebar()" aria-controls="mobile-sidebar" aria-label="Ouvrir le menu"
-                            class="inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary">
+                            class="hidden md:inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -831,25 +833,25 @@
                     </svg>
                 </button>
 
-                {{-- Bouton universel Applications (Grille 3x3) --}}
+                {{-- Bouton universel Applications (Grille 3x3) sur grand écran --}}
                 <a href="{{ route('dashboard') }}"
                    title="Toutes les applications"
-                   class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary hover:bg-accent/30 transition-all shadow-xs"
+                   class="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary hover:bg-accent/30 transition-all shadow-xs"
                    aria-label="Applications">
                     <i data-lucide="layout-grid" class="w-5 h-5"></i>
                 </a>
 
                 @if($activeGroup)
-                    <div class="flex min-w-0 items-center gap-2 text-xs">
+                    <div class="hidden md:flex min-w-0 items-center gap-2 text-xs">
                         <a href="{{ $activeGroup['url'] ?? '#' }}" class="font-bold text-primary/70 hover:text-primary transition hidden sm:inline">{{ $activeGroup['title'] }}</a>
                         <span class="text-primary/30 hidden sm:inline">/</span>
                         <p class="min-w-0 text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                     </div>
                 @else
-                    <p class="text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
+                    <p class="hidden md:block text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                 @endif
             </div>
-            <div class="flex items-center gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-4 ml-auto">
                 {{-- Bouton d'activation des notifications push (visible tant que la
                      permission n'est pas accordée). Requiert un geste utilisateur. --}}
                 <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
@@ -1252,7 +1254,7 @@
     {{-- <x-ai-assistant /> --}}
 
     {{-- Barre de navigation mobile flottante (Style Tab Bar / Dock) --}}
-    @include('layouts.partials.mobile-tab-bar', ['tabs' => $mobileTabs])
+    @include('layouts.partials.mobile-tab-bar', ['tabs' => $mobileTabs, 'hasSidebar' => $hasSidebar])
 
     <!-- Notification Container -->
     <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
