@@ -238,7 +238,16 @@ class MaintenanceService
     /** Les dépôts du service technique, d'où sortent les pièces. */
     public static function depotsTechniques(): Collection
     {
-        return ServiceStore::query()->active()->where('department', 'technique')->orderBy('sort_order')->orderBy('name')->get();
+        $depots = ServiceStore::query()->active()->where('department', 'technique')->orderBy('sort_order')->orderBy('name')->get();
+        if ($depots->isEmpty()) {
+            $depot = ServiceStore::firstOrCreate(
+                ['department' => 'technique', 'name' => 'Dépôt Maintenance & Technique'],
+                ['is_active' => true, 'sort_order' => 1]
+            );
+            return collect([$depot]);
+        }
+
+        return $depots;
     }
 
     /**
@@ -247,7 +256,7 @@ class MaintenanceService
      *
      * @param  array<int, float>  $pieces  [stock_item_id => quantité]
      */
-    public function employerPieces(MaintenanceRequest $demande, ServiceStore $depot, array $pieces, User $par): Collection
+    public function employerPieces(MaintenanceRequest $demande, ServiceStore $depot, array $pieces, User $par, ?string $motif = null): Collection
     {
         if (!$demande->isActive()) {
             throw new RuntimeException("La demande {$demande->reference} n'est plus en cours.");
@@ -261,18 +270,33 @@ class MaintenanceService
             throw new RuntimeException('Indiquez au moins une pièce et sa quantité.');
         }
 
-        return DB::transaction(function () use ($demande, $depot, $pieces, $par) {
+        return DB::transaction(function () use ($demande, $depot, $pieces, $par, $motif) {
             $articles = StockItem::query()->whereKey(array_keys($pieces))->get()->keyBy('id');
             $sorties = collect();
+            $detailMotif = $motif ? " — {$motif}" : '';
 
             foreach ($pieces as $id => $quantite) {
                 $article = $articles->get($id) ?? throw new RuntimeException('Pièce introuvable.');
-                $sorties->push($this->depots->issue($depot, $article, (float) $quantite, ServiceStoreMovement::SOURCE_INTERVENTION, $demande->id,
-                    "Intervention {$demande->reference} — {$demande->lieu()}"));
+                $sorties->push($this->depots->issue(
+                    $depot,
+                    $article,
+                    (float) $quantite,
+                    ServiceStoreMovement::SOURCE_INTERVENTION,
+                    $demande->id,
+                    "Intervention {$demande->reference} — {$demande->lieu()}{$detailMotif}"
+                ));
             }
 
-            $this->noter($demande, 'parts', $sorties->map(fn ($m) => rtrim(rtrim(number_format(abs((float) $m->quantity), 3, ',', ' '), '0'), ',')
-                . ' ' . $articles[$m->stock_item_id]->unit . ' ' . $articles[$m->stock_item_id]->name)->implode(', '), $par);
+            $resumePieces = $sorties->map(fn ($m) => rtrim(rtrim(number_format(abs((float) $m->quantity), 3, ',', ' '), '0'), ',')
+                . ' ' . $articles[$m->stock_item_id]->unit . ' ' . $articles[$m->stock_item_id]->name)->implode(', ');
+
+            $estResp = $par->exerce(self::RESPONSABLES) || $par->isAdmin() || $par->exerce(['manager']);
+            $note = ($estResp ? "Matériel délivré par {$par->name} : " : 'Pièces employées : ') . $resumePieces;
+            if ($motif) {
+                $note .= " (Motif : {$motif})";
+            }
+
+            $this->noter($demande, 'parts', $note, $par);
 
             return $sorties;
         });
@@ -280,25 +304,62 @@ class MaintenanceService
 
     // ── Soumettre fiche, viser, terminer, rouvrir, annuler ───────────────────
 
-    /** Le technicien renseigne ses travaux et pièces, et remonte la fiche au responsable pour visa. */
-    public function soumettreFiche(MaintenanceRequest $demande, string $compteRendu, User $technicien, ?ServiceStore $depot = null, ?array $pieces = null): MaintenanceRequest
+    /** Le technicien renseigne la fiche d'intervention complète et ses pièces, et la remonte au responsable pour visa. */
+    public function soumettreFiche(MaintenanceRequest $demande, array|string $fiche, User $technicien, ?ServiceStore $depot = null, ?array $pieces = null): MaintenanceRequest
     {
-        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_OPEN, MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
         }
 
-        DB::transaction(function () use ($demande, $compteRendu, $technicien, $depot, $pieces) {
+        $donneesFiche = is_array($fiche) ? $fiche : [
+            'diagnostic'       => null,
+            'travaux_realises' => $fiche,
+            'resultat'         => MaintenanceRequest::RESULTAT_RESOLU,
+            'recommandations'  => null,
+        ];
+
+        $diagnostic = trim((string) ($donneesFiche['diagnostic'] ?? ''));
+        $travaux = trim((string) ($donneesFiche['travaux_realises'] ?? ($donneesFiche['resolution'] ?? '')));
+        $resultat = (string) ($donneesFiche['resultat'] ?? MaintenanceRequest::RESULTAT_RESOLU);
+        $recommandations = trim((string) ($donneesFiche['recommandations'] ?? ''));
+
+        if (empty($travaux) && empty($diagnostic)) {
+            throw new RuntimeException("La fiche d'intervention doit contenir le détail des travaux réalisés.");
+        }
+
+        // Consolidation pour la compatibilité avec $demande->resolution
+        $sections = [];
+        if ($diagnostic !== '') {
+            $sections[] = "Diagnostic & Cause :\n" . $diagnostic;
+        }
+        if ($travaux !== '') {
+            $sections[] = "Travaux réalisés :\n" . $travaux;
+        }
+        $resultatLibelle = MaintenanceRequest::RESULTATS[$resultat] ?? $resultat;
+        $sections[] = "Résultat : " . $resultatLibelle;
+        if ($recommandations !== '') {
+            $sections[] = "Recommandations préventives :\n" . $recommandations;
+        }
+        $compteRendu = implode("\n\n", $sections);
+
+        DB::transaction(function () use ($demande, $diagnostic, $travaux, $resultat, $resultatLibelle, $recommandations, $compteRendu, $technicien, $depot, $pieces) {
             if ($depot && !empty($pieces)) {
                 $this->employerPieces($demande, $depot, $pieces, $technicien);
             }
 
             $demande->update([
-                'status'     => MaintenanceRequest::STATUS_SUBMITTED,
-                'started_at' => $demande->started_at ?? now(),
-                'resolution' => $compteRendu,
+                'status'           => MaintenanceRequest::STATUS_SUBMITTED,
+                'started_at'       => $demande->started_at ?? now(),
+                'diagnostic'       => $diagnostic ?: null,
+                'travaux_realises' => $travaux,
+                'resultat'         => $resultat,
+                'recommandations'  => $recommandations ?: null,
+                'resolution'       => $compteRendu,
+                'fiche_soumise_by' => $technicien->id,
+                'fiche_soumise_at' => now(),
             ]);
 
-            $this->noter($demande, 'submitted', $compteRendu, $technicien);
+            $this->noter($demande, 'submitted', "Fiche d'intervention soumise par {$technicien->name} (Résultat : {$resultatLibelle})\n\n{$travaux}", $technicien);
         });
 
         // Alerte les responsables techniques pour visa
@@ -315,6 +376,10 @@ class MaintenanceService
     {
         if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en état d'être visée.");
+        }
+
+        if (!$demande->aFicheSoumise()) {
+            throw new RuntimeException("La fiche d'intervention doit obligatoirement être renseignée et soumise avant de pouvoir viser et clôturer l'intervention.");
         }
 
         DB::transaction(function () use ($demande, $avisResponsable, $responsable) {
@@ -362,38 +427,29 @@ class MaintenanceService
         return $demande->fresh();
     }
 
-    public function terminer(MaintenanceRequest $demande, string $compteRendu, User $par): MaintenanceRequest
+    public function terminer(MaintenanceRequest $demande, array|string $fiche, User $par): MaintenanceRequest
     {
         if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
         }
 
+        // Si la fiche n'a pas encore été soumise, on exige la soumission de la fiche complète
+        if (!$demande->aFicheSoumise()) {
+            $donneesFiche = is_array($fiche) ? $fiche : ['travaux_realises' => $fiche];
+            if (empty($donneesFiche['travaux_realises']) && empty($donneesFiche['diagnostic'])) {
+                throw new RuntimeException("La fiche d'intervention doit obligatoirement être renseignée et soumise pour clôturer l'intervention.");
+            }
+            $demande = $this->soumettreFiche($demande, $fiche, $par);
+        }
+
         // Si l'utilisateur est le responsable technique ou la direction : visa direct
         if ($par->exerce([...self::RESPONSABLES, 'manager']) || $par->isAdmin()) {
-            DB::transaction(function () use ($demande, $compteRendu, $par) {
-                $demande->update([
-                    'status'       => MaintenanceRequest::STATUS_DONE,
-                    'started_at'   => $demande->started_at ?? now(),
-                    'completed_at' => now(),
-                    'completed_by' => $par->id,
-                    'resolution'   => $compteRendu ?: $demande->resolution,
-                ]);
-                $this->noter($demande, 'completed', $compteRendu ?: $demande->resolution, $par);
-                $this->libererChambre($demande, "Intervention {$demande->reference} terminée", $par);
-            });
-
-            $destinataires = collect([$demande->requester, $demande->technician])->filter()->unique('id');
-            $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $par->id), new Avis($demande->fresh(), Avis::COMPLETED, $compteRendu));
-
-            if ($demande->source === MaintenanceRequest::SOURCE_HOUSEKEEPING) {
-                $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande->fresh(), Avis::COMPLETED, $compteRendu), $par->id);
-            }
-
-            return $demande->fresh();
+            $avis = is_array($fiche) ? ($fiche['note_responsable'] ?? null) : null;
+            return $this->viserEtCloturer($demande, $avis, $par);
         }
 
         // Sinon (technicien opérationnel) : c'est une soumission de fiche au responsable
-        return $this->soumettreFiche($demande, $compteRendu, $par);
+        return $demande;
     }
 
     public function rouvrir(MaintenanceRequest $demande, string $motif, User $par): MaintenanceRequest
