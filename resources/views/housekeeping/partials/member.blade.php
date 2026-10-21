@@ -8,6 +8,7 @@
     ];
 @endphp
 
+<div x-data class="space-y-6">
 <div class="flex items-center justify-between gap-3 mb-6">
     <div>
         <h1 class="font-heading text-xl sm:text-2xl font-semibold text-primary">Mon espace housekeeping</h1>
@@ -134,3 +135,5 @@
         @endif
     </div>
 @endif
+</div>
+

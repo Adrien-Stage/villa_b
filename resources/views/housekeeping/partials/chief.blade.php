@@ -344,6 +344,7 @@
                                 </form>
                                 @endif
                                 <button type="button"
+                                        onclick="window.openHousekeepingIssueModal({{ $room->id }}, '{{ addslashes($room->number) }}', '{{ route('housekeeping.issue', $room) }}')"
                                         @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
                                         class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
                                         title="Signaler un problème">
