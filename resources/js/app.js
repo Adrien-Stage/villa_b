@@ -2,12 +2,16 @@ import './bootstrap';
 import './reglages';
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
+import articlePicker from './article-picker';
 
 window.Alpine = Alpine;
 
 window.refreshLucideIcons = () => createIcons({ icons });
 
 document.addEventListener('alpine:init', () => {
+    // Choix d'un article par sa saisie (x-article-picker).
+    Alpine.data('articlePicker', articlePicker);
+
     /*
      * Menu ⋮ des actions d'une ligne de tableau (x-table.actions).
      *

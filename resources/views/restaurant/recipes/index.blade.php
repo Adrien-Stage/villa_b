@@ -316,41 +316,25 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div x-show="form.type === 'dish'">
                             <label class="block text-xs font-medium text-primary/70 mb-1">Plat du menu *</label>
-                            <select name="restaurant_menu_item_id" x-model="form.restaurant_menu_item_id"
-                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                <option value="">— Choisir —</option>
-                                @foreach($availableMenuItems as $menuItem)
-                                    <option value="{{ $menuItem->id }}">{{ $menuItem->name }} ({{ number_format($menuItem->price / 100, 0, ',', ' ') }} FCFA)</option>
-                                @endforeach
-                                {{-- Le plat déjà rattaché à la fiche en cours d'édition --}}
-                                @foreach($dishes as $dish)
-                                    @if($dish->menuItem)
-                                        <option value="{{ $dish->menuItem->id }}"
-                                            x-show="editing && String(form.restaurant_menu_item_id) === '{{ $dish->menuItem->id }}'">
-                                            {{ $dish->menuItem->name }} ({{ number_format($dish->menuItem->price / 100, 0, ',', ' ') }} FCFA)
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            @php
+                                $platsLibres = $availableMenuItems->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'prix' => number_format($m->price / 100, 0, ',', ' ') . ' FCFA'])->values()->all();
+                                $platsLies = $dishes->filter(fn ($d) => $d->menuItem)->map(fn ($d) => ['id' => $d->menuItem->id, 'name' => $d->menuItem->name, 'prix' => number_format($d->menuItem->price / 100, 0, ',', ' ') . ' FCFA'])->values()->all();
+                            @endphp
+                            {{-- Les plats sans fiche, plus celui de la fiche en cours d'édition. --}}
+                            <x-article-picker name="restaurant_menu_item_id" model="form.restaurant_menu_item_id"
+                                :source="'[...' . \Illuminate\Support\Js::from($platsLibres) . ', ...' . \Illuminate\Support\Js::from($platsLies) . '.filter((m) => editing && String(m.id) === String(form.restaurant_menu_item_id))]'"
+                                placeholder="Tapez le nom du plat…" detail="m => m.prix" />
                         </div>
 
                         <div x-show="form.type === 'prep'" style="display: none;">
                             <label class="block text-xs font-medium text-primary/70 mb-1">Article fabriqué *</label>
-                            <select name="produces_pantry_item_id" x-model="form.produces_pantry_item_id"
-                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary">
-                                <option value="">— Choisir —</option>
-                                @foreach($availablePreparedItems as $prepared)
-                                    <option value="{{ $prepared->id }}">{{ $prepared->name }} ({{ $prepared->unit }})</option>
-                                @endforeach
-                                @foreach($preparations as $prep)
-                                    @if($prep->producedItem)
-                                        <option value="{{ $prep->producedItem->id }}"
-                                            x-show="editing && String(form.produces_pantry_item_id) === '{{ $prep->producedItem->id }}'">
-                                            {{ $prep->producedItem->name }} ({{ $prep->producedItem->unit }})
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            @php
+                                $prepsLibres = $availablePreparedItems->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'unit' => $p->unit])->values()->all();
+                                $prepsLiees = $preparations->filter(fn ($p) => $p->producedItem)->map(fn ($p) => ['id' => $p->producedItem->id, 'name' => $p->producedItem->name, 'unit' => $p->producedItem->unit])->values()->all();
+                            @endphp
+                            <x-article-picker name="produces_pantry_item_id" model="form.produces_pantry_item_id"
+                                :source="'[...' . \Illuminate\Support\Js::from($prepsLibres) . ', ...' . \Illuminate\Support\Js::from($prepsLiees) . '.filter((p) => editing && String(p.id) === String(form.produces_pantry_item_id))]'"
+                                placeholder="Tapez le nom de la préparation…" />
                             <p class="text-[11px] text-primary/40 mt-1">
                                 L'article doit être marqué « fabriqué en cuisine » dans le garde-manger.
                             </p>
@@ -394,14 +378,9 @@
                             <template x-for="(line, index) in form.lines" :key="index">
                                 <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-2 px-3 py-2 items-center border-b border-secondary/10 last:border-0">
                                     <div class="col-span-4">
-                                        <select :name="`lines[${index}][restaurant_pantry_item_id]`" x-model="line.restaurant_pantry_item_id" required
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2 text-primary">
-                                            <option value="">— Choisir —</option>
-                                            <template x-for="item in catalog" :key="item.id">
-                                                <option :value="item.id"
-                                                    x-text="item.name + (item.prepared ? ' (préparation)' : '') + ' · ' + item.unit"></option>
-                                            </template>
-                                        </select>
+                                        <x-article-picker source="catalog" model="line.restaurant_pantry_item_id" name-bind="`lines[${index}][restaurant_pantry_item_id]`" size="sm" required
+                                            aria-label="Ingrédient" placeholder="Tapez un ingrédient…"
+                                            detail="item => (item.prepared ? 'Préparation · ' : '') + item.unit" />
                                     </div>
                                     <div class="col-span-2">
                                         <div class="relative">

@@ -93,7 +93,8 @@ function articlesPlomberie(): array
 }
 
 test("l'export d'un magasin donne un classeur complet : listes, formules de stock, mouvements numérotés", function () {
-    $tuyau = StockItem::create(['name' => 'Tuyau PVC 32', 'reference' => 'PVC32', 'unit' => 'pièce', 'min_stock' => 5]);
+    $plomberie = \App\Models\StockCategory::create(['name' => 'Plomberie']);
+    $tuyau = StockItem::create(['name' => 'Tuyau PVC 32', 'reference' => 'PVC32', 'unit' => 'pièce', 'min_stock' => 5, 'stock_category_id' => $plomberie->id]);
     app(StockService::class)->recordIn($tuyau, 12, 150_000);
 
     $reponse = $this->get(route('economat.classeur.export'))->assertOk();
@@ -119,6 +120,14 @@ test("l'export d'un magasin donne un classeur complet : listes, formules de stoc
         ->and($mouvements->getCell('D5')->getCalculatedValue())->toBe('Tuyau PVC 32')
         ->and($mouvements->getCell('I5')->getCalculatedValue())->toEqual(12)
         ->and($mouvements->getDataValidation('F5:F' . $mouvements->getHighestRow())->getFormula1())->toContain(C::ONGLET_LISTES);
+
+    // La synthèse lit les catégories par INDEX : supprimer une ligne de
+    // l'onglet Catégories ne la casse pas en #REF!.
+    $synthese = $classeur->getSheetByName(C::ONGLET_SYNTHESE);
+    expect($synthese->getCell('A5')->getValue())->toContain('INDEX(')->not->toContain("'!A5")
+        ->and($synthese->getCell('A5')->getCalculatedValue())->toBe('Plomberie')
+        ->and($synthese->getCell('B5')->getCalculatedValue())->toEqual(1)
+        ->and($synthese->getCell('A6')->getCalculatedValue())->toBe('');
 });
 
 test("vers le magasin central : l'aperçu n'écrit rien, la confirmation enregistre articles et mouvements", function () {

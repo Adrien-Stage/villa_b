@@ -7,6 +7,7 @@
     $articlesJson = $items->map(fn ($i) => [
         'id'    => $i->id,
         'name'  => $i->name,
+        'reference' => $i->reference,
         'unit'  => $i->unit ?: 'pièce',
         // Dernier prix payé, sinon coût moyen : une proposition, modifiable.
         'price' => (int) round(($i->last_purchase_price ?: $i->average_cost) / 100),
@@ -159,13 +160,8 @@
                                     @endif
                                 </div>
                                 <template x-if="!ligne.nouveau">
-                                    <select :id="'article-' + ligne.key" :name="`lines[${idx}][stock_item_id]`" x-model.number="ligne.itemId" @change="choisir(ligne)" required
-                                        class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                        <option value="">Choisir un article…</option>
-                                        <template x-for="a in articles" :key="a.id">
-                                            <option :value="a.id" x-text="a.name + ' (' + a.unit + ')'" :selected="a.id === ligne.itemId"></option>
-                                        </template>
-                                    </select>
+                                    <x-article-picker source="articles" model="ligne.itemId" name-bind="`lines[${idx}][stock_item_id]`" id-bind="'article-' + ligne.key" size="sm" required
+                                        on-select="choisir(ligne)" />
                                 </template>
                                 <template x-if="ligne.nouveau">
                                     <div class="grid grid-cols-6 gap-2">

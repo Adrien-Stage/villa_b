@@ -510,18 +510,11 @@
                         {{-- Sélecteur d'article rapide --}}
                         <div class="bg-gray-50 border border-secondary/20 p-3.5 rounded-xl">
                             <label class="block text-xs font-semibold text-primary mb-1.5">Ajouter un article à ce fournisseur</label>
-                            <div class="flex gap-2">
-                                <select x-model="selectedItemIdToAdd" class="flex-1 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                    <option value="">-- Choisir un article dans le magasin --</option>
-                                    <template x-for="item in availableItemsForSelect" :key="item.id">
-                                        <option :value="item.id" x-text="`${item.name} (${item.category_name}) - Réf: ${item.reference || 'N/A'}`"></option>
-                                    </template>
-                                </select>
-                                <button type="button" @click="addItemToSupplier()" :disabled="!selectedItemIdToAdd"
-                                    class="px-4 py-2 bg-purple-700 text-white text-sm font-semibold rounded-lg hover:bg-purple-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5">
-                                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Associer
-                                </button>
-                            </div>
+                            {{-- Choisir un article l'associe aussitôt au fournisseur. --}}
+                            <x-article-picker source="availableItemsForSelect" model="selectedItemIdToAdd"
+                                on-select="$event.detail.article && addItemToSupplier()"
+                                placeholder="Tapez le nom ou la référence d’un article du magasin…"
+                                detail="item => [item.category_name, item.reference ? 'Réf. ' + item.reference : null].filter(Boolean).join(' · ')" />
                         </div>
 
                         {{-- Liste des articles associés --}}

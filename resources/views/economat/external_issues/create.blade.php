@@ -85,6 +85,14 @@
                         @endforeach
                     </select>
                 </div>
+                {{-- « Autre » : le motif s'écrit, et le bon l'imprime tel quel. --}}
+                <div x-show="motif === 'autre'" x-cloak>
+                    <label for="motif-precise" class="block text-xs font-semibold text-primary/80 mb-1.5">Précisez le motif <span class="text-red-500">*</span></label>
+                    <input id="motif-precise" type="text" name="reason_other" value="{{ old('reason_other') }}" maxlength="160"
+                           :required="motif === 'autre'" :disabled="motif !== 'autre'"
+                           x-effect="if (motif === 'autre') $nextTick(() => $el.focus())"
+                           placeholder="Ex : matériel prêté pour un tournage" class="{{ $champ }}">
+                </div>
                 <div>
                     <label for="sortie-le" class="block text-xs font-semibold text-primary/80 mb-1.5">Sortie le</label>
                     <input id="sortie-le" type="datetime-local" name="issued_at" value="{{ old('issued_at', now()->format('Y-m-d\TH:i')) }}" max="{{ now()->format('Y-m-d\TH:i') }}" class="{{ $champ }}">
@@ -116,13 +124,9 @@
                     <div class="grid grid-cols-12 gap-2.5 items-end p-3 rounded-lg border border-secondary/20 bg-surface-light/20">
                         <div class="col-span-12 md:col-span-5">
                             <label :for="'article-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Article</label>
-                            <select :id="'article-' + ligne.key" :name="`lines[${idx}][stock_item_id]`" x-model.number="ligne.itemId" @change="ligne.packaging = article(ligne)?.unit || ''" required
-                                    class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                <option value="">Choisir un article…</option>
-                                <template x-for="a in articles" :key="a.id">
-                                    <option :value="a.id" x-text="a.name" :selected="a.id === ligne.itemId"></option>
-                                </template>
-                            </select>
+                            <x-article-picker source="articles" model="ligne.itemId" name-bind="`lines[${idx}][stock_item_id]`" id-bind="'article-' + ligne.key" size="sm" required
+                                on-select="ligne.packaging = article(ligne)?.unit || ''"
+                                detail="a => (a.decompose || (a.stock + ' ' + a.unit)) + ' en stock'" />
                         </div>
                         <div class="col-span-4 md:col-span-2">
                             <label :for="'qte-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Quantité</label>

@@ -71,6 +71,7 @@ class ExternalIssueController extends Controller
     {
         $data = $request->validate([
             'reason'                   => ['required', Rule::in(array_keys(ExternalIssue::REASONS))],
+            'reason_other'             => ['nullable', 'required_if:reason,' . ExternalIssue::REASON_AUTRE, 'string', 'max:160'],
             'issued_at'                => ['nullable', 'date', 'before_or_equal:now'],
             'beneficiary_name'         => ['required', 'string', 'max:160'],
             'beneficiary_organisation' => ['nullable', 'string', 'max:160'],
@@ -85,6 +86,7 @@ class ExternalIssueController extends Controller
             'lines.*.notes'            => ['nullable', 'string', 'max:255'],
         ], [
             'reason.required'           => 'Indiquez pourquoi le matériel quitte l\'établissement.',
+            'reason_other.required_if'  => 'Précisez le motif de la sortie.',
             'beneficiary_name.required' => 'Indiquez le nom de la personne qui emporte le matériel : il signe le bon.',
             'lines.required'            => 'Ajoutez au moins un article.',
             'lines.*.quantity.gt'       => 'La quantité doit être positive.',

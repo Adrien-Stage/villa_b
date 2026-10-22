@@ -165,6 +165,40 @@ pagination et le même menu d'actions.
 Les états imprimables, les états comptables (balance, grand livre…) et les grilles de
 saisie gardent leurs propres tableaux : ce ne sont pas des listes.
 
+### Un article se choisit par sa saisie, avec `<x-article-picker>`
+
+Un article (économat, garde-manger, plat de la carte, portion) ne se choisit jamais
+dans un `<select>` : on tape quelques lettres du nom ou de la référence, la liste
+propose ce qui correspond, comme la recherche du client à la réservation. Le
+composant (`resources/views/components/article-picker.blade.php`, logique dans
+`resources/js/article-picker.js`) ignore accents et casse, se pilote au clavier, et
+envoie l'identifiant dans un champ caché. Un texte tapé qui ne désigne aucun article
+bloque l'envoi du formulaire.
+
+```blade
+{{-- Formulaire ordinaire : liste PHP --}}
+<x-article-picker name="stock_item_id" :value="old('stock_item_id', '')" required
+    :items="$articles->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'reference' => $a->reference, 'unit' => $a->unit])" />
+
+{{-- Ligne d'une liste Alpine : liste et valeur tenues par le parent --}}
+<x-article-picker source="items" model="line.itemId" name-bind="`lines[${idx}][stock_item_id]`"
+    size="sm" required on-select="line.packaging = getItemUnit(line.itemId)" />
+```
+
+- `items` (liste PHP) ou `source` (expression Alpine du parent, réévaluée : la liste
+  peut changer avec le fournisseur ou le restaurant choisi).
+- `name` / `name-bind`, `value` / `model` (x-model du parent), `on-select` (joué après
+  le choix, `$event.detail.article`).
+- `libelle` et `detail` : fonctions JS (`a => …`) pour le nom et la ligne grise sous
+  le nom ; par défaut `name` (ou `nom`) et « référence · unité ».
+- Une liste construite en PHP et combinée en JS passe par `:source` et `Js::from()` :
+  `{{ }}` dans un attribut de composant échappe deux fois.
+- La liste est téléportée dans `<body>` : ni une fenêtre modale ni un tableau qui
+  défile ne la coupent.
+
+Une liste courte et fermée (l'article défectueux parmi ceux d'un mini-bar de
+chambre) peut rester un `<select>`.
+
 ### Tout ce qui s'imprime se retrouve dans les Éditions
 
 La rubrique **Éditions** (`/editions`) réunit les registres, situations et journaux de

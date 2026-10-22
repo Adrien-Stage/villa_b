@@ -80,12 +80,8 @@
             @csrf
             <label class="block sm:col-span-2">
                 <span class="block text-xs text-primary/60 mb-1">Article de l'économat</span>
-                <select name="stock_item_id" required class="{{ $champ }}">
-                    <option value="">Choisir…</option>
-                    @foreach($articlesLibres as $item)
-                        <option value="{{ $item->id }}" @selected((int) old('stock_item_id') === $item->id)>{{ $item->name }} ({{ $item->unit }})</option>
-                    @endforeach
-                </select>
+                <x-article-picker name="stock_item_id" :value="old('stock_item_id', '')" required
+                    :items="$articlesLibres->map(fn ($item) => ['id' => $item->id, 'name' => $item->name, 'reference' => $item->reference, 'unit' => $item->unit])->values()->all()" />
             </label>
             <label class="block">
                 <span class="block text-xs text-primary/60 mb-1">Nom sur la note (optionnel)</span>

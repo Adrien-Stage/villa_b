@@ -7,6 +7,7 @@
      x-data="requisitionForm({{ Js::from($items->map(fn($i) => [
          'id'       => $i->id,
          'name'     => $i->name,
+         'reference' => $i->reference,
          'unit'     => $i->unit,
          'stock'    => (float) $i->current_stock,
          'category' => $i->category?->name ?? 'Général',
@@ -124,13 +125,9 @@
                             {{-- Sélection de l'article --}}
                             <div class="col-span-12 md:col-span-6">
                                 <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Désignation de l'article</label>
-                                <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" @change="line.packaging = getItemUnit(line.itemId)" required
-                                    class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                    <option value="">Sélectionner un article...</option>
-                                    <template x-for="it in items" :key="it.id">
-                                        <option :value="it.id" x-text="`[${it.category}] ${it.name} (${it.decompose || (formatStock(it.stock) + ' ' + it.unit)} dispo)`"></option>
-                                    </template>
-                                </select>
+                                <x-article-picker source="items" model="line.itemId" name-bind="`lines[${idx}][stock_item_id]`" size="sm" required
+                                    on-select="line.packaging = getItemUnit(line.itemId)"
+                                    detail="it => `${it.category || 'Sans catégorie'} · ${it.decompose || (formatStock(it.stock) + ' ' + it.unit)} dispo`" />
                             </div>
 
                             {{-- Quantité demandée --}}

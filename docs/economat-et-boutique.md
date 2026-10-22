@@ -173,6 +173,9 @@ L'économe enregistre et valide ces sorties dans **Économat › Sorties hors
   matériel : nom (obligatoire), structure ou qualité, téléphone, pièce d'identité. Sa
   signature est tirée de son nom, comme celle d'un demandeur interne ; l'économe signe
   aussi. Pour un prêt ou une réparation, une date de retour prévue peut être notée.
+- Le motif « Autre » ouvre un champ obligatoire où l'économe écrit le motif
+  (`reason_other`) : le bon, la liste et les éditions l'affichent à la place de
+  « Autre ». Le filtre par motif les range toujours sous « Autre ».
 - La validation sort les articles du stock au coût moyen
   (source `external_issue`), sous le gel d'inventaire comme toute sortie ; chaque ligne
   garde son coût. L'annulation, motivée, les fait revenir au même coût sans toucher au

@@ -33,20 +33,20 @@
             <label for="restaurant_pantry_item_id" class="block text-xs font-semibold text-primary mb-1.5">
                 Ingrédient ou préparation concernée <span class="text-red-500">*</span>
             </label>
-            <select name="restaurant_pantry_item_id" id="restaurant_pantry_item_id" required
-                class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary"
-                onchange="updateItemDetails()">
-                <option value="">-- Sélectionnez un article du garde-manger --</option>
-                @foreach($items as $item)
-                    <option value="{{ $item->id }}"
-                        data-unit="{{ $item->unit }}"
-                        data-stock="{{ (float) $item->current_stock }}"
-                        data-cost="{{ (float) $item->average_cost / 100 }}"
-                        @selected(old('restaurant_pantry_item_id') == $item->id)>
-                        @if(app(\App\Services\RestaurantContext::class)->vueEnsemble(auth()->user()) && $item->pointOfSale){{ $item->pointOfSale->name }} — @endif{{ $item->name }} (Stock actuel: {{ rtrim(rtrim(number_format((float) $item->current_stock, 3, ',', ' '), '0'), ',') }} {{ $item->unit }} — Coût moy: {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA/{{ $item->unit }})
-                    </option>
-                @endforeach
-            </select>
+            @php
+                $vueEnsemble = app(\App\Services\RestaurantContext::class)->vueEnsemble(auth()->user());
+                $articlesRebut = $items->map(fn ($item) => [
+                    'id'    => $item->id,
+                    'name'  => ($vueEnsemble && $item->pointOfSale ? $item->pointOfSale->name . ' — ' : '') . $item->name,
+                    'unit'  => $item->unit,
+                    'stock' => (float) $item->current_stock,
+                    'cost'  => (float) $item->average_cost / 100,
+                ])->values()->all();
+            @endphp
+            <x-article-picker name="restaurant_pantry_item_id" input-id="restaurant_pantry_item_id" :value="old('restaurant_pantry_item_id', '')" required
+                :items="$articlesRebut" on-select="choisirArticleRebut($event.detail.article)"
+                placeholder="Tapez le nom de l’ingrédient ou de la préparation…"
+                detail="a => 'Stock : ' + String(a.stock).replace('.', ',') + ' ' + a.unit + ' · coût moyen ' + a.cost.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' FCFA/' + a.unit" />
         </div>
 
         {{-- Quantité mise au rebut --}}
@@ -150,23 +150,22 @@
 </div>
 
 <script>
+// L'article choisi dans le champ de recherche (x-article-picker).
+const articlesRebut = @json($articlesRebut);
+let articleRebut = articlesRebut.find((a) => String(a.id) === @json((string) old('restaurant_pantry_item_id', ''))) || null;
+
+function choisirArticleRebut(article) {
+    articleRebut = article;
+    updateItemDetails();
+}
+
 function updateItemDetails() {
-    const select = document.getElementById('restaurant_pantry_item_id');
-    const opt = select.options[select.selectedIndex];
-    const unitBadge = document.getElementById('unit-badge');
-
-    if (opt && opt.dataset.unit) {
-        unitBadge.textContent = opt.dataset.unit;
-    } else {
-        unitBadge.textContent = 'unité';
-    }
-
+    document.getElementById('unit-badge').textContent = articleRebut?.unit || 'unité';
     calculateValuation();
 }
 
 function calculateValuation() {
-    const select = document.getElementById('restaurant_pantry_item_id');
-    const opt = select.options[select.selectedIndex];
+    const opt = articleRebut ? { dataset: { cost: String(articleRebut.cost), stock: String(articleRebut.stock), unit: articleRebut.unit } } : null;
     const qtyInput = document.getElementById('quantity');
     const costElem = document.getElementById('estimated-cost');
     const stockAfterElem = document.getElementById('stock-after-hint');

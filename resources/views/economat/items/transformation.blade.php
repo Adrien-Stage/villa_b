@@ -184,12 +184,9 @@
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <div class="col-span-12 sm:col-span-5">
                                     <label :for="'portion-' + ligne.cle" class="sr-only">Portion</label>
-                                    <select :id="'portion-' + ligne.cle" :name="`lines[${i}][pantry_item_id]`" x-model="ligne.pantry_item_id" class="{{ $champ }}">
-                                        <option value="">Nouvelle portion…</option>
-                                        <template x-for="p in portionsDu(restaurant)" :key="p.id">
-                                            <option :value="p.id" x-text="p.nom + ' (' + p.unite + ')'" :selected="String(p.id) === String(ligne.pantry_item_id)"></option>
-                                        </template>
-                                    </select>
+                                    {{-- Vide : une nouvelle portion, nommée à côté. --}}
+                                    <x-article-picker source="portionsDu(restaurant)" model="ligne.pantry_item_id" name-bind="`lines[${i}][pantry_item_id]`" id-bind="'portion-' + ligne.cle" size="sm"
+                                        placeholder="Nouvelle portion — ou tapez une portion existante" />
                                 </div>
                                 <div class="col-span-7 sm:col-span-3">
                                     <label :for="'portion-nom-' + ligne.cle" class="sr-only">Nom de la nouvelle portion</label>

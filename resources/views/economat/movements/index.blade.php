@@ -49,12 +49,11 @@
         <div class="flex flex-wrap items-end gap-3">
             <div class="min-w-[14rem] flex-1">
                 <label for="article" class="block text-[11px] font-medium text-primary/50">Article</label>
-                <select name="article" id="article" class="{{ $champ }} w-full">
-                    <option value="">Tous les articles</option>
-                    @foreach($articles as $a)
-                        <option value="{{ $a->id }}" @selected($filtres['article'] === $a->id)>{{ $a->name }}@if($a->reference) ({{ $a->reference }})@endif{{ $a->is_active ? '' : ' — inactif' }}</option>
-                    @endforeach
-                </select>
+                {{-- Vide : tous les articles. --}}
+                <x-article-picker name="article" input-id="article" :value="$filtres['article'] ?? ''" size="sm"
+                    placeholder="Tous les articles — tapez un nom pour filtrer"
+                    :items="$articles->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'reference' => $a->reference, 'unit' => $a->unit, 'inactif' => ! $a->is_active])->values()->all()"
+                    detail="a => [a.reference, a.unit, a.inactif ? 'inactif' : null].filter(Boolean).join(' · ')" />
             </div>
             <div>
                 <label for="du" class="block text-[11px] font-medium text-primary/50">Du</label>
