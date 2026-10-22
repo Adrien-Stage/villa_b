@@ -520,9 +520,15 @@ class ClasseurStockExport
         $nbLignes = 60;
         $premiere = C::PREMIERE_LIGNE;
 
+        // La n-ième catégorie de la liste, lue par INDEX sur toute la plage :
+        // supprimer des lignes de l'onglet Catégories raccourcit la plage sans
+        // casser la formule. Une référence cellule par cellule ('Catégories'!A5)
+        // tournait en #REF! dès qu'on supprimait la ligne qu'elle visait.
+        $categories = $this->plage(C::ONGLET_CATEGORIES, 'A', $plages['listes']);
+
         for ($i = 0; $i < $nbLignes; $i++) {
             $n = $premiere + $i;
-            $source = $this->reference(C::ONGLET_CATEGORIES) . '!A' . ($premiere + $i);
+            $source = "INDEX({$categories},ROWS(\$A\${$premiere}:A{$n}))";
             $ws->setCellValue("A{$n}", "=IF({$source}=\"\",\"\",{$source})");
             $ws->setCellValue("B{$n}", "=IF(A{$n}=\"\",\"\",COUNTIFS({$art('categorie')},A{$n},{$art('reference')},\"<>\"))");
             $ws->setCellValue("C{$n}", "=IF(A{$n}=\"\",\"\",SUMIFS({$art('valeur')},{$art('categorie')},A{$n}))");
