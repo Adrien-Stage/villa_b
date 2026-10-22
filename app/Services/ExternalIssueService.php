@@ -24,7 +24,7 @@ class ExternalIssueService
     }
 
     /**
-     * @param  array{reason: string, issued_at?: ?string, beneficiary_name: string, beneficiary_organisation?: ?string,
+     * @param  array{reason: string, reason_other?: ?string, issued_at?: ?string, beneficiary_name: string, beneficiary_organisation?: ?string,
      *               beneficiary_phone?: ?string, beneficiary_id_document?: ?string, expected_return_at?: ?string,
      *               notes?: ?string, lines: list<array{stock_item_id: int, quantity: float, notes?: ?string}>}  $data
      */
@@ -33,6 +33,9 @@ class ExternalIssueService
         return DB::transaction(function () use ($data, $econome) {
             $sortie = ExternalIssue::create([
                 'reason'                   => $data['reason'],
+                'reason_other'             => $data['reason'] === ExternalIssue::REASON_AUTRE
+                    ? $this->texte($data['reason_other'] ?? null)
+                    : null,
                 'issued_at'                => !empty($data['issued_at']) ? Carbon::parse($data['issued_at']) : now(),
                 'beneficiary_name'         => trim($data['beneficiary_name']),
                 'beneficiary_organisation' => $this->texte($data['beneficiary_organisation'] ?? null),

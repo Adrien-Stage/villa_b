@@ -85,6 +85,14 @@
                         @endforeach
                     </select>
                 </div>
+                {{-- « Autre » : le motif s'écrit, et le bon l'imprime tel quel. --}}
+                <div x-show="motif === 'autre'" x-cloak>
+                    <label for="motif-precise" class="block text-xs font-semibold text-primary/80 mb-1.5">Précisez le motif <span class="text-red-500">*</span></label>
+                    <input id="motif-precise" type="text" name="reason_other" value="{{ old('reason_other') }}" maxlength="160"
+                           :required="motif === 'autre'" :disabled="motif !== 'autre'"
+                           x-effect="if (motif === 'autre') $nextTick(() => $el.focus())"
+                           placeholder="Ex : matériel prêté pour un tournage" class="{{ $champ }}">
+                </div>
                 <div>
                     <label for="sortie-le" class="block text-xs font-semibold text-primary/80 mb-1.5">Sortie le</label>
                     <input id="sortie-le" type="datetime-local" name="issued_at" value="{{ old('issued_at', now()->format('Y-m-d\TH:i')) }}" max="{{ now()->format('Y-m-d\TH:i') }}" class="{{ $champ }}">

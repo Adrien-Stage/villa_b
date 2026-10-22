@@ -114,6 +114,34 @@ test('une sortie impossible ne sort rien : stock insuffisant, nom manquant, inve
         ->and((float) $this->clim->fresh()->current_stock)->toBe(3.0);
 });
 
+test("le motif « Autre » se précise par écrit, et le bon l'affiche à sa place", function () {
+    $this->actingAs(personneEconomat('econome'));
+
+    $this->get(route('economat.external_issues.create'))->assertOk()
+        ->assertSee('name="reason_other"', false)
+        ->assertSee('Précisez le motif');
+
+    // Sans précision, rien ne sort.
+    $this->post(route('economat.external_issues.store'), [
+        'reason' => 'autre', 'reason_other' => '   ', 'beneficiary_name' => 'Studio Lumière',
+        'lines'  => [['stock_item_id' => $this->chaises->id, 'quantity' => 4]],
+    ])->assertSessionHasErrors(['reason_other' => 'Précisez le motif de la sortie.']);
+    expect(ExternalIssue::count())->toBe(0);
+
+    $sortie = sortieDeChaises($this, ['reason' => 'autre', 'reason_other' => 'Décor pour un tournage', 'expected_return_at' => null]);
+
+    expect($sortie->reason)->toBe('autre')
+        ->and($sortie->reason_other)->toBe('Décor pour un tournage')
+        ->and($sortie->reasonLabel())->toBe('Décor pour un tournage');
+    $this->get(route('economat.external_issues.show', $sortie))->assertSee('Décor pour un tournage');
+    $this->get(route('economat.external_issues.print', $sortie))->assertSee('Décor pour un tournage');
+
+    // Un autre motif ne garde pas de précision envoyée par erreur.
+    $pret = sortieDeChaises($this, ['reason_other' => 'Texte resté dans le champ']);
+    expect($pret->reason_other)->toBeNull()
+        ->and($pret->reasonLabel())->toBe('Prêt');
+});
+
 test("annuler la sortie fait revenir le matériel au même coût, sans toucher au dernier prix d'achat", function () {
     $this->actingAs(personneEconomat('econome'));
     $sortie = sortieDeChaises($this);

@@ -35,11 +35,14 @@ class ExternalIssue extends Model
         'autre'               => 'Autre',
     ];
 
+    /** Motif à préciser par écrit (reason_other). */
+    public const REASON_AUTRE = 'autre';
+
     /** Motifs où le matériel doit revenir : la date de retour prévue a un sens. */
     public const REASONS_AVEC_RETOUR = ['pret', 'reparation'];
 
     protected $fillable = [
-        'number', 'reason', 'status', 'issued_at',
+        'number', 'reason', 'reason_other', 'status', 'issued_at',
         'beneficiary_name', 'beneficiary_organisation', 'beneficiary_phone', 'beneficiary_id_document', 'beneficiary_signature',
         'expected_return_at', 'notes', 'total_value',
         'issued_by', 'issuer_signature',
@@ -105,8 +108,13 @@ class ExternalIssue extends Model
         return $this->status === self::STATUS_CANCELLED;
     }
 
+    /** Le motif « Autre » se lit par sa précision : « Prêt pour un tournage ». */
     public function reasonLabel(): string
     {
+        if ($this->reason === self::REASON_AUTRE && filled($this->reason_other)) {
+            return $this->reason_other;
+        }
+
         return self::REASONS[$this->reason] ?? $this->reason;
     }
 
