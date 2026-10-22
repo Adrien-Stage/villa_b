@@ -121,6 +121,8 @@ Chaque fiche dit ce que le rôle fait, ce qu'il ne fait pas, et ce qu'il faut sa
     réception, housekeeping, chambres, tarifs, prestations et partenaires ;
   - valide ce qui engage l'hôtel : séjours offerts, demandes d'achat ;
   - crée les restaurants, leurs salles et leurs équipes ;
+  - tient, avec le chef économe, la liste des unités de mesure des articles
+    (Paramètres › Économat), employée par tous les services ;
   - gère les comptes du personnel ;
   - consulte tous les autres services.
 - *Ne fait pas* :
@@ -296,7 +298,7 @@ produits et les demandes à l'économat.
 - *Fait* :
   - articles, catégories, fournisseurs ;
   - unités de stockage des articles, dans Paramètres › Économat (le seul onglet des
-    paramètres qu'il règle) ;
+    paramètres qu'il règle, ouvert par la tuile Paramètres) ;
   - bons de commande, envoyés par email ou marqués comme transmis (main propre,
     téléphone, WhatsApp) quand le fournisseur n'a pas d'email ;
   - réception directe d'une marchandise arrivée sans bon de commande, sous un bon

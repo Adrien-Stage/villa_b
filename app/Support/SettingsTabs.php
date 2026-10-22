@@ -38,14 +38,11 @@ class SettingsTabs
         // définit, l'administrateur les règle aussi (configuration).
         'quarts' => ['manager', 'admin'],
         'partners' => ['manager'],
-        // Les unités de stockage des articles : l'économe les tient, la
-        // direction les consulte (les écrire reste un droit de l'économat).
+        // Les unités de mesure des articles, employées dans tout le PMS :
+        // l'économe et la direction les tiennent. L'économat est un module
+        // cœur, toujours actif : il ne figure jamais dans TENANT_MODULES, et
+        // l'onglet ne doit donc pas en dépendre.
         'economat' => ['manager', 'econome'],
-    ];
-
-    /** Onglets d'un module : sans le module, l'onglet n'existe pas. */
-    private const MODULES = [
-        'economat' => 'economat',
     ];
 
     /**
@@ -66,10 +63,6 @@ class SettingsTabs
 
     public static function peutRegler(?User $user, string $onglet): bool
     {
-        if (isset(self::MODULES[$onglet]) && !TenantModules::has(self::MODULES[$onglet])) {
-            return false;
-        }
-
         // Un onglet inconnu relève de la direction seule.
         return $user !== null && $user->exerce(self::ONGLETS[$onglet] ?? ['manager']);
     }

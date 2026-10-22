@@ -251,9 +251,11 @@ le même journal ([`StockMovementJournal`](../app/Services/StockMovementJournal.
 ## Unités de stockage
 
 [`StockUnit`](../app/Models/StockUnit.php) — la liste des unités dans lesquelles
-l'économat compte ses articles (kg, litre, pièce, casier…). L'économe la tient
-dans **Paramètres › Économat** (droits `economat.units.*`) ; la direction la
-consulte.
+l'économat compte ses articles (kg, litre, pièce, casier…). L'économe et la
+direction la tiennent dans **Paramètres › Économat** (droits `economat.units.*`) :
+c'est un référentiel de l'hôtel, employé par tous les services. L'économat est un
+module cœur, toujours actif : l'onglet ne dépend pas de `TENANT_MODULES`, où la
+console ne le liste jamais.
 
 La fiche d'un article, la réception directe, la fiche fournisseur et l'import CSV
 choisissent l'unité dans cette liste au lieu de la taper. L'import ramène « KG » à
