@@ -1356,15 +1356,18 @@
  ],
  "economat.units.destroy": [
   "admin",
-  "econome"
+  "econome",
+  "manager"
  ],
  "economat.units.store": [
   "admin",
-  "econome"
+  "econome",
+  "manager"
  ],
  "economat.units.update": [
   "admin",
-  "econome"
+  "econome",
+  "manager"
  ],
  "editions.export": [
   "accountant",

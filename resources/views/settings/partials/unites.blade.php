@@ -10,9 +10,9 @@
 @endphp
 
 <div class="max-w-3xl">
-    <h2 class="text-lg font-semibold text-primary">Unités de stockage</h2>
+    <h2 class="text-lg font-semibold text-primary">Unités de mesure & de stockage</h2>
     <p class="mt-1 text-sm text-primary/60">
-        Les unités dans lesquelles l'économat compte ses articles : kg, litre, pièce, casier…
+        Les unités de mesure dans lesquelles l'économat et tout l'établissement comptent leurs articles : kg, litre, pièce, casier, portion…
         La fiche d'un article choisit la sienne dans cette liste, comme la réception directe et l'import des articles.
         Renommer une unité renomme aussi celle des articles qui l'emploient.
     </p>
@@ -69,7 +69,7 @@
     @droit('economat.units.creer')
         <form data-reglages method="POST" action="{{ route('economat.units.store') }}" class="mt-6 rounded-xl border border-secondary/20 p-4">
             @csrf
-            <h3 class="text-sm font-semibold text-primary">Ajouter une unité</h3>
+            <h3 class="text-sm font-semibold text-primary">Ajouter une unité de mesure</h3>
             <div class="mt-3 flex flex-wrap items-end gap-3">
                 <label class="block">
                     <span class="text-xs text-primary/60">Nom</span>

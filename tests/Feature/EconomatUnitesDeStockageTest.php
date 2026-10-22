@@ -11,14 +11,16 @@ use Illuminate\Http\UploadedFile;
 uses(RefreshDatabase::class);
 
 /*
- * Les unités de stockage des articles : l'économe en tient la liste dans
- * Paramètres › Économat, et la fiche d'un article y choisit la sienne au
- * lieu de la taper. « kg », « Kg » et « kilo » ne cohabitent plus.
+ * Les unités de stockage des articles : l'économe et la direction en tiennent
+ * la liste dans Paramètres › Économat, et la fiche d'un article y choisit la
+ * sienne au lieu de la taper. « kg », « Kg » et « kilo » ne cohabitent plus.
  */
 
 beforeEach(function () {
     RoleCatalog::sync();
-    activerModules(['economat']);
+    // Comme sur un établissement réel : l'économat est un module cœur,
+    // toujours actif, que la console ne liste jamais dans TENANT_MODULES.
+    activerModules([]);
 });
 
 function membreEconomat(string $role, string $nom): User
@@ -106,21 +108,26 @@ test("l'import ramène l'unité à celle de la liste et refuse une unité inconn
         ->and(session('import_errors'))->toHaveCount(1);
 });
 
-test("la direction consulte la liste sans la modifier ; sans économat, pas d'onglet", function () {
+test("la direction tient aussi la liste ; le magasinier n'a que son profil", function () {
     $this->actingAs(membreEconomat('manager', 'Directrice'));
 
     $this->get(route('settings.index', ['tab' => 'economat']))->assertOk()
         ->assertSee('Unités de stockage')
-        ->assertDontSee('Ajouter une unité');
-    $this->post(route('economat.units.store'), ['name' => 'bidon'])->assertSessionHas('access_denied_popup', true);
-    expect(StockUnit::where('name', 'bidon')->exists())->toBeFalse();
+        ->assertSee('Ajouter une unité');
+    $this->post(route('economat.units.store'), ['name' => 'bidon'])
+        ->assertRedirect(route('settings.index', ['tab' => 'economat']));
+    expect(StockUnit::where('name', 'bidon')->exists())->toBeTrue();
 
-    // Le magasinier ne règle pas les paramètres.
+    // Le magasinier ne règle rien : la tuile Paramètres le mène à son profil.
     $this->actingAs(membreEconomat('storekeeper', 'Magasinier'))
-        ->get(route('settings.index'))->assertSessionHas('access_denied_popup', true);
+        ->get(route('settings.index'))->assertRedirect(route('profile.edit'));
+});
 
-    // Sans le module, l'économe n'a aucun onglet à régler.
-    activerModules([]);
-    $this->actingAs(membreEconomat('econome', 'Économe'))
-        ->get(route('settings.index'))->assertForbidden();
+test("la tuile Paramètres de l'économe ouvre l'onglet Économat, sans « economat » dans TENANT_MODULES", function () {
+    $econome = membreEconomat('econome', 'Économe');
+
+    expect(\App\Support\SettingsTabs::parDefaut($econome))->toBe('economat');
+    $this->actingAs($econome)->get(route('settings.index'))->assertOk()
+        ->assertSee('Unités de stockage')
+        ->assertSee('Ajouter une unité');
 });

@@ -13,13 +13,13 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 130 | 242 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
-| Manager (`manager`) | 2 | — | 128 | 107 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
+| Administrateur (`admin`) | 1 | — | 130 | 248 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
+| Manager (`manager`) | 2 | — | 128 | 115 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 35 | 51 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Technique, Factures, Planning |
 | Réceptionniste (`reception`) | 4 | — | 33 | 35 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Technique, Factures |
-| Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 13 | 30 | Économat, Paramètres, Housekeeping, Technique, Planning |
-| Gouvernante (`housekeeping_supervisor`) | 4 | — | 9 | 15 | Économat, Housekeeping, Technique |
-| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 7 | 13 | Économat, Housekeeping, Technique |
+| Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 13 | 33 | Économat, Paramètres, Housekeeping, Technique, Planning |
+| Gouvernante (`housekeeping_supervisor`) | 4 | — | 9 | 18 | Économat, Housekeeping, Technique |
+| Valet / Femme de chambre (`housekeeping_staff`) | 4 | — | 7 | 15 | Économat, Housekeeping, Technique |
 | Responsable de restaurant (`restaurant_manager`) | 3 | `restaurant_staff`, `cashier` | 28 | 44 | Restaurant, Économat, Paramètres, Technique, Planning |
 | Chef de cuisine (`restaurant_chief`) | 3 | `restaurant_cook` | 24 | 42 | Restaurant, Économat, Paramètres, Technique, Planning |
 | Serveur (salle) (`restaurant_staff`) | 4 | — | 13 | 13 | Restaurant, Économat, Technique |
@@ -29,8 +29,8 @@
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 9 | 11 | Économat, Boutique, Technique |
 | Chef économe (`econome`) | 3 | `storekeeper` | 34 | 58 | Économat, Technique, Planning |
 | Magasinier (`storekeeper`) | 4 | — | 27 | 10 | Économat, Technique |
-| Responsable technique (`tech_manager`) | 3 | `technician` | 10 | 18 | Économat, Technique, Planning |
-| Technicien de maintenance (`technician`) | 4 | — | 7 | 9 | Économat, Technique |
+| Responsable technique (`tech_manager`) | 3 | `technician` | 10 | 21 | Économat, Technique, Planning |
+| Technicien de maintenance (`technician`) | 4 | — | 7 | 10 | Économat, Technique |
 | Responsable administratif et financier (`finance_manager`) | 3 | `accountant` | 34 | 29 | Comptabilité, Économat, Chambres, Technique, Planning |
 | Comptable (`accountant`) | 4 | — | 34 | 24 | Comptabilité, Économat, Chambres, Technique |
 | Contrôleur de gestion (`controller`) | transversal | — | 93 | 0 | — |
@@ -164,6 +164,7 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `housekeeping.minibar.articles.creer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.minibar.articles.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.minibar.check` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.minibar.defective` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.minibar.depot` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
 | `housekeeping.minibar.restock` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
 | `housekeeping.minibar.rooms.modifier` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
@@ -172,8 +173,10 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `housekeeping.minibar.voir` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |
 | `housekeeping.ready` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.reject` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `housekeeping.resolve_issue` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.stayover` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `housekeeping.teams.creer` | **agit** | ✓ | ✓ | ✓ |  |  |  |  |  |
+| `housekeeping.transmettre_technique` | **agit** | ✓ | ✓ | ✓ | ✓ |  |  |  |  |
 | `housekeeping.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Restaurant
@@ -362,22 +365,25 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.suppliers.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
 | `economat.suppliers.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
 | `economat.suppliers.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  | ✓ | ✓ | ✓ |
-| `economat.units.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
-| `economat.units.modifier` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
-| `economat.units.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
+| `economat.units.creer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
+| `economat.units.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
+| `economat.units.supprimer` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |
 | `economat.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  | ✓ | ✓ | ✓ |
 
 ### Technique
 
 | Droit | Nature | Admin | Manager | Chef réc. | Récep. | Resp. étages | Gouv. | Valet | Resp. resto | Chef cuis. | Serveur | Cuisinier | Caissier | Resp. bout. | Vendeur | Économe | Magasinier | Resp. tech. | Technicien | RAF | Comptable | Contrôleur | Auditeur | Support |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `technique.demandes.approve` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `technique.demandes.assign` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `technique.demandes.cancel` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `technique.demandes.complete` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `technique.demandes.creer` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
 | `technique.demandes.parts` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `technique.demandes.reopen` | **agit** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |  |
+| `technique.demandes.rework` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
 | `technique.demandes.start` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
+| `technique.demandes.submit` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `technique.demandes.take` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |
 | `technique.demandes.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `technique.depot.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  | ✓ |

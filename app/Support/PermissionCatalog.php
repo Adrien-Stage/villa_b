@@ -28,12 +28,14 @@ namespace App\Support;
  * sans saisir : ces services ont leurs responsables, et le directeur d'hôtel
  * qui saisirait à leur place brouillerait la responsabilité de chacun.
  *
- * Deux exceptions. Valider ou refuser une demande d'achat : ce n'est pas une
+ * Trois exceptions. Valider ou refuser une demande d'achat : ce n'est pas une
  * saisie à la place de l'économe mais la décision de dépense, que la
  * direction se réserve. Créer les restaurants de l'hôtel, leurs salles, et
  * composer leurs équipes : c'est la structure de l'hôtel, non l'exploitation
- * d'un restaurant. Le comptage des caisses, lui, est contresigné par la
- * comptabilité seule (CashClosurePolicy).
+ * d'un restaurant. Tenir la liste des unités de mesure, que tous les services
+ * emploient : c'est un référentiel de l'hôtel, non une saisie de magasin. Le
+ * comptage des caisses, lui, est contresigné par la comptabilité seule
+ * (CashClosurePolicy).
  *
  * Le gabarit n'écrit que les rôles qui reçoivent un droit pour eux-mêmes ;
  * all() le complète de ce que la hiérarchie implique (voir RoleCatalog) : un
@@ -832,10 +834,11 @@ class PermissionCatalog
             'economat.suppliers.modifier' => ['econome'],
             'economat.suppliers.supprimer' => ['econome'],
             'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            // Les unités de stockage des articles : l'économe tient la liste.
-            'economat.units.creer' => ['econome'],
-            'economat.units.modifier' => ['econome'],
-            'economat.units.supprimer' => ['econome'],
+            // Les unités de mesure des articles, employées dans tout le PMS :
+            // un référentiel de l'hôtel que l'économe et la direction tiennent.
+            'economat.units.creer' => ['econome', 'manager'],
+            'economat.units.modifier' => ['econome', 'manager'],
+            'economat.units.supprimer' => ['econome', 'manager'],
             'economat.stores.counts.cancel' => ['econome'],
             'economat.stores.counts.close' => ['econome'],
             'economat.stores.counts.creer' => ['econome'],

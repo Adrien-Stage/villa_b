@@ -81,6 +81,11 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         'restaurant.restaurants.spaces.creer',
         'restaurant.restaurants.spaces.modifier',
         'restaurant.restaurants.team.modifier',
+        // Les unités de mesure des articles : un référentiel de l'hôtel,
+        // employé par tous les services, que la direction tient aussi.
+        'economat.units.creer',
+        'economat.units.modifier',
+        'economat.units.supprimer',
     ];
 
     $ecrituresIndues = [];
