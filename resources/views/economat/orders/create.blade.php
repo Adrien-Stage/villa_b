@@ -247,24 +247,9 @@
                                     {{-- Sélection Article --}}
                                     <div class="col-span-12 md:col-span-5">
                                         <label class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Article / Service</label>
-                                        <select :name="`lines[${idx}][stock_item_id]`" x-model.number="line.itemId" @change="onItemChange(line)" required
-                                            class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary font-medium">
-                                            <option value="">Sélectionner un article…</option>
-                                            {{-- Priorité 1 : Articles du fournisseur --}}
-                                            <template x-if="supplierItems.length > 0">
-                                                <optgroup label="Catalogue de ce fournisseur">
-                                                    <template x-for="it in supplierItems" :key="'grp-sup-' + it.id">
-                                                        <option :value="it.id" x-text="it.name + ' (' + it.unit + ')'"></option>
-                                                    </template>
-                                                </optgroup>
-                                            </template>
-                                            {{-- Priorité 2 : Autres articles de l'économat --}}
-                                            <optgroup label="Tous les articles de l'économat">
-                                                <template x-for="it in allItems" :key="'grp-all-' + it.id">
-                                                    <option :value="it.id" x-text="it.name + ' [' + it.category_name + '] (' + it.unit + ')'"></option>
-                                                </template>
-                                            </optgroup>
-                                        </select>
+                                        <x-article-picker source="articlesProposes" model="line.itemId" name-bind="`lines[${idx}][stock_item_id]`" size="sm" required
+                                            on-select="onItemChange(line)" aria-label="Article"
+                                            detail="it => (it.duFournisseur ? 'Catalogue du fournisseur · ' : (it.category_name ? it.category_name + ' · ' : '')) + it.unit + (it.reference ? ' · ' + it.reference : '')" />
                                     </div>
 
                                     {{-- Unité de mesure connue --}}
@@ -363,6 +348,13 @@
             get supplierItems() {
                 if (!this.supplierId) return [];
                 return this.allItems.filter(i => i.supplier_id === this.supplierId);
+            },
+
+            // Les articles du fournisseur d'abord, puis le reste de l'économat.
+            get articlesProposes() {
+                const siens = this.supplierItems.map(i => ({ ...i, duFournisseur: true }));
+                const ids = new Set(siens.map(i => i.id));
+                return [...siens, ...this.allItems.filter(i => !ids.has(i.id))];
             },
 
             onSupplierChange() {

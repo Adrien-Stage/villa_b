@@ -3,7 +3,11 @@
 @section('title', 'Nouvelle demande d\'achat — Économat')
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestForm()">
+<div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
+    'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->unit,
+    'stock' => (float) $it->current_stock,
+    'price' => $it->last_purchase_price > 0 ? $it->last_purchase_price / 100 : $it->average_cost / 100,
+])->values()) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.purchase_requests.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -78,17 +82,8 @@
                         <template x-for="(line, index) in lines" :key="index">
                             <tr class="hover:bg-gray-50/40">
                                 <td class="px-4 py-2.5">
-                                    <select :name="'lines[' + index + '][stock_item_id]'" x-model="line.stock_item_id" @change="onItemChange(line)" required class="w-full px-2.5 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
-                                        <option value="">Sélectionner un article...</option>
-                                        @foreach($items as $it)
-                                            <option value="{{ $it->id }}"
-                                                data-unit="{{ $it->unit }}"
-                                                data-stock="{{ $it->current_stock }}"
-                                                data-price="{{ $it->last_purchase_price > 0 ? $it->last_purchase_price / 100 : $it->average_cost / 100 }}">
-                                                {{ $it->name }} ({{ $it->unit }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <x-article-picker source="catalogue" model="line.stock_item_id" name-bind="'lines[' + index + '][stock_item_id]'" size="sm" required
+                                        on-select="onItemChange(line, $event.detail.article)" aria-label="Article" />
                                 </td>
                                 <td class="px-4 py-2.5 text-center font-mono text-xs text-primary/60">
                                     <span x-text="line.current_stock !== null ? line.current_stock + ' ' + (line.unit || '') : '—'"></span>
@@ -139,8 +134,9 @@
 </div>
 
 <script>
-function purchaseRequestForm() {
+function purchaseRequestForm(catalogue) {
     return {
+        catalogue,
         lines: [
             { stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' }
         ],
@@ -153,13 +149,11 @@ function purchaseRequestForm() {
                 this.lines.splice(idx, 1);
             }
         },
-        onItemChange(line) {
-            const select = event.target;
-            const opt = select.options[select.selectedIndex];
-            if (opt && opt.value) {
-                line.unit = opt.getAttribute('data-unit') || '';
-                line.current_stock = parseFloat(opt.getAttribute('data-stock') || 0);
-                line.unit_price = Math.round(parseFloat(opt.getAttribute('data-price') || 0));
+        onItemChange(line, article) {
+            if (article) {
+                line.unit = article.unit || '';
+                line.current_stock = parseFloat(article.stock || 0);
+                line.unit_price = Math.round(parseFloat(article.price || 0));
             } else {
                 line.unit = '';
                 line.current_stock = null;

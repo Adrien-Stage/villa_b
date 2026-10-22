@@ -116,13 +116,9 @@
                     <div class="grid grid-cols-12 gap-2.5 items-end p-3 rounded-lg border border-secondary/20 bg-surface-light/20">
                         <div class="col-span-12 md:col-span-5">
                             <label :for="'article-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Article</label>
-                            <select :id="'article-' + ligne.key" :name="`lines[${idx}][stock_item_id]`" x-model.number="ligne.itemId" @change="ligne.packaging = article(ligne)?.unit || ''" required
-                                    class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                <option value="">Choisir un article…</option>
-                                <template x-for="a in articles" :key="a.id">
-                                    <option :value="a.id" x-text="a.name" :selected="a.id === ligne.itemId"></option>
-                                </template>
-                            </select>
+                            <x-article-picker source="articles" model="ligne.itemId" name-bind="`lines[${idx}][stock_item_id]`" id-bind="'article-' + ligne.key" size="sm" required
+                                on-select="ligne.packaging = article(ligne)?.unit || ''"
+                                detail="a => (a.decompose || (a.stock + ' ' + a.unit)) + ' en stock'" />
                         </div>
                         <div class="col-span-4 md:col-span-2">
                             <label :for="'qte-' + ligne.key" class="block text-[10px] font-semibold text-primary/60 mb-0.5 uppercase">Quantité</label>

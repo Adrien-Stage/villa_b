@@ -273,10 +273,10 @@
                     {{-- Lien économat --}}
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Lier à un article de l'économat <span class="text-primary/30">(facultatif)</span></label>
-                        <select name="stock_item_id" x-model="form.stock_item_id" @change="onStockChange()" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <option value="">Non — je saisis le prix moi-même</option>
-                            <template x-for="it in stockItems" :key="it.id"><option :value="it.id" x-text="it.name + ' (' + fmt(it.average_cost) + ' F/' + it.unit + ')'"></option></template>
-                        </select>
+                        {{-- Vide : pas de lien, le prix se saisit à la main. --}}
+                        <x-article-picker source="stockItems" model="form.stock_item_id" name="stock_item_id" on-select="onStockChange()"
+                            placeholder="Aucun lien — tapez un article pour lier son prix"
+                            detail="it => fmt(it.average_cost) + ' F / ' + it.unit + (it.reference ? ' · ' + it.reference : '')" />
                         <p class="text-[10px] text-primary/40 mt-1">Si vous liez un article, son prix se met à jour tout seul quand vos achats changent.</p>
                     </div>
 

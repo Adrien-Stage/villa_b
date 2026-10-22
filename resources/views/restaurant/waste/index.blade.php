@@ -115,12 +115,9 @@
         </div>
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Ingrédient</label>
-            <select name="item_id" class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
-                <option value="">Tous les articles</option>
-                @foreach($activeItems as $item)
-                    <option value="{{ $item->id }}" @selected(request('item_id') == $item->id)>{{ $item->name }}</option>
-                @endforeach
-            </select>
+            {{-- Vide : tous les articles. --}}
+            <x-article-picker name="item_id" :value="request('item_id', '')" size="sm" placeholder="Tous les articles"
+                :items="$activeItems->map(fn ($item) => ['id' => $item->id, 'name' => $item->name, 'unit' => $item->unit])->values()->all()" />
         </div>
         <div class="flex items-end gap-2">
             <button type="submit" class="w-full py-2 px-3 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity">
