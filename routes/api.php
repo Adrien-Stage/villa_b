@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\EstablishmentController;
 use App\Http\Controllers\Api\PermissionMatrixController;
 use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicPingController;
@@ -70,6 +71,11 @@ Route::middleware('orchestration.token')->group(function () {
         ->whereNumber('department')->name('api.departements.update');
     Route::delete('/departements/{department}', [DepartmentController::class, 'destroy'])
         ->whereNumber('department')->name('api.departements.destroy');
+
+    // L'identité de l'établissement (nom, coordonnées, devise, couleurs) : la
+    // console la tient, l'application la reçoit à chaque enregistrement.
+    Route::get('/etablissement', [EstablishmentController::class, 'show'])->name('api.etablissement.show');
+    Route::put('/etablissement', [EstablishmentController::class, 'update'])->name('api.etablissement.update');
 });
 
 Route::prefix('reporting')->middleware(['module:api', 'reporting.token'])->group(function () {

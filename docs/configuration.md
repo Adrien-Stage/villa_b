@@ -33,6 +33,14 @@ console. Personne ne les édite à la main sur le serveur.
 > est relu à chaque requête par
 > [`TenantModules`](../app/Support/TenantModules.php).
 
+L'**identité** de l'établissement — nom, adresse, téléphone, email, devise, pays,
+couleurs — est tenue par la console : chaque enregistrement de la fiche de
+l'établissement la pousse sur le canal d'orchestration (`PUT /api/etablissement`,
+[`EstablishmentController`](../app/Http/Controllers/Api/EstablishmentController.php)).
+L'application la montre en lecture seule dans Paramètres › Général. Si l'application
+est injoignable, la console le signale : il suffit d'enregistrer de nouveau la fiche.
+Le logo, lui, reste celui que la direction importe dans l'application.
+
 ### Base de données
 
 | Variable | Valeur en production |

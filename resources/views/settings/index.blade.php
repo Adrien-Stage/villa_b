@@ -201,7 +201,16 @@
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>
                         <input type="text" value="{{ $tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
                     </div>
+                    @if($tenant?->address || $tenant?->phone || $tenant?->email)
+                        <div class="md:col-span-2 text-xs text-primary/60">
+                            {{ collect([$tenant->address, $tenant->phone, $tenant->email])->filter()->implode(' · ') }}
+                        </div>
+                    @endif
                 </div>
+                <p class="mt-2 text-xs text-primary/50">
+                    Nom, coordonnées, devise et couleurs se règlent dans la console Wetchah (fiche de l'établissement) :
+                    chaque enregistrement les transmet ici.
+                </p>
 
                 <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" enctype="multipart/form-data"
                       class="mt-6"
