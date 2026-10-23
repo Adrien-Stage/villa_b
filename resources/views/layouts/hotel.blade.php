@@ -332,8 +332,9 @@
                         <div>
                             <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                             <ul class="space-y-0.5">
-                                {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module. --}}
-                                @pour('manager','reception','finance_manager')
+                                {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module.
+                                     Le contrôleur de gestion figure dans chaque bloc : il consulte tous les services. --}}
+                                @pour('manager','reception','finance_manager','controller')
                                     @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
                                         <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
                                     @endif
@@ -343,7 +344,7 @@
                                     <x-sidebar-link route="rooms.rates.index" icon="tags">Tarifs</x-sidebar-link>
                                 @enddroit
 
-                            @pour('manager','reception','finance_manager')
+                            @pour('manager','reception','finance_manager','controller')
                                 @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
                                     {{-- L'agenda est un écran à part entière : le calendrier
                                          des séjours n'est plus une vue de la liste. --}}
@@ -411,7 +412,7 @@
                                 @endif
                             @endpour
 
-                            @pour('manager','housekeeping_leader','housekeeping_supervisor','housekeeping_staff','housekeeping')
+                            @pour('manager','housekeeping_leader','housekeeping_supervisor','housekeeping_staff','housekeeping','controller')
                                 @module('housekeeping')
                                     <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
                                     @droit('housekeeping.journal.voir')
@@ -445,7 +446,7 @@
                 @endif
 
                 @if(!$hasSidebar || $activeGroupId === 'restaurant')
-                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier','finance_manager')
+                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier','finance_manager','controller')
                     @module('restaurant')
                     @php
                         // Un service qu'aucun des restaurants de la personne
@@ -457,7 +458,7 @@
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
-                            @pour('manager','restaurant_chief','restaurant_staff')
+                            @pour('manager','restaurant_chief','restaurant_staff','controller')
                                 <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
                                 @if($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE))
                                     <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
@@ -465,29 +466,29 @@
                             @endpour
 
                             @if($serviceOffert(\App\Models\PointOfSale::SERVICE_CUISINE))
-                                @pour('restaurant_chief','restaurant_cook')
+                                @pour('restaurant_chief','restaurant_cook','controller')
                                     <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
                                 @endpour
                             @endif
 
                             @if($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR))
-                                @pour('restaurant_chief','restaurant_staff')
+                                @pour('restaurant_chief','restaurant_staff','controller')
                                     <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
                                 @endpour
                             @endif
 
                             {{-- Le buffet au forfait, là où un restaurant sert au buffet, en salle. --}}
                             @if($contexteResto->offrant(auth()->user(), \App\Models\PointOfSale::SERVICE_SALLE)->contains(fn ($r) => $r->sert(\App\Models\PointOfSale::MODE_BUFFET)))
-                                @pour('manager','restaurant_chief','restaurant_staff','cashier')
+                                @pour('manager','restaurant_chief','restaurant_staff','cashier','controller')
                                     <x-sidebar-link route="restaurant.buffets.index" icon="salad">Buffets</x-sidebar-link>
                                 @endpour
                             @endif
 
-                            @pour('manager','restaurant_chief','restaurant_manager','cashier','finance_manager')
+                            @pour('manager','restaurant_chief','restaurant_manager','cashier','finance_manager','controller')
                                 <x-sidebar-link route="restaurant.banquets.index" icon="party-popper">Banquets</x-sidebar-link>
                             @endpour
 
-                            @pour('manager','restaurant_chief','restaurant_staff','finance_manager')
+                            @pour('manager','restaurant_chief','restaurant_staff','finance_manager','controller')
                                 {{-- Pour le serveur, « Menus » est l'écran de prise de
                                      commande ; pour le chef, la carte à administrer. --}}
                                 <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
@@ -495,7 +496,7 @@
 
                             {{-- Coûts, stocks et inventaires relèvent de la gestion :
                                  la salle n'a pas à les voir. --}}
-                            @pour('manager','restaurant_chief','finance_manager')
+                            @pour('manager','restaurant_chief','finance_manager','controller')
                                 <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
                                 @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
                                     <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
@@ -504,16 +505,16 @@
                             @endpour
 
                             @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
-                                @pour('manager','restaurant_chief','restaurant_cook','finance_manager')
+                                @pour('manager','restaurant_chief','restaurant_cook','finance_manager','controller')
                                     <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
                                 @endpour
                             @endif
 
-                            @pour('manager','restaurant_chief','finance_manager')
+                            @pour('manager','restaurant_chief','finance_manager','controller')
                                 <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
                             @endpour
 
-                            @pour('manager','restaurant_chief','cashier','finance_manager')
+                            @pour('manager','restaurant_chief','cashier','finance_manager','controller')
                                 <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
                                 <x-sidebar-link route="restaurant.cash_register.index" icon="calculator">Caisse</x-sidebar-link>
                             @endpour
@@ -556,7 +557,7 @@
                 @endif
 
                 @if(!$hasSidebar)
-                @pour('manager','reception','cashier','finance_manager')
+                @pour('manager','reception','cashier','finance_manager','controller')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
@@ -572,16 +573,16 @@
                     </div>
                 @endpour
 
-                @pour('shop_manager','shop_cashier','manager','finance_manager')
+                @pour('shop_manager','shop_cashier','manager','finance_manager','controller')
                     @module('shop')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
-                            @pour('shop_manager','manager','finance_manager')
+                            @pour('shop_manager','manager','finance_manager','controller')
                                 <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
                             @endpour
                             <x-sidebar-link route="shop.orders.index" icon="shopping-cart">Commandes</x-sidebar-link>
-                            @pour('shop_manager','manager','finance_manager')
+                            @pour('shop_manager','manager','finance_manager','controller')
                                 <x-sidebar-link route="shop.cash_register.index" icon="calculator">Compta Boutique</x-sidebar-link>
                             @endpour
                         </ul>
@@ -718,7 +719,7 @@
                                   marge par type de chambre. C'est de la
                                   comptabilité analytique, d'où sa place ici. Le
                                   manager la voit déjà dans la section Hôtel. --}}
-                            @pour('accountant','admin')
+                            @pour('accountant','admin','controller')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
                             @endpour
                         </ul>
