@@ -74,7 +74,7 @@ class RoleReview
         if ($actifs->doesntContain(fn (User $u) => $u->exerce(['accountant']))) {
             $constats[] = self::constat('aucun_comptable', self::A_CORRIGER,
                 'Aucun compte en comptabilité.',
-                'La comptabilité contresigne toute caisse comptée : sans comptable ni responsable administratif et financier, les caisses resteront en attente de contrôle. Créer au moins un compte, même pour un comptable externe.',
+                'La comptabilité contresigne toute caisse comptée : sans comptable ni responsable financier, les caisses resteront en attente de contrôle. Créer au moins un compte, même pour un comptable externe.',
                 collect());
         }
 

@@ -79,7 +79,8 @@ Niveau 3  Chef de réception ─────────── inclut ── Ré
           Responsable boutique ──────── inclut ── Vendeur-caissier
           Chef économe ──────────────── inclut ── Magasinier
           Responsable technique ─────── inclut ── Technicien de maintenance   (module Technique)
-          Responsable administratif et financier ── inclut ── Comptable
+          Responsable financier ─────── inclut ── Comptable
+                                        encadre ── Contrôleur de gestion, Chef économe (sans les inclure)
 Transversal (lecture seule) : Contrôleur de gestion, Contrôleur qualité & audit
 Technique : Support Wetchah (lecture seule, ouvert par le mode assistance)
 ```
@@ -309,7 +310,7 @@ produits et les demandes à l'économat.
   - reprise du stock initial ;
   - conversion d'une demande d'achat validée en commande.
 - *Ne fait pas* : valider une demande d'achat. C'est une décision de dépense, que la
-  direction se réserve.
+  direction et le responsable financier se réservent.
 
 **Magasinier** — réceptionne les livraisons commandées, livre les demandes, saisit
 les comptages. Il ne reçoit pas sans bon de commande : recevoir sans commande engage
@@ -345,14 +346,34 @@ Le demandeur est prévenu de la fin et peut rouvrir pendant 7 jours.
 
 ### Comptabilité et finances
 
-**Responsable administratif et financier** et **Comptable** — les mêmes droits.
+**Responsable financier** — le chef du département Comptabilité et Finance. Il
+encadre les comptables, le contrôle de gestion et l'économat.
 
-- *Font* :
+- *Fait* : tout ce que fait le comptable (ci-dessous), et :
+  - fixe les **tarifs des chambres** : prix de base et grille par critère (Hôtel ›
+    Tarifs) ;
+  - fixe les **prix des produits et services** : tarification et réductions,
+    petit-déjeuner et lit d'appoint, packs, partenaires, prestations, taxes, carte des
+    restaurants, articles de la boutique, mini-bar — en plus de ceux qui les fixent
+    déjà (direction, chefs de service) ;
+  - **valide ou refuse les demandes d'achat**, vise les demandes internes ;
+  - planifie son département, reçoit les alertes de stock ;
+  - consulte **tout ce que consulte le contrôleur de gestion** : les chiffres de tous
+    les services, tous les restaurants à la fois.
+- *Ne fait pas* : le travail du magasin (commandes, réceptions, livraisons,
+  ajustements), ni celui du contrôleur, dont il ne prend pas le rôle ; il ne crée pas
+  les plats ni les produits, il en fixe le prix.
+- *À savoir* : il n'inclut ni l'économe ni le contrôleur. Les inclure lui ferait
+  détenir le stock en tenant les livres, et contrôler son propre travail (§ 5).
+
+**Comptable** — la tenue des livres.
+
+- *Fait* :
   - écritures, rapprochements, clôtures, audit de nuit ;
   - dépenses ;
   - fiches de coût des chambres ;
-  - **contresignature des comptages de caisse** : eux seuls la font.
-- *Ne font pas* : encaisser, ni détenir le stock (§ 5).
+  - **contresignature des comptages de caisse** : la comptabilité seule la fait.
+- *Ne fait pas* : encaisser, ni détenir le stock (§ 5).
 
 ### Contrôle
 

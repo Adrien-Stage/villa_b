@@ -743,9 +743,14 @@ class BookingController extends Controller
         $checkInTime = $validated['check_in_time'] ?? '14:00';
         $nights = $checkIn->diffInDays($checkOut);
         
-        // base_price est en centimes en BDD, on divise par 100 pour l'affichage (FCFA), avec surcharge éventuelle
-        $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0) / 100;
-        $totalRoomAmount = $nights * $pricePerNight;
+        // Tarif de référence du séjour, nuit par nuit d'après la grille
+        // tarifaire (TarifSejour), surcharge de capacité comprise. En FCFA
+        // pour l'affichage ; la base le garde en centimes.
+        $tarifSejour = app(\App\Services\TarifSejour::class)->calculer(
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0));
+        $pricePerNight = $tarifSejour['par_nuit'] / 100;
+        $totalRoomAmount = $tarifSejour['total'] / 100;
+        $resumeTarif = $tarifSejour['ajuste'] ? app(\App\Services\TarifSejour::class)->resume($tarifSejour) : null;
 
         // Récupérer le pourcentage d'acompte minimum depuis les paramètres du Tenant
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
@@ -858,6 +863,7 @@ class BookingController extends Controller
             'notes' => $validated['notes'] ?? '',
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
+            'resumeTarif' => $resumeTarif,
             'minDepositPercentage' => $minDepositPercentage,
             'maxDiscountPercentage' => $maxDiscountPercentage,
             'draftToken' => $this->upsertDraftStep3($request, $validated, $hasExtraBed, $extraBedCount, $extraBedAmount * 100, $prepaidBreakfastChildren, $prepaidBreakfastAmount * 100),
@@ -956,8 +962,11 @@ class BookingController extends Controller
         $nights   = $checkIn->diffInDays($checkOut);
 
         // Validations spécifiques pour le prix négocié et l'acompte (avec surcharge éventuelle)
-        $basePricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0) / 100;
-        $baseTotalRoomAmount = $nights * $basePricePerNight;
+        // Le même tarif de référence que l'écran de confirmation : la grille.
+        $tarifSejour = app(\App\Services\TarifSejour::class)->calculer(
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0));
+        $basePricePerNight = $tarifSejour['par_nuit'] / 100;
+        $baseTotalRoomAmount = $tarifSejour['total'] / 100;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $maxDiscountPercentage = $tenantSettings['reception']['max_discount_percentage'] ?? 10;
         $minDepositPercentage = $tenantSettings['reception']['min_deposit_percentage'] ?? 30;
@@ -1125,12 +1134,10 @@ class BookingController extends Controller
         }
 
         // Manque à gagner : le séjour étant facturé zéro, sa valeur au tarif
-        // publié du type de chambre est la seule trace de ce que l'offre coûte
-        // à l'établissement. Sans elle, une gratuité pèse comptablement autant
+        // de la grille est la seule trace de ce que l'offre coûte à
+        // l'établissement. Sans elle, une gratuité pèse comptablement autant
         // qu'une chambre vide.
-        $complimentaryValue = $isComplimentary
-            ? (int) ($room->roomType->base_price ?? 0) * $nights
-            : 0;
+        $complimentaryValue = $isComplimentary ? $tarifSejour['total'] : 0;
 
         $booking = Booking::create([
             'room_id'         => $room->id,
@@ -2000,7 +2007,8 @@ class BookingController extends Controller
             }
         }
 
-        $pricePerNight    = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
+        $pricePerNight    = app(\App\Services\TarifSejour::class)->calculer(
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0))['par_nuit'];
         $totalRoomAmount  = $nights * $pricePerNight;
         $totalAmount      = $totalRoomAmount;
         // TVA extraite du total TTC, jamais ajoutée par dessus.

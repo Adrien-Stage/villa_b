@@ -4,7 +4,7 @@
  * Les rôles introduits par la refonte ouvrent leurs écrans de travail.
  *
  * Ils sont attribuables : un chef de réception, un responsable de restaurant,
- * un responsable administratif et financier ou un magasinier doit trouver,
+ * un responsable financier ou un magasinier doit trouver,
  * le premier jour, chacun des écrans de sa fonction — sans erreur.
  */
 
@@ -33,7 +33,7 @@ test('chaque nouveau rôle ouvre les écrans de sa fonction', function (string $
         'restaurant.orders.index', 'restaurant.menus.index', 'restaurant.billing.index',
         'restaurant.breakfast.index', 'settings.index', 'economat.requisitions.index',
     ]],
-    'responsable administratif et financier' => ['finance_manager', [
+    'responsable financier' => ['finance_manager', [
         'accounting.index', 'accounting.cash_reviews', 'accounting.journal', 'economat.requisitions.index',
     ]],
     'magasinier' => ['storekeeper', [

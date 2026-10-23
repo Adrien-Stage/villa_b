@@ -23,8 +23,12 @@ use Illuminate\Validation\ValidationException;
  */
 class RestaurantContext
 {
-    /** Rôles qui voient tous les restaurants à la fois. */
-    public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'quality_auditor', 'support'];
+    /**
+     * Rôles qui voient tous les restaurants à la fois. Le responsable
+     * financier en est : il fixe les prix de la carte de chaque restaurant et
+     * en suit les chiffres.
+     */
+    public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'finance_manager', 'quality_auditor', 'support'];
 
     /** Rôles du personnel d'un restaurant : ceux qu'on affecte à une équipe. */
     public const ROLES_DU_RESTAURANT = ['restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'];

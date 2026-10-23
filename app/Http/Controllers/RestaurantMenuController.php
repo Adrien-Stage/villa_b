@@ -85,6 +85,10 @@ class RestaurantMenuController extends Controller
             // On compose la carte d'un restaurant : depuis la vue d'ensemble,
             // on choisit d'abord lequel.
             'peutCreer' => $canManage && ! $vueEnsemble,
+            // Modifier un article sans en créer : le responsable financier,
+            // qui fixe aussi les prix de la carte.
+            'peutModifierArticle' => $droits->allows($user, 'restaurant.menus.items.modifier'),
+            'peutSupprimerArticle' => $droits->allows($user, 'restaurant.menus.items.supprimer'),
             'itemTypes' => self::typesPour($restaurant),
             'mealServices' => RestaurantMenuItem::MEAL_SERVICES,
         ]);

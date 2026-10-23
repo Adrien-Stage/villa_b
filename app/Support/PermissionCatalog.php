@@ -37,6 +37,13 @@ namespace App\Support;
  * comptage des caisses, lui, est contresigné par la comptabilité seule
  * (CashClosurePolicy).
  *
+ * Le responsable financier dirige la comptabilité (il détient les droits du
+ * comptable) et fixe les prix de tous les services : grille tarifaire des
+ * chambres, packs, partenaires, prestations, carte, boutique, mini-bar — en
+ * plus de ceux qui les fixaient déjà. Il encadre l'économat et le contrôle de
+ * gestion sans en faire le travail : il valide les demandes d'achat et
+ * consulte ce que consulte le contrôleur.
+ *
  * Le gabarit n'écrit que les rôles qui reçoivent un droit pour eux-mêmes ;
  * all() le complète de ce que la hiérarchie implique (voir RoleCatalog) : un
  * chef détient les droits de ses membres, et l'administrateur consulte tout.
@@ -268,6 +275,10 @@ class PermissionCatalog
         'rooms.images.supprimer',
         'rooms.import',
         'rooms.modifier',
+        'rooms.rates.creer',
+        'rooms.rates.modifier',
+        'rooms.rates.supprimer',
+        'rooms.rates.types.modifier',
         'rooms.supprimer',
         'rooms.types.creer',
         'rooms.types.import',
@@ -421,6 +432,9 @@ class PermissionCatalog
      */
     private const PARAMETRES = ['settings.modifier'];
 
+    /** Le responsable financier : la comptabilité, les tarifs et les prix. */
+    public const RESPONSABLE_FINANCIER = 'finance_manager';
+
     /**
      * Les comptes du personnel, que l'administrateur crée et tient. Avec la
      * configuration, ce sont ses seules écritures : il administre
@@ -474,6 +488,8 @@ class PermissionCatalog
      *  - l'administrateur détient tous les droits du PMS. Chacune de ses
      *    opérations métier est marquée « administrateur » au journal
      *    d'audit (LogUserActivity) ;
+     *  - le responsable financier consulte ce que consulte le contrôle de
+     *    gestion ;
      *  - le support de l'éditeur consulte tout, sans rien extraire ;
      *  - l'auditeur qualité consulte les services d'exploitation.
      *
@@ -488,6 +504,14 @@ class PermissionCatalog
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
             $roles[] = RoleCatalog::ADMIN;
+
+            // Le responsable financier consulte tout ce que consulte le
+            // contrôle de gestion : les chiffres de tous les services. Il
+            // encadre le contrôleur sans en prendre le rôle, qui ne se cumule
+            // avec aucun rôle opérationnel (DutySegregation).
+            if (in_array(DutySegregation::CONTROLE_DE_GESTION, $roles, true) && self::estLecture($droit)) {
+                $roles[] = self::RESPONSABLE_FINANCIER;
+            }
 
             // Le support diagnostique : il consulte, sans extraire de fichier
             // ni écrire.
@@ -640,7 +664,8 @@ class PermissionCatalog
             'restaurant.menus.export' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
             'restaurant.menus.import' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.items.creer' => ['restaurant_chief', 'restaurant_manager'],
-            'restaurant.menus.items.modifier' => ['restaurant_chief', 'restaurant_manager'],
+            // Le responsable financier fixe aussi les prix de la carte.
+            'restaurant.menus.items.modifier' => ['finance_manager', 'restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.items.supprimer' => ['restaurant_chief', 'restaurant_manager'],
             'restaurant.menus.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
             'restaurant.orders.claim' => ['restaurant_staff'],
@@ -807,11 +832,13 @@ class PermissionCatalog
             // Le journal des mouvements : qui consulte le stock le lit.
             'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.purchase_requests.approve' => ['manager'],
+            // La décision de dépense : la direction, et le responsable
+            // financier qui encadre l'économat.
+            'economat.purchase_requests.approve' => ['finance_manager', 'manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.convert' => ['econome'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
-            'economat.purchase_requests.reject' => ['manager'],
+            'economat.purchase_requests.reject' => ['finance_manager', 'manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
@@ -877,6 +904,15 @@ class PermissionCatalog
             'rooms.supprimer' => ['manager', 'reception_chief'],
             'rooms.types.creer' => ['manager', 'reception_chief'],
             'rooms.types.export' => ['controller', 'manager', 'reception'],
+            // La grille tarifaire des chambres : prix de base de chaque type
+            // et tarifs par critère (saison, week-end, événement, long séjour,
+            // dernière minute). Le responsable financier la fixe, avec la
+            // direction et le chef de réception ; la réception la consulte.
+            'rooms.rates.voir' => ['controller', 'finance_manager', 'manager', 'reception'],
+            'rooms.rates.creer' => ['finance_manager', 'manager', 'reception_chief'],
+            'rooms.rates.modifier' => ['finance_manager', 'manager', 'reception_chief'],
+            'rooms.rates.supprimer' => ['finance_manager', 'manager', 'reception_chief'],
+            'rooms.rates.types.modifier' => ['finance_manager', 'manager', 'reception_chief'],
             'rooms.types.import' => ['manager', 'reception_chief'],
             'rooms.types.modifier' => ['manager', 'reception_chief'],
             'rooms.types.supprimer' => ['manager', 'reception_chief'],
@@ -889,23 +925,23 @@ class PermissionCatalog
             'settings.cancellation_policies.modifier' => ['manager'],
             'settings.cancellation_policies.supprimer' => ['manager'],
             'settings.export' => ['controller', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'settings.import' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'settings.modifier' => ['housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
-            'settings.packages.creer' => ['manager'],
+            'settings.import' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.modifier' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
+            'settings.packages.creer' => ['finance_manager', 'manager'],
             'settings.packages.export' => ['controller', 'manager'],
-            'settings.packages.import' => ['manager'],
-            'settings.packages.modifier' => ['manager'],
-            'settings.packages.supprimer' => ['manager'],
-            'settings.partners.creer' => ['manager'],
+            'settings.packages.import' => ['finance_manager', 'manager'],
+            'settings.packages.modifier' => ['finance_manager', 'manager'],
+            'settings.packages.supprimer' => ['finance_manager', 'manager'],
+            'settings.partners.creer' => ['finance_manager', 'manager'],
             'settings.partners.export' => ['controller', 'manager'],
-            'settings.partners.import' => ['manager'],
-            'settings.partners.modifier' => ['manager'],
-            'settings.partners.supprimer' => ['manager'],
-            'settings.services.creer' => ['manager'],
+            'settings.partners.import' => ['finance_manager', 'manager'],
+            'settings.partners.modifier' => ['finance_manager', 'manager'],
+            'settings.partners.supprimer' => ['finance_manager', 'manager'],
+            'settings.services.creer' => ['finance_manager', 'manager'],
             'settings.services.export' => ['controller', 'manager'],
-            'settings.services.import' => ['manager'],
-            'settings.services.modifier' => ['manager'],
-            'settings.services.supprimer' => ['manager'],
+            'settings.services.import' => ['finance_manager', 'manager'],
+            'settings.services.modifier' => ['finance_manager', 'manager'],
+            'settings.services.supprimer' => ['finance_manager', 'manager'],
             // L'économe y règle l'onglet Économat (unités de stockage).
             'settings.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
@@ -924,7 +960,8 @@ class PermissionCatalog
             'shop.products.creer' => ['shop_manager'],
             'shop.products.export' => ['controller', 'manager', 'shop_manager'],
             'shop.products.import' => ['shop_manager'],
-            'shop.products.modifier' => ['shop_manager'],
+            // Le responsable financier fixe aussi les prix de la boutique.
+            'shop.products.modifier' => ['finance_manager', 'shop_manager'],
             'shop.products.supprimer' => ['shop_manager'],
             'shop.products.voir' => ['controller', 'manager', 'shop_manager'],
 
@@ -967,7 +1004,8 @@ class PermissionCatalog
             'housekeeping.minibar.voir' => ['controller', 'housekeeping_leader', 'housekeeping_supervisor', 'manager'],
             'housekeeping.minibar.depot' => ['housekeeping_leader', 'manager'],
             'housekeeping.minibar.articles.creer' => ['housekeeping_leader', 'manager'],
-            'housekeeping.minibar.articles.modifier' => ['housekeeping_leader', 'manager'],
+            // Le prix d'un article du mini-bar : le responsable financier aussi.
+            'housekeeping.minibar.articles.modifier' => ['finance_manager', 'housekeeping_leader', 'manager'],
             'housekeeping.minibar.standards.modifier' => ['housekeeping_leader', 'manager'],
             'housekeeping.minibar.rooms.voir' => ['controller', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager'],
             'housekeeping.minibar.rooms.modifier' => ['housekeeping_leader', 'manager'],
