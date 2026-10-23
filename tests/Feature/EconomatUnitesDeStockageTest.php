@@ -37,7 +37,7 @@ test("la liste part des unités courantes, et l'économe la règle dans Paramèt
     $this->actingAs(membreEconomat('econome', 'Économe'));
 
     // L'économe n'a que cet onglet : Paramètres s'ouvre dessus.
-    $this->get(route('settings.index'))->assertOk()->assertSee('Unités de stockage')->assertSee('Ajouter une unité');
+    $this->get(route('settings.index'))->assertOk()->assertSee('Unités de mesure & de stockage', false)->assertSee('Ajouter une unité');
 
     $this->post(route('economat.units.store'), ['name' => 'bidon'])
         ->assertRedirect(route('settings.index', ['tab' => 'economat']));
@@ -112,7 +112,7 @@ test("la direction tient aussi la liste ; le magasinier n'a que son profil", fun
     $this->actingAs(membreEconomat('manager', 'Directrice'));
 
     $this->get(route('settings.index', ['tab' => 'economat']))->assertOk()
-        ->assertSee('Unités de stockage')
+        ->assertSee('Unités de mesure & de stockage', false)
         ->assertSee('Ajouter une unité');
     $this->post(route('economat.units.store'), ['name' => 'bidon'])
         ->assertRedirect(route('settings.index', ['tab' => 'economat']));
@@ -128,6 +128,6 @@ test("la tuile Paramètres de l'économe ouvre l'onglet Économat, sans « econo
 
     expect(\App\Support\SettingsTabs::parDefaut($econome))->toBe('economat');
     $this->actingAs($econome)->get(route('settings.index'))->assertOk()
-        ->assertSee('Unités de stockage')
+        ->assertSee('Unités de mesure & de stockage', false)
         ->assertSee('Ajouter une unité');
 });

@@ -224,6 +224,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('permission')->name('types.destroy');
     });
 
+    // --- GRILLE TARIFAIRE DES CHAMBRES ---
+    // Prix de base et tarifs par critère : le responsable financier, la
+    // direction et le chef de réception la fixent ; la réception la consulte.
+    Route::prefix('hebergement/tarifs')->name('rooms.rates.')->middleware('permission')->group(function () {
+        $c = App\Http\Controllers\RoomRateController::class;
+
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/', [$c, 'store'])->name('store');
+        Route::put('/types/{roomType}', [$c, 'updateType'])->whereNumber('roomType')->name('types.update');
+        Route::put('/{rate}', [$c, 'update'])->whereNumber('rate')->name('update');
+        Route::delete('/{rate}', [$c, 'destroy'])->whereNumber('rate')->name('destroy');
+    });
+
     // --- FICHES TECHNIQUES DES CHAMBRES (marge sur une chambre louée) ---
     // Donnée de gestion : réservée au manager et au comptable. Préfixe hors du
     // groupe « rooms » pour ne pas heurter sa route rooms/{room}.

@@ -33,7 +33,10 @@ class Navigation
         }
 
         $droits = app(PermissionResolver::class);
-        $estComptable = $user->exerce(['accountant']);
+        // Le comptable n'a rien à faire dans l'Hôtel ; le responsable
+        // financier, qui détient ses droits, y fixe les tarifs.
+        $estFinancier = $user->exerce([PermissionCatalog::RESPONSABLE_FINANCIER]);
+        $estComptable = $user->exerce(['accountant']) && ! $estFinancier;
         $groups = [];
 
         // 1. HÔTEL (Chambres, réservations, agenda, housekeeping)
@@ -55,9 +58,11 @@ class Navigation
                 'border_color'=> 'border-indigo-100',
                 // La tuile ouvre le premier écran que la personne peut voir :
                 // le housekeeping n'a pas les Chambres, il arrive à son tableau.
-                'url'         => self::premiereRoutePermise($user, [
-                    'rooms.index', 'bookings.index', 'agenda.index', 'housekeeping.index', 'reception.pos.index',
-                ]) ?? route('rooms.index'),
+                // Le responsable financier arrive à la grille tarifaire.
+                'url'         => self::premiereRoutePermise($user, $estFinancier
+                    ? ['rooms.rates.index', 'bookings.index', 'rooms.index']
+                    : ['rooms.index', 'bookings.index', 'agenda.index', 'housekeeping.index', 'reception.pos.index'],
+                ) ?? route('rooms.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -65,7 +70,7 @@ class Navigation
         // 2. RESTAURANT
         $peutVoirResto = TenantModules::has('restaurant') && (
             $user->isAdmin() ||
-            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'])
+            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER])
         );
         if ($peutVoirResto) {
             $groups[] = [
@@ -78,10 +83,14 @@ class Navigation
                 'text_color'  => 'text-amber-600',
                 'bg_soft'     => 'bg-amber-50',
                 'border_color'=> 'border-amber-100',
-                'url'         => self::premiereRoutePermise($user, [
-                    'restaurant.orders.index', 'restaurant.kitchen.index', 'restaurant.bar.index', 'restaurant.billing.index',
-                    'restaurant.breakfast.index', 'restaurant.banquets.index', 'restaurant.menus.index', 'restaurant.restaurants.index',
-                ]) ?? route('restaurant.orders.index'),
+                // Le responsable financier arrive aux chiffres : facturation, puis la carte.
+                'url'         => self::premiereRoutePermise($user, $estFinancier
+                    ? ['restaurant.billing.index', 'restaurant.consumption.index', 'restaurant.menus.index']
+                    : [
+                        'restaurant.orders.index', 'restaurant.kitchen.index', 'restaurant.bar.index', 'restaurant.billing.index',
+                        'restaurant.breakfast.index', 'restaurant.banquets.index', 'restaurant.menus.index', 'restaurant.restaurants.index',
+                    ],
+                ) ?? route('restaurant.orders.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -149,7 +158,7 @@ class Navigation
         }
 
         // 5. GESTION (Clients & Utilisateurs) — Groupe léger (Onglets)
-        $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier']);
+        $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER]);
         if ($peutVoirGestion) {
             $urlGestion = (!auth()->check() || $user->hasModuleAccess('clients'))
                 ? route('customers.index')
@@ -172,7 +181,7 @@ class Navigation
 
         // 6. BOUTIQUE — Groupe léger (Onglets)
         $peutVoirShop = TenantModules::has('shop') && (
-            $user->isAdmin() || $user->exerce(['shop_manager', 'shop_cashier', 'manager'])
+            $user->isAdmin() || $user->exerce(['shop_manager', 'shop_cashier', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])
         );
         if ($peutVoirShop) {
             $groups[] = [
@@ -661,7 +670,7 @@ class Navigation
                 }
             } else {
                 // Réception / Direction Hôtel
-                if ($user->isAdmin() || $user->exerce(['manager', 'reception'])) {
+                if ($user->isAdmin() || $user->exerce(['manager', 'reception', PermissionCatalog::RESPONSABLE_FINANCIER])) {
                     if ($user->hasModuleAccess('hebergement') && $droits->allows($user, 'rooms.voir')) {
                         $tabs[] = [
                             'label'  => 'Chambres',
@@ -762,7 +771,7 @@ class Navigation
                     'active' => request()->routeIs('restaurant.orders.*'),
                 ];
             }
-            if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
+            if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', PermissionCatalog::RESPONSABLE_FINANCIER])) {
                 if ($droits->allows($user, 'restaurant.menus.voir')) {
                     $tabs[] = [
                         'label'  => 'Menus',
@@ -800,7 +809,7 @@ class Navigation
                     ];
                 }
             }
-            if ($user->exerce(['cashier', 'restaurant_chief', 'manager']) && $droits->allows($user, 'restaurant.cash_register.voir')) {
+            if ($user->exerce(['cashier', 'restaurant_chief', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER]) && $droits->allows($user, 'restaurant.cash_register.voir')) {
                 $tabs[] = [
                     'label'  => 'Caisse',
                     'icon'   => 'calculator',
@@ -932,7 +941,7 @@ class Navigation
                 }
             }
         } elseif ($groupId === 'shop') {
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) && $droits->allows($user, 'shop.products.voir')) {
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])) && $droits->allows($user, 'shop.products.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.products.index',
                     'label'  => 'Articles',
@@ -948,7 +957,7 @@ class Navigation
                     'active' => request()->routeIs('shop.orders.*'),
                 ];
             }
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager'])) && $droits->allows($user, 'shop.cash_register.voir')) {
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])) && $droits->allows($user, 'shop.cash_register.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.cash_register.index',
                     'label'  => 'Compta Boutique',

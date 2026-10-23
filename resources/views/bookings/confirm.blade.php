@@ -411,10 +411,18 @@
                         {{-- Tarif de référence --}}
                         <div class="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-slate-50 border border-secondary/15">
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-primary">
-                                    Prix de base — {{ $nights }} nuit{{ $nights > 1 ? 's' : '' }} × {{ number_format($pricePerNight, 0, ',', ' ') }} FCFA
-                                </p>
-                                <p class="text-xs text-primary/50 mt-0.5">Taxes incluses</p>
+                                @if(!empty($resumeTarif))
+                                    {{-- Grille tarifaire : les nuits n'ont pas toutes le même prix. --}}
+                                    <p class="text-sm font-medium text-primary">
+                                        Tarif de la grille — {{ $nights }} nuit{{ $nights > 1 ? 's' : '' }}, moyenne {{ number_format($pricePerNight, 0, ',', ' ') }} FCFA
+                                    </p>
+                                    <p class="text-xs text-primary/50 mt-0.5">{{ $resumeTarif }} · taxes incluses</p>
+                                @else
+                                    <p class="text-sm font-medium text-primary">
+                                        Prix de base — {{ $nights }} nuit{{ $nights > 1 ? 's' : '' }} × {{ number_format($pricePerNight, 0, ',', ' ') }} FCFA
+                                    </p>
+                                    <p class="text-xs text-primary/50 mt-0.5">Taxes incluses</p>
+                                @endif
                             </div>
                             <p class="font-semibold text-primary tabular-nums flex-shrink-0">{{ number_format($totalRoomAmount, 0, ',', ' ') }} FCFA</p>
                         </div>

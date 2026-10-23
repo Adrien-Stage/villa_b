@@ -86,11 +86,13 @@ class PublicBookingController extends Controller
             ]);
         }
 
-        // Tarification à partir du type de chambre
+        // Tarification d'après la grille tarifaire du type de chambre : le site
+        // propose le même tarif que la réception.
         $checkIn  = \Carbon\Carbon::parse($data['check_in']);
         $checkOut = \Carbon\Carbon::parse($data['check_out']);
         $nights   = max(1, $checkIn->diffInDays($checkOut));
-        $pricePerNight = (int) ($room->roomType->base_price ?? 0);
+        $pricePerNight = app(\App\Services\TarifSejour::class)->calculer(
+            $room->roomType, $checkIn, $checkIn->copy()->addDays($nights), (int) ($data['adults'] ?? 1), (int) ($data['children'] ?? 0))['par_nuit'];
         $totalRoom = $nights * $pricePerNight;
 
         $booking = Booking::create([

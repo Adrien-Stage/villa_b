@@ -24,20 +24,23 @@ class SettingsTabs
         // L'administrateur règle l'identité et le fonctionnement général ;
         // tarifs, prestations et services restent à la direction et aux chefs.
         'general' => ['manager', 'admin'],
-        'hebergement' => ['manager', 'reception_chief'],
-        'reception' => ['manager', 'reception_chief'],
-        'taxes' => ['manager', 'reception_chief'],
+        // Le responsable financier fixe les prix : tarification et réductions,
+        // petit-déjeuner, lit d'appoint et packs vivent dans l'onglet
+        // Hébergement, les taxes dans Taxes & Tarifs.
+        'hebergement' => ['manager', 'reception_chief', 'finance_manager'],
+        'reception' => ['manager', 'reception_chief', 'finance_manager'],
+        'taxes' => ['manager', 'reception_chief', 'finance_manager'],
         'housekeeping' => ['manager', 'housekeeping_leader'],
         'restaurant' => ['manager', 'restaurant_chief', 'restaurant_manager'],
         'shop' => ['manager', 'shop_manager'],
-        'services' => ['manager'],
+        'services' => ['manager', 'finance_manager'],
         // Le calendrier des inventaires généraux engage tous les services :
         // c'est une décision de la direction.
         'inventaire' => ['manager'],
         // Les quarts de travail engagent tout l'hôtel : la direction les
         // définit, l'administrateur les règle aussi (configuration).
         'quarts' => ['manager', 'admin'],
-        'partners' => ['manager'],
+        'partners' => ['manager', 'finance_manager'],
         // Les unités de mesure des articles, employées dans tout le PMS :
         // l'économe et la direction les tiennent. L'économat est un module
         // cœur, toujours actif : il ne figure jamais dans TENANT_MODULES, et

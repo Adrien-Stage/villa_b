@@ -179,7 +179,7 @@
             <x-table.col hide="2xl">Service</x-table.col>
             <x-table.col align="right">Prix</x-table.col>
             <x-table.col>Statut</x-table.col>
-            @if($canManage)<x-table.col actions />@endif
+            @if($peutModifierArticle || $peutSupprimerArticle)<x-table.col actions />@endif
         </x-slot:head>
 
         @foreach($items as $item)
@@ -202,10 +202,14 @@
                 <x-table.cell nowrap>
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $item->is_active ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-red-200 bg-red-50 text-red-700' }}">{{ $item->is_active ? 'Actif' : 'Inactif' }}</span>
                 </x-table.cell>
-                @if($canManage)
+                @if($peutModifierArticle || $peutSupprimerArticle)
                     <x-table.actions :label="'Actions pour '.$item->name">
-                        <x-table.action icon="pencil" onclick="openEditItemModal({{ $item->id }})">Modifier</x-table.action>
-                        <x-table.action :action="route('restaurant.menus.items.destroy', $item)" method="DELETE" icon="trash-2" tone="danger" confirm="Supprimer cet article ?">Supprimer</x-table.action>
+                        @if($peutModifierArticle)
+                            <x-table.action icon="pencil" onclick="openEditItemModal({{ $item->id }})">Modifier</x-table.action>
+                        @endif
+                        @if($peutSupprimerArticle)
+                            <x-table.action :action="route('restaurant.menus.items.destroy', $item)" method="DELETE" icon="trash-2" tone="danger" confirm="Supprimer cet article ?">Supprimer</x-table.action>
+                        @endif
                     </x-table.actions>
                 @endif
             </x-table.row>
@@ -351,8 +355,10 @@
             <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
         </x-slot:footer>
     </x-modal>
+@endif
 
-    {{-- Edit item modals --}}
+{{-- Edit item modals : aussi pour qui modifie sans créer (responsable financier). --}}
+@if($peutModifierArticle)
     @foreach($items as $item)
         <x-modal id="edit-item-modal-{{ $item->id }}" title="Modifier {{ $item->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.menus.items.update', $item) }}" enctype="multipart/form-data" closeAction="closeEditItemModal({{ $item->id }})">
             @method('PUT')

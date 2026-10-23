@@ -216,9 +216,12 @@ class RoleCatalog
 
             // ── Comptabilité & finances ──
             [
-                'name' => 'Responsable administratif et financier',
+                'name' => 'Responsable financier',
                 'slug' => 'finance_manager',
-                'description' => 'Dirige la comptabilité et les finances : écritures, clôtures, contrôle des caisses',
+                // Encadre aussi le contrôle de gestion et l'économat, sans en
+                // inclure les rôles : le stock et les livres, le contrôle et
+                // l'exploitation restent dans des mains différentes.
+                'description' => 'Dirige la comptabilité et les finances : tarifs et prix, écritures, clôtures, contrôle des caisses ; encadre la comptabilité, le contrôle de gestion et l\'économat',
                 'module' => 'comptabilite', 'icon' => 'landmark', 'sort_order' => 59, 'is_assignable' => true,
                 'level' => 3, 'includes' => ['accountant'], 'statut' => self::ACTIF,
             ],

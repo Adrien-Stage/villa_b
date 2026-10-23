@@ -77,18 +77,24 @@ class RoomType extends Model
      */
     public function getCalculatedPricePerNight(int $adults, int $children = 0, ?int $tenantId = null): int
     {
+        return $this->avecSurchargeDeCapacite((int) $this->base_price, $adults, $children, $tenantId);
+    }
+
+    /**
+     * Le prix d'une nuit, majoré quand les occupants dépassent la capacité de
+     * base. La grille tarifaire (TarifSejour) l'applique au tarif de la nuit.
+     */
+    public function avecSurchargeDeCapacite(int $prix, int $adults, int $children = 0, ?int $tenantId = null): int
+    {
+        if ($adults + $children <= $this->base_capacity) {
+            return $prix;
+        }
+
         $tenantId = $tenantId ?? $this->tenant_id ?? \App\Models\Tenant::current()?->id;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
         $surchargePercentage = $tenantSettings['reception']['capacity_surcharge_percentage'] ?? 10;
 
-        $totalPeople = $adults + $children;
-
-        if ($totalPeople > $this->base_capacity) {
-            $surcharged = $this->base_price * (1 + $surchargePercentage / 100);
-            return (int) round($surcharged);
-        }
-
-        return $this->base_price;
+        return (int) round($prix * (1 + $surchargePercentage / 100));
     }
 
     /**

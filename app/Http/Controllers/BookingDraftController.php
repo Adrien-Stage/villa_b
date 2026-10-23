@@ -361,8 +361,10 @@ class BookingDraftController extends Controller
         $notes       = $draft->notes ?? '';
         $draftToken  = $draft->token;
 
-        $pricePerNight = $room->roomType->getCalculatedPricePerNight($adultsCount, $childrenCount) / 100;
-        $totalRoomAmount = $nights * $pricePerNight;
+        // Tarif de référence du séjour d'après la grille tarifaire (TarifSejour).
+        $tarifSejour = app(\App\Services\TarifSejour::class)->calculer($room->roomType, $checkIn, $checkOut, (int) $adultsCount, (int) $childrenCount);
+        $pricePerNight = $tarifSejour['par_nuit'] / 100;
+        $totalRoomAmount = $tarifSejour['total'] / 100;
 
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
@@ -444,6 +446,7 @@ class BookingDraftController extends Controller
             'notes' => $notes,
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
+            'resumeTarif' => $tarifSejour['ajuste'] ? app(\App\Services\TarifSejour::class)->resume($tarifSejour) : null,
             'minDepositPercentage' => $minDepositPercentage,
             'maxDiscountPercentage' => $maxDiscountPercentage,
             'draftToken' => $draftToken,

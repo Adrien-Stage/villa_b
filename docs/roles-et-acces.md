@@ -36,7 +36,7 @@ leurs droits sans qu'on les recopie, et porte aussi leurs incompatibilités.
 | 3 | `restaurant_chief` — Chef de cuisine (cuisine seule) | restaurant | `restaurant_cook` | actif |
 | 3 | `shop_manager` — Responsable boutique | boutique | `shop_cashier` | actif |
 | 3 | `econome` — Chef économe | économat | `storekeeper` | actif |
-| 3 | `finance_manager` — Responsable administratif et financier | comptabilité | `accountant` | actif |
+| 3 | `finance_manager` — Responsable financier | comptabilité | `accountant` | actif |
 | 4 | `reception` — Réceptionniste (encaisse) | hébergement | — | actif |
 | 4 | `housekeeping_supervisor` — Gouvernante | housekeeping | — | actif |
 | 4 | `housekeeping_staff` — Valet / Femme de chambre | housekeeping | — | actif |
@@ -304,7 +304,7 @@ contrôle crédible.
 Le comptage n'a **pas** de restriction de rôle supplémentaire : le contrôleur borne
 la session à `auth()->id()`. Chacun compte la sienne, personne ne compte celle d'un
 autre. La caisse cesse alors d'encaisser et attend la **contresignature de la
-comptabilité** (comptable ou responsable administratif et financier), seule à
+comptabilité** (comptable ou responsable financier), seule à
 constater l'écart. Ce n'est pas un réglage : ni l'établissement ni le manager ne
 peuvent en dispenser. Le circuit est le même à la réception, à la boutique et dans
 chaque restaurant — une caisse par restaurant, une session par personne (voir

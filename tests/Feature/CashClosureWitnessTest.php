@@ -160,7 +160,7 @@ test('le manager ne contresigne plus les comptages', function () {
     expect($session->refresh()->closed_at)->toBeNull();
 });
 
-test('le responsable administratif et financier contresigne aussi', function () {
+test('le responsable financier contresigne aussi', function () {
     $raf = User::factory()->create(['role' => 'finance_manager']);
 
     expect(CashClosurePolicy::canWitness($raf, User::factory()->create(['role' => 'reception'])->id))->toBeTrue();

@@ -283,7 +283,9 @@ class GroupBookingController extends Controller
 
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::current()?->id;
-        $pricePerNight = $room->roomType->getCalculatedPricePerNight($validated['adults_count'], $validated['children_count'] ?? 0);
+        // Le groupe prend le tarif moyen de la grille sur ses dates.
+        $pricePerNight = app(\App\Services\TarifSejour::class)->calculer(
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0))['par_nuit'];
         $totalRoomAmount = $nights * $pricePerNight;
         $totalAmount = $totalRoomAmount;
         // TVA extraite du total TTC, jamais ajoutée par dessus.

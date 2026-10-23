@@ -162,15 +162,44 @@ Trois mécanismes se combinent :
 
 | Mécanisme | Modèle | Usage |
 |---|---|---|
-| **Tarifs** | `RoomRate` | Prix par type et par période |
+| **Grille tarifaire** | `RoomType::base_price`, `RoomRate` | Prix de base par type, et tarifs par critère |
 | **Packs** | `RoomPackage` | Nuit + prestations groupées, à prix forfaitaire |
 | **Partenaires** | `PartnerOrganization` | Conventions avec remise négociée |
 
 Les **prestations** (`ServiceItem`) constituent le catalogue des extras facturables,
 et alimentent les lignes de folio.
 
-Les organisations partenaires sont réservées au manager : ces conventions engagent
-des remises.
+Prix, packs, partenaires et prestations se fixent par le responsable financier et
+la direction ; la grille tarifaire aussi par le chef de réception.
+
+### La grille tarifaire
+
+**Hôtel › Tarifs** (`/hebergement/tarifs`, droits `rooms.rates.*`) porte, par type de
+chambre, le prix de base et les tarifs par critère :
+
+| Critère | Conditions | Exemple |
+|---|---|---|
+| Événement | période, nom de l'événement | FESPAM : 70 000 F la nuit |
+| Saison | période | Fêtes : +20 % du 20 décembre au 5 janvier |
+| Jours de la semaine | jours cochés, période facultative | Week-end : +25 % le vendredi et le samedi |
+| Long séjour | nombre de nuits minimal (et maximal) | −10 % dès 7 nuits |
+| Dernière minute | délai maximal entre réservation et arrivée | −5 000 F réservé la veille ou le jour même |
+
+Le prix d'une nuit est un prix fixe, une majoration ou remise en pourcentage, ou une
+remise en montant, appliqué au prix de base. Une période vide vaut toute l'année.
+
+[`TarifSejour`](../app/Services/TarifSejour.php) calcule le séjour **nuit par nuit** :
+chaque nuit prend le tarif qui s'y applique — la plus haute priorité saisie, puis
+l'ordre du tableau ci-dessus —, sinon le prix de base. Les tarifs ne se cumulent pas ;
+la surcharge de capacité s'applique ensuite au prix de la nuit, chaque nuit arrondie
+au franc.
+
+Le total devient le **tarif de référence** de la réservation : la réception le
+négocie dans la limite de remise de l'établissement, partenaires et packs s'en
+déduisent, et un séjour offert y mesure son manque à gagner. Le séjour se facture au
+tarif moyen de ses nuits (`price_per_night`). Le site, les groupes et la
+modification d'une réservation prennent le même calcul. L'écran propose une
+simulation de séjour qui montre le prix de chaque nuit.
 
 ## Fiches techniques de coût
 
