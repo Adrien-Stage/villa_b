@@ -155,6 +155,68 @@ dans les calculs financiers.
 
 ---
 
+## Pilotage (contrôle de gestion)
+
+Tuile **Pilotage** (`/pilotage`, droits `pilotage.*`) : l'outil du contrôleur de
+gestion. Le contrôleur et le responsable financier l'établissent, la direction le
+consulte. Sans module à activer.
+
+### Le budget
+
+`/pilotage/budget` — produits et charges prévus, par centre et par mois
+([`BudgetLine`](../app/Models/BudgetLine.php)) : hébergement, restauration, boutique,
+économat, et **structure** (le non-ventilé de l'analytique : loyer, assurances,
+administration).
+
+Le réalisé ([`RealiseDeGestion`](../app/Services/RealiseDeGestion.php)) vient du
+**grand livre analytique** dès que le module `ledger` porte des écritures validées
+sur l'année (droits constatés, centre par centre) ; sinon de la **comptabilité de
+caisse** (recettes encaissées par activité, dépenses saisies en structure). La source
+retenue est affichée sur la grille.
+
+L'écart ([`BudgetDeGestion`](../app/Services/BudgetDeGestion.php)) porte sur les mois
+écoulés et se lit dans le sens de l'hôtel : recettes au-dessus, charges en dessous du
+budget sont favorables. « Partir du réalisé N−1 » propose le réalisé de l'année
+précédente dans la grille, sans rien enregistrer.
+
+### Le tableau de bord de gestion
+
+`/pilotage` — un mois (le mois en cours s'arrête à aujourd'hui), comparé au mois
+précédent sur le même nombre de jours
+([`TableauDeBordGestion`](../app/Services/TableauDeBordGestion.php)) :
+
+| Domaine | Indicateurs |
+|---|---|
+| Hébergement | Taux d'occupation, prix moyen (ADR), RevPAR, revenu d'hébergement, revenu par canal de vente, taux d'annulation et de non-présentation des arrivées |
+| Restauration | Chiffre d'affaires, couverts, revenu par couvert, coût matière, pertes |
+| Trésorerie | Encaissements par activité et par moyen, dépenses, créances clients |
+| Budget | Produits et charges du mois par centre, ramenés aux jours écoulés, et leur écart |
+
+Les indicateurs d'hébergement se lisent sur les séjours, nuit par nuit (séjours
+offerts exclus du revenu), et non sur les encaissements. Le revenu par couvert ne
+porte que sur les commandes qui ont leurs couverts (saisis à la commande en salle).
+
+### Les alertes de dérive
+
+Chaque matin à 7 h 30, `pilotage:alertes`
+([`AlertesDeGestion`](../app/Services/AlertesDeGestion.php)) constate sur le mois en
+cours :
+
+| Règle | Déclenchement |
+|---|---|
+| Charges au-dessus du budget | charges d'un centre au-delà du budget ramené aux jours écoulés, plus la tolérance |
+| Recettes en retard sur le budget | recettes d'un centre en deçà de ce budget, moins la tolérance |
+| Coût matière au-dessus du seuil | coût matière de la restauration depuis le début du mois |
+| Marge en baisse | marge d'un centre inférieure de plus de N points à celle du mois précédent |
+
+Les règles de budget et de marge attendent le 8 du mois : avant, un prorata varie trop.
+Une dérive est notifiée une fois par règle, centre et mois
+([`ManagementAlert`](../app/Models/ManagementAlert.php)) au contrôleur de gestion, au
+responsable financier et à la direction ; les jours suivants, sa valeur se met à jour.
+Les seuils (tolérance, coût matière, baisse de marge) se règlent sur le tableau de bord.
+
+---
+
 ## Analytics
 
 Module optionnel (`analytics`), réservé au **manager** — distinct de la comptabilité.

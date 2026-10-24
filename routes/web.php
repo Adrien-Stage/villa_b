@@ -224,6 +224,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('permission')->name('types.destroy');
     });
 
+    // --- PILOTAGE (contrôle de gestion) ---
+    // Tableau de bord, budget et seuils d'alerte : le contrôleur de gestion et
+    // le responsable financier les établissent, la direction les consulte.
+    Route::prefix('pilotage')->name('pilotage.')->middleware('permission')->group(function () {
+        $c = App\Http\Controllers\PilotageController::class;
+
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::put('/seuils', [$c, 'updateSeuils'])->name('seuils.update');
+        Route::get('/budget', [$c, 'budget'])->name('budget.index');
+        Route::put('/budget/{annee}', [$c, 'updateBudget'])->whereNumber('annee')->name('budget.update');
+    });
+
     // --- GRILLE TARIFAIRE DES CHAMBRES ---
     // Prix de base et tarifs par critère : le responsable financier, la
     // direction et le chef de réception la fixent ; la réception la consulte.

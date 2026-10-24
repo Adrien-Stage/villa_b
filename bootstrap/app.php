@@ -36,6 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('planning:rappel')
             ->weeklyOn(0, '08:00');
 
+        // Pilotage de gestion : les dérives du mois (budget, coût matière,
+        // marge), constatées après la clôture de nuit et avant la journée.
+        $schedule->command('pilotage:alertes')
+            ->dailyAt('07:30')
+            ->withoutOverlapping();
+
         // Interventions de l'administrateur : clôture des échues et trace
         // vers la console, rattrapée si elle était injoignable.
         $schedule->command('interventions:transmettre')

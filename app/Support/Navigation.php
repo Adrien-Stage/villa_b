@@ -70,7 +70,8 @@ class Navigation
         // 2. RESTAURANT
         $peutVoirResto = TenantModules::has('restaurant') && (
             $user->isAdmin() ||
-            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER])
+            // Le contrôleur de gestion consulte tous les services, restaurants compris.
+            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])
         );
         if ($peutVoirResto) {
             $groups[] = [
@@ -157,8 +158,27 @@ class Navigation
             ];
         }
 
+        // 4 bis. PILOTAGE — le contrôle de gestion : tableau de bord, budget,
+        // alertes de dérive. Le contrôleur et le responsable financier le
+        // tiennent, la direction le consulte.
+        if ($user->isAdmin() || $droits->allows($user, 'pilotage.voir')) {
+            $groups[] = [
+                'id'          => 'pilotage',
+                'title'       => 'Pilotage',
+                'subtitle'    => 'Indicateurs, budget & alertes',
+                'icon'        => 'gauge',
+                'color'       => 'indigo',
+                'bg_gradient' => 'from-indigo-500 to-violet-600',
+                'text_color'  => 'text-indigo-600',
+                'bg_soft'     => 'bg-indigo-50',
+                'border_color'=> 'border-indigo-100',
+                'url'         => route('pilotage.index'),
+                'type'        => self::TYPE_SIDEBAR,
+            ];
+        }
+
         // 5. GESTION (Clients & Utilisateurs) — Groupe léger (Onglets)
-        $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER]);
+        $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION]);
         if ($peutVoirGestion) {
             $urlGestion = (!auth()->check() || $user->hasModuleAccess('clients'))
                 ? route('customers.index')
@@ -181,7 +201,7 @@ class Navigation
 
         // 6. BOUTIQUE — Groupe léger (Onglets)
         $peutVoirShop = TenantModules::has('shop') && (
-            $user->isAdmin() || $user->exerce(['shop_manager', 'shop_cashier', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])
+            $user->isAdmin() || $user->exerce(['shop_manager', 'shop_cashier', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])
         );
         if ($peutVoirShop) {
             $groups[] = [
@@ -459,6 +479,10 @@ class Navigation
             return self::groupInfo('accounting');
         }
 
+        if (str_starts_with($routeName, 'pilotage.')) {
+            return self::groupInfo('pilotage');
+        }
+
         // Groupes avec Onglets (Tabs)
         if (str_starts_with($routeName, 'customers.') || str_starts_with($routeName, 'users.')) {
             return self::groupInfo('gestion');
@@ -539,6 +563,12 @@ class Navigation
                 'id'       => 'accounting',
                 'title'    => 'Comptabilité',
                 'icon'     => 'landmark',
+                'type'     => self::TYPE_SIDEBAR,
+            ],
+            'pilotage' => [
+                'id'       => 'pilotage',
+                'title'    => 'Pilotage',
+                'icon'     => 'gauge',
                 'type'     => self::TYPE_SIDEBAR,
             ],
             'gestion' => [
@@ -670,7 +700,7 @@ class Navigation
                 }
             } else {
                 // Réception / Direction Hôtel
-                if ($user->isAdmin() || $user->exerce(['manager', 'reception', PermissionCatalog::RESPONSABLE_FINANCIER])) {
+                if ($user->isAdmin() || $user->exerce(['manager', 'reception', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) {
                     if ($user->hasModuleAccess('hebergement') && $droits->allows($user, 'rooms.voir')) {
                         $tabs[] = [
                             'label'  => 'Chambres',
@@ -771,7 +801,7 @@ class Navigation
                     'active' => request()->routeIs('restaurant.orders.*'),
                 ];
             }
-            if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', PermissionCatalog::RESPONSABLE_FINANCIER])) {
+            if ($user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) {
                 if ($droits->allows($user, 'restaurant.menus.voir')) {
                     $tabs[] = [
                         'label'  => 'Menus',
@@ -809,7 +839,7 @@ class Navigation
                     ];
                 }
             }
-            if ($user->exerce(['cashier', 'restaurant_chief', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER]) && $droits->allows($user, 'restaurant.cash_register.voir')) {
+            if ($user->exerce(['cashier', 'restaurant_chief', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION]) && $droits->allows($user, 'restaurant.cash_register.voir')) {
                 $tabs[] = [
                     'label'  => 'Caisse',
                     'icon'   => 'calculator',
@@ -883,6 +913,23 @@ class Navigation
                     'active' => request()->routeIs('economat.requisitions.*'),
                 ];
             }
+        } elseif ($groupId === 'pilotage') {
+            if ($droits->allows($user, 'pilotage.voir')) {
+                $tabs[] = [
+                    'label'  => 'Indicateurs',
+                    'icon'   => 'gauge',
+                    'url'    => route('pilotage.index'),
+                    'active' => request()->routeIs('pilotage.index'),
+                ];
+            }
+            if ($droits->allows($user, 'pilotage.budget.voir')) {
+                $tabs[] = [
+                    'label'  => 'Budget',
+                    'icon'   => 'target',
+                    'url'    => route('pilotage.budget.index'),
+                    'active' => request()->routeIs('pilotage.budget.*'),
+                ];
+            }
         } elseif (in_array($groupId, ['gestion', 'shop', 'admin'], true)) {
             $groupTabs = self::getGroupTabs($groupId, $user);
             foreach ($groupTabs as $gTab) {
@@ -941,7 +988,7 @@ class Navigation
                 }
             }
         } elseif ($groupId === 'shop') {
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])) && $droits->allows($user, 'shop.products.voir')) {
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.products.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.products.index',
                     'label'  => 'Articles',
@@ -957,7 +1004,7 @@ class Navigation
                     'active' => request()->routeIs('shop.orders.*'),
                 ];
             }
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER])) && $droits->allows($user, 'shop.cash_register.voir')) {
+            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.cash_register.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.cash_register.index',
                     'label'  => 'Compta Boutique',

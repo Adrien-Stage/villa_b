@@ -1774,6 +1774,30 @@
   "reception_chief",
   "support"
  ],
+ "pilotage.budget.index": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "pilotage.budget.update": [
+  "admin",
+  "controller",
+  "finance_manager"
+ ],
+ "pilotage.index": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "pilotage.seuils.update": [
+  "admin",
+  "controller",
+  "finance_manager"
+ ],
  "planning.affectations.destroy": [
   "admin",
   "econome",

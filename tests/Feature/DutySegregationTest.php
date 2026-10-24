@@ -88,7 +88,7 @@ test('le contrôle de gestion ne se cumule à aucun rôle opérationnel', functi
     expect(DutySegregation::isCompatible(['controller', $operationnel]))->toBeFalse();
 })->with(['econome', 'accountant', 'cashier', 'reception', 'restaurant_chief']);
 
-test('le contrôleur de gestion voit tout et n\'écrit rien', function () {
+test('le contrôleur de gestion voit tout et n\'écrit que ses instruments de pilotage', function () {
     $droits = \App\Support\PermissionCatalog::forRole('controller');
 
     $ecritures = array_values(array_filter(
@@ -97,7 +97,9 @@ test('le contrôleur de gestion voit tout et n\'écrit rien', function () {
     ));
 
     // Sa valeur tient à ce qu'il ne participe pas aux opérations qu'il surveille.
-    expect($ecritures)->toBe([])
+    // Le budget et les seuils d'alerte sont ses instruments, non des opérations.
+    sort($ecritures);
+    expect($ecritures)->toBe(['pilotage.budget.modifier', 'pilotage.seuils.modifier'])
         ->and(count($droits))->toBeGreaterThan(40);
 });
 

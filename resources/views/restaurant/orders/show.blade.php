@@ -23,6 +23,7 @@
         </div>
         <p class="text-sm text-primary/50 mt-0.5">
             @if($order->table_number) Table {{ $order->table_number }} · @endif
+            @if($order->covers) {{ $order->covers }} couvert{{ $order->covers > 1 ? 's' : '' }} · @endif
             {{ ($order->source ?? 'portal') === 'portal' ? 'Commande du portail' : 'Commande saisie en salle' }}
         </p>
     </div>
