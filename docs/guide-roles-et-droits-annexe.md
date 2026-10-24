@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 131 | 252 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
-| Manager (`manager`) | 2 | — | 129 | 119 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
+| Administrateur (`admin`) | 1 | — | 133 | 254 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Pilotage, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
+| Manager (`manager`) | 2 | — | 131 | 119 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 36 | 55 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Technique, Factures, Planning |
 | Réceptionniste (`reception`) | 4 | — | 34 | 35 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Technique, Factures |
 | Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 13 | 33 | Économat, Paramètres, Housekeeping, Technique, Planning |
@@ -31,11 +31,11 @@
 | Magasinier (`storekeeper`) | 4 | — | 27 | 10 | Économat, Technique |
 | Responsable technique (`tech_manager`) | 3 | `technician` | 10 | 21 | Économat, Technique, Planning |
 | Technicien de maintenance (`technician`) | 4 | — | 7 | 10 | Économat, Technique |
-| Responsable financier (`finance_manager`) | 3 | `accountant` | 115 | 52 | Restaurant, Comptabilité, Économat, Chambres, Paramètres, Boutique, Housekeeping, Technique, Planning |
+| Responsable financier (`finance_manager`) | 3 | `accountant` | 117 | 54 | Restaurant, Comptabilité, Économat, Chambres, Pilotage, Paramètres, Boutique, Housekeeping, Technique, Planning |
 | Comptable (`accountant`) | 4 | — | 34 | 24 | Comptabilité, Économat, Chambres, Technique |
-| Contrôleur de gestion (`controller`) | transversal | — | 94 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 96 | 2 | Pilotage |
 | Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 75 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 110 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 112 | 0 | — |
 
 ## Droit par droit
 
@@ -439,6 +439,15 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `accounting.receivables` | consulte | ✓ | ✓ | ✓ | ✓ |  | ✓ |
 | `accounting.revenue_journal` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `accounting.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+### Pilotage
+
+| Droit | Nature | Admin | Manager | RAF | Contrôleur | Support |
+|---|---|:-:|:-:|:-:|:-:|:-:|
+| `pilotage.budget.modifier` | **agit** | ✓ |  | ✓ | ✓ |  |
+| `pilotage.budget.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `pilotage.seuils.modifier` | **agit** | ✓ |  | ✓ | ✓ |  |
+| `pilotage.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Analytique
 

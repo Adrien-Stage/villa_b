@@ -28,9 +28,10 @@ class DutySegregation
     public const CONTROLE_INDEPENDANT = 'quality_auditor';
 
     /**
-     * Contrôleur de gestion : il voit tous les services et n'écrit nulle part.
+     * Contrôleur de gestion : il voit tous les services et n'écrit dans aucun.
      * Sa vue d'ensemble n'a de valeur que s'il ne participe pas aux opérations
-     * qu'il surveille.
+     * qu'il surveille. Il établit seulement le budget et règle les seuils des
+     * alertes (Pilotage) : ce sont ses instruments, non des opérations.
      */
     public const CONTROLE_DE_GESTION = 'controller';
 

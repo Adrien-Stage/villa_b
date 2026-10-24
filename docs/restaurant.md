@@ -112,6 +112,9 @@ C'est cette prise de service qui le rend éligible aux affectations automatiques
 | Ouvrir | `POST /restaurant/shifts/open` |
 | Fermer | `POST /restaurant/shifts/close` |
 
+À la prise de commande en salle, le serveur peut saisir le **nombre de couverts**
+(facultatif) : il donne le revenu par couvert du tableau de bord de gestion.
+
 ### Le cycle d'une commande
 
 ```

@@ -210,6 +210,12 @@
                                    placeholder="12"
                                    class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
                         </div>
+                        <div>
+                            <label for="covers" class="block text-xs font-semibold text-primary/60 mb-1.5">Couverts</label>
+                            <input id="covers" name="covers" type="number" inputmode="numeric" min="1" max="500"
+                                   placeholder="Nombre de personnes à table"
+                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                        </div>
 
                         {{-- Nom, téléphone et note : repliés par défaut, ils
                              n'encombrent pas le geste courant. --}}

@@ -124,6 +124,8 @@ class RestaurantOrderController extends Controller
     {
         $validated = $request->validate([
             'table_number' => ['required', 'string', 'max:10'],
+            // Le nombre de couverts : facultatif, il sert le revenu par couvert (Pilotage).
+            'covers' => ['nullable', 'integer', 'min:1', 'max:500'],
             'customer_name' => ['nullable', 'string', 'max:120'],
             'customer_phone' => ['nullable', 'string', 'max:30'],
             'order_type' => ['nullable', 'string', Rule::in(RestaurantCustomerOrder::ORDER_TYPES)],
@@ -194,6 +196,7 @@ class RestaurantOrderController extends Controller
                 'created_by' => Auth::id(),
                 'assigned_server_id' => Auth::id(),
                 'table_number' => trim((string) $validated['table_number']),
+                'covers' => $validated['covers'] ?? null,
                 'order_type' => $orderType,
                 'is_complimentary' => $isComplimentary,
                 'complimentary_reason' => trim((string) ($validated['complimentary_reason'] ?? '')) ?: null,

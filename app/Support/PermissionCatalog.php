@@ -275,6 +275,8 @@ class PermissionCatalog
         'rooms.images.supprimer',
         'rooms.import',
         'rooms.modifier',
+        'pilotage.budget.modifier',
+        'pilotage.seuils.modifier',
         'rooms.rates.creer',
         'rooms.rates.modifier',
         'rooms.rates.supprimer',
@@ -904,6 +906,14 @@ class PermissionCatalog
             'rooms.supprimer' => ['manager', 'reception_chief'],
             'rooms.types.creer' => ['manager', 'reception_chief'],
             'rooms.types.export' => ['controller', 'manager', 'reception'],
+            // Le pilotage de gestion : tableau de bord, budget, seuils d'alerte.
+            // Le contrôleur de gestion établit le budget et règle les seuils —
+            // ce n'est pas une opération d'exploitation, sa vue d'ensemble n'en
+            // souffre pas —, avec le responsable financier ; la direction lit.
+            'pilotage.voir' => ['controller', 'finance_manager', 'manager'],
+            'pilotage.budget.voir' => ['controller', 'finance_manager', 'manager'],
+            'pilotage.budget.modifier' => ['controller', 'finance_manager'],
+            'pilotage.seuils.modifier' => ['controller', 'finance_manager'],
             // La grille tarifaire des chambres : prix de base de chaque type
             // et tarifs par critère (saison, week-end, événement, long séjour,
             // dernière minute). Le responsable financier la fixe, avec la

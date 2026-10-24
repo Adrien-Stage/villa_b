@@ -357,7 +357,9 @@ encadre les comptables, le contrôle de gestion et l'économat.
     restaurants, articles de la boutique, mini-bar — en plus de ceux qui les fixent
     déjà (direction, chefs de service) ;
   - **valide ou refuse les demandes d'achat**, vise les demandes internes ;
-  - planifie son département, reçoit les alertes de stock ;
+  - établit le budget avec le contrôleur de gestion, suit le tableau de bord de
+    gestion (Pilotage) ;
+  - planifie son département, reçoit les alertes de stock et les alertes de dérive ;
   - consulte **tout ce que consulte le contrôleur de gestion** : les chiffres de tous
     les services, tous les restaurants à la fois.
 - *Ne fait pas* : le travail du magasin (commandes, réceptions, livraisons,
@@ -377,8 +379,14 @@ encadre les comptables, le contrôle de gestion et l'économat.
 
 ### Contrôle
 
-**Contrôleur de gestion** — consulte tous les services, la comptabilité et les caisses
-comprises. N'écrit nulle part.
+**Contrôleur de gestion** — le pilotage économique de l'hôtel.
+
+- *Fait* : établit le **budget** par centre et par mois, règle les **seuils d'alerte**
+  (Pilotage), suit le tableau de bord de gestion et les écarts au budget, reçoit les
+  alertes de dérive.
+- *Consulte* : tous les services, la comptabilité et les caisses comprises.
+- *Ne fait pas* : aucune opération de service — ni saisie, ni validation, ni
+  encaissement. Le budget et les seuils sont ses instruments, non des opérations.
 
 **Contrôleur qualité & audit** — consulte l'exploitation (hébergement, housekeeping,
 restaurant, boutique, économat). Ne voit ni la comptabilité, ni les caisses, ni les

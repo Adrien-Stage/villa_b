@@ -158,6 +158,25 @@ class Navigation
             ];
         }
 
+        // 4 bis. PILOTAGE — le contrôle de gestion : tableau de bord, budget,
+        // alertes de dérive. Le contrôleur et le responsable financier le
+        // tiennent, la direction le consulte.
+        if ($user->isAdmin() || $droits->allows($user, 'pilotage.voir')) {
+            $groups[] = [
+                'id'          => 'pilotage',
+                'title'       => 'Pilotage',
+                'subtitle'    => 'Indicateurs, budget & alertes',
+                'icon'        => 'gauge',
+                'color'       => 'indigo',
+                'bg_gradient' => 'from-indigo-500 to-violet-600',
+                'text_color'  => 'text-indigo-600',
+                'bg_soft'     => 'bg-indigo-50',
+                'border_color'=> 'border-indigo-100',
+                'url'         => route('pilotage.index'),
+                'type'        => self::TYPE_SIDEBAR,
+            ];
+        }
+
         // 5. GESTION (Clients & Utilisateurs) — Groupe léger (Onglets)
         $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION]);
         if ($peutVoirGestion) {
@@ -460,6 +479,10 @@ class Navigation
             return self::groupInfo('accounting');
         }
 
+        if (str_starts_with($routeName, 'pilotage.')) {
+            return self::groupInfo('pilotage');
+        }
+
         // Groupes avec Onglets (Tabs)
         if (str_starts_with($routeName, 'customers.') || str_starts_with($routeName, 'users.')) {
             return self::groupInfo('gestion');
@@ -540,6 +563,12 @@ class Navigation
                 'id'       => 'accounting',
                 'title'    => 'Comptabilité',
                 'icon'     => 'landmark',
+                'type'     => self::TYPE_SIDEBAR,
+            ],
+            'pilotage' => [
+                'id'       => 'pilotage',
+                'title'    => 'Pilotage',
+                'icon'     => 'gauge',
                 'type'     => self::TYPE_SIDEBAR,
             ],
             'gestion' => [
@@ -882,6 +911,23 @@ class Navigation
                     'icon'   => 'inbox',
                     'url'    => route('economat.requisitions.index'),
                     'active' => request()->routeIs('economat.requisitions.*'),
+                ];
+            }
+        } elseif ($groupId === 'pilotage') {
+            if ($droits->allows($user, 'pilotage.voir')) {
+                $tabs[] = [
+                    'label'  => 'Indicateurs',
+                    'icon'   => 'gauge',
+                    'url'    => route('pilotage.index'),
+                    'active' => request()->routeIs('pilotage.index'),
+                ];
+            }
+            if ($droits->allows($user, 'pilotage.budget.voir')) {
+                $tabs[] = [
+                    'label'  => 'Budget',
+                    'icon'   => 'target',
+                    'url'    => route('pilotage.budget.index'),
+                    'active' => request()->routeIs('pilotage.budget.*'),
                 ];
             }
         } elseif (in_array($groupId, ['gestion', 'shop', 'admin'], true)) {

@@ -697,6 +697,20 @@
                 @endif
 
 
+                @if(!$hasSidebar || $activeGroupId === 'pilotage')
+                @droit('pilotage.voir')
+                    <div>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Pilotage</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="pilotage.index" icon="gauge">Indicateurs de gestion</x-sidebar-link>
+                            @droit('pilotage.budget.voir')
+                                <x-sidebar-link route="pilotage.budget.index" icon="target">Budget</x-sidebar-link>
+                            @enddroit
+                        </ul>
+                    </div>
+                @enddroit
+                @endif
+
                 @if(!$hasSidebar || $activeGroupId === 'accounting')
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>

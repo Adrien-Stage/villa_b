@@ -233,11 +233,11 @@ class RoleCatalog
                 'level' => 4, 'statut' => self::ACTIF,
             ],
 
-            // ── Contrôle : hors hiérarchie, lecture seule ──
+            // ── Contrôle : hors hiérarchie, lecture seule des services ──
             [
                 'name' => 'Contrôleur de gestion',
                 'slug' => 'controller',
-                'description' => 'Contrôle et audit interne — vue sur tous les services, aucune écriture',
+                'description' => 'Pilotage économique : budget, indicateurs, écarts et alertes ; vue sur tous les services sans y écrire',
                 'module' => 'comptabilite', 'icon' => 'shield-check', 'sort_order' => 41, 'is_assignable' => true,
                 'level' => null, 'statut' => self::ACTIF,
             ],

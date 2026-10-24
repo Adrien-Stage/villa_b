@@ -85,6 +85,7 @@ class RestaurantCustomerOrder extends Model
         'created_by',
         'assigned_server_id',
         'table_number',
+        'covers',
         'order_type',
         'is_complimentary',
         'complimentary_reason',
@@ -113,6 +114,7 @@ class RestaurantCustomerOrder extends Model
 
     protected $casts = [
         'is_complimentary' => 'boolean',
+        'covers' => 'integer',
         'total_amount' => 'integer',
         'amount_paid' => 'integer',
         'food_cost' => 'integer',
