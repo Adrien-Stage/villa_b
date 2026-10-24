@@ -124,6 +124,12 @@ class SettingsController extends Controller
 
             $settings['logo'] = $request->file('logo')->store('logos', 'public');
             $dirty = true;
+        } elseif ($request->boolean('remove_logo') && !empty($settings['logo'])) {
+            // Retrait : le fichier part avec la clé, l'établissement retrouve
+            // son initiale à la place du logo.
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($settings['logo']);
+            unset($settings['logo']);
+            $dirty = true;
         }
 
         // L'onglet actuel pour savoir quelle clé mettre à jour
