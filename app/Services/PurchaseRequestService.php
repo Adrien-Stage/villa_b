@@ -9,21 +9,68 @@ use App\Models\PurchaseRequestLine;
 use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Notifications\PurchaseRequestUpdated;
+use App\Support\RoleCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
  * Service de gestion du cycle de vie des Demandes d'Achat internes.
+ *
+ * Le circuit : un service ou l'économat demande ; le contrôleur de gestion
+ * — ou le responsable financier à sa place — approuve, en ajustant au besoin
+ * les quantités, ou refuse ; le responsable des achats tire les bons de
+ * commande des quantités approuvées et les envoie. Chaque étape est annoncée
+ * à qui doit agir ensuite.
  */
 class PurchaseRequestService
 {
+    /** Ceux qui décident de la dépense. */
+    public const APPROBATEURS = ['controller', 'finance_manager'];
+
+    /** Ceux qui commandent. */
+    public const ACHETEURS = ['purchasing_manager'];
+
+    /** L'économat, qui reçoit ce qui est commandé et suit chaque décision. */
+    public const ECONOMAT = ['econome'];
+
+    public function __construct(private Notifier $notifier)
+    {
+    }
+
+    /** La demande nouvelle part aux approbateurs. */
+    public function annoncer(PurchaseRequest $request): void
+    {
+        $this->notifier->toRoles(self::APPROBATEURS, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::SOUMISE), $request->requested_by);
+    }
+
+    /** Le demandeur et l'économat apprennent la décision ; le dossier approuvé passe aux achats. */
+    private function annoncerDecision(PurchaseRequest $request, User $decideur): void
+    {
+        $request->loadMissing(['lines.item', 'requestedBy', 'reviewedBy']);
+        $etape = $request->status === PurchaseRequest::STATUS_APPROVED
+            ? PurchaseRequestUpdated::APPROUVEE
+            : PurchaseRequestUpdated::REFUSEE;
+
+        $economat = User::query()
+            ->havingRole(RoleCatalog::avecCeuxQuiLesIncluent(self::ECONOMAT))
+            ->active()
+            ->where('id', '!=', $decideur->id)
+            ->get();
+        $this->notifier->send($economat->push($request->requestedBy)->filter(), new PurchaseRequestUpdated($request, $etape));
+
+        if ($etape === PurchaseRequestUpdated::APPROUVEE) {
+            $this->notifier->toRoles(self::ACHETEURS, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::A_COMMANDER), $decideur->id);
+        }
+    }
+
     /**
      * Crée une nouvelle demande d'achat avec ses lignes chiffrées.
      */
     public function create(array $data, User $user): PurchaseRequest
     {
-        return DB::transaction(function () use ($data, $user) {
+        $request = DB::transaction(function () use ($data, $user) {
             $request = PurchaseRequest::create([
                 'department'   => $data['department'] ?? 'economat',
                 'priority'     => $data['priority'] ?? PurchaseRequest::PRIORITY_NORMAL,
@@ -65,12 +112,22 @@ class PurchaseRequestService
 
             return $request->fresh('lines.item');
         });
+
+        $this->annoncer($request);
+
+        return $request;
     }
 
     /**
-     * Valide / Approuve la demande d'achat.
+     * Approuve la demande d'achat.
+     *
+     * L'approbateur peut ajuster la quantité de chaque ligne ($quantites,
+     * par identifiant de ligne) ; zéro écarte l'article. La quantité demandée
+     * reste écrite à côté : l'économat voit ce qui a changé.
+     *
+     * @param  array<int|string, int|float|string|null>  $quantites
      */
-    public function approve(PurchaseRequest $request, User $reviewer, ?string $notes = null): PurchaseRequest
+    public function approve(PurchaseRequest $request, User $reviewer, ?string $notes = null, array $quantites = []): PurchaseRequest
     {
         if (!$request->canBeReviewed()) {
             throw new RuntimeException("Cette demande d'achat ne peut pas être approuvée dans son statut actuel.");
@@ -78,14 +135,38 @@ class PurchaseRequestService
 
         $this->refuserSaPropreDemande($request, $reviewer);
 
-        $request->update([
-            'status'       => PurchaseRequest::STATUS_APPROVED,
-            'reviewed_by'  => $reviewer->id,
-            'reviewed_at'  => now(),
-            'review_notes' => $notes,
-        ]);
+        DB::transaction(function () use ($request, $reviewer, $notes, $quantites) {
+            $retenu = 0.0;
 
-        return $request->fresh();
+            foreach ($request->lines()->get() as $ligne) {
+                $saisie = $quantites[$ligne->id] ?? null;
+                $quantite = ($saisie === null || $saisie === '') ? (float) $ligne->quantity_requested : (float) $saisie;
+
+                if ($quantite < 0) {
+                    throw new RuntimeException('Une quantité approuvée ne peut pas être négative.');
+                }
+
+                $ligne->update(['quantity_approved' => $quantite]);
+                $retenu += $quantite;
+            }
+
+            if ($retenu <= 0) {
+                throw new RuntimeException("Toutes les quantités sont à zéro : refusez plutôt la demande, avec son motif.");
+            }
+
+            $request->update([
+                'status'       => PurchaseRequest::STATUS_APPROVED,
+                'reviewed_by'  => $reviewer->id,
+                'reviewed_at'  => now(),
+                'review_notes' => $notes,
+            ]);
+            $request->recalculateTotal();
+        });
+
+        $request = $request->fresh(['lines.item', 'requestedBy', 'reviewedBy']);
+        $this->annoncerDecision($request, $reviewer);
+
+        return $request;
     }
 
     /**
@@ -106,7 +187,10 @@ class PurchaseRequestService
             'rejection_reason' => $reason,
         ]);
 
-        return $request->fresh();
+        $request = $request->fresh(['lines.item', 'requestedBy', 'reviewedBy']);
+        $this->annoncerDecision($request, $reviewer);
+
+        return $request;
     }
 
     /**
@@ -143,7 +227,8 @@ class PurchaseRequestService
     }
 
     /**
-     * Convertit une demande d'achat approuvée en bon(s) de commande fournisseur.
+     * Convertit une demande d'achat approuvée en bon(s) de commande fournisseur,
+     * aux quantités approuvées ; un article ramené à zéro n'est pas commandé.
      * Groupe les articles par leur fournisseur habituel (ou utilise le fournisseur spécifié).
      *
      * @return Collection<int, PurchaseOrder>
@@ -157,15 +242,16 @@ class PurchaseRequestService
         return DB::transaction(function () use ($request, $user, $supplierId) {
             $request->loadMissing('lines.item.supplier');
             $createdOrders = collect();
+            $aCommander = $request->lines->filter(fn (PurchaseRequestLine $l) => $l->quantiteRetenue() > 0);
 
             // Si un fournisseur précis a été imposé pour tous les articles
             if ($supplierId) {
                 $supplier = Supplier::findOrFail($supplierId);
-                $order = $this->createOrderFromLines($request, $supplier, $request->lines, $user);
+                $order = $this->createOrderFromLines($request, $supplier, $aCommander, $user);
                 $createdOrders->push($order);
             } else {
                 // Groupement automatique par fournisseur habituel de l'article
-                $linesBySupplier = $request->lines->groupBy(fn (PurchaseRequestLine $l) => $l->item?->supplier_id ?? 0);
+                $linesBySupplier = $aCommander->groupBy(fn (PurchaseRequestLine $l) => $l->item?->supplier_id ?? 0);
 
                 foreach ($linesBySupplier as $supId => $lines) {
                     $supplier = $supId > 0 ? Supplier::find($supId) : null;
@@ -202,6 +288,8 @@ class PurchaseRequestService
             'status'              => PurchaseOrder::STATUS_DRAFT,
             'notes'               => "Généré automatiquement depuis la demande d'achat {$request->number} (" . $request->departmentLabel() . ")",
             'created_by'          => $user->id,
+            // Le responsable des achats signe le bon qu'il émet.
+            'issuer_signature'    => $user->signatureName(),
             'tenant_id'           => $user->tenant_id ?? \App\Models\Tenant::current()?->id,
         ]);
 
@@ -209,7 +297,7 @@ class PurchaseRequestService
             PurchaseOrderLine::create([
                 'purchase_order_id' => $order->id,
                 'stock_item_id'     => $reqLine->stock_item_id,
-                'quantity_ordered'  => $reqLine->quantity_requested,
+                'quantity_ordered'  => $reqLine->quantiteRetenue(),
                 'unit_price'        => $reqLine->estimated_unit_price, // en centimes
             ]);
         }

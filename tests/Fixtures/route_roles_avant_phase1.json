@@ -253,6 +253,14 @@
   "manager",
   "support"
  ],
+ "achats.index": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "purchasing_manager",
+  "support"
+ ],
  "agenda.index": [
   "admin",
   "controller",
@@ -685,12 +693,14 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "support"
  ],
  "economat.control.suggestions.store": [
   "admin",
-  "econome"
+  "econome",
+  "purchasing_manager"
  ],
  "economat.control.variances.index": [
   "admin",
@@ -899,11 +909,10 @@
  ],
  "economat.orders.cancel": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.orders.create": [
-  "admin",
-  "econome"
+  "admin"
  ],
  "economat.orders.export": [
   "admin",
@@ -911,6 +920,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor"
  ],
  "economat.orders.index": [
@@ -919,6 +929,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -929,6 +940,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -940,7 +952,7 @@
  ],
  "economat.orders.send": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.orders.show": [
   "admin",
@@ -948,27 +960,28 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.orders.store": [
-  "admin",
-  "econome"
+  "admin"
  ],
  "economat.orders.transmit": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.purchase_requests.approve": [
   "admin",
-  "finance_manager",
-  "manager"
+  "controller",
+  "finance_manager"
  ],
  "economat.purchase_requests.cancel": [
   "admin",
   "econome",
   "housekeeping_leader",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -978,12 +991,13 @@
  ],
  "economat.purchase_requests.convert": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.purchase_requests.create": [
   "admin",
   "econome",
   "housekeeping_leader",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -998,6 +1012,24 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
+  "quality_auditor",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "shop_manager",
+  "support",
+  "tech_manager"
+ ],
+ "economat.purchase_requests.print": [
+  "admin",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1009,8 +1041,8 @@
  ],
  "economat.purchase_requests.reject": [
   "admin",
-  "finance_manager",
-  "manager"
+  "controller",
+  "finance_manager"
  ],
  "economat.purchase_requests.show": [
   "admin",
@@ -1019,6 +1051,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1032,6 +1065,7 @@
   "admin",
   "econome",
   "housekeeping_leader",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -1062,6 +1096,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper"
  ],
@@ -1071,6 +1106,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1081,6 +1117,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1091,6 +1128,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1392,7 +1430,7 @@
  ],
  "economat.suppliers.destroy": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.suppliers.index": [
   "admin",
@@ -1400,17 +1438,18 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.suppliers.store": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.suppliers.update": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.units.destroy": [
   "admin",
@@ -1438,6 +1477,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1462,6 +1502,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1487,6 +1528,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1512,6 +1554,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1804,6 +1847,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1816,6 +1860,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1833,6 +1878,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1853,6 +1899,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -1865,6 +1912,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
@@ -2959,6 +3007,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -2986,6 +3035,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -3009,6 +3059,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -3038,6 +3089,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -3061,6 +3113,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -3090,6 +3143,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "reception",
   "reception_chief",
   "restaurant_chief",

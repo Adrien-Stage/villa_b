@@ -33,8 +33,15 @@ class GoodsReceiptController extends Controller
 
     public const MAX_EXPORT = 1000;
 
-    /** Prévenus d'une réception directe : la marchandise est là, la facture suivra. */
-    private const WATCHERS = ['manager', 'accountant'];
+    /**
+     * Prévenus d'une réception directe : la marchandise est là, la facture
+     * suivra ; et la dépense s'est faite hors du circuit d'achat, que le
+     * responsable des achats et le contrôleur de gestion tiennent.
+     */
+    private const WATCHERS = ['manager', 'accountant', 'purchasing_manager', 'controller'];
+
+    /** Prévenu d'une livraison reçue : le responsable des achats, qui l'a commandée. */
+    private const ACHETEURS = ['purchasing_manager'];
 
     public function __construct(private GoodsReceiptService $receiptService)
     {
@@ -124,7 +131,7 @@ class GoodsReceiptController extends Controller
         ]);
     }
 
-    public function store(Request $request, PurchaseOrder $order): RedirectResponse
+    public function store(Request $request, PurchaseOrder $order, Notifier $notifier): RedirectResponse
     {
         $validated = $request->validate([
             'delivery_note_number'       => ['nullable', 'string', 'max:80'],
@@ -144,6 +151,8 @@ class GoodsReceiptController extends Controller
         } catch (RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
+
+        $notifier->toRoles(self::ACHETEURS, new PurchaseOrderUpdated($order->fresh('supplier')), Auth::id());
 
         return redirect()
             ->route('economat.receipts.show', $receipt)

@@ -176,7 +176,7 @@ class StockService
             // englobante (livraison d'une demande). On n'alerte pas sur un
             // déstockage qui finirait par être annulé.
             DB::afterCommit(fn () => app(Notifier::class)
-                ->toRoles(['econome', 'manager', 'finance_manager'], new StockItemBelowThreshold($crossedThreshold)));
+                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'], new StockItemBelowThreshold($crossedThreshold)));
         }
 
         return $movement;
@@ -329,7 +329,7 @@ class StockService
             // englobante (livraison d'une demande). On n'alerte pas sur un
             // déstockage qui finirait par être annulé.
             DB::afterCommit(fn () => app(Notifier::class)
-                ->toRoles(['econome', 'manager', 'finance_manager'], new StockItemBelowThreshold($crossedThreshold)));
+                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'], new StockItemBelowThreshold($crossedThreshold)));
         }
 
         return $movement;

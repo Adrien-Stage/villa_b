@@ -59,6 +59,8 @@ class PurchaseOrderService
             'send_error'    => $error,
         ]);
 
+        $order->purchaseRequest?->archiverSiCommandee();
+
         return $sent;
     }
 
@@ -93,6 +95,7 @@ class PurchaseOrderService
         });
 
         $order->refresh();
+        $order->purchaseRequest?->archiverSiCommandee();
     }
 
     /**

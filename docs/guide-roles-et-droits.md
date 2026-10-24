@@ -78,9 +78,11 @@ Niveau 3  Chef de réception ─────────── inclut ── Ré
           Chef de cuisine ───────────── inclut ── Cuisinier
           Responsable boutique ──────── inclut ── Vendeur-caissier
           Chef économe ──────────────── inclut ── Magasinier
+          Responsable des achats
           Responsable technique ─────── inclut ── Technicien de maintenance   (module Technique)
           Responsable financier ─────── inclut ── Comptable
-                                        encadre ── Contrôleur de gestion, Chef économe (sans les inclure)
+                                        encadre ── Contrôleur de gestion, Chef économe,
+                                                   Responsable des achats (sans les inclure)
 Transversal (lecture seule) : Contrôleur de gestion, Contrôleur qualité & audit
 Technique : Support Wetchah (lecture seule, ouvert par le mode assistance)
 ```
@@ -297,20 +299,38 @@ produits et les demandes à l'économat.
 **Chef économe** — le magasin central.
 
 - *Fait* :
-  - articles, catégories, fournisseurs ;
+  - articles, catégories ;
   - unités de stockage des articles, dans Paramètres › Économat (le seul onglet des
     paramètres qu'il règle, ouvert par la tuile Paramètres) ;
-  - bons de commande, envoyés par email ou marqués comme transmis (main propre,
-    téléphone, WhatsApp) quand le fournisseur n'a pas d'email ;
+  - **demandes d'achat** pour réapprovisionner le magasin, depuis les alertes de stock
+    ou à la main ; il est averti de la décision et des quantités ajustées ;
+  - **réception** des livraisons commandées et bons d'entrée ;
   - réception directe d'une marchandise arrivée sans bon de commande, sous un bon
-    de régularisation ;
+    de régularisation (le fournisseur se choisit au fichier) ;
   - validation des demandes des services ;
   - dépôts de service ;
   - inventaires ;
-  - reprise du stock initial ;
-  - conversion d'une demande d'achat validée en commande.
-- *Ne fait pas* : valider une demande d'achat. C'est une décision de dépense, que la
-  direction et le responsable financier se réservent.
+  - reprise du stock initial.
+- *Ne fait pas* : approuver une demande d'achat (le contrôle de gestion), tenir le
+  fichier des fournisseurs, émettre ou envoyer un bon de commande (le responsable des
+  achats).
+
+**Responsable des achats** — le service des achats (tuile **Achats**).
+
+- *Fait* :
+  - tient le **fichier des fournisseurs** ;
+  - reçoit les demandes d'achat **approuvées** et en tire les **bons de commande**,
+    aux quantités approuvées, un bon par fournisseur ;
+  - **envoie** les bons aux fournisseurs, par email ou en les marquant transmis (main
+    propre, téléphone, WhatsApp). Le bon ne porte que les articles et les quantités,
+    **jamais les prix**. Envoyé, il fait passer la demande aux **archives** ;
+  - suit les **alertes de stock** et propose les demandes de réapprovisionnement ;
+  - suit les livraisons attendues et reçues ;
+  - consulte ses éditions : registre des demandes d'achat, des bons de commande, des
+    bons d'entrée, répertoire des fournisseurs.
+- *Ne fait pas* : approuver une demande, réceptionner une livraison, saisir un bon
+  sans demande approuvée. Tout bon naît d'une demande que le contrôle de gestion a
+  approuvée.
 
 **Magasinier** — réceptionne les livraisons commandées, livre les demandes, saisit
 les comptages. Il ne reçoit pas sans bon de commande : recevoir sans commande engage
@@ -347,7 +367,7 @@ Le demandeur est prévenu de la fin et peut rouvrir pendant 7 jours.
 ### Comptabilité et finances
 
 **Responsable financier** — le chef du département Comptabilité et Finance. Il
-encadre les comptables, le contrôle de gestion et l'économat.
+encadre les comptables, le contrôle de gestion, l'économat et les achats.
 
 - *Fait* : tout ce que fait le comptable (ci-dessous), et :
   - fixe les **tarifs des chambres** : prix de base et grille par critère (Hôtel ›
@@ -356,7 +376,8 @@ encadre les comptables, le contrôle de gestion et l'économat.
     petit-déjeuner et lit d'appoint, packs, partenaires, prestations, taxes, carte des
     restaurants, articles de la boutique, mini-bar — en plus de ceux qui les fixent
     déjà (direction, chefs de service) ;
-  - **valide ou refuse les demandes d'achat**, vise les demandes internes ;
+  - **approuve ou refuse les demandes d'achat** à la place du contrôleur de gestion,
+    vise les demandes internes ;
   - établit le budget avec le contrôleur de gestion, suit le tableau de bord de
     gestion (Pilotage) ;
   - planifie son département, reçoit les alertes de stock et les alertes de dérive ;
@@ -381,12 +402,17 @@ encadre les comptables, le contrôle de gestion et l'économat.
 
 **Contrôleur de gestion** — le pilotage économique de l'hôtel.
 
-- *Fait* : établit le **budget** par centre et par mois, règle les **seuils d'alerte**
-  (Pilotage), suit le tableau de bord de gestion et les écarts au budget, reçoit les
-  alertes de dérive.
+- *Fait* :
+  - établit le **budget** par centre et par mois, règle les **seuils d'alerte**
+    (Pilotage), suit le tableau de bord de gestion et les écarts au budget, reçoit les
+    alertes de dérive ;
+  - **approuve ou refuse les demandes d'achat** (tuile Achats), en ajustant au besoin
+    les quantités : l'économat est averti de chaque changement, le responsable des
+    achats reçoit la demande approuvée.
 - *Consulte* : tous les services, la comptabilité et les caisses comprises.
-- *Ne fait pas* : aucune opération de service — ni saisie, ni validation, ni
-  encaissement. Le budget et les seuils sont ses instruments, non des opérations.
+- *Ne fait pas* : aucune opération de service — ni saisie, ni encaissement, ni
+  commande, ni réception. Le budget, les seuils et l'approbation des achats sont des
+  actes de contrôle, non des opérations.
 
 **Contrôleur qualité & audit** — consulte l'exploitation (hébergement, housekeeping,
 restaurant, boutique, économat). Ne voit ni la comptabilité, ni les caisses, ni les
@@ -467,6 +493,8 @@ enregistrer, contrôler**. Qui en cumule deux peut commettre un acte et le dissi
 | Cumul refusé | Pourquoi |
 |---|---|
 | Chef économe ou magasinier **+** comptable | Détenir le stock et tenir les livres : un vol se couvre par une écriture de régularisation |
+| Responsable des achats **+** chef économe ou magasinier | Commander et réceptionner : une commande fictive se couvre par une réception de complaisance |
+| Responsable des achats **+** comptable (ou responsable financier) | Engager la dépense et la régler : le fournisseur choisi est aussi celui qu'on paie |
 | Caissier, responsable de restaurant, réceptionniste ou vendeur-caissier **+** comptable | Encaisser et enregistrer : l'encaissement du jour couvre le trou de la veille |
 | Contrôleur de gestion ou contrôleur qualité **+** tout rôle opérationnel | Un contrôle exercé sur son propre travail n'est plus un contrôle |
 | Administrateur **+** tout autre rôle | Celui qui distribue les droits ne doit pas pouvoir s'en servir |

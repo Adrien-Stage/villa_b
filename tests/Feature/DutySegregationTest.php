@@ -88,7 +88,7 @@ test('le contrôle de gestion ne se cumule à aucun rôle opérationnel', functi
     expect(DutySegregation::isCompatible(['controller', $operationnel]))->toBeFalse();
 })->with(['econome', 'accountant', 'cashier', 'reception', 'restaurant_chief']);
 
-test('le contrôleur de gestion voit tout et n\'écrit que ses instruments de pilotage', function () {
+test('le contrôleur de gestion voit tout et n\'écrit que ses actes de contrôle', function () {
     $droits = \App\Support\PermissionCatalog::forRole('controller');
 
     $ecritures = array_values(array_filter(
@@ -97,9 +97,13 @@ test('le contrôleur de gestion voit tout et n\'écrit que ses instruments de pi
     ));
 
     // Sa valeur tient à ce qu'il ne participe pas aux opérations qu'il surveille.
-    // Le budget et les seuils d'alerte sont ses instruments, non des opérations.
+    // Le budget, les seuils d'alerte et l'approbation des demandes d'achat sont
+    // des actes de contrôle, non des opérations : il n'achète ni ne reçoit.
     sort($ecritures);
-    expect($ecritures)->toBe(['pilotage.budget.modifier', 'pilotage.seuils.modifier'])
+    expect($ecritures)->toBe([
+        'economat.purchase_requests.approve', 'economat.purchase_requests.reject',
+        'pilotage.budget.modifier', 'pilotage.seuils.modifier',
+    ])
         ->and(count($droits))->toBeGreaterThan(40);
 });
 
@@ -131,6 +135,6 @@ test("la configuration tenue par l'administrateur n'est pas une fonction à imit
 });
 
 test("le contrôle ne reçoit aucune écriture", function () {
-    expect(DutySegregation::conflitsDUneAutorisation('controller', 'economat.purchase_requests.approve'))->not->toBeEmpty()
+    expect(DutySegregation::conflitsDUneAutorisation('controller', 'economat.orders.send'))->not->toBeEmpty()
         ->and(DutySegregation::conflitsDUneAutorisation('quality_auditor', 'economat.items.creer'))->not->toBeEmpty();
 });

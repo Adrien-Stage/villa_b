@@ -102,7 +102,7 @@ class Navigation
             $groups[] = [
                 'id'          => 'economat',
                 'title'       => 'Économat',
-                'subtitle'    => 'Stocks, achats & inventaires',
+                'subtitle'    => 'Stocks, réceptions & inventaires',
                 'icon'        => 'warehouse',
                 'color'       => 'emerald',
                 'bg_gradient' => 'from-emerald-500 to-teal-600',
@@ -113,6 +113,25 @@ class Navigation
                     'economat.index', 'economat.items.index', 'economat.orders.index', 'economat.receipts.index',
                     'economat.stock_counts.index', 'economat.suppliers.index', 'economat.movements.index',
                 ]) ?? route('economat.index'),
+                'type'        => self::TYPE_SIDEBAR,
+            ];
+        }
+
+        // 3 ter. ACHATS — le circuit d'achat : le responsable des achats y
+        // commande, le contrôle de gestion y approuve, la direction le suit.
+        // L'économe, qui réceptionne, garde ces écrans dans l'Économat.
+        if (self::tientLesAchats($user)) {
+            $groups[] = [
+                'id'          => 'achats',
+                'title'       => 'Achats',
+                'subtitle'    => 'Demandes, commandes & fournisseurs',
+                'icon'        => 'shopping-cart',
+                'color'       => 'orange',
+                'bg_gradient' => 'from-orange-500 to-amber-600',
+                'text_color'  => 'text-orange-600',
+                'bg_soft'     => 'bg-orange-50',
+                'border_color'=> 'border-orange-100',
+                'url'         => route('achats.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -365,7 +384,7 @@ class Navigation
         $droits = app(PermissionResolver::class);
 
         foreach (PermissionCatalog::droitsDuModule('economat') as $droit) {
-            if (str_starts_with($droit, 'economat.requisitions.') || str_starts_with($droit, 'economat.purchase_requests.')
+            if (str_starts_with($droit, 'economat.requisitions.') || self::estUnEcranDAchat($droit)
                 || !PermissionCatalog::estLecture($droit)) {
                 continue;
             }
@@ -375,6 +394,37 @@ class Navigation
         }
 
         return false;
+    }
+
+    /**
+     * Écrans du circuit d'achat — demandes, bons, fournisseurs, réceptions
+     * suivies, propositions de réapprovisionnement. Les consulter ne fait
+     * pas tenir le magasin : le responsable des achats n'a pas l'Économat.
+     */
+    private const ECRANS_D_ACHAT = [
+        'economat.purchase_requests.', 'economat.orders.', 'economat.suppliers.',
+        'economat.receipts.', 'economat.control.suggestions.',
+    ];
+
+    private static function estUnEcranDAchat(string $droitOuRoute): bool
+    {
+        foreach (self::ECRANS_D_ACHAT as $prefixe) {
+            if (str_starts_with($droitOuRoute, $prefixe)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** La personne a-t-elle la tuile Achats ? */
+    public static function tientLesAchats(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return $user->isAdmin() || app(PermissionResolver::class)->allows($user, 'achats.voir');
     }
 
     /**
@@ -443,7 +493,17 @@ class Navigation
         $estComptable = $user && $user->exerce(['accountant']);
 
         // Groupes avec Sidebar
+        if (str_starts_with($routeName, 'achats.')) {
+            return self::groupInfo('achats');
+        }
+
         if (str_starts_with($routeName, 'economat.')) {
+            // Les écrans du circuit d'achat vivent dans la tuile Achats pour
+            // qui l'a ; les réceptions, dans l'Économat pour qui le tient.
+            if (self::estUnEcranDAchat($routeName) && self::tientLesAchats($user)
+                && !(str_starts_with($routeName, 'economat.receipts.') && self::tientLEconomat($user))) {
+                return self::groupInfo('achats');
+            }
             // Les demandes à l'économat de qui ne le tient pas vivent dans
             // l'application de son service.
             if (str_starts_with($routeName, 'economat.requisitions.') || str_starts_with($routeName, 'economat.purchase_requests.')) {
@@ -569,6 +629,12 @@ class Navigation
                 'id'       => 'pilotage',
                 'title'    => 'Pilotage',
                 'icon'     => 'gauge',
+                'type'     => self::TYPE_SIDEBAR,
+            ],
+            'achats' => [
+                'id'       => 'achats',
+                'title'    => 'Achats',
+                'icon'     => 'shopping-cart',
                 'type'     => self::TYPE_SIDEBAR,
             ],
             'gestion' => [
@@ -911,6 +977,37 @@ class Navigation
                     'icon'   => 'inbox',
                     'url'    => route('economat.requisitions.index'),
                     'active' => request()->routeIs('economat.requisitions.*'),
+                ];
+            }
+        } elseif ($groupId === 'achats') {
+            $tabs[] = [
+                'label'  => 'Achats',
+                'icon'   => 'shopping-cart',
+                'url'    => route('achats.index'),
+                'active' => request()->routeIs('achats.index'),
+            ];
+            if ($droits->allows($user, 'economat.purchase_requests.voir')) {
+                $tabs[] = [
+                    'label'  => 'Demandes',
+                    'icon'   => 'file-question',
+                    'url'    => route('economat.purchase_requests.index'),
+                    'active' => request()->routeIs('economat.purchase_requests.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.orders.voir')) {
+                $tabs[] = [
+                    'label'  => 'Bons',
+                    'icon'   => 'clipboard-list',
+                    'url'    => route('economat.orders.index'),
+                    'active' => request()->routeIs('economat.orders.*'),
+                ];
+            }
+            if ($droits->allows($user, 'economat.suppliers.voir')) {
+                $tabs[] = [
+                    'label'  => 'Fournisseurs',
+                    'icon'   => 'truck',
+                    'url'    => route('economat.suppliers.index'),
+                    'active' => request()->routeIs('economat.suppliers.*'),
                 ];
             }
         } elseif ($groupId === 'pilotage') {

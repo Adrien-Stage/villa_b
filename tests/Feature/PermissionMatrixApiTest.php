@@ -289,9 +289,10 @@ test('une dérogation sans motif est refusée', function () {
 });
 
 test("le contrôle ne reçoit aucune écriture sans dérogation", function () {
-    // Bug corrigé en phase 0 : le contrôleur de gestion approuvait des achats.
+    // Il approuve les demandes d'achat (acte de contrôle), mais n'envoie pas
+    // les bons : ce serait acheter.
     $this->putJson('/api/permissions/matrice', ['ecarts' => [[
-        'role' => 'controller', 'permission' => 'economat.purchase_requests.approve', 'effect' => 'allow',
+        'role' => 'controller', 'permission' => 'economat.orders.send', 'effect' => 'allow',
         'reason' => 'Essai.',
     ]]], entete())->assertStatus(422);
 });

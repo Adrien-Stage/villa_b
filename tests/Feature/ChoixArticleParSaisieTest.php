@@ -46,7 +46,6 @@ test("les écrans de l'économat proposent les articles par saisie, sans menu d�
 })->with([
     'demande interne'      => ['economat.requisitions.create', 'econome'],
     "demande d'achat"      => ['economat.purchase_requests.create', 'econome'],
-    'bon de commande'      => ['economat.orders.create', 'econome'],
     'réception directe'    => ['economat.receipts.direct.create', 'econome'],
     'sortie externe'       => ['economat.external_issues.create', 'econome'],
     'journal des mouvements' => ['economat.movements.index', 'econome'],

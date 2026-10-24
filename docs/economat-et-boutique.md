@@ -55,7 +55,48 @@ Montants en **centimes FCFA** (entiers), quantités en **décimal**.
 
 ## Les trois flux
 
-### 1. Achat — le bon de commande
+### 1. Achat — de la demande au bon de commande
+
+Quatre mains différentes :
+
+```
+demande d'achat (économat, service, alerte de stock)
+  → approuvée par le contrôleur de gestion (le responsable financier à sa place),
+    quantités ajustées au besoin — l'économat en est averti
+  → bon(s) de commande tiré(s) par le responsable des achats, un par fournisseur,
+    aux quantités approuvées
+  → envoyé(s) au fournisseur : articles et quantités, jamais les prix ;
+    la demande passe aux archives (`archived_at`)
+  → réceptionné(s) par l'économat
+```
+
+La demande :
+
+```
+pending → approved → converted (puis archivée à l'envoi du dernier bon)
+   └──── rejected / cancelled
+```
+
+| Action | Route | Qui |
+|---|---|---|
+| Demander | `POST /economat/demandes-achat` | économe, chefs de service, responsable des achats |
+| Approuver (quantités ajustables, champ `quantities[ligne]`) | `POST /economat/demandes-achat/{id}/approuver` | contrôleur de gestion, responsable financier |
+| Refuser (motif obligatoire) | `POST /economat/demandes-achat/{id}/refuser` | contrôleur de gestion, responsable financier |
+| Tirer les bons | `POST /economat/demandes-achat/{id}/convertir` | responsable des achats |
+| Imprimer | `GET /economat/demandes-achat/{id}/imprimer` | qui consulte la demande |
+
+La quantité demandée reste écrite à côté de la quantité approuvée
+(`purchase_request_lines.quantity_approved`) : la notification à l'économat
+nomme chaque ajustement (« Riz 10 → 8 kg »). Une ligne ramenée à zéro n'est pas
+commandée ; tout ramener à zéro est refusé — c'est un refus, avec son motif.
+[`PurchaseRequestService`](../app/Services/PurchaseRequestService.php) annonce
+chaque étape à qui doit agir ensuite (`PurchaseRequestUpdated`).
+
+La liste des demandes a deux vues : **En cours** (à approuver, à commander, bons
+à envoyer) et **Archives** (commandées, refusées, annulées). Le registre des
+demandes d'achat et « Retrouver une pièce » les retrouvent dans Éditions.
+
+Le bon de commande :
 
 ```
 draft → sent → partially_received → received
@@ -64,18 +105,30 @@ draft → sent → partially_received → received
 
 | Action | Route |
 |---|---|
-| Créer | `POST /economat/bons` |
 | Envoyer au fournisseur | `POST /economat/bons/{order}/envoyer` |
 | Marquer comme transmis (sans email) | `POST /economat/bons/{order}/transmis` |
 | Réceptionner | `POST /economat/bons/{order}/reception` |
 | Annuler | `POST /economat/bons/{order}/annuler` |
 
+Envoyer, transmettre et annuler sont au responsable des achats ; réceptionner,
+à l'économe et au magasinier. Le bon saisi de toutes pièces (`POST
+/economat/bons`) n'est plus ouvert qu'à l'administrateur : il engagerait une
+dépense sans approbation.
+
 [`PurchaseOrderService`](../app/Services/PurchaseOrderService.php) gère le cycle et
 **délègue l'entrée en stock à `StockService`** — jamais d'écriture directe.
 
 L'envoi produit un e-mail au fournisseur
-([`PurchaseOrderMail`](../app/Mail/PurchaseOrderMail.php)). La réception peut être
-partielle, d'où le statut intermédiaire.
+([`PurchaseOrderMail`](../app/Mail/PurchaseOrderMail.php)). L'e-mail et le bon
+imprimé ne portent que les articles et les quantités, **jamais les prix** : les
+prix restent dans le PMS (écran du bon, registre, comptabilité). La réception
+peut être partielle, d'où le statut intermédiaire.
+
+La tuile **Achats** (`/achats`, droit `achats.voir`) rassemble le circuit :
+demandes à approuver, à commander, bons à envoyer, livraisons attendues et en
+retard, montant engagé du mois, alertes de stock. Le responsable des achats,
+le contrôleur de gestion, le responsable financier et la direction l'ont ;
+l'économe garde ces écrans dans l'Économat, pour réceptionner.
 
 Un fournisseur sans email (vendeur du marché, fournisseur joint par
 téléphone) reçoit son bon autrement : remis en main propre, dicté au
@@ -98,10 +151,13 @@ le coût moyen, le rapprochement de la facture fournisseur et l'annulation
 fonctionnent donc comme pour toute réception. Annuler la réception annule
 aussi le bon de régularisation, qui n'attend aucune livraison.
 
-Le fournisseur et les articles absents du magasin se créent depuis le
-formulaire, sous leurs droits habituels (`economat.suppliers.creer`,
-`economat.items.creer`). Une application encore vide peut ainsi enregistrer ce
-qui vient d'arriver. Le prix unitaire est obligatoire : il valorise le stock.
+Les articles absents du magasin se créent depuis le formulaire, sous leur droit
+habituel (`economat.items.creer`). Le fournisseur se choisit au fichier, que le
+responsable des achats tient (`economat.suppliers.creer`) : pour les achats au
+marché, il y crée une fois un fournisseur « Marché / divers ». Le prix unitaire
+est obligatoire : il valorise le stock. Une réception directe avertit aussi le
+responsable des achats et le contrôleur de gestion : la dépense s'est faite hors
+du circuit d'achat.
 
 Pour la marchandise déjà en magasin au démarrage, ce n'est pas une réception :
 c'est la reprise du stock initial (Articles › Reprise du stock, ou la colonne

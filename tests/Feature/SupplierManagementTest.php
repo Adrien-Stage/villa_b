@@ -60,10 +60,11 @@ test('l econome accede a la liste enrichie des fournisseurs avec KPIs et catalog
         ->assertSee('1 article(s)');
 });
 
-test('l econome cree un fournisseur avec toutes ses informations commerciales et ses articles lies', function () {
+test('le responsable des achats cree un fournisseur avec toutes ses informations commerciales et ses articles lies', function () {
+    // Le fichier des fournisseurs est tenu par le responsable des achats.
     $econome = User::factory()->create([
         'name' => 'Jean-Pierre Eboule',
-        'role' => 'econome',
+        'role' => 'purchasing_manager',
     ]);
 
     $category = StockCategory::create(['name' => 'Boissons']);
@@ -142,10 +143,10 @@ test('l econome cree un fournisseur avec toutes ses informations commerciales et
         ->and($itemB->last_purchase_price)->toBe(1200000);
 });
 
-test('l econome met a jour un fournisseur et dissocie un article retire', function () {
+test('le responsable des achats met a jour un fournisseur et dissocie un article retire', function () {
     $econome = User::factory()->create([
         'name' => 'Jean-Pierre Eboule',
-        'role' => 'econome',
+        'role' => 'purchasing_manager',
     ]);
 
     $supplier = Supplier::create([

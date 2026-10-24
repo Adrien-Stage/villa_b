@@ -75,13 +75,17 @@ test("chaque écran qu'il peut consulter s'ouvre sans erreur", function () {
     expect($enErreur)->toBe([]);
 });
 
-test("il n'écrit que le budget et les seuils d'alerte du pilotage", function () {
+test("il n'écrit que le budget, les seuils d'alerte et l'approbation des demandes d'achat", function () {
     $ecritures = collect(PermissionCatalog::all())
         ->filter(fn ($roles, $droit) => in_array('controller', $roles, true) && ! PermissionCatalog::estLecture($droit))
         ->keys()->sort()->values()->all();
 
-    // Établir un budget n'est pas une opération : sa vue d'ensemble n'en souffre pas.
-    expect($ecritures)->toBe(['pilotage.budget.modifier', 'pilotage.seuils.modifier']);
+    // Établir un budget, approuver une dépense ne sont pas des opérations : il
+    // n'achète ni ne reçoit, sa vue d'ensemble n'en souffre pas.
+    expect($ecritures)->toBe([
+        'economat.purchase_requests.approve', 'economat.purchase_requests.reject',
+        'pilotage.budget.modifier', 'pilotage.seuils.modifier',
+    ]);
 });
 
 test('ses menus mènent à ce qu\'il consulte, sans bouton pour écrire', function () {

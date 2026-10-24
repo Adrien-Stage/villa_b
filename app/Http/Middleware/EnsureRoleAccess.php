@@ -96,6 +96,7 @@ class EnsureRoleAccess
             'accountant' => 'Accès réservé à la comptabilité.',
             'cashier' => 'Accès réservé aux caissiers.',
             'econome' => 'Accès réservé à l\'économat.',
+            'purchasing_manager' => 'Accès réservé au service des achats.',
         ];
 
         $message = 'Accès refusé. Rôles requis: ' . implode(', ', $authorizedRoles);

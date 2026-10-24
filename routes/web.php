@@ -726,6 +726,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
+    // --- ACHATS ---
+    // Le tableau de bord du circuit d'achat : demandes à approuver et à
+    // commander, bons à envoyer, livraisons attendues, alertes de stock. Les
+    // écrans du circuit eux-mêmes restent ceux de l'économat (economat.*).
+    Route::prefix('achats')->name('achats.')->middleware('permission')->group(function () {
+        Route::get('/', [App\Http\Controllers\AchatsController::class, 'index'])->name('index');
+    });
+
     // --- ÉCONOMAT / INVENTAIRE ---
     Route::prefix('economat')->name('economat.')->group(function () {
         $eco = 'App\\Http\\Controllers\\Economat\\';
@@ -870,6 +878,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])->name('purchase_requests.create');
             Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])->name('purchase_requests.store');
             Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])->whereNumber('purchaseRequest')->name('purchase_requests.show');
+            Route::get('/demandes-achat/{purchaseRequest}/imprimer', [$eco . 'PurchaseRequestController', 'print'])->whereNumber('purchaseRequest')->name('purchase_requests.print');
             Route::post('/demandes-achat/{purchaseRequest}/annuler', [$eco . 'PurchaseRequestController', 'cancel'])->whereNumber('purchaseRequest')->name('purchase_requests.cancel');
 
             // Demandes internes
