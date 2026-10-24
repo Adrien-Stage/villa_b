@@ -216,10 +216,13 @@
                       class="mt-6"
                       x-data="{
                           fileName: '',
+                          logoActuel: @js(!empty($tenantSettings['logo'] ?? null)),
+                          retirer: false,
                           preview: @js(!empty($tenantSettings['logo'] ?? null) ? asset('storage/' . $tenantSettings['logo']) : null),
                           onFileSelected(event) {
                               const file = event.target.files[0];
                               if (!file) { this.fileName = ''; return; }
+                              this.retirer = false;
                               this.fileName = file.name;
                               const reader = new FileReader();
                               reader.onload = (e) => { this.preview = e.target.result; };
@@ -233,9 +236,21 @@
                         <p class="mb-2 text-xs text-red-500">{{ $message }}</p>
                     @enderror
 
-                    <div class="mb-3 flex items-center gap-3" x-show="preview" x-cloak>
-                        <img :src="preview" alt="Aperçu du logo" class="w-14 h-14 rounded-full object-cover border border-secondary/20">
-                        <span class="text-xs text-primary/50" x-text="fileName ? 'Nouveau logo (aperçu)' : 'Logo actuel'"></span>
+                    <div class="mb-3 flex flex-wrap items-center gap-3" x-show="preview" x-cloak>
+                        <img :src="preview" alt="Aperçu du logo" class="w-14 h-14 rounded-full object-cover border border-secondary/20 transition-opacity"
+                             :class="retirer && 'opacity-30 grayscale'">
+                        <span class="text-xs" :class="retirer ? 'text-red-600 font-medium' : 'text-primary/50'"
+                              x-text="retirer ? 'Le logo sera retiré à l\'enregistrement' : (fileName ? 'Nouveau logo (aperçu)' : 'Logo actuel')"></span>
+                        {{-- Retirer le logo actuel : pris en compte à l'enregistrement de
+                             l'onglet, comme le reste ; l'établissement retrouve son initiale. --}}
+                        @if(!empty($tenantSettings['logo'] ?? null))
+                            <label x-show="!fileName" class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors focus-within:ring-2 focus-within:ring-red-300"
+                                   :class="retirer ? 'border-red-300 bg-red-50 text-red-700' : 'border-secondary/30 text-primary/70 hover:bg-red-50 hover:text-red-700'">
+                                <input type="checkbox" name="remove_logo" value="1" x-model="retirer" class="sr-only">
+                                <i data-lucide="trash-2" class="h-3.5 w-3.5" aria-hidden="true"></i>
+                                <span x-text="retirer ? 'Garder le logo' : 'Retirer le logo'">Retirer le logo</span>
+                            </label>
+                        @endif
                     </div>
 
                     <label class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
