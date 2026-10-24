@@ -29,6 +29,15 @@ class StockItemController extends Controller
             $query->belowThreshold();
         }
 
+        // Recherche à la saisie : le nom, la référence ou la catégorie.
+        $recherche = trim((string) $request->query('q', ''));
+        if ($recherche !== '') {
+            $motif = '%' . mb_strtolower($recherche) . '%';
+            $query->where(fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', [$motif])
+                ->orWhereRaw('LOWER(reference) LIKE ?', [$motif])
+                ->orWhereHas('category', fn ($c) => $c->whereRaw('LOWER(name) LIKE ?', [$motif])));
+        }
+
         $items = $query->orderBy('name')->paginate(self::PAR_PAGE)->withQueryString();
 
         $categories = StockCategory::orderBy('sort_order')->orderBy('name')->get();
@@ -40,6 +49,7 @@ class StockItemController extends Controller
             'suppliers'  => $suppliers,
             'unites'     => StockUnit::choix(),
             'filter'     => $request->query('filter'),
+            'recherche'  => $recherche,
         ]);
     }
 
