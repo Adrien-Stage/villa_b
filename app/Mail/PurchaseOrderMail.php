@@ -10,8 +10,8 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Bon de commande envoyé au fournisseur. Le corps liste les articles, les
- * quantités et le total ; c'est ce message qui déclenche la livraison.
+ * Bon de commande envoyé au fournisseur. Le corps liste les articles et les
+ * quantités, sans aucun prix ; c'est ce message qui déclenche la livraison.
  */
 class PurchaseOrderMail extends Mailable
 {

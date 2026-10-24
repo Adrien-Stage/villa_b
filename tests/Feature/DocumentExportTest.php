@@ -204,11 +204,21 @@ test("l'export est journalisé", function () {
 
 test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", function () {
     activerModules(['economat']);
+    \App\Support\RoleCatalog::sync();
 
-    // L'économe le crée.
+    // Tout bon naît d'une demande approuvée : l'économe ne saisit plus de bon,
+    // le responsable des achats part des demandes à commander.
     $this->actingAs(User::factory()->create(['role' => 'econome']))
         ->get(route('economat.orders.index'))
-        ->assertSee('Nouveau bon');
+        ->assertOk()
+        ->assertDontSee('Nouveau bon');
+    $acheteur = User::factory()->create(['is_active' => true]);
+    $acheteur->roles()->sync(\App\Models\Role::where('slug', 'purchasing_manager')->pluck('id'));
+    $this->actingAs($acheteur->fresh())
+        ->get(route('economat.orders.index'))
+        ->assertOk()
+        ->assertSee('Demandes à commander')
+        ->assertDontSee('Nouveau bon');
 
     // Le comptable adresse une demande interne à l'économat depuis sa section
     // Comptabilité ; il ne crée pas de bon fournisseur.

@@ -1,6 +1,6 @@
 @extends('layouts.hotel')
 
-@section('title', 'Demandes d\'achat — Économat')
+@section('title', 'Demandes d\'achat')
 
 @section('content')
 @php
@@ -24,7 +24,7 @@
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Demandes d'achat (Approvisionnement)</h1>
-            <p class="text-sm text-primary/60 mt-0.5">Besoins d'approvisionnement exprimés par les services et validation hiérarchique.</p>
+            <p class="text-sm text-primary/60 mt-0.5">Besoins exprimés par l'économat et les services : le contrôle de gestion les approuve, le responsable des achats les commande. Une demande commandée passe aux archives.</p>
         </div>
         @droit('economat.purchase_requests.creer')
             <a href="{{ route('economat.purchase_requests.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
@@ -37,27 +37,37 @@
 
     {{-- Cartes de synthèse --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
-            <span class="text-xs text-primary/50 font-medium">Total demandes</span>
-            <div class="text-2xl font-bold font-mono text-primary mt-1">{{ $stats['total'] }}</div>
-        </div>
         <div class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm bg-amber-50/20">
-            <span class="text-xs text-amber-700 font-medium">En attente d'avis</span>
+            <span class="text-xs text-amber-700 font-medium">À approuver</span>
             <div class="text-2xl font-bold font-mono text-amber-700 mt-1">{{ $stats['pending'] }}</div>
         </div>
         <div class="bg-white border border-blue-200 rounded-xl p-4 shadow-sm bg-blue-50/20">
-            <span class="text-xs text-blue-700 font-medium">Validées / À commander</span>
+            <span class="text-xs text-blue-700 font-medium">Approuvées, à commander</span>
             <div class="text-2xl font-bold font-mono text-blue-700 mt-1">{{ $stats['approved'] }}</div>
         </div>
         <div class="bg-white border border-emerald-200 rounded-xl p-4 shadow-sm bg-emerald-50/20">
-            <span class="text-xs text-emerald-700 font-medium">Converties en bons</span>
+            <span class="text-xs text-emerald-700 font-medium">Bons à envoyer</span>
             <div class="text-2xl font-bold font-mono text-emerald-700 mt-1">{{ $stats['converted'] }}</div>
         </div>
+        <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
+            <span class="text-xs text-primary/50 font-medium">Archives</span>
+            <div class="text-2xl font-bold font-mono text-primary mt-1">{{ $stats['archived'] }}</div>
+        </div>
     </div>
+
+    {{-- En cours / archives --}}
+    <nav class="flex gap-1 border-b border-secondary/20" aria-label="Demandes en cours ou archivées">
+        @foreach($vues as $cle => $libelle)
+            <a href="{{ route('economat.purchase_requests.index', ['vue' => $cle]) }}"
+               @if($vue === $cle) aria-current="page" @endif
+               class="px-4 py-2 text-sm font-semibold border-b-2 -mb-px {{ $vue === $cle ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary' }}">{{ $libelle }}</a>
+        @endforeach
+    </nav>
 
     {{-- Filtres --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
         <form method="GET" action="{{ route('economat.purchase_requests.index') }}" class="flex flex-wrap items-center gap-3">
+            <input type="hidden" name="vue" value="{{ $vue }}">
             <div class="flex-1 min-w-[160px]">
                 <select name="status" class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary focus:outline-none focus:border-primary">
                     <option value="">Tous les statuts</option>
@@ -86,7 +96,7 @@
                 Filtrer
             </button>
             @if(request()->hasAny(['status', 'department', 'priority']))
-                <a href="{{ route('economat.purchase_requests.index') }}" class="px-3 py-1.5 text-xs text-primary/50 hover:text-primary">
+                <a href="{{ route('economat.purchase_requests.index', ['vue' => $vue]) }}" class="px-3 py-1.5 text-xs text-primary/50 hover:text-primary">
                     Effacer
                 </a>
             @endif
@@ -94,7 +104,7 @@
     </div>
 
     {{-- Tableau des demandes --}}
-    <x-table :rows="$requests" empty="Aucune demande d'achat trouvée." empty-icon="clipboard-list" caption="Demandes d'achat">
+    <x-table :rows="$requests" :empty="$vue === 'archives' ? 'Aucune demande archivée.' : 'Aucune demande d\'achat en cours.'" empty-icon="clipboard-list" caption="Demandes d'achat">
         <x-slot:head>
             <x-table.col>Numéro</x-table.col>
             <x-table.col>Département</x-table.col>

@@ -2,6 +2,8 @@
 
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
+use App\Models\PurchaseRequest;
+use App\Models\Role;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\Supplier;
@@ -18,6 +20,19 @@ if (!function_exists('makeReplenishmentEconomeUser')) {
             'role' => 'econome',
         ]);
         test()->actingAs($u);
+        return $u;
+    }
+}
+
+if (!function_exists('makeReplenishmentMembre')) {
+    /** Un membre du circuit d'achat, connecté. */
+    function makeReplenishmentMembre(string $role, string $name = 'Jean-Paul Kamga'): User
+    {
+        \App\Support\RoleCatalog::sync();
+        $u = User::factory()->create(['name' => $name, 'is_active' => true]);
+        $u->roles()->sync(Role::where('slug', $role)->pluck('id'));
+        test()->actingAs($u = $u->fresh());
+
         return $u;
     }
 }
@@ -83,16 +98,15 @@ test('un fournisseur prealablement cree dans les parametres fournit plusieurs pr
         ->and($produitsFournisseur->pluck('id'))->toContain($bierre1->id, $jus1->id)
         ->and($produitsFournisseur->pluck('id'))->not->toContain($papier->id);
 
-    // Vérification du formulaire create avec le fournisseur sélectionné
-    $resCreate = test()->get(route('economat.orders.create', ['supplier_id' => $fournisseur->id]));
-    $resCreate->assertOk();
-    $resCreate->assertSee('Brasseries &amp; Boissons du Cameroun', false);
-    $resCreate->assertSee('Casier Castel Beer 65cl (12 btles)');
-    $resCreate->assertSee('Carton Top Ananas 1L (6 btles)');
+    // Le bon saisi de toutes pièces n'est plus ouvert : tout bon naît d'une
+    // demande d'achat approuvée.
+    makeReplenishmentMembre('purchasing_manager');
+    test()->get(route('economat.orders.create', ['supplier_id' => $fournisseur->id]))
+        ->assertRedirect()->assertSessionHas('access_denied_popup', true);
 });
 
 test('un bon de commande est lie a strictement un seul fournisseur avec signature automatique Qwigley', function () {
-    $econome = makeReplenishmentEconomeUser('Adrien Bertrand Meka');
+    $econome = makeReplenishmentEconomeUser();
 
     $fournisseur = Supplier::create([
         'name'      => 'Société Alimentaire Camerounaise',
@@ -121,26 +135,19 @@ test('un bon de commande est lie a strictement un seul fournisseur avec signatur
         'is_active'     => true,
     ]);
 
-    // Émission du bon de commande pour ce fournisseur unique
-    $postData = [
-        'supplier_id' => $fournisseur->id,
-        'expected_at' => now()->addDays(3)->toDateString(),
-        'notes'       => 'Livraison urgente économat matinée',
-        'lines'       => [
-            [
-                'stock_item_id' => $item1->id,
-                'quantity'      => 5,
-                'unit_price'    => 16000, // 16 000 F / bidon
-            ],
-            [
-                'stock_item_id' => $item2->id,
-                'quantity'      => 4,
-                'unit_price'    => 6500, // 6 500 F / sac
-            ],
+    // La demande de l'économat, approuvée par le contrôle de gestion…
+    $demande = app(\App\Services\PurchaseRequestService::class)->create([
+        'department' => 'economat',
+        'lines'      => [
+            ['stock_item_id' => $item1->id, 'quantity_requested' => 5, 'estimated_unit_price' => 16000],
+            ['stock_item_id' => $item2->id, 'quantity_requested' => 4, 'estimated_unit_price' => 6500],
         ],
-    ];
+    ], $econome);
+    app(\App\Services\PurchaseRequestService::class)->approve($demande, makeReplenishmentMembre('controller', 'Claire Ngo'));
 
-    $response = test()->post(route('economat.orders.store'), $postData);
+    // … dont le responsable des achats tire le bon.
+    makeReplenishmentMembre('purchasing_manager', 'Adrien Bertrand Meka');
+    $response = test()->post(route('economat.purchase_requests.convert', $demande));
     $response->assertRedirect();
 
     $order = PurchaseOrder::where('supplier_id', $fournisseur->id)->latest()->first();
@@ -156,7 +163,7 @@ test('un bon de commande est lie a strictement un seul fournisseur avec signatur
         ->and($order->total_amount)->toBe(10600000);
 });
 
-test('la validation echoue si le fournisseur est manquant ou invalide', function () {
+test('le bon saisi de toutes pièces est refusé : il engagerait une dépense sans approbation', function () {
     $econome = makeReplenishmentEconomeUser();
 
     $item = StockItem::create([
@@ -166,16 +173,20 @@ test('la validation echoue si le fournisseur est manquant ou invalide', function
         'is_active'     => true,
     ]);
 
-    // Tentative sans fournisseur
-    $response = test()->post(route('economat.orders.store'), [
-        'supplier_id' => null,
+    $fournisseur = Supplier::create(['name' => 'Hygiène Pro', 'is_active' => true]);
+    $saisie = [
+        'supplier_id' => $fournisseur->id,
         'lines' => [
             ['stock_item_id' => $item->id, 'quantity' => 10, 'unit_price' => 500],
         ],
-    ]);
+    ];
 
-    $response->assertSessionHasErrors('supplier_id');
-    expect(PurchaseOrder::count())->toBe(0);
+    test()->post(route('economat.orders.store'), $saisie)->assertSessionHas('access_denied_popup', true);
+    makeReplenishmentMembre('purchasing_manager');
+    test()->post(route('economat.orders.store'), $saisie)->assertSessionHas('access_denied_popup', true);
+
+    expect(PurchaseOrder::count())->toBe(0)
+        ->and(PurchaseRequest::count())->toBe(0);
 });
 
 test('les bons de commandes sont filtrables par fournisseur statut date et recherche avec KPI clairs', function () {
@@ -351,7 +362,9 @@ test('un bon individuel peut etre consulte en detail et imprime au format offici
     $resPrint->assertSee('Société Industrielle des Viandes');
     $resPrint->assertSee('Rodrigue Tchouassi');
     $resPrint->assertSee('Qwigley');
-    $resPrint->assertSee('L\'Économe / Responsable des Achats', false);
+    $resPrint->assertSee('Le Responsable des Achats', false);
+    // Le bon imprimé part chez le fournisseur : aucun prix.
+    $resPrint->assertDontSee('80 000');
 });
 
 test('la réception rapide sur le bon refuse un formulaire vide, et fait entrer ce qui est saisi', function () {

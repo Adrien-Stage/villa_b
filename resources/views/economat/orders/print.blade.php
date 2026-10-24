@@ -293,7 +293,7 @@
             <td style="vertical-align: top;">
                 <div class="etab-name">{{ $tenant?->name ?? config('app.name', 'Établissement Hôtelier') }}</div>
                 <div class="etab-sub">Direction Administrative & Financière</div>
-                <div class="etab-sub">Service Approvisionnements & Économat Central</div>
+                <div class="etab-sub">Service des Achats</div>
             </td>
             <td style="vertical-align: top; text-align: right;">
                 <div style="font-size: 11px; font-weight: 800; font-family: monospace;">BON N° : {{ $order->number }}</div>
@@ -308,7 +308,7 @@
             <div class="doc-subtitle">Établi après la réception d'une marchandise livrée sans commande préalable</div>
         @else
             <h1 class="doc-title">Bon de Commande Fournisseur</h1>
-            <div class="doc-subtitle">Engagement de dépense et commande ferme de marchandises</div>
+            <div class="doc-subtitle">Commande ferme de marchandises : articles et quantités à livrer</div>
         @endif
     </div>
 
@@ -350,11 +350,11 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 5%; text-align: center;">N°</th>
-                <th style="width: 45%; text-align: left;">Désignation de l'article</th>
-                <th style="width: 15%; text-align: right;">Quantité</th>
-                <th style="width: 15%; text-align: right;">Prix Unitaire HT</th>
-                <th style="width: 20%; text-align: right;">Total TTC</th>
+                {{-- Le bon part chez le fournisseur : il dit quoi livrer et combien,
+                     jamais à quel prix. Les prix restent dans le PMS. --}}
+                <th style="width: 6%; text-align: center;">N°</th>
+                <th style="width: 69%; text-align: left;">Désignation de l'article</th>
+                <th style="width: 25%; text-align: right;">Quantité</th>
             </tr>
         </thead>
         <tbody>
@@ -368,12 +368,6 @@
                     <td class="text-right font-mono font-bold">
                         {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
                     </td>
-                    <td class="text-right font-mono">
-                        {{ number_format($line->unit_price / 100, 0, ',', ' ') }} FCFA
-                    </td>
-                    <td class="text-right font-mono font-bold">
-                        {{ number_format((int) round((float) $line->quantity_ordered * $line->unit_price) / 100, 0, ',', ' ') }} FCFA
-                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -384,19 +378,15 @@
             <span>Nombre d'articles commandés :</span>
             <span class="font-mono font-bold">{{ $order->lines->count() }}</span>
         </div>
-        <div class="summary-row total">
-            <span>MONTANT TOTAL COMMANDE :</span>
-            <span class="font-mono">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</span>
-        </div>
     </div>
 
     <table class="signatures-table">
         <tr>
             <td>
-                <div class="signature-title">L'Économe / Responsable des Achats</div>
+                <div class="signature-title">Le Responsable des Achats</div>
                 <div class="signature-mention">« Bon pour commande & engagement »</div>
                 <div style="margin-top: 4px; font-weight: bold; color: #0f172a; font-size: 9.5px;">
-                    Nom : {{ $order->createdBy?->name ?? 'L\'Économe' }}
+                    Nom : {{ $order->createdBy?->name ?? 'Service Achats' }}
                 </div>
                 <div style="margin-top: 4px;">
                     <span class="sig-handwritten">{{ $order->issuerSignature() }}</span>
@@ -406,9 +396,16 @@
                 </div>
             </td>
             <td>
-                <div class="signature-title">La Direction Générale / Contrôle</div>
-                <div class="signature-mention">« Bon pour accord financier et engagement »</div>
-                <div class="signature-line" style="margin-top: 35px;">Nom & Visa : ....................................</div>
+                <div class="signature-title">Contrôle de gestion</div>
+                @if($order->purchaseRequest?->reviewed_at && $order->purchaseRequest->status !== 'rejected')
+                    <div class="signature-mention">« Demande {{ $order->purchaseRequest->number }} approuvée »</div>
+                    <div style="margin-top: 4px; font-weight: bold; color: #0f172a; font-size: 9.5px;">
+                        {{ $order->purchaseRequest->reviewedBy?->name ?? '—' }}, le {{ $order->purchaseRequest->reviewed_at->format('d/m/Y') }}
+                    </div>
+                @else
+                    <div class="signature-mention">« Visa »</div>
+                    <div class="signature-line" style="margin-top: 35px;">Nom & Visa : ....................................</div>
+                @endif
             </td>
         </tr>
     </table>

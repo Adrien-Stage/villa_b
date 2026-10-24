@@ -13,7 +13,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * Émise par un responsable de département (restaurant, cuisine, bar, housekeeping, économe...)
  * pour exprimer un besoin d'approvisionnement externe.
- * Doit être approuvée par la direction / le manager avant transformation en bon(s) de commande.
+ *
+ * Le circuit : le contrôleur de gestion l'approuve — ajustant au besoin les
+ * quantités — ou la refuse ; le responsable des achats en tire le(s) bon(s)
+ * de commande et les envoie aux fournisseurs. Quand plus aucun de ses bons
+ * n'attend d'envoi, la demande est archivée.
  */
 class PurchaseRequest extends Model
 {
@@ -66,11 +70,13 @@ class PurchaseRequest extends Model
         'requested_by',
         'reviewed_by',
         'reviewed_at',
+        'archived_at',
         'tenant_id',
     ];
 
     protected $casts = [
         'reviewed_at'            => 'datetime',
+        'archived_at'            => 'datetime',
         'total_estimated_amount' => 'integer',
     ];
 
@@ -146,6 +152,20 @@ class PurchaseRequest extends Model
         return $query->where('status', self::STATUS_APPROVED);
     }
 
+    /** Les demandes encore en circuit : à approuver, à commander, ou dont un bon attend l'envoi. */
+    public function scopeEnCours(Builder $query): Builder
+    {
+        return $query->whereNull('archived_at')
+            ->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED, self::STATUS_CONVERTED]);
+    }
+
+    /** Les demandes sorties du circuit : commandées, refusées ou annulées. */
+    public function scopeArchivees(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNotNull('archived_at')
+            ->orWhereIn('status', [self::STATUS_REJECTED, self::STATUS_CANCELLED]));
+    }
+
     // ── Helpers de cycle ─────────────────────────────────────────────────────
 
     public function isPending(): bool
@@ -180,7 +200,40 @@ class PurchaseRequest extends Model
 
     public function statusLabel(): string
     {
+        if ($this->status === self::STATUS_CONVERTED && $this->archived_at !== null) {
+            return 'Commandée';
+        }
+
         return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    public function estArchivee(): bool
+    {
+        return $this->archived_at !== null
+            || in_array($this->status, [self::STATUS_REJECTED, self::STATUS_CANCELLED], true);
+    }
+
+    /** Une ligne au moins dont l'approbation a changé la quantité demandée. */
+    public function aEteAjustee(): bool
+    {
+        return $this->lines->contains(fn (PurchaseRequestLine $l) => $l->estAjustee());
+    }
+
+    /**
+     * Archive la demande convertie quand plus aucun de ses bons n'attend
+     * d'envoi : ils sont partis chez les fournisseurs, ou ont été annulés.
+     */
+    public function archiverSiCommandee(): void
+    {
+        if ($this->status !== self::STATUS_CONVERTED || $this->archived_at !== null) {
+            return;
+        }
+
+        if ($this->purchaseOrders()->where('status', PurchaseOrder::STATUS_DRAFT)->exists()) {
+            return;
+        }
+
+        $this->update(['archived_at' => now()]);
     }
 
     public function priorityLabel(): string
@@ -196,7 +249,7 @@ class PurchaseRequest extends Model
     public function recalculateTotal(): void
     {
         $total = $this->lines()->get()
-            ->sum(fn (PurchaseRequestLine $l) => (int) round((float) $l->quantity_requested * $l->estimated_unit_price));
+            ->sum(fn (PurchaseRequestLine $l) => $l->estimatedTotal());
 
         $this->update(['total_estimated_amount' => (int) $total]);
     }

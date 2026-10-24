@@ -22,13 +22,22 @@
                 <span>Bons de commande fournisseurs</span>
             </h1>
             <p class="text-sm text-primary/60 mt-1 max-w-3xl">
-                Gestion des approvisionnements, engagements de dépenses, suivi des livraisons et traçabilité des signatures.
+                Chaque bon naît d'une demande d'achat approuvée par le contrôle de gestion. Le responsable des achats l'envoie au
+                fournisseur — articles et quantités, sans prix —, l'économat réceptionne la livraison.
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 shrink-0">
             @droit('economat.orders.export')
                 <x-barre-export route="economat.orders.export" />
+            @enddroit
+
+            @droit('economat.purchase_requests.convert')
+                <a href="{{ route('economat.purchase_requests.index', ['status' => 'approved']) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <i data-lucide="file-check" class="w-4 h-4"></i>
+                    <span>Demandes à commander</span>
+                </a>
             @enddroit
 
             @droit('economat.orders.creer')

@@ -78,7 +78,7 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
     expect($request->total_estimated_amount)->toBe(27500000);
 });
 
-test("le contrôleur de gestion consulte une demande d'achat sans pouvoir l'approuver", function () {
+test("le contrôleur de gestion approuve les demandes d'achat ; la direction les consulte", function () {
     activerModules(['economat']);
 
     $demandeur = createStaffUser('restaurant_chief');
@@ -91,18 +91,22 @@ test("le contrôleur de gestion consulte une demande d'achat sans pouvoir l'appr
         'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 4]],
     ], $demandeur);
 
-    createStaffUser('controller');
-
-    // Il surveille les achats : il lit la demande, mais n'y voit aucun bouton de décision.
+    // La direction lit la demande, sans bouton de décision, et la route refuse.
+    createStaffUser('manager');
     $this->get(route('economat.purchase_requests.show', $demande))
         ->assertOk()
-        ->assertDontSee('Approuver la demande');
-
-    // Et la route refuse, quelle que soit la forme du refus.
+        ->assertDontSee('Approuver aux quantités retenues');
     $this->post(route('economat.purchase_requests.approve', $demande));
-    $this->post(route('economat.purchase_requests.reject', $demande), ['rejection_reason' => 'Contrôle']);
-
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
+
+    // Le contrôle de gestion décide de la dépense.
+    createStaffUser('controller');
+    $this->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()
+        ->assertSee('Approuver aux quantités retenues');
+    $this->post(route('economat.purchase_requests.approve', $demande))->assertRedirect();
+
+    expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_APPROVED);
 });
 
 test('la direction peut approuver ou refuser une demande d achat', function () {

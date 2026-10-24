@@ -197,7 +197,7 @@ class StockControlService
             throw new RuntimeException('Aucun article sélectionné pour la commande.');
         }
 
-        return DB::transaction(function () use ($selectedItems, $user, $tenantId, $priority) {
+        $purchaseRequest = DB::transaction(function () use ($selectedItems, $user, $tenantId, $priority) {
             $totalEstimated = 0;
             $linesData = [];
 
@@ -247,6 +247,11 @@ class StockControlService
 
             return $purchaseRequest->fresh(['lines.stockItem']);
         });
+
+        // Comme toute demande d'achat, elle part aux approbateurs.
+        app(PurchaseRequestService::class)->annoncer($purchaseRequest);
+
+        return $purchaseRequest;
     }
 
     /**

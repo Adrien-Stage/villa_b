@@ -183,7 +183,7 @@ class RoleCatalog
             [
                 'name' => 'Chef économe',
                 'slug' => 'econome',
-                'description' => 'Gestion du magasin central : stock, fournisseurs, bons de commande et demandes des départements',
+                'description' => 'Gestion du magasin central : stock, réceptions, inventaires, dépôts et demandes des départements',
                 'module' => 'economat', 'icon' => 'warehouse', 'sort_order' => 50, 'is_assignable' => true,
                 'level' => 3, 'includes' => ['storekeeper'], 'statut' => self::ACTIF,
             ],
@@ -193,6 +193,16 @@ class RoleCatalog
                 'description' => 'Réception des livraisons, sorties et comptages du magasin central',
                 'module' => 'economat', 'icon' => 'package-check', 'sort_order' => 51, 'is_assignable' => true,
                 'level' => 4, 'statut' => self::ACTIF,
+            ],
+            // Le responsable des achats commande : il tient les fournisseurs,
+            // tire les bons des demandes approuvées et les envoie. Il ne
+            // réceptionne pas — l'économat reçoit ce qu'il a commandé.
+            [
+                'name' => 'Responsable des achats',
+                'slug' => 'purchasing_manager',
+                'description' => 'Achats : fournisseurs, bons de commande tirés des demandes approuvées et leur envoi, suivi des livraisons',
+                'module' => 'economat', 'icon' => 'shopping-cart', 'sort_order' => 52, 'is_assignable' => true,
+                'level' => 3, 'statut' => self::ACTIF,
             ],
 
             // ── Technique (module « technique ») ──
@@ -218,10 +228,11 @@ class RoleCatalog
             [
                 'name' => 'Responsable financier',
                 'slug' => 'finance_manager',
-                // Encadre aussi le contrôle de gestion et l'économat, sans en
-                // inclure les rôles : le stock et les livres, le contrôle et
-                // l'exploitation restent dans des mains différentes.
-                'description' => 'Dirige la comptabilité et les finances : tarifs et prix, écritures, clôtures, contrôle des caisses ; encadre la comptabilité, le contrôle de gestion et l\'économat',
+                // Encadre aussi le contrôle de gestion, l'économat et les
+                // achats, sans en inclure les rôles : le stock et les livres,
+                // le contrôle et l'exploitation restent dans des mains
+                // différentes.
+                'description' => 'Dirige la comptabilité et les finances : tarifs et prix, écritures, clôtures, contrôle des caisses ; encadre la comptabilité, le contrôle de gestion, l\'économat et les achats',
                 'module' => 'comptabilite', 'icon' => 'landmark', 'sort_order' => 59, 'is_assignable' => true,
                 'level' => 3, 'includes' => ['accountant'], 'statut' => self::ACTIF,
             ],
@@ -237,7 +248,7 @@ class RoleCatalog
             [
                 'name' => 'Contrôleur de gestion',
                 'slug' => 'controller',
-                'description' => 'Pilotage économique : budget, indicateurs, écarts et alertes ; vue sur tous les services sans y écrire',
+                'description' => 'Pilotage économique : budget, indicateurs, écarts et alertes, approbation des demandes d\'achat ; vue sur tous les services sans y écrire',
                 'module' => 'comptabilite', 'icon' => 'shield-check', 'sort_order' => 41, 'is_assignable' => true,
                 'level' => null, 'statut' => self::ACTIF,
             ],

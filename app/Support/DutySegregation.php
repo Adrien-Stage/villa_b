@@ -31,7 +31,8 @@ class DutySegregation
      * Contrôleur de gestion : il voit tous les services et n'écrit dans aucun.
      * Sa vue d'ensemble n'a de valeur que s'il ne participe pas aux opérations
      * qu'il surveille. Il établit seulement le budget et règle les seuils des
-     * alertes (Pilotage) : ce sont ses instruments, non des opérations.
+     * alertes (Pilotage), et approuve les demandes d'achat : ce sont des actes
+     * de contrôle, non des opérations — il n'achète ni ne reçoit.
      */
     public const CONTROLE_DE_GESTION = 'controller';
 
@@ -51,7 +52,7 @@ class DutySegregation
         'housekeeping_leader', 'housekeeping_supervisor', 'housekeeping_staff',
         'restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier',
         'shop_manager', 'shop_cashier',
-        'econome', 'storekeeper',
+        'econome', 'storekeeper', 'purchasing_manager',
         'finance_manager', 'accountant',
     ];
 
@@ -72,6 +73,18 @@ class DutySegregation
             [
                 'roles'  => ['storekeeper', 'accountant'],
                 'motif'  => "Détenir le stock et tenir les livres : un vol se couvre par une écriture de régularisation.",
+            ],
+            [
+                'roles'  => ['purchasing_manager', 'econome'],
+                'motif'  => "Commander et réceptionner : une commande fictive se couvre par une réception de complaisance.",
+            ],
+            [
+                'roles'  => ['purchasing_manager', 'storekeeper'],
+                'motif'  => "Commander et réceptionner : une commande fictive se couvre par une réception de complaisance.",
+            ],
+            [
+                'roles'  => ['purchasing_manager', 'accountant'],
+                'motif'  => "Engager la dépense et la régler : le fournisseur choisi est aussi celui qu'on paie, sans regard extérieur.",
             ],
             [
                 'roles'  => ['cashier', 'accountant'],

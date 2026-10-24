@@ -49,10 +49,9 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px; border-collapse:collapse;">
                                 <thead>
                                     <tr>
+                                        {{-- Les articles et les quantités à livrer, jamais les prix. --}}
                                         <th align="left" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Article</th>
-                                        <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Qté</th>
-                                        <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">P.U.</th>
-                                        <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Total</th>
+                                        <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Quantité</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -62,18 +61,10 @@
                                                 {{ $line->item?->name ?? 'Article' }}
                                                 <span style="color:#8a7d6b;">({{ $line->item?->unit }})</span>
                                             </td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1;">{{ number_format($line->unit_price / 100, 0, ',', ' ') }}</td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1;">{{ number_format($line->lineTotal() / 100, 0, ',', ' ') }}</td>
+                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="3" align="right" style="padding:10px 8px; font-weight:bold;">Total (FCFA)</td>
-                                        <td align="right" style="padding:10px 8px; font-weight:bold; font-size:15px;">{{ number_format($order->total_amount / 100, 0, ',', ' ') }}</td>
-                                    </tr>
-                                </tfoot>
                             </table>
 
                             @if($order->notes)
@@ -84,7 +75,7 @@
 
                             <p style="margin:24px 0 0; font-size:13px; line-height:1.6; color:#5a5045;">
                                 Cordialement,<br>
-                                Le service économat — {{ $brand }}
+                                Le service des achats — {{ $brand }}
                             </p>
                         </td>
                     </tr>

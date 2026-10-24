@@ -52,8 +52,14 @@ function bonSansEmail(): PurchaseOrder
 test("un bon transmis sans email se réceptionne comme un bon envoyé", function () {
     $bon = bonSansEmail();
     $econome = personnelEconomat('econome', 'Économe');
-    $this->actingAs($econome);
 
+    // L'économat attend l'envoi : il ne transmet pas le bon.
+    $this->actingAs($econome)->get(route('economat.orders.show', $bon))->assertOk()
+        ->assertDontSee('Marquer comme transmis')
+        ->assertSee("En attente d'envoi par le responsable des achats", false);
+
+    // Le responsable des achats le transmet.
+    $this->actingAs(personnelEconomat('purchasing_manager', 'Acheteur'));
     $this->get(route('economat.orders.show', $bon))->assertOk()
         ->assertSee('Marquer comme transmis')
         ->assertDontSee('Envoyer au fournisseur');
@@ -70,12 +76,14 @@ test("un bon transmis sans email se réceptionne comme un bon envoyé", function
         ->and($bon->sent_to_email)->toBeNull()
         ->and($bon->canBeReceived())->toBeTrue();
 
-    $this->get(route('economat.orders.show', $bon))->assertSee('dicté par téléphone')->assertSee('Réceptionner la livraison');
-    $this->get(route('economat.receipts.create', $bon))->assertOk();
-
     // Une seconde fois : le bon n'est plus en brouillon.
     $this->post(route('economat.orders.transmit', $bon), ['moyen' => 'main_propre'])->assertSessionHas('error');
     expect($bon->fresh()->transmission)->toBe('telephone');
+
+    // L'économat réceptionne la livraison.
+    $this->actingAs($econome);
+    $this->get(route('economat.orders.show', $bon))->assertSee('dicté par téléphone')->assertSee('Réceptionner la livraison');
+    $this->get(route('economat.receipts.create', $bon))->assertOk();
 
     // Le magasinier pointe les livraisons, il ne transmet pas les bons.
     $autre = bonSansEmail();
@@ -85,19 +93,29 @@ test("un bon transmis sans email se réceptionne comme un bon envoyé", function
     expect($autre->fresh()->status)->toBe(PurchaseOrder::STATUS_DRAFT);
 });
 
-test("dans une application vide, la réception directe crée fournisseur, articles et bon de régularisation", function () {
+test("dans un magasin vide, la réception directe crée les articles et le bon de régularisation", function () {
     Notification::fake();
     $comptable = personnelEconomat('accountant', 'Comptable');
+    $acheteur = personnelEconomat('purchasing_manager', 'Acheteur');
     $linge = StockCategory::create(['name' => 'Linge']);
+    // Le fichier des fournisseurs est tenu par le responsable des achats.
+    $fournisseur = Supplier::create(['name' => 'Quincaillerie du Centre', 'phone' => '+237 677 11 22 33', 'is_active' => true]);
     $econome = personnelEconomat('econome', 'Économe');
     $this->actingAs($econome);
 
     $this->get(route('economat.receipts.direct.create'))->assertOk()
         ->assertSee('Réception directe, sans bon de commande')
-        ->assertSee('Nouveau fournisseur');
+        ->assertSee('Quincaillerie du Centre');
+
+    // L'économe ne crée pas de fournisseur au passage.
+    $this->post(route('economat.receipts.direct.store'), [
+        'nouveau_fournisseur' => ['name' => 'Inconnu du fichier'],
+        'motif'               => 'achat_comptant',
+        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'pièce'], 'quantity_delivered' => 1, 'unit_price' => 500]],
+    ])->assertSessionHasErrors('nouveau_fournisseur.name');
 
     $reponse = $this->post(route('economat.receipts.direct.store'), [
-        'nouveau_fournisseur'  => ['name' => 'Quincaillerie du Centre', 'phone' => '+237 677 11 22 33'],
+        'supplier_id'          => $fournisseur->id,
         'motif'                => 'achat_comptant',
         'delivery_note_number' => 'TICKET-552',
         'notes'                => 'Payé en espèces',
@@ -111,7 +129,6 @@ test("dans une application vide, la réception directe crée fournisseur, articl
     $recu = GoodsReceipt::sole();
     $reponse->assertRedirect(route('economat.receipts.show', $recu));
 
-    $fournisseur = Supplier::where('name', 'Quincaillerie du Centre')->sole();
     $drap = StockItem::where('name', 'Drap blanc 2 places')->sole();
     $ampoule = StockItem::where('name', 'Ampoule LED 9W')->sole();
     $bon = $recu->purchaseOrder;
@@ -136,6 +153,8 @@ test("dans une application vide, la réception directe crée fournisseur, articl
         ->and(AuditLog::where('event_type', 'reception_directe')->exists())->toBeTrue();
 
     Notification::assertSentTo($comptable, PurchaseOrderUpdated::class);
+    // L'achat s'est fait hors du circuit : le responsable des achats le sait.
+    Notification::assertSentTo($acheteur, PurchaseOrderUpdated::class);
 
     $this->get(route('economat.receipts.show', $recu))->assertOk()->assertSee('Réception directe, sans commande préalable');
     $this->get(route('economat.orders.print', $bon))->assertOk()->assertSee('Bon de Commande de Régularisation');
@@ -165,23 +184,25 @@ test("une réception directe incohérente n'enregistre rien", function () {
     Supplier::create(['name' => 'Quincaillerie du Centre', 'is_active' => true]);
     $this->actingAs(personnelEconomat('econome', 'Économe'));
 
+    $fournisseur = Supplier::sole();
+
     // Tout refusé : rien n'est gardé, rien ne s'enregistre.
     $this->post(route('economat.receipts.direct.store'), [
-        'nouveau_fournisseur' => ['name' => 'Nouveau grossiste'],
+        'supplier_id'         => $fournisseur->id,
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
     ])->assertSessionHas('error');
 
-    // Un fournisseur qui existe déjà se choisit dans la liste.
+    // Un fournisseur se choisit dans la liste : l'économe n'en crée pas.
     $this->post(route('economat.receipts.direct.store'), [
         'nouveau_fournisseur' => ['name' => 'quincaillerie du centre'],
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 500]],
-    ])->assertSessionHas('error');
+    ])->assertSessionHasErrors('nouveau_fournisseur.name');
 
     // Sans prix, le stock serait valorisé à zéro.
     $this->post(route('economat.receipts.direct.store'), [
-        'nouveau_fournisseur' => ['name' => 'Nouveau grossiste'],
+        'supplier_id'         => $fournisseur->id,
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 0]],
     ])->assertSessionHasErrors('lines.0.unit_price');
@@ -199,8 +220,9 @@ test("une réception directe incohérente n'enregistre rien", function () {
 
 test("annuler une réception directe sort la marchandise et annule son bon de régularisation", function () {
     $econome = personnelEconomat('econome', 'Économe');
+    $marche = Supplier::create(['name' => 'Marché central', 'is_active' => true]);
     $this->actingAs($econome)->post(route('economat.receipts.direct.store'), [
-        'nouveau_fournisseur' => ['name' => 'Marché central'],
+        'supplier_id'         => $marche->id,
         'motif'               => 'achat_comptant',
         'lines'               => [['nouvel_article' => ['name' => 'Tomates', 'unit' => 'kg'], 'quantity_delivered' => 12, 'unit_price' => 600]],
     ]);

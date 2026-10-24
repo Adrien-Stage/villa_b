@@ -26,12 +26,15 @@
                 Répertoire des partenaires d'approvisionnement, conditions commerciales, délais de livraison et catalogues d'articles.
             </p>
         </div>
-        <div class="flex items-center gap-3">
-            <button type="button" @click="openCreate()"
-                class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i> Nouveau fournisseur
-            </button>
-        </div>
+        {{-- Le fichier des fournisseurs : le responsable des achats le tient. --}}
+        @droit('economat.suppliers.creer')
+            <div class="flex items-center gap-3">
+                <button type="button" @click="openCreate()"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nouveau fournisseur
+                </button>
+            </div>
+        @enddroit
     </div>
 
     @include('economat.partials.flash')
@@ -123,9 +126,11 @@
     {{-- Tableau des Fournisseurs --}}
     <x-table :rows="$suppliers" empty="{{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun fournisseur ne correspond à vos critères de recherche.' : 'Aucun fournisseur. Ajoutez le premier pour pouvoir émettre des bons de commande.' }}" empty-icon="truck" caption="Fournisseurs">
         <x-slot:emptyActions>
-            <button type="button" x-on:click="openCreate()" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-surface-dark">
-                <i data-lucide="plus" class="h-4 w-4" aria-hidden="true"></i> Ajouter un fournisseur
-            </button>
+            @droit('economat.suppliers.creer')
+                <button type="button" x-on:click="openCreate()" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-surface-dark">
+                    <i data-lucide="plus" class="h-4 w-4" aria-hidden="true"></i> Ajouter un fournisseur
+                </button>
+            @enddroit
         </x-slot:emptyActions>
         <x-slot:head>
             <x-table.col>Fournisseur &amp; secteur</x-table.col>
@@ -257,10 +262,16 @@
                                     </span>
                 </x-table.cell>
                 <x-table.actions :label="'Actions pour le fournisseur '.$supplier->name">
-                    <x-table.action :href="route('economat.orders.create', ['fournisseur' => $supplier->id])" icon="shopping-cart" title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
-                    <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})" title="Modifier la fiche et les articles associés">Modifier</x-table.action>
-                    <x-table.action :action="route('economat.suppliers.destroy', $supplier)" method="DELETE" icon="trash-2" tone="danger"
-                        :confirm="'Supprimer définitivement le fournisseur « '.$supplier->name.' » ?'">Supprimer</x-table.action>
+                    @droit('economat.orders.creer')
+                        <x-table.action :href="route('economat.orders.create', ['fournisseur' => $supplier->id])" icon="shopping-cart" title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
+                    @enddroit
+                    @droit('economat.suppliers.modifier')
+                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})" title="Modifier la fiche et les articles associés">Modifier</x-table.action>
+                    @enddroit
+                    @droit('economat.suppliers.supprimer')
+                        <x-table.action :action="route('economat.suppliers.destroy', $supplier)" method="DELETE" icon="trash-2" tone="danger"
+                            :confirm="'Supprimer définitivement le fournisseur « '.$supplier->name.' » ?'">Supprimer</x-table.action>
+                    @enddroit
                 </x-table.actions>
             </x-table.row>
         @endforeach

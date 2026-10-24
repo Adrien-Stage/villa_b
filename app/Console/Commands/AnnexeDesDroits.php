@@ -29,7 +29,7 @@ class AnnexeDesDroits extends Command
         'restaurant_manager' => 'Resp. resto', 'restaurant_chief' => 'Chef cuis.', 'restaurant_staff' => 'Serveur',
         'restaurant_cook' => 'Cuisinier', 'cashier' => 'Caissier',
         'shop_manager' => 'Resp. bout.', 'shop_cashier' => 'Vendeur',
-        'econome' => 'Économe', 'storekeeper' => 'Magasinier',
+        'econome' => 'Économe', 'storekeeper' => 'Magasinier', 'purchasing_manager' => 'Resp. achats',
         'tech_manager' => 'Resp. tech.', 'technician' => 'Technicien',
         'finance_manager' => 'RAF', 'accountant' => 'Comptable',
         'controller' => 'Contrôleur', 'quality_auditor' => 'Auditeur', 'support' => 'Support',
@@ -40,7 +40,7 @@ class AnnexeDesDroits extends Command
         'rooms' => 'Chambres', 'bookings' => 'Réservations', 'groups' => 'Groupes', 'agenda' => 'Agenda',
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
-        'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'pilotage' => 'Pilotage', 'analytics' => 'Analytique',
+        'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'achats' => 'Achats', 'pilotage' => 'Pilotage', 'analytics' => 'Analytique',
         'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
     ];

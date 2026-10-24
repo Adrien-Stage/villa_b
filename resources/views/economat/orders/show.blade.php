@@ -100,7 +100,7 @@
                     <i data-lucide="printer" class="w-4 h-4"></i> Imprimer
                 </a>
 
-                @if($order->canBeReceived())
+                @if($order->canBeReceived() && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.receipts.creer'))
                     <a href="{{ route('economat.receipts.create', $order) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                         <i data-lucide="package-check" class="w-4 h-4"></i> Réceptionner la livraison (BL)
                     </a>
@@ -126,23 +126,30 @@
                         </form>
                     @enddroit
                     @if($order->supplier?->canReceiveOrdersByEmail())
+                        @droit('economat.orders.send')
+                            <form method="POST" action="{{ route('economat.orders.send', $order) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                                    <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
+                                </button>
+                            </form>
+                        @enddroit
+                    @endif
+                    @unless(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.orders.send') || app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.orders.transmit'))
+                        <span class="text-xs text-primary/50">En attente d'envoi par le responsable des achats.</span>
+                    @endunless
+                @elseif($order->status === 'sent' && $order->send_error)
+                    @droit('economat.orders.send')
                         <form method="POST" action="{{ route('economat.orders.send', $order) }}">
                             @csrf
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                                <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/10">
+                                <i data-lucide="rotate-cw" class="w-4 h-4"></i> Renvoyer l'email
                             </button>
                         </form>
-                    @endif
-                @elseif($order->status === 'sent' && $order->send_error)
-                    <form method="POST" action="{{ route('economat.orders.send', $order) }}">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/10">
-                            <i data-lucide="rotate-cw" class="w-4 h-4"></i> Renvoyer l'email
-                        </button>
-                    </form>
+                    @enddroit
                 @endif
 
-                @if($order->canBeCancelled())
+                @if($order->canBeCancelled() && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.orders.cancel'))
                     <form method="POST" action="{{ route('economat.orders.cancel', $order) }}" onsubmit="return confirm('Êtes-vous certain de vouloir annuler ce bon de commande ?');">
                         @csrf
                         <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">

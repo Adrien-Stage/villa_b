@@ -19,6 +19,9 @@
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux demandes d'achat
         </a>
         <div class="flex items-center gap-2">
+            <a href="{{ route('economat.purchase_requests.print', $request) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimer
+            </a>
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ $statusStyles[$request->status] ?? 'bg-gray-100' }}">
                 {{ $request->statusLabel() }}
             </span>
@@ -65,7 +68,8 @@
             <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex items-center justify-between">
                 <div>
                     <span class="font-bold text-xs uppercase block">Demande approuvée pour achat</span>
-                    <span class="text-xs text-blue-700">Validée le {{ $request->reviewed_at?->format('d/m/Y') }} par {{ $request->reviewedBy?->name ?? 'La direction' }}</span>
+                    <span class="text-xs text-blue-700">Validée le {{ $request->reviewed_at?->format('d/m/Y') }} par {{ $request->reviewedBy?->name ?? 'Le contrôle de gestion' }}{{ $request->aEteAjustee() ? ', quantités ajustées' : '' }}.
+                        {{ $canManage ? '' : 'Elle est chez le responsable des achats, qui en tire le(s) bon(s) de commande.' }}</span>
                     @if($request->review_notes)
                         <div class="mt-1 text-xs italic text-blue-900">Note : {{ $request->review_notes }}</div>
                     @endif
@@ -78,7 +82,9 @@
             </div>
         @elseif($request->status === 'converted' && $request->purchaseOrders->isNotEmpty())
             <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg space-y-2">
-                <span class="font-bold text-xs text-emerald-800 uppercase block">Bon(s) de commande fournisseur généré(s) :</span>
+                <span class="font-bold text-xs text-emerald-800 uppercase block">
+                    {{ $request->archived_at ? 'Commandée — archivée le ' . $request->archived_at->format('d/m/Y') . ', bon(s) envoyé(s) au fournisseur :' : 'Bon(s) de commande fournisseur généré(s), en attente d\'envoi :' }}
+                </span>
                 <div class="flex flex-wrap gap-2">
                     @foreach($request->purchaseOrders as $po)
                         {{-- Le chef de service suit sa demande sans tenir l'économat :
@@ -97,22 +103,27 @@
             </div>
         @endif
 
-        {{-- Barre d'actions hiérarchiques --}}
-        @if($request->isPending() && ($canReview || $canManage))
-            <div class="flex flex-wrap gap-2 pt-3 border-t border-secondary/15">
+        {{-- Barre d'actions : l'approbation porte les quantités saisies dans le tableau. --}}
+        @if($request->isPending() && ($canReview || $peutAnnuler))
+            <div class="flex flex-wrap items-end gap-2 pt-3 border-t border-secondary/15">
                 @if($canReview)
-                    <form method="POST" action="{{ route('economat.purchase_requests.approve', $request) }}">
+                    <form id="form-approbation" method="POST" action="{{ route('economat.purchase_requests.approve', $request) }}" class="flex flex-wrap items-end gap-2">
                         @csrf
+                        <label class="block">
+                            <span class="block text-[11px] font-medium text-primary/60 mb-1">Note pour l'économat et les achats (facultatif)</span>
+                            <input type="text" name="notes" maxlength="500" value="{{ old('notes') }}" class="w-72 max-w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:outline-none focus:border-primary">
+                        </label>
                         <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i> Approuver la demande
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Approuver aux quantités retenues
                         </button>
                     </form>
                     <button type="button" @click="showRejectModal = true" class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
                         <i data-lucide="x-circle" class="w-4 h-4"></i> Refuser la demande
                     </button>
+                    <p class="w-full text-[11px] text-primary/50">Ajustez au besoin les quantités dans le tableau ci-dessous avant d'approuver : 0 écarte l'article. L'économat est averti de chaque changement.</p>
                 @endif
 
-                @if($request->canBeCancelled())
+                @if($peutAnnuler && $request->canBeCancelled())
                     <form method="POST" action="{{ route('economat.purchase_requests.cancel', $request) }}" onsubmit="return confirm('Annuler cette demande d\'achat ?');">
                         @csrf
                         <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary/70 hover:bg-gray-50 text-sm font-medium rounded-lg transition-colors">
@@ -133,10 +144,19 @@
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
+                    @php
+                        // L'approbateur saisit ici la quantité qu'il retient ; une fois
+                        // décidée, la quantité approuvée s'affiche à côté de la demandée.
+                        $saisie = $canReview && $request->isPending();
+                        $approuvee = $saisie || $request->lines->contains(fn ($l) => $l->quantity_approved !== null);
+                    @endphp
                     <tr>
                         <th class="px-5 py-3 text-left">Article</th>
                         <th class="px-5 py-3 text-left">Fournisseur habituel</th>
                         <th class="px-5 py-3 text-right">Quantité demandée</th>
+                        @if($approuvee)
+                            <th class="px-5 py-3 text-right">Quantité approuvée</th>
+                        @endif
                         <th class="px-5 py-3 text-right">P.U. estimé</th>
                         <th class="px-5 py-3 text-right">Total estimé</th>
                     </tr>
@@ -154,6 +174,21 @@
                             <td class="px-5 py-3 text-right font-mono font-bold text-primary">
                                 {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
                             </td>
+                            @if($approuvee)
+                                <td class="px-5 py-3 text-right font-mono">
+                                    @if($saisie)
+                                        <input type="number" form="form-approbation" name="quantities[{{ $line->id }}]" min="0" step="0.001"
+                                               value="{{ old('quantities.' . $line->id, rtrim(rtrim(number_format((float) $line->quantity_requested, 3, '.', ''), '0'), '.')) }}"
+                                               aria-label="Quantité approuvée pour {{ $line->item?->name }}"
+                                               class="w-24 rounded-md border border-secondary/30 px-2 py-1 text-right text-sm text-primary focus:outline-none focus:border-primary">
+                                    @elseif($line->quantity_approved !== null)
+                                        <span class="font-bold {{ $line->estAjustee() ? 'text-amber-700' : 'text-primary' }}">
+                                            {{ rtrim(rtrim(number_format($line->quantity_approved, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
+                                        </span>
+                                        @if($line->estAjustee())<span class="block text-[10px] text-amber-700">ajustée</span>@endif
+                                    @endif
+                                </td>
+                            @endif
                             <td class="px-5 py-3 text-right font-mono text-primary/70">
                                 {{ number_format($line->estimated_unit_price / 100, 0, ',', ' ') }} F
                             </td>
@@ -165,7 +200,7 @@
                 </tbody>
                 <tfoot class="bg-gray-50/80 border-t border-secondary/15 font-semibold text-primary">
                     <tr>
-                        <td colspan="4" class="px-5 py-3 text-right">Total estimé de la demande :</td>
+                        <td colspan="{{ $approuvee ? 5 : 4 }}" class="px-5 py-3 text-right">Total estimé de la demande :</td>
                         <td class="px-5 py-3 text-right font-mono text-base font-bold text-primary">
                             {{ number_format($request->total_estimated_amount / 100, 0, ',', ' ') }} FCFA
                         </td>

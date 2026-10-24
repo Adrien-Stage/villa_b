@@ -8,8 +8,9 @@ use Illuminate\Notifications\Notification;
 
 /**
  * Un article vient de passer sous son seuil d'alerte après une sortie.
- * Destinée à l'économe : c'est le moment de lancer un réapprovisionnement,
- * avant la rupture qui bloquerait un département.
+ * Destinée à l'économe et au responsable des achats : c'est le moment de
+ * lancer un réapprovisionnement, avant la rupture qui bloquerait un
+ * département.
  */
 class StockItemBelowThreshold extends Notification
 {
@@ -24,8 +25,16 @@ class StockItemBelowThreshold extends Notification
         return ['database', 'webpush'];
     }
 
-    private function url(): string
+    /** La fiche de l'article pour qui tient le magasin, les propositions de réapprovisionnement pour l'acheteur. */
+    private function url(object $notifiable): string
     {
+        $droits = app(\App\Services\PermissionResolver::class);
+
+        if ($notifiable instanceof \App\Models\User && ! $droits->allows($notifiable, 'economat.items.voir')
+            && $droits->allows($notifiable, 'economat.control.suggestions.voir')) {
+            return route('economat.control.suggestions.index');
+        }
+
         return route('economat.items.show', $this->item);
     }
 
@@ -52,7 +61,7 @@ class StockItemBelowThreshold extends Notification
             'stock_item_id' => $this->item->id,
             'title'   => (float) $this->item->current_stock <= 0 ? 'Rupture de stock' : 'Stock bas',
             'message' => $this->detail(),
-            'url'     => $this->url(),
+            'url'     => $this->url($notifiable),
         ];
     }
 
@@ -61,7 +70,7 @@ class StockItemBelowThreshold extends Notification
         return [
             'title' => (float) $this->item->current_stock <= 0 ? 'Rupture de stock' : 'Stock bas',
             'body'  => $this->detail(),
-            'url'   => $this->url(),
+            'url'   => $this->url($notifiable),
             // Un tag par article : les alertes successives sur le même article
             // se remplacent au lieu de s'accumuler.
             'tag'   => 'stock-low-' . $this->item->id,

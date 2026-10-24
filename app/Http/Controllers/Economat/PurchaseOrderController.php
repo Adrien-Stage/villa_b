@@ -32,6 +32,12 @@ class PurchaseOrderController extends Controller
     /** Direction et comptabilité suivent l'engagement puis la dette fournisseur. */
     private const WATCHERS = ['manager', 'accountant'];
 
+    /** Le bon parti, l'économat attend la livraison. */
+    private const A_L_ENVOI = [...self::WATCHERS, 'econome'];
+
+    /** La marchandise arrivée, le responsable des achats sait sa commande servie. */
+    private const A_LA_RECEPTION = [...self::WATCHERS, 'purchasing_manager'];
+
     public function __construct(private Notifier $notifier)
     {
     }
@@ -246,12 +252,12 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * Bon de commande officiel fournisseur imprimable.
-     * Conforme aux normes d'audit et sans éléments d'interface web polluants.
+     * Bon de commande officiel fournisseur imprimable : articles et quantités,
+     * sans aucun prix — c'est le document que reçoit le fournisseur.
      */
     public function print(PurchaseOrder $order): View
     {
-        $order->load(['supplier', 'lines.item.category', 'createdBy', 'purchaseRequest']);
+        $order->load(['supplier', 'lines.item.category', 'createdBy', 'purchaseRequest.reviewedBy']);
 
         return view('economat.orders.print', [
             'order'  => $order,
@@ -270,7 +276,7 @@ class PurchaseOrderController extends Controller
 
         // Le bon est marqué envoyé même si l'email échoue : l'engagement de
         // dépense existe, la direction doit le savoir dans les deux cas.
-        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+        $this->notifier->toRoles(self::A_L_ENVOI, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
 
         return $sent
             ? back()->with('success', "Bon {$order->number} envoyé à {$order->supplier->email}.")
@@ -295,7 +301,7 @@ class PurchaseOrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+        $this->notifier->toRoles(self::A_L_ENVOI, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
 
         return back()->with('success', "Bon {$order->number} transmis au fournisseur ("
             . mb_strtolower(PurchaseOrder::TRANSMISSIONS_MANUELLES[$validated['moyen']])
@@ -319,7 +325,7 @@ class PurchaseOrderController extends Controller
         }
 
         // La marchandise est entrée en stock : la facture fournisseur suit.
-        $this->notifier->toRoles(self::WATCHERS, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+        $this->notifier->toRoles(self::A_LA_RECEPTION, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
 
         return back()->with('success', "Réception enregistrée pour le bon {$order->number}.");
     }
@@ -331,6 +337,8 @@ class PurchaseOrderController extends Controller
         }
 
         $order->update(['status' => PurchaseOrder::STATUS_CANCELLED]);
+        // Le dernier bon en attente annulé, la demande sort du circuit.
+        $order->purchaseRequest?->archiverSiCommandee();
 
         return back()->with('success', "Bon {$order->number} annulé.");
     }

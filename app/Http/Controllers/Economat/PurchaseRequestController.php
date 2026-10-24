@@ -22,9 +22,15 @@ class PurchaseRequestController extends Controller
     {
     }
 
+    /** Les demandes en cours de circuit, ou les archives : commandées, refusées, annulées. */
+    public const VUES = ['en_cours' => 'En cours', 'archives' => 'Archives'];
+
     public function index(Request $request): View
     {
-        $query = PurchaseRequest::with(['requestedBy', 'reviewedBy'])->withCount('lines');
+        $vue = array_key_exists($request->query('vue'), self::VUES) ? $request->query('vue') : 'en_cours';
+
+        $query = PurchaseRequest::with(['requestedBy', 'reviewedBy'])->withCount('lines')
+            ->when($vue === 'archives', fn ($q) => $q->archivees(), fn ($q) => $q->enCours());
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -41,14 +47,16 @@ class PurchaseRequestController extends Controller
         $requests = $query->orderByDesc('id')->paginate(self::PAR_PAGE)->withQueryString();
 
         $stats = [
-            'total'     => PurchaseRequest::count(),
             'pending'   => PurchaseRequest::where('status', PurchaseRequest::STATUS_PENDING)->count(),
             'approved'  => PurchaseRequest::where('status', PurchaseRequest::STATUS_APPROVED)->count(),
-            'converted' => PurchaseRequest::where('status', PurchaseRequest::STATUS_CONVERTED)->count(),
+            'converted' => PurchaseRequest::where('status', PurchaseRequest::STATUS_CONVERTED)->whereNull('archived_at')->count(),
+            'archived'  => PurchaseRequest::query()->archivees()->count(),
         ];
 
         return view('economat.purchase_requests.index', [
             'requests'    => $requests,
+            'vue'         => $vue,
+            'vues'        => self::VUES,
             'stats'       => $stats,
             'departments' => PurchaseRequest::DEPARTMENTS,
             'statuses'    => PurchaseRequest::STATUSES,
@@ -93,7 +101,7 @@ class PurchaseRequestController extends Controller
 
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
-            ->with('success', "Demande d'achat {$purchaseRequest->number} créée avec succès. Elle est en attente d'approbation.");
+            ->with('success', "Demande d'achat {$purchaseRequest->number} créée. Elle part au contrôle de gestion pour approbation.");
     }
 
     public function show(PurchaseRequest $purchaseRequest): View
@@ -109,23 +117,42 @@ class PurchaseRequestController extends Controller
             // le droit de décider, et jamais sur sa propre demande.
             'canReview' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.approve')
                 && !PurchaseRequestService::estSaPropreDemande($purchaseRequest, Auth::user()),
+            'peutAnnuler' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.cancel'),
             'canManage' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
         ]);
     }
 
+    /** Impression de la demande, pour le classement ou la signature. */
+    public function print(PurchaseRequest $purchaseRequest): View
+    {
+        $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item', 'purchaseOrders.supplier', 'purchaseOrders.createdBy']);
+
+        return view('economat.purchase_requests.print', [
+            'request' => $purchaseRequest,
+            'tenant'  => \App\Models\Tenant::first(),
+        ]);
+    }
+
+    /** Approbation, avec les quantités que l'approbateur retient ligne par ligne. */
     public function approve(Request $request, PurchaseRequest $purchaseRequest): RedirectResponse
     {
         $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:500'],
+            'notes'        => ['nullable', 'string', 'max:500'],
+            'quantities'   => ['nullable', 'array'],
+            'quantities.*' => ['nullable', 'numeric', 'min:0'],
+        ], [
+            'quantities.*.min' => 'Une quantité approuvée ne peut pas être négative.',
         ]);
 
         try {
-            $this->requestService->approve($purchaseRequest, Auth::user(), $validated['notes'] ?? null);
+            $approuvee = $this->requestService->approve($purchaseRequest, Auth::user(), $validated['notes'] ?? null, $validated['quantities'] ?? []);
         } catch (RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage())->withInput();
         }
 
-        return back()->with('success', "Demande d'achat {$purchaseRequest->number} approuvée. Vous pouvez maintenant la convertir en bon de commande.");
+        return back()->with('success', "Demande d'achat {$purchaseRequest->number} approuvée"
+            . ($approuvee->aEteAjustee() ? ' avec des quantités ajustées — l\'économat en est averti' : '')
+            . '. Elle passe au responsable des achats.');
     }
 
     public function reject(Request $request, PurchaseRequest $purchaseRequest): RedirectResponse

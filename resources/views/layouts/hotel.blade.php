@@ -296,6 +296,9 @@
                     ? "Mes demandes à l'économat"
                     : "Demandes à l'économat";
                 $afficheEconomat = \App\Support\Navigation::tientLEconomat($utilisateur);
+                // Qui a la tuile Achats y trouve demandes, bons et fournisseurs :
+                // l'Économat ne les répète pas.
+                $afficheAchats = \App\Support\Navigation::tientLesAchats($utilisateur);
 
                 $activeGroupId = $activeGroup['id'] ?? null;
             @endphp
@@ -611,11 +614,13 @@
                             @droit('economat.stores.voir')
                                 <x-sidebar-link route="economat.stores.index" icon="warehouse">Dépôts de service</x-sidebar-link>
                             @enddroit
-                            <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
-                            @droit('economat.purchase_requests.voir')
-                                <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
-                            @enddroit
-                            <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @unless($afficheAchats)
+                                <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
+                                @droit('economat.purchase_requests.voir')
+                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                                @enddroit
+                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @endunless
                             @droit('economat.receipts.voir')
                                 <x-sidebar-link route="economat.receipts.index" icon="package-check">Bons d'entrée (BR)</x-sidebar-link>
                             @enddroit
@@ -642,15 +647,46 @@
                             @droit('economat.control.voir')
                                 <x-sidebar-link route="economat.control.index" icon="pie-chart">Contrôle & Ratios</x-sidebar-link>
                             @enddroit
-                            @droit('economat.control.suggestions.voir')
-                                <x-sidebar-link route="economat.control.suggestions.index" icon="shopping-cart">Propositions d'achat</x-sidebar-link>
-                            @enddroit
+                            @unless($afficheAchats)
+                                @droit('economat.control.suggestions.voir')
+                                    <x-sidebar-link route="economat.control.suggestions.index" icon="shopping-cart">Propositions d'achat</x-sidebar-link>
+                                @enddroit
+                            @endunless
                             @droit('economat.control.variances.voir')
                                 <x-sidebar-link route="economat.control.variances.index" icon="git-compare">Écarts d'inventaire</x-sidebar-link>
                             @enddroit
                         </ul>
                     </div>
                 @endundroit
+                @endif
+                @endif
+
+                {{-- Achats : le circuit d'achat, de la demande approuvée à la livraison. --}}
+                @if(!$hasSidebar || $activeGroupId === 'achats')
+                @if($afficheAchats)
+                    <div>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Achats</p>
+                        <ul class="space-y-0.5">
+                            <x-sidebar-link route="achats.index" icon="shopping-cart">Tableau des achats</x-sidebar-link>
+                            @droit('economat.purchase_requests.voir')
+                                <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.orders.voir')
+                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.suppliers.voir')
+                                <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
+                            @enddroit
+                            @droit('economat.control.suggestions.voir')
+                                <x-sidebar-link route="economat.control.suggestions.index" icon="bell-ring">Alertes & réapprovisionnement</x-sidebar-link>
+                            @enddroit
+                            @unless($afficheEconomat)
+                                @droit('economat.receipts.voir')
+                                    <x-sidebar-link route="economat.receipts.index" icon="package-check">Livraisons reçues</x-sidebar-link>
+                                @enddroit
+                            @endunless
+                        </ul>
+                    </div>
                 @endif
                 @endif
 
@@ -807,7 +843,8 @@
                         </div>
                         <div class="sidebar-libelle min-w-0">
                             <p class="text-white text-xs font-medium truncate">{{ \Illuminate\Support\Str::limit(Auth::user()->name, 13, '...') }}</p>
-                            <p class="text-text-on-dark/60 text-[10px] capitalize truncate">{{ Auth::user()->role ?? 'Admin' }}</p>
+                            {{-- Le nom du rôle, non son code : « Responsable des achats », pas « purchasing_manager ». --}}
+                            <p class="text-text-on-dark/60 text-[10px] truncate">{{ \App\Support\RoleCatalog::find((string) Auth::user()->role)['name'] ?? ucfirst((string) (Auth::user()->role ?? 'Admin')) }}</p>
                         </div>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">

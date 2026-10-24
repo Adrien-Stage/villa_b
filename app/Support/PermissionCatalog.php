@@ -396,7 +396,7 @@ class PermissionCatalog
     /** Toutes les fonctions de l'établissement, hors administration et support. */
     private const TOUT_LE_PERSONNEL = [
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'quality_auditor', 'reception', 'reception_chief',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'quality_auditor', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
@@ -408,14 +408,14 @@ class PermissionCatalog
      */
     private const PERSONNEL_OPERATIONNEL = [
         'accountant', 'cashier', 'econome', 'finance_manager', 'housekeeping_leader',
-        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'reception_chief',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
 
     /** Ceux qui planifient le personnel : les chefs de service et la direction. */
     private const CHEFS_DE_SERVICE = [
-        'econome', 'finance_manager', 'housekeeping_leader', 'manager', 'reception_chief',
+        'econome', 'finance_manager', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception_chief',
         'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager',
     ];
 
@@ -797,9 +797,9 @@ class PermissionCatalog
             'economat.classeur.export' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.classeur.import' => ['econome'],
             'economat.classeur.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.control.suggestions.creer' => ['econome'],
+            'economat.control.suggestions.creer' => ['econome', 'purchasing_manager'],
             'economat.count_sheets.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.control.suggestions.voir' => ['controller', 'econome', 'manager'],
+            'economat.control.suggestions.voir' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.control.variances.voir' => ['controller', 'econome', 'manager'],
             'economat.control.voir' => ['controller', 'econome', 'manager'],
             // Sortie de matériel hors de l'établissement : l'économe la valide.
@@ -823,32 +823,40 @@ class PermissionCatalog
             // La découpe vers le garde-manger : l'économe la saisit, en présence du chef.
             'economat.items.transformation.cut' => ['econome'],
             'economat.cuts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.orders.cancel' => ['econome'],
-            'economat.orders.creer' => ['econome'],
-            'economat.orders.export' => ['controller', 'econome', 'manager'],
+            // Le responsable des achats commande ; l'économat réceptionne. Tout
+            // bon naît d'une demande d'achat approuvée : le bon saisi de toutes
+            // pièces, qui engagerait une dépense sans approbation, n'est plus
+            // ouvert qu'à l'administrateur.
+            'economat.orders.cancel' => ['purchasing_manager'],
+            'economat.orders.creer' => [],
+            'economat.orders.export' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.orders.receive' => ['econome', 'storekeeper'],
-            'economat.orders.send' => ['econome'],
+            'economat.orders.send' => ['purchasing_manager'],
             // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
-            'economat.orders.transmit' => ['econome'],
-            'economat.orders.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.orders.transmit' => ['purchasing_manager'],
+            'economat.orders.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Le journal des mouvements : qui consulte le stock le lit.
             'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            // La décision de dépense : la direction, et le responsable
-            // financier qui encadre l'économat.
-            'economat.purchase_requests.approve' => ['finance_manager', 'manager'],
-            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
-            'economat.purchase_requests.convert' => ['econome'],
-            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
-            'economat.purchase_requests.reject' => ['finance_manager', 'manager'],
-            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            // La décision de dépense : le contrôleur de gestion, qui peut
+            // ajuster les quantités, et le responsable financier qui l'encadre,
+            // à sa place. C'est un acte de contrôle, non une opération : le
+            // contrôleur n'achète ni ne reçoit. Le responsable des achats tire
+            // ensuite les bons des demandes approuvées.
+            'economat.purchase_requests.approve' => ['controller', 'finance_manager'],
+            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.convert' => ['purchasing_manager'],
+            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.reject' => ['controller', 'finance_manager'],
+            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
             // Recevoir sans commande engage une dépense : c'est l'économe qui
             // en décide, pas le magasinier qui pointe les livraisons attendues.
             'economat.receipts.direct.creer' => ['econome'],
-            'economat.receipts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.receipts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Le responsable des achats suit les livraisons de ses commandes.
+            'economat.receipts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.receipts.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
             // Chaque membre d'un service demande ; son chef vise avant l'économat.
             'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
@@ -859,10 +867,11 @@ class PermissionCatalog
             'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
-            'economat.suppliers.creer' => ['econome'],
-            'economat.suppliers.modifier' => ['econome'],
-            'economat.suppliers.supprimer' => ['econome'],
-            'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            // Le fichier des fournisseurs : le responsable des achats le tient.
+            'economat.suppliers.creer' => ['purchasing_manager'],
+            'economat.suppliers.modifier' => ['purchasing_manager'],
+            'economat.suppliers.supprimer' => ['purchasing_manager'],
+            'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :
             // un référentiel de l'hôtel que l'économe et la direction tiennent.
             'economat.units.creer' => ['econome', 'manager'],
@@ -910,6 +919,9 @@ class PermissionCatalog
             // Le contrôleur de gestion établit le budget et règle les seuils —
             // ce n'est pas une opération d'exploitation, sa vue d'ensemble n'en
             // souffre pas —, avec le responsable financier ; la direction lit.
+            // Le tableau de bord des achats : demandes à approuver, à commander,
+            // bons à envoyer, livraisons attendues, alertes de stock.
+            'achats.voir' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'pilotage.voir' => ['controller', 'finance_manager', 'manager'],
             'pilotage.budget.voir' => ['controller', 'finance_manager', 'manager'],
             'pilotage.budget.modifier' => ['controller', 'finance_manager'],
