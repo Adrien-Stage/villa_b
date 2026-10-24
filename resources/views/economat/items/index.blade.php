@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto"
-     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }})">
+     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }}, {{ Js::from($recherche) }}, {{ Js::from($filter) }})">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
@@ -38,12 +38,33 @@
         <li><strong>stock_initial</strong> facultatif : quantité déjà en magasin, reprise au <strong>cout_moyen_fcfa</strong> (obligatoire dans ce cas). Sans elle, le stock démarre à 0</li>
     </x-csv-import-modal>
 
-    <div class="flex gap-2 mb-4">
-        <a href="{{ route('economat.items.index') }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
-        <a href="{{ route('economat.items.index', ['filter' => 'alert']) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
+    {{-- Recherche à la saisie : la liste se recharge seule, sans quitter la
+         page ni perdre le curseur. Sans JavaScript, Entrée envoie le formulaire. --}}
+    <form method="GET" action="{{ route('economat.items.index') }}" role="search" class="mb-3" @submit.prevent="chercher(true)">
+        @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
+        <label for="recherche-articles" class="sr-only">Rechercher un article</label>
+        <div class="relative max-w-md">
+            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" aria-hidden="true"></i>
+            <input id="recherche-articles" type="search" name="q" value="{{ $recherche }}" autocomplete="off"
+                   x-model="recherche" @input="chercher()" @keydown.escape="recherche = ''; chercher(true)"
+                   placeholder="Rechercher par nom, référence ou catégorie…"
+                   class="w-full rounded-lg border border-secondary/30 bg-white py-2 pl-9 pr-9 text-sm text-primary placeholder:text-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15">
+            <span x-show="enRecherche" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+                <i data-lucide="loader-circle" class="h-4 w-4 animate-spin text-primary/40 motion-reduce:animate-none"></i>
+            </span>
+        </div>
+    </form>
+
+    <div id="liste-articles" aria-live="polite">
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+        <a href="{{ route('economat.items.index', array_filter(['q' => $recherche])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
+        <a href="{{ route('economat.items.index', array_filter(['filter' => 'alert', 'q' => $recherche])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
+        @if($recherche !== '')
+            <span class="text-xs text-primary/55">{{ $items->total() }} article(s) pour « {{ $recherche }} »</span>
+        @endif
     </div>
 
-    <x-table :rows="$items" :empty="$filter === 'alert' ? 'Aucun article sous le seuil.' : 'Aucun article. Créez-en un pour démarrer le magasin.'" empty-icon="boxes" caption="Articles du magasin central">
+    <x-table :rows="$items" :empty="$recherche !== '' ? 'Aucun article ne correspond à « ' . $recherche . ' ».' : ($filter === 'alert' ? 'Aucun article sous le seuil.' : 'Aucun article. Créez-en un pour démarrer le magasin.')" empty-icon="boxes" caption="Articles du magasin central">
         <x-slot:head>
             <x-table.col>Article</x-table.col>
             <x-table.col hide="xl">Catégorie</x-table.col>
@@ -107,6 +128,7 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 
     {{-- Modal création / édition --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
@@ -257,11 +279,48 @@
 
 @push('scripts')
 <script>
-    function stockItems(categories, suppliers, unites) {
+    function stockItems(categories, suppliers, unites, recherche, filtre) {
         const storeUrl = @js(route('economat.items.store'));
         const baseUrl = @js(url('/economat/articles'));
+        const listeUrl = @js(route('economat.items.index'));
+        let minuterie = null;
+        let requete = null;
         return {
             categories, suppliers, unites,
+            recherche: recherche ?? '', enRecherche: false,
+            /**
+             * Recharge la liste pour la saisie en cours : la page suivante est
+             * demandée au serveur, et seule la liste est remplacée — le champ
+             * garde le curseur. Une réponse dépassée par une frappe plus
+             * récente est abandonnée.
+             */
+            chercher(immediat = false) {
+                clearTimeout(minuterie);
+                minuterie = setTimeout(async () => {
+                    const params = new URLSearchParams();
+                    if (filtre) params.set('filter', filtre);
+                    if (this.recherche.trim() !== '') params.set('q', this.recherche.trim());
+                    const url = listeUrl + (params.toString() ? '?' + params : '');
+
+                    requete?.abort();
+                    const courante = requete = new AbortController();
+                    this.enRecherche = true;
+                    try {
+                        const reponse = await fetch(url, { signal: courante.signal, headers: { 'Accept': 'text/html' } });
+                        if (!reponse.ok) { window.location = url; return; }
+                        const page = new DOMParser().parseFromString(await reponse.text(), 'text/html');
+                        const nouvelle = page.getElementById('liste-articles');
+                        if (!nouvelle) { window.location = url; return; }
+                        document.getElementById('liste-articles').innerHTML = nouvelle.innerHTML;
+                        history.replaceState(null, '', url);
+                        window.refreshLucideIcons?.();
+                    } catch (e) {
+                        if (e.name !== 'AbortError') window.location = url;
+                    } finally {
+                        if (requete === courante) this.enRecherche = false;
+                    }
+                }, immediat ? 0 : 250);
+            },
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
             openingOpen: false, openingAction: '', opening: {},
