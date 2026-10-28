@@ -101,20 +101,20 @@
         </div>
 
         {{-- Cadre Sélection des Articles --}}
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm">
-            <div class="px-5 py-3 border-b border-secondary/20 bg-surface-light flex items-center justify-between">
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm flex flex-col">
+            <div class="px-5 py-3 border-b border-secondary/20 bg-surface-light flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-primary">Articles sollicités</h2>
                     <span class="text-xs text-primary/50" x-text="`(${lines.length} ligne(s))`"></span>
                 </div>
                 <button type="button" @click="addLine()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-lg transition-colors">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     <span>Ajouter une ligne</span>
                 </button>
             </div>
 
-            <div class="p-5">
+            <div x-ref="linesBody" class="p-5 max-h-[500px] overflow-y-auto">
                 <template x-if="lines.length === 0">
                     <p class="text-xs text-primary/40 text-center py-6">Aucun article sélectionné. Cliquez sur « Ajouter une ligne » ci-dessus.</p>
                 </template>
@@ -172,9 +172,16 @@
             </div>
 
             {{-- Total de la demande --}}
-            <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between text-xs">
-                <span class="text-primary/70">Budget estimé du bon :</span>
-                <strong class="font-mono text-sm text-primary" x-text="formatMoney(getTotal())"></strong>
+            <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between text-xs shrink-0">
+                <button type="button" @click="addLine()"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Ajouter une ligne</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <span class="text-primary/70">Budget estimé du bon :</span>
+                    <strong class="font-mono text-sm text-primary" x-text="formatMoney(getTotal())"></strong>
+                </div>
             </div>
         </div>
 
@@ -202,6 +209,12 @@
             nextKey: 1,
             addLine() {
                 this.lines.push({ key: this.nextKey++, itemId: '', qty: 1, packaging: '' });
+                this.$nextTick(() => {
+                    if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    if (this.$refs.linesBody) {
+                        this.$refs.linesBody.scrollTop = this.$refs.linesBody.scrollHeight;
+                    }
+                });
             },
             removeLine(idx) {
                 if (this.lines.length > 1) {
