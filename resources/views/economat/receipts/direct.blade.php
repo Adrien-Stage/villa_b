@@ -128,8 +128,8 @@
         </div>
 
         {{-- Articles reçus --}}
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-            <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex flex-wrap items-center justify-between gap-2">
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm flex flex-col">
+            <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex flex-wrap items-center justify-between gap-2 shrink-0">
                 <div>
                     <h2 class="text-sm font-semibold text-primary">Articles reçus</h2>
                     <p class="text-xs text-primary/50">
@@ -142,7 +142,7 @@
                 </button>
             </div>
 
-            <div class="p-5 space-y-3">
+            <div x-ref="lignesBody" class="p-5 space-y-3 max-h-[500px] overflow-y-auto">
                 <template x-if="lignes.length === 0">
                     <p class="text-xs text-primary/40 text-center py-6">Aucun article. Cliquez sur « Ajouter un article ».</p>
                 </template>
@@ -239,8 +239,13 @@
                 </template>
             </div>
 
-            <div class="px-5 py-3.5 border-t border-secondary/20 bg-surface-light flex flex-wrap items-center justify-between gap-3">
-                <span class="text-xs text-primary/60">Articles : <strong class="font-mono text-primary" x-text="lignes.length"></strong></span>
+            <div class="px-5 py-3.5 border-t border-secondary/20 bg-surface-light flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter un article
+                    </button>
+                    <span class="text-xs text-primary/60">Articles : <strong class="font-mono text-primary" x-text="lignes.length"></strong></span>
+                </div>
                 <span class="flex items-center gap-3">
                     <span class="text-xs font-semibold uppercase text-primary/70">Valeur entrée en stock</span>
                     <span class="text-xl font-bold font-mono text-primary" x-text="formatMontant(total) + ' FCFA'"></span>
@@ -297,7 +302,12 @@
                     itemId: '', name: '', unit: '', category: '', packaging: '',
                     delivered: '', rejected: '', reason: '', price: '', notes: '',
                 });
-                this.$nextTick(() => { if (window.refreshLucideIcons) window.refreshLucideIcons(); });
+                this.$nextTick(() => {
+                    if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    if (this.$refs.lignesBody) {
+                        this.$refs.lignesBody.scrollTop = this.$refs.lignesBody.scrollHeight;
+                    }
+                });
             },
 
             retirer(idx) {

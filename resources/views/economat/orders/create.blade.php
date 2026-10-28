@@ -196,8 +196,8 @@
         </template>
 
         {{-- Lignes du Bon de Commande --}}
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm">
-            <div class="px-5 py-3.5 border-b border-secondary/20 bg-surface-light flex items-center justify-between">
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm flex flex-col">
+            <div class="px-5 py-3.5 border-b border-secondary/20 bg-surface-light flex items-center justify-between shrink-0">
                 <div>
                     <h2 class="text-xs font-bold uppercase tracking-wider text-primary">Articles commandés</h2>
                     <p class="text-[11px] text-primary/50">Lignes incluses dans le bon de commande adressé au fournisseur</p>
@@ -210,7 +210,7 @@
                 </button>
             </div>
 
-            <div class="p-5">
+            <div x-ref="linesBody" class="p-5 max-h-[500px] overflow-y-auto">
                 {{-- Alerte si aucun fournisseur sélectionné --}}
                 <template x-if="!supplierId">
                     <div class="p-8 text-center text-primary/50">
@@ -303,9 +303,16 @@
             </div>
 
             {{-- Pied du tableau avec Total Général Valorisé --}}
-            <div class="px-5 py-3.5 border-t border-secondary/20 bg-surface-light flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="text-xs text-primary/60">
-                    Nombre d'articles : <strong class="font-mono text-primary font-bold" x-text="lines.length"></strong>
+            <div class="px-5 py-3.5 border-t border-secondary/20 bg-surface-light flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="addLine()" :disabled="!supplierId"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Ajouter une ligne</span>
+                    </button>
+                    <div class="text-xs text-primary/60">
+                        Nombre d'articles : <strong class="font-mono text-primary font-bold" x-text="lines.length"></strong>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -386,6 +393,12 @@
                     qty: 1,
                     currentStock: item.current_stock,
                 });
+                this.$nextTick(() => {
+                    if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    if (this.$refs.linesBody) {
+                        this.$refs.linesBody.scrollTop = this.$refs.linesBody.scrollHeight;
+                    }
+                });
             },
 
             addLine() {
@@ -397,6 +410,12 @@
                     price: 0,
                     qty: 1,
                     currentStock: null,
+                });
+                this.$nextTick(() => {
+                    if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    if (this.$refs.linesBody) {
+                        this.$refs.linesBody.scrollTop = this.$refs.linesBody.scrollHeight;
+                    }
                 });
             },
 

@@ -109,17 +109,17 @@
         </div>
 
         {{-- Articles --}}
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-            <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between gap-2">
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm flex flex-col">
+            <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between gap-2 shrink-0">
                 <div>
                     <h2 class="text-sm font-semibold text-primary">Articles qui sortent</h2>
                     <p class="text-xs text-primary/50">Seuls les articles en stock sont proposés ; la quantité ne dépasse pas le stock.</p>
                 </div>
-                <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">
+                <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter un article
                 </button>
             </div>
-            <div class="p-5 space-y-3">
+            <div x-ref="lignesBody" class="p-5 space-y-3 max-h-[500px] overflow-y-auto">
                 <template x-for="(ligne, idx) in lignes" :key="ligne.key">
                     <div class="grid grid-cols-12 gap-2.5 items-end p-3 rounded-lg border border-secondary/20 bg-surface-light/20">
                         <div class="col-span-12 md:col-span-5">
@@ -159,9 +159,14 @@
                 </template>
                 <p class="text-xs text-primary/40 text-center py-4" x-show="lignes.length === 0">Aucun article. Cliquez sur « Ajouter un article ».</p>
             </div>
-            <div class="px-5 py-3 border-t border-secondary/15 bg-surface-light flex justify-end gap-3 text-sm">
-                <span class="text-primary/60">Valeur totale (coût moyen)</span>
-                <strong class="font-mono text-primary" x-text="montant(total) + ' FCFA'"></strong>
+            <div class="px-5 py-3 border-t border-secondary/15 bg-surface-light flex items-center justify-between gap-3 text-sm shrink-0">
+                <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter un article
+                </button>
+                <div class="flex items-center gap-3">
+                    <span class="text-primary/60">Valeur totale (coût moyen)</span>
+                    <strong class="font-mono text-primary" x-text="montant(total) + ' FCFA'"></strong>
+                </div>
             </div>
         </div>
 
@@ -190,7 +195,12 @@
             },
             ajouter() {
                 this.lignes.push({ key: this.cle++, itemId: '', qty: '', packaging: '', notes: '' });
-                this.$nextTick(() => { if (window.refreshLucideIcons) window.refreshLucideIcons(); });
+                this.$nextTick(() => {
+                    if (window.refreshLucideIcons) window.refreshLucideIcons();
+                    if (this.$refs.lignesBody) {
+                        this.$refs.lignesBody.scrollTop = this.$refs.lignesBody.scrollHeight;
+                    }
+                });
             },
             article(ligne) { return this.articles.find(a => a.id === ligne.itemId) || null; },
             // Unités de l'article dans l'unité choisie : 200 pour un carton de 200 pièces.
