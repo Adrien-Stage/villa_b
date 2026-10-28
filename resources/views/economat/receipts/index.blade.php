@@ -40,7 +40,13 @@
     @include('economat.partials.flash')
 
     {{-- Synthèse & Indicateurs KPI --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <a href="{{ route('economat.receipts.index', ['statut' => \App\Models\GoodsReceipt::STATUS_PENDING]) }}" class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm bg-amber-50/30 hover:border-amber-400">
+            <span class="text-xs text-amber-800 font-medium">Livraisons attendues</span>
+            <div class="text-2xl font-bold font-mono text-amber-800 mt-1">{{ number_format($stats['en_attente'], 0, ',', ' ') }}</div>
+            <div class="text-[11px] text-amber-700/70 mt-0.5">Bons en attente, ouverts à l'envoi des commandes</div>
+        </a>
+
         <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
             <span class="text-xs text-primary/50 font-medium">Bons d'entrée enregistrés</span>
             <div class="text-2xl font-bold font-mono text-primary mt-1">{{ number_format($stats['total_receipts'], 0, ',', ' ') }}</div>
@@ -136,6 +142,10 @@
             <x-table.row :href="route('economat.receipts.show', $rc)">
                 <x-table.cell nowrap>
                     <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-primary hover:underline">{{ $rc->number }}</a>
+                    {{-- Visible à toute largeur : la colonne « Litige » se replie sur petit écran. --}}
+                    @if($rc->estEnAttente())
+                        <span class="block text-[10px] font-semibold text-amber-700">En attente de livraison</span>
+                    @endif
                 </x-table.cell>
                 <x-table.cell hide="xl" nowrap>
                     @if($rc->purchaseOrder)
@@ -150,21 +160,35 @@
                 <x-table.cell class="font-medium">{{ $rc->supplier?->name ?? '—' }}</x-table.cell>
                 <x-table.cell hide="3xl" class="font-mono text-xs text-primary/70">{{ $rc->delivery_note_number ?? '—' }}</x-table.cell>
                 <x-table.cell align="right" hide="2xl" class="font-mono text-primary/70">{{ $rc->lines_count }}</x-table.cell>
-                <x-table.cell align="right" nowrap class="font-mono font-bold text-emerald-800">{{ number_format($rc->total_amount / 100, 0, ',', ' ') }} F</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono font-bold text-emerald-800">{{ $rc->estEnAttente() ? '—' : number_format($rc->total_amount / 100, 0, ',', ' ') . ' F' }}</x-table.cell>
                 <x-table.cell hide="lg" nowrap>
-                    @if($rc->hasRejections())
+                    @if($rc->estEnAttente())
+                        <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800"><i data-lucide="clock" class="h-3 w-3" aria-hidden="true"></i> En attente de livraison</span>
+                    @elseif($rc->status === \App\Models\GoodsReceipt::STATUS_CANCELLED)
+                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-500">Annulé</span>
+                    @elseif($rc->hasRejections())
                         <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700"><i data-lucide="alert-circle" class="h-3 w-3" aria-hidden="true"></i> Refusé ({{ rtrim(rtrim(number_format($rc->totalRejectedQuantity(), 2, ',', ' '), '0'), ',') }})</span>
                     @else
                         <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"><i data-lucide="check" class="h-3 w-3" aria-hidden="true"></i> 100 % conforme</span>
                     @endif
+                    @if($rc->deliveryLabel())
+                        <span class="block mt-0.5 text-[10px] text-primary/50">{{ $rc->deliveryLabel() }}</span>
+                    @endif
                 </x-table.cell>
                 <x-table.cell hide="3xl" nowrap>
-                    <span class="inline-flex items-center gap-1.5 rounded border border-indigo-200/70 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900" title="Signature certifiée">
-                        <i data-lucide="pen-tool" class="h-3 w-3 text-indigo-600" aria-hidden="true"></i><span>{{ $rc->receiverSignature() ?? ($rc->receivedBy?->name ?? 'Économe') }}</span>
-                    </span>
+                    @unless($rc->estEnAttente())
+                        <span class="inline-flex items-center gap-1.5 rounded border border-indigo-200/70 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900" title="Signature certifiée">
+                            <i data-lucide="pen-tool" class="h-3 w-3 text-indigo-600" aria-hidden="true"></i><span>{{ $rc->receiverSignature() ?? ($rc->receivedBy?->name ?? 'Économe') }}</span>
+                        </span>
+                    @endunless
                 </x-table.cell>
-                <x-table.cell hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $rc->received_at->format('d/m/Y H:i') }}</x-table.cell>
+                <x-table.cell hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $rc->received_at?->format('d/m/Y H:i') ?? 'Attendu' }}</x-table.cell>
                 <x-table.actions :label="'Actions pour le bon d\'entrée '.$rc->number">
+                    @if($rc->estEnAttente() && $rc->purchaseOrder)
+                        @droit('economat.receipts.creer')
+                            <x-table.action :href="route('economat.receipts.create', $rc->purchaseOrder)" icon="package-check">Réceptionner la livraison</x-table.action>
+                        @enddroit
+                    @endif
                     <x-table.action :href="route('economat.receipts.show', $rc)" icon="eye">Détails</x-table.action>
                     <x-table.action :href="route('economat.receipts.print', $rc)" icon="printer" target="_blank">Imprimer le bordereau</x-table.action>
                 </x-table.actions>

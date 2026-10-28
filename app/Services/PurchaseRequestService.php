@@ -10,7 +10,6 @@ use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Notifications\PurchaseRequestUpdated;
-use App\Support\RoleCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -18,34 +17,41 @@ use RuntimeException;
 /**
  * Service de gestion du cycle de vie des Demandes d'Achat internes.
  *
- * Le circuit : un service ou l'économat demande ; le contrôleur de gestion
- * — ou le responsable financier à sa place — approuve, en ajustant au besoin
- * les quantités, ou refuse ; le responsable des achats tire les bons de
- * commande des quantités approuvées et les envoie. Chaque étape est annoncée
- * à qui doit agir ensuite.
+ * Le circuit : l'économat (ou un service) exprime le besoin ; la demande
+ * part au responsable des achats, qui la vérifie et peut en modifier les
+ * quantités — le demandeur est averti de chaque changement ; il en tire les
+ * bons de commande et les transmet aux fournisseurs, ce qui ouvre les bons de
+ * réception en attente que l'économat remplira à la livraison. Le contrôle de
+ * gestion et le responsable financier suivent tout le circuit.
  */
 class PurchaseRequestService
 {
-    /** Ceux qui décident de la dépense. */
-    public const APPROBATEURS = ['controller', 'finance_manager'];
-
-    /** Ceux qui commandent. */
+    /** Ceux qui vérifient les demandes et commandent. */
     public const ACHETEURS = ['purchasing_manager'];
 
-    /** L'économat, qui reçoit ce qui est commandé et suit chaque décision. */
-    public const ECONOMAT = ['econome'];
+    /** Qui vérifie la demande du responsable des achats lui-même. */
+    public const SUPERIEUR_DES_ACHATS = ['finance_manager'];
 
     public function __construct(private Notifier $notifier)
     {
     }
 
-    /** La demande nouvelle part aux approbateurs. */
+    /**
+     * La demande nouvelle part au responsable des achats. La sienne propre,
+     * il ne la vérifie pas lui-même : elle part aussi au responsable
+     * financier, qui l'encadre.
+     */
     public function annoncer(PurchaseRequest $request): void
     {
-        $this->notifier->toRoles(self::APPROBATEURS, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::SOUMISE), $request->requested_by);
+        $notification = new PurchaseRequestUpdated($request, PurchaseRequestUpdated::SOUMISE);
+        $this->notifier->toRoles(self::ACHETEURS, $notification, $request->requested_by);
+
+        if ($request->requestedBy?->exerce(self::ACHETEURS)) {
+            $this->notifier->toRoles(self::SUPERIEUR_DES_ACHATS, $notification, $request->requested_by);
+        }
     }
 
-    /** Le demandeur et l'économat apprennent la décision ; le dossier approuvé passe aux achats. */
+    /** Le demandeur apprend la décision et ses ajustements ; le dossier approuvé passe aux achats. */
     private function annoncerDecision(PurchaseRequest $request, User $decideur): void
     {
         $request->loadMissing(['lines.item', 'requestedBy', 'reviewedBy']);
@@ -53,12 +59,9 @@ class PurchaseRequestService
             ? PurchaseRequestUpdated::APPROUVEE
             : PurchaseRequestUpdated::REFUSEE;
 
-        $economat = User::query()
-            ->havingRole(RoleCatalog::avecCeuxQuiLesIncluent(self::ECONOMAT))
-            ->active()
-            ->where('id', '!=', $decideur->id)
-            ->get();
-        $this->notifier->send($economat->push($request->requestedBy)->filter(), new PurchaseRequestUpdated($request, $etape));
+        if ($request->requestedBy && (int) $request->requestedBy->id !== (int) $decideur->id) {
+            $this->notifier->send($request->requestedBy, new PurchaseRequestUpdated($request, $etape));
+        }
 
         if ($etape === PurchaseRequestUpdated::APPROUVEE) {
             $this->notifier->toRoles(self::ACHETEURS, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::A_COMMANDER), $decideur->id);
@@ -127,7 +130,12 @@ class PurchaseRequestService
             throw new RuntimeException("Cette demande d'achat ne peut plus être modifiée dans son statut actuel.");
         }
 
-        return DB::transaction(function () use ($request, $data) {
+        $request->loadMissing('lines.item');
+        $avant = $request->lines->mapWithKeys(fn (PurchaseRequestLine $l) => [$l->stock_item_id => [
+            'nom' => $l->item?->name ?? 'Article', 'unite' => $l->item?->unit, 'quantite' => $l->quantiteRetenue(),
+        ]])->all();
+
+        $request = DB::transaction(function () use ($request, $data) {
             $request->update([
                 'department' => $data['department'] ?? $request->department,
                 'priority'   => $data['priority'] ?? $request->priority,
@@ -186,6 +194,44 @@ class PurchaseRequestService
 
             return $request->fresh(['lines.item', 'requestedBy', 'reviewedBy']);
         });
+
+        // Le demandeur apprend ce qui a changé dans sa demande.
+        $changements = $this->changements($avant, $request);
+        if ($changements !== '' && $request->requestedBy && (int) $request->requestedBy->id !== (int) $user->id) {
+            $this->notifier->send($request->requestedBy, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::MODIFIEE, $changements, $user->name));
+        }
+
+        return $request;
+    }
+
+    /**
+     * « Riz 50 → 40 kg ; Huile : article retiré ; Sucre : article ajouté (10 kg) » : les lignes
+     * qu'une modification a changées.
+     *
+     * @param  array<int, array{nom: string, unite: ?string, quantite: float}>  $avant
+     */
+    private function changements(array $avant, PurchaseRequest $request): string
+    {
+        $qte = fn (float $v) => rtrim(rtrim(number_format($v, 3, ',', ' '), '0'), ',');
+        $apres = $request->lines->mapWithKeys(fn (PurchaseRequestLine $l) => [$l->stock_item_id => [
+            'nom' => $l->item?->name ?? 'Article', 'unite' => $l->item?->unit, 'quantite' => $l->quantiteRetenue(),
+        ]])->all();
+
+        $changements = [];
+        foreach ($avant as $article => $ligne) {
+            if (! isset($apres[$article])) {
+                $changements[] = "{$ligne['nom']} : article retiré";
+            } elseif (abs($apres[$article]['quantite'] - $ligne['quantite']) > 0.0005) {
+                $changements[] = "{$ligne['nom']} {$qte($ligne['quantite'])} → {$qte($apres[$article]['quantite'])}" . ($ligne['unite'] ? " {$ligne['unite']}" : '');
+            }
+        }
+        foreach ($apres as $article => $ligne) {
+            if (! isset($avant[$article])) {
+                $changements[] = "{$ligne['nom']} : article ajouté ({$qte($ligne['quantite'])}" . ($ligne['unite'] ? " {$ligne['unite']}" : '') . ')';
+            }
+        }
+
+        return implode(' ; ', $changements);
     }
 
     /**

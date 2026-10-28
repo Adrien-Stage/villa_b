@@ -122,7 +122,8 @@ test('une facture sans bon de commande reste libre', function () {
 test('une réception déjà facturée ne peut plus être annulée', function () {
     $bon = bonRecu(8);
     facturerBon($bon, 8_000_000);
-    $reception = GoodsReceipt::where('purchase_order_id', $bon->id)->sole();
+    // Le reste du bon est attendu sous un bon en attente : la réception est l'autre.
+    $reception = GoodsReceipt::where('purchase_order_id', $bon->id)->where('status', GoodsReceipt::STATUS_RECEIVED)->sole();
 
     expect(fn () => app(GoodsReceiptService::class)->cancel($reception, auth()->user()))
         ->toThrow(RuntimeException::class, 'déjà facturé');
@@ -138,7 +139,7 @@ test('une réception qui dépasse ce qui est facturé reste annulable', function
     facturerBon($bon, 4_000_000);
 
     // Deux réceptions de 4 kg, une seule facturée : l'autre peut s'annuler.
-    $seconde = GoodsReceipt::where('purchase_order_id', $bon->id)->latest('id')->first();
+    $seconde = GoodsReceipt::where('purchase_order_id', $bon->id)->where('status', GoodsReceipt::STATUS_RECEIVED)->latest('id')->first();
     app(GoodsReceiptService::class)->cancel($seconde, auth()->user());
 
     expect($seconde->fresh()->status)->toBe(GoodsReceipt::STATUS_CANCELLED);

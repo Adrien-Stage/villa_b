@@ -25,7 +25,9 @@
         <div>
             <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Établissement du Bon d'Entrée en Stock (BR)</span>
             <h1 class="text-xl font-heading font-semibold text-primary">Réception de livraison — Commande {{ $order->number }}</h1>
-            <p class="text-sm text-primary/60 mt-0.5">Fournisseur attitré : <strong>{{ $order->supplier?->name }}</strong></p>
+            <p class="text-sm text-primary/60 mt-0.5">Fournisseur attitré : <strong>{{ $order->supplier?->name }}</strong>
+                @if($attente) · Bon de réception en attente <strong class="font-mono">{{ $attente->number }}</strong>@endif
+            </p>
         </div>
     </div>
 
@@ -182,6 +184,29 @@
                 </table>
             </div>
         </div>
+
+        {{-- Livraison complète ou partielle : l'économat le dit. --}}
+        <fieldset class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm">
+            <legend class="sr-only">Nature de la livraison</legend>
+            <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-2">La livraison est… *</p>
+            @error('livraison')<p class="mb-2 text-xs text-red-600">{{ $message }}</p>@enderror
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                    <input type="radio" name="livraison" value="{{ \App\Models\GoodsReceipt::DELIVERY_COMPLETE }}" required @checked(old('livraison') === \App\Models\GoodsReceipt::DELIVERY_COMPLETE) class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                    <span>
+                        <span class="block text-sm font-semibold text-primary">{{ $livraisons[\App\Models\GoodsReceipt::DELIVERY_COMPLETE] }}</span>
+                        <span class="block text-xs text-primary/60">Le bon de commande est soldé : ce qui manque n'est plus attendu.</span>
+                    </span>
+                </label>
+                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50">
+                    <input type="radio" name="livraison" value="{{ \App\Models\GoodsReceipt::DELIVERY_PARTIAL }}" required @checked(old('livraison') === \App\Models\GoodsReceipt::DELIVERY_PARTIAL) class="mt-0.5 text-amber-600 focus:ring-amber-500">
+                    <span>
+                        <span class="block text-sm font-semibold text-primary">{{ $livraisons[\App\Models\GoodsReceipt::DELIVERY_PARTIAL] }}</span>
+                        <span class="block text-xs text-primary/60">Le reste est encore attendu : un nouveau bon de réception en attente est ouvert pour lui.</span>
+                    </span>
+                </label>
+            </div>
+        </fieldset>
 
         {{-- Engagement & Signature Numérique Automatique --}}
         <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">

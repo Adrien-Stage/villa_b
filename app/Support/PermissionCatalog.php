@@ -839,17 +839,17 @@ class PermissionCatalog
             // Le journal des mouvements : qui consulte le stock le lit.
             'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            // La décision de dépense : le contrôleur de gestion, qui peut
-            // ajuster les quantités, et le responsable financier qui l'encadre,
-            // à sa place. C'est un acte de contrôle, non une opération : le
-            // contrôleur n'achète ni ne reçoit. Le responsable des achats tire
-            // ensuite les bons des demandes approuvées.
+            // La demande d'achat part au responsable des achats : il la vérifie,
+            // en ajuste les quantités, la valide ou la refuse, puis en tire les
+            // bons. Le contrôleur de gestion, le responsable financier et la
+            // direction peuvent aussi en décider ; la demande du responsable
+            // des achats lui-même, un autre la valide.
             'economat.purchase_requests.approve' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.convert' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],
-            'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager'],
+            'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],

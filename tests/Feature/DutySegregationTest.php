@@ -101,7 +101,7 @@ test('le contrôleur de gestion voit tout et n\'écrit que ses actes de contrôl
     // des actes de contrôle, non des opérations : il n'achète ni ne reçoit.
     sort($ecritures);
     expect($ecritures)->toBe([
-        'economat.purchase_requests.approve', 'economat.purchase_requests.reject',
+        'economat.purchase_requests.approve', 'economat.purchase_requests.modifier', 'economat.purchase_requests.reject',
         'pilotage.budget.modifier', 'pilotage.seuils.modifier',
     ])
         ->and(count($droits))->toBeGreaterThan(40);

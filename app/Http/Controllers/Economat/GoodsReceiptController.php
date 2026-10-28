@@ -61,11 +61,13 @@ class GoodsReceiptController extends Controller
             $statsQuery->whereDate('received_at', '<=', $fin);
         }
 
+        $recus = (clone $statsQuery)->where('status', '!=', GoodsReceipt::STATUS_PENDING);
         $stats = [
-            'total_receipts' => (clone $statsQuery)->count(),
-            'conforme'       => (clone $statsQuery)->whereDoesntHave('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
-            'avec_litige'    => (clone $statsQuery)->whereHas('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
+            'total_receipts' => (clone $recus)->count(),
+            'conforme'       => (clone $recus)->whereDoesntHave('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
+            'avec_litige'    => (clone $recus)->whereHas('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
             'total_amount'   => (int) (clone $statsQuery)->where('status', GoodsReceipt::STATUS_RECEIVED)->sum('total_amount'),
+            'en_attente'     => GoodsReceipt::query()->enAttente()->count(),
         ];
 
         $suppliers = Supplier::active()->orderBy('name')->get();
@@ -125,9 +127,15 @@ class GoodsReceiptController extends Controller
 
         $order->load(['supplier', 'lines.item.packagings']);
 
+        // Le bon en attente, ouvert à l'envoi du bon de commande ; un bon
+        // envoyé avant les bons en attente reçoit le sien maintenant.
+        $attente = $this->receiptService->attenteDe($order) ?? $this->receiptService->ouvrirAttente($order);
+
         return view('economat.receipts.create', [
-            'order'   => $order,
-            'reasons' => GoodsReceiptLine::REASONS,
+            'order'      => $order,
+            'attente'    => $attente,
+            'reasons'    => GoodsReceiptLine::REASONS,
+            'livraisons' => GoodsReceipt::DELIVERIES,
         ]);
     }
 
@@ -144,6 +152,9 @@ class GoodsReceiptController extends Controller
             'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
             'lines.*.rejection_reason'   => ['nullable', 'string', 'max:100'],
             'lines.*.notes'              => ['nullable', 'string', 'max:255'],
+            // Le formulaire la demande ; sans réponse, la livraison est
+            // complète quand plus rien n'est dû, partielle sinon.
+            'livraison'                  => ['nullable', Rule::in(array_keys(GoodsReceipt::DELIVERIES))],
         ]);
 
         try {
@@ -154,9 +165,13 @@ class GoodsReceiptController extends Controller
 
         $notifier->toRoles(self::ACHETEURS, new PurchaseOrderUpdated($order->fresh('supplier')), Auth::id());
 
+        $suite = $receipt->delivery_type === GoodsReceipt::DELIVERY_PARTIAL && ($reste = $this->receiptService->attenteDe($order))
+            ? " Livraison partielle : le reste est attendu sous le bon {$reste->number}."
+            : ' Livraison complète : le bon de commande est soldé.';
+
         return redirect()
             ->route('economat.receipts.show', $receipt)
-            ->with('success', "Bon d'entrée en stock {$receipt->number} validé et signé. Les marchandises acceptées sont intégrées au stock.");
+            ->with('success', "Bon d'entrée en stock {$receipt->number} validé et signé. Les marchandises acceptées sont intégrées au stock." . $suite);
     }
 
     /**
@@ -292,10 +307,18 @@ class GoodsReceiptController extends Controller
      */
     private function filtrer(Request $request): Builder
     {
+        // Les livraisons attendues d'abord : c'est le travail de l'économat.
         $query = GoodsReceipt::with(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item'])
             ->withCount('lines')
+            ->orderByRaw('case when status = ? then 0 else 1 end', [GoodsReceipt::STATUS_PENDING])
             ->orderByDesc('received_at')
             ->orderByDesc('id');
+
+        if ($statut = $request->query('statut')) {
+            if (array_key_exists($statut, GoodsReceipt::STATUSES)) {
+                $query->where('status', $statut);
+            }
+        }
 
         if ($supplierId = $request->query('fournisseur') ?: $request->query('supplier_id')) {
             $query->where('supplier_id', $supplierId);

@@ -27,7 +27,7 @@
             <a href="{{ route('economat.receipts.print', $receipt) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4 text-primary/70"></i> Imprimer le Bon d'Entrée (PDF / Papier)
             </a>
-            @if(\Illuminate\Support\Facades\Route::has('accounting.supplier-invoices.create'))
+            @if(\Illuminate\Support\Facades\Route::has('accounting.supplier-invoices.create') && ! $receipt->estEnAttente())
                 <a href="{{ route('accounting.supplier-invoices.create', ['bon' => $receipt->purchase_order_id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Saisir la facture fournisseur
                 </a>
@@ -37,6 +37,22 @@
 
     @include('economat.partials.flash')
 
+    @if($receipt->estEnAttente())
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
+            <div>
+                <p class="text-sm font-semibold text-amber-900">Livraison attendue</p>
+                <p class="text-xs text-amber-800">À l'arrivée de la marchandise, remplissez ce bon : quantités livrées, acceptées, refusées, et si la livraison est complète ou partielle.</p>
+            </div>
+            @if($receipt->purchaseOrder)
+                @droit('economat.receipts.creer')
+                    <a href="{{ route('economat.receipts.create', $receipt->purchaseOrder) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 shadow-sm">
+                        <i data-lucide="package-check" class="w-4 h-4"></i> Réceptionner la livraison
+                    </a>
+                @enddroit
+            @endif
+        </div>
+    @endif
+
     {{-- En-tête du Bon d'Entrée & Statut --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -44,14 +60,21 @@
                 <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Bon d'entrée officiel en magasin</span>
                 <div class="flex items-center gap-3 mt-1">
                     <h1 class="text-2xl font-heading font-bold text-primary font-mono tracking-tight">{{ $receipt->number }}</h1>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border {{ $receipt->estEnAttente() ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200' }}">
                         {{ $receipt->statusLabel() }}
                     </span>
                 </div>
-                <p class="text-xs text-primary/50 mt-1">
-                    Enregistré le <span class="font-medium text-primary/80">{{ $receipt->received_at->format('d/m/Y à H:i') }}</span>
-                    par <span class="font-medium text-primary/80">{{ $receipt->receivedBy?->name ?? 'Économe' }}</span>
-                </p>
+                @if($receipt->estEnAttente())
+                    <p class="text-xs text-amber-800 mt-1">
+                        Ouvert le {{ $receipt->created_at->format('d/m/Y à H:i') }}, à l'envoi du bon de commande : la livraison est attendue.
+                    </p>
+                @else
+                    <p class="text-xs text-primary/50 mt-1">
+                        Enregistré le <span class="font-medium text-primary/80">{{ $receipt->received_at?->format('d/m/Y à H:i') }}</span>
+                        par <span class="font-medium text-primary/80">{{ $receipt->receivedBy?->name ?? 'Économe' }}</span>
+                        @if($receipt->deliveryLabel()) · <span class="font-medium text-primary/80">{{ $receipt->deliveryLabel() }}</span>@endif
+                    </p>
+                @endif
             </div>
 
             <div class="text-right sm:border-l sm:border-secondary/15 sm:pl-6">
@@ -72,9 +95,15 @@
                     <i data-lucide="truck" class="w-4 h-4 text-primary/70"></i>
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Livraison Fournisseur</h2>
                 </div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    <i data-lucide="check" class="w-3 h-3"></i> Réceptionné
-                </span>
+                @if($receipt->estEnAttente())
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                        <i data-lucide="clock" class="w-3 h-3"></i> Attendue
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <i data-lucide="check" class="w-3 h-3"></i> Réceptionné
+                    </span>
+                @endif
             </div>
 
             <div class="space-y-1.5 text-xs text-primary/80">
@@ -116,11 +145,19 @@
                     <i data-lucide="pen-tool" class="w-4 h-4 text-emerald-700"></i>
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Signature Économe</h2>
                 </div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
-                    <i data-lucide="shield-check" class="w-3 h-3"></i> Certifiée
-                </span>
+                @unless($receipt->estEnAttente())
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                        <i data-lucide="shield-check" class="w-3 h-3"></i> Certifiée
+                    </span>
+                @endunless
             </div>
 
+            @if($receipt->estEnAttente())
+                {{-- Pas encore de signature : l'économat signera en réceptionnant. --}}
+                <div class="bg-gray-50/80 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto text-xs text-primary/55">
+                    Signée par l'économat à la réception de la livraison.
+                </div>
+            @else
             <div class="bg-gray-50/80 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto">
                 <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider mb-1">Entrée en stock certifiée conforme</div>
                 <div class="font-signature text-4xl text-primary font-normal leading-tight py-1 select-none">
@@ -130,9 +167,10 @@
                     {{ $receipt->receivedBy?->name ?? 'Économe Réceptionnaire' }}
                 </div>
                 <div class="text-[10px] text-primary/40 mt-0.5">
-                    Validé le {{ $receipt->received_at->format('d/m/Y à H:i') }}
+                    Validé le {{ $receipt->received_at?->format('d/m/Y à H:i') ?? '—' }}
                 </div>
             </div>
+            @endif
 
             <p class="text-[11px] text-primary/50 mt-2 italic">
                 Ce bon d'entrée engage l'incorporation physique des marchandises admises sous la responsabilité de l'économe signataire.

@@ -10,20 +10,34 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Bon de réception contradictoire (Goods Receipt).
  *
- * Établi lors de la livraison physique par le fournisseur.
- * Enregistre les quantités commandées, livrées, acceptées (qui entrent en stock)
- * et rejetées (avaries, non-conformités, casse).
+ * Ouvert « en attente » dès que le bon de commande part chez le fournisseur,
+ * avec le reste attendu de chaque ligne ; rempli par l'économat à la
+ * livraison physique. Enregistre alors les quantités livrées, acceptées (qui
+ * entrent en stock) et rejetées (avaries, non-conformités, casse), et si la
+ * livraison est partielle ou complète.
  */
 class GoodsReceipt extends Model
 {
     use HasFactory;
 
+    /** Ouvert à l'envoi du bon de commande : la livraison est attendue. */
+    public const STATUS_PENDING   = 'pending';
     public const STATUS_RECEIVED  = 'received';
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUSES = [
+        self::STATUS_PENDING   => 'En attente de livraison',
         self::STATUS_RECEIVED  => 'Réceptionné & Conforme',
         self::STATUS_CANCELLED => 'Annulé',
+    ];
+
+    /** Partielle : le reste du bon de commande reste attendu. Complète : le bon est soldé. */
+    public const DELIVERY_PARTIAL  = 'partielle';
+    public const DELIVERY_COMPLETE = 'complete';
+
+    public const DELIVERIES = [
+        self::DELIVERY_COMPLETE => 'Livraison complète',
+        self::DELIVERY_PARTIAL  => 'Livraison partielle',
     ];
 
     protected $fillable = [
@@ -33,6 +47,7 @@ class GoodsReceipt extends Model
         'delivery_note_number',
         'received_at',
         'status',
+        'delivery_type',
         'total_amount',
         'notes',
         'received_by',
@@ -55,6 +70,10 @@ class GoodsReceipt extends Model
             }
             if (empty($receipt->status)) {
                 $receipt->status = self::STATUS_RECEIVED;
+            }
+            // Un bon en attente n'est encore ni reçu ni signé.
+            if ($receipt->status === self::STATUS_PENDING) {
+                return;
             }
             if (empty($receipt->received_at)) {
                 $receipt->received_at = now();
@@ -113,6 +132,21 @@ class GoodsReceipt extends Model
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    public function estEnAttente(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function scopeEnAttente(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
+
+    public function deliveryLabel(): ?string
+    {
+        return self::DELIVERIES[$this->delivery_type] ?? null;
+    }
 
     public function statusLabel(): string
     {

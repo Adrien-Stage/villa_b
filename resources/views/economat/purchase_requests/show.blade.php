@@ -73,7 +73,7 @@
             <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex items-center justify-between">
                 <div>
                     <span class="font-bold text-xs uppercase block">Demande approuvée pour achat</span>
-                    <span class="text-xs text-blue-700">Validée le {{ $request->reviewed_at?->format('d/m/Y') }} par {{ $request->reviewedBy?->name ?? 'Le contrôle de gestion' }}{{ $request->aEteAjustee() ? ', quantités ajustées' : '' }}.
+                    <span class="text-xs text-blue-700">Validée le {{ $request->reviewed_at?->format('d/m/Y') }} par {{ $request->reviewedBy?->name ?? 'Le responsable des achats' }}{{ $request->aEteAjustee() ? ', quantités ajustées' : '' }}.
                         {{ $canManage ? '' : 'Elle est chez le responsable des achats, qui en tire le(s) bon(s) de commande.' }}</span>
                     @if($request->review_notes)
                         <div class="mt-1 text-xs italic text-blue-900">Note : {{ $request->review_notes }}</div>
@@ -115,17 +115,17 @@
                     <form id="form-approbation" method="POST" action="{{ route('economat.purchase_requests.approve', $request) }}" class="flex flex-wrap items-end gap-2">
                         @csrf
                         <label class="block">
-                            <span class="block text-[11px] font-medium text-primary/60 mb-1">Note pour l'économat et les achats (facultatif)</span>
+                            <span class="block text-[11px] font-medium text-primary/60 mb-1">Note pour le demandeur (facultatif)</span>
                             <input type="text" name="notes" maxlength="500" value="{{ old('notes') }}" class="w-72 max-w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:outline-none focus:border-primary">
                         </label>
                         <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i> Approuver aux quantités retenues
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Valider aux quantités retenues
                         </button>
                     </form>
                     <button type="button" @click="showRejectModal = true" class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
                         <i data-lucide="x-circle" class="w-4 h-4"></i> Refuser la demande
                     </button>
-                    <p class="w-full text-[11px] text-primary/50">Ajustez au besoin les quantités dans le tableau ci-dessous avant d'approuver : 0 écarte l'article. L'économat est averti de chaque changement.</p>
+                    <p class="w-full text-[11px] text-primary/50">Ajustez au besoin les quantités dans le tableau ci-dessous avant de valider : 0 écarte l'article. Le demandeur est averti de chaque changement.</p>
                 @endif
 
                 @if($peutAnnuler && $request->canBeCancelled())

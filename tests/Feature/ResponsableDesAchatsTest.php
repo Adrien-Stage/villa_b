@@ -2,6 +2,7 @@
 
 use App\Editions\Catalogue;
 use App\Mail\PurchaseOrderMail;
+use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\Role;
@@ -23,12 +24,14 @@ uses(RefreshDatabase::class);
 
 /*
  * Le circuit d'achat avec un responsable des achats :
- *   l'économat (ou une alerte de stock) demande ;
- *   le contrôleur de gestion approuve, en ajustant les quantités — le
- *   responsable financier à sa place ;
- *   le responsable des achats tire le bon et l'envoie, sans prix ; la demande
- *   part aux archives ;
- *   l'économat réceptionne.
+ *   l'économat (ou une alerte de stock) exprime le besoin, envoyé au
+ *   responsable des achats ;
+ *   le responsable des achats le vérifie et peut en modifier les quantités —
+ *   le demandeur est averti de chaque changement ;
+ *   il tire le bon et le transmet au fournisseur, ce qui ouvre un bon de
+ *   réception en attente ; la demande part aux archives ;
+ *   l'économat remplit ce bon à la livraison, partielle ou complète.
+ * Le contrôle de gestion et le responsable financier voient tout le circuit.
  */
 
 beforeEach(function () {
@@ -65,10 +68,10 @@ test('le responsable des achats commande, ne réceptionne pas et ne décide pas 
 
     $acheteur = $droits('purchasing_manager');
     expect($acheteur)->toContain('achats.voir', 'economat.suppliers.creer', 'economat.suppliers.modifier',
+        'economat.purchase_requests.approve', 'economat.purchase_requests.reject', 'economat.purchase_requests.modifier',
         'economat.purchase_requests.convert', 'economat.orders.send', 'economat.orders.transmit', 'economat.orders.cancel',
         'economat.control.suggestions.creer', 'economat.receipts.voir', 'editions.voir')
-        ->not->toContain('economat.orders.receive', 'economat.receipts.creer', 'economat.purchase_requests.approve',
-            'economat.purchase_requests.reject', 'economat.orders.creer', 'economat.items.voir');
+        ->not->toContain('economat.orders.receive', 'economat.receipts.creer', 'economat.orders.creer', 'economat.items.voir');
 
     // L'économat réceptionne, gère le stock et demande ; il ne commande plus.
     $econome = $droits('econome');
@@ -76,15 +79,20 @@ test('le responsable des achats commande, ne réceptionne pas et ne décide pas 
         'economat.stock_counts.creer', 'economat.requisitions.approve', 'economat.suppliers.voir')
         ->not->toContain('economat.orders.send', 'economat.orders.transmit', 'economat.suppliers.creer', 'economat.purchase_requests.convert');
 
-    // La dépense : le contrôleur de gestion, le responsable financier à sa place.
-    expect(PermissionCatalog::roles('economat.purchase_requests.approve'))->toContain('controller', 'finance_manager')
-        ->not->toContain('manager', 'econome', 'purchasing_manager');
+    // La vérification : le responsable des achats ; l'économe, qui demande, non.
+    expect(PermissionCatalog::roles('economat.purchase_requests.approve'))->toContain('purchasing_manager')
+        ->not->toContain('econome', 'storekeeper');
+
+    // Le contrôle de gestion et le responsable financier suivent tout le circuit.
+    foreach (['controller', 'finance_manager'] as $role) {
+        expect($droits($role))->toContain('achats.voir', 'economat.purchase_requests.voir', 'economat.orders.voir', 'economat.receipts.voir');
+    }
 
     // Le rôle est proposé à l'affectation.
     expect(Role::where('slug', 'purchasing_manager')->value('is_assignable'))->toBeTrue();
 });
 
-test("le circuit complet : approbation ajustée, bon tiré des quantités approuvées, envoi et archivage", function () {
+test("le circuit complet : vérification ajustée par les achats, bon transmis, bon de réception en attente, livraisons", function () {
     Notification::fake();
 
     $fournisseur = Supplier::create(['name' => 'Grossiste Nord', 'phone' => '690000000', 'is_active' => true]);
@@ -92,28 +100,30 @@ test("le circuit complet : approbation ajustée, bon tiré des quantités approu
     $huile = articleAchats('Huile', $fournisseur);
 
     $econome = membreAchats('econome');
-    $controleur = membreAchats('controller');
     $acheteur = membreAchats('purchasing_manager');
 
-    // 1. L'économat demande : le contrôleur est averti.
+    // 1. L'économat exprime le besoin, sans département à choisir : il part au responsable des achats.
+    $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
+        ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
     $this->actingAs($econome)->post(route('economat.purchase_requests.store'), [
-        'department' => 'economat', 'priority' => 'normal',
+        'priority' => 'normal',
         'lines' => [
             ['stock_item_id' => $riz->id, 'quantity_requested' => 10],
             ['stock_item_id' => $huile->id, 'quantity_requested' => 5],
         ],
-    ])->assertRedirect();
+    ])->assertRedirect()->assertSessionHas('success');
     $demande = PurchaseRequest::with('lines')->latest('id')->firstOrFail();
-    Notification::assertSentTo($controleur, PurchaseRequestUpdated::class, fn ($n) => $n->etape === PurchaseRequestUpdated::SOUMISE);
+    expect($demande->department)->toBe('economat');
+    Notification::assertSentTo($acheteur, PurchaseRequestUpdated::class, fn ($n) => $n->etape === PurchaseRequestUpdated::SOUMISE);
 
-    // L'économe ne tire plus de bon d'une demande.
+    // L'économe ne tire pas de bon d'une demande.
     refuseAuxAchats($this->actingAs($econome)->post(route('economat.purchase_requests.convert', $demande)));
 
-    // 2. Le contrôleur approuve : 10 kg de riz ramenés à 8, l'huile écartée.
+    // 2. Le responsable des achats vérifie : 10 kg de riz ramenés à 8, l'huile écartée.
     [$ligneRiz, $ligneHuile] = [$demande->lines->firstWhere('stock_item_id', $riz->id), $demande->lines->firstWhere('stock_item_id', $huile->id)];
-    $this->actingAs($controleur)->get(route('economat.purchase_requests.show', $demande))
-        ->assertOk()->assertSee('Approuver aux quantités retenues')->assertSee('quantities[' . $ligneRiz->id . ']', false);
-    $this->actingAs($controleur)->post(route('economat.purchase_requests.approve', $demande), [
+    $this->actingAs($acheteur)->get(route('economat.purchase_requests.show', $demande))
+        ->assertOk()->assertSee('Valider aux quantités retenues')->assertSee('quantities[' . $ligneRiz->id . ']', false);
+    $this->actingAs($acheteur)->post(route('economat.purchase_requests.approve', $demande), [
         'notes' => 'Stock de sécurité suffisant pour l\'huile',
         'quantities' => [$ligneRiz->id => 8, $ligneHuile->id => 0],
     ])->assertRedirect();
@@ -123,43 +133,145 @@ test("le circuit complet : approbation ajustée, bon tiré des quantités approu
         ->and((float) $demande->lines->firstWhere('id', $ligneRiz->id)->quantity_approved)->toBe(8.0)
         ->and((float) $demande->lines->firstWhere('id', $ligneRiz->id)->quantity_requested)->toBe(10.0)
         ->and($demande->aEteAjustee())->toBeTrue()
-        // 8 kg à 2 500 F : le total suit les quantités approuvées.
+        // 8 kg à 2 500 F : le total suit les quantités retenues.
         ->and($demande->total_estimated_amount)->toBe(2000000);
 
-    // L'économat apprend les ajustements ; les achats, qu'il faut commander.
+    // Le demandeur apprend les changements apportés à sa demande.
     Notification::assertSentTo($econome, PurchaseRequestUpdated::class, function ($n) use ($econome) {
         $message = $n->toArray($econome)['message'];
 
         return $n->etape === PurchaseRequestUpdated::APPROUVEE && str_contains($message, 'Riz 10 → 8 kg') && str_contains($message, 'Huile 5 → 0 kg');
     });
-    Notification::assertSentTo($acheteur, PurchaseRequestUpdated::class, fn ($n) => $n->etape === PurchaseRequestUpdated::A_COMMANDER);
 
-    // 3. Le responsable des achats tire le bon : le riz seul, à 8 kg.
+    // 3. Il tire le bon : le riz seul, à 8 kg.
     $this->actingAs($acheteur)->post(route('economat.purchase_requests.convert', $demande))->assertRedirect();
     $bon = PurchaseOrder::with('lines')->where('purchase_request_id', $demande->id)->sole();
     expect($bon->lines)->toHaveCount(1)
         ->and((float) $bon->lines->first()->quantity_ordered)->toBe(8.0)
-        ->and($demande->fresh()->archived_at)->toBeNull();
+        ->and(GoodsReceipt::query()->count())->toBe(0);
 
-    // L'économe ne l'envoie pas ; le responsable des achats le transmet.
+    // 4. Il le transmet au fournisseur : un bon de réception « en attente » s'ouvre.
     refuseAuxAchats($this->actingAs($econome)->post(route('economat.orders.transmit', $bon), ['moyen' => 'telephone']));
     $this->actingAs($acheteur)->post(route('economat.orders.transmit', $bon), ['moyen' => 'telephone'])->assertRedirect();
     expect($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_SENT);
 
-    // 4. La demande commandée part aux archives.
+    $attente = GoodsReceipt::query()->where('purchase_order_id', $bon->id)->sole();
+    expect($attente->status)->toBe(GoodsReceipt::STATUS_PENDING)
+        ->and($attente->received_at)->toBeNull()
+        ->and((float) $attente->lines()->sole()->quantity_ordered)->toBe(8.0);
+
+    // La demande commandée part aux archives.
     $demande->refresh();
-    expect($demande->archived_at)->not->toBeNull()
-        ->and($demande->statusLabel())->toBe('Commandée');
+    expect($demande->archived_at)->not->toBeNull()->and($demande->statusLabel())->toBe('Commandée');
     $this->actingAs($econome)->get(route('economat.purchase_requests.index'))->assertOk()->assertDontSee($demande->number);
     $this->actingAs($econome)->get(route('economat.purchase_requests.index', ['vue' => 'archives']))->assertOk()->assertSee($demande->number);
-
-    // L'archive s'imprime : demandée, approuvée, commandée, avec ses signataires.
     $impression = texteAffiche($this->actingAs($econome)->get(route('economat.purchase_requests.print', $demande))->assertOk()->getContent());
     expect($impression)->toContain($demande->number)->toContain('Commandée')->toContain('10 kg')->toContain('8 kg')->toContain($bon->number);
 
-    // 5. L'économat réceptionne ; l'acheteur, non.
-    $this->actingAs($econome)->get(route('economat.receipts.create', $bon))->assertOk();
+    // Tous suivent la livraison attendue ; seul l'économat la réceptionne.
+    foreach (['purchasing_manager', 'controller', 'finance_manager'] as $role) {
+        $this->actingAs(membreAchats($role))->get(route('economat.receipts.index'))->assertOk()->assertSee($attente->number)->assertSee('En attente de livraison');
+        $this->actingAs(membreAchats($role))->get(route('economat.receipts.show', $attente))->assertOk()->assertSee('Livraison attendue');
+    }
     refuseAuxAchats($this->actingAs($acheteur)->get(route('economat.receipts.create', $bon)));
+
+    // 5. Première livraison, partielle : 5 kg. Le reste reste attendu sous un nouveau bon.
+    $ligneBon = $bon->lines->first();
+    $this->actingAs($econome)->get(route('economat.receipts.create', $bon))->assertOk()
+        ->assertSee($attente->number)->assertSee('Livraison partielle')->assertSee('Livraison complète');
+    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), [
+        'delivery_note_number' => 'BL-1', 'livraison' => GoodsReceipt::DELIVERY_PARTIAL,
+        'lines' => [$ligneBon->id => ['quantity_delivered' => 5]],
+    ])->assertRedirect()->assertSessionHas('success');
+
+    $attente->refresh();
+    expect($attente->status)->toBe(GoodsReceipt::STATUS_RECEIVED)
+        ->and($attente->delivery_type)->toBe(GoodsReceipt::DELIVERY_PARTIAL)
+        ->and($attente->delivery_note_number)->toBe('BL-1')
+        ->and($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_PARTIALLY_RECEIVED)
+        ->and((float) $riz->fresh()->current_stock)->toBe(7.0);
+    $reste = GoodsReceipt::query()->enAttente()->where('purchase_order_id', $bon->id)->sole();
+    expect((float) $reste->lines()->sole()->quantity_ordered)->toBe(3.0);
+
+    // 6. Seconde livraison, déclarée complète avec 2 kg : le bon est soldé, le manquant n'est plus attendu.
+    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), [
+        'livraison' => GoodsReceipt::DELIVERY_COMPLETE,
+        'lines' => [$ligneBon->id => ['quantity_delivered' => 2]],
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($reste->fresh()->status)->toBe(GoodsReceipt::STATUS_RECEIVED)
+        ->and($reste->fresh()->delivery_type)->toBe(GoodsReceipt::DELIVERY_COMPLETE)
+        ->and($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_RECEIVED)
+        ->and(GoodsReceipt::query()->enAttente()->count())->toBe(0)
+        ->and((float) $riz->fresh()->current_stock)->toBe(9.0);
+});
+
+test("la demande modifiée par le responsable des achats avertit son demandeur de chaque changement", function () {
+    Notification::fake();
+    $riz = articleAchats('Riz');
+    $huile = articleAchats('Huile');
+    $sucre = articleAchats('Sucre');
+    $econome = membreAchats('econome');
+    $acheteur = membreAchats('purchasing_manager');
+
+    $demande = app(PurchaseRequestService::class)->create([
+        'lines' => [
+            ['stock_item_id' => $riz->id, 'quantity_requested' => 50],
+            ['stock_item_id' => $huile->id, 'quantity_requested' => 20],
+        ],
+    ], $econome);
+    $ligneRiz = $demande->lines->firstWhere('stock_item_id', $riz->id);
+
+    $this->actingAs($acheteur)->get(route('economat.purchase_requests.edit', $demande))->assertOk()
+        ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
+    $this->actingAs($acheteur)->put(route('economat.purchase_requests.update', $demande), [
+        'priority' => 'normal',
+        'lines' => [
+            ['id' => $ligneRiz->id, 'stock_item_id' => $riz->id, 'quantity_requested' => 40],
+            ['stock_item_id' => $sucre->id, 'quantity_requested' => 10],
+        ],
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($demande->fresh()->department)->toBe('economat');
+    Notification::assertSentTo($econome, PurchaseRequestUpdated::class, function ($n) use ($econome) {
+        $message = $n->toArray($econome)['message'];
+
+        return $n->etape === PurchaseRequestUpdated::MODIFIEE
+            && str_contains($message, 'Riz 50 → 40 kg') && str_contains($message, 'Huile : article retiré') && str_contains($message, 'Sucre : article ajouté (10 kg)');
+    });
+});
+
+test("un chef de service choisit encore son département ; la demande du responsable des achats part à son responsable financier", function () {
+    Notification::fake();
+    $article = articleAchats('Savon');
+
+    $this->actingAs(membreAchats('housekeeping_leader'))->get(route('economat.purchase_requests.create'))->assertOk()
+        ->assertSee('name="department"', false);
+
+    $acheteur = membreAchats('purchasing_manager');
+    $financier = membreAchats('finance_manager');
+    app(PurchaseRequestService::class)->create([
+        'lines' => [['stock_item_id' => $article->id, 'quantity_requested' => 3]],
+    ], $acheteur);
+
+    Notification::assertNotSentTo($acheteur, PurchaseRequestUpdated::class);
+    Notification::assertSentTo($financier, PurchaseRequestUpdated::class, fn ($n) => $n->etape === PurchaseRequestUpdated::SOUMISE);
+});
+
+test("annuler le bon de commande transmis annule son bon de réception en attente", function () {
+    $fournisseur = Supplier::create(['name' => 'Marché', 'phone' => '690000001', 'is_active' => true]);
+    $article = articleAchats('Tomates', $fournisseur);
+    $bon = PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => PurchaseOrder::STATUS_DRAFT]);
+    $bon->lines()->create(['stock_item_id' => $article->id, 'quantity_ordered' => 6, 'unit_price' => 50000]);
+    $acheteur = membreAchats('purchasing_manager');
+
+    $this->actingAs($acheteur)->post(route('economat.orders.transmit', $bon), ['moyen' => 'main_propre'])->assertRedirect();
+    $attente = GoodsReceipt::query()->enAttente()->where('purchase_order_id', $bon->id)->sole();
+
+    $this->actingAs($acheteur)->post(route('economat.orders.cancel', $bon))->assertRedirect();
+
+    expect($attente->fresh()->status)->toBe(GoodsReceipt::STATUS_CANCELLED)
+        ->and(GoodsReceipt::query()->enAttente()->count())->toBe(0);
 });
 
 test("le bon envoyé au fournisseur ne porte jamais de prix", function () {
@@ -169,7 +281,8 @@ test("le bon envoyé au fournisseur ne porte jamais de prix", function () {
     $bon->lines()->create(['stock_item_id' => $article->id, 'quantity_ordered' => 12, 'unit_price' => 3456700]);
     $bon->recalculateTotal();
 
-    $impression = $this->actingAs(membreAchats('purchasing_manager'))->get(route('economat.orders.print', $bon))->assertOk();
+    // La version « sans prix » est celle du fournisseur ; la version chiffrée reste interne.
+    $impression = $this->actingAs(membreAchats('purchasing_manager'))->get(route('economat.orders.print', [$bon, 'prix' => 0]))->assertOk();
     $texte = texteAffiche($impression->getContent());
     expect($texte)->toContain('Sucre')->toContain('12 kg')
         ->not->toContain('34 567')->not->toContain('414 804')->not->toContain('FCFA');
@@ -179,14 +292,14 @@ test("le bon envoyé au fournisseur ne porte jamais de prix", function () {
         ->not->toContain('34 567')->not->toContain('414 804');
 });
 
-test("le responsable financier approuve à la place du contrôleur ; la direction ne décide plus de la dépense", function () {
+test("le responsable financier peut valider une demande ; l'économe, qui demande, non", function () {
     $article = articleAchats('Farine');
     $demande = app(PurchaseRequestService::class)->create([
         'department' => 'economat',
         'lines' => [['stock_item_id' => $article->id, 'quantity_requested' => 4]],
     ], membreAchats('econome'));
 
-    refuseAuxAchats($this->actingAs(membreAchats('manager'))->post(route('economat.purchase_requests.approve', $demande)));
+    refuseAuxAchats($this->actingAs(membreAchats('econome'))->post(route('economat.purchase_requests.approve', $demande)));
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
 
     $this->actingAs(membreAchats('finance_manager'))->post(route('economat.purchase_requests.approve', $demande))->assertRedirect();
@@ -244,12 +357,13 @@ test("le tableau des achats montre à chacun ce qu'il doit faire", function () {
         'lines' => [['stock_item_id' => $article->id, 'quantity_requested' => 12]],
     ], membreAchats('econome'));
 
-    $this->actingAs(membreAchats('controller'))->get(route('achats.index'))
-        ->assertOk()->assertSee('Demandes à approuver')->assertSee($demande->number)->assertSee('Votre décision est attendue');
-
     $acheteur = membreAchats('purchasing_manager');
     $this->actingAs($acheteur)->get(route('achats.index'))
-        ->assertOk()->assertSee('Alertes de stock')->assertSee('Lait')->assertSee('Chez le contrôle de gestion');
+        ->assertOk()->assertSee('Demandes à vérifier')->assertSee($demande->number)->assertSee('Votre vérification est attendue')
+        ->assertSee('Alertes de stock')->assertSee('Lait');
+
+    // Le contrôle de gestion suit le circuit.
+    $this->actingAs(membreAchats('controller'))->get(route('achats.index'))->assertOk()->assertSee($demande->number);
     refuseAuxAchats($this->actingAs($acheteur)->get(route('economat.index')));
 
     refuseAuxAchats($this->actingAs(membreAchats('econome'))->get(route('achats.index')));

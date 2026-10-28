@@ -214,7 +214,8 @@ test('une livraison reçue en cartons entre en cartons fermés ; son annulation 
         'packaging' => 'carton', 'quantity_delivered' => 10, 'quantity_rejected' => 1, 'rejection_reason' => 'damaged',
     ]]])->assertSessionHas('success');
 
-    $recu = \App\Models\GoodsReceipt::sole();
+    // Les 200 pièces refusées restent attendues sous un bon en attente.
+    $recu = \App\Models\GoodsReceipt::where('status', \App\Models\GoodsReceipt::STATUS_RECEIVED)->sole();
     $ligneRecue = $recu->lines()->sole();
     expect((float) $ligneRecue->quantity_accepted)->toBe(1800.0)
         ->and((float) $ligneRecue->quantity_rejected)->toBe(200.0)

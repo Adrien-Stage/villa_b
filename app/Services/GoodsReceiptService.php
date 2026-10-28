@@ -25,11 +25,75 @@ class GoodsReceiptService
     {
     }
 
+    /** Le bon de réception qui attend la livraison de ce bon de commande, s'il y en a un. */
+    public function attenteDe(PurchaseOrder $order): ?GoodsReceipt
+    {
+        return GoodsReceipt::query()->enAttente()->where('purchase_order_id', $order->id)->latest('id')->first();
+    }
+
+    /**
+     * Ouvre — ou remet à jour — le bon de réception en attente d'un bon de
+     * commande parti chez le fournisseur : une ligne par article encore dû,
+     * avec la quantité attendue. Un bon qui n'attend plus rien (soldé, annulé)
+     * voit son bon en attente annulé plutôt qu'effacé : la numérotation des
+     * bons de réception reste continue.
+     */
+    public function ouvrirAttente(PurchaseOrder $order): ?GoodsReceipt
+    {
+        return DB::transaction(function () use ($order) {
+            $order = PurchaseOrder::query()->lockForUpdate()->with('lines')->findOrFail($order->id);
+            $attente = $this->attenteDe($order);
+            $attendues = $order->canBeReceived() && !$order->isRegularisation()
+                ? $order->lines->filter(fn ($l) => $l->outstanding() > 0)
+                : collect();
+
+            if ($attendues->isEmpty()) {
+                $attente?->update([
+                    'status' => GoodsReceipt::STATUS_CANCELLED,
+                    'notes'  => 'Sans objet : le bon de commande n\'attend plus de livraison.',
+                ]);
+
+                return null;
+            }
+
+            $attente ??= GoodsReceipt::create([
+                'purchase_order_id' => $order->id,
+                'supplier_id'       => $order->supplier_id,
+                'status'            => GoodsReceipt::STATUS_PENDING,
+                'total_amount'      => 0,
+                'tenant_id'         => $order->tenant_id ?? \App\Models\Tenant::current()?->id,
+            ]);
+
+            $attente->lines()->delete();
+            foreach ($attendues as $ligne) {
+                GoodsReceiptLine::create([
+                    'goods_receipt_id'       => $attente->id,
+                    'purchase_order_line_id' => $ligne->id,
+                    'stock_item_id'          => $ligne->stock_item_id,
+                    'quantity_ordered'       => $ligne->outstanding(),
+                    'quantity_delivered'     => 0,
+                    'quantity_accepted'      => 0,
+                    'quantity_rejected'      => 0,
+                    'unit_cost'              => (int) $ligne->unit_price,
+                    'total_cost'             => 0,
+                ]);
+            }
+
+            return $attente->fresh('lines');
+        });
+    }
+
     /**
      * Enregistre un bon de réception avec contrôle contradictoire (livré, accepté, refusé).
      *
+     * Le bon en attente du bon de commande est rempli ; à défaut (bon envoyé
+     * avant les bons en attente, régularisation), un bon est créé. L'économat
+     * dit si la livraison est partielle — le reste reste attendu, dans un
+     * nouveau bon en attente — ou complète : le bon de commande est soldé,
+     * même si des quantités manquent.
+     *
      * @param  PurchaseOrder  $order
-     * @param  array          $data   Contient 'delivery_note_number', 'received_at', 'notes', 'lines'
+     * @param  array          $data   Contient 'delivery_note_number', 'received_at', 'notes', 'lines', 'livraison'
      * @param  User           $user
      * @return GoodsReceipt
      */
@@ -50,7 +114,7 @@ class GoodsReceiptService
 
             $receivedAt = !empty($data['received_at']) ? Carbon::parse($data['received_at']) : now();
 
-            $receipt = GoodsReceipt::create([
+            $entete = [
                 'purchase_order_id'    => $order->id,
                 'supplier_id'          => $order->supplier_id,
                 'delivery_note_number' => !empty($data['delivery_note_number']) ? trim((string) $data['delivery_note_number']) : null,
@@ -59,8 +123,18 @@ class GoodsReceiptService
                 'notes'                => $data['notes'] ?? null,
                 'received_by'          => $user->id,
                 'receiver_signature'   => $user->signatureName(),
-                'tenant_id'            => $user->tenant_id ?? \App\Models\Tenant::current()?->id,
-            ]);
+            ];
+
+            // Le bon en attente garde son numéro : c'est lui qu'on remplit.
+            $receipt = $this->attenteDe($order);
+            if ($receipt) {
+                $receipt->lines()->delete();
+                $receipt->update($entete);
+            } else {
+                $receipt = GoodsReceipt::create($entete + [
+                    'tenant_id' => $user->tenant_id ?? \App\Models\Tenant::current()?->id,
+                ]);
+            }
 
             $totalAcceptedAmount = 0;
             $order->load('lines.item.packagings');
@@ -137,10 +211,27 @@ class GoodsReceiptService
                 }
             }
 
-            $receipt->update(['total_amount' => $totalAcceptedAmount]);
+            if ($receipt->lines()->doesntExist()) {
+                throw new RuntimeException('Aucune quantité livrée : saisissez ce qui est réellement arrivé.');
+            }
 
             $order->update(['received_by' => $user->id]);
             $order->refreshReceptionStatus();
+
+            // Partielle ou complète : l'économat le dit ; sans réponse, la
+            // livraison est complète quand plus rien n'est dû.
+            $resteDu = $order->lines()->get()->contains(fn ($l) => $l->outstanding() > 0);
+            $livraison = $data['livraison'] ?? ($resteDu ? GoodsReceipt::DELIVERY_PARTIAL : GoodsReceipt::DELIVERY_COMPLETE);
+            $receipt->update(['total_amount' => $totalAcceptedAmount, 'delivery_type' => $livraison]);
+
+            if ($livraison === GoodsReceipt::DELIVERY_COMPLETE && $resteDu) {
+                // Livraison déclarée complète : le bon est soldé, le manquant
+                // n'est plus attendu.
+                $order->update(['status' => PurchaseOrder::STATUS_RECEIVED, 'received_at' => $order->received_at ?? now()]);
+            }
+
+            // Le reste d'une livraison partielle est attendu sous un nouveau bon.
+            $this->ouvrirAttente($order);
 
             return $receipt->fresh(['lines.item', 'supplier', 'purchaseOrder']);
         });
@@ -313,6 +404,9 @@ class GoodsReceiptService
         if ($receipt->status === GoodsReceipt::STATUS_CANCELLED) {
             throw new RuntimeException("Ce bon de réception est déjà annulé.");
         }
+        if ($receipt->estEnAttente()) {
+            throw new RuntimeException("Ce bon attend encore sa livraison : il se clôt avec son bon de commande.");
+        }
 
         return DB::transaction(function () use ($receipt, $user) {
             // Verrou sur le bon d'entrée : un double clic ne doit pas sortir
@@ -373,6 +467,9 @@ class GoodsReceiptService
                 && $receipt->purchaseOrder->status === PurchaseOrder::STATUS_SENT) {
                 $receipt->purchaseOrder->update(['status' => PurchaseOrder::STATUS_CANCELLED]);
             }
+
+            // Ce qui avait été reçu est de nouveau attendu.
+            $this->ouvrirAttente($receipt->purchaseOrder);
 
             return $receipt->fresh();
         });
