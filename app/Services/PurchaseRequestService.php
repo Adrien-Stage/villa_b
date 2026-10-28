@@ -119,6 +119,76 @@ class PurchaseRequestService
     }
 
     /**
+     * Met à jour une demande d'achat (notamment quantités, articles, motif, priorité).
+     */
+    public function update(PurchaseRequest $request, array $data, User $user): PurchaseRequest
+    {
+        if (!$request->canBeEdited()) {
+            throw new RuntimeException("Cette demande d'achat ne peut plus être modifiée dans son statut actuel.");
+        }
+
+        return DB::transaction(function () use ($request, $data) {
+            $request->update([
+                'department' => $data['department'] ?? $request->department,
+                'priority'   => $data['priority'] ?? $request->priority,
+                'purpose'    => $data['purpose'] ?? $request->purpose,
+            ]);
+
+            $totalEstimated = 0;
+            $keptLineIds = [];
+
+            foreach ($data['lines'] as $lineData) {
+                $item = StockItem::findOrFail($lineData['stock_item_id']);
+                $qty = (float) $lineData['quantity_requested'];
+
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                $unitPrice = !empty($lineData['estimated_unit_price'])
+                    ? (int) round(((float) $lineData['estimated_unit_price']) * 100)
+                    : ($item->last_purchase_price > 0 ? (int) $item->last_purchase_price : (int) $item->average_cost);
+
+                $lineTotal = (int) round($qty * $unitPrice);
+
+                $lineAttributes = [
+                    'stock_item_id'        => $item->id,
+                    'quantity_requested'   => $qty,
+                    'estimated_unit_price' => $unitPrice,
+                    'notes'                => $lineData['notes'] ?? null,
+                ];
+
+                if ($request->isApproved()) {
+                    $lineAttributes['quantity_approved'] = $qty;
+                }
+
+                if (!empty($lineData['id'])) {
+                    $line = $request->lines()->where('id', $lineData['id'])->first();
+                    if ($line) {
+                        $line->update($lineAttributes);
+                        $keptLineIds[] = $line->id;
+                    } else {
+                        $newLine = $request->lines()->create($lineAttributes);
+                        $keptLineIds[] = $newLine->id;
+                    }
+                } else {
+                    $newLine = $request->lines()->create($lineAttributes);
+                    $keptLineIds[] = $newLine->id;
+                }
+
+                $totalEstimated += $lineTotal;
+            }
+
+            // Supprimer les lignes non conservées
+            $request->lines()->whereNotIn('id', $keptLineIds)->delete();
+
+            $request->update(['total_estimated_amount' => $totalEstimated]);
+
+            return $request->fresh(['lines.item', 'requestedBy', 'reviewedBy']);
+        });
+    }
+
+    /**
      * Approuve la demande d'achat.
      *
      * L'approbateur peut ajuster la quantité de chaque ligne ($quantites,
@@ -229,44 +299,58 @@ class PurchaseRequestService
     /**
      * Convertit une demande d'achat approuvée en bon(s) de commande fournisseur,
      * aux quantités approuvées ; un article ramené à zéro n'est pas commandé.
-     * Groupe les articles par leur fournisseur habituel (ou utilise le fournisseur spécifié).
+     * Groupe les articles par fournisseur (soit par ligne, soit fournisseur global, soit fournisseur habituel).
      *
+     * @param  array<int|string, int|string>  $lineSuppliers
      * @return Collection<int, PurchaseOrder>
      */
-    public function convertToOrders(PurchaseRequest $request, User $user, ?int $supplierId = null): Collection
+    public function convertToOrders(PurchaseRequest $request, User $user, ?int $supplierId = null, array $lineSuppliers = []): Collection
     {
         if (!$request->canBeConverted()) {
             throw new RuntimeException("Seule une demande d'achat approuvée peut être convertie en bon de commande.");
         }
 
-        return DB::transaction(function () use ($request, $user, $supplierId) {
+        return DB::transaction(function () use ($request, $user, $supplierId, $lineSuppliers) {
             $request->loadMissing('lines.item.supplier');
             $createdOrders = collect();
             $aCommander = $request->lines->filter(fn (PurchaseRequestLine $l) => $l->quantiteRetenue() > 0);
 
-            // Si un fournisseur précis a été imposé pour tous les articles
-            if ($supplierId) {
-                $supplier = Supplier::findOrFail($supplierId);
-                $order = $this->createOrderFromLines($request, $supplier, $aCommander, $user);
-                $createdOrders->push($order);
+            if ($aCommander->isEmpty()) {
+                throw new RuntimeException("Aucun article avec une quantité positive à commander.");
+            }
+
+            // Si des fournisseurs précis par ligne sont spécifiés
+            if (!empty($lineSuppliers)) {
+                $linesBySupplier = $aCommander->groupBy(function (PurchaseRequestLine $l) use ($lineSuppliers, $supplierId) {
+                    if (!empty($lineSuppliers[$l->id])) {
+                        return (int) $lineSuppliers[$l->id];
+                    }
+                    if ($supplierId) {
+                        return (int) $supplierId;
+                    }
+                    return (int) ($l->item?->supplier_id ?? 0);
+                });
+            } elseif ($supplierId) {
+                // Si un fournisseur précis a été imposé pour tous les articles
+                $linesBySupplier = collect([(int) $supplierId => $aCommander]);
             } else {
                 // Groupement automatique par fournisseur habituel de l'article
-                $linesBySupplier = $aCommander->groupBy(fn (PurchaseRequestLine $l) => $l->item?->supplier_id ?? 0);
+                $linesBySupplier = $aCommander->groupBy(fn (PurchaseRequestLine $l) => (int) ($l->item?->supplier_id ?? 0));
+            }
 
-                foreach ($linesBySupplier as $supId => $lines) {
-                    $supplier = $supId > 0 ? Supplier::find($supId) : null;
-                    if (!$supplier) {
-                        // S'il n'y a pas de fournisseur habituel, prendre le premier fournisseur actif ou fournisseur par défaut
-                        $supplier = Supplier::active()->first();
-                    }
-
-                    if (!$supplier) {
-                        throw new RuntimeException("Aucun fournisseur disponible pour convertir cette commande.");
-                    }
-
-                    $order = $this->createOrderFromLines($request, $supplier, $lines, $user);
-                    $createdOrders->push($order);
+            foreach ($linesBySupplier as $supId => $lines) {
+                $supplier = $supId > 0 ? Supplier::find($supId) : null;
+                if (!$supplier) {
+                    // S'il n'y a pas de fournisseur habituel, prendre le premier fournisseur actif ou fournisseur par défaut
+                    $supplier = Supplier::active()->first();
                 }
+
+                if (!$supplier) {
+                    throw new RuntimeException("Aucun fournisseur disponible pour convertir cette commande.");
+                }
+
+                $order = $this->createOrderFromLines($request, $supplier, $lines, $user);
+                $createdOrders->push($order);
             }
 
             $request->update([

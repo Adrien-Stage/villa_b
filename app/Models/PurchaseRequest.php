@@ -188,6 +188,11 @@ class PurchaseRequest extends Model
         return $this->status === self::STATUS_PENDING;
     }
 
+    public function canBeEdited(): bool
+    {
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED], true);
+    }
+
     public function canBeConverted(): bool
     {
         return $this->status === self::STATUS_APPROVED;

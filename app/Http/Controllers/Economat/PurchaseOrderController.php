@@ -252,16 +252,25 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * Bon de commande officiel fournisseur imprimable : articles et quantités,
-     * sans aucun prix — c'est le document que reçoit le fournisseur.
+     * Bon de commande officiel fournisseur imprimable :
+     * - Version chiffrée (avec prix unitaire et total) pour le suivi financier et l'engagement.
+     * - Version non chiffrée (sans prix) pour le bon de commande envoyé au fournisseur.
      */
-    public function print(PurchaseOrder $order): View
+    public function print(Request $request, PurchaseOrder $order): View
     {
         $order->load(['supplier', 'lines.item.category', 'createdBy', 'purchaseRequest.reviewedBy']);
 
+        $avecPrix = true;
+        if ($request->has('prix')) {
+            $avecPrix = $request->boolean('prix');
+        } elseif ($request->boolean('sans_prix') || $request->query('version') === 'sans_prix') {
+            $avecPrix = false;
+        }
+
         return view('economat.orders.print', [
-            'order'  => $order,
-            'tenant' => \App\Models\Tenant::first(),
+            'order'    => $order,
+            'avecPrix' => $avecPrix,
+            'tenant'   => \App\Models\Tenant::first(),
         ]);
     }
 

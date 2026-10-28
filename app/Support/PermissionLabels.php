@@ -171,6 +171,7 @@ class PermissionLabels
         'economat.units.supprimer' => ['Unités de stockage', 'Supprimer'],
         'economat.purchase_requests.voir' => ["Demandes d'achat", 'Consulter'],
         'economat.purchase_requests.creer' => ["Demandes d'achat", 'Créer'],
+        'economat.purchase_requests.modifier' => ["Demandes d'achat", 'Modifier'],
         'economat.purchase_requests.approve' => ["Demandes d'achat", 'Approuver'],
         'economat.purchase_requests.reject' => ["Demandes d'achat", 'Refuser'],
         'economat.purchase_requests.cancel' => ["Demandes d'achat", 'Annuler'],
