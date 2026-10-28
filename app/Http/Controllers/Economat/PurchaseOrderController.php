@@ -348,6 +348,8 @@ class PurchaseOrderController extends Controller
         $order->update(['status' => PurchaseOrder::STATUS_CANCELLED]);
         // Le dernier bon en attente annulé, la demande sort du circuit.
         $order->purchaseRequest?->archiverSiCommandee();
+        // Plus de livraison attendue : le bon de réception en attente est annulé.
+        app(\App\Services\GoodsReceiptService::class)->ouvrirAttente($order);
 
         return back()->with('success', "Bon {$order->number} annulé.");
     }

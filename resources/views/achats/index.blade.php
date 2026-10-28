@@ -15,7 +15,8 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Achats</h1>
             <p class="text-sm text-primary/60 mt-0.5 max-w-3xl">
                 Le circuit d'achat au {{ $aujourdhui->locale('fr')->isoFormat('D MMMM YYYY') }} : la demande est approuvée par le
-                contrôle de gestion, le responsable des achats en tire le bon de commande et l'envoie, l'économat réceptionne.
+                responsable des achats, qui la vérifie, en tire le bon de commande et l'envoie ; l'envoi ouvre le bon de réception en attente
+                que l'économat remplit à la livraison. Le contrôle de gestion et le responsable financier suivent tout le circuit.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -34,7 +35,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
         @if($voitDemandes)
             <a href="{{ route('economat.purchase_requests.index', ['status' => 'pending']) }}" class="{{ $carte }} hover:border-primary/40">
-                <p class="text-[10px] uppercase tracking-wider text-primary/45">À approuver</p>
+                <p class="text-[10px] uppercase tracking-wider text-primary/45">À vérifier</p>
                 <p class="text-xl font-heading font-bold {{ $aApprouver->isNotEmpty() ? 'text-amber-700' : 'text-primary' }} mt-0.5">{{ $aApprouver->count() }}</p>
                 <p class="text-[10px] text-primary/40">demandes en attente</p>
             </a>
@@ -71,12 +72,12 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {{-- 1. À approuver --}}
+        {{-- 1. À vérifier --}}
         @if($voitDemandes)
             <section class="bg-white border border-secondary/20 rounded-xl shadow-sm" aria-labelledby="titre-approuver">
                 <header class="px-4 py-3 border-b border-secondary/15 flex items-center justify-between">
-                    <h2 id="titre-approuver" class="text-sm font-semibold text-primary">Demandes à approuver</h2>
-                    <span class="text-[11px] text-primary/45">{{ $peutApprouver ? 'Votre décision est attendue' : 'Chez le contrôle de gestion' }}</span>
+                    <h2 id="titre-approuver" class="text-sm font-semibold text-primary">Demandes à vérifier</h2>
+                    <span class="text-[11px] text-primary/45">{{ $peutApprouver ? 'Votre vérification est attendue' : 'Chez le responsable des achats' }}</span>
                 </header>
                 @forelse($aApprouver->take($lignes) as $demande)
                     <a href="{{ route('economat.purchase_requests.show', $demande) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10 last:border-0 hover:bg-gray-50/60">

@@ -348,7 +348,7 @@
                             <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-sm text-primary hover:underline">
                                 {{ $rc->number }}
                             </a>
-                            <span class="text-xs text-primary/50 ml-2">du {{ $rc->received_at->format('d/m/Y H:i') }}</span>
+                            <span class="text-xs text-primary/50 ml-2">{{ $rc->received_at ? 'du ' . $rc->received_at->format('d/m/Y H:i') : '— ' . $rc->statusLabel() }}</span>
                             @if($rc->delivery_note_number)
                                 <span class="text-xs text-primary/60 ml-2 font-mono">(BL: {{ $rc->delivery_note_number }})</span>
                             @endif

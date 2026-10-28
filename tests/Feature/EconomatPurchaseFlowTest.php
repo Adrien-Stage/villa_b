@@ -78,8 +78,9 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
     expect($request->total_estimated_amount)->toBe(27500000);
 });
 
-test("le contrôleur de gestion approuve les demandes d'achat ; la direction les consulte", function () {
+test("le responsable des achats vérifie les demandes d'achat ; le demandeur ne valide pas la sienne", function () {
     activerModules(['economat']);
+    \App\Support\RoleCatalog::sync();
 
     $demandeur = createStaffUser('restaurant_chief');
     $article = StockItem::create([
@@ -91,19 +92,20 @@ test("le contrôleur de gestion approuve les demandes d'achat ; la direction les
         'lines'      => [['stock_item_id' => $article->id, 'quantity_requested' => 4]],
     ], $demandeur);
 
-    // La direction lit la demande, sans bouton de décision, et la route refuse.
-    createStaffUser('manager');
+    // Le demandeur lit sa demande, sans bouton de décision, et la route refuse.
     $this->get(route('economat.purchase_requests.show', $demande))
         ->assertOk()
-        ->assertDontSee('Approuver aux quantités retenues');
+        ->assertDontSee('Valider aux quantités retenues');
     $this->post(route('economat.purchase_requests.approve', $demande));
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
 
-    // Le contrôle de gestion décide de la dépense.
-    createStaffUser('controller');
+    // Le responsable des achats la vérifie et la valide.
+    $acheteur = User::factory()->create(['is_active' => true]);
+    $acheteur->roles()->sync(\App\Models\Role::where('slug', 'purchasing_manager')->pluck('id'));
+    $this->actingAs($acheteur->fresh());
     $this->get(route('economat.purchase_requests.show', $demande))
         ->assertOk()
-        ->assertSee('Approuver aux quantités retenues');
+        ->assertSee('Valider aux quantités retenues');
     $this->post(route('economat.purchase_requests.approve', $demande))->assertRedirect();
 
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_APPROVED);
@@ -255,7 +257,7 @@ test("l'économe ne décide plus des demandes d'achat", function () {
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
 });
 
-test("le manager valide la dépense mais laisse à l'économe la commande", function () {
+test("le manager valide la dépense et peut en tirer la commande ; l'économe, non", function () {
     activerModules(['economat']);
 
     $econome = createStaffUser('econome');
@@ -273,16 +275,19 @@ test("le manager valide la dépense mais laisse à l'économe la commande", func
     $manager = createStaffUser('manager');
     $service->approve($demande, $manager);
 
-    // La demande approuvée ne lui propose pas de générer la commande…
+    // L'économe, qui demande, ne tire pas la commande…
+    $this->actingAs($econome);
     $this->get(route('economat.purchase_requests.show', $demande))
         ->assertOk()
         ->assertDontSee('Générer le(s) bon(s) de commande');
-
-    // … et la route la lui refuse : la demande reste approuvée, sans commande.
     $this->post(route('economat.purchase_requests.convert', $demande), ['supplier_id' => $fournisseur->id]);
-
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_APPROVED)
         ->and(PurchaseOrder::where('purchase_request_id', $demande->id)->exists())->toBeFalse();
+
+    // … la direction peut la tirer, comme le responsable des achats.
+    $this->actingAs($manager);
+    $this->post(route('economat.purchase_requests.convert', $demande), ['supplier_id' => $fournisseur->id])->assertRedirect();
+    expect(PurchaseOrder::where('purchase_request_id', $demande->id)->exists())->toBeTrue();
 });
 
 test('la reception de marchandise genere un bon de reception contradictoire et met a jour le stock', function () {

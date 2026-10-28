@@ -975,12 +975,15 @@
  "economat.purchase_requests.approve": [
   "admin",
   "controller",
-  "finance_manager"
+  "finance_manager",
+  "manager",
+  "purchasing_manager"
  ],
  "economat.purchase_requests.cancel": [
   "admin",
   "econome",
   "housekeeping_leader",
+  "manager",
   "purchasing_manager",
   "reception",
   "reception_chief",
@@ -991,12 +994,14 @@
  ],
  "economat.purchase_requests.convert": [
   "admin",
+  "manager",
   "purchasing_manager"
  ],
  "economat.purchase_requests.create": [
   "admin",
   "econome",
   "housekeeping_leader",
+  "manager",
   "purchasing_manager",
   "reception",
   "reception_chief",
@@ -1004,6 +1009,13 @@
   "restaurant_manager",
   "shop_manager",
   "tech_manager"
+ ],
+ "economat.purchase_requests.edit": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "purchasing_manager"
  ],
  "economat.purchase_requests.index": [
   "admin",
@@ -1042,7 +1054,9 @@
  "economat.purchase_requests.reject": [
   "admin",
   "controller",
-  "finance_manager"
+  "finance_manager",
+  "manager",
+  "purchasing_manager"
  ],
  "economat.purchase_requests.show": [
   "admin",
@@ -1065,6 +1079,7 @@
   "admin",
   "econome",
   "housekeeping_leader",
+  "manager",
   "purchasing_manager",
   "reception",
   "reception_chief",
@@ -1072,6 +1087,13 @@
   "restaurant_manager",
   "shop_manager",
   "tech_manager"
+ ],
+ "economat.purchase_requests.update": [
+  "admin",
+  "controller",
+  "econome",
+  "manager",
+  "purchasing_manager"
  ],
  "economat.receipts.cancel": [
   "admin",

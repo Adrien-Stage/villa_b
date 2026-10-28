@@ -24,7 +24,7 @@
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Demandes d'achat (Approvisionnement)</h1>
-            <p class="text-sm text-primary/60 mt-0.5">Besoins exprimés par l'économat et les services : le contrôle de gestion les approuve, le responsable des achats les commande. Une demande commandée passe aux archives.</p>
+            <p class="text-sm text-primary/60 mt-0.5">Besoins exprimés par l'économat et les services : le responsable des achats les vérifie, ajuste au besoin les quantités, puis les commande. Une demande commandée passe aux archives.</p>
         </div>
         @droit('economat.purchase_requests.creer')
             <a href="{{ route('economat.purchase_requests.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
@@ -38,7 +38,7 @@
     {{-- Cartes de synthèse --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm bg-amber-50/20">
-            <span class="text-xs text-amber-700 font-medium">À approuver</span>
+            <span class="text-xs text-amber-700 font-medium">À vérifier</span>
             <div class="text-2xl font-bold font-mono text-amber-700 mt-1">{{ $stats['pending'] }}</div>
         </div>
         <div class="bg-white border border-blue-200 rounded-xl p-4 shadow-sm bg-blue-50/20">

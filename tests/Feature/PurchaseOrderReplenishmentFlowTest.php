@@ -355,7 +355,8 @@ test('un bon individuel peut etre consulte en detail et imprime au format offici
     $resShow->assertSee('80 000');
 
     // 2. Impression officielle du bon de commande (format PDF / impression directe)
-    $resPrint = test()->get(route('economat.orders.print', $order));
+    // La version sans prix, celle qui part chez le fournisseur.
+    $resPrint = test()->get(route('economat.orders.print', [$order, 'prix' => 0]));
     $resPrint->assertOk();
     $resPrint->assertSee('Bon de Commande Fournisseur');
     $resPrint->assertSee('BC-2026-OF001');

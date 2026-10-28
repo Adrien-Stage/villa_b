@@ -311,26 +311,30 @@ produits et les demandes à l'économat.
   - dépôts de service ;
   - inventaires ;
   - reprise du stock initial.
-- *Ne fait pas* : approuver une demande d'achat (le contrôle de gestion), tenir le
-  fichier des fournisseurs, émettre ou envoyer un bon de commande (le responsable des
-  achats).
+- *Ne fait pas* : valider sa propre demande d'achat (le responsable des achats la
+  vérifie), tenir le fichier des fournisseurs, émettre ou envoyer un bon de commande.
+- *À savoir* : chaque bon de commande transmis ouvre un **bon de réception en
+  attente** ; à la livraison, l'économe le remplit et dit si elle est **complète**
+  (le bon de commande est soldé) ou **partielle** (le reste reste attendu).
 
 **Responsable des achats** — le service des achats (tuile **Achats**).
 
 - *Fait* :
   - tient le **fichier des fournisseurs** ;
-  - reçoit les demandes d'achat **approuvées** et en tire les **bons de commande**,
-    aux quantités approuvées, un bon par fournisseur ;
-  - **envoie** les bons aux fournisseurs, par email ou en les marquant transmis (main
-    propre, téléphone, WhatsApp). Le bon ne porte que les articles et les quantités,
-    **jamais les prix**. Envoyé, il fait passer la demande aux **archives** ;
+  - reçoit les **demandes d'achat**, les **vérifie** et peut en modifier les
+    quantités : le demandeur est averti de chaque changement ; il les valide ou les
+    refuse ;
+  - en tire les **bons de commande**, aux quantités retenues ;
+  - **transmet** les bons aux fournisseurs, par email ou en les marquant transmis
+    (main propre, téléphone, WhatsApp), dans leur version **sans prix**. La
+    transmission ouvre le bon de réception en attente et fait passer la demande aux
+    **archives** ;
   - suit les **alertes de stock** et propose les demandes de réapprovisionnement ;
   - suit les livraisons attendues et reçues ;
   - consulte ses éditions : registre des demandes d'achat, des bons de commande, des
     bons d'entrée, répertoire des fournisseurs.
-- *Ne fait pas* : approuver une demande, réceptionner une livraison, saisir un bon
-  sans demande approuvée. Tout bon naît d'une demande que le contrôle de gestion a
-  approuvée.
+- *Ne fait pas* : valider sa propre demande (son responsable financier la valide),
+  réceptionner une livraison, saisir un bon sans demande validée.
 
 **Magasinier** — réceptionne les livraisons commandées, livre les demandes, saisit
 les comptages. Il ne reçoit pas sans bon de commande : recevoir sans commande engage
@@ -376,8 +380,8 @@ encadre les comptables, le contrôle de gestion, l'économat et les achats.
     petit-déjeuner et lit d'appoint, packs, partenaires, prestations, taxes, carte des
     restaurants, articles de la boutique, mini-bar — en plus de ceux qui les fixent
     déjà (direction, chefs de service) ;
-  - **approuve ou refuse les demandes d'achat** à la place du contrôleur de gestion,
-    vise les demandes internes ;
+  - peut valider ou refuser les demandes d'achat, et valide celles du responsable
+    des achats lui-même ; vise les demandes internes ;
   - établit le budget avec le contrôleur de gestion, suit le tableau de bord de
     gestion (Pilotage) ;
   - planifie son département, reçoit les alertes de stock et les alertes de dérive ;
@@ -406,12 +410,11 @@ encadre les comptables, le contrôle de gestion, l'économat et les achats.
   - établit le **budget** par centre et par mois, règle les **seuils d'alerte**
     (Pilotage), suit le tableau de bord de gestion et les écarts au budget, reçoit les
     alertes de dérive ;
-  - **approuve ou refuse les demandes d'achat** (tuile Achats), en ajustant au besoin
-    les quantités : l'économat est averti de chaque changement, le responsable des
-    achats reçoit la demande approuvée.
+  - suit tout le circuit d'achat (tuile Achats) : demandes, bons de commande, bons
+    de réception en attente et reçus ; il peut aussi valider ou modifier une demande.
 - *Consulte* : tous les services, la comptabilité et les caisses comprises.
 - *Ne fait pas* : aucune opération de service — ni saisie, ni encaissement, ni
-  commande, ni réception. Le budget, les seuils et l'approbation des achats sont des
+  commande, ni réception. Le budget, les seuils et la validation des achats sont des
   actes de contrôle, non des opérations.
 
 **Contrôleur qualité & audit** — consulte l'exploitation (hébergement, housekeeping,

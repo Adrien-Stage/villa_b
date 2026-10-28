@@ -57,18 +57,27 @@ Montants en **centimes FCFA** (entiers), quantités en **décimal**.
 
 ### 1. Achat — de la demande au bon de commande
 
-Quatre mains différentes :
+Le parcours :
 
 ```
-demande d'achat (économat, service, alerte de stock)
-  → approuvée par le contrôleur de gestion (le responsable financier à sa place),
-    quantités ajustées au besoin — l'économat en est averti
-  → bon(s) de commande tiré(s) par le responsable des achats, un par fournisseur,
-    aux quantités approuvées
-  → envoyé(s) au fournisseur : articles et quantités, jamais les prix ;
-    la demande passe aux archives (`archived_at`)
-  → réceptionné(s) par l'économat
+expression du besoin (économe, responsable des achats, chef de service, alerte de stock)
+  → envoyée au responsable des achats, qui la vérifie : il peut en modifier les
+    quantités (à la validation ou par « Modifier ») — le demandeur est averti de
+    chaque changement (« Riz 50 → 40 kg ; Huile : article retiré »)
+  → bon(s) de commande tiré(s) par le responsable des achats, aux quantités retenues
+  → transmis au fournisseur ; la transmission ouvre automatiquement un bon de
+    réception « en attente » (une ligne par article encore dû), et la demande
+    passe aux archives (`archived_at`)
+  → à la livraison, l'économat remplit ce bon et dit si la livraison est complète
+    (le bon de commande est soldé) ou partielle (le reste est attendu sous un
+    nouveau bon en attente)
 ```
+
+Le responsable des achats, le contrôle de gestion et le responsable financier
+voient tout le circuit (tuile Achats, demandes, bons, bons de réception).
+L'économe et le responsable des achats n'ont pas de département à choisir : leur
+demande est celle de l'économat central. La demande du responsable des achats
+lui-même part à son responsable financier, qui la valide.
 
 La demande :
 
@@ -80,19 +89,20 @@ pending → approved → converted (puis archivée à l'envoi du dernier bon)
 | Action | Route | Qui |
 |---|---|---|
 | Demander | `POST /economat/demandes-achat` | économe, chefs de service, responsable des achats |
-| Approuver (quantités ajustables, champ `quantities[ligne]`) | `POST /economat/demandes-achat/{id}/approuver` | contrôleur de gestion, responsable financier |
-| Refuser (motif obligatoire) | `POST /economat/demandes-achat/{id}/refuser` | contrôleur de gestion, responsable financier |
-| Tirer les bons | `POST /economat/demandes-achat/{id}/convertir` | responsable des achats |
+| Modifier (articles, quantités) | `PUT /economat/demandes-achat/{id}` | responsable des achats, économe, contrôle de gestion, direction |
+| Valider (quantités ajustables, champ `quantities[ligne]`) | `POST /economat/demandes-achat/{id}/approuver` | responsable des achats ; aussi contrôle de gestion, responsable financier, direction |
+| Refuser (motif obligatoire) | `POST /economat/demandes-achat/{id}/refuser` | les mêmes |
+| Tirer les bons | `POST /economat/demandes-achat/{id}/convertir` | responsable des achats, direction |
 | Imprimer | `GET /economat/demandes-achat/{id}/imprimer` | qui consulte la demande |
 
 La quantité demandée reste écrite à côté de la quantité approuvée
-(`purchase_request_lines.quantity_approved`) : la notification à l'économat
+(`purchase_request_lines.quantity_approved`) : la notification au demandeur
 nomme chaque ajustement (« Riz 10 → 8 kg »). Une ligne ramenée à zéro n'est pas
 commandée ; tout ramener à zéro est refusé — c'est un refus, avec son motif.
 [`PurchaseRequestService`](../app/Services/PurchaseRequestService.php) annonce
 chaque étape à qui doit agir ensuite (`PurchaseRequestUpdated`).
 
-La liste des demandes a deux vues : **En cours** (à approuver, à commander, bons
+La liste des demandes a deux vues : **En cours** (à vérifier, à commander, bons
 à envoyer) et **Archives** (commandées, refusées, annulées). Le registre des
 demandes d'achat et « Retrouver une pièce » les retrouvent dans Éditions.
 

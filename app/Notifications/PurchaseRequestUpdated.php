@@ -9,11 +9,11 @@ use Illuminate\Notifications\Notification;
 
 /**
  * Étape franchie par une demande d'achat, annoncée à qui doit agir ensuite :
- *  - soumise : au contrôleur de gestion et au responsable financier, qui
- *    l'approuvent ;
- *  - approuvée : au demandeur et à l'économat, avec les quantités ajustées ;
+ *  - soumise : au responsable des achats, qui la vérifie ;
+ *  - modifiée : au demandeur, avec ce qui a changé ;
+ *  - approuvée : au demandeur, avec les quantités ajustées ;
  *  - à commander : au responsable des achats, qui en tire les bons ;
- *  - refusée : au demandeur et à l'économat, avec le motif.
+ *  - refusée : au demandeur, avec le motif.
  */
 class PurchaseRequestUpdated extends Notification
 {
@@ -23,9 +23,18 @@ class PurchaseRequestUpdated extends Notification
     public const APPROUVEE = 'approuvee';
     public const A_COMMANDER = 'a_commander';
     public const REFUSEE = 'refusee';
+    public const MODIFIEE = 'modifiee';
 
-    public function __construct(public PurchaseRequest $request, public string $etape)
-    {
+    /**
+     * @param  ?string  $changements  pour MODIFIEE : ce qui a changé (« Riz 50 → 40 kg ; Huile retirée »)
+     * @param  ?string  $par          pour MODIFIEE : qui l'a changé
+     */
+    public function __construct(
+        public PurchaseRequest $request,
+        public string $etape,
+        public ?string $changements = null,
+        public ?string $par = null,
+    ) {
     }
 
     public function via(object $notifiable): array
@@ -41,7 +50,8 @@ class PurchaseRequestUpdated extends Notification
     private function headline(): string
     {
         return match ($this->etape) {
-            self::SOUMISE     => "Demande d'achat à approuver",
+            self::SOUMISE     => "Demande d'achat à vérifier",
+            self::MODIFIEE    => "Votre demande d'achat a été modifiée",
             self::APPROUVEE   => $this->request->aEteAjustee() ? "Demande d'achat approuvée, quantités ajustées" : "Demande d'achat approuvée",
             self::A_COMMANDER => "Demande d'achat à commander",
             self::REFUSEE     => "Demande d'achat refusée",
@@ -85,6 +95,7 @@ class PurchaseRequestUpdated extends Notification
             self::A_COMMANDER => "{$numero} approuvée" . ($par ? " par {$par}" : '') . " — {$this->montant()} estimés. "
                 . 'Générez le(s) bon(s) de commande.',
             self::REFUSEE => "{$numero} refusée" . ($par ? " par {$par}" : '') . " : {$this->request->rejection_reason}",
+            self::MODIFIEE => "{$numero} modifiée" . ($this->par ? " par {$this->par}" : '') . " : {$this->changements}.",
             default => "{$numero} mise à jour.",
         };
     }

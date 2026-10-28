@@ -22,6 +22,17 @@ class PurchaseRequestController extends Controller
     {
     }
 
+    /**
+     * L'économe et le responsable des achats demandent pour l'économat : le
+     * département demandeur ne se choisit pas, c'est l'économat central.
+     */
+    private const DEMANDENT_POUR_L_ECONOMAT = ['econome', 'purchasing_manager'];
+
+    private static function choisitLeDepartement(): bool
+    {
+        return ! Auth::user()?->exerce(self::DEMANDENT_POUR_L_ECONOMAT);
+    }
+
     /** Les demandes en cours de circuit, ou les archives : commandées, refusées, annulées. */
     public const VUES = ['en_cours' => 'En cours', 'archives' => 'Archives'];
 
@@ -72,14 +83,19 @@ class PurchaseRequestController extends Controller
             ->get(['id', 'name', 'unit', 'current_stock', 'average_cost', 'last_purchase_price']);
 
         return view('economat.purchase_requests.create', [
-            'items'       => $items,
-            'departments' => PurchaseRequest::DEPARTMENTS,
-            'priorities'  => PurchaseRequest::PRIORITIES,
+            'items'              => $items,
+            'departments'        => PurchaseRequest::DEPARTMENTS,
+            'priorities'         => PurchaseRequest::PRIORITIES,
+            'choisitDepartement' => self::choisitLeDepartement(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        if (! self::choisitLeDepartement()) {
+            $request->merge(['department' => 'economat']);
+        }
+
         $validated = $request->validate([
             'department'                    => ['required', 'string', 'max:50'],
             'priority'                      => ['required', 'in:low,normal,urgent'],
@@ -101,7 +117,9 @@ class PurchaseRequestController extends Controller
 
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
-            ->with('success', "Demande d'achat {$purchaseRequest->number} créée. Elle part au contrôle de gestion pour approbation.");
+            ->with('success', $purchaseRequest->status === PurchaseRequest::STATUS_PENDING
+                ? "Demande d'achat {$purchaseRequest->number} envoyée au responsable des achats, qui la vérifie."
+                : "Demande d'achat {$purchaseRequest->number} créée.");
     }
 
     public function edit(PurchaseRequest $purchaseRequest): View
@@ -121,10 +139,11 @@ class PurchaseRequestController extends Controller
             ->get(['id', 'name', 'unit', 'current_stock', 'average_cost', 'last_purchase_price']);
 
         return view('economat.purchase_requests.edit', [
-            'request'     => $purchaseRequest,
-            'items'       => $items,
-            'departments' => PurchaseRequest::DEPARTMENTS,
-            'priorities'  => PurchaseRequest::PRIORITIES,
+            'request'            => $purchaseRequest,
+            'items'              => $items,
+            'departments'        => PurchaseRequest::DEPARTMENTS,
+            'priorities'         => PurchaseRequest::PRIORITIES,
+            'choisitDepartement' => self::choisitLeDepartement(),
         ]);
     }
 
@@ -138,7 +157,8 @@ class PurchaseRequestController extends Controller
         );
 
         $validated = $request->validate([
-            'department'                   => ['required', 'string', 'max:50'],
+            // Sans champ (économe, responsable des achats), la demande garde son département.
+            'department'                   => ['nullable', 'string', 'max:50'],
             'priority'                     => ['required', 'in:low,normal,urgent'],
             'purpose'                      => ['nullable', 'string', 'max:1000'],
             'lines'                        => ['required', 'array', 'min:1'],
@@ -159,7 +179,8 @@ class PurchaseRequestController extends Controller
 
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
-            ->with('success', "Demande d'achat {$purchaseRequest->number} mise à jour avec succès.");
+            ->with('success', "Demande d'achat {$purchaseRequest->number} mise à jour."
+                . ((int) $purchaseRequest->requested_by !== (int) Auth::id() ? ' Le demandeur est averti des changements.' : ''));
     }
 
     public function show(PurchaseRequest $purchaseRequest): View

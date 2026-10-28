@@ -34,15 +34,17 @@
 
         {{-- Paramètres généraux --}}
         <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Département demandeur *</label>
-                    <select name="department" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
-                        @foreach($departments as $key => $lbl)
-                            <option value="{{ $key }}" @selected(old('department', $request->department) === $key)>{{ $lbl }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div class="grid grid-cols-1 {{ $choisitDepartement ? 'md:grid-cols-3' : 'md:grid-cols-2' }} gap-4">
+                @if($choisitDepartement)
+                    <div>
+                        <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Département demandeur *</label>
+                        <select name="department" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                            @foreach($departments as $key => $lbl)
+                                <option value="{{ $key }}" @selected(old('department', $request->department) === $key)>{{ $lbl }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
                 <div>
                     <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Degré d'urgence *</label>
                     <select name="priority" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
@@ -84,11 +86,11 @@
                             <th class="px-4 py-2.5 text-right w-32">Quantité voulue</th>
                             <th class="px-4 py-2.5 text-right w-36">Prix Est. unitaire (F)</th>
                             <th class="px-4 py-2.5 text-right w-36">Total Estimé (F)</th>
-                            <th class="px-4 py-2.5 text-center w-12"></th>
+                            <th class="px-4 py-2.5 text-center w-24"><span class="sr-only">Retirer</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
-                        <template x-for="(line, index) in lines" :key="index">
+                        <template x-for="(line, index) in lines" :key="line.uid">
                             <tr class="hover:bg-gray-50/40">
                                 <td class="px-4 py-2.5">
                                     <input type="hidden" :name="'lines[' + index + '][id]'" :value="line.id || ''">
@@ -111,8 +113,11 @@
                                     <span x-text="formatMoney(lineTotal(line))"></span> F
                                 </td>
                                 <td class="px-4 py-2.5 text-center">
-                                    <button type="button" @click="removeLine(index)" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" x-show="lines.length > 1">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    <button type="button" @click="removeLine(index)"
+                                            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                                            :aria-label="'Retirer la ligne ' + (index + 1)" title="Retirer cet article">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                        <span class="sr-only sm:not-sr-only">Retirer</span>
                                     </button>
                                 </td>
                             </tr>
@@ -148,21 +153,27 @@
 function purchaseRequestEditForm(catalogue, initialLines) {
     return {
         catalogue,
-        lines: initialLines && initialLines.length > 0 ? initialLines : [
-            { id: null, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' }
-        ],
+        prochain: (initialLines || []).length + 1,
+        lines: initialLines && initialLines.length > 0
+            ? initialLines.map((l, i) => ({ ...l, uid: i }))
+            : [{ uid: 0, id: null, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' }],
+        nouvelleLigne() {
+            return { uid: this.prochain++, id: null, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' };
+        },
         addLine() {
-            this.lines.push({ id: null, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' });
+            this.lines.push(this.nouvelleLigne());
             this.$nextTick(() => {
-                if (window.lucide) window.lucide.createIcons();
+                window.refreshLucideIcons?.();
                 if (this.$refs.linesBody) {
                     this.$refs.linesBody.scrollTop = this.$refs.linesBody.scrollHeight;
                 }
             });
         },
+        // Chaque ligne s'efface ; la dernière laisse une ligne vide à remplir.
         removeLine(idx) {
-            if (this.lines.length > 1) {
-                this.lines.splice(idx, 1);
+            this.lines.splice(idx, 1);
+            if (this.lines.length === 0) {
+                this.lines.push(this.nouvelleLigne());
             }
         },
         onItemChange(line, article) {

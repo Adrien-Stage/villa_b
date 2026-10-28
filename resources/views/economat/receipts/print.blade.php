@@ -299,7 +299,7 @@
             <td class="meta-label">Numéro BR :</td>
             <td class="meta-val font-mono font-bold">{{ $receipt->number }}</td>
             <td class="meta-label">Date de réception :</td>
-            <td class="meta-val font-mono">{{ $receipt->received_at->format('d/m/Y H:i') }}</td>
+            <td class="meta-val font-mono">{{ $receipt->received_at?->format('d/m/Y H:i') ?? 'Livraison attendue' }}</td>
         </tr>
         <tr>
             <td class="meta-label">Fournisseur :</td>
@@ -399,7 +399,7 @@
                     <span class="sig-handwritten">{{ $receipt->receiverSignature() }}</span>
                 </div>
                 <div style="font-size: 8px; color: #64748b; margin-top: 4px;">
-                    ✓ Réceptionné et signé numériquement le {{ $receipt->received_at->format('d/m/Y à H:i') }}
+                    @if($receipt->received_at)✓ Réceptionné et signé numériquement le {{ $receipt->received_at->format('d/m/Y à H:i') }}@else En attente de livraison @endif
                 </div>
             </td>
             <td>

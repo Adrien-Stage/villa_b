@@ -83,7 +83,7 @@ test("il n'écrit que le budget, les seuils d'alerte et l'approbation des demand
     // Établir un budget, approuver une dépense ne sont pas des opérations : il
     // n'achète ni ne reçoit, sa vue d'ensemble n'en souffre pas.
     expect($ecritures)->toBe([
-        'economat.purchase_requests.approve', 'economat.purchase_requests.reject',
+        'economat.purchase_requests.approve', 'economat.purchase_requests.modifier', 'economat.purchase_requests.reject',
         'pilotage.budget.modifier', 'pilotage.seuils.modifier',
     ]);
 });

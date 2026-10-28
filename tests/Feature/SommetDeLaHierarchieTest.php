@@ -70,6 +70,13 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
     $actesDeSupervision = [
         'economat.purchase_requests.approve',
         'economat.purchase_requests.reject',
+        // La direction suit aussi le circuit d'achat de bout en bout :
+        // exprimer un besoin, corriger une demande, l'annuler, en tirer la
+        // commande (décision du 2026-10-28).
+        'economat.purchase_requests.creer',
+        'economat.purchase_requests.modifier',
+        'economat.purchase_requests.cancel',
+        'economat.purchase_requests.convert',
         // Viser une demande interne quand le chef du service est absent :
         // le même acte de supervision, avant la décision de l'économe.
         'economat.requisitions.endorse',

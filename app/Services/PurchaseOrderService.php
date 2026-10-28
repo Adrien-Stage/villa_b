@@ -60,6 +60,8 @@ class PurchaseOrderService
         ]);
 
         $order->purchaseRequest?->archiverSiCommandee();
+        // Parti chez le fournisseur : sa livraison est attendue.
+        app(GoodsReceiptService::class)->ouvrirAttente($order);
 
         return $sent;
     }
@@ -96,6 +98,7 @@ class PurchaseOrderService
 
         $order->refresh();
         $order->purchaseRequest?->archiverSiCommandee();
+        app(GoodsReceiptService::class)->ouvrirAttente($order);
     }
 
     /**
@@ -169,5 +172,7 @@ class PurchaseOrderService
         });
 
         $order->refresh();
+        // Le bon en attente suit ce qui reste dû.
+        app(GoodsReceiptService::class)->ouvrirAttente($order);
     }
 }
