@@ -878,6 +878,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])->name('purchase_requests.create');
             Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])->name('purchase_requests.store');
             Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])->whereNumber('purchaseRequest')->name('purchase_requests.show');
+            Route::get('/demandes-achat/{purchaseRequest}/modifier', [$eco . 'PurchaseRequestController', 'edit'])->whereNumber('purchaseRequest')->name('purchase_requests.edit');
+            Route::put('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'update'])->whereNumber('purchaseRequest')->name('purchase_requests.update');
             Route::get('/demandes-achat/{purchaseRequest}/imprimer', [$eco . 'PurchaseRequestController', 'print'])->whereNumber('purchaseRequest')->name('purchase_requests.print');
             Route::post('/demandes-achat/{purchaseRequest}/annuler', [$eco . 'PurchaseRequestController', 'cancel'])->whereNumber('purchaseRequest')->name('purchase_requests.cancel');
 

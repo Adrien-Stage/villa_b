@@ -104,6 +104,64 @@ class PurchaseRequestController extends Controller
             ->with('success', "Demande d'achat {$purchaseRequest->number} créée. Elle part au contrôle de gestion pour approbation.");
     }
 
+    public function edit(PurchaseRequest $purchaseRequest): View
+    {
+        abort_unless($purchaseRequest->canBeEdited(), 403, "Cette demande d'achat ne peut plus être modifiée.");
+        abort_unless(
+            app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.modifier')
+            || app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
+            403
+        );
+
+        $purchaseRequest->load(['lines.item']);
+
+        $items = StockItem::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit', 'current_stock', 'average_cost', 'last_purchase_price']);
+
+        return view('economat.purchase_requests.edit', [
+            'request'     => $purchaseRequest,
+            'items'       => $items,
+            'departments' => PurchaseRequest::DEPARTMENTS,
+            'priorities'  => PurchaseRequest::PRIORITIES,
+        ]);
+    }
+
+    public function update(Request $request, PurchaseRequest $purchaseRequest): RedirectResponse
+    {
+        abort_unless($purchaseRequest->canBeEdited(), 403, "Cette demande d'achat ne peut plus être modifiée.");
+        abort_unless(
+            app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.modifier')
+            || app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
+            403
+        );
+
+        $validated = $request->validate([
+            'department'                   => ['required', 'string', 'max:50'],
+            'priority'                     => ['required', 'in:low,normal,urgent'],
+            'purpose'                      => ['nullable', 'string', 'max:1000'],
+            'lines'                        => ['required', 'array', 'min:1'],
+            'lines.*.id'                   => ['nullable', 'integer'],
+            'lines.*.stock_item_id'        => ['required', 'exists:stock_items,id'],
+            'lines.*.quantity_requested'   => ['required', 'numeric', 'min:0.001'],
+            'lines.*.estimated_unit_price' => ['nullable', 'numeric', 'min:0'],
+            'lines.*.notes'                => ['nullable', 'string', 'max:255'],
+        ], [
+            'lines.required' => 'Veuillez conserver au moins un article dans la demande d\'achat.',
+        ]);
+
+        try {
+            $this->requestService->update($purchaseRequest, $validated, Auth::user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+
+        return redirect()
+            ->route('economat.purchase_requests.show', $purchaseRequest)
+            ->with('success', "Demande d'achat {$purchaseRequest->number} mise à jour avec succès.");
+    }
+
     public function show(PurchaseRequest $purchaseRequest): View
     {
         $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item.supplier', 'purchaseOrders.supplier']);
@@ -119,6 +177,9 @@ class PurchaseRequestController extends Controller
                 && !PurchaseRequestService::estSaPropreDemande($purchaseRequest, Auth::user()),
             'peutAnnuler' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.cancel'),
             'canManage' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
+            'canEdit'   => (app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.modifier')
+                || app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'))
+                && $purchaseRequest->canBeEdited(),
         ]);
     }
 
@@ -175,14 +236,17 @@ class PurchaseRequestController extends Controller
     public function convert(Request $request, PurchaseRequest $purchaseRequest): RedirectResponse
     {
         $validated = $request->validate([
-            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'supplier_id'      => ['nullable', 'exists:suppliers,id'],
+            'line_suppliers'   => ['nullable', 'array'],
+            'line_suppliers.*' => ['nullable', 'exists:suppliers,id'],
         ]);
 
         try {
             $orders = $this->requestService->convertToOrders(
                 $purchaseRequest,
                 Auth::user(),
-                !empty($validated['supplier_id']) ? (int) $validated['supplier_id'] : null
+                !empty($validated['supplier_id']) ? (int) $validated['supplier_id'] : null,
+                $validated['line_suppliers'] ?? []
             );
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());

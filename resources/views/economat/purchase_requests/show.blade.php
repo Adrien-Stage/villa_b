@@ -13,12 +13,17 @@
     ];
 @endphp
 
-<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false }">
+<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false, globalSupplier: '', applyGlobalSupplier() { if(this.globalSupplier) { document.querySelectorAll('.line-supplier-select').forEach(el => el.value = this.globalSupplier); } } }">
     <div class="flex items-center justify-between">
         <a href="{{ route('economat.purchase_requests.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux demandes d'achat
         </a>
         <div class="flex items-center gap-2">
+            @if($canEdit)
+                <a href="{{ route('economat.purchase_requests.edit', $request) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-primary/70"></i> Modifier la demande
+                </a>
+            @endif
             <a href="{{ route('economat.purchase_requests.print', $request) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimer
             </a>
@@ -232,26 +237,76 @@
 
     {{-- Modal de conversion en bon de commande --}}
     <div x-show="showConvertModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4" @click.outside="showConvertModal = false">
-            <h3 class="text-base font-bold text-primary">Générer les bons de commande</h3>
-            <p class="text-xs text-primary/60">
-                Par défaut, le système groupe automatiquement les articles par fournisseur habituel. Vous pouvez également forcer un fournisseur unique pour l'ensemble du lot.
-            </p>
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col" @click.outside="showConvertModal = false">
+            <div>
+                <h3 class="text-base font-bold text-primary">Générer les bons de commande</h3>
+                <p class="text-xs text-primary/60 mt-0.5">
+                    Sélectionnez le fournisseur correspondant au lot complet ou spécifiez un fournisseur pour chaque article. Les articles d'un même fournisseur seront regroupés dans un même bon.
+                </p>
+            </div>
 
-            <form method="POST" action="{{ route('economat.purchase_requests.convert', $request) }}" class="space-y-4">
+            <form method="POST" action="{{ route('economat.purchase_requests.convert', $request) }}" class="space-y-4 flex flex-col overflow-hidden">
                 @csrf
-                <div>
-                    <label class="block text-xs font-semibold text-primary uppercase mb-1">Fournisseur (optionnel)</label>
-                    <select name="supplier_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:outline-none focus:border-primary">
-                        <option value="">Automatique (Groupement par fournisseur habituel)</option>
-                        @foreach($suppliers as $sup)
-                            <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                        @endforeach
-                    </select>
+
+                {{-- Sélecteur global rapide --}}
+                <div class="bg-gray-50 border border-secondary/20 p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+                    <div>
+                        <label class="block text-xs font-semibold text-primary uppercase">Fournisseur global (lot complet)</label>
+                        <span class="text-[11px] text-primary/50">Applique le même fournisseur à tous les articles ci-dessous</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select x-model="globalSupplier" @change="applyGlobalSupplier()" name="supplier_id" class="px-3 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                            <option value="">Sélectionner pour tout appliquer...</option>
+                            @foreach($suppliers as $sup)
+                                <option value="{{ $sup->id }}">{{ $sup->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" @click="showConvertModal = false" class="px-4 py-2 text-xs text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-surface-dark">Générer le(s) bon(s)</button>
+
+                {{-- Liste des articles avec choix du fournisseur par article --}}
+                <div class="border border-secondary/20 rounded-lg overflow-hidden flex flex-col flex-1">
+                    <div class="px-4 py-2 bg-gray-50 border-b border-secondary/15 flex items-center justify-between shrink-0">
+                        <span class="text-xs font-semibold text-primary uppercase">Fournisseur par article</span>
+                        <span class="text-[11px] text-primary/50">{{ $request->lines->filter(fn($l) => $l->quantiteRetenue() > 0)->count() }} article(s) à commander</span>
+                    </div>
+                    <div class="overflow-y-auto max-h-[300px] divide-y divide-secondary/10">
+                        @foreach($request->lines as $line)
+                            @if($line->quantiteRetenue() > 0)
+                                @php
+                                    $defaultSupId = $line->item?->supplier_id ?? ($suppliers->first()?->id ?? '');
+                                @endphp
+                                <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-gray-50/50">
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-medium text-primary truncate">{{ $line->item?->name ?? 'Article' }}</div>
+                                        <div class="text-xs text-primary/50">
+                                            Qté : <strong>{{ rtrim(rtrim(number_format($line->quantiteRetenue(), 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}</strong>
+                                            @if($line->item?->supplier)
+                                                · Habituel : <span class="italic text-primary/70">{{ $line->item->supplier->name }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="shrink-0 w-full sm:w-60">
+                                        <select name="line_suppliers[{{ $line->id }}]" class="line-supplier-select w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                            @foreach($suppliers as $sup)
+                                                <option value="{{ $sup->id }}" @selected($sup->id == $defaultSupId)>{{ $sup->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 shrink-0">
+                    <span class="text-[11px] text-primary/50">1 bon sera créé par fournisseur distinct sélectionné.</span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="showConvertModal = false" class="px-4 py-2 text-xs text-primary/60 hover:text-primary">Annuler</button>
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Générer le(s) bon(s)
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

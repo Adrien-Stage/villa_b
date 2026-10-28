@@ -31,8 +31,11 @@
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la liste des bons de commande
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ route('economat.orders.print', $order) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
-                <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer le Bon officiel (PDF / Papier)
+            <a href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer (avec prix)
+            </a>
+            <a href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer (sans prix)
             </a>
         </div>
     </div>

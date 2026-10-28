@@ -237,7 +237,8 @@
                 </x-table.cell>
                 <x-table.actions :label="'Actions pour le bon '.$order->number">
                     <x-table.action :href="route('economat.orders.show', $order)" icon="eye">Détails</x-table.action>
-                    <x-table.action :href="route('economat.orders.print', $order)" icon="printer" target="_blank">Imprimer</x-table.action>
+                    <x-table.action :href="route('economat.orders.print', [$order, 'prix' => 1])" icon="printer" target="_blank">Imprimer (avec prix)</x-table.action>
+                    <x-table.action :href="route('economat.orders.print', [$order, 'prix' => 0])" icon="printer" target="_blank">Imprimer (sans prix)</x-table.action>
                 </x-table.actions>
             </x-table.row>
         @endforeach

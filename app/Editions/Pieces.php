@@ -59,12 +59,13 @@ class Pieces
                 ->get();
 
             foreach ($pieces as $piece) {
+                $urlParams = isset($sorte['params']) ? array_merge([$piece], $sorte['params']) : $piece;
                 $resultats->push([
                     'sorte' => $sorte['sorte'],
                     'numero' => (string) $piece->{$sorte['colonne']},
                     'date' => $piece->{$sorte['date']},
                     'detail' => ($sorte['detail'])($piece),
-                    'url' => route($sorte['route'], $piece),
+                    'url' => route($sorte['route'], $urlParams),
                 ]);
             }
         }
@@ -85,9 +86,12 @@ class Pieces
             ['sorte' => "Demande d'achat", 'modele' => \App\Models\PurchaseRequest::class, 'colonne' => 'number', 'date' => 'created_at',
                 'route' => 'economat.purchase_requests.print', 'droit' => 'economat.purchase_requests.voir',
                 'detail' => fn (\App\Models\PurchaseRequest $d) => $d->departmentLabel() . ' — ' . $d->statusLabel()],
-            ['sorte' => 'Bon de commande', 'modele' => PurchaseOrder::class, 'colonne' => 'number', 'date' => 'created_at',
-                'route' => 'economat.orders.print', 'droit' => 'economat.orders.voir',
-                'detail' => fn (PurchaseOrder $o) => ($o->supplier?->name ?? '') . ' — ' . $o->statusLabel()],
+            ['sorte' => 'Bon de commande (avec prix)', 'modele' => PurchaseOrder::class, 'colonne' => 'number', 'date' => 'created_at',
+                'route' => 'economat.orders.print', 'params' => ['prix' => 1], 'droit' => 'economat.orders.voir',
+                'detail' => fn (PurchaseOrder $o) => ($o->supplier?->name ?? '') . ' — Chiffré (' . number_format(((int) $o->total_amount) / 100, 0, ',', ' ') . ' FCFA) — ' . $o->statusLabel()],
+            ['sorte' => 'Bon de commande (sans prix)', 'modele' => PurchaseOrder::class, 'colonne' => 'number', 'date' => 'created_at',
+                'route' => 'economat.orders.print', 'params' => ['prix' => 0], 'droit' => 'economat.orders.voir',
+                'detail' => fn (PurchaseOrder $o) => ($o->supplier?->name ?? '') . ' — Non chiffré — ' . $o->statusLabel()],
             ['sorte' => "Bon d'entrée", 'modele' => GoodsReceipt::class, 'colonne' => 'number', 'date' => 'received_at',
                 'route' => 'economat.receipts.print', 'droit' => 'economat.receipts.voir',
                 'detail' => fn (GoodsReceipt $r) => ($r->supplier?->name ?? '') . ' — ' . $r->statusLabel()],

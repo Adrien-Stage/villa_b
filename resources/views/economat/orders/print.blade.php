@@ -278,12 +278,22 @@
 <body>
 
 <div class="no-print">
-    <a href="{{ route('economat.orders.show', $order) }}" class="btn-back">
-        ← Retour au bon de commande
-    </a>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <a href="{{ route('economat.orders.show', $order) }}" class="btn-back">
+            ← Retour au bon de commande
+        </a>
+        <div style="display: inline-flex; border-radius: 6px; overflow: hidden; border: 1px solid #475569;">
+            <a href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}" style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ $avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
+                Version avec prix
+            </a>
+            <a href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}" style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ !$avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
+                Version sans prix
+            </a>
+        </div>
+    </div>
     <button onclick="window.print()" class="btn-print">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v8H6z"></path></svg>
-        Imprimer le Bon de Commande
+        Imprimer ({{ $avecPrix ? 'avec prix' : 'sans prix' }})
     </button>
 </div>
 
@@ -304,11 +314,11 @@
 
     <div class="doc-title-block">
         @if($order->isRegularisation())
-            <h1 class="doc-title">Bon de Commande de Régularisation</h1>
-            <div class="doc-subtitle">Établi après la réception d'une marchandise livrée sans commande préalable</div>
+            <h1 class="doc-title">Bon de Commande de Régularisation {{ $avecPrix ? '(Chiffré)' : '(Sans prix)' }}</h1>
+            <div class="doc-subtitle">{{ $avecPrix ? 'Établi après réception — valorisation financière des marchandises' : 'Établi après la réception d\'une marchandise livrée sans commande préalable' }}</div>
         @else
-            <h1 class="doc-title">Bon de Commande Fournisseur</h1>
-            <div class="doc-subtitle">Commande ferme de marchandises : articles et quantités à livrer</div>
+            <h1 class="doc-title">Bon de Commande Fournisseur {{ $avecPrix ? '(Chiffré)' : '' }}</h1>
+            <div class="doc-subtitle">{{ $avecPrix ? 'Commande valorisée de marchandises : articles, quantités, prix unitaires et montants' : 'Commande ferme de marchandises : articles et quantités à livrer' }}</div>
         @endif
     </div>
 
@@ -350,11 +360,17 @@
     <table class="items-table">
         <thead>
             <tr>
-                {{-- Le bon part chez le fournisseur : il dit quoi livrer et combien,
-                     jamais à quel prix. Les prix restent dans le PMS. --}}
-                <th style="width: 6%; text-align: center;">N°</th>
-                <th style="width: 69%; text-align: left;">Désignation de l'article</th>
-                <th style="width: 25%; text-align: right;">Quantité</th>
+                @if($avecPrix)
+                    <th style="width: 5%; text-align: center;">N°</th>
+                    <th style="width: 47%; text-align: left;">Désignation de l'article</th>
+                    <th style="width: 16%; text-align: right;">Quantité</th>
+                    <th style="width: 16%; text-align: right;">P.U. HT</th>
+                    <th style="width: 16%; text-align: right;">Total HT</th>
+                @else
+                    <th style="width: 6%; text-align: center;">N°</th>
+                    <th style="width: 69%; text-align: left;">Désignation de l'article</th>
+                    <th style="width: 25%; text-align: right;">Quantité</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -368,6 +384,14 @@
                     <td class="text-right font-mono font-bold">
                         {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
                     </td>
+                    @if($avecPrix)
+                        <td class="text-right font-mono">
+                            {{ number_format($line->unit_price / 100, 0, ',', ' ') }} F
+                        </td>
+                        <td class="text-right font-mono font-bold">
+                            {{ number_format(($line->unit_price * $line->quantity_ordered) / 100, 0, ',', ' ') }} F
+                        </td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
@@ -378,6 +402,12 @@
             <span>Nombre d'articles commandés :</span>
             <span class="font-mono font-bold">{{ $order->lines->count() }}</span>
         </div>
+        @if($avecPrix)
+            <div class="summary-row total">
+                <span>Montant Total HT :</span>
+                <span class="font-mono">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</span>
+            </div>
+        @endif
     </div>
 
     <table class="signatures-table">
