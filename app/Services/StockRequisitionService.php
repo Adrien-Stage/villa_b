@@ -10,6 +10,7 @@ use App\Models\StockCount;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\StockRequisition;
+use App\Models\StockUnit;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -244,7 +245,10 @@ class StockRequisitionService
         $pantryUnit = mb_strtolower(trim($pantryItem->unit ?? ''));
 
         if ($conversion <= 1.0) {
-            if ($economatUnit === 'kg' && $pantryUnit === 'g') {
+            $taux = StockUnit::conversionRate($stockItem->unit, $pantryItem->unit);
+            if ($taux !== null && $taux > 0) {
+                $conversion = (float) $taux;
+            } elseif ($economatUnit === 'kg' && $pantryUnit === 'g') {
                 $conversion = 1000.0;
             } elseif ($economatUnit === 'l' && $pantryUnit === 'ml') {
                 $conversion = 1000.0;

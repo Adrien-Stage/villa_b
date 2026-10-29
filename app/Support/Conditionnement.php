@@ -12,7 +12,7 @@ final class Conditionnement
     public const EPSILON = 0.0005;
 
     /** Les unités abrégées ne prennent pas la marque du pluriel. */
-    private const INVARIABLES = ['kg', 'g', 'mg', 'l', 'cl', 'ml', 'dl', 'm', 'cm', 'mm', 'm2', 'm3', 'u'];
+    private const INVARIABLES = ['kg', 'g', 'mg', 'l', 'cl', 'ml', 'dl', 'm', 'cm', 'mm', 'm2', 'm3', 'u', 'pcs', 'ctn', 'btl', 'pqt'];
 
     public static function quantite(float $valeur): string
     {
@@ -22,7 +22,8 @@ final class Conditionnement
     /** « 1 carton », « 4 cartons », « 2,5 kg ». */
     public static function libelle(float $nombre, string $unite): string
     {
-        return self::quantite($nombre) . ' ' . self::accorde($unite, $nombre);
+        $symbole = \App\Models\StockUnit::symbolFor($unite);
+        return self::quantite($nombre) . ' ' . self::accorde($symbole, $nombre);
     }
 
     public static function accorde(string $unite, float $nombre): string

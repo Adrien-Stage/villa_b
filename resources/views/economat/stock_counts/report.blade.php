@@ -371,7 +371,7 @@
                         <strong>{{ $line->item?->name ?? '—' }}</strong>
                     </td>
                     <td>{{ $line->item?->category?->name ?? 'Général' }}</td>
-                    <td class="text-center">{{ $line->item?->unit }}</td>
+                    <td class="text-center font-bold">{{ $line->item?->shortUnit() }}</td>
                     <td class="text-right font-mono">{{ rtrim(rtrim(number_format($theo, 3, ',', ' '), '0'), ',') }}</td>
                     <td class="text-right font-mono">
                         {{ $counted !== null ? rtrim(rtrim(number_format($counted, 3, ',', ' '), '0'), ',') : '—' }}

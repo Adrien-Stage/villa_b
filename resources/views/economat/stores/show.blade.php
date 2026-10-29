@@ -81,6 +81,7 @@
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Catégorie</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock</th>
+                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Coût moyen</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur</th>
                         </tr>
@@ -90,9 +91,11 @@
                             <tr>
                                 <td class="px-5 py-3 font-medium text-primary">{{ $stock->item->name }}</td>
                                 <td class="px-5 py-3 text-primary/60 text-xs">{{ $stock->item->category?->name ?? '—' }}</td>
-                                <td class="px-5 py-3 text-right">
-                                    <span class="font-medium text-primary">{{ rtrim(rtrim(number_format((float) $stock->current_stock, 3, ',', ' '), '0'), ',') }}</span>
-                                    <span class="text-primary/40 text-xs">{{ $stock->item->unit }}</span>
+                                <td class="px-5 py-3 text-right font-medium font-mono text-primary">
+                                    {{ rtrim(rtrim(number_format((float) $stock->current_stock, 3, ',', ' '), '0'), ',') }}
+                                </td>
+                                <td class="px-5 py-3 text-center font-mono font-bold text-xs text-primary/70">
+                                    {{ $stock->item->shortUnit() }}
                                 </td>
                                 <td class="px-5 py-3 text-right text-primary/70">{{ number_format($stock->average_cost / 100, 0, ',', ' ') }}</td>
                                 <td class="px-5 py-3 text-right font-medium text-primary">{{ number_format($stock->stockValue() / 100, 0, ',', ' ') }}</td>
@@ -117,6 +120,7 @@
                         <tr>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Quantité</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Motif</th>
@@ -127,6 +131,7 @@
                             <tr>
                                 <td class="px-5 py-3 text-primary/70 text-xs whitespace-nowrap">{{ $mouvement->occurred_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-5 py-3 text-primary">{{ $mouvement->item?->name ?? '—' }}</td>
+                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ \App\Models\StockUnit::symbolFor($mouvement->item?->unit) }}</td>
                                 <td class="px-5 py-3 text-primary/70 text-xs">{{ $mouvement->typeLabel() }}<span class="block text-[10px] text-primary/45">{{ $mouvement->sourceLabel() }}</span></td>
                                 <td class="px-5 py-3 text-right font-mono {{ (float) $mouvement->quantity < 0 ? 'text-red-700' : 'text-green-700' }}">
                                     {{ (float) $mouvement->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format((float) $mouvement->quantity, 3, ',', ' '), '0'), ',') }}

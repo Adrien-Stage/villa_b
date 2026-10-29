@@ -210,6 +210,7 @@
         <x-table.col align="right" hide="2xl">Coût du batch</x-table.col>
         <x-table.col align="right">Coût unitaire</x-table.col>
         <x-table.col align="right" hide="lg">Stock</x-table.col>
+        <x-table.col align="center" hide="lg">Unité</x-table.col>
         @if($canManage)
             <x-table.col>Produire</x-table.col>
             <x-table.col actions />
@@ -223,10 +224,11 @@
                 <p class="text-sm font-semibold text-primary">{{ $recipe->name }}</p>
                 <p class="mt-0.5 text-[11px] text-primary/45">{{ $recipe->lines->count() }} ingrédient(s) → {{ $produced?->name ?? 'article supprimé' }}</p>
             </x-table.cell>
-            <x-table.cell hide="xl" nowrap class="text-xs text-primary/60">{{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ' '), '0'), ',') }} {{ $produced?->unit }}</x-table.cell>
+            <x-table.cell hide="xl" nowrap class="text-xs text-primary/60 font-mono">{{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ' '), '0'), ',') }} {{ $produced?->shortUnit() }}</x-table.cell>
             <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($recipe->totalCost() / 100, 0, ',', ' ') }} FCFA</x-table.cell>
-            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($recipe->unitCost() / 100, 2, ',', ' ') }} FCFA / {{ $produced?->unit }}</x-table.cell>
-            <x-table.cell align="right" hide="lg" nowrap class="{{ $produced && $produced->isLowStock() ? 'font-semibold text-red-600' : 'text-primary/70' }}">{{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') . ' ' . $produced->unit : '—' }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($recipe->unitCost() / 100, 2, ',', ' ') }} FCFA / {{ $produced?->shortUnit() }}</x-table.cell>
+            <x-table.cell align="right" hide="lg" nowrap class="font-mono {{ $produced && $produced->isLowStock() ? 'font-semibold text-red-600' : 'text-primary/70' }}">{{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') : '—' }}</x-table.cell>
+            <x-table.cell align="center" hide="lg" nowrap class="font-mono text-xs font-bold text-primary/70">{{ $produced?->shortUnit() ?? '—' }}</x-table.cell>
             @if($canManage)
                 <x-table.cell nowrap>
                     <form method="POST" action="{{ route('restaurant.recipes.produce', $recipe) }}" class="flex items-center gap-1">

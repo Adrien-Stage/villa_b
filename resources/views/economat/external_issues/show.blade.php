@@ -91,6 +91,7 @@
                 <thead class="text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
                     <tr>
                         <th class="px-4 py-2.5 text-left">Article</th>
+                        <th class="px-3 py-2.5 text-center">Unité</th>
                         <th class="px-4 py-2.5 text-right">Quantité</th>
                         <th class="px-4 py-2.5 text-right">Coût unitaire</th>
                         <th class="px-4 py-2.5 text-right">Valeur</th>
@@ -101,8 +102,9 @@
                     @foreach($sortie->lines as $ligne)
                         <tr>
                             <td class="px-4 py-2.5 font-medium text-primary">{{ $ligne->item?->name ?? '—' }}</td>
+                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
                             <td class="px-4 py-2.5 text-right font-mono">
-                                {{ $qte($ligne->quantity) }} <span class="text-xs text-primary/50">{{ $ligne->item?->unit }}</span>
+                                {{ $qte($ligne->quantity) }}
                                 @if($ligne->packaging_name)<span class="block text-[10px] font-sans text-primary/55">{{ $ligne->enConditionnement((float) $ligne->quantity) }}</span>@endif
                             </td>
                             <td class="px-4 py-2.5 text-right font-mono text-primary/70">{{ $fcfa((int) $ligne->unit_cost) }} F</td>

@@ -56,6 +56,7 @@
                 <thead class="text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
                     <tr>
                         <th class="px-4 py-2.5 text-left">Portion</th>
+                        <th class="px-3 py-2.5 text-center">Unité</th>
                         <th class="px-4 py-2.5 text-right">Quantité</th>
                         <th class="px-4 py-2.5 text-right">Part</th>
                         <th class="px-4 py-2.5 text-right">Valeur</th>
@@ -67,10 +68,11 @@
                         @php $uniteCuisine = $ligne->pantryItem?->unit ?? $unite; @endphp
                         <tr>
                             <td class="px-4 py-2.5 font-medium text-primary">{{ $ligne->label }}</td>
+                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ \App\Models\StockUnit::symbolFor($uniteCuisine) }}</td>
                             <td class="px-4 py-2.5 text-right font-mono">
-                                {{ Conditionnement::libelle((float) $ligne->quantity, $unite) }}
+                                {{ rtrim(rtrim(number_format((float) $ligne->pantry_quantity, 3, ',', ' '), '0'), ',') }}
                                 @if(mb_strtolower($uniteCuisine) !== mb_strtolower($unite))
-                                    <span class="block text-[10px] text-primary/50">= {{ Conditionnement::libelle((float) $ligne->pantry_quantity, $uniteCuisine) }}</span>
+                                    <span class="block text-[10px] text-primary/50">({{ rtrim(rtrim(number_format((float) $ligne->quantity, 3, ',', ' '), '0'), ',') }} {{ \App\Models\StockUnit::symbolFor($unite) }})</span>
                                 @endif
                             </td>
                             <td class="px-4 py-2.5 text-right font-mono text-primary/70">{{ $reparti > 0 ? number_format(100 * (float) $ligne->quantity / $reparti, 1, ',', ' ') : 0 }} %</td>

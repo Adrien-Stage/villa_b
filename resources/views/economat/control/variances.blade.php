@@ -170,6 +170,7 @@
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Article & Réf.</th>
                         <th class="py-2.5 px-3">Catégorie</th>
+                        <th class="py-2.5 px-3 text-center">Unité</th>
                         <th class="py-2.5 px-3 text-center">Théorique</th>
                         <th class="py-2.5 px-3 text-center">Compté</th>
                         <th class="py-2.5 px-3 text-center">Écart Qté</th>
@@ -198,14 +199,17 @@
                             <td class="py-2.5 px-3 text-primary/60">
                                 {{ $line->stockItem?->category?->name ?? 'Général' }}
                             </td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-primary/70">
+                                {{ \App\Models\StockUnit::symbolFor($line->unit) }}
+                            </td>
                             <td class="py-2.5 px-3 text-center font-mono text-primary/70">
-                                {{ (float) $line->theoretical_quantity }} {{ $line->unit }}
+                                {{ (float) $line->theoretical_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold text-primary">
-                                {{ (float) $line->counted_quantity }} {{ $line->unit }}
+                                {{ (float) $line->counted_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold {{ $diffQty < 0 ? 'text-red-700' : 'text-green-700' }}">
-                                {{ $diffQty > 0 ? '+' : '' }}{{ $diffQty }} {{ $line->unit }}
+                                {{ $diffQty > 0 ? '+' : '' }}{{ $diffQty }}
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono text-primary/60">
                                 {{ number_format($line->unit_cost / 100, 0, ',', ' ') }} FCFA
@@ -263,6 +267,7 @@
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Produit / Ingrédient</th>
                         <th class="py-2.5 px-3">Catégorie</th>
+                        <th class="py-2.5 px-3 text-center">Unité</th>
                         <th class="py-2.5 px-3 text-center">Théorique</th>
                         <th class="py-2.5 px-3 text-center">Compté</th>
                         <th class="py-2.5 px-3 text-center">Écart Qté</th>
@@ -290,14 +295,17 @@
                             <td class="py-2.5 px-3 text-primary/60">
                                 {{ $rLine->item?->category?->name ?? 'Garde-manger' }}
                             </td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-primary/70">
+                                {{ \App\Models\StockUnit::symbolFor($rLine->item?->unit) }}
+                            </td>
                             <td class="py-2.5 px-3 text-center font-mono text-primary/70">
-                                {{ (float) $rLine->theoretical_quantity }} {{ $rLine->item?->unit ?? 'u' }}
+                                {{ (float) $rLine->theoretical_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold text-primary">
-                                {{ (float) $rLine->counted_quantity }} {{ $rLine->item?->unit ?? 'u' }}
+                                {{ (float) $rLine->counted_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold {{ $rDiffQty < 0 ? 'text-red-700' : 'text-green-700' }}">
-                                {{ $rDiffQty > 0 ? '+' : '' }}{{ $rDiffQty }} {{ $rLine->item?->unit ?? 'u' }}
+                                {{ $rDiffQty > 0 ? '+' : '' }}{{ $rDiffQty }}
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono text-primary/60">
                                 {{ number_format($rLine->unit_cost / 100, 0, ',', ' ') }} FCFA
@@ -352,6 +360,7 @@
                         <th class="py-2.5 px-3">Dépôt</th>
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Article</th>
+                        <th class="py-2.5 px-3 text-center">Unité</th>
                         <th class="py-2.5 px-3 text-center">Théorique</th>
                         <th class="py-2.5 px-3 text-center">Compté</th>
                         <th class="py-2.5 px-3 text-center">Écart Qté</th>
@@ -381,13 +390,18 @@
                                 <div class="font-medium text-primary">{{ $sLine->item?->name ?? 'Article' }}</div>
                                 <div class="text-[10px] font-mono text-primary/40">{{ $sLine->item?->reference }}</div>
                             </td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-primary/70">
+                                {{ \App\Models\StockUnit::symbolFor($sLine->item?->unit) }}
+                            </td>
                             <td class="py-2.5 px-3 text-center font-mono text-primary/70">
-                                {{ (float) $sLine->theoretical_quantity }} {{ $sLine->item?->unit ?? 'u' }}
+                                {{ (float) $sLine->theoretical_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold text-primary">
-                                {{ (float) $sLine->counted_quantity }} {{ $sLine->item?->unit ?? 'u' }}
+                                {{ (float) $sLine->counted_quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold {{ $sDiffQty < 0 ? 'text-red-700' : 'text-green-700' }}">
+                                {{ $sDiffQty > 0 ? '+' : '' }}{{ $sDiffQty }}
+                            </td>
                                 {{ $sDiffQty > 0 ? '+' : '' }}{{ $sDiffQty }} {{ $sLine->item?->unit ?? 'u' }}
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono text-primary/60">

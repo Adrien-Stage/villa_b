@@ -23,7 +23,7 @@
         'id'            => $i->id,
         'name'          => $i->name,
         'reference'     => $i->reference,
-        'unit'          => $i->unit ?: 'pièce',
+        'unit'          => $i->shortUnit(),
         'price'         => (int) round(($i->last_purchase_price ?: $i->average_cost) / 100), // en FCFA
         'supplier_id'   => $i->supplier_id ? (int) $i->supplier_id : null,
         'category_name' => $i->category?->name ?? 'Général',

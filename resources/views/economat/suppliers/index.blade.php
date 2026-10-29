@@ -7,11 +7,11 @@
     'id' => $i->id,
     'name' => $i->name,
     'reference' => $i->reference,
-    'unit' => $i->unit,
+    'unit' => $i->shortUnit(),
     'price' => $i->last_purchase_price ? ($i->last_purchase_price / 100) : ($i->average_cost / 100),
     'category_name' => $i->category?->name ?? 'Général',
     'supplier_id' => $i->supplier_id
-])->values()) }}, {{ Js::from(\App\Models\StockUnit::choix()) }})">
+])->values()) }}, {{ Js::from(\App\Models\StockUnit::selectOptions()) }})">
 
     {{-- En-tête de page --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -165,7 +165,7 @@
                                         'id'        => $item->id,
                                         'name'      => $item->name,
                                         'reference' => $item->reference,
-                                        'unit'      => $item->unit,
+                                        'unit'      => $item->shortUnit(),
                                         'price'     => $item->last_purchase_price ? ($item->last_purchase_price / 100) : ($item->average_cost / 100),
                                     ])->values()->all(),
                                 ];
@@ -567,8 +567,11 @@
                                                     <td class="px-4 py-2.5">
                                                         <select :name="`linked_items[${idx}][unit]`" x-model="line.unit" required aria-label="Unité"
                                                             class="w-full px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                                            <template x-for="u in (unites.includes(line.unit) || !line.unit ? unites : [...unites, line.unit])" :key="u">
-                                                                <option :value="u" x-text="u" :selected="u === line.unit"></option>
+                                                            <template x-if="line.unit && !unites.some(u => (u.value || u) === line.unit)">
+                                                                <option :value="line.unit" x-text="line.unit" selected></option>
+                                                            </template>
+                                                            <template x-for="u in unites" :key="u.value || u">
+                                                                <option :value="u.value || u" x-text="u.label || u" :selected="(u.value || u) === line.unit"></option>
                                                             </template>
                                                         </select>
                                                     </td>
@@ -742,7 +745,7 @@
                         id: item.id,
                         name: item.name,
                         reference: item.reference || '',
-                        unit: item.unit || (unites[0] ?? ''),
+                        unit: item.unit || (this.unites[0]?.value ?? this.unites[0] ?? ''),
                         price: item.price || 0,
                     });
                     this.selectedItemIdToAdd = '';

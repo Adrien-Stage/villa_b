@@ -8,7 +8,7 @@
     $articlesJson = $articles->map(fn ($a) => [
         'id'    => $a->id,
         'name'  => $a->name . ($a->reference ? ' (' . $a->reference . ')' : ''),
-        'unit'  => $a->unit,
+        'unit'  => $a->shortUnit(),
         'stock' => (float) $a->current_stock,
         'cump'  => (int) $a->average_cost,
         // Sorti en cartons ou en paquets : on peut saisir dans chacun.

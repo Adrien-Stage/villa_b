@@ -50,6 +50,7 @@ class MouvementsStock extends Edition
                 Colonne::texte('article', 'Article'),
                 Colonne::texte('nature', 'Mouvement'),
                 Colonne::texte('origine', 'Document'),
+                Colonne::texte('unite', 'Unité'),
                 Colonne::nombre('avant', 'Stock restant'),
                 Colonne::nombre('entree', 'Entrée'),
                 Colonne::nombre('sortie', 'Sortie'),

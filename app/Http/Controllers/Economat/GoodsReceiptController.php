@@ -196,7 +196,7 @@ class GoodsReceiptController extends Controller
             'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
             'items'         => StockItem::active()->with('packagings')->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
-            'unites'        => StockUnit::choix(),
+            'unites'        => StockUnit::selectOptions(),
             'motifs'        => PurchaseOrder::MOTIFS_REGULARISATION,
             'reasons'       => GoodsReceiptLine::REASONS,
             'peutCreerFournisseur' => $resolver->allows($user, 'economat.suppliers.creer'),

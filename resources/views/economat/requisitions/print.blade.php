@@ -419,7 +419,7 @@
                         <td style="color: #475569;">
                             {{ $item?->category?->name ?? 'Général' }}
                         </td>
-                        <td class="text-center">{{ $item?->unit ?? 'u' }}</td>
+                        <td class="text-center font-bold">{{ $item?->shortUnit() ?? 'u' }}</td>
                         <td class="text-right font-mono font-bold">
                             @if($line->packaging_name)
                                 {{ $line->quantiteDemandee() }}

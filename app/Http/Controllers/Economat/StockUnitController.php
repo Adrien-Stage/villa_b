@@ -13,87 +13,155 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Les unités de stockage des articles (Paramètres › Économat) : l'économe
- * les crée, les renomme, les met hors service. La fiche d'un article choisit
- * la sienne dans cette liste.
+ * Les unités de mesure et de stockage des articles (Paramètres › Économat) :
+ * l'économe les crée (nom long, nom court / symbole, valeur & unité de référence),
+ * les modifie et les met hors service.
  */
 class StockUnitController extends Controller
 {
     public function store(Request $request): RedirectResponse
     {
-        $nom = $this->nom($request);
+        $donnees = $this->valider($request);
 
         $unite = StockUnit::create([
-            'name'       => $nom,
-            'sort_order' => (int) StockUnit::max('sort_order') + 1,
-            'is_active'  => true,
+            'name'              => $donnees['name'],
+            'short_name'        => $donnees['short_name'],
+            'factor'            => $donnees['factor'],
+            'reference_unit_id' => $donnees['reference_unit_id'],
+            'sort_order'        => (int) StockUnit::max('sort_order') + 1,
+            'is_active'         => true,
         ]);
 
-        $this->journal("Unité de stockage « {$unite->name} » créée", $unite);
+        $this->journal("Unité de mesure « {$unite->name} ({$unite->short_name}) » créée", $unite);
 
-        return $this->retour()->with('success', "Unité « {$unite->name} » ajoutée.");
+        return $this->retour()->with('success', "Unité « {$unite->name} ({$unite->short_name}) » ajoutée avec succès.");
     }
 
     public function update(Request $request, StockUnit $unite): RedirectResponse
     {
-        $nom = $this->nom($request, $unite);
-        $ancien = $unite->name;
+        $donnees = $this->valider($request, $unite);
+        $ancienNom = $unite->name;
+        $ancienCourt = $unite->short_name;
 
-        // L'article garde le nom de son unité : il suit le renommage.
-        DB::transaction(function () use ($unite, $nom, $ancien, $request) {
-            $unite->update(['name' => $nom, 'is_active' => $request->boolean('is_active')]);
+        DB::transaction(function () use ($unite, $donnees, $ancienNom, $ancienCourt, $request) {
+            $unite->update([
+                'name'              => $donnees['name'],
+                'short_name'        => $donnees['short_name'],
+                'factor'            => $donnees['factor'],
+                'reference_unit_id' => $donnees['reference_unit_id'],
+                'is_active'         => $request->boolean('is_active'),
+            ]);
 
-            if ($nom !== $ancien) {
-                StockItem::query()->where('unit', $ancien)->update(['unit' => $nom]);
+            // Mettre à jour les articles qui portaient l'ancien nom ou ancien symbole
+            if ($donnees['name'] !== $ancienNom || $donnees['short_name'] !== $ancienCourt) {
+                StockItem::query()
+                    ->whereIn('unit', array_filter([$ancienNom, $ancienCourt]))
+                    ->update(['unit' => $donnees['short_name']]);
             }
         });
 
-        $action = $nom !== $ancien ? "Unité de stockage « {$ancien} » renommée « {$nom} »" : "Unité de stockage « {$nom} » modifiée";
+        $action = "Unité de mesure « {$donnees['name']} ({$donnees['short_name']}) » modifiée";
         $this->journal($action . ($unite->is_active ? '' : ' (hors service)'), $unite);
 
-        return $this->retour()->with('success', "Unité « {$nom} » enregistrée.");
+        return $this->retour()->with('success', "Unité « {$donnees['name']} » mise à jour.");
     }
 
     public function destroy(StockUnit $unite): RedirectResponse
     {
         $articles = $unite->articlesCount();
-
-        // Une unité employée reste lisible sur les fiches et les bons.
         if ($articles > 0) {
-            return $this->retour()->withErrors(['unite' => "L'unité « {$unite->name} » est employée par {$articles} article(s) : mettez-la hors service plutôt que de la supprimer."]);
+            return $this->retour()->withErrors([
+                'unite' => "L'unité « {$unite->name} » est employée par {$articles} article(s) : mettez-la hors service plutôt que de la supprimer.",
+            ]);
         }
 
-        $unite->delete();
-        $this->journal("Unité de stockage « {$unite->name} » supprimée", $unite);
+        $dependances = $unite->subUnits()->count();
+        if ($dependances > 0) {
+            return $this->retour()->withErrors([
+                'unite' => "L'unité « {$unite->name} » sert d'unité de référence à {$dependances} autre(s) unité(s). Modifiez d'abord ces unités avant de la supprimer.",
+            ]);
+        }
 
-        return $this->retour()->with('success', "Unité « {$unite->name} » supprimée.");
+        $nom = $unite->name;
+        $unite->delete();
+        $this->journal("Unité de mesure « {$nom} » supprimée", $unite);
+
+        return $this->retour()->with('success', "Unité « {$nom} » supprimée.");
     }
 
-    private function nom(Request $request, ?StockUnit $unite = null): string
+    /**
+     * @return array{name: string, short_name: string, factor: float, reference_unit_id: ?int}
+     */
+    private function valider(Request $request, ?StockUnit $unite = null): array
     {
         $valide = $request->validate([
-            'name' => ['required', 'string', 'max:20'],
+            'name'              => ['required', 'string', 'max:50'],
+            'short_name'        => ['required', 'string', 'max:20'],
+            'factor'            => ['nullable', 'numeric', 'gt:0'],
+            'reference_unit_id' => ['nullable', 'integer', 'exists:stock_units,id'],
         ], [
-            'name.required' => "Donnez le nom de l'unité.",
-            'name.max'      => "Le nom d'une unité tient en 20 caractères.",
+            'name.required'       => "Indiquez le nom complet de l'unité (ex: Kilogramme).",
+            'name.max'            => "Le nom d'une unité ne peut pas dépasser 50 caractères.",
+            'short_name.required' => "Indiquez le symbole / nom court (ex: kg).",
+            'short_name.max'      => "Le nom court ne peut pas dépasser 20 caractères.",
+            'factor.numeric'      => "La valeur / facteur d'équivalence doit être un nombre positif.",
+            'factor.gt'           => "Le facteur d'équivalence doit être strictement supérieur à 0.",
         ]);
 
         $nom = trim($valide['name']);
+        $court = trim($valide['short_name']);
+        $refId = ! empty($valide['reference_unit_id']) ? (int) $valide['reference_unit_id'] : null;
+        $facteur = (float) ($valide['factor'] ?? 1.0);
 
-        // « Kg » et « kg » sont la même unité. La liste est courte : la
-        // comparer en PHP tient compte des accents, que LOWER() de SQLite ignore.
-        $existe = StockUnit::query()
+        if ($unite && $refId === $unite->id) {
+            $refId = null;
+            $facteur = 1.0;
+        }
+
+        // Vérification de circularité
+        if ($unite && $refId) {
+            $curr = StockUnit::find($refId);
+            $visited = [$unite->id];
+            while ($curr) {
+                if (in_array($curr->id, $visited, true)) {
+                    throw ValidationException::withMessages([
+                        'reference_unit_id' => "Cette unité de référence crée une référence circulaire.",
+                    ]);
+                }
+                $visited[] = $curr->id;
+                $curr = $curr->referenceUnit;
+            }
+        }
+
+        // Unicité insensible à la casse
+        $nomExiste = StockUnit::query()
             ->when($unite, fn ($q) => $q->whereKeyNot($unite->id))
-            ->pluck('name')
-            ->contains(fn (string $autre) => mb_strtolower($autre) === mb_strtolower($nom));
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($nom)])
+            ->exists();
 
-        if ($existe) {
+        if ($nomExiste) {
             throw ValidationException::withMessages([
                 'name' => "L'unité « {$nom} » existe déjà.",
             ]);
         }
 
-        return $nom;
+        $courtExiste = StockUnit::query()
+            ->when($unite, fn ($q) => $q->whereKeyNot($unite->id))
+            ->whereRaw('LOWER(short_name) = ?', [mb_strtolower($court)])
+            ->exists();
+
+        if ($courtExiste) {
+            throw ValidationException::withMessages([
+                'short_name' => "Le symbole / nom court « {$court} » est déjà utilisé par une autre unité.",
+            ]);
+        }
+
+        return [
+            'name'              => $nom,
+            'short_name'        => $court,
+            'factor'            => $refId ? $facteur : 1.0,
+            'reference_unit_id' => $refId,
+        ];
     }
 
     private function journal(string $action, StockUnit $unite): void

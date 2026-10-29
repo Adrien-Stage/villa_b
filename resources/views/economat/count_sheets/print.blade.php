@@ -170,7 +170,7 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="muted">{{ $ligne['unit'] }}</td>
+                                <td class="muted font-bold">{{ \App\Models\StockUnit::symbolFor($ligne['unit']) }}</td>
                                 @if($showTheoretical)<td class="num {{ $ligne['theoretical'] < 0 ? 'negatif' : '' }}">{{ $qte($ligne['theoretical']) }}</td>@endif
                                 <td class="fill"></td>
                                 @if($showTheoretical)<td class="fill"></td>@endif

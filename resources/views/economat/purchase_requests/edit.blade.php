@@ -4,13 +4,13 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestEditForm({{ Js::from($items->map(fn ($it) => [
-    'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->unit,
+    'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
     'stock' => (float) $it->current_stock,
     'price' => $it->last_purchase_price > 0 ? $it->last_purchase_price / 100 : $it->average_cost / 100,
 ])->values()) }}, {{ Js::from($request->lines->map(fn ($l) => [
     'id' => $l->id,
     'stock_item_id' => $l->stock_item_id,
-    'unit' => $l->item?->unit ?? '',
+    'unit' => $l->item?->shortUnit() ?? '',
     'current_stock' => (float) ($l->item?->current_stock ?? 0),
     'quantity' => (float) $l->quantity_requested,
     'unit_price' => (float) ($l->estimated_unit_price / 100),

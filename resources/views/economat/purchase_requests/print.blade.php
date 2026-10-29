@@ -106,6 +106,7 @@
                 <tr>
                     <th style="width:24px">#</th>
                     <th>Article</th>
+                    <th style="width:40px" class="text-center">Unité</th>
                     <th class="num">Demandée</th>
                     <th class="num">Approuvée</th>
                     <th class="num">P.U. estimé</th>
@@ -117,8 +118,9 @@
                     <tr>
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $ligne->item?->name ?? '—' }}</td>
-                        <td class="num">{{ $qte($ligne->quantity_requested) }} {{ $ligne->item?->unit }}</td>
-                        <td class="num {{ $ligne->estAjustee() ? 'ajuste' : '' }}">{{ $ligne->quantity_approved !== null ? $qte($ligne->quantity_approved) . ' ' . $ligne->item?->unit : '—' }}</td>
+                        <td class="text-center font-bold" style="font-size: 8.5px;">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
+                        <td class="num">{{ $qte($ligne->quantity_requested) }}</td>
+                        <td class="num {{ $ligne->estAjustee() ? 'ajuste' : '' }}">{{ $ligne->quantity_approved !== null ? $qte($ligne->quantity_approved) : '—' }}</td>
                         <td class="num">{{ $fcfa($ligne->estimated_unit_price) }} F</td>
                         <td class="num">{{ $fcfa($ligne->estimatedTotal()) }} F</td>
                     </tr>
@@ -126,7 +128,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5">Total estimé</td>
+                    <td colspan="6">Total estimé</td>
                     <td class="num">{{ $fcfa($request->total_estimated_amount) }} F</td>
                 </tr>
             </tfoot>

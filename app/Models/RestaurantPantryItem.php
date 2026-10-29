@@ -112,4 +112,12 @@ class RestaurantPantryItem extends Model
     {
         return (float) $this->current_stock * (float) $this->average_cost;
     }
+
+    /**
+     * Nom court / symbole de l'unité (ex: kg, g, pcs, l).
+     */
+    public function shortUnit(): string
+    {
+        return StockUnit::symbolFor($this->unit);
+    }
 }

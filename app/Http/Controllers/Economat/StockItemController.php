@@ -47,7 +47,7 @@ class StockItemController extends Controller
             'items'      => $items,
             'categories' => $categories,
             'suppliers'  => $suppliers,
-            'unites'     => StockUnit::choix(),
+            'unites'     => StockUnit::selectOptions(),
             'filter'     => $request->query('filter'),
             'recherche'  => $recherche,
         ]);
@@ -71,7 +71,7 @@ class StockItemController extends Controller
             'stock_category_id' => $validated['stock_category_id'] ?? null,
             'name'              => trim($validated['name']),
             'reference'         => $validated['reference'] ?? null,
-            'unit'              => $validated['unit'],
+            'unit'              => StockUnit::symbolFor($validated['unit']),
             'description'       => $validated['description'] ?? null,
             'min_stock'         => $validated['min_stock'] ?? 0,
             'supplier_id'       => $validated['supplier_id'] ?? null,
@@ -96,7 +96,7 @@ class StockItemController extends Controller
                 $item->update([
                     'name'        => trim($validated['name']),
                     'reference'   => $validated['reference'] ?? null,
-                    'unit'        => $validated['unit'],
+                    'unit'        => StockUnit::symbolFor($validated['unit']),
                     'description' => $validated['description'] ?? null,
                     'min_stock'   => $validated['min_stock'] ?? 0,
                     'supplier_id' => $validated['supplier_id'] ?? null,

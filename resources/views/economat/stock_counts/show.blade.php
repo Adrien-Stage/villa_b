@@ -177,6 +177,7 @@
                     <thead class="bg-gray-100/60 text-primary/60 text-[11px] font-semibold uppercase tracking-wider">
                         <tr>
                             <th class="px-4 py-3 text-left">Article</th>
+                            <th class="px-3 py-3 text-center">Unité</th>
                             <th class="px-4 py-3 text-right">Stock initial (théorique)</th>
                             <th class="px-4 py-3 text-right w-32">Stock compté</th>
                             <th class="px-4 py-3 text-right">Écart qté</th>
@@ -224,8 +225,12 @@
                                 <td class="px-4 py-3">
                                     <p class="font-medium text-primary text-xs sm:text-sm">{{ $line->item?->name ?? '—' }}</p>
                                     <p class="text-[11px] text-primary/45 mt-0.5">
-                                        {{ $line->item?->category?->name ?? 'Épicerie' }} · Unité : <span class="font-mono">{{ $line->item?->unit }}</span>
+                                        {{ $line->item?->category?->name ?? 'Épicerie' }}
                                     </p>
+                                </td>
+
+                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">
+                                    {{ $line->item?->shortUnit() ?? $line->item?->unit }}
                                 </td>
 
                                 <td class="px-4 py-3 text-right font-mono text-xs text-primary/70">

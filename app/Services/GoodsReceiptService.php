@@ -8,6 +8,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
@@ -417,7 +418,7 @@ class GoodsReceiptService
 
         return $nouveaux[$cle] = StockItem::create([
             'name'              => $nom,
-            'unit'              => trim((string) ($ligne['nouvel_article']['unit'] ?? '')) ?: 'pièce',
+            'unit'              => StockUnit::symbolFor($ligne['nouvel_article']['unit'] ?? 'pcs'),
             'stock_category_id' => $ligne['nouvel_article']['stock_category_id'] ?? null,
             'supplier_id'       => $supplier->id,
             // Le stock et le coût moyen naissent de la réception qui suit.

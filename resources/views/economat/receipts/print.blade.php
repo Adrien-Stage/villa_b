@@ -324,13 +324,14 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 28%; text-align: left;">Désignation de l'article</th>
+                <th style="width: 25%; text-align: left;">Désignation de l'article</th>
+                <th style="width: 7%; text-align: center;">Unité</th>
                 <th style="width: 10%; text-align: right;">Commandé</th>
                 <th style="width: 10%; text-align: right;">Livré (BL)</th>
-                <th style="width: 12%; text-align: right;">Admis (Stock)</th>
-                <th style="width: 10%; text-align: right;">Refusé</th>
-                <th style="width: 12%; text-align: right;">Prix Unitaire</th>
-                <th style="width: 18%; text-align: right;">Montant Admis (TTC)</th>
+                <th style="width: 11%; text-align: right;">Admis (Stock)</th>
+                <th style="width: 9%; text-align: right;">Refusé</th>
+                <th style="width: 11%; text-align: right;">Prix Unitaire</th>
+                <th style="width: 17%; text-align: right;">Montant Admis (TTC)</th>
             </tr>
         </thead>
         <tbody>
@@ -338,13 +339,13 @@
                 <tr>
                     <td>
                         <div class="font-bold">{{ $line->item?->name ?? '—' }}</div>
-                        <div style="font-size: 8px; color: #64748b;">Unité : {{ $line->item?->unit }}</div>
                         @if($line->quantity_rejected > 0)
                             <div style="font-size: 8px; color: #b91c1c; font-weight: bold; margin-top: 2px;">
                                 Litige : {{ $line->rejectionReasonLabel() }} @if($line->notes) — {{ $line->notes }}@endif
                             </div>
                         @endif
                     </td>
+                    <td class="text-center font-mono font-bold" style="font-size: 8.5px;">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
                     <td class="text-right font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
                     <td class="text-right font-mono">{{ rtrim(rtrim(number_format($line->quantity_delivered, 3, ',', ' '), '0'), ',') }}</td>
                     <td class="text-right font-mono font-bold">

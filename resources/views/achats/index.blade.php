@@ -181,6 +181,7 @@
                                     <th scope="col" class="px-4 py-2 text-left font-medium">Fournisseur habituel</th>
                                     <th scope="col" class="px-4 py-2 text-right font-medium">En stock</th>
                                     <th scope="col" class="px-4 py-2 text-right font-medium">Seuil</th>
+                                    <th scope="col" class="px-4 py-2 text-center font-medium">Unité</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,8 +189,9 @@
                                     <tr class="border-b border-secondary/10 last:border-0">
                                         <td class="px-4 py-2 text-primary font-medium">{{ $article->name }}</td>
                                         <td class="px-4 py-2 text-primary/60">{{ $article->supplier?->name ?? 'Non défini' }}</td>
-                                        <td class="px-4 py-2 text-right font-mono {{ (float) $article->current_stock <= 0 ? 'text-red-600 font-semibold' : 'text-primary' }}">{{ $qte($article->current_stock) }} {{ $article->unit }}</td>
-                                        <td class="px-4 py-2 text-right font-mono text-primary/60">{{ $qte($article->min_stock) }} {{ $article->unit }}</td>
+                                        <td class="px-4 py-2 text-right font-mono {{ (float) $article->current_stock <= 0 ? 'text-red-600 font-semibold' : 'text-primary' }}">{{ $qte($article->current_stock) }}</td>
+                                        <td class="px-4 py-2 text-right font-mono text-primary/60">{{ $qte($article->min_stock) }}</td>
+                                        <td class="px-4 py-2 text-center font-mono font-bold text-xs text-primary/70">{{ $article->shortUnit() }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -189,8 +189,8 @@
                                 <td class="px-4 py-3 text-primary/60">
                                     {{ $item?->category?->name ?? 'Général' }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-primary/60">
-                                    {{ $item?->unit ?? 'u' }}
+                                <td class="px-4 py-3 text-center text-primary/70 font-mono font-bold">
+                                    {{ $item?->shortUnit() ?? 'u' }}
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <span class="font-mono {{ $serviceable ? 'text-primary/70' : 'text-red-600 font-bold' }}">

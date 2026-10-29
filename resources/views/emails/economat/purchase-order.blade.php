@@ -52,6 +52,7 @@
                                         {{-- Les articles et les quantités à livrer, jamais les prix. --}}
                                         <th align="left" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Article</th>
                                         <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Quantité</th>
+                                        <th align="center" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Unité</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -59,9 +60,9 @@
                                         <tr>
                                             <td style="padding:8px; border-bottom:1px solid #efeae1;">
                                                 {{ $line->item?->name ?? 'Article' }}
-                                                <span style="color:#8a7d6b;">({{ $line->item?->unit }})</span>
                                             </td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}</td>
+                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
+                                            <td align="center" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace; font-weight:bold; color:#5a5045;">{{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

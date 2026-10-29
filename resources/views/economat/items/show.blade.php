@@ -81,6 +81,7 @@
                         <tr>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock restant</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Quantité</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock Total</th>
@@ -98,6 +99,7 @@
                                         {{ $m->typeLabel() }}
                                     </span>
                                 </td>
+                                <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ $item->shortUnit() }}</td>
                                 <td class="px-5 py-2.5 text-right text-primary/60">{{ rtrim(rtrim(number_format($m->stockAvant(), 3, ',', ' '), '0'), ',') }}</td>
                                 <td class="px-5 py-2.5 text-right font-medium {{ $m->quantity > 0 ? 'text-green-700' : 'text-red-700' }}">
                                     {{ $m->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($m->quantity, 3, ',', ' '), '0'), ',') }}
