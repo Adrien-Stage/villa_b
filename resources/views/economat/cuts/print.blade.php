@@ -96,6 +96,7 @@
                 <tr>
                     <th style="width:24px">#</th>
                     <th>Portion</th>
+                    <th class="text-center" style="width:40px">Unité</th>
                     <th class="num">Quantité</th>
                     <th class="num">Part</th>
                     <th class="num">Valeur</th>
@@ -108,17 +109,18 @@
                     <tr>
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $ligne->label }}</td>
-                        <td class="num">{{ \App\Support\Conditionnement::libelle((float) $ligne->pantry_quantity, $uniteCuisine) }}</td>
+                        <td class="text-center font-bold" style="font-size: 8.5px;">{{ \App\Models\StockUnit::symbolFor($uniteCuisine) }}</td>
+                        <td class="num">{{ rtrim(rtrim(number_format((float) $ligne->pantry_quantity, 3, ',', ' '), '0'), ',') }}</td>
                         <td class="num">{{ $reparti > 0 ? number_format(100 * (float) $ligne->quantity / $reparti, 1, ',', ' ') : 0 }} %</td>
                         <td class="num">{{ $fcfa($ligne->value) }} F</td>
-                        <td class="num">{{ $fcfa($ligne->unit_cost) }} F / {{ $uniteCuisine }}</td>
+                        <td class="num">{{ $fcfa($ligne->unit_cost) }} F / {{ \App\Models\StockUnit::symbolFor($uniteCuisine) }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2">Total réparti</td>
-                    <td class="num">{{ \App\Support\Conditionnement::libelle($reparti, $unite) }}</td>
+                    <td colspan="3">Total réparti</td>
+                    <td class="num">{{ rtrim(rtrim(number_format($reparti, 3, ',', ' '), '0'), ',') }}</td>
                     <td></td>
                     <td class="num">{{ $fcfa($decoupe->lines->sum('value')) }} F</td>
                     <td></td>

@@ -242,6 +242,7 @@
                     <thead class="bg-gray-50/70">
                         <tr>
                             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Commandé</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Déjà reçu</th>
                             <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">P.U.</th>
@@ -258,14 +259,14 @@
                                     <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
                                     <div class="text-[11px] text-primary/40 flex items-center gap-1.5 mt-0.5">
                                         @if($line->item?->code)
-                                            <span class="font-mono">{{ $line->item->code }}</span> ·
+                                            <span class="font-mono">{{ $line->item->code }}</span>
                                         @endif
-                                        <span class="inline-block px-1.5 py-0.2 bg-gray-100 rounded text-[10px]">{{ $line->item?->unit ?? 'unité' }}</span>
                                         @if($line->item?->category)
                                             · <span>{{ $line->item->category->name }}</span>
                                         @endif
                                     </div>
                                 </td>
+                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
                                 <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
                                 <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
                                 <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ number_format($line->unit_price / 100, 0, ',', ' ') }} F</td>

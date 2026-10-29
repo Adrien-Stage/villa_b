@@ -157,6 +157,7 @@
                     @endphp
                     <tr>
                         <th class="px-5 py-3 text-left">Article</th>
+                        <th class="px-3 py-3 text-center">Unité</th>
                         <th class="px-5 py-3 text-left">Fournisseur habituel</th>
                         <th class="px-5 py-3 text-right">Quantité demandée</th>
                         @if($approuvee)
@@ -171,13 +172,15 @@
                         <tr class="hover:bg-gray-50/40">
                             <td class="px-5 py-3 text-primary font-medium">
                                 {{ $line->item?->name ?? '—' }}
-                                <span class="text-xs text-primary/40">({{ $line->item?->unit }})</span>
+                            </td>
+                            <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">
+                                {{ $line->item?->shortUnit() ?? $line->item?->unit }}
                             </td>
                             <td class="px-5 py-3 text-primary/60 text-xs">
                                 {{ $line->item?->supplier?->name ?? 'Non défini' }}
                             </td>
                             <td class="px-5 py-3 text-right font-mono font-bold text-primary">
-                                {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
+                                {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
                             </td>
                             @if($approuvee)
                                 <td class="px-5 py-3 text-right font-mono">
@@ -188,7 +191,7 @@
                                                class="w-24 rounded-md border border-secondary/30 px-2 py-1 text-right text-sm text-primary focus:outline-none focus:border-primary">
                                     @elseif($line->quantity_approved !== null)
                                         <span class="font-bold {{ $line->estAjustee() ? 'text-amber-700' : 'text-primary' }}">
-                                            {{ rtrim(rtrim(number_format($line->quantity_approved, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
+                                            {{ rtrim(rtrim(number_format($line->quantity_approved, 3, ',', ' '), '0'), ',') }}
                                         </span>
                                         @if($line->estAjustee())<span class="block text-[10px] text-amber-700">ajustée</span>@endif
                                     @endif

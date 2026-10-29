@@ -34,13 +34,15 @@
                     <x-table.col>Pièce</x-table.col>
                     <x-table.col hide="md">Catégorie</x-table.col>
                     <x-table.col align="right">Stock</x-table.col>
+                    <x-table.col align="center">Unité</x-table.col>
                     <x-table.col align="right" hide="sm">Valeur (FCFA)</x-table.col>
                 </x-slot:head>
                 @foreach($lignes as $stock)
                     <x-table.row :muted="(float) $stock->current_stock <= 0">
                         <x-table.cell class="text-sm">{{ $stock->item->name }} <span class="block text-[11px] text-primary/45">{{ $stock->item->reference }}</span></x-table.cell>
                         <x-table.cell hide="md" class="text-xs text-primary/60">{{ $stock->item->category?->name ?? '—' }}</x-table.cell>
-                        <x-table.cell align="right" nowrap class="font-medium">{{ $qte($stock->current_stock) }} <span class="text-xs font-normal text-primary/60">{{ $stock->item->unit }}</span></x-table.cell>
+                        <x-table.cell align="right" nowrap class="font-medium font-mono">{{ $qte($stock->current_stock) }}</x-table.cell>
+                        <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($stock->item->unit) }}</x-table.cell>
                         <x-table.cell align="right" hide="sm" class="text-xs">{{ number_format($stock->stockValue() / 100, 0, ',', ' ') }}</x-table.cell>
                     </x-table.row>
                 @endforeach
@@ -56,13 +58,15 @@
                     <x-table.col>Le</x-table.col>
                     <x-table.col>Pièce</x-table.col>
                     <x-table.col align="right">Quantité</x-table.col>
+                    <x-table.col align="center">Unité</x-table.col>
                     <x-table.col>Intervention</x-table.col>
                 </x-slot:head>
                 @foreach($sorties as $sortie)
                     <x-table.row>
                         <x-table.cell nowrap class="text-xs">{{ $sortie->occurred_at?->format('d/m H:i') }}</x-table.cell>
                         <x-table.cell class="text-sm">{{ $sortie->item?->name ?? '—' }}</x-table.cell>
-                        <x-table.cell align="right" nowrap>{{ $qte($sortie->quantity) }} <span class="text-xs text-primary/60">{{ $sortie->item?->unit }}</span></x-table.cell>
+                        <x-table.cell align="right" nowrap class="font-mono font-medium">{{ $qte($sortie->quantity) }}</x-table.cell>
+                        <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($sortie->item?->unit) }}</x-table.cell>
                         <x-table.cell class="text-xs">
                             @if(isset($demandes[$sortie->source_id]))
                                 <a href="{{ route('technique.demandes.show', $sortie->source_id) }}" class="text-primary hover:underline">{{ $demandes[$sortie->source_id] }}</a>

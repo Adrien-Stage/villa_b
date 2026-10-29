@@ -128,6 +128,7 @@
                 <thead class="bg-accent/20">
                     <tr>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Ingrédient</th>
+                        <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-widest text-primary/50">Unité</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Stock théorique</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Compté</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Écart</th>
@@ -146,12 +147,14 @@
                                 <p class="text-sm font-medium text-primary">{{ $line->item?->name ?? 'Article supprimé' }}</p>
                                 <p class="text-[11px] text-primary/40">
                                     {{ $line->item?->category?->name ?? 'Sans catégorie' }}
-                                    · {{ number_format((float) $line->unit_cost / 100, 2, ',', ' ') }} FCFA / {{ $line->item?->unit }}
+                                    · {{ number_format((float) $line->unit_cost / 100, 2, ',', ' ') }} FCFA / {{ $line->item?->shortUnit() }}
                                 </p>
                             </td>
-                            <td class="px-4 py-2.5 text-right text-sm text-primary/70 whitespace-nowrap">
+                            <td class="px-4 py-2.5 text-center font-mono font-bold text-xs text-primary/70">
+                                {{ $line->item?->shortUnit() }}
+                            </td>
+                            <td class="px-4 py-2.5 text-right text-sm text-primary/70 whitespace-nowrap font-mono">
                                 {{ rtrim(rtrim(number_format((float) $line->theoretical_quantity, 3, ',', ' '), '0'), ',') }}
-                                <span class="text-[11px] text-primary/40">{{ $line->item?->unit }}</span>
                             </td>
                             <td class="px-4 py-2.5 text-right">
                                 @if($count->isDraft() && $canManage)
@@ -173,9 +176,8 @@
                                         <i data-lucide="check" class="w-3.5 h-3.5"></i> juste
                                     </span>
                                 @else
-                                    <span class="font-semibold {{ $variance < 0 ? 'text-red-600' : 'text-amber-600' }}">
+                                    <span class="font-semibold font-mono {{ $variance < 0 ? 'text-red-600' : 'text-amber-600' }}">
                                         {{ $variance > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($variance, 3, ',', ' '), '0'), ',') }}
-                                        <span class="text-[11px] font-normal">{{ $line->item?->unit }}</span>
                                     </span>
                                 @endif
                             </td>

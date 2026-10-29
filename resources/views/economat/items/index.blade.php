@@ -69,6 +69,7 @@
             <x-table.col>Article</x-table.col>
             <x-table.col hide="xl">Catégorie</x-table.col>
             <x-table.col align="right">Stock</x-table.col>
+            <x-table.col align="center">Unité</x-table.col>
             <x-table.col align="right" hide="lg">Coût moyen</x-table.col>
             <x-table.col align="right">Valeur</x-table.col>
             <x-table.col actions />
@@ -103,13 +104,13 @@
                 <x-table.cell align="right" nowrap>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}" aria-hidden="true"></span>
-                        <span class="font-medium text-primary">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
-                        <span class="text-xs text-primary/45">{{ $item->unit }}</span>
+                        <span class="font-medium text-primary font-mono">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
                     </span>
                     @if($item->packagings->isNotEmpty())
                         <span class="block text-[10px] text-primary/50">{{ $item->stockDecompose() }}</span>
                     @endif
                 </x-table.cell>
+                <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ $item->shortUnit() }}</x-table.cell>
                 <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ number_format($item->average_cost / 100, 0, ',', ' ') }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-medium">{{ number_format($item->stockValue() / 100, 0, ',', ' ') }}</x-table.cell>
                 <x-table.actions :label="'Actions pour '.$item->name">
@@ -151,7 +152,9 @@
                             <label for="article-unite" class="block text-xs font-medium text-primary/70 mb-1.5">Unité <span class="text-red-500">*</span></label>
                             <select id="article-unite" name="unit" x-model="form.unit" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                                 <option value="">Choisir…</option>
-                                <template x-for="u in unitesProposees" :key="u"><option :value="u" x-text="u" :selected="u === form.unit"></option></template>
+                                <template x-for="u in unitesProposees" :key="u.value || u">
+                                    <option :value="u.value || u" x-text="u.label || u" :selected="(u.value || u) === form.unit"></option>
+                                </template>
                             </select>
                             @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'economat'))
                                 <a href="{{ route('settings.index', ['tab' => 'economat']) }}" class="mt-1 inline-block text-[11px] text-primary/50 underline hover:text-primary">Gérer les unités</a>
@@ -326,12 +329,20 @@
             openingOpen: false, openingAction: '', opening: {},
             autoCode: true,
             blank() {
-                return { id: null, name: '', reference: '', unit: this.unites.includes('pièce') ? 'pièce' : (this.unites[0] ?? ''), description: '',
+                let premiere = this.unites.length > 0 ? (this.unites[0].value || this.unites[0]) : '';
+                return { id: null, name: '', reference: '', unit: premiere, description: '',
                     stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true };
             },
             // L'unité d'un article mise hors service depuis reste proposée pour lui.
             get unitesProposees() {
-                return this.form.unit && !this.unites.includes(this.form.unit) ? [...this.unites, this.form.unit] : this.unites;
+                let options = this.unites || [];
+                let current = this.form.unit;
+                if (!current) return options;
+                let exists = options.some(u => (u.value || u) === current || (u.short_name || u) === current || (u.name || u) === current);
+                if (!exists) {
+                    return [...options, { value: current, label: current, short_name: current, name: current }];
+                }
+                return options;
             },
             // La référence suit le nom tant qu'elle n'a pas été saisie à la main.
             applyAutoCode() { if (this.autoCode) this.form.reference = window.suggestCode(this.form.name || ''); },

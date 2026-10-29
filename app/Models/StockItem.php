@@ -175,6 +175,12 @@ class StockItem extends Model
         return $etat === null ? null : \App\Support\Conditionnement::decomposition($etat, (string) $this->unit);
     }
 
+    /** Nom court / symbole de l'unité de stock (ex: kg, pcs, l). */
+    public function shortUnit(): string
+    {
+        return StockUnit::symbolFor($this->unit);
+    }
+
     /**
      * Les unités dans lesquelles on peut demander ou sortir cet article : la
      * sienne, puis ses conditionnements. Pour les formulaires.

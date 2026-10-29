@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RestaurantPantryCategory;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantPantryMovement;
+use App\Models\StockUnit;
 use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Carbon\Carbon;
@@ -98,7 +99,7 @@ class RestaurantPantryController extends Controller
             // vue d'ensemble, on choisit d'abord lequel.
             'peutCreer' => $canManage && ! $vueEnsemble,
             'vueEnsemble' => $vueEnsemble,
-            'units' => self::UNITS,
+            'units' => StockUnit::selectOptions(),
             'moveTypes' => self::MOVE_TYPES,
             'moveReasons' => self::MOVE_REASONS,
             'reasonLabels' => RestaurantPantryMovement::REASON_LABELS,
@@ -179,7 +180,7 @@ class RestaurantPantryController extends Controller
                 'max:140',
                 Rule::unique('restaurant_pantry_items', 'name')->where('point_of_sale_id', $restaurant->id),
             ],
-            'unit' => ['required', Rule::in(self::UNITS)],
+            'unit' => ['required', 'string', Rule::in(StockUnit::choix())],
             'is_prepared' => ['nullable', 'boolean'],
             // On achète en sacs de 50 kg mais on cuisine en grammes : l'unité d'achat
             // et son facteur de conversion évitent l'erreur de saisie la plus courante.
@@ -197,7 +198,7 @@ class RestaurantPantryController extends Controller
             'point_of_sale_id' => $restaurant->id,
             'restaurant_pantry_category_id' => $validated['restaurant_pantry_category_id'] ?? null,
             'name' => trim($validated['name']),
-            'unit' => $validated['unit'],
+            'unit' => StockUnit::symbolFor($validated['unit']),
             'is_prepared' => $request->boolean('is_prepared'),
             'purchase_unit' => $validated['purchase_unit'] ?? null,
             'purchase_conversion' => $validated['purchase_conversion'] ?? 1,
@@ -228,7 +229,7 @@ class RestaurantPantryController extends Controller
                     ->ignore($item->id)
                     ->where('point_of_sale_id', $item->point_of_sale_id),
             ],
-            'unit' => ['required', Rule::in(self::UNITS)],
+            'unit' => ['required', 'string', Rule::in(StockUnit::choix($item->unit))],
             'is_prepared' => ['nullable', 'boolean'],
             // On achète en sacs de 50 kg mais on cuisine en grammes : l'unité d'achat
             // et son facteur de conversion évitent l'erreur de saisie la plus courante.
@@ -243,7 +244,7 @@ class RestaurantPantryController extends Controller
         $item->update([
             'restaurant_pantry_category_id' => $validated['restaurant_pantry_category_id'] ?? null,
             'name' => trim($validated['name']),
-            'unit' => $validated['unit'],
+            'unit' => StockUnit::symbolFor($validated['unit']),
             'is_prepared' => $request->boolean('is_prepared'),
             'purchase_unit' => $validated['purchase_unit'] ?? null,
             'purchase_conversion' => $validated['purchase_conversion'] ?? 1,

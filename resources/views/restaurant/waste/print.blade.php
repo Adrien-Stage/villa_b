@@ -186,6 +186,7 @@
             <tr>
                 <th>Désignation de la matière</th>
                 <th>Catégorie</th>
+                <th class="text-center" style="width: 50px;">Unité</th>
                 <th class="text-right">Quantité mise au rebut</th>
                 <th class="text-right">Coût unitaire (FCFA)</th>
                 <th class="text-right">Valorisation totale (FCFA)</th>
@@ -195,7 +196,8 @@
             <tr>
                 <td class="font-bold">{{ $waste->item?->name ?? 'Article' }}</td>
                 <td>{{ $waste->item?->category?->name ?? 'Matière première' }}</td>
-                <td class="text-right font-bold">{{ rtrim(rtrim(number_format((float) $waste->quantity, 3, ',', ' '), '0'), ',') }} {{ $waste->item?->unit }}</td>
+                <td class="text-center font-bold" style="font-size: 8.5px;">{{ \App\Models\StockUnit::symbolFor($waste->item?->unit) }}</td>
+                <td class="text-right font-bold">{{ rtrim(rtrim(number_format((float) $waste->quantity, 3, ',', ' '), '0'), ',') }}</td>
                 <td class="text-right">{{ number_format($waste->unitCostFcfa(), 2, ',', ' ') }}</td>
                 <td class="text-right font-bold">{{ number_format($waste->totalCostFcfa(), 0, ',', ' ') }} FCFA</td>
             </tr>

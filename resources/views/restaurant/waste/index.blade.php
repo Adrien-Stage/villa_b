@@ -136,6 +136,7 @@
         <x-table.col>Date &amp; réf.</x-table.col>
         <x-table.col>Article</x-table.col>
         <x-table.col align="right">Quantité</x-table.col>
+        <x-table.col align="center">Unité</x-table.col>
         <x-table.col align="right" hide="2xl">Coût unitaire</x-table.col>
         <x-table.col align="right">Valeur</x-table.col>
         <x-table.col hide="lg">Motif &amp; atelier</x-table.col>
@@ -155,7 +156,8 @@
                     <div class="text-[10px] text-primary/50">{{ $log->item->category->name }}</div>
                 @endif
             </x-table.cell>
-            <x-table.cell align="right" nowrap class="font-medium text-red-600">-{{ rtrim(rtrim(number_format((float) $log->quantity, 3, ',', ' '), '0'), ',') }} {{ $log->item?->unit }}</x-table.cell>
+            <x-table.cell align="right" nowrap class="font-medium text-red-600 font-mono">-{{ rtrim(rtrim(number_format((float) $log->quantity, 3, ',', ' '), '0'), ',') }}</x-table.cell>
+            <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($log->item?->unit) }}</x-table.cell>
             <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($log->unitCostFcfa(), 2, ',', ' ') }} FCFA</x-table.cell>
             <x-table.cell align="right" nowrap class="font-semibold text-red-600">{{ $log->formattedTotalCost() }}</x-table.cell>
             <x-table.cell hide="lg">

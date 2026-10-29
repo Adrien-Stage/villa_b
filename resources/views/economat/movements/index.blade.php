@@ -174,6 +174,7 @@
             @unless($article)<x-table.col>Article</x-table.col>@endunless
             <x-table.col>Mouvement</x-table.col>
             <x-table.col hide="lg">Document</x-table.col>
+            <x-table.col align="center">Unité</x-table.col>
             <x-table.col align="right">Stock restant</x-table.col>
             <x-table.col align="right">Entrée</x-table.col>
             <x-table.col align="right">Sortie</x-table.col>
@@ -203,11 +204,12 @@
                         <span class="text-primary/60">{{ $l['origine'] }}</span>
                     @endif
                 </x-table.cell>
+                <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($l['unite']) }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono text-primary/70">{{ $qte($l['avant']) }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono text-green-700">{{ $l['entree'] !== null ? '+' . $qte($l['entree']) : '' }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono text-red-700">{{ $l['sortie'] !== null ? '−' . $qte($l['sortie']) : '' }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono font-bold text-primary">
-                    {{ $qte($l['apres']) }} <span class="text-[10px] font-sans font-normal text-primary/50">{{ $l['unite'] }}</span>
+                    {{ $qte($l['apres']) }}
                     @if($l['apres_decompose'])<span class="block text-[10px] font-sans font-normal text-primary/45">{{ $l['apres_decompose'] }}</span>@endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $fcfa($l['cout']) }}</x-table.cell>

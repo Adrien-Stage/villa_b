@@ -259,6 +259,7 @@
                 <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
                     <tr>
                         <th class="px-5 py-3 text-left">Article</th>
+                        <th class="px-3 py-3 text-center">Unité</th>
                         <th class="px-3 py-3 text-right">Commandé</th>
                         <th class="px-3 py-3 text-right">Livré (BL)</th>
                         <th class="px-3 py-3 text-right text-emerald-800">Accepté (Stock)</th>
@@ -274,9 +275,8 @@
                                 <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
                                 <div class="text-[11px] text-primary/40 flex items-center gap-1 mt-0.5">
                                     @if($line->item?->code)
-                                        <span class="font-mono">{{ $line->item->code }}</span> ·
+                                        <span class="font-mono">{{ $line->item->code }}</span>
                                     @endif
-                                    <span>Unité : {{ $line->item?->unit }}</span>
                                     @if($line->item?->category)
                                         · <span>{{ $line->item->category->name }}</span>
                                     @endif
@@ -289,6 +289,7 @@
                                     </div>
                                 @endif
                             </td>
+                            <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
                             <td class="px-3 py-3 text-right font-mono text-primary/60">
                                 {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
                             </td>

@@ -187,6 +187,7 @@
                     <x-table.col>Article</x-table.col>
                     <x-table.col>Type</x-table.col>
                     <x-table.col align="right">Quantité</x-table.col>
+                    <x-table.col align="center">Unité</x-table.col>
                     <x-table.col align="right" hide="md">Coût unit.</x-table.col>
                     <x-table.col hide="lg">Document</x-table.col>
                     <x-table.col hide="lg">Destination / motif</x-table.col>
@@ -206,7 +207,8 @@
                         <x-table.cell nowrap>
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold border {{ $couleurs[$m['type']] ?? '' }}">{{ $m['type'] }}</span>
                         </x-table.cell>
-                        <x-table.cell align="right" nowrap class="font-medium">{{ $qte($m['quantite']) }} <span class="text-xs font-normal text-primary/60">{{ $m['unite'] }}</span></x-table.cell>
+                        <x-table.cell align="right" nowrap class="font-medium font-mono">{{ $qte($m['quantite']) }}</x-table.cell>
+                        <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($m['unite']) }}</x-table.cell>
                         <x-table.cell align="right" nowrap hide="md" class="text-xs text-primary/70">{{ $m['cout'] !== null ? number_format($m['cout'], 0, ',', ' ') : '—' }}</x-table.cell>
                         <x-table.cell hide="lg" class="text-xs text-primary/70">
                             {{ $m['document'] ?? '' }}

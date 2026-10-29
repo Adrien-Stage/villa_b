@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
-    'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->unit,
+    'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
     'stock' => (float) $it->current_stock,
     'price' => $it->last_purchase_price > 0 ? $it->last_purchase_price / 100 : $it->average_cost / 100,
 ])->values()) }})">

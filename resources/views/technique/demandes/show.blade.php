@@ -317,6 +317,7 @@
                         <x-slot:head>
                             <x-table.col>Réf. & Désignation</x-table.col>
                             <x-table.col align="right">Quantité</x-table.col>
+                            <x-table.col align="center">Unité</x-table.col>
                             <x-table.col align="right" hide="sm">P.U. (FCFA)</x-table.col>
                             <x-table.col align="right">Total (FCFA)</x-table.col>
                             <x-table.col hide="md">Délivré le</x-table.col>
@@ -331,8 +332,11 @@
                                     <span class="font-medium text-primary">{{ $piece->item?->name ?? 'Article' }}</span>
                                     <span class="block text-[11px] text-primary/50">{{ $piece->item?->reference ?? '—' }}</span>
                                 </x-table.cell>
-                                <x-table.cell align="right" nowrap class="font-medium">
-                                    {{ $qte($piece->quantity) }} <span class="text-xs text-primary/60">{{ $piece->item?->unit }}</span>
+                                <x-table.cell align="right" nowrap class="font-medium font-mono">
+                                    {{ $qte($piece->quantity) }}
+                                </x-table.cell>
+                                <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">
+                                    {{ \App\Models\StockUnit::symbolFor($piece->item?->unit) }}
                                 </x-table.cell>
                                 <x-table.cell align="right" hide="sm" class="text-xs text-primary/70">
                                     {{ number_format($piece->unit_cost / 100, 0, ',', ' ') }}

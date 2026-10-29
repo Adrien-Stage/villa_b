@@ -10,6 +10,7 @@ use App\Models\StockCut;
 use App\Models\StockCutLine;
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Models\StockUnit;
 use App\Models\User;
 use App\Support\Conditionnement;
 use Illuminate\Support\Facades\DB;
@@ -179,6 +180,11 @@ class StockCutService
         $b = mb_strtolower(trim($vers));
         if ($a === $b) {
             return 1.0;
+        }
+
+        $taux = StockUnit::conversionRate($depuis, $vers);
+        if ($taux !== null && $taux > 0) {
+            return (float) $taux;
         }
 
         [$familleA, $valeurA] = self::FAMILLES[$a] ?? [null, null];

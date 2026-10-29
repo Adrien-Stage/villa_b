@@ -101,6 +101,7 @@
                     <th style="width:80px">Référence</th>
                     <th>Article</th>
                     <th class="num">Quantité</th>
+                    <th class="text-center" style="width:40px">Unité</th>
                     <th class="num">Coût unitaire</th>
                     <th class="num">Valeur</th>
                     <th>Note</th>
@@ -112,7 +113,8 @@
                         <td>{{ $i + 1 }}</td>
                         <td class="muted">{{ $ligne->item?->reference ?? '' }}</td>
                         <td>{{ $ligne->item?->name ?? '—' }}</td>
-                        <td class="num">{{ $ligne->packaging_name ? $ligne->enConditionnement((float) $ligne->quantity) : $qte($ligne->quantity) . ' ' . $ligne->item?->unit }}</td>
+                        <td class="num">{{ $qte($ligne->quantity) }}</td>
+                        <td class="text-center font-bold" style="font-size: 8.5px;">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
                         <td class="num">{{ $fcfa((int) $ligne->unit_cost) }} F</td>
                         <td class="num">{{ $fcfa((int) $ligne->total_cost) }} F</td>
                         <td>{{ $ligne->notes ?? '' }}</td>
@@ -121,7 +123,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5">Valeur totale au coût moyen</td>
+                    <td colspan="6">Valeur totale au coût moyen</td>
                     <td class="num">{{ $fcfa((int) $sortie->total_value) }} F</td>
                     <td></td>
                 </tr>

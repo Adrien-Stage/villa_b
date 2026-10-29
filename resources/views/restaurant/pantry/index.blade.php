@@ -148,6 +148,7 @@
             <x-table.col>Article</x-table.col>
             <x-table.col hide="2xl">Catégorie</x-table.col>
             <x-table.col align="right">Stock</x-table.col>
+            <x-table.col align="center">Unité</x-table.col>
             <x-table.col align="right" hide="lg">Min</x-table.col>
             <x-table.col align="right" hide="xl">Coût moyen</x-table.col>
             <x-table.col align="right" hide="md">Valeur</x-table.col>
@@ -178,6 +179,7 @@
                 </x-table.cell>
                 <x-table.cell hide="2xl" class="text-primary/70">{{ $item->category?->name ?? '—' }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-semibold {{ $isNegative ? 'text-red-600' : '' }}">{{ rtrim(rtrim(number_format((float) $item->current_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
+                <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ $item->shortUnit() }}</x-table.cell>
                 <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ rtrim(rtrim(number_format((float) $item->min_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="text-xs {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
                     @if((float) $item->average_cost <= 0)
@@ -389,8 +391,12 @@
             <div>
                 <label class="text-xs text-primary/60">Unité de stock</label>
                 <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                    @foreach($units as $unit)
-                        <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
+                    @foreach($units as $u)
+                        @php
+                            $val = is_array($u) ? $u['value'] : $u;
+                            $lbl = is_array($u) ? $u['label'] : strtoupper($u);
+                        @endphp
+                        <option value="{{ $val }}">{{ $lbl }}</option>
                     @endforeach
                 </select>
             </div>
@@ -471,8 +477,12 @@
                 <div>
                     <label class="text-xs text-primary/60">Unité de stock</label>
                     <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
-                        @foreach($units as $unit)
-                            <option value="{{ $unit }}" @selected($item->unit === $unit)>{{ strtoupper($unit) }}</option>
+                        @foreach($units as $u)
+                            @php
+                                $val = is_array($u) ? $u['value'] : $u;
+                                $lbl = is_array($u) ? $u['label'] : strtoupper($u);
+                            @endphp
+                            <option value="{{ $val }}" @selected($item->unit === $val || $item->shortUnit() === $val)>{{ $lbl }}</option>
                         @endforeach
                     </select>
                 </div>

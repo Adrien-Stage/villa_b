@@ -179,7 +179,11 @@
                                             class="col-span-3 sm:col-span-1 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                             <option value="">Unité…</option>
                                             @foreach($unites as $unite)
-                                                <option value="{{ $unite }}">{{ $unite }}</option>
+                                                @php
+                                                    $uVal = is_array($unite) ? ($unite['value'] ?? '') : $unite;
+                                                    $uLbl = is_array($unite) ? ($unite['label'] ?? $uVal) : $unite;
+                                                @endphp
+                                                <option value="{{ $uVal }}">{{ $uLbl }}</option>
                                             @endforeach
                                         </select>
                                         <select :name="`lines[${idx}][nouvel_article][stock_category_id]`" x-model="ligne.category" aria-label="Catégorie"

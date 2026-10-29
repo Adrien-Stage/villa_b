@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    @php
+        $avecPrix = $avecPrix ?? true;
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bon de Commande — {{ $order->number }}</title>
@@ -362,14 +365,16 @@
             <tr>
                 @if($avecPrix)
                     <th style="width: 5%; text-align: center;">N°</th>
-                    <th style="width: 47%; text-align: left;">Désignation de l'article</th>
-                    <th style="width: 16%; text-align: right;">Quantité</th>
+                    <th style="width: 45%; text-align: left;">Désignation de l'article</th>
+                    <th style="width: 11%; text-align: right;">Quantité</th>
+                    <th style="width: 7%; text-align: center;">Unité</th>
                     <th style="width: 16%; text-align: right;">P.U. HT</th>
                     <th style="width: 16%; text-align: right;">Total HT</th>
                 @else
                     <th style="width: 6%; text-align: center;">N°</th>
-                    <th style="width: 69%; text-align: left;">Désignation de l'article</th>
-                    <th style="width: 25%; text-align: right;">Quantité</th>
+                    <th style="width: 64%; text-align: left;">Désignation de l'article</th>
+                    <th style="width: 18%; text-align: right;">Quantité</th>
+                    <th style="width: 12%; text-align: center;">Unité</th>
                 @endif
             </tr>
         </thead>
@@ -382,7 +387,10 @@
                         <div style="font-size: 8px; color: #64748b;">Réf : {{ $line->item?->reference ?? '—' }}</div>
                     </td>
                     <td class="text-right font-mono font-bold">
-                        {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}
+                        {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
+                    </td>
+                    <td class="text-center font-mono font-bold" style="font-size: 8.5px;">
+                        {{ $line->item?->shortUnit() ?? $line->item?->unit }}
                     </td>
                     @if($avecPrix)
                         <td class="text-right font-mono">

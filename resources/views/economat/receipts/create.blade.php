@@ -139,7 +139,7 @@
                             }" @tout-recevoir.window="toutRecevoir()">
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
-                                    <div class="text-xs text-primary/40 font-mono">P.U. : {{ number_format($line->unit_price / 100, 0, ',', ' ') }} F / {{ $line->item?->unit }}</div>
+                                    <div class="text-xs text-primary/40 font-mono">P.U. : {{ number_format($line->unit_price / 100, 0, ',', ' ') }} F / {{ $line->item?->shortUnit() }}</div>
                                     <template x-if="unites.length > 1">
                                         <label class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-primary/60">
                                             Reçu en

@@ -49,6 +49,7 @@
                         <thead class="bg-gray-50/70">
                             <tr>
                                 <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
+                                <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
                                 <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Théorique</th>
                                 <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Compté</th>
                                 <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Écart</th>
@@ -63,7 +64,10 @@
                                         <span class="font-medium text-primary">{{ $ligne->item?->name ?? '—' }}</span>
                                         <span class="block text-[10px] text-primary/40">{{ $ligne->item?->category?->name }}</span>
                                     </td>
-                                    <td class="px-5 py-3 text-right text-primary/70 whitespace-nowrap">{{ $qte($ligne->theoretical_quantity) }} <span class="text-xs text-primary/40">{{ $ligne->item?->unit }}</span></td>
+                                    <td class="px-5 py-3 text-center font-mono font-bold text-xs text-primary/70">
+                                        {{ $ligne->item?->shortUnit() }}
+                                    </td>
+                                    <td class="px-5 py-3 text-right text-primary/70 whitespace-nowrap font-mono">{{ $qte($ligne->theoretical_quantity) }}</td>
                                     <td class="px-5 py-3 text-right">
                                         @if($editable)
                                             <label class="sr-only" for="compte-{{ $ligne->id }}">Quantité comptée — {{ $ligne->item?->name }}</label>
