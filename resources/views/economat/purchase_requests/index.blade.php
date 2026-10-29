@@ -108,6 +108,7 @@
         <x-slot:head>
             <x-table.col>Numéro</x-table.col>
             <x-table.col>Département</x-table.col>
+            <x-table.col hide="md">Fournisseur</x-table.col>
             <x-table.col hide="xl">Demandeur</x-table.col>
             <x-table.col align="center" hide="lg">Priorité</x-table.col>
             <x-table.col align="center">Statut</x-table.col>
@@ -123,6 +124,7 @@
                     <a href="{{ route('economat.purchase_requests.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
                 </x-table.cell>
                 <x-table.cell class="text-primary/70">{{ $req->departmentLabel() }}</x-table.cell>
+                <x-table.cell hide="md" class="text-primary/80 font-medium">{{ $req->supplier?->name ?? '—' }}</x-table.cell>
                 <x-table.cell hide="xl" class="text-primary/80">{{ $req->requestedBy?->name ?? '—' }}</x-table.cell>
                 <x-table.cell align="center" hide="lg" nowrap>
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $priorityBadges[$req->priority] ?? 'bg-gray-100' }}">{{ $req->priorityLabel() }}</span>

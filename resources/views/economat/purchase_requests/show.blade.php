@@ -13,7 +13,7 @@
     ];
 @endphp
 
-<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false, globalSupplier: '', applyGlobalSupplier() { if(this.globalSupplier) { document.querySelectorAll('.line-supplier-select').forEach(el => el.value = this.globalSupplier); } } }">
+<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false, globalSupplier: '{{ $request->supplier_id }}', applyGlobalSupplier() { if(this.globalSupplier) { document.querySelectorAll('.line-supplier-select').forEach(el => el.value = this.globalSupplier); } } }">
     <div class="flex items-center justify-between">
         <a href="{{ route('economat.purchase_requests.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux demandes d'achat
@@ -55,6 +55,34 @@
                 </div>
             </div>
         </div>
+
+        @if($request->supplier)
+            <div class="p-3.5 bg-gray-50 border border-secondary/15 rounded-lg flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                        <i data-lucide="truck" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider block">Fournisseur retenu</span>
+                        <span class="text-sm font-bold text-primary">{{ $request->supplier->name }}</span>
+                        @if($request->supplier->contact_name)
+                            <span class="text-xs text-primary/60">· {{ $request->supplier->contact_name }}</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-primary/70">
+                    @if($request->supplier->phone)
+                        <span class="inline-flex items-center gap-1"><i data-lucide="phone" class="w-3.5 h-3.5 text-primary/50"></i> {{ $request->supplier->phone }}</span>
+                    @endif
+                    @if($request->supplier->email)
+                        <span class="inline-flex items-center gap-1"><i data-lucide="mail" class="w-3.5 h-3.5 text-primary/50"></i> {{ $request->supplier->email }}</span>
+                    @endif
+                    @droit('economat.suppliers.voir')
+                        <a href="{{ route('economat.suppliers.index') }}" class="text-xs text-primary underline hover:text-primary/70 ml-2">Fichier fournisseur</a>
+                    @enddroit
+                </div>
+            </div>
+        @endif
 
         @if($request->purpose)
             <div class="p-3.5 bg-gray-50 rounded-lg text-sm text-primary/80 border border-secondary/10">
@@ -158,12 +186,11 @@
                     <tr>
                         <th class="px-5 py-3 text-left">Article</th>
                         <th class="px-3 py-3 text-center">Unité</th>
-                        <th class="px-5 py-3 text-left">Fournisseur habituel</th>
                         <th class="px-5 py-3 text-right">Quantité demandée</th>
                         @if($approuvee)
                             <th class="px-5 py-3 text-right">Quantité approuvée</th>
                         @endif
-                        <th class="px-5 py-3 text-right">P.U. estimé</th>
+                        <th class="px-5 py-3 text-right">Prix moyen unitaire</th>
                         <th class="px-5 py-3 text-right">Total estimé</th>
                     </tr>
                 </thead>
@@ -175,9 +202,6 @@
                             </td>
                             <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">
                                 {{ $line->item?->shortUnit() ?? $line->item?->unit }}
-                            </td>
-                            <td class="px-5 py-3 text-primary/60 text-xs">
-                                {{ $line->item?->supplier?->name ?? 'Non défini' }}
                             </td>
                             <td class="px-5 py-3 text-right font-mono font-bold text-primary">
                                 {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
@@ -277,7 +301,7 @@
                         @foreach($request->lines as $line)
                             @if($line->quantiteRetenue() > 0)
                                 @php
-                                    $defaultSupId = $line->item?->supplier_id ?? ($suppliers->first()?->id ?? '');
+                                    $defaultSupId = $request->supplier_id ?? ($line->item?->supplier_id ?? ($suppliers->first()?->id ?? ''));
                                 @endphp
                                 <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-gray-50/50">
                                     <div class="min-w-0">

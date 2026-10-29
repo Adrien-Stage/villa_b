@@ -60,6 +60,7 @@ class PurchaseRequest extends Model
 
     protected $fillable = [
         'number',
+        'supplier_id',
         'department',
         'priority',
         'status',
@@ -119,6 +120,11 @@ class PurchaseRequest extends Model
     }
 
     // ── Relations ────────────────────────────────────────────────────────────
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
 
     public function lines(): HasMany
     {

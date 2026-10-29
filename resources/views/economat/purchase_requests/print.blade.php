@@ -84,6 +84,7 @@
                 <h2>Demande</h2>
                 <p><strong>{{ $request->departmentLabel() }}</strong> — priorité {{ mb_strtolower($request->priorityLabel()) }}</p>
                 <p>Par : {{ $request->requestedBy?->name ?? '—' }}</p>
+                <p>Fournisseur retenu : <strong>{{ $request->supplier?->name ?? 'Non spécifié' }}</strong></p>
                 @if($request->purpose)<p class="muted" style="font-size:9.5px">{{ $request->purpose }}</p>@endif
             </div>
             <div class="cadre">

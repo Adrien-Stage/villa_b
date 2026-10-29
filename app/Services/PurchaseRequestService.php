@@ -75,6 +75,7 @@ class PurchaseRequestService
     {
         $request = DB::transaction(function () use ($data, $user) {
             $request = PurchaseRequest::create([
+                'supplier_id'  => !empty($data['supplier_id']) ? (int) $data['supplier_id'] : null,
                 'department'   => $data['department'] ?? 'economat',
                 'priority'     => $data['priority'] ?? PurchaseRequest::PRIORITY_NORMAL,
                 'status'       => PurchaseRequest::STATUS_PENDING,
@@ -93,10 +94,30 @@ class PurchaseRequestService
                     continue;
                 }
 
-                // Prix estimé : s'il est spécifié en FCFA, sinon dernier prix d'achat ou CUMP
-                $unitPrice = !empty($lineData['estimated_unit_price'])
-                    ? (int) round(((float) $lineData['estimated_unit_price']) * 100) // centimes
-                    : ($item->last_purchase_price > 0 ? (int) $item->last_purchase_price : (int) $item->average_cost);
+                // Prix estimé : prix moyen calculé en fonction des fournisseurs approvisionnant l'article
+                $unitPrice = $item->averageSupplierPrice();
+                if ($unitPrice <= 0 && !empty($lineData['estimated_unit_price'])) {
+                    $unitPrice = (int) round(((float) $lineData['estimated_unit_price']) * 100);
+                }
+
+                // Si l'article n'est pas encore rattaché au fournisseur de la demande, l'ajouter à son catalogue
+                if ($request->supplier_id) {
+                    $dejaLie = DB::table('stock_item_supplier')
+                        ->where('stock_item_id', $item->id)
+                        ->where('supplier_id', $request->supplier_id)
+                        ->exists();
+
+                    if (! $dejaLie) {
+                        DB::table('stock_item_supplier')->insert([
+                            'stock_item_id'  => $item->id,
+                            'supplier_id'    => $request->supplier_id,
+                            'purchase_price' => $unitPrice > 0 ? $unitPrice : (int) $item->average_cost,
+                            'unit'           => $item->unit,
+                            'created_at'     => now(),
+                            'updated_at'     => now(),
+                        ]);
+                    }
+                }
 
                 $lineTotal = (int) round($qty * $unitPrice);
 
@@ -136,10 +157,12 @@ class PurchaseRequestService
         ]])->all();
 
         $request = DB::transaction(function () use ($request, $data) {
+            $supplierId = !empty($data['supplier_id']) ? (int) $data['supplier_id'] : $request->supplier_id;
             $request->update([
-                'department' => $data['department'] ?? $request->department,
-                'priority'   => $data['priority'] ?? $request->priority,
-                'purpose'    => $data['purpose'] ?? $request->purpose,
+                'supplier_id' => $supplierId,
+                'department'  => $data['department'] ?? $request->department,
+                'priority'    => $data['priority'] ?? $request->priority,
+                'purpose'     => $data['purpose'] ?? $request->purpose,
             ]);
 
             $totalEstimated = 0;
@@ -153,9 +176,28 @@ class PurchaseRequestService
                     continue;
                 }
 
-                $unitPrice = !empty($lineData['estimated_unit_price'])
-                    ? (int) round(((float) $lineData['estimated_unit_price']) * 100)
-                    : ($item->last_purchase_price > 0 ? (int) $item->last_purchase_price : (int) $item->average_cost);
+                $unitPrice = $item->averageSupplierPrice();
+                if ($unitPrice <= 0 && !empty($lineData['estimated_unit_price'])) {
+                    $unitPrice = (int) round(((float) $lineData['estimated_unit_price']) * 100);
+                }
+
+                if ($request->supplier_id) {
+                    $dejaLie = DB::table('stock_item_supplier')
+                        ->where('stock_item_id', $item->id)
+                        ->where('supplier_id', $request->supplier_id)
+                        ->exists();
+
+                    if (! $dejaLie) {
+                        DB::table('stock_item_supplier')->insert([
+                            'stock_item_id'  => $item->id,
+                            'supplier_id'    => $request->supplier_id,
+                            'purchase_price' => $unitPrice > 0 ? $unitPrice : (int) $item->average_cost,
+                            'unit'           => $item->unit,
+                            'created_at'     => now(),
+                            'updated_at'     => now(),
+                        ]);
+                    }
+                }
 
                 $lineTotal = (int) round($qty * $unitPrice);
 
@@ -364,6 +406,8 @@ class PurchaseRequestService
             if ($aCommander->isEmpty()) {
                 throw new RuntimeException("Aucun article avec une quantité positive à commander.");
             }
+
+            $supplierId = $supplierId ?: $request->supplier_id;
 
             // Si des fournisseurs précis par ligne sont spécifiés
             if (!empty($lineSuppliers)) {

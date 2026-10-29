@@ -157,46 +157,37 @@ class SupplierController extends Controller
 
     protected function syncSupplierItems(Supplier $supplier, array $linkedItems): void
     {
-        $submittedIds = [];
-        foreach ($linkedItems as $entry) {
-            $id = is_array($entry) ? (int) ($entry['id'] ?? 0) : (int) $entry;
-            if ($id > 0) {
-                $submittedIds[] = $id;
-            }
-        }
-
-        // Dissocier les articles qui ne sont plus dans la liste
-        StockItem::where('supplier_id', $supplier->id)
-            ->whereNotIn('id', $submittedIds)
-            ->update(['supplier_id' => null]);
-
-        // Mettre à jour / lier les articles sélectionnés
+        $syncData = [];
         foreach ($linkedItems as $entry) {
             $id = is_array($entry) ? (int) ($entry['id'] ?? 0) : (int) $entry;
             if ($id <= 0) {
                 continue;
             }
 
-            $item = StockItem::find($id);
-            if (!$item) {
-                continue;
-            }
-
-            $data = ['supplier_id' => $supplier->id];
+            $price = 0;
+            $unit = null;
             if (is_array($entry)) {
                 if (isset($entry['price']) && is_numeric($entry['price']) && $entry['price'] >= 0) {
-                    $data['last_purchase_price'] = (int) round((float) $entry['price'] * 100);
+                    $price = (int) round((float) $entry['price'] * 100);
                 }
-                // Seule une unité de la liste (Paramètres › Économat) remplace
-                // celle de l'article.
-                if (!empty($entry['unit']) && is_string($entry['unit'])
-                    && ($unite = StockUnit::canonique($entry['unit'])) !== null) {
-                    $data['unit'] = $unite;
+                if (!empty($entry['unit']) && is_string($entry['unit'])) {
+                    $unit = StockUnit::symbolFor($entry['unit']);
                 }
             }
 
-            $item->update($data);
+            $syncData[$id] = [
+                'purchase_price' => $price,
+                'unit'           => $unit,
+            ];
+
+            // Si l'article n'a pas encore de fournisseur principal, assigner celui-ci
+            $item = StockItem::find($id);
+            if ($item && ! $item->supplier_id) {
+                $item->update(['supplier_id' => $supplier->id]);
+            }
         }
+
+        $supplier->stockItems()->sync($syncData);
     }
 
     private function validated(Request $request, ?Supplier $supplier = null): array

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -56,9 +57,11 @@ class Supplier extends Model
         'delivery_lead_time_days' => 'integer',
     ];
 
-    public function stockItems(): HasMany
+    public function stockItems(): BelongsToMany
     {
-        return $this->hasMany(StockItem::class);
+        return $this->belongsToMany(StockItem::class, 'stock_item_supplier')
+            ->withPivot(['purchase_price', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
+            ->withTimestamps();
     }
 
     public function purchaseOrders(): HasMany

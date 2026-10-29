@@ -55,12 +55,46 @@ class StockItemController extends Controller
 
     public function show(StockItem $item): View
     {
-        $item->load('category', 'supplier', 'packagings');
+        $item->load(['category', 'supplier', 'packagings', 'suppliers' => fn ($q) => $q->orderBy('name')]);
 
         // Historique des mouvements : l'audit de l'article.
         $movements = $item->movements()->with('user', 'item')->latest('occurred_at')->latest('id')->take(50)->get();
 
-        return view('economat.items.show', compact('item', 'movements'));
+        $allSuppliers = Supplier::active()->orderBy('name')->get();
+
+        return view('economat.items.show', compact('item', 'movements', 'allSuppliers'));
+    }
+
+    public function linkSupplier(Request $request, StockItem $item): RedirectResponse
+    {
+        $validated = $request->validate([
+            'supplier_id'    => ['required', 'exists:suppliers,id'],
+            'purchase_price' => ['required', 'numeric', 'min:0'],
+            'unit'           => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $item->suppliers()->syncWithoutDetaching([
+            $validated['supplier_id'] => [
+                'purchase_price' => (int) round((float) $validated['purchase_price'] * 100),
+                'unit'           => StockUnit::symbolFor($validated['unit'] ?? $item->unit),
+            ],
+        ]);
+
+        if (! $item->supplier_id) {
+            $item->update(['supplier_id' => $validated['supplier_id']]);
+        }
+
+        return back()->with('success', 'Fournisseur associé à cet article.');
+    }
+
+    public function unlinkSupplier(StockItem $item, Supplier $supplier): RedirectResponse
+    {
+        $item->suppliers()->detach($supplier->id);
+        if ((int) $item->supplier_id === (int) $supplier->id) {
+            $item->update(['supplier_id' => $item->suppliers()->value('suppliers.id')]);
+        }
+
+        return back()->with('success', 'Fournisseur détaché de cet article.');
     }
 
     public function store(Request $request): RedirectResponse
