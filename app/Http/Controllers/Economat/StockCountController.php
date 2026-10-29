@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StockCategory;
 use App\Models\StockCount;
 use App\Models\StockCountLine;
+use App\Models\StockRequisition;
 use App\Services\PermissionResolver;
 use App\Services\StockCountImportService;
 use App\Services\StockCountService;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -27,7 +29,23 @@ class StockCountController extends Controller
 
     public function index(Request $request): View
     {
+        $departments = [
+            'economat' => 'Économat (Magasin central)',
+            ...StockRequisition::DEPARTMENTS,
+        ];
+
         $query = StockCount::with(['category', 'openedBy', 'closedBy'])->withCount('lines');
+
+        if ($request->filled('service')) {
+            $service = $request->input('service');
+            if ($service === 'economat') {
+                $query->where(function ($q) {
+                    $q->where('department', 'economat')->orWhereNull('department');
+                });
+            } else {
+                $query->where('department', $service);
+            }
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -47,46 +65,73 @@ class StockCountController extends Controller
 
         $counts = $query->orderByDesc('count_date')->orderByDesc('id')->paginate(self::PAR_PAGE)->withQueryString();
 
-        $openCount = StockCount::where('status', StockCount::STATUS_DRAFT)->latest('id')->first();
+        $openCountQuery = StockCount::where('status', StockCount::STATUS_DRAFT);
+        if ($request->filled('service')) {
+            $service = $request->input('service');
+            if ($service === 'economat') {
+                $openCountQuery->where(function ($q) {
+                    $q->where('department', 'economat')->orWhereNull('department');
+                });
+            } else {
+                $openCountQuery->where('department', $service);
+            }
+        }
+        $openCount = $openCountQuery->latest('id')->first();
         $categories = StockCategory::orderBy('sort_order')->orderBy('name')->get();
 
-        // Statistiques globales d'inventaire
+        // Statistiques de la sélection
+        $statsQuery = StockCount::query();
+        if ($request->filled('service')) {
+            $service = $request->input('service');
+            if ($service === 'economat') {
+                $statsQuery->where(function ($q) {
+                    $q->where('department', 'economat')->orWhereNull('department');
+                });
+            } else {
+                $statsQuery->where('department', $service);
+            }
+        }
         $stats = [
-            'total_counts'  => StockCount::count(),
-            'closed_counts' => StockCount::where('status', StockCount::STATUS_CLOSED)->count(),
-            'total_losses'  => (int) StockCount::where('status', StockCount::STATUS_CLOSED)->sum('loss_value'),
-            'total_surplus' => (int) StockCount::where('status', StockCount::STATUS_CLOSED)->sum('surplus_value'),
-            'net_variance'  => (int) StockCount::where('status', StockCount::STATUS_CLOSED)->sum('variance_value'),
+            'total_counts'  => (clone $statsQuery)->count(),
+            'closed_counts' => (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->count(),
+            'total_losses'  => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('loss_value'),
+            'total_surplus' => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('surplus_value'),
+            'net_variance'  => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('variance_value'),
         ];
 
         return view('economat.stock_counts.index', [
-            'counts'     => $counts,
-            'openCount'  => $openCount,
-            'categories' => $categories,
-            'stats'      => $stats,
-            'canManage'  => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
+            'counts'      => $counts,
+            'openCount'   => $openCount,
+            'categories'  => $categories,
+            'departments' => $departments,
+            'stats'       => $stats,
+            'canManage'   => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
         ]);
     }
 
     public function create(): View|RedirectResponse
     {
-        $existing = StockCount::where('status', StockCount::STATUS_DRAFT)->first();
-        if ($existing) {
-            return redirect()
-                ->route('economat.stock_counts.show', $existing)
-                ->with('error', "L'inventaire {$existing->reference} est déjà en cours. Veuillez le clôturer ou l'annuler avant d'en ouvrir un nouveau.");
-        }
-
         $categories = StockCategory::orderBy('sort_order')->orderBy('name')->get();
+        $departments = [
+            'economat' => 'Économat (Magasin central)',
+            ...StockRequisition::DEPARTMENTS,
+        ];
 
         return view('economat.stock_counts.create', [
-            'categories' => $categories,
+            'categories'  => $categories,
+            'departments' => $departments,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $departments = [
+            'economat' => 'Économat (Magasin central)',
+            ...StockRequisition::DEPARTMENTS,
+        ];
+
         $validated = $request->validate([
+            'department'        => ['nullable', 'string', Rule::in(array_keys($departments))],
             'count_date'        => ['nullable', 'date'],
             'stock_category_id' => ['nullable', 'exists:stock_categories,id'],
             'notes'             => ['nullable', 'string', 'max:1000'],

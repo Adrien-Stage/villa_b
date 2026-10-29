@@ -25,7 +25,7 @@ class StockMovementJournal
 {
     /**
      * @param  array{du?: ?CarbonInterface, au?: ?CarbonInterface, article?: ?int, categorie?: ?int,
-     *               type?: ?string, source?: ?string, recherche?: ?string}  $filtres
+     *               type?: ?string, source?: ?string, service?: ?string, recherche?: ?string}  $filtres
      */
     public function query(array $filtres): Builder
     {
@@ -37,8 +37,209 @@ class StockMovementJournal
             ->when($filtres['categorie'] ?? null, fn ($q, $id) => $q->whereHas('item', fn ($i) => $i->where('stock_category_id', $id)))
             ->when($filtres['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($filtres['source'] ?? null, fn ($q, $source) => $q->where('source_type', $source))
+            ->when(!empty($filtres['service']), fn ($q) => $this->appliquerFiltreService($q, (string) $filtres['service']))
             // Sans tenir compte de la casse : LIKE la distingue sous PostgreSQL.
             ->when(trim((string) ($filtres['recherche'] ?? '')), fn ($q, $texte) => $q->whereRaw('LOWER(reason) LIKE ?', ['%' . mb_strtolower($texte) . '%']));
+    }
+
+    /**
+     * Filtre les mouvements par département ou service demandeur / de destination.
+     */
+    private function appliquerFiltreService(Builder $query, string $service): void
+    {
+        if ($service === 'economat') {
+            $query->where(function (Builder $sub) {
+                // Opérations intrinsèques au magasin central
+                $sub->whereIn('source_type', [
+                    StockMovement::SOURCE_OPENING,
+                    StockMovement::SOURCE_MANUAL,
+                    StockMovement::SOURCE_PACKAGING,
+                    StockMovement::SOURCE_EXTERNAL_ISSUE,
+                ])
+                // Inventaires du magasin central
+                ->orWhere(function (Builder $q) {
+                    $q->where('source_type', StockMovement::SOURCE_STOCK_COUNT)
+                      ->where(function (Builder $sq) {
+                          $sq->whereNull('source_id')
+                             ->orWhereIn('source_id', function ($raw) {
+                                 $raw->select('id')->from('stock_counts')
+                                     ->where('department', 'economat')
+                                     ->orWhereNull('department');
+                             });
+                      });
+                })
+                // Demandes internes de l'économat
+                ->orWhere(function (Builder $q) {
+                    $q->where('source_type', StockMovement::SOURCE_REQUISITION)
+                      ->whereIn('source_id', function ($raw) {
+                          $raw->select('id')->from('stock_requisitions')->where('department', 'economat');
+                      });
+                })
+                // Réceptions fournisseurs sans demande extérieure (entrées directes en stock central)
+                ->orWhere(function (Builder $q) {
+                    $q->where('source_type', StockMovement::SOURCE_GOODS_RECEIPT)
+                      ->whereNotIn('source_id', function ($raw) {
+                          $raw->select('gr.id')
+                              ->from('goods_receipts as gr')
+                              ->join('purchase_orders as po', 'po.id', '=', 'gr.purchase_order_id')
+                              ->join('purchase_requests as pr', 'pr.id', '=', 'po.purchase_request_id')
+                              ->whereNotNull('pr.department')
+                              ->where('pr.department', '!=', 'economat');
+                      });
+                })
+                // Bons de commande sans demande extérieure
+                ->orWhere(function (Builder $q) {
+                    $q->where('source_type', StockMovement::SOURCE_PURCHASE_ORDER)
+                      ->whereNotIn('source_id', function ($raw) {
+                          $raw->select('po.id')
+                              ->from('purchase_orders as po')
+                              ->join('purchase_requests as pr', 'pr.id', '=', 'po.purchase_request_id')
+                              ->whereNotNull('pr.department')
+                              ->where('pr.department', '!=', 'economat');
+                      });
+                })
+                // Imports non rattachés à un dépôt de service
+                ->orWhere(function (Builder $q) {
+                    $q->where('source_type', StockMovement::SOURCE_IMPORT)
+                      ->where(function (Builder $sq) {
+                          $sq->whereNull('stock_import_id')
+                             ->orWhereIn('stock_import_id', function ($raw) {
+                                 $raw->select('id')->from('stock_imports')->whereNull('service_store_id');
+                             });
+                      });
+                })
+                ->orWhereRaw('LOWER(reason) LIKE ?', ['%économat%'])
+                ->orWhereRaw('LOWER(reason) LIKE ?', ['%economat%'])
+                ->orWhereRaw('LOWER(reason) LIKE ?', ['%magasin central%']);
+            });
+            return;
+        }
+
+        // Cas dépôt de service spécifique: depot-{id}
+        if (str_starts_with($service, 'depot-')) {
+            $storeId = (int) substr($service, 6);
+            $store = \App\Models\ServiceStore::find($storeId);
+            $storeName = $store ? mb_strtolower($store->name) : null;
+
+            $query->where(function (Builder $sub) use ($storeId, $storeName) {
+                $sub->where(function (Builder $q) use ($storeId) {
+                    $q->where('source_type', StockMovement::SOURCE_REQUISITION)
+                      ->whereIn('source_id', function ($raw) use ($storeId) {
+                          $raw->select('id')->from('stock_requisitions')->where('service_store_id', $storeId);
+                      });
+                })
+                ->orWhere(function (Builder $q) use ($storeId) {
+                    $q->where('source_type', StockMovement::SOURCE_IMPORT)
+                      ->where(function (Builder $sq) use ($storeId) {
+                          $sq->whereIn('source_id', function ($raw) use ($storeId) {
+                              $raw->select('id')->from('stock_imports')->where('service_store_id', $storeId);
+                          })->orWhereIn('stock_import_id', function ($raw) use ($storeId) {
+                              $raw->select('id')->from('stock_imports')->where('service_store_id', $storeId);
+                          });
+                      });
+                });
+
+                if ($storeName) {
+                    $sub->orWhereRaw('LOWER(reason) LIKE ?', ['%' . $storeName . '%']);
+                }
+            });
+            return;
+        }
+
+        // Cas département standard
+        $dept = $service;
+        $purchaseDepts = match ($dept) {
+            'restaurant'   => ['restaurant', 'cuisine', 'bar'],
+            'technique'    => ['technique', 'maintenance'],
+            'housekeeping' => ['housekeeping', 'hebergement'],
+            'hebergement'  => ['hebergement', 'reception'],
+            'comptabilite' => ['comptabilite', 'finance', 'finances', 'direction'],
+            default        => [$dept],
+        };
+
+        $keywords = match ($dept) {
+            'restaurant'   => ['restaurant', 'cuisine', 'bar', 'restauration'],
+            'technique'    => ['technique', 'maintenance'],
+            'housekeeping' => ['housekeeping', 'étage', 'etage', 'chambre'],
+            'hebergement'  => ['hébergement', 'hebergement', 'réception', 'reception'],
+            'boutique'     => ['boutique'],
+            'comptabilite' => ['comptabilité', 'comptabilite', 'finance'],
+            'autre'        => ['autre'],
+            default        => [$dept],
+        };
+
+        $query->where(function (Builder $sub) use ($dept, $purchaseDepts, $keywords) {
+            // 1. Demandes de réquisition du département ou de ses dépôts
+            $sub->where(function (Builder $q) use ($dept) {
+                $q->where('source_type', StockMovement::SOURCE_REQUISITION)
+                  ->whereIn('source_id', function ($raw) use ($dept) {
+                      $raw->select('id')->from('stock_requisitions')
+                          ->where('department', $dept)
+                          ->orWhereIn('service_store_id', function ($subRaw) use ($dept) {
+                              $subRaw->select('id')->from('service_stores')->where('department', $dept);
+                          });
+                  });
+            });
+
+            // 2. Découpes boucherie vers le restaurant
+            if ($dept === 'restaurant') {
+                $sub->orWhere('source_type', StockMovement::SOURCE_CUT);
+            }
+
+            // 3. Imports assignés à un dépôt de ce département
+            $sub->orWhere(function (Builder $q) use ($dept) {
+                $q->where('source_type', StockMovement::SOURCE_IMPORT)
+                  ->where(function (Builder $sq) use ($dept) {
+                      $sq->whereIn('source_id', function ($raw) use ($dept) {
+                          $raw->select('id')->from('stock_imports')
+                              ->whereIn('service_store_id', function ($subRaw) use ($dept) {
+                                  $subRaw->select('id')->from('service_stores')->where('department', $dept);
+                              });
+                      })->orWhereIn('stock_import_id', function ($raw) use ($dept) {
+                          $raw->select('id')->from('stock_imports')
+                              ->whereIn('service_store_id', function ($subRaw) use ($dept) {
+                                  $subRaw->select('id')->from('service_stores')->where('department', $dept);
+                              });
+                      });
+                  });
+            });
+
+            // 4. Réceptions issues d'achats pour ce département
+            $sub->orWhere(function (Builder $q) use ($purchaseDepts) {
+                $q->where('source_type', StockMovement::SOURCE_GOODS_RECEIPT)
+                  ->whereIn('source_id', function ($raw) use ($purchaseDepts) {
+                      $raw->select('gr.id')
+                          ->from('goods_receipts as gr')
+                          ->join('purchase_orders as po', 'po.id', '=', 'gr.purchase_order_id')
+                          ->join('purchase_requests as pr', 'pr.id', '=', 'po.purchase_request_id')
+                          ->whereIn('pr.department', $purchaseDepts);
+                  });
+            });
+
+            // 5. Bons de commande pour ce département
+            $sub->orWhere(function (Builder $q) use ($purchaseDepts) {
+                $q->where('source_type', StockMovement::SOURCE_PURCHASE_ORDER)
+                  ->whereIn('source_id', function ($raw) use ($purchaseDepts) {
+                      $raw->select('po.id')
+                          ->from('purchase_orders as po')
+                          ->join('purchase_requests as pr', 'pr.id', '=', 'po.purchase_request_id')
+                          ->whereIn('pr.department', $purchaseDepts);
+                  });
+            });
+
+            // 6. Inventaires physiques de ce département
+            $sub->orWhere(function (Builder $q) use ($dept) {
+                $q->where('source_type', StockMovement::SOURCE_STOCK_COUNT)
+                  ->whereIn('source_id', function ($raw) use ($dept) {
+                      $raw->select('id')->from('stock_counts')->where('department', $dept);
+                  });
+            });
+
+            // 7. Mots-clés dans reason
+            foreach ($keywords as $kw) {
+                $sub->orWhereRaw('LOWER(reason) LIKE ?', ['%' . mb_strtolower($kw) . '%']);
+            }
+        });
     }
 
     /** Totaux de la sélection : nombre de mouvements et valeurs par nature. */

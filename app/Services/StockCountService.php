@@ -24,17 +24,28 @@ class StockCountService
      */
     public function open(array $data, ?User $user = null): StockCount
     {
-        // Un seul inventaire ouvert à la fois pour éviter la concurrence sur les stocks théoriques
-        $existing = StockCount::where('status', StockCount::STATUS_DRAFT)->first();
+        $department = !empty($data['department']) ? (string) $data['department'] : 'economat';
+
+        // Un seul inventaire ouvert à la fois pour ce service pour éviter la concurrence sur les stocks théoriques
+        $existing = StockCount::where('status', StockCount::STATUS_DRAFT)
+            ->where(function ($q) use ($department) {
+                if ($department === 'economat') {
+                    $q->where('department', 'economat')->orWhereNull('department');
+                } else {
+                    $q->where('department', $department);
+                }
+            })->first();
+
         if ($existing) {
-            throw new RuntimeException("L'inventaire {$existing->reference} est déjà en cours. Veuillez le clôturer ou l'annuler avant d'en ouvrir un nouveau.");
+            throw new RuntimeException("L'inventaire {$existing->reference} pour ce service est déjà en cours. Veuillez le clôturer ou l'annuler avant d'en ouvrir un nouveau.");
         }
 
-        return DB::transaction(function () use ($data, $user) {
+        return DB::transaction(function () use ($data, $user, $department) {
             $countDate = !empty($data['count_date']) ? Carbon::parse($data['count_date'])->toDateString() : now()->toDateString();
             $categoryId = !empty($data['stock_category_id']) ? (int) $data['stock_category_id'] : null;
 
             $stockCount = StockCount::create([
+                'department'        => $department,
                 'stock_category_id' => $categoryId,
                 'status'            => StockCount::STATUS_DRAFT,
                 'count_date'        => $countDate,
@@ -223,6 +234,9 @@ class StockCountService
                 if (abs($variance) >= 0.0005) {
                     $reasonLabel = $line->reasonLabel();
                     $reasonText = "Inventaire {$stockCount->reference}";
+                    if ($stockCount->department && $stockCount->department !== 'economat') {
+                        $reasonText .= " — {$stockCount->departmentLabel()}";
+                    }
                     if (!empty($line->reason)) {
                         $reasonText .= " ({$reasonLabel})";
                     }

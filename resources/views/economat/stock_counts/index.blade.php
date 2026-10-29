@@ -103,7 +103,16 @@
 
 {{-- Filtres --}}
 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-4">
-    <form method="GET" action="{{ route('economat.stock_counts.index') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+    <form method="GET" action="{{ route('economat.stock_counts.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+        <div>
+            <label class="block text-xs font-semibold text-primary/60 mb-1">Service / Département</label>
+            <select name="service" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary outline-none focus:border-primary">
+                <option value="">Tous les services</option>
+                @foreach($departments as $code => $label)
+                    <option value="{{ $code }}" {{ request('service') === $code ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
         <div>
             <label class="block text-xs font-semibold text-primary/60 mb-1">Statut</label>
             <select name="status" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary outline-none focus:border-primary">
@@ -134,7 +143,7 @@
             <button type="submit" class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-surface-dark text-xs self-end">
                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>
             </button>
-            @if(request()->hasAny(['status', 'category', 'date_from', 'date_to']))
+            @if(request()->hasAny(['service', 'status', 'category', 'date_from', 'date_to']))
                 <a href="{{ route('economat.stock_counts.index') }}" class="px-2.5 py-2 border border-secondary/30 text-primary/60 hover:text-primary rounded-lg text-xs self-end" title="Effacer les filtres">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </a>
@@ -151,9 +160,10 @@
         'cancelled' => 'bg-gray-100 text-gray-600 border-gray-200',
     ];
 @endphp
-<x-table :rows="$counts" empty="Aucun inventaire physique enregistré. Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire." empty-icon="clipboard-check" caption="Inventaires du magasin central">
+<x-table :rows="$counts" empty="Aucun inventaire physique enregistré. Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire." empty-icon="clipboard-check" caption="Inventaires physiques">
     <x-slot:head>
         <x-table.col>Réf.</x-table.col>
+        <x-table.col hide="md">Service</x-table.col>
         <x-table.col hide="lg">Date</x-table.col>
         <x-table.col hide="xl">Périmètre</x-table.col>
         <x-table.col>Statut</x-table.col>
@@ -169,6 +179,12 @@
         <x-table.row :href="route('economat.stock_counts.show', $count)">
             <x-table.cell nowrap>
                 <a href="{{ route('economat.stock_counts.show', $count) }}" class="font-mono font-medium text-primary hover:underline">{{ $count->reference }}</a>
+            </x-table.cell>
+            <x-table.cell hide="md" nowrap>
+                <span class="inline-flex items-center gap-1.5 text-xs text-primary/80 font-medium">
+                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-primary/45"></i>
+                    {{ $count->departmentLabel() }}
+                </span>
             </x-table.cell>
             <x-table.cell hide="lg" nowrap class="text-primary/70">{{ $count->count_date->format('d/m/Y') }}</x-table.cell>
             <x-table.cell hide="xl" nowrap class="text-primary/80">
