@@ -21,7 +21,7 @@
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
-        <a href="{{ route('economat.control.print', ['start_date' => $startDate, 'end_date' => $endDate]) }}" target="_blank"
+        <a href="{{ route('economat.control.print', array_filter(['start_date' => $startDate, 'end_date' => $endDate, 'service' => $service])) }}" target="_blank"
             class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
             <i data-lucide="printer" class="w-4 h-4 text-primary/60"></i>
             <span>Imprimer le rapport</span>
@@ -31,14 +31,34 @@
 
 @include('economat.partials.flash')
 
-{{-- Filtrage par période --}}
+{{-- Filtrage par période et service --}}
 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 shadow-sm">
     <form method="GET" action="{{ route('economat.control.variances.index') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-            <i data-lucide="calendar" class="w-4 h-4 text-primary/50"></i>
-            <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Période des inventaires :</span>
+            <i data-lucide="filter" class="w-4 h-4 text-primary/50"></i>
+            <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Filtres :</span>
         </div>
         <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+                <label for="service" class="text-xs text-primary/60">Service</label>
+                <select id="service" name="service" class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 bg-white focus:border-primary focus:ring-primary">
+                    <option value="">Tous les services</option>
+                    <option value="economat" @selected(($service ?? '') === 'economat')>Économat (Magasin central)</option>
+                    <optgroup label="Départements">
+                        @foreach($departments as $cle => $libelle)
+                            @continue($cle === 'economat')
+                            <option value="{{ $cle }}" @selected(($service ?? '') === $cle)>{{ $libelle }}</option>
+                        @endforeach
+                    </optgroup>
+                    @if(isset($serviceStores) && $serviceStores->isNotEmpty())
+                        <optgroup label="Dépôts de service">
+                            @foreach($serviceStores as $store)
+                                <option value="depot-{{ $store->id }}" @selected(($service ?? '') === 'depot-' . $store->id)>{{ $store->name }} ({{ $store->departmentLabel() }})</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
+                </select>
+            </div>
             <div class="flex items-center gap-2">
                 <label for="start_date" class="text-xs text-primary/60">Du</label>
                 <input type="date" id="start_date" name="start_date" value="{{ $startDate }}"
@@ -53,7 +73,7 @@
                 class="px-3.5 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
                 Filtrer
             </button>
-            @if(request()->has('start_date') || request()->has('end_date'))
+            @if(request()->hasAny(['start_date', 'end_date', 'service']))
                 <a href="{{ route('economat.control.variances.index') }}" class="text-xs text-primary/50 hover:text-primary underline">
                     Réinitialiser
                 </a>
@@ -69,9 +89,16 @@
         <p class="text-2xl font-bold font-mono text-red-700 mt-1">
             −{{ number_format($variances['total_loss_value'] / 100, 0, ',', ' ') }} <span class="text-xs font-sans font-normal text-red-600/70">FCFA</span>
         </p>
-        <div class="mt-2 pt-2 border-t border-secondary/15 flex justify-between text-xs text-primary/60">
-            <span>Économat : −{{ number_format($variances['economat']['loss_value'] / 100, 0, ',', ' ') }}</span>
-            <span>Cuisine : −{{ number_format($variances['restaurant']['loss_value'] / 100, 0, ',', ' ') }}</span>
+        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs text-primary/60">
+            @if($service)
+                <span>Service : <strong>{{ $departments[$service] ?? (str_starts_with($service, 'depot-') ? 'Dépôt' : ucfirst($service)) }}</strong></span>
+            @else
+                <span>Économat : −{{ number_format($variances['economat']['loss_value'] / 100, 0, ',', ' ') }}</span>
+                <span>Cuisine : −{{ number_format($variances['restaurant']['loss_value'] / 100, 0, ',', ' ') }}</span>
+                @if(!empty($variances['stores']['loss_value']))
+                    <span>Dépôts : −{{ number_format($variances['stores']['loss_value'] / 100, 0, ',', ' ') }}</span>
+                @endif
+            @endif
         </div>
     </div>
 
@@ -80,9 +107,16 @@
         <p class="text-2xl font-bold font-mono text-green-700 mt-1">
             +{{ number_format($variances['total_surplus_value'] / 100, 0, ',', ' ') }} <span class="text-xs font-sans font-normal text-green-600/70">FCFA</span>
         </p>
-        <div class="mt-2 pt-2 border-t border-secondary/15 flex justify-between text-xs text-primary/60">
-            <span>Économat : +{{ number_format($variances['economat']['surplus_value'] / 100, 0, ',', ' ') }}</span>
-            <span>Cuisine : +{{ number_format($variances['restaurant']['surplus_value'] / 100, 0, ',', ' ') }}</span>
+        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs text-primary/60">
+            @if($service)
+                <span>Service : <strong>{{ $departments[$service] ?? (str_starts_with($service, 'depot-') ? 'Dépôt' : ucfirst($service)) }}</strong></span>
+            @else
+                <span>Économat : +{{ number_format($variances['economat']['surplus_value'] / 100, 0, ',', ' ') }}</span>
+                <span>Cuisine : +{{ number_format($variances['restaurant']['surplus_value'] / 100, 0, ',', ' ') }}</span>
+                @if(!empty($variances['stores']['surplus_value']))
+                    <span>Dépôts : +{{ number_format($variances['stores']['surplus_value'] / 100, 0, ',', ' ') }}</span>
+                @endif
+            @endif
         </div>
     </div>
 
@@ -93,18 +127,26 @@
             {{ $net > 0 ? '+' : ($net < 0 ? '−' : '') }}{{ number_format(abs($net) / 100, 0, ',', ' ') }} <span class="text-xs font-sans font-normal text-primary/50">FCFA</span>
         </p>
         <div class="mt-2 pt-2 border-t border-secondary/15 text-xs text-primary/60">
-            <span>Lignes en écart : <strong>{{ $variances['economat']['count'] + $variances['restaurant']['count'] }} article(s)</strong></span>
+            <span>Lignes en écart : <strong>{{ $variances['total_count'] ?? ($variances['economat']['count'] + $variances['restaurant']['count']) }} article(s)</strong></span>
         </div>
     </div>
 </div>
 
-{{-- Section 1 : Écarts Magasin Central (Économat) --}}
+{{-- Section 1 : Écarts Magasin Central ou Service sélectionné --}}
+@php
+    $nomSection1 = match(true) {
+        $service === 'economat' => 'Magasin Central — Écarts d\'inventaire Économat',
+        !empty($service) && !str_starts_with($service, 'depot-') => ($departments[$service] ?? ucfirst($service)) . ' — Écarts d\'inventaire',
+        default => 'Magasin Central — Écarts d\'inventaire Économat',
+    };
+@endphp
+@if(!$service || $service !== 'restaurant' || $variances['economat']['lines']->isNotEmpty())
 <div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-6">
     <div class="p-4 bg-surface-light border-b border-secondary/20 flex items-center justify-between">
         <div class="flex items-center gap-2">
             <i data-lucide="warehouse" class="w-4 h-4 text-primary"></i>
             <h2 class="text-sm font-bold uppercase tracking-wider text-primary">
-                Magasin Central — Écarts d'inventaire Économat
+                {{ $nomSection1 }}
             </h2>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
                 {{ $variances['economat']['count'] }} ligne(s)
@@ -118,7 +160,7 @@
     @if($variances['economat']['lines']->isEmpty())
         <div class="p-8 text-center text-primary/40">
             <i data-lucide="check" class="w-8 h-8 text-green-500 mx-auto mb-2 opacity-60"></i>
-            <p class="text-xs">Aucun écart constaté sur les inventaires du magasin central sur cette période.</p>
+            <p class="text-xs">Aucun écart constaté sur cette période{{ $service ? ' pour ce service' : ' sur les inventaires du magasin central' }}.</p>
         </div>
     @else
         <div class="overflow-x-auto">
@@ -188,7 +230,9 @@
         </div>
     @endif
 </div>
+@endif
 
+@if(!$service || $service === 'restaurant')
 {{-- Section 2 : Écarts Garde-Manger Restaurant --}}
 <div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-6">
     <div class="p-4 bg-surface-light border-b border-secondary/20 flex items-center justify-between">
@@ -275,4 +319,92 @@
         </div>
     @endif
 </div>
+@endif
+
+@if((!$service && !empty($variances['stores']['lines']) && $variances['stores']['lines']->isNotEmpty()) || ($service && $service !== 'economat' && $service !== 'restaurant') || ($service && str_starts_with($service, 'depot-')))
+{{-- Section 3 : Écarts Dépôts de service --}}
+<div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-6">
+    <div class="p-4 bg-surface-light border-b border-secondary/20 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-primary">
+                {{ $service && str_starts_with($service, 'depot-') ? 'Dépôt — Écarts d\'inventaire' : 'Dépôts de service — Écarts d\'inventaire' }}
+            </h2>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-900">
+                {{ $variances['stores']['count'] ?? 0 }} ligne(s)
+            </span>
+        </div>
+        <div class="text-xs text-primary/60 font-mono">
+            Solde net : <strong>{{ number_format(($variances['stores']['variance_value'] ?? 0) / 100, 0, ',', ' ') }} FCFA</strong>
+        </div>
+    </div>
+
+    @if(empty($variances['stores']['lines']) || $variances['stores']['lines']->isEmpty())
+        <div class="p-8 text-center text-primary/40">
+            <i data-lucide="check" class="w-8 h-8 text-green-500 mx-auto mb-2 opacity-60"></i>
+            <p class="text-xs">Aucun écart constaté sur les inventaires de dépôt sur cette période.</p>
+        </div>
+    @else
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                        <th class="py-2.5 px-3">Dépôt</th>
+                        <th class="py-2.5 px-3">Inventaire</th>
+                        <th class="py-2.5 px-3">Article</th>
+                        <th class="py-2.5 px-3 text-center">Théorique</th>
+                        <th class="py-2.5 px-3 text-center">Compté</th>
+                        <th class="py-2.5 px-3 text-center">Écart Qté</th>
+                        <th class="py-2.5 px-3 text-right">P.U.</th>
+                        <th class="py-2.5 px-3 text-right">Valeur Écart</th>
+                        <th class="py-2.5 px-3">Observations</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-secondary/10">
+                    @foreach($variances['stores']['lines'] as $sLine)
+                        @php
+                            $sDiffQty = (float) $sLine->varianceQuantity();
+                            $sDiffVal = (int) $sLine->varianceValue();
+                        @endphp
+                        <tr class="hover:bg-surface-light/40 transition-colors">
+                            <td class="py-2.5 px-3 font-medium text-primary">
+                                {{ $sLine->inventory?->store?->name ?? 'Dépôt' }}
+                                <span class="text-[10px] text-primary/40 block">{{ $sLine->inventory?->store?->departmentLabel() }}</span>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <a href="{{ route('economat.stores.counts.show', $sLine->inventory) }}" class="font-mono font-bold text-primary hover:underline">
+                                    {{ $sLine->inventory?->reference }}
+                                </a>
+                                <div class="text-[10px] text-primary/40">{{ $sLine->inventory?->closed_at?->format('d/m/Y') }}</div>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <div class="font-medium text-primary">{{ $sLine->item?->name ?? 'Article' }}</div>
+                                <div class="text-[10px] font-mono text-primary/40">{{ $sLine->item?->reference }}</div>
+                            </td>
+                            <td class="py-2.5 px-3 text-center font-mono text-primary/70">
+                                {{ (float) $sLine->theoretical_quantity }} {{ $sLine->item?->unit ?? 'u' }}
+                            </td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-primary">
+                                {{ (float) $sLine->counted_quantity }} {{ $sLine->item?->unit ?? 'u' }}
+                            </td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold {{ $sDiffQty < 0 ? 'text-red-700' : 'text-green-700' }}">
+                                {{ $sDiffQty > 0 ? '+' : '' }}{{ $sDiffQty }} {{ $sLine->item?->unit ?? 'u' }}
+                            </td>
+                            <td class="py-2.5 px-3 text-right font-mono text-primary/60">
+                                {{ number_format($sLine->unit_cost / 100, 0, ',', ' ') }} FCFA
+                            </td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold {{ $sDiffVal < 0 ? 'text-red-700' : 'text-green-700' }}">
+                                {{ $sDiffVal > 0 ? '+' : '' }}{{ number_format($sDiffVal / 100, 0, ',', ' ') }} FCFA
+                            </td>
+                            <td class="py-2.5 px-3 text-primary/60">
+                                {{ $sLine->notes ?: '—' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
+@endif
 @endsection
