@@ -126,6 +126,12 @@ class GoodsReceipt extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    /** Les bordereaux de livraison joints : plusieurs par livraison. */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptAttachment::class)->latest('id');
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(GoodsReceiptLine::class);

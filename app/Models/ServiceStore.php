@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class ServiceStore extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     protected $fillable = ['name', 'department', 'is_active', 'sort_order', 'tenant_id'];
 
     protected $casts = [

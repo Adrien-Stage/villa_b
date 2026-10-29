@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CorbeilleController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EstablishmentController;
 use App\Http\Controllers\Api\PermissionMatrixController;
@@ -74,6 +75,14 @@ Route::middleware('orchestration.token')->group(function () {
 
     // L'identité de l'établissement (nom, coordonnées, devise, couleurs) : la
     // console la tient, l'application la reçoit à chaque enregistrement.
+    // La corbeille : consultée, restaurée et purgée par l'administrateur
+    // TECH de la console, jamais depuis l'hôtel.
+    Route::get('/corbeille', [CorbeilleController::class, 'index'])->name('api.corbeille.index');
+    Route::post('/corbeille/{entree}/restaurer', [CorbeilleController::class, 'restore'])
+        ->whereNumber('entree')->name('api.corbeille.restaurer');
+    Route::delete('/corbeille/{entree}', [CorbeilleController::class, 'destroy'])
+        ->whereNumber('entree')->name('api.corbeille.purger');
+
     Route::get('/etablissement', [EstablishmentController::class, 'show'])->name('api.etablissement.show');
     Route::put('/etablissement', [EstablishmentController::class, 'update'])->name('api.etablissement.update');
 });

@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class StockUnit extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     protected $fillable = ['name', 'sort_order', 'is_active'];
 
     protected $casts = [

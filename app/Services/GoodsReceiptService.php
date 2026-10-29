@@ -25,6 +25,40 @@ class GoodsReceiptService
     {
     }
 
+    /**
+     * Joint les bordereaux de livraison au bon : rangés hors de l'espace
+     * public (disque local), un dossier par bon.
+     *
+     * @param  list<\Illuminate\Http\UploadedFile>  $fichiers
+     * @return int  bordereaux joints
+     */
+    public function joindre(GoodsReceipt $receipt, array $fichiers, User $user): int
+    {
+        $joints = 0;
+        foreach ($fichiers as $fichier) {
+            if (! $fichier instanceof \Illuminate\Http\UploadedFile || ! $fichier->isValid()) {
+                continue;
+            }
+            $receipt->attachments()->create([
+                'disk'          => 'local',
+                'path'          => $fichier->store("bordereaux/{$receipt->id}", 'local'),
+                'original_name' => mb_substr($fichier->getClientOriginalName() ?: 'bordereau', 0, 255),
+                'mime_type'     => $fichier->getMimeType(),
+                'size'          => (int) $fichier->getSize(),
+                'uploaded_by'   => $user->id,
+            ]);
+            $joints++;
+        }
+
+        if ($joints > 0) {
+            \App\Models\AuditLog::record($user->id, 'bordereau_joint',
+                "{$joints} bordereau(x) de livraison joint(s) au bon {$receipt->number}", 'economat',
+                ['goods_receipt_id' => $receipt->id]);
+        }
+
+        return $joints;
+    }
+
     /** Le bon de réception qui attend la livraison de ce bon de commande, s'il y en a un. */
     public function attenteDe(PurchaseOrder $order): ?GoodsReceipt
     {

@@ -33,7 +33,7 @@
 
     @include('economat.partials.flash')
 
-    <form method="POST" action="{{ route('economat.receipts.store', $order) }}" class="space-y-6">
+    <form method="POST" action="{{ route('economat.receipts.store', $order) }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
         {{-- Métadonnées de livraison --}}
@@ -46,13 +46,26 @@
                     <input type="text" name="delivery_note_number" placeholder="Ex: BL-98421" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary font-mono">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Date et heure de déchargement</label>
-                    <input type="datetime-local" name="received_at" value="{{ now()->format('Y-m-d\TH:i') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                    {{-- La date de chaque livraison se saisit : elle n'est jamais supposée. --}}
+                    <label for="recu-le" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Date et heure de réception *</label>
+                    <input id="recu-le" type="datetime-local" name="received_at" required value="{{ old('received_at') }}" max="{{ now()->format('Y-m-d\TH:i') }}"
+                           @if($order->sent_at) min="{{ $order->sent_at->copy()->startOfDay()->format('Y-m-d\TH:i') }}" @endif
+                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                    @error('received_at')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Magasinier réceptionnaire</label>
                     <input type="text" readonly disabled value="{{ auth()->user()->name }}" class="w-full px-3 py-2 text-sm border border-secondary/20 bg-gray-50 rounded-lg text-primary/70">
                 </div>
+            </div>
+
+            <div>
+                <label for="bordereaux" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Bordereaux de livraison (facultatif)</label>
+                <input id="bordereaux" type="file" name="bordereaux[]" multiple accept="application/pdf,image/*"
+                       class="block w-full text-sm text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-surface-dark">
+                <p class="mt-1 text-[11px] text-primary/50">PDF ou photo du bordereau signé (plusieurs possibles, 10 Mo chacun). Vous pourrez en joindre d'autres depuis la fiche du bon.</p>
+                @error('bordereaux')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                @error('bordereaux.*')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>

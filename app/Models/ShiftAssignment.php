@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** Une personne planifiée sur un quart, un jour donné, par son chef de service. */
 class ShiftAssignment extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     protected $fillable = ['user_id', 'work_shift_id', 'department_id', 'date', 'assigned_by'];
 
     // « date » reste une chaîne AAAA-MM-JJ : un cast de date y ajouterait une
@@ -49,5 +52,12 @@ class ShiftAssignment extends Model
     public function enCoursA(CarbonImmutable $instant): bool
     {
         return $instant->greaterThanOrEqualTo($this->debut()) && $instant->lessThan($this->fin());
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return ($this->user?->name ?? 'Employé') . ' — ' . ($this->shift?->name ?? 'quart')
+            . ' du ' . \Illuminate\Support\Carbon::parse($this->date)->format('d/m/Y');
     }
 }

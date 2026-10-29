@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class FolioItem extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     // Types de prestations disponibles
@@ -101,5 +104,12 @@ class FolioItem extends Model
             self::TYPE_PAYMENT    => 'Paiement',
             default               => 'Autre',
         };
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return trim(($this->description ?? 'Prestation') . ' — ' . number_format(((int) $this->total_price) / 100, 0, ',', ' ') . ' FCFA'
+            . ($this->booking?->booking_number ? ' (séjour ' . $this->booking->booking_number . ')' : ''));
     }
 }

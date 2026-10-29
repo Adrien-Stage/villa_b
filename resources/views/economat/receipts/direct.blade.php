@@ -51,7 +51,7 @@
 
     @include('economat.partials.flash')
 
-    <form method="POST" action="{{ route('economat.receipts.direct.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('economat.receipts.direct.store') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
         {{-- Fournisseur et livraison --}}
@@ -117,13 +117,21 @@
                     <input id="bl" type="text" name="delivery_note_number" value="{{ old('delivery_note_number') }}" maxlength="80" placeholder="Ex : BL-98421" class="{{ $champ }} font-mono">
                 </div>
                 <div>
-                    <label for="recu-le" class="block text-xs font-semibold text-primary/80 mb-1.5">Reçu le</label>
-                    <input id="recu-le" type="datetime-local" name="received_at" value="{{ old('received_at', now()->format('Y-m-d\TH:i')) }}" max="{{ now()->format('Y-m-d\TH:i') }}" class="{{ $champ }}">
+                    <label for="recu-le" class="block text-xs font-semibold text-primary/80 mb-1.5">Reçu le *</label>
+                    <input id="recu-le" type="datetime-local" name="received_at" required value="{{ old('received_at') }}" max="{{ now()->format('Y-m-d\TH:i') }}" class="{{ $champ }}">
+                    @error('received_at')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label for="observations" class="block text-xs font-semibold text-primary/80 mb-1.5">Observations</label>
                     <input id="observations" type="text" name="notes" value="{{ old('notes') }}" maxlength="1000" placeholder="Ex : acheté par M. Talla, payé en espèces" class="{{ $champ }}">
                 </div>
+            </div>
+            <div class="mt-4">
+                <label for="bordereaux" class="block text-xs font-semibold text-primary/80 mb-1.5">Bordereau, ticket ou facture (facultatif)</label>
+                <input id="bordereaux" type="file" name="bordereaux[]" multiple accept="application/pdf,image/*"
+                       class="block w-full text-sm text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-surface-dark">
+                <p class="mt-1 text-[11px] text-primary/50">PDF ou photo (plusieurs possibles, 10 Mo chacun).</p>
+                @error('bordereaux.*')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
         </div>
 

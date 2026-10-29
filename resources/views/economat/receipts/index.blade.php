@@ -145,6 +145,11 @@
                     {{-- Visible à toute largeur : la colonne « Litige » se replie sur petit écran. --}}
                     @if($rc->estEnAttente())
                         <span class="block text-[10px] font-semibold text-amber-700">En attente de livraison</span>
+                    @elseif($rc->status !== \App\Models\GoodsReceipt::STATUS_CANCELLED)
+                        {{-- Rappel : le bordereau est facultatif, mais attendu. --}}
+                        <span class="block text-[10px] {{ $rc->attachments_count > 0 ? 'text-primary/50' : 'font-semibold text-amber-700' }}">
+                            {{ $rc->attachments_count > 0 ? $rc->attachments_count . ' bordereau(x)' : 'Aucun bordereau joint' }}
+                        </span>
                     @endif
                 </x-table.cell>
                 <x-table.cell hide="xl" nowrap>

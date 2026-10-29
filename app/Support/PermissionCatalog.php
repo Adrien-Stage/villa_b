@@ -151,6 +151,8 @@ class PermissionCatalog
         'economat.purchase_requests.creer',
         'economat.purchase_requests.modifier',
         'economat.purchase_requests.reject',
+        'economat.receipts.attachments.creer',
+        'economat.receipts.attachments.supprimer',
         'economat.receipts.cancel',
         'economat.receipts.creer',
         'economat.receipts.direct.creer',
@@ -851,6 +853,11 @@ class PermissionCatalog
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            // Bordereaux de livraison : qui réceptionne les joint ; l'économe
+            // seul les retire, et ils partent à la corbeille.
+            'economat.receipts.attachments.creer' => ['econome', 'storekeeper'],
+            'economat.receipts.attachments.supprimer' => ['econome'],
+            'economat.receipts.attachments.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
             // Recevoir sans commande engage une dépense : c'est l'économe qui

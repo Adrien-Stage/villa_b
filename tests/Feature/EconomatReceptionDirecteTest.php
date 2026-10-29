@@ -108,13 +108,13 @@ test("dans un magasin vide, la réception directe crée les articles et le bon d
         ->assertSee('Quincaillerie du Centre');
 
     // L'économe ne crée pas de fournisseur au passage.
-    $this->post(route('economat.receipts.direct.store'), [
+    $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'nouveau_fournisseur' => ['name' => 'Inconnu du fichier'],
         'motif'               => 'achat_comptant',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'pièce'], 'quantity_delivered' => 1, 'unit_price' => 500]],
     ])->assertSessionHasErrors('nouveau_fournisseur.name');
 
-    $reponse = $this->post(route('economat.receipts.direct.store'), [
+    $reponse = $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'          => $fournisseur->id,
         'motif'                => 'achat_comptant',
         'delivery_note_number' => 'TICKET-552',
@@ -167,7 +167,7 @@ test("un article déjà au magasin reçoit la marchandise au coût moyen", funct
     app(\App\Services\StockService::class)->recordOpening($biere, 10, 800000);
 
     $this->actingAs(personnelEconomat('econome', 'Économe'))
-        ->post(route('economat.receipts.direct.store'), [
+        ->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
             'supplier_id' => $fournisseur->id,
             'motif'       => 'livraison_imprevue',
             'lines'       => [['stock_item_id' => $biere->id, 'quantity_delivered' => 10, 'unit_price' => 10000]],
@@ -187,21 +187,21 @@ test("une réception directe incohérente n'enregistre rien", function () {
     $fournisseur = Supplier::sole();
 
     // Tout refusé : rien n'est gardé, rien ne s'enregistre.
-    $this->post(route('economat.receipts.direct.store'), [
+    $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'         => $fournisseur->id,
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
     ])->assertSessionHas('error');
 
     // Un fournisseur se choisit dans la liste : l'économe n'en crée pas.
-    $this->post(route('economat.receipts.direct.store'), [
+    $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'nouveau_fournisseur' => ['name' => 'quincaillerie du centre'],
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 500]],
     ])->assertSessionHasErrors('nouveau_fournisseur.name');
 
     // Sans prix, le stock serait valorisé à zéro.
-    $this->post(route('economat.receipts.direct.store'), [
+    $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'         => $fournisseur->id,
         'motif'               => 'urgence',
         'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'unit_price' => 0]],
@@ -221,7 +221,7 @@ test("une réception directe incohérente n'enregistre rien", function () {
 test("annuler une réception directe sort la marchandise et annule son bon de régularisation", function () {
     $econome = personnelEconomat('econome', 'Économe');
     $marche = Supplier::create(['name' => 'Marché central', 'is_active' => true]);
-    $this->actingAs($econome)->post(route('economat.receipts.direct.store'), [
+    $this->actingAs($econome)->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'         => $marche->id,
         'motif'               => 'achat_comptant',
         'lines'               => [['nouvel_article' => ['name' => 'Tomates', 'unit' => 'kg'], 'quantity_delivered' => 12, 'unit_price' => 600]],

@@ -161,9 +161,7 @@ class AccountingController extends Controller
             return $refus;
         }
 
-        if ($expense->receipt_path) {
-            Storage::disk('public')->delete($expense->receipt_path);
-        }
+        // Le justificatif part avec la dépense dans la corbeille.
         $expense->delete();
 
         return redirect()

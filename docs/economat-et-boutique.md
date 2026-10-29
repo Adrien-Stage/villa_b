@@ -147,6 +147,26 @@ téléphone, envoyé par WhatsApp. « Marquer comme transmis » fait passer le b
 réceptionne qu'un bon transmis : sans cette action, un fournisseur sans
 adresse bloquait toute la chaîne.
 
+#### Bordereaux et date de chaque livraison
+
+- **La date de réception est saisie à chaque livraison.** C'est vrai pour une
+  livraison partielle comme pour une livraison complète, et pour une réception
+  directe. Le champ arrive vide. Il refuse une date dans le futur et une date
+  antérieure à l'envoi du bon de commande.
+- **Bordereaux de livraison.** On peut joindre un ou plusieurs fichiers (PDF ou
+  photo, 10 Mo chacun) au formulaire de réception, ou plus tard depuis la fiche
+  du bon d'entrée. Ils sont facultatifs. Un bon sans bordereau affiche
+  « Aucun bordereau joint ».
+  - Ils sont rangés hors de l'espace public (disque local,
+    `bordereaux/{bon}/`) et ne s'ouvrent qu'avec
+    `economat.receipts.attachments.voir`.
+  - Les joindre : économe et magasinier. Les retirer : l'économe seul. Un
+    bordereau retiré part à la [corbeille](corbeille.md) : seule la console peut
+    le rendre.
+- **Suivi des livraisons.** Le bon de commande et chaque bon d'entrée affichent
+  toutes les livraisons du bon : date, numéro de bon d'entrée, quantités,
+  bordereaux, et ce qui reste attendu.
+
 #### Réception directe, sans bon de commande
 
 Une marchandise arrive parfois sans commande : achat au comptant au marché,

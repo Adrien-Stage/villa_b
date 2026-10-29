@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RestaurantPantryItem extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory, AppartientAUnRestaurant;
 
     /** Le garde-manger est le stock du restaurant. */

@@ -20,6 +20,9 @@ use Illuminate\Support\Collection;
  */
 class PartnerOrganization extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     public const TYPES = [

@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Expense extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     const CATEGORY_ELECTRICITY = 'electricity';
@@ -66,5 +69,11 @@ class Expense extends Model
     public function categoryLabel(): string
     {
         return self::CATEGORIES[$this->category] ?? 'Divers';
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return ($this->label ?? 'Dépense') . ' — ' . number_format(((int) $this->amount) / 100, 0, ',', ' ') . ' FCFA';
     }
 }
