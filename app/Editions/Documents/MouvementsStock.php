@@ -21,7 +21,7 @@ class MouvementsStock extends Edition
 
     public function description(): string
     {
-        return "Chaque entrée, sortie ou ajustement du magasin central sur la période : article, stock avant et après, valeur, document d'origine, motif et auteur.";
+        return "Chaque entrée, sortie ou ajustement du magasin central sur la période : article, stock restant et stock total, valeur, document d'origine, motif et auteur.";
     }
 
     public function droits(): array { return ['economat.items.voir']; }
@@ -50,10 +50,10 @@ class MouvementsStock extends Edition
                 Colonne::texte('article', 'Article'),
                 Colonne::texte('nature', 'Mouvement'),
                 Colonne::texte('origine', 'Document'),
-                Colonne::nombre('avant', 'Stock avant'),
+                Colonne::nombre('avant', 'Stock restant'),
                 Colonne::nombre('entree', 'Entrée'),
                 Colonne::nombre('sortie', 'Sortie'),
-                Colonne::nombre('apres', 'Stock après'),
+                Colonne::nombre('apres', 'Stock Total'),
                 Colonne::montant('cout', 'Coût unitaire', false),
                 Colonne::montant('valeur', 'Valeur'),
                 Colonne::texte('motif', 'Motif'),

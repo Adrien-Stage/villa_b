@@ -23,9 +23,9 @@
             </h1>
             <p class="text-sm text-primary/60 mt-1 max-w-3xl">
                 @if($article)
-                    Tous les mouvements de <strong>{{ $article->name }}</strong> dans l'ordre du temps, avec le stock avant et après chacun.
+                    Tous les mouvements de <strong>{{ $article->name }}</strong> dans l'ordre du temps, avec le stock restant et le stock total après chacun.
                 @else
-                    Chaque entrée, sortie et ajustement du magasin central, avec le stock avant et après, la valeur et le document d'origine.
+                    Chaque entrée, sortie et ajustement du magasin central, avec le stock restant et le stock total, la valeur et le document d'origine.
                 @endif
             </p>
         </div>
@@ -174,10 +174,10 @@
             @unless($article)<x-table.col>Article</x-table.col>@endunless
             <x-table.col>Mouvement</x-table.col>
             <x-table.col hide="lg">Document</x-table.col>
-            <x-table.col align="right">Stock avant</x-table.col>
+            <x-table.col align="right">Stock restant</x-table.col>
             <x-table.col align="right">Entrée</x-table.col>
             <x-table.col align="right">Sortie</x-table.col>
-            <x-table.col align="right">Stock après</x-table.col>
+            <x-table.col align="right">Stock Total</x-table.col>
             <x-table.col align="right" hide="xl">Coût unit.</x-table.col>
             <x-table.col align="right">Valeur</x-table.col>
             <x-table.col hide="2xl">Motif</x-table.col>

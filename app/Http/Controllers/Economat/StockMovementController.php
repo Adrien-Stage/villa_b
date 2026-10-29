@@ -83,7 +83,7 @@ class StockMovementController extends Controller
 
         $document = Document::intitule($article ? 'Fiche de stock — ' . $article->name : 'Mouvements de stock')
             ->sousTitre($article
-                ? 'Entrées, sorties et ajustements de l\'article, avec le stock avant et après chaque mouvement'
+                ? 'Entrées, sorties et ajustements de l\'article, avec le stock restant et le stock total après chaque mouvement'
                 : 'Entrées, sorties et ajustements du magasin central')
             ->periode($filtres['du'], $filtres['au'])
             ->filtres($this->filtresImprimes($filtres, $article))
@@ -92,10 +92,10 @@ class StockMovementController extends Controller
                 $article ? null : Colonne::texte('article', 'Article'),
                 Colonne::texte('nature', 'Mouvement'),
                 Colonne::texte('origine', 'Document'),
-                Colonne::nombre('avant', 'Stock avant'),
+                Colonne::nombre('avant', 'Stock restant'),
                 Colonne::nombre('entree', 'Entrée'),
                 Colonne::nombre('sortie', 'Sortie'),
-                Colonne::nombre('apres', 'Stock après'),
+                Colonne::nombre('apres', 'Stock Total'),
                 Colonne::montant('cout', 'Coût unitaire', false),
                 Colonne::montant('valeur', 'Valeur'),
                 Colonne::texte('motif', 'Motif'),
