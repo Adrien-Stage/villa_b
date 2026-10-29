@@ -92,7 +92,8 @@
                     </span>
                 </div>
                 <p class="text-sm text-primary/70 mt-1">
-                    Périmètre : <strong>{{ $count->category?->name ?? 'Tout le magasin central (Général)' }}</strong>
+                    Service : <strong>{{ $count->departmentLabel() }}</strong>
+                    · Périmètre : <strong>{{ $count->category?->name ?? 'Tout le magasin (Général)' }}</strong>
                     · Date de comptage : {{ $count->count_date->format('d/m/Y') }}
                 </p>
                 <p class="text-xs text-primary/45 mt-0.5">

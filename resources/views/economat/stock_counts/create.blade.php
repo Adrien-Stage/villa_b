@@ -33,6 +33,17 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Service / Département <span class="text-red-500">*</span></label>
+                    <select name="department" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        @foreach($departments as $code => $label)
+                            <option value="{{ $code }}" {{ old('department', 'economat') === $code ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-primary/45 mt-1">Sélectionnez le magasin central (Économat) ou le service rattaché à cet inventaire.</p>
+                    @error('department')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
                     <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Périmètre / Catégorie</label>
                     <select name="stock_category_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                         <option value="">Tous les articles de l'économat (Inventaire général)</option>

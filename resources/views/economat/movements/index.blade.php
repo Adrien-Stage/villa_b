@@ -73,6 +73,25 @@
                 </select>
             </div>
             <div>
+                <label for="service" class="block text-[11px] font-medium text-primary/50">Service / Département</label>
+                <select name="service" id="service" class="{{ $champ }}">
+                    <option value="">Tous les services</option>
+                    <option value="economat" @selected(($filtres['service'] ?? '') === 'economat')>Économat (Magasin central)</option>
+                    <optgroup label="Départements">
+                        @foreach(\App\Models\StockRequisition::DEPARTMENTS as $cle => $libelle)
+                            <option value="{{ $cle }}" @selected(($filtres['service'] ?? '') === $cle)>{{ $libelle }}</option>
+                        @endforeach
+                    </optgroup>
+                    @if(isset($serviceStores) && $serviceStores->isNotEmpty())
+                        <optgroup label="Dépôts de service">
+                            @foreach($serviceStores as $store)
+                                <option value="depot-{{ $store->id }}" @selected(($filtres['service'] ?? '') === 'depot-' . $store->id)>{{ $store->name }} ({{ $store->departmentLabel() }})</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
+                </select>
+            </div>
+            <div>
                 <label for="type" class="block text-[11px] font-medium text-primary/50">Mouvement</label>
                 <select name="type" id="type" class="{{ $champ }}">
                     <option value="">Tous</option>

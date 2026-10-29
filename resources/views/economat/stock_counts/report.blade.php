@@ -321,18 +321,22 @@
             <td class="meta-val font-mono">{{ $count->count_date->format('d/m/Y') }}</td>
         </tr>
         <tr>
+            <td class="meta-label">Service / Département :</td>
+            <td class="meta-val"><strong>{{ $count->departmentLabel() }}</strong></td>
             <td class="meta-label">Périmètre / Catégorie :</td>
             <td class="meta-val">{{ $count->category?->name ?? 'Magasin complet (Tous articles)' }}</td>
+        </tr>
+        <tr>
             <td class="meta-label">Statut du PV :</td>
             <td class="meta-val">
                 <strong>{{ $count->status === 'closed' ? 'Régularisé & Clôturé' : 'Provisoire' }}</strong>
             </td>
-        </tr>
-        <tr>
             <td class="meta-label">Auteur du comptage :</td>
             <td class="meta-val">{{ $count->openedBy?->name ?? 'Économe' }}</td>
+        </tr>
+        <tr>
             <td class="meta-label">Validé / Clôturé par :</td>
-            <td class="meta-val">{{ $count->closedBy?->name ?? '—' }}</td>
+            <td class="meta-val" colspan="3">{{ $count->closedBy?->name ?? '—' }}</td>
         </tr>
     </table>
 

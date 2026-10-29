@@ -30,6 +30,7 @@ class StockCount extends Model
 
     protected $fillable = [
         'reference',
+        'department',
         'stock_category_id',
         'status',
         'count_date',
@@ -62,6 +63,9 @@ class StockCount extends Model
         static::creating(function (self $count) {
             if (empty($count->reference)) {
                 $count->reference = self::generateReference();
+            }
+            if (empty($count->department)) {
+                $count->department = 'economat';
             }
             if (empty($count->count_date)) {
                 $count->count_date = now()->toDateString();
@@ -154,6 +158,15 @@ class StockCount extends Model
     public function statusLabel(): string
     {
         return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    public function departmentLabel(): string
+    {
+        if (empty($this->department) || $this->department === 'economat') {
+            return 'Économat (Magasin central)';
+        }
+
+        return StockRequisition::DEPARTMENTS[$this->department] ?? ucfirst($this->department);
     }
 
     /**

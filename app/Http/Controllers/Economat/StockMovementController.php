@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\ServiceStore;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Models\StockRequisition;
 use App\Services\DocumentExporter;
 use App\Services\StockMovementJournal;
 use App\Support\Document\Colonne;
@@ -48,14 +50,19 @@ class StockMovementController extends Controller
         $documents = $this->journal->documents($mouvements->items());
 
         return view('economat.movements.index', [
-            'mouvements' => $mouvements,
-            'lignes'     => collect($mouvements->items())->map(fn (StockMovement $m) => $this->journal->ligne($m, $documents)),
-            'synthese'   => $this->journal->synthese($filtres),
-            'article'    => $article,
-            'fiche'      => $article ? $this->journal->fiche($article, $filtres['du'], $filtres['au']) : null,
-            'filtres'    => $filtres,
-            'articles'   => StockItem::query()->orderBy('name')->get(['id', 'name', 'reference', 'unit', 'is_active']),
-            'categories' => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'mouvements'    => $mouvements,
+            'lignes'        => collect($mouvements->items())->map(fn (StockMovement $m) => $this->journal->ligne($m, $documents)),
+            'synthese'      => $this->journal->synthese($filtres),
+            'article'       => $article,
+            'fiche'         => $article ? $this->journal->fiche($article, $filtres['du'], $filtres['au']) : null,
+            'filtres'       => $filtres,
+            'articles'      => StockItem::query()->orderBy('name')->get(['id', 'name', 'reference', 'unit', 'is_active']),
+            'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'departments'   => [
+                'economat' => 'Économat (Magasin central)',
+                ...StockRequisition::DEPARTMENTS,
+            ],
+            'serviceStores' => ServiceStore::active()->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -124,6 +131,7 @@ class StockMovementController extends Controller
             'categorie' => (int) $request->query('categorie') ?: null,
             'type'      => array_key_exists((string) $request->query('type'), StockMovement::TYPES) ? $request->query('type') : null,
             'source'    => array_key_exists((string) $request->query('source'), StockMovement::SOURCES) ? $request->query('source') : null,
+            'service'   => trim((string) $request->query('service')) ?: null,
             'recherche' => trim((string) $request->query('recherche')) ?: null,
         ];
     }
@@ -131,12 +139,28 @@ class StockMovementController extends Controller
     private function filtresImprimes(array $filtres, ?StockItem $article): array
     {
         return array_filter([
-            'Article'   => $article?->name,
-            'Catégorie' => $filtres['categorie'] ? StockCategory::find($filtres['categorie'])?->name : null,
-            'Mouvement' => $filtres['type'] ? StockMovement::TYPES[$filtres['type']] : null,
-            'Origine'   => $filtres['source'] ? StockMovement::SOURCES[$filtres['source']] : null,
-            'Motif'     => $filtres['recherche'],
+            'Article'               => $article?->name,
+            'Catégorie'             => $filtres['categorie'] ? StockCategory::find($filtres['categorie'])?->name : null,
+            'Mouvement'             => $filtres['type'] ? StockMovement::TYPES[$filtres['type']] : null,
+            'Origine'               => $filtres['source'] ? StockMovement::SOURCES[$filtres['source']] : null,
+            'Service / Département' => $this->labelService($filtres['service'] ?? null),
+            'Motif'                 => $filtres['recherche'],
         ]);
+    }
+
+    private function labelService(?string $key): ?string
+    {
+        if (!$key) {
+            return null;
+        }
+        if ($key === 'economat') {
+            return 'Économat (Magasin central)';
+        }
+        if (str_starts_with($key, 'depot-')) {
+            $store = ServiceStore::find((int) substr($key, 6));
+            return $store ? "{$store->name} ({$store->departmentLabel()})" : null;
+        }
+        return StockRequisition::DEPARTMENTS[$key] ?? ucfirst($key);
     }
 
     private function date(?string $valeur): ?Carbon
