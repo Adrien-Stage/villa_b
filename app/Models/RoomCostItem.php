@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RoomCostItem extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     // Catégories — servent au regroupement et aux sous-totaux de la fiche.

@@ -341,10 +341,7 @@ class RestaurantMenuController extends Controller
                 ->withErrors(['item' => 'Cet article est deja utilise dans des commandes. Desactive-le au lieu de le supprimer.']);
         }
 
-        if ($item->image_path) {
-            Storage::disk('public')->delete($item->image_path);
-        }
-
+        // Son image part avec lui dans la corbeille.
         $item->delete();
 
         return redirect()

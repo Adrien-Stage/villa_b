@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ServiceItem extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     const CATEGORY_ACTIVITY     = 'activity';

@@ -174,11 +174,7 @@ class RoomController extends Controller
             return back()->withErrors(['delete' => 'Impossible de supprimer une chambre avec des réservations actives.']);
         }
 
-        // Supprimer les images du disque
-        foreach ($room->images as $image) {
-            Storage::disk('public')->delete($image->path);
-        }
-
+        // Ses photos partent avec elle dans la corbeille.
         $roomNumber = $room->number;
         $room->delete();
 
@@ -203,7 +199,7 @@ class RoomController extends Controller
             abort(403);
         }
 
-        Storage::disk('public')->delete($image->path);
+        // Le fichier part avec la photo dans la corbeille.
         $image->delete();
 
         return back()->with('success', 'Image supprimée.');

@@ -179,7 +179,7 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
     $ligneBon = $bon->lines->first();
     $this->actingAs($econome)->get(route('economat.receipts.create', $bon))->assertOk()
         ->assertSee($attente->number)->assertSee('Livraison partielle')->assertSee('Livraison complète');
-    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), [
+    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'delivery_note_number' => 'BL-1', 'livraison' => GoodsReceipt::DELIVERY_PARTIAL,
         'lines' => [$ligneBon->id => ['quantity_delivered' => 5]],
     ])->assertRedirect()->assertSessionHas('success');
@@ -194,7 +194,7 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
     expect((float) $reste->lines()->sole()->quantity_ordered)->toBe(3.0);
 
     // 6. Seconde livraison, déclarée complète avec 2 kg : le bon est soldé, le manquant n'est plus attendu.
-    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), [
+    $this->actingAs($econome)->post(route('economat.receipts.store', $bon), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'livraison' => GoodsReceipt::DELIVERY_COMPLETE,
         'lines' => [$ligneBon->id => ['quantity_delivered' => 2]],
     ])->assertRedirect()->assertSessionHas('success');

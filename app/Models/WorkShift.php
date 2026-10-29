@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class WorkShift extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     protected $fillable = ['name', 'starts_at', 'ends_at', 'sort_order', 'is_active'];
 
     protected $casts = [

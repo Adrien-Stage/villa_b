@@ -210,7 +210,7 @@ test('une livraison reçue en cartons entre en cartons fermés ; son annulation 
     $ligne = $bon->lines->first();
 
     $this->get(route('economat.receipts.create', $bon))->assertOk()->assertSee('Reçu en');
-    $this->post(route('economat.receipts.store', $bon), ['lines' => [$ligne->id => [
+    $this->post(route('economat.receipts.store', $bon), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 'lines' => [$ligne->id => [
         'packaging' => 'carton', 'quantity_delivered' => 10, 'quantity_rejected' => 1, 'rejection_reason' => 'damaged',
     ]]])->assertSessionHas('success');
 
@@ -248,7 +248,7 @@ test('la réception directe en cartons compte le prix au carton', function () {
     cartonsDeGants($this, 0);
     $fournisseur = \App\Models\Supplier::create(['name' => 'Medisup SARL']);
 
-    $this->post(route('economat.receipts.direct.store'), [
+    $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id' => $fournisseur->id,
         'motif'       => 'achat_comptant',
         'lines'       => [['stock_item_id' => $this->gants->id, 'packaging' => 'carton', 'quantity_delivered' => 2, 'unit_price' => 10000]],

@@ -19,6 +19,9 @@ use Illuminate\Support\Collection;
  */
 class RoomPackage extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     public const MODE_PER_PERSON_NIGHT = 'per_person_night';

@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DiscussionConversation extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     protected $fillable = [
@@ -37,5 +40,11 @@ class DiscussionConversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(DiscussionMessage::class, 'conversation_id');
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return $this->title ?: 'Conversation #' . $this->id;
     }
 }

@@ -178,6 +178,62 @@
         </div>
     </div>
 
+    {{-- Bordereaux de livraison : joints ici ou au formulaire de réception. --}}
+    <section class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm" aria-labelledby="titre-bordereaux">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-secondary/10">
+            <h2 id="titre-bordereaux" class="text-xs font-semibold uppercase tracking-wider text-primary/70">Bordereaux de livraison ({{ $receipt->attachments->count() }})</h2>
+            @if($receipt->status !== \App\Models\GoodsReceipt::STATUS_CANCELLED)
+                @droit('economat.receipts.attachments.creer')
+                    <form method="POST" action="{{ route('economat.receipts.attachments.store', $receipt) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+                        @csrf
+                        <label for="ajout-bordereaux" class="sr-only">Joindre des bordereaux</label>
+                        <input id="ajout-bordereaux" type="file" name="bordereaux[]" multiple required accept="application/pdf,image/*"
+                               class="max-w-[16rem] text-xs text-primary file:mr-2 file:rounded-md file:border-0 file:bg-secondary/15 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-primary">
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5" aria-hidden="true"></i> Joindre
+                        </button>
+                    </form>
+                @enddroit
+            @endif
+        </div>
+        @error('bordereaux')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('bordereaux.*')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
+
+        @forelse($receipt->attachments as $bordereau)
+            <div class="flex flex-wrap items-center justify-between gap-3 py-2.5 {{ $loop->first ? 'mt-1' : 'border-t border-secondary/10' }}">
+                <div class="flex min-w-0 items-center gap-2.5">
+                    <i data-lucide="{{ $bordereau->estUneImage() ? 'image' : 'file-text' }}" class="h-4 w-4 shrink-0 text-primary/50" aria-hidden="true"></i>
+                    <div class="min-w-0">
+                        @droit('economat.receipts.attachments.voir')
+                            <a href="{{ route('economat.receipts.attachments.show', [$receipt, $bordereau]) }}" target="_blank" rel="noopener" class="block truncate text-sm font-medium text-primary hover:underline">{{ $bordereau->original_name }}</a>
+                        @else
+                            <span class="block truncate text-sm font-medium text-primary">{{ $bordereau->original_name }}</span>
+                        @enddroit
+                        <span class="block text-[11px] text-primary/50">{{ $bordereau->taille() }} · joint le {{ $bordereau->created_at->format('d/m/Y à H:i') }} par {{ $bordereau->uploadedBy?->name ?? '—' }}</span>
+                    </div>
+                </div>
+                @droit('economat.receipts.attachments.supprimer')
+                    <form method="POST" action="{{ route('economat.receipts.attachments.destroy', [$receipt, $bordereau]) }}"
+                          onsubmit="return confirm('Retirer ce bordereau du bon ? Il sera conservé dans la corbeille de l\'établissement.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50">
+                            <i data-lucide="trash-2" class="h-3.5 w-3.5" aria-hidden="true"></i> Supprimer
+                        </button>
+                    </form>
+                @enddroit
+            </div>
+        @empty
+            <p class="mt-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-900">
+                {{ $receipt->estEnAttente() ? 'Le bordereau se joint à la réception de la livraison.' : 'Aucun bordereau joint : ajoutez le bordereau de livraison signé dès que vous l\'avez.' }}
+            </p>
+        @endforelse
+    </section>
+
+    @if($receipt->purchaseOrder && ! $receipt->purchaseOrder->isRegularisation())
+        @include('economat.receipts.partials.suivi-livraisons', ['order' => $receipt->purchaseOrder, 'courant' => $receipt])
+    @endif
+
     {{-- Alerte litige éventuel --}}
     @if($receipt->hasRejections())
         <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1 shadow-sm">

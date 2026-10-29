@@ -333,6 +333,10 @@
     @endif
 
     {{-- Bons de réception associés (Goods Receipts) --}}
+    @unless($order->isRegularisation())
+        @include('economat.receipts.partials.suivi-livraisons', ['order' => $order])
+    @endunless
+
     @if($order->receipts->isNotEmpty())
         <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
             <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between">

@@ -141,9 +141,13 @@ class GoodsReceiptController extends Controller
 
     public function store(Request $request, PurchaseOrder $order, Notifier $notifier): RedirectResponse
     {
+        // La date de chaque livraison est saisie, jamais supposée : ni dans
+        // le futur, ni avant que le bon parte chez le fournisseur.
+        $depuis = $order->sent_at?->copy()->startOfDay();
+
         $validated = $request->validate([
             'delivery_note_number'       => ['nullable', 'string', 'max:80'],
-            'received_at'                => ['nullable', 'date'],
+            'received_at'                => array_filter(['required', 'date', 'before_or_equal:now', $depuis ? 'after_or_equal:' . $depuis->toDateTimeString() : null]),
             'notes'                      => ['nullable', 'string', 'max:1000'],
             'lines'                      => ['required', 'array'],
             'lines.*.quantity_delivered' => ['nullable', 'numeric', 'min:0'],
@@ -155,13 +159,19 @@ class GoodsReceiptController extends Controller
             // Le formulaire la demande ; sans réponse, la livraison est
             // complète quand plus rien n'est dû, partielle sinon.
             'livraison'                  => ['nullable', Rule::in(array_keys(GoodsReceipt::DELIVERIES))],
-        ]);
+        ] + GoodsReceiptAttachmentController::regles(), [
+            'received_at.required'        => 'Indiquez la date et l\'heure de cette livraison.',
+            'received_at.before_or_equal' => 'Une livraison ne se date pas dans le futur.',
+            'received_at.after_or_equal'  => 'Cette date précède l\'envoi du bon de commande au fournisseur.',
+        ] + GoodsReceiptAttachmentController::messages());
 
         try {
             $receipt = $this->receiptService->receive($order, $validated, Auth::user());
         } catch (RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
+
+        $this->receiptService->joindre($receipt, $request->file('bordereaux', []), Auth::user());
 
         $notifier->toRoles(self::ACHETEURS, new PurchaseOrderUpdated($order->fresh('supplier')), Auth::id());
 
@@ -202,7 +212,7 @@ class GoodsReceiptController extends Controller
             'nouveau_fournisseur.phone' => ['nullable', 'string', 'max:30'],
             'motif'                     => ['required', Rule::in(array_keys(PurchaseOrder::MOTIFS_REGULARISATION))],
             'delivery_note_number'      => ['nullable', 'string', 'max:80'],
-            'received_at'               => ['nullable', 'date', 'before_or_equal:now'],
+            'received_at'               => ['required', 'date', 'before_or_equal:now'],
             'notes'                     => ['nullable', 'string', 'max:1000'],
             'lines'                     => ['required', 'array', 'min:1', 'max:100'],
             'lines.*.stock_item_id'     => ['nullable', 'integer', 'exists:stock_items,id', 'required_without:lines.*.nouvel_article.name'],
@@ -216,7 +226,7 @@ class GoodsReceiptController extends Controller
             // Prix unitaire en FCFA : sans lui, le coût moyen du stock serait faussé.
             'lines.*.unit_price'         => ['required', 'numeric', 'gt:0', 'max:999999999'],
             'lines.*.notes'              => ['nullable', 'string', 'max:255'],
-        ], [
+        ] + GoodsReceiptAttachmentController::regles(), [
             'supplier_id.required_without'              => 'Choisissez le fournisseur, ou donnez le nom du nouveau.',
             'nouveau_fournisseur.name.required_without' => 'Choisissez le fournisseur, ou donnez le nom du nouveau.',
             'motif.required'                            => 'Indiquez pourquoi la marchandise arrive sans bon de commande.',
@@ -229,7 +239,8 @@ class GoodsReceiptController extends Controller
             'lines.*.unit_price.required'               => 'Le prix unitaire est obligatoire : il valorise le stock.',
             'lines.*.unit_price.gt'                     => 'Le prix unitaire est obligatoire : il valorise le stock.',
             'received_at.before_or_equal'               => 'Une réception ne se date pas dans le futur.',
-        ]);
+            'received_at.required'                      => 'Indiquez la date et l\'heure de cette réception.',
+        ] + GoodsReceiptAttachmentController::messages());
 
         $user = Auth::user();
 
@@ -247,6 +258,8 @@ class GoodsReceiptController extends Controller
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
+
+        $this->receiptService->joindre($receipt, $request->file('bordereaux', []), $user);
 
         $order = $receipt->purchaseOrder;
         $montant = number_format($receipt->total_amount / 100, 0, ',', ' ') . ' FCFA';
@@ -268,7 +281,7 @@ class GoodsReceiptController extends Controller
 
     public function show(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings']);
+        $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments', 'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'attachments.uploadedBy']);
 
         return view('economat.receipts.show', [
             'receipt' => $receipt,
@@ -309,7 +322,7 @@ class GoodsReceiptController extends Controller
     {
         // Les livraisons attendues d'abord : c'est le travail de l'économat.
         $query = GoodsReceipt::with(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item'])
-            ->withCount('lines')
+            ->withCount(['lines', 'attachments'])
             ->orderByRaw('case when status = ? then 0 else 1 end', [GoodsReceipt::STATUS_PENDING])
             ->orderByDesc('received_at')
             ->orderByDesc('id');

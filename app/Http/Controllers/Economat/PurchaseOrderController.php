@@ -246,7 +246,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $order): View
     {
-        $order->load(['supplier', 'lines.item.category', 'lines.item.packagings', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'invoices']);
+        $order->load(['supplier', 'lines.item.category', 'lines.item.packagings', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'receipts.attachments', 'receipts.lines.item', 'invoices']);
 
         return view('economat.orders.show', compact('order'));
     }

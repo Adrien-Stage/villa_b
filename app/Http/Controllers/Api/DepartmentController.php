@@ -121,11 +121,9 @@ class DepartmentController extends Controller
         $nom = $department->name;
         $id = $department->id;
 
-        DB::transaction(function () use ($department): void {
-            DB::table('users')->where('department_id', $department->id)
-                ->update(['department_id' => null, 'updated_at' => now()]);
-            $department->delete();
-        });
+        // Ses employés sont détachés par la base (department_id mis à nul) :
+        // la corbeille note lesquels, pour les lui rendre à la restauration.
+        $department->delete();
 
         AuditLog::record(null, 'department_console',
             "Département {$nom} supprimé depuis la console", 'users',

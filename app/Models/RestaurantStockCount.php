@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class RestaurantStockCount extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory, AppartientAUnRestaurant;
 
     /** On ne compte que le stock d'un restaurant qui en tient un. */

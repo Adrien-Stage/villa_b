@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class PermissionGrant extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     public const SUJET_ROLE = 'role';
     public const SUJET_USER = 'user';
 
@@ -56,5 +59,12 @@ class PermissionGrant extends Model
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('subject_type', self::SUJET_USER)->where('subject_id', (string) $userId);
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return \App\Support\PermissionLabels::complet($this->permission) . ' — ' . ($this->effect === self::EFFET_DENY ? 'refus' : 'autorisation')
+            . ' pour ' . ($this->subject_type === self::SUJET_USER ? (\App\Models\User::find((int) $this->subject_id)?->name ?? 'le compte #' . $this->subject_id) : 'le rôle ' . $this->subject_id);
     }
 }

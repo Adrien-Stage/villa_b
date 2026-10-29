@@ -834,6 +834,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');
             Route::get('/receptions/{receipt}/imprimer', [$eco . 'GoodsReceiptController', 'print'])->whereNumber('receipt')->name('receipts.print');
             Route::post('/receptions/{receipt}/annuler', [$eco . 'GoodsReceiptController', 'cancel'])->whereNumber('receipt')->name('receipts.cancel');
+            // Bordereaux de livraison : joints, ouverts, retirés (vers la corbeille).
+            Route::post('/receptions/{receipt}/bordereaux', [$eco . 'GoodsReceiptAttachmentController', 'store'])->whereNumber('receipt')->name('receipts.attachments.store');
+            Route::get('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController', 'show'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.show');
+            Route::delete('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController', 'destroy'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.destroy');
 
             // Traitement des demandes d'achat (approbation / rejet / conversion)
             Route::post('/demandes-achat/{purchaseRequest}/approuver', [$eco . 'PurchaseRequestController', 'approve'])->whereNumber('purchaseRequest')->name('purchase_requests.approve');

@@ -13,8 +13,8 @@
 
 | Rôle | Niveau | Inclut | Consulte | Agit | Services où il agit |
 |---|---|---|---:|---:|---|
-| Administrateur (`admin`) | 1 | — | 134 | 255 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Pilotage, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
-| Manager (`manager`) | 2 | — | 132 | 123 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
+| Administrateur (`admin`) | 1 | — | 135 | 257 | Restaurant, Comptabilité, Réservations, Économat, Chambres, Pilotage, Paramètres, Boutique, Groupes, Housekeeping, Clients, POS Réception, Rôles & droits, Interventions, Utilisateurs, Technique, Factures, Planning |
+| Manager (`manager`) | 2 | — | 133 | 123 | Restaurant, Réservations, Économat, Chambres, Paramètres, Groupes, Housekeeping, Clients, POS Réception, Utilisateurs, Technique, Factures, Planning |
 | Chef de réception (`reception_chief`) | 3 | `reception` | 36 | 55 | Réservations, Économat, Chambres, Paramètres, Groupes, Clients, POS Réception, Technique, Factures, Planning |
 | Réceptionniste (`reception`) | 4 | — | 34 | 35 | Réservations, Économat, Chambres, Groupes, Clients, POS Réception, Technique, Factures |
 | Responsable des étages (`housekeeping_leader`) | 3 | `housekeeping_supervisor`, `housekeeping_staff` | 13 | 33 | Économat, Paramètres, Housekeeping, Technique, Planning |
@@ -27,16 +27,16 @@
 | Caissier restaurant (`cashier`) | 4 | — | 12 | 10 | Restaurant, Technique |
 | Responsable boutique (`shop_manager`) | 3 | `shop_cashier` | 16 | 24 | Économat, Paramètres, Boutique, Technique, Planning |
 | Vendeur-caissier (`shop_cashier`) | 4 | — | 9 | 11 | Économat, Boutique, Technique |
-| Chef économe (`econome`) | 3 | `storekeeper` | 34 | 51 | Économat, Technique, Planning |
-| Magasinier (`storekeeper`) | 4 | — | 27 | 10 | Économat, Technique |
-| Responsable des achats (`purchasing_manager`) | 3 | — | 12 | 20 | Économat, Technique, Planning |
+| Chef économe (`econome`) | 3 | `storekeeper` | 35 | 53 | Économat, Technique, Planning |
+| Magasinier (`storekeeper`) | 4 | — | 28 | 11 | Économat, Technique |
+| Responsable des achats (`purchasing_manager`) | 3 | — | 13 | 20 | Économat, Technique, Planning |
 | Responsable technique (`tech_manager`) | 3 | `technician` | 10 | 21 | Économat, Technique, Planning |
 | Technicien de maintenance (`technician`) | 4 | — | 7 | 10 | Économat, Technique |
-| Responsable financier (`finance_manager`) | 3 | `accountant` | 118 | 54 | Restaurant, Comptabilité, Économat, Chambres, Pilotage, Paramètres, Boutique, Housekeeping, Technique, Planning |
+| Responsable financier (`finance_manager`) | 3 | `accountant` | 119 | 54 | Restaurant, Comptabilité, Économat, Chambres, Pilotage, Paramètres, Boutique, Housekeeping, Technique, Planning |
 | Comptable (`accountant`) | 4 | — | 34 | 24 | Comptabilité, Économat, Chambres, Technique |
-| Contrôleur de gestion (`controller`) | transversal | — | 97 | 5 | Économat, Pilotage |
-| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 75 | 0 | — |
-| Support Wetchah (`support`) | transversal | — | 113 | 0 | — |
+| Contrôleur de gestion (`controller`) | transversal | — | 98 | 5 | Économat, Pilotage |
+| Contrôleur Qualité & Audit (`quality_auditor`) | transversal | — | 76 | 0 | — |
+| Support Wetchah (`support`) | transversal | — | 114 | 0 | — |
 
 ## Droit par droit
 
@@ -338,6 +338,9 @@ Seuls les rôles qui détiennent au moins un droit du service ont une colonne.
 | `economat.purchase_requests.modifier` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ |  | ✓ |  |  |  |  | ✓ |  |  |
 | `economat.purchase_requests.reject` | **agit** | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  | ✓ |  | ✓ |  |  |
 | `economat.purchase_requests.voir` | consulte | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |  |  | ✓ |  | ✓ |  | ✓ | ✓ |  | ✓ |  | ✓ | ✓ | ✓ |
+| `economat.receipts.attachments.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |  |  |
+| `economat.receipts.attachments.supprimer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |  |
+| `economat.receipts.attachments.voir` | consulte | ✓ | ✓ |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ |
 | `economat.receipts.cancel` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |  |
 | `economat.receipts.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |  |  |  |  |
 | `economat.receipts.direct.creer` | **agit** | ✓ |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |  |  |  |

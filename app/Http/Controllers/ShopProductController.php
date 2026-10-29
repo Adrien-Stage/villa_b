@@ -186,11 +186,7 @@ class ShopProductController extends Controller
 
     public function destroy(ShopProduct $product)
     {
-        // Supprimer l'image si elle existe
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
-        }
-
+        // Son image part avec lui dans la corbeille.
         $productName = $product->name;
         $product->delete();
 

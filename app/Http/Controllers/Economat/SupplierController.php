@@ -139,11 +139,9 @@ class SupplierController extends Controller
             return back()->with('error', "Ce fournisseur a des bons de commande enregistrés : désactivez-le plutôt que de le supprimer pour préserver l'historique.");
         }
 
-        DB::transaction(function () use ($supplier) {
-            // Détachement des articles
-            $supplier->stockItems()->update(['supplier_id' => null]);
-            $supplier->delete();
-        });
+        // Ses articles sont détachés par la base (supplier_id mis à nul) : la
+        // corbeille note lesquels, pour les lui rendre à la restauration.
+        $supplier->delete();
 
         // Journal d'audit
         AuditLog::record(

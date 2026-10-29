@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class Room extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     protected $fillable = [
@@ -201,5 +204,11 @@ class Room extends Model
             'changed_by' => $resolvedUserId,  // Peut être null en CLI
             'changed_at' => now(),
         ]);
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return 'Chambre ' . $this->number;
     }
 }

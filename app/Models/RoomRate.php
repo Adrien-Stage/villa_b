@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RoomRate extends Model
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory;
 
     public const TYPE_EVENT = 'event';
@@ -206,5 +209,11 @@ class RoomRate extends Model
         }
 
         return implode(' · ', $parties);
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return ($this->name ?? 'Tarif') . ($this->roomType?->name ? ' — ' . $this->roomType->name : '');
     }
 }

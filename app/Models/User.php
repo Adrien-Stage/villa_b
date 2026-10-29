@@ -20,6 +20,9 @@ use Illuminate\Notifications\Notifiable;
  */
 class User extends Authenticatable
 {
+    // Effacé par un bouton « Supprimer », il passe par la corbeille.
+    use \App\Models\Concerns\VaALaCorbeille;
+
     use HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';           // Service informatique de l'hôtel
@@ -371,5 +374,11 @@ class User extends Authenticatable
 
         // Prend un des noms de l'utilisateur s'il en a deux ou plus
         return mb_convert_case($parts[0], MB_CASE_TITLE, 'UTF-8');
+    }
+
+    /** Ce que la corbeille affiche pour cette fiche. */
+    public function libelleCorbeille(): string
+    {
+        return $this->name . ($this->email ? ' (' . $this->email . ')' : '');
     }
 }
