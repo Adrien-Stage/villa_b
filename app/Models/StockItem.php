@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -46,6 +47,57 @@ class StockItem extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'stock_item_supplier')
+            ->withPivot(['purchase_price', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Prix moyen d'achat calculé d'après les fournisseurs qui approvisionnent cet article (en centimes FCFA).
+     * Si aucun fournisseur n'a de prix convenu, repli sur last_purchase_price ou average_cost (CUMP).
+     */
+    public function averageSupplierPrice(): int
+    {
+        $prices = $this->relationLoaded('suppliers')
+            ? $this->suppliers->pluck('pivot.purchase_price')->filter(fn ($p) => (int) $p > 0)
+            : $this->suppliers()->where('purchase_price', '>', 0)->pluck('purchase_price');
+
+        if ($prices->isNotEmpty()) {
+            return (int) round($prices->avg());
+        }
+
+        if ($this->last_purchase_price > 0) {
+            return (int) $this->last_purchase_price;
+        }
+
+        return (int) ($this->average_cost ?: 0);
+    }
+
+    /** Prix moyen d'achat calculé en FCFA entier. */
+    public function averageSupplierPriceFcfa(): float
+    {
+        return round($this->averageSupplierPrice() / 100);
+    }
+
+    /** Prix convenu auprès d'un fournisseur précis (en centimes FCFA), ou null si non lié. */
+    public function supplierPriceFor(int|Supplier|null $supplier): ?int
+    {
+        $supplierId = $supplier instanceof Supplier ? $supplier->id : (int) $supplier;
+        if (! $supplierId) {
+            return null;
+        }
+
+        if ($this->relationLoaded('suppliers')) {
+            $pivot = $this->suppliers->firstWhere('id', $supplierId)?->pivot;
+            return $pivot && (int) $pivot->purchase_price > 0 ? (int) $pivot->purchase_price : null;
+        }
+
+        $price = $this->suppliers()->where('suppliers.id', $supplierId)->value('purchase_price');
+        return $price !== null && (int) $price > 0 ? (int) $price : null;
     }
 
     public function movements(): HasMany

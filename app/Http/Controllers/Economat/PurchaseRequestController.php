@@ -40,7 +40,7 @@ class PurchaseRequestController extends Controller
     {
         $vue = array_key_exists($request->query('vue'), self::VUES) ? $request->query('vue') : 'en_cours';
 
-        $query = PurchaseRequest::with(['requestedBy', 'reviewedBy'])->withCount('lines')
+        $query = PurchaseRequest::with(['supplier', 'requestedBy', 'reviewedBy'])->withCount('lines')
             ->when($vue === 'archives', fn ($q) => $q->archivees(), fn ($q) => $q->enCours());
 
         if ($request->filled('status')) {
@@ -79,11 +79,15 @@ class PurchaseRequestController extends Controller
     {
         $items = StockItem::query()
             ->active()
+            ->with('suppliers')
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'current_stock', 'average_cost', 'last_purchase_price']);
+            ->get();
+
+        $suppliers = Supplier::active()->orderBy('name')->get();
 
         return view('economat.purchase_requests.create', [
             'items'              => $items,
+            'suppliers'          => $suppliers,
             'departments'        => PurchaseRequest::DEPARTMENTS,
             'priorities'         => PurchaseRequest::PRIORITIES,
             'choisitDepartement' => self::choisitLeDepartement(),
@@ -97,6 +101,7 @@ class PurchaseRequestController extends Controller
         }
 
         $validated = $request->validate([
+            'supplier_id'                   => ['required', 'exists:suppliers,id'],
             'department'                    => ['required', 'string', 'max:50'],
             'priority'                      => ['required', 'in:low,normal,urgent'],
             'purpose'                       => ['nullable', 'string', 'max:1000'],
@@ -106,7 +111,8 @@ class PurchaseRequestController extends Controller
             'lines.*.estimated_unit_price'  => ['nullable', 'numeric', 'min:0'],
             'lines.*.notes'                 => ['nullable', 'string', 'max:255'],
         ], [
-            'lines.required' => 'Veuillez ajouter au moins un article à la demande d\'achat.',
+            'supplier_id.required' => 'Veuillez sélectionner le fournisseur pour cette demande d\'achat.',
+            'lines.required'       => 'Veuillez ajouter au moins un article à la demande d\'achat.',
         ]);
 
         try {
@@ -131,16 +137,20 @@ class PurchaseRequestController extends Controller
             403
         );
 
-        $purchaseRequest->load(['lines.item']);
+        $purchaseRequest->load(['lines.item.suppliers', 'supplier']);
 
         $items = StockItem::query()
             ->active()
+            ->with('suppliers')
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'current_stock', 'average_cost', 'last_purchase_price']);
+            ->get();
+
+        $suppliers = Supplier::active()->orderBy('name')->get();
 
         return view('economat.purchase_requests.edit', [
             'request'            => $purchaseRequest,
             'items'              => $items,
+            'suppliers'          => $suppliers,
             'departments'        => PurchaseRequest::DEPARTMENTS,
             'priorities'         => PurchaseRequest::PRIORITIES,
             'choisitDepartement' => self::choisitLeDepartement(),
@@ -157,6 +167,7 @@ class PurchaseRequestController extends Controller
         );
 
         $validated = $request->validate([
+            'supplier_id'                  => ['required', 'exists:suppliers,id'],
             // Sans champ (économe, responsable des achats), la demande garde son département.
             'department'                   => ['nullable', 'string', 'max:50'],
             'priority'                     => ['required', 'in:low,normal,urgent'],
@@ -168,7 +179,8 @@ class PurchaseRequestController extends Controller
             'lines.*.estimated_unit_price' => ['nullable', 'numeric', 'min:0'],
             'lines.*.notes'                => ['nullable', 'string', 'max:255'],
         ], [
-            'lines.required' => 'Veuillez conserver au moins un article dans la demande d\'achat.',
+            'supplier_id.required' => 'Veuillez sélectionner le fournisseur pour cette demande d\'achat.',
+            'lines.required'       => 'Veuillez conserver au moins un article dans la demande d\'achat.',
         ]);
 
         try {
@@ -185,7 +197,7 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest): View
     {
-        $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item.supplier', 'purchaseOrders.supplier']);
+        $purchaseRequest->load(['supplier', 'requestedBy', 'reviewedBy', 'lines.item.suppliers', 'purchaseOrders.supplier']);
 
         $suppliers = Supplier::query()->active()->orderBy('name')->get();
 

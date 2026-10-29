@@ -316,7 +316,7 @@
                 </tbody>
                 <tfoot class="bg-gray-50/80 border-t border-secondary/15 font-semibold text-primary">
                     <tr>
-                        <td colspan="6" class="px-5 py-3.5 text-right font-bold text-primary">Valeur totale acceptée entrée en stock :</td>
+                        <td colspan="7" class="px-5 py-3.5 text-right font-bold text-primary">Valeur totale acceptée entrée en stock :</td>
                         <td class="px-5 py-3.5 text-right font-mono text-lg font-bold text-emerald-800">
                             {{ number_format($receipt->total_amount / 100, 0, ',', ' ') }} FCFA
                         </td>

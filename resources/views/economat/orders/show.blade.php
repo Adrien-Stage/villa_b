@@ -298,8 +298,11 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-gray-50">
-                            <td colspan="{{ $order->canBeReceived() ? 5 : 4 }}" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
+                            <td colspan="5" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
                             <td class="px-5 py-3 text-right font-bold text-primary font-mono text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
+                            @if($order->canBeReceived())
+                                <td class="px-5 py-3"></td>
+                            @endif
                         </tr>
                     </tfoot>
                 </table>

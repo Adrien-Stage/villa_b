@@ -402,8 +402,6 @@
                             <td class="py-2.5 px-3 text-center font-mono font-bold {{ $sDiffQty < 0 ? 'text-red-700' : 'text-green-700' }}">
                                 {{ $sDiffQty > 0 ? '+' : '' }}{{ $sDiffQty }}
                             </td>
-                                {{ $sDiffQty > 0 ? '+' : '' }}{{ $sDiffQty }} {{ $sLine->item?->unit ?? 'u' }}
-                            </td>
                             <td class="py-2.5 px-3 text-right font-mono text-primary/60">
                                 {{ number_format($sLine->unit_cost / 100, 0, ',', ' ') }} FCFA
                             </td>

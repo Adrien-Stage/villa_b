@@ -6,7 +6,8 @@
 <div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
     'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
     'stock' => (float) $it->current_stock,
-    'price' => $it->last_purchase_price > 0 ? $it->last_purchase_price / 100 : $it->average_cost / 100,
+    'price' => $it->averageSupplierPriceFcfa(),
+    'suppliers_count' => $it->suppliers->count(),
 ])->values()) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.purchase_requests.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
@@ -25,7 +26,16 @@
 
         {{-- Paramètres généraux --}}
         <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm space-y-4">
-            <div class="grid grid-cols-1 {{ $choisitDepartement ? 'md:grid-cols-3' : 'md:grid-cols-2' }} gap-4">
+            <div class="grid grid-cols-1 {{ $choisitDepartement ? 'md:grid-cols-4' : 'md:grid-cols-3' }} gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Fournisseur *</label>
+                    <select name="supplier_id" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                        <option value="">Sélectionner un fournisseur...</option>
+                        @foreach($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" @selected(old('supplier_id') == $supplier->id)>{{ $supplier->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @if($choisitDepartement)
                     <div>
                         <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Département demandeur *</label>
@@ -61,7 +71,7 @@
             <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between shrink-0">
                 <div>
                     <h2 class="text-sm font-semibold text-primary">Articles demandés</h2>
-                    <p class="text-xs text-primary/50">Sélectionnez les articles du magasin et la quantité requise.</p>
+                    <p class="text-xs text-primary/50">Sélectionnez les articles du magasin et la quantité requise. Le prix moyen calculé s'applique automatiquement.</p>
                 </div>
                 <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
@@ -73,11 +83,12 @@
                     <thead class="bg-gray-50/95 sticky top-0 z-10 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10 backdrop-blur-sm">
                         <tr>
                             <th class="px-4 py-2.5 text-left w-1/3">Article</th>
-                            <th class="px-4 py-2.5 text-center w-28">Stock actuel</th>
-                            <th class="px-4 py-2.5 text-right w-32">Quantité voulue</th>
-                            <th class="px-4 py-2.5 text-right w-36">Prix Est. unitaire (F)</th>
-                            <th class="px-4 py-2.5 text-right w-36">Total Estimé (F)</th>
-                            <th class="px-4 py-2.5 text-center w-24"><span class="sr-only">Retirer</span></th>
+                            <th class="px-4 py-2.5 text-right w-24">Stock actuel</th>
+                            <th class="px-3 py-2.5 text-center w-16">Unité</th>
+                            <th class="px-4 py-2.5 text-right w-28">Quantité voulue</th>
+                            <th class="px-4 py-2.5 text-right w-36">Prix moyen unitaire (F)</th>
+                            <th class="px-4 py-2.5 text-right w-32">Total Estimé (F)</th>
+                            <th class="px-4 py-2.5 text-center w-20"><span class="sr-only">Retirer</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
@@ -87,17 +98,22 @@
                                     <x-article-picker source="catalogue" model="line.stock_item_id" name-bind="'lines[' + index + '][stock_item_id]'" size="sm" required
                                         on-select="onItemChange(line, $event.detail.article)" aria-label="Article" />
                                 </td>
-                                <td class="px-4 py-2.5 text-center font-mono text-xs text-primary/60">
-                                    <span x-text="line.current_stock !== null ? line.current_stock + ' ' + (line.unit || '') : '—'"></span>
+                                <td class="px-4 py-2.5 text-right font-mono text-xs text-primary/60">
+                                    <span x-text="line.current_stock !== null ? formatNumber(line.current_stock) : '—'"></span>
+                                </td>
+                                <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">
+                                    <span x-text="line.unit || '—'"></span>
                                 </td>
                                 <td class="px-4 py-2.5 text-right">
-                                    <div class="inline-flex items-center gap-1.5 justify-end">
-                                        <input type="number" step="0.001" min="0.001" :name="'lines[' + index + '][quantity_requested]'" x-model="line.quantity" required class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
-                                        <span class="text-xs text-primary/40 font-mono" x-text="line.unit"></span>
+                                    <input type="number" step="0.001" min="0.001" :name="'lines[' + index + '][quantity_requested]'" x-model="line.quantity" required class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-mono">
+                                    <input type="hidden" :name="'lines[' + index + '][estimated_unit_price]'" :value="line.unit_price">
+                                    <div class="inline-flex flex-col items-end">
+                                        <span class="font-bold text-primary" x-text="formatMoney(line.unit_price) + ' F'"></span>
+                                        <span class="text-[10px] text-primary/50" x-show="line.suppliers_count > 0" x-text="line.suppliers_count + (line.suppliers_count > 1 ? ' fournisseurs' : ' fournisseur')"></span>
+                                        <span class="text-[10px] text-amber-700 bg-amber-50 px-1 rounded" x-show="line.stock_item_id && line.suppliers_count === 0">Coût moyen</span>
                                     </div>
-                                </td>
-                                <td class="px-4 py-2.5 text-right">
-                                    <input type="number" min="0" :name="'lines[' + index + '][estimated_unit_price]'" x-model="line.unit_price" class="w-28 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="P.U.">
                                 </td>
                                 <td class="px-4 py-2.5 text-right font-mono font-bold text-primary">
                                     <span x-text="formatMoney(lineTotal(line))"></span> F
@@ -145,10 +161,10 @@ function purchaseRequestForm(catalogue) {
         catalogue,
         prochain: 1,
         lines: [
-            { uid: 0, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' }
+            { uid: 0, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, suppliers_count: 0, notes: '' }
         ],
         nouvelleLigne() {
-            return { uid: this.prochain++, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' };
+            return { uid: this.prochain++, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, suppliers_count: 0, notes: '' };
         },
         addLine() {
             this.lines.push(this.nouvelleLigne());
@@ -171,10 +187,12 @@ function purchaseRequestForm(catalogue) {
                 line.unit = article.unit || '';
                 line.current_stock = parseFloat(article.stock || 0);
                 line.unit_price = Math.round(parseFloat(article.price || 0));
+                line.suppliers_count = article.suppliers_count || 0;
             } else {
                 line.unit = '';
                 line.current_stock = null;
                 line.unit_price = 0;
+                line.suppliers_count = 0;
             }
         },
         lineTotal(line) {
@@ -187,6 +205,10 @@ function purchaseRequestForm(catalogue) {
         },
         formatMoney(amount) {
             return new Intl.NumberFormat('fr-FR').format(amount || 0);
+        },
+        formatNumber(num) {
+            if (num === null || num === undefined) return '—';
+            return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(num);
         }
     };
 }

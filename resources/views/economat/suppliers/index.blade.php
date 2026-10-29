@@ -165,8 +165,8 @@
                                         'id'        => $item->id,
                                         'name'      => $item->name,
                                         'reference' => $item->reference,
-                                        'unit'      => $item->shortUnit(),
-                                        'price'     => $item->last_purchase_price ? ($item->last_purchase_price / 100) : ($item->average_cost / 100),
+                                        'unit'      => $item->pivot?->unit ?: $item->shortUnit(),
+                                        'price'     => $item->pivot && (int) $item->pivot->purchase_price > 0 ? ($item->pivot->purchase_price / 100) : ($item->last_purchase_price ? ($item->last_purchase_price / 100) : ($item->average_cost / 100)),
                                     ])->values()->all(),
                                 ];
                             @endphp

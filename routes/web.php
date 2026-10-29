@@ -752,6 +752,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
             Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
             Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
+            Route::post('/articles/{item}/fournisseurs', [$eco . 'StockItemController', 'linkSupplier'])->whereNumber('item')->name('items.suppliers.link');
+            Route::delete('/articles/{item}/fournisseurs/{supplier}', [$eco . 'StockItemController', 'unlinkSupplier'])->whereNumber('item')->whereNumber('supplier')->name('items.suppliers.unlink');
             // Transformation : conditionnements de l'article et ouverture d'unités fermées.
             Route::get('/articles/{item}/transformation', [$eco . 'StockItemTransformationController', 'show'])->whereNumber('item')->name('items.transformation.show');
             Route::post('/articles/{item}/conditionnements', [$eco . 'StockItemTransformationController', 'packagings'])->whereNumber('item')->name('items.transformation.packagings');
