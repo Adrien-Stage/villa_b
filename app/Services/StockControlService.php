@@ -260,18 +260,29 @@ class StockControlService
     public function getInventoryVariancesSummary(
         CarbonInterface $startDate,
         CarbonInterface $endDate,
-        ?int $tenantId = null
+        ?int $tenantId = null,
+        ?string $service = null
     ): array {
         $start = $startDate->copy()->startOfDay();
         $end = $endDate->copy()->endOfDay();
 
-        // 1. Écarts inventaires Économat
+        // 1. Écarts inventaires Économat / Départements (StockCountLine)
         $economatLines = StockCountLine::query()
             ->with(['stockCount', 'stockItem.category'])
-            ->whereHas('stockCount', function ($q) use ($start, $end, $tenantId) {
+            ->whereHas('stockCount', function ($q) use ($start, $end, $tenantId, $service) {
                 $q->where('status', 'closed')
                   ->whereBetween('closed_at', [$start, $end])
                   ->when($tenantId, fn ($tq) => $tq->where('tenant_id', $tenantId));
+
+                if ($service) {
+                    if ($service === 'economat') {
+                        $q->where(fn ($sq) => $sq->where('department', 'economat')->orWhereNull('department'));
+                    } elseif (str_starts_with($service, 'depot-')) {
+                        $q->whereRaw('1 = 0');
+                    } else {
+                        $q->where('department', $service);
+                    }
+                }
             })
             ->whereRaw('abs(variance_quantity) > 0.0005')
             ->get();
@@ -291,26 +302,67 @@ class StockControlService
         }
 
         // 2. Écarts inventaires Garde-Manger Restaurant
-        $restaurantLines = RestaurantStockCountLine::query()
-            ->with(['stockCount', 'item.category'])
-            ->whereHas('stockCount', function ($q) use ($start, $end) {
-                $q->where('status', 'closed')
-                  ->whereBetween('closed_at', [$start, $end]);
-            })
-            ->whereRaw('abs(variance_quantity) > 0.0005')
-            ->get();
-
+        $includeRestaurant = !$service || $service === 'restaurant';
+        $restaurantLines = collect();
         $restaurantVarianceValue = 0;
         $restaurantLossValue = 0;
         $restaurantSurplusValue = 0;
 
-        foreach ($restaurantLines as $rLine) {
-            $val = (int) $rLine->variance_value;
-            $restaurantVarianceValue += $val;
-            if ($val < 0) {
-                $restaurantLossValue += abs($val);
-            } else {
-                $restaurantSurplusValue += $val;
+        if ($includeRestaurant) {
+            $restaurantLines = RestaurantStockCountLine::query()
+                ->with(['stockCount', 'item.category'])
+                ->whereHas('stockCount', function ($q) use ($start, $end) {
+                    $q->where('status', 'closed')
+                      ->whereBetween('closed_at', [$start, $end]);
+                })
+                ->whereRaw('abs(variance_quantity) > 0.0005')
+                ->get();
+
+            foreach ($restaurantLines as $rLine) {
+                $val = (int) $rLine->variance_value;
+                $restaurantVarianceValue += $val;
+                if ($val < 0) {
+                    $restaurantLossValue += abs($val);
+                } else {
+                    $restaurantSurplusValue += $val;
+                }
+            }
+        }
+
+        // 3. Écarts inventaires Dépôts de service (ServiceStoreCountLine)
+        $includeStores = !$service || $service !== 'economat';
+        $storeLines = collect();
+        $storeVarianceValue = 0;
+        $storeLossValue = 0;
+        $storeSurplusValue = 0;
+
+        if ($includeStores) {
+            $storeQuery = \App\Models\ServiceStoreCountLine::query()
+                ->with(['inventory.store', 'item.category'])
+                ->whereHas('inventory', function ($q) use ($start, $end, $service) {
+                    $q->where('status', 'closed')
+                      ->whereBetween('closed_at', [$start, $end]);
+
+                    if ($service) {
+                        if (str_starts_with($service, 'depot-')) {
+                            $storeId = (int) substr($service, 6);
+                            $q->where('service_store_id', $storeId);
+                        } else {
+                            $q->whereHas('store', fn ($sq) => $sq->where('department', $service));
+                        }
+                    }
+                });
+
+            $storeLines = $storeQuery->get()->filter(fn ($l) => abs($l->varianceQuantity()) > 0.0005)->values();
+
+            foreach ($storeLines as $sLine) {
+                $val = (int) $sLine->varianceValue();
+                $storeVarianceValue += $val;
+                if ($val < 0) {
+                    $storeLossValue += abs($val);
+                } else {
+                    $storeSurplusValue += $val;
+                }
             }
         }
 
@@ -333,9 +385,17 @@ class StockControlService
                 'loss_value'     => $restaurantLossValue,
                 'surplus_value'  => $restaurantSurplusValue,
             ],
-            'total_variance_value' => $economatVarianceValue + $restaurantVarianceValue,
-            'total_loss_value'     => $economatLossValue + $restaurantLossValue,
-            'total_surplus_value'  => $economatSurplusValue + $restaurantSurplusValue,
+            'stores' => [
+                'lines'          => $storeLines,
+                'count'          => $storeLines->count(),
+                'variance_value' => $storeVarianceValue,
+                'loss_value'     => $storeLossValue,
+                'surplus_value'  => $storeSurplusValue,
+            ],
+            'total_variance_value' => $economatVarianceValue + $restaurantVarianceValue + $storeVarianceValue,
+            'total_loss_value'     => $economatLossValue + $restaurantLossValue + $storeLossValue,
+            'total_surplus_value'  => $economatSurplusValue + $restaurantSurplusValue + $storeSurplusValue,
+            'total_count'          => $economatLines->count() + $restaurantLines->count() + $storeLines->count(),
         ];
     }
 

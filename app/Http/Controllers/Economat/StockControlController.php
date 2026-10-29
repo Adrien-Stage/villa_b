@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceStore;
+use App\Models\StockRequisition;
 use App\Models\Tenant;
 use App\Services\StockControlService;
 use Carbon\Carbon;
@@ -117,12 +119,22 @@ class StockControlController extends Controller
             ? Carbon::parse($request->input('end_date'))->endOfDay()
             : now()->endOfDay();
 
-        $variances = $this->controlService->getInventoryVariancesSummary($startDate, $endDate, $tenantId);
+        $service = trim((string) $request->input('service')) ?: null;
+
+        $variances = $this->controlService->getInventoryVariancesSummary($startDate, $endDate, $tenantId, $service);
+
+        $departments = [
+            'economat' => 'Économat (Magasin central)',
+            ...StockRequisition::DEPARTMENTS,
+        ];
 
         return view('economat.control.variances', [
-            'variances' => $variances,
-            'startDate' => $startDate->toDateString(),
-            'endDate'   => $endDate->toDateString(),
+            'variances'     => $variances,
+            'startDate'     => $startDate->toDateString(),
+            'endDate'       => $endDate->toDateString(),
+            'service'       => $service,
+            'departments'   => $departments,
+            'serviceStores' => ServiceStore::active()->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
