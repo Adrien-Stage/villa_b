@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceStore;
-use App\Models\StockRequisition;
 use App\Services\PermissionResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class ServiceStoreController extends Controller
 
         return view('economat.stores.index', [
             'stores'      => $stores,
-            'departments' => StockRequisition::DEPARTMENTS,
+            'departments' => ServiceStore::services(),
             'canManage'   => app(PermissionResolver::class)->allows(auth()->user(), 'economat.stores.modifier'),
         ]);
     }
@@ -104,7 +103,7 @@ class ServiceStoreController extends Controller
     {
         return $request->validate([
             'name'       => ['required', 'string', 'max:80', Rule::unique('service_stores', 'name')->ignore($store?->id)],
-            'department' => ['required', Rule::in(array_keys(StockRequisition::DEPARTMENTS))],
+            'department' => ['required', Rule::in(array_keys(ServiceStore::services()))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
     }
