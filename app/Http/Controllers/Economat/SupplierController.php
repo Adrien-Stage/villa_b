@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Economat;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\StockItem;
-use App\Models\StockUnit;
 use App\Models\Supplier;
+use App\Services\SupplierTariffService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,8 +26,12 @@ class SupplierController extends Controller
 
         $query = Supplier::query()
             ->withCount('stockItems', 'purchaseOrders')
+            // Colonnes qualifiées : la table des tarifs a aussi un id et un
+            // supplier_id, et une colonne ambiguë fait échouer la requête.
             ->with(['stockItems' => function ($q) {
-                $q->select('id', 'name', 'reference', 'unit', 'last_purchase_price', 'average_cost', 'supplier_id', 'stock_category_id');
+                $q->select('stock_items.id', 'stock_items.name', 'stock_items.reference', 'stock_items.unit',
+                    'stock_items.last_purchase_price', 'stock_items.supplier_id', 'stock_items.stock_category_id')
+                    ->orderBy('stock_items.name');
             }]);
 
         if ($search !== '') {
@@ -59,7 +63,7 @@ class SupplierController extends Controller
         // Articles actifs disponibles pour association directe
         $availableItems = StockItem::active()
             ->with('category:id,name')
-            ->select('id', 'name', 'reference', 'unit', 'last_purchase_price', 'average_cost', 'supplier_id', 'stock_category_id')
+            ->select('id', 'name', 'reference', 'unit', 'last_purchase_price', 'supplier_id', 'stock_category_id')
             ->orderBy('name')
             ->get();
 
@@ -68,7 +72,7 @@ class SupplierController extends Controller
             'total_suppliers'    => Supplier::count(),
             'active_suppliers'   => Supplier::active()->count(),
             'with_email'         => Supplier::whereNotNull('email')->where('email', '!=', '')->count(),
-            'total_items_linked' => StockItem::whereNotNull('supplier_id')->count(),
+            'total_items_linked' => DB::table('stock_item_supplier')->distinct()->count('stock_item_id'),
         ];
 
         $categories     = Supplier::CATEGORIES;
@@ -80,54 +84,59 @@ class SupplierController extends Controller
         ));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, SupplierTariffService $tarifs): RedirectResponse
     {
         $validated = $this->validated($request);
+        $catalogue = $this->catalogueSaisi($request);
 
-        $supplier = DB::transaction(function () use ($request, $validated) {
+        [$supplier, $bilan] = DB::transaction(function () use ($request, $validated, $catalogue, $tarifs) {
             $supplier = Supplier::create($validated + [
                 'is_active' => $request->boolean('is_active', true),
                 'tenant_id' => $this->tenantId(),
             ]);
 
-            // Synchronisation des articles associés
-            $this->syncSupplierItems($supplier, $request->input('linked_items', []));
-
-            return $supplier;
+            return [$supplier, $tarifs->catalogue($supplier, $catalogue)];
         });
 
         // Journal d'audit
         AuditLog::record(
             Auth::id(),
             'supplier_create',
-            "Création du fournisseur « {$supplier->name} » (" . ($supplier->category_label ?? 'Général') . ")",
+            "Création du fournisseur « {$supplier->name} » (" . ($supplier->category_label ?? 'Général') . ")"
+                . ($bilan['ajoutes'] > 0 ? " — {$bilan['ajoutes']} article(s) au catalogue" : ''),
             'economat',
-            ['supplier_id' => $supplier->id]
+            ['supplier_id' => $supplier->id, 'catalogue' => $catalogue]
         );
 
         return back()->with('success', "Fournisseur « {$supplier->name} » ajouté avec succès.");
     }
 
-    public function update(Request $request, Supplier $supplier): RedirectResponse
+    public function update(Request $request, Supplier $supplier, SupplierTariffService $tarifs): RedirectResponse
     {
         $validated = $this->validated($request, $supplier);
+        $catalogue = $this->catalogueSaisi($request);
 
-        DB::transaction(function () use ($request, $supplier, $validated) {
+        $bilan = DB::transaction(function () use ($request, $supplier, $validated, $catalogue, $tarifs) {
             $supplier->update($validated + [
                 'is_active' => $request->boolean('is_active', true),
             ]);
 
-            // Synchronisation des articles associés
-            $this->syncSupplierItems($supplier, $request->input('linked_items', []));
+            return $tarifs->catalogue($supplier, $catalogue);
         });
+
+        $changements = array_filter([
+            $bilan['ajoutes'] > 0 ? "{$bilan['ajoutes']} article(s) ajouté(s)" : null,
+            $bilan['modifies'] > 0 ? "{$bilan['modifies']} prix modifié(s)" : null,
+            $bilan['retires'] > 0 ? "{$bilan['retires']} article(s) retiré(s)" : null,
+        ]);
 
         // Journal d'audit
         AuditLog::record(
             Auth::id(),
             'supplier_update',
-            "Mise à jour du fournisseur « {$supplier->name} »",
+            "Mise à jour du fournisseur « {$supplier->name} »" . ($changements !== [] ? ' — catalogue : ' . implode(', ', $changements) : ''),
             'economat',
-            ['supplier_id' => $supplier->id]
+            ['supplier_id' => $supplier->id, 'catalogue' => $catalogue]
         );
 
         return back()->with('success', "Fournisseur « {$supplier->name} » mis à jour avec succès.");
@@ -155,39 +164,31 @@ class SupplierController extends Controller
         return back()->with('success', 'Fournisseur supprimé.');
     }
 
-    protected function syncSupplierItems(Supplier $supplier, array $linkedItems): void
+    /**
+     * Le catalogue saisi dans le formulaire : article => prix en centimes,
+     * dans l'unité de stock de l'article. Un prix est obligatoire : un tarif
+     * sans prix ne sert à rien, et 0 ferait croire à un article gratuit.
+     *
+     * @return array<int, int>
+     */
+    private function catalogueSaisi(Request $request): array
     {
-        $syncData = [];
-        foreach ($linkedItems as $entry) {
-            $id = is_array($entry) ? (int) ($entry['id'] ?? 0) : (int) $entry;
-            if ($id <= 0) {
-                continue;
-            }
+        $request->validate([
+            'linked_items'         => ['nullable', 'array'],
+            'linked_items.*.id'    => ['required', 'integer', 'distinct', 'exists:stock_items,id'],
+            'linked_items.*.price' => ['required', 'numeric', 'gt:0', 'max:999999999'],
+        ], [
+            'linked_items.*.price.required' => 'Chaque article du catalogue a son prix.',
+            'linked_items.*.price.gt'       => 'Chaque article du catalogue a un prix supérieur à 0.',
+            'linked_items.*.id.distinct'    => 'Un même article figure deux fois au catalogue.',
+        ]);
 
-            $price = 0;
-            $unit = null;
-            if (is_array($entry)) {
-                if (isset($entry['price']) && is_numeric($entry['price']) && $entry['price'] >= 0) {
-                    $price = (int) round((float) $entry['price'] * 100);
-                }
-                if (!empty($entry['unit']) && is_string($entry['unit'])) {
-                    $unit = StockUnit::symbolFor($entry['unit']);
-                }
-            }
-
-            $syncData[$id] = [
-                'purchase_price' => $price,
-                'unit'           => $unit,
-            ];
-
-            // Si l'article n'a pas encore de fournisseur principal, assigner celui-ci
-            $item = StockItem::find($id);
-            if ($item && ! $item->supplier_id) {
-                $item->update(['supplier_id' => $supplier->id]);
-            }
+        $catalogue = [];
+        foreach ((array) $request->input('linked_items', []) as $ligne) {
+            $catalogue[(int) $ligne['id']] = (int) round((float) $ligne['price'] * 100);
         }
 
-        $supplier->stockItems()->sync($syncData);
+        return $catalogue;
     }
 
     private function validated(Request $request, ?Supplier $supplier = null): array

@@ -106,6 +106,7 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
     $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
         ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
     $this->actingAs($econome)->post(route('economat.purchase_requests.store'), [
+        'supplier_id' => $fournisseur->id,
         'priority' => 'normal',
         'lines' => [
             ['stock_item_id' => $riz->id, 'quantity_requested' => 10],
@@ -225,6 +226,7 @@ test("la demande modifiée par le responsable des achats avertit son demandeur d
     $this->actingAs($acheteur)->get(route('economat.purchase_requests.edit', $demande))->assertOk()
         ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
     $this->actingAs($acheteur)->put(route('economat.purchase_requests.update', $demande), [
+        'supplier_id' => Supplier::create(['name' => 'Grossiste Sud', 'is_active' => true])->id,
         'priority' => 'normal',
         'lines' => [
             ['id' => $ligneRiz->id, 'stock_item_id' => $riz->id, 'quantity_requested' => 40],

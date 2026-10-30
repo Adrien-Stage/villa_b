@@ -60,7 +60,7 @@ class Supplier extends Model
     public function stockItems(): BelongsToMany
     {
         return $this->belongsToMany(StockItem::class, 'stock_item_supplier')
-            ->withPivot(['purchase_price', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
+            ->withPivot(['purchase_price', 'priced_at', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
             ->withTimestamps();
     }
 

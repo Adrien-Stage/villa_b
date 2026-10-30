@@ -42,10 +42,8 @@ test('l econome accede a la liste enrichie des fournisseurs avec KPIs et catalog
         'is_active'               => true,
     ]);
 
-    $item1->update([
-        'supplier_id'         => $supplier->id,
-        'last_purchase_price' => 15000, // 150 FCFA
-    ]);
+    // Son tarif chez ce fournisseur : 150 FCFA la pièce.
+    app(\App\Services\SupplierTariffService::class)->fixer($item1, $supplier, 15000);
 
     $response = $this->actingAs($econome)->get(route('economat.suppliers.index'));
 
@@ -104,12 +102,10 @@ test('le responsable des achats cree un fournisseur avec toutes ses informations
         'linked_items'            => [
             [
                 'id'    => $itemA->id,
-                'unit'  => 'Pack de 6',
                 'price' => '2400', // 2400 FCFA -> 240000 centimes
             ],
             [
                 'id'    => $itemB->id,
-                'unit'  => 'Carton de 12',
                 'price' => '12000', // 12000 FCFA
             ],
         ],
@@ -135,12 +131,15 @@ test('le responsable des achats cree un fournisseur avec toutes ses informations
     $itemA->refresh();
     $itemB->refresh();
 
+    // Le tarif s'exprime dans l'unité de stock : l'article garde la sienne,
+    // et son dernier prix payé reste celui des réceptions.
     expect($itemA->supplier_id)->toBe($supplier->id)
-        ->and($itemA->unit)->toBe('Pack de 6')
-        ->and($itemA->last_purchase_price)->toBe(240000)
+        ->and($itemA->unit)->toBe('Pack')
+        ->and($itemA->supplierPriceFor($supplier))->toBe(240000)
+        ->and((int) $itemA->last_purchase_price)->toBe(0)
         ->and($itemB->supplier_id)->toBe($supplier->id)
-        ->and($itemB->unit)->toBe('Carton de 12')
-        ->and($itemB->last_purchase_price)->toBe(1200000);
+        ->and($itemB->unit)->toBe('Bouteille')
+        ->and($itemB->supplierPriceFor($supplier))->toBe(1200000);
 });
 
 test('le responsable des achats met a jour un fournisseur et dissocie un article retire', function () {
@@ -156,8 +155,6 @@ test('le responsable des achats met a jour un fournisseur et dissocie un article
         'email'     => 'vente@burotech.cm',
         'is_active' => true,
     ]);
-
-    StockUnit::create(['name' => 'Rame 500 feuilles']);
 
     $item1 = StockItem::create([
         'name'                => 'Rame Papier A4 80g',
@@ -175,6 +172,10 @@ test('le responsable des achats met a jour un fournisseur et dissocie un article
         'last_purchase_price' => 500000,
     ]);
 
+    $tarifs = app(\App\Services\SupplierTariffService::class);
+    $tarifs->fixer($item1, $supplier, 320000);
+    $tarifs->fixer($item2, $supplier, 500000);
+
     // On retire l'article 2 et on ajuste le prix de l'article 1
     $updatePayload = [
         'name'                    => 'BuroTech Bureautique & Papeterie SARL',
@@ -190,7 +191,6 @@ test('le responsable des achats met a jour un fournisseur et dissocie un article
         'linked_items'            => [
             [
                 'id'    => $item1->id,
-                'unit'  => 'Rame 500 feuilles',
                 'price' => '3500', // Nouveau prix négocié 3500 FCFA
             ],
         ],
@@ -213,13 +213,14 @@ test('le responsable des achats met a jour un fournisseur et dissocie un article
     $item1->refresh();
     $item2->refresh();
 
-    // Item 1 toujours lié avec prix et unité mis à jour
+    // Item 1 toujours lié, au nouveau prix ; son unité ne change pas
     expect($item1->supplier_id)->toBe($supplier->id)
-        ->and($item1->unit)->toBe('Rame 500 feuilles')
-        ->and($item1->last_purchase_price)->toBe(350000);
+        ->and($item1->unit)->toBe('Rame')
+        ->and($item1->supplierPriceFor($supplier))->toBe(350000);
 
-    // Item 2 dissocié
-    expect($item2->supplier_id)->toBeNull();
+    // Item 2 dissocié : plus de tarif chez ce fournisseur, plus de fournisseur habituel
+    expect($item2->supplierPriceFor($supplier))->toBeNull()
+        ->and($item2->supplier_id)->toBeNull();
 });
 
 test('le filtrage par recherche, categorie et statut fonctionne sur les fournisseurs', function () {

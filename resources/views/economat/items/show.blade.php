@@ -80,11 +80,11 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">{{ $item->suppliers->count() }}</span>
                 </h2>
                 <p class="text-xs text-primary/50 mt-0.5">
-                    Prix moyen fournisseurs : <strong class="font-mono text-primary font-bold">{{ number_format($item->averageSupplierPriceFcfa(), 0, ',', ' ') }} FCFA / {{ $item->shortUnit() }}</strong>
-                    (appliqué automatiquement en expression d'achat)
+                    Prix par {{ $item->shortUnit() }}, du moins cher au plus cher. Une demande d'achat prend le prix du fournisseur choisi ;
+                    chaque réception met à jour celui du fournisseur qui livre.
                 </p>
             </div>
-            @droit('economat.suppliers.creer')
+            @droit('economat.items.suppliers.link')
                 <button type="button" @click="openModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Associer un fournisseur
                 </button>
@@ -104,15 +104,17 @@
                         <tr>
                             <th class="px-5 py-3 text-left">Fournisseur</th>
                             <th class="px-4 py-3 text-left">Contact</th>
-                            <th class="px-3 py-3 text-center">Unité</th>
                             <th class="px-4 py-3 text-center">Délai</th>
-                            <th class="px-5 py-3 text-right">Prix convenu (FCFA)</th>
+                            <th class="px-5 py-3 text-right">Prix d'achat (FCFA / {{ $item->shortUnit() }})</th>
                             <th class="px-4 py-3 text-right">Écart vs Moyenne</th>
                             <th class="px-4 py-3 text-center"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
-                        @php $prixMoyen = $item->averageSupplierPriceFcfa(); @endphp
+                        @php
+                            $prixMoyen = $item->averageSupplierPriceFcfa();
+                            $moinsCher = $item->suppliers->first(fn ($s) => (int) $s->pivot->purchase_price > 0)?->id;
+                        @endphp
                         @foreach($item->suppliers as $sup)
                             @php
                                 $prixConvenu = (int) ($sup->pivot->purchase_price ?? 0) / 100;
@@ -124,22 +126,31 @@
                                     @if((int) $item->supplier_id === (int) $sup->id)
                                         <span class="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 mt-0.5">Fournisseur principal</span>
                                     @endif
+                                    @if($item->suppliers->count() > 1 && $moinsCher === $sup->id)
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-sky-700 font-semibold bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200 mt-0.5">Moins cher</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-xs text-primary/70">
                                     <div>{{ $sup->contact_name ?: '—' }}</div>
                                     <div class="text-[11px] text-primary/50">{{ $sup->phone ?: ($sup->email ?: 'Sans contact') }}</div>
                                 </td>
-                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">
-                                    {{ $sup->pivot->unit ?: $item->shortUnit() }}
-                                </td>
                                 <td class="px-4 py-3 text-center text-xs text-primary/60">
                                     {{ $sup->pivot->delivery_lead_time_days ? $sup->pivot->delivery_lead_time_days . ' j' : ($sup->delivery_lead_time_days ? $sup->delivery_lead_time_days . ' j' : '—') }}
                                 </td>
                                 <td class="px-5 py-3 text-right font-mono font-bold text-primary">
-                                    {{ number_format($prixConvenu, 0, ',', ' ') }} F
+                                    @if($prixConvenu > 0)
+                                        {{ number_format($prixConvenu, 0, ',', ' ') }} F
+                                    @else
+                                        <span class="text-xs font-sans font-semibold text-amber-700">À renseigner</span>
+                                    @endif
+                                    @if($sup->pivot->priced_at)
+                                        <div class="text-[10px] font-sans font-normal text-primary/40">Prix du {{ \Illuminate\Support\Carbon::parse($sup->pivot->priced_at)->format('d/m/Y') }}</div>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-right font-mono text-xs">
-                                    @if(abs($ecart) < 0.1)
+                                    @if($prixConvenu <= 0)
+                                        <span class="text-primary/30">—</span>
+                                    @elseif(abs($ecart) < 0.1)
                                         <span class="text-primary/50">Moyenne</span>
                                     @elseif($ecart < 0)
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -152,7 +163,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @droit('economat.suppliers.modifier')
+                                    @droit('economat.items.suppliers.unlink')
                                         <form method="POST" action="{{ route('economat.items.suppliers.unlink', [$item, $sup]) }}" onsubmit="return confirm('Détacher ce fournisseur de l\'article ?');" class="inline">
                                             @csrf
                                             @method('DELETE')
@@ -173,7 +184,7 @@
         <div x-show="openModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-xs">
             <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 border border-secondary/20">
                 <div class="flex items-center justify-between pb-3 border-b border-secondary/15">
-                    <h3 class="font-heading font-semibold text-primary">Associer un fournisseur</h3>
+                    <h3 class="font-heading font-semibold text-primary">Prix d'un fournisseur</h3>
                     <button type="button" @click="openModal = false" class="text-primary/40 hover:text-primary"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <form method="POST" action="{{ route('economat.items.suppliers.link', $item) }}" class="space-y-4 pt-4">
@@ -188,8 +199,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-primary/60 mb-1">Prix d'achat convenu (FCFA) *</label>
-                        <input type="number" step="1" min="0" name="purchase_price" required placeholder="Ex: 5000" class="w-full px-3 py-2 text-sm font-mono border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        <label class="block text-xs font-semibold uppercase text-primary/60 mb-1">Prix d'achat (FCFA / {{ $item->shortUnit() }}) *</label>
+                        <input type="number" step="1" min="1" name="purchase_price" required placeholder="Ex: 5000" class="w-full px-3 py-2 text-sm font-mono border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                     </div>
                     <div class="flex items-center justify-end gap-2 pt-2 border-t border-secondary/15">
                         <button type="button" @click="openModal = false" class="px-3 py-1.5 text-xs text-primary/60 hover:text-primary">Annuler</button>

@@ -22,8 +22,10 @@ use RuntimeException;
  */
 class GoodsReceiptService
 {
-    public function __construct(private StockService $stockService)
-    {
+    public function __construct(
+        private StockService $stockService,
+        private SupplierTariffService $tarifs,
+    ) {
     }
 
     /**
@@ -242,6 +244,13 @@ class GoodsReceiptService
                         niveau: $conditionnement
                     );
 
+                    // Le prix payé devient le tarif de ce fournisseur, à la date
+                    // de la livraison — et l'article sans fournisseur habituel
+                    // prend celui qui vient de le livrer.
+                    if ($unitCost > 0) {
+                        $this->tarifs->fixer($line->item, (int) $order->supplier_id, $unitCost, $receivedAt);
+                    }
+
                     $totalAcceptedAmount += $lineCost;
                 }
             }
@@ -391,15 +400,9 @@ class GoodsReceiptService
     private function article(array $ligne, Supplier $supplier, ?int $tenantId, array &$nouveaux): StockItem
     {
         if (!empty($ligne['stock_item_id'])) {
-            $item = StockItem::findOrFail($ligne['stock_item_id']);
-
-            // Comme à la commande : l'article sans fournisseur habituel
-            // prend celui qui vient de le livrer.
-            if (empty($item->supplier_id)) {
-                $item->update(['supplier_id' => $supplier->id]);
-            }
-
-            return $item;
+            // Son tarif chez ce fournisseur — et, s'il n'en avait pas, son
+            // fournisseur habituel — naissent de la réception qui suit.
+            return StockItem::findOrFail($ligne['stock_item_id']);
         }
 
         $nom = trim((string) ($ligne['nouvel_article']['name'] ?? ''));
