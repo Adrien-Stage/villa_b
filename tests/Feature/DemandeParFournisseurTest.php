@@ -96,7 +96,9 @@ test("l'économe exprime un besoin sans fournisseur ; l'acheteur choisit le four
     // L'économe : articles et quantités, ni fournisseur ni carte.
     $econome = demandeur();
     $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
-        ->assertDontSee("Fournisseurs de l'article", false)->assertDontSee('name="supplier_id"', false)->assertDontSee('Prix moyen');
+        ->assertDontSee("Fournisseurs de l'article", false)->assertDontSee('name="supplier_id"', false)->assertDontSee('Prix moyen')
+        // Aucun prix : l'article et sa quantité.
+        ->assertDontSee('Prix estimé')->assertDontSee('Montant estimé')->assertDontSee('estimated_unit_price', false);
     $this->actingAs($econome)->post(route('economat.purchase_requests.store'), [
         'priority' => 'normal',
         'lines' => [
