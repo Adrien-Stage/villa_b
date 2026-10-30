@@ -53,7 +53,11 @@
     }
 
     $ecritures = array_flip($matrice['ecritures']);
-    $parModule = collect($matrice['catalogue'])->groupBy(fn ($r, $droit) => explode('.', $droit)[0], preserveKeys: true);
+    // Par service responsable, pas par préfixe technique (PermissionLabels::GROUPES).
+    $parModule = [];
+    foreach (\App\Support\PermissionLabels::matrice(array_keys($matrice['catalogue'])) as $groupe => $liste) {
+        $parModule[\App\Support\PermissionLabels::GROUPES[$groupe]] = array_combine($liste, array_map(fn ($d) => $matrice['catalogue'][$d], $liste));
+    }
     $peutRegler = app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'droits.modifier');
     $peutExcepter = app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'droits.exceptions.creer');
 
@@ -164,9 +168,10 @@
                         <tbody>
                             @foreach($droits as $droit => $detenteurs)
                                 <tr>
-                                    <th scope="row" class="sticky left-0 z-10 border-b border-r border-secondary/15 bg-white px-3 py-1.5 text-left font-mono text-[11px] font-normal text-primary/80">
-                                        {{ $droit }}
-                                        @if(!isset($ecritures[$droit]))<span class="ml-1 rounded bg-accent/40 px-1 font-sans text-[9px] text-primary/60">lecture</span>@endif
+                                    <th scope="row" class="sticky left-0 z-10 border-b border-r border-secondary/15 bg-white px-3 py-1.5 text-left text-[11px] font-normal text-primary/80">
+                                        <span class="block font-semibold text-primary">{{ \App\Support\PermissionLabels::complet($droit) }}</span>
+                                        <span class="font-mono text-[10px] text-primary/40">{{ $droit }}</span>
+                                        @if(!isset($ecritures[$droit]))<span class="ml-1 rounded bg-accent/40 px-1 text-[9px] text-primary/60">lecture</span>@endif
                                     </th>
                                     @foreach($colonnes as $index => $role)
                                         @php
@@ -568,7 +573,9 @@
                 module.querySelectorAll('tbody tr').forEach((ligne) => {
                     const boites = [...ligne.querySelectorAll('input[type="checkbox"][data-droit]')];
                     const droit = boites[0]?.dataset.droit ?? '';
-                    const parTexte = terme === '' || droit.toLowerCase().includes(terme);
+                    // Le code du droit ou son libellé : « fournisseurs » trouve economat.suppliers.*.
+                    const libelle = (ligne.querySelector('th')?.textContent ?? '').toLowerCase();
+                    const parTexte = terme === '' || droit.toLowerCase().includes(terme) || libelle.includes(terme);
                     const parEcart = !filtreEcart.checked || boites.some((c) => c.classList.contains('case-droit')
                         && (role === '' || c.dataset.role === role) && ecartDe(c) !== null);
                     ligne.classList.toggle('hidden', !(parTexte && parEcart));
