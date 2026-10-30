@@ -30,6 +30,9 @@ class ServiceStoreMovement extends Model
     /** Pièce employée par une intervention technique (MaintenanceRequest) : charge du service. */
     public const SOURCE_INTERVENTION = 'intervention';
 
+    /** Bon de transfert du magasin central : l'économat approvisionne son propre dépôt. */
+    public const SOURCE_TRANSFER = 'transfer';
+
     public const SOURCES = [
         self::SOURCE_REQUISITION  => "Livraison de l'économat",
         self::SOURCE_STOCK_COUNT  => 'Inventaire du dépôt',
@@ -38,6 +41,7 @@ class ServiceStoreMovement extends Model
         self::SOURCE_BENEFICIAIRE => 'Sortie à un bénéficiaire',
         self::SOURCE_RETOUR       => 'Retour en stock',
         self::SOURCE_INTERVENTION => 'Intervention technique',
+        self::SOURCE_TRANSFER     => 'Transfert du magasin central',
     ];
 
     public const TYPES = [

@@ -309,6 +309,7 @@ class StockMovementJournal
             StockMovement::SOURCE_EXTERNAL_ISSUE => [ExternalIssue::class, 'number', 'economat.external_issues.show'],
             StockMovement::SOURCE_CUT            => [\App\Models\StockCut::class, 'number', 'economat.cuts.show'],
             StockMovement::SOURCE_IMPORT         => [\App\Models\StockImport::class, 'reference', 'economat.classeur.show'],
+            StockMovement::SOURCE_TRANSFER       => [\App\Models\StockTransfer::class, 'number', 'economat.transfers.show'],
         ];
 
         $documents = [];

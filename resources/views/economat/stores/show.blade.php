@@ -29,6 +29,41 @@
 
     @include('economat.partials.flash')
 
+    {{-- Un dépôt de l'économat se sert par transfert du magasin central ; les autres, par une demande de leur service. --}}
+    @if($parTransfert)
+        <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-sm">
+                <p class="font-semibold text-primary">Approvisionnement</p>
+                <p class="text-xs text-primary/60">Ce dépôt appartient à l'économat : il se sert par un bon de transfert du magasin central, sans demande.</p>
+            </div>
+            @if($canTransfer)
+                <a href="{{ route('economat.transfers.create', $store) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
+                    <i data-lucide="arrow-right-left" class="w-4 h-4" aria-hidden="true"></i> Approvisionner ce dépôt
+                </a>
+            @endif
+        </div>
+    @endif
+
+    @if($transfers->isNotEmpty())
+        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-6">
+            <div class="px-5 py-3 border-b border-secondary/15 bg-gray-50/80">
+                <h2 class="text-sm font-semibold text-primary">Bons de transfert</h2>
+            </div>
+            <ul class="divide-y divide-secondary/10 text-sm">
+                @foreach($transfers as $transfert)
+                    <li class="px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+                        <a href="{{ route('economat.transfers.show', $transfert) }}" class="font-mono text-primary hover:underline">{{ $transfert->number }}</a>
+                        <span class="text-xs text-primary/60">
+                            {{ $transfert->transferred_at->format('d/m/Y') }} · {{ $transfert->lines_count }} article(s)
+                            · {{ number_format($transfert->total_value / 100, 0, ',', ' ') }} FCFA
+                            · {{ $transfert->statusLabel() }}
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @php
         $encours = $counts->firstWhere('status', \App\Models\ServiceStoreCount::STATUS_DRAFT);
     @endphp

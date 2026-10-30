@@ -49,9 +49,17 @@ class ServiceStoreController extends Controller
             ->take(10)
             ->get();
 
-        $canOpenCount = app(PermissionResolver::class)->allows(auth()->user(), 'economat.stores.counts.creer');
+        $droits = app(PermissionResolver::class);
+        $canOpenCount = $droits->allows(auth()->user(), 'economat.stores.counts.creer');
 
-        return view('economat.stores.show', compact('store', 'stocks', 'movements', 'counts', 'canOpenCount'));
+        // Un dépôt de l'économat se sert par transfert, sans demande.
+        $parTransfert = \App\Services\StockTransferService::peutRecevoir($store);
+        $canTransfer = $parTransfert && $droits->allows(auth()->user(), 'economat.transfers.creer');
+        $transfers = $droits->allows(auth()->user(), 'economat.transfers.voir')
+            ? $store->transfers()->with('transferredBy')->withCount('lines')->latest('transferred_at')->latest('id')->take(10)->get()
+            : collect();
+
+        return view('economat.stores.show', compact('store', 'stocks', 'movements', 'counts', 'canOpenCount', 'parTransfert', 'canTransfer', 'transfers'));
     }
 
     public function store(Request $request): RedirectResponse
