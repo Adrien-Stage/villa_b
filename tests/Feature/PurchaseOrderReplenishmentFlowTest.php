@@ -147,7 +147,10 @@ test('un bon de commande est lie a strictement un seul fournisseur avec signatur
 
     // … dont le responsable des achats tire le bon.
     makeReplenishmentMembre('purchasing_manager', 'Adrien Bertrand Meka');
-    $response = test()->post(route('economat.purchase_requests.convert', $demande));
+    // Il choisit le fournisseur de chaque article.
+    $response = test()->post(route('economat.purchase_requests.convert', $demande), [
+        'line_suppliers' => $demande->lines->mapWithKeys(fn ($l) => [$l->id => $fournisseur->id])->all(),
+    ]);
     $response->assertRedirect();
 
     $order = PurchaseOrder::where('supplier_id', $fournisseur->id)->latest()->first();

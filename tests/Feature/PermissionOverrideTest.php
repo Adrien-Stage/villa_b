@@ -37,17 +37,17 @@ test('sans surcharge, la décision est celle du catalogue', function () {
     $resolveur = app(PermissionResolver::class);
     $econome   = User::factory()->create(['role' => 'econome']);
 
-    expect($resolveur->allows($econome, 'economat.items.creer'))->toBeTrue()
+    expect($resolveur->allows($econome, 'economat.items.transformation.cut'))->toBeTrue()
         ->and($resolveur->allows($econome, 'accounting.voir'))->toBeFalse();
 });
 
 test("un refus posé sur un rôle retire le droit à ceux qui le portent", function () {
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.creer');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.transformation.cut');
 
     $resolveur = app(PermissionResolver::class);
     $econome   = User::factory()->create(['role' => 'econome']);
 
-    expect($resolveur->allows($econome, 'economat.items.creer'))->toBeFalse()
+    expect($resolveur->allows($econome, 'economat.items.transformation.cut'))->toBeFalse()
         // Le reste de l'économat lui reste ouvert.
         ->and($resolveur->allows($econome, 'economat.items.voir'))->toBeTrue();
 });
@@ -55,7 +55,7 @@ test("un refus posé sur un rôle retire le droit à ceux qui le portent", funct
 test("le refus l'emporte sur l'autorisation d'un second rôle", function () {
     // C'est tout l'enjeu du cumul : sans cette règle, il suffirait d'un autre
     // rôle pour rendre le refus inopérant.
-    refuser(PermissionGrant::SUJET_ROLE, 'accountant', 'economat.items.creer');
+    refuser(PermissionGrant::SUJET_ROLE, 'accountant', 'economat.items.transformation.cut');
 
     $comptable = User::factory()->create();
     $comptable->roles()->attach([
@@ -64,7 +64,7 @@ test("le refus l'emporte sur l'autorisation d'un second rôle", function () {
     ]);
 
     // econome donne le droit, accountant le refuse : le refus gagne.
-    expect(app(PermissionResolver::class)->allows($comptable->fresh(), 'economat.items.creer'))->toBeFalse();
+    expect(app(PermissionResolver::class)->allows($comptable->fresh(), 'economat.items.transformation.cut'))->toBeFalse();
 });
 
 test("une autorisation nominative ouvre un droit que le rôle ne donne pas", function () {
@@ -78,22 +78,22 @@ test("une autorisation nominative ouvre un droit que le rôle ne donne pas", fun
 
     expect(app(PermissionResolver::class)->allows($comptable, 'economat.items.voir'))->toBeTrue()
         // Consulter, oui. Créer, non : l'exception ne porte que sur le droit nommé.
-        ->and(app(PermissionResolver::class)->allows($comptable, 'economat.items.creer'))->toBeFalse();
+        ->and(app(PermissionResolver::class)->allows($comptable, 'economat.items.transformation.cut'))->toBeFalse();
 });
 
 test("la surcharge nominative écrase celle du rôle", function () {
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.creer');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.transformation.cut');
 
     $econome = User::factory()->create(['role' => 'econome']);
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_USER,
         'subject_id'   => (string) $econome->id,
-        'permission'   => 'economat.items.creer',
+        'permission'   => 'economat.items.transformation.cut',
         'effect'       => PermissionGrant::EFFET_ALLOW,
         'reason'       => "Dérogation du directeur : établissement de six personnes.",
     ]);
 
-    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.creer'))->toBeTrue();
+    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.transformation.cut'))->toBeTrue();
 });
 
 test('le refus se voit depuis la route, pas seulement depuis le résolveur', function () {
@@ -114,20 +114,20 @@ test('un compte désactivé ne détient plus rien', function () {
 });
 
 test('les droits retirés à une personne sont énumérables', function () {
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.creer');
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.supprimer');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.transformation.cut');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.receipts.creer');
 
     $retires = app(PermissionResolver::class)->deniedPermissions(User::factory()->create(['role' => 'econome']));
     sort($retires);
 
     // De quoi montrer au directeur ce que la matrice de son établissement
     // retire au gabarit d'origine.
-    expect($retires)->toBe(['economat.items.creer', 'economat.items.supprimer']);
+    expect($retires)->toBe(['economat.items.transformation.cut', 'economat.receipts.creer']);
 });
 
 test('un même droit ne peut pas être posé deux fois sur le même sujet', function () {
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.creer');
-    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.creer');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.transformation.cut');
+    refuser(PermissionGrant::SUJET_ROLE, 'econome', 'economat.items.transformation.cut');
 })->throws(\Illuminate\Database\QueryException::class);
 
 test("le motif accompagne la décision", function () {
@@ -169,10 +169,10 @@ test("entre deux couches, le refus posé sur une personne l'emporte", function (
     foreach ([[PermissionGrant::ORIGINE_ERP, PermissionGrant::EFFET_DENY], [PermissionGrant::ORIGINE_ETABLISSEMENT, PermissionGrant::EFFET_ALLOW]] as [$origine, $effet]) {
         PermissionGrant::create([
             'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $econome->id,
-            'permission' => 'economat.items.creer', 'effect' => $effet, 'origin' => $origine,
+            'permission' => 'economat.items.transformation.cut', 'effect' => $effet, 'origin' => $origine,
             'reason' => 'Deux autorités, deux décisions.',
         ]);
     }
 
-    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.creer'))->toBeFalse();
+    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.transformation.cut'))->toBeFalse();
 });

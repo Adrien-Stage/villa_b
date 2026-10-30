@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -104,44 +103,25 @@ class PurchaseRequestController extends Controller
             $request->merge(['department' => 'economat']);
         }
 
+        // Le demandeur exprime un besoin : articles et quantités. Le fournisseur
+        // se choisit aux achats, au moment de passer la demande en bons.
         $validated = $request->validate([
             'department'                    => ['required', 'string', 'max:50'],
             'priority'                      => ['required', 'in:low,normal,urgent'],
             'purpose'                       => ['nullable', 'string', 'max:1000'],
             'lines'                         => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id'         => ['required', 'exists:stock_items,id'],
-            // Chaque ligne a son fournisseur : une demande par fournisseur.
-            'lines.*.supplier_id'           => ['required', 'exists:suppliers,id'],
             'lines.*.quantity_requested'    => ['required', 'numeric', 'min:0.001'],
-            'lines.*.estimated_unit_price'  => ['nullable', 'numeric', 'min:0'],
             'lines.*.notes'                 => ['nullable', 'string', 'max:255'],
         ], [
-            'lines.required'               => 'Veuillez ajouter au moins un article à la demande d\'achat.',
-            'lines.*.supplier_id.required' => 'Choisissez le fournisseur de chaque article, dans la carte des fournisseurs.',
+            'lines.required' => 'Veuillez ajouter au moins un article à la demande d\'achat.',
         ]);
 
-        // Deux fournisseurs, deux demandes : chacune part, se vérifie et se
-        // commande de son côté. Toutes ou aucune.
-        $parFournisseur = collect($validated['lines'])->groupBy(fn (array $l) => (int) $l['supplier_id']);
-
         try {
-            $demandes = DB::transaction(fn () => $parFournisseur->map(fn ($lignes, $supplierId) => $this->requestService->create(
-                ['supplier_id' => $supplierId, 'lines' => $lignes->values()->all()] + $validated,
-                Auth::user()
-            ))->values());
+            $purchaseRequest = $this->requestService->create($validated, Auth::user());
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
-
-        if ($demandes->count() > 1) {
-            $liste = $demandes->map(fn (PurchaseRequest $d) => "{$d->number} ({$d->supplier?->name})")->implode(', ');
-
-            return redirect()
-                ->route('economat.purchase_requests.index')
-                ->with('success', "{$demandes->count()} demandes d'achat créées, une par fournisseur : {$liste}. Elles partent au responsable des achats, qui les vérifie.");
-        }
-
-        $purchaseRequest = $demandes->first();
 
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
@@ -151,9 +131,9 @@ class PurchaseRequestController extends Controller
     }
 
     /**
-     * Les fournisseurs d'un article, pour la carte de la demande d'achat :
-     * le prix et la date de la dernière livraison de chacun, son tarif, et
-     * ses prix livrés sur la période choisie.
+     * Les fournisseurs d'un article, pour la carte de conversion d'une
+     * demande en bons : le prix et la date de la dernière livraison de
+     * chacun, son tarif, et ses prix livrés sur la période choisie.
      */
     public function fournisseurs(Request $request, StockItem $item): JsonResponse
     {
@@ -211,7 +191,6 @@ class PurchaseRequestController extends Controller
         );
 
         $validated = $request->validate([
-            'supplier_id'                  => ['required', 'exists:suppliers,id'],
             // Sans champ (économe, responsable des achats), la demande garde son département.
             'department'                   => ['nullable', 'string', 'max:50'],
             'priority'                     => ['required', 'in:low,normal,urgent'],
@@ -220,11 +199,9 @@ class PurchaseRequestController extends Controller
             'lines.*.id'                   => ['nullable', 'integer'],
             'lines.*.stock_item_id'        => ['required', 'exists:stock_items,id'],
             'lines.*.quantity_requested'   => ['required', 'numeric', 'min:0.001'],
-            'lines.*.estimated_unit_price' => ['nullable', 'numeric', 'min:0'],
             'lines.*.notes'                => ['nullable', 'string', 'max:255'],
         ], [
-            'supplier_id.required' => 'Veuillez sélectionner le fournisseur pour cette demande d\'achat.',
-            'lines.required'       => 'Veuillez conserver au moins un article dans la demande d\'achat.',
+            'lines.required' => 'Veuillez conserver au moins un article dans la demande d\'achat.',
         ]);
 
         try {
@@ -244,16 +221,27 @@ class PurchaseRequestController extends Controller
         $purchaseRequest->load(['supplier', 'requestedBy', 'reviewedBy', 'lines.item.suppliers', 'purchaseOrders.supplier']);
 
         $suppliers = Supplier::query()->active()->orderBy('name')->get();
+        $peutConvertir = app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert');
+
+        // Pour la conversion en bons : les fournisseurs de chaque article,
+        // leur dernière livraison et leur tarif, déjà comparés.
+        $comparaisons = $peutConvertir && $purchaseRequest->canBeConverted()
+            ? $purchaseRequest->lines
+                ->filter(fn ($l) => $l->quantiteRetenue() > 0 && $l->item)
+                ->mapWithKeys(fn ($l) => [$l->id => PrixFournisseurs::comparer($l->item)])
+                ->all()
+            : [];
 
         return view('economat.purchase_requests.show', [
             'request'   => $purchaseRequest,
             'suppliers' => $suppliers,
+            'comparaisons' => $comparaisons,
             // Les boutons posent la même question que la route et le service :
             // le droit de décider, et jamais sur sa propre demande.
             'canReview' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.approve')
                 && !PurchaseRequestService::estSaPropreDemande($purchaseRequest, Auth::user()),
             'peutAnnuler' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.cancel'),
-            'canManage' => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
+            'canManage' => $peutConvertir,
             'canEdit'   => (app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.modifier')
                 || app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'))
                 && $purchaseRequest->canBeEdited(),
@@ -313,17 +301,27 @@ class PurchaseRequestController extends Controller
     public function convert(Request $request, PurchaseRequest $purchaseRequest): RedirectResponse
     {
         $validated = $request->validate([
-            'supplier_id'      => ['nullable', 'exists:suppliers,id'],
-            'line_suppliers'   => ['nullable', 'array'],
-            'line_suppliers.*' => ['nullable', 'exists:suppliers,id'],
+            'line_suppliers'   => ['required', 'array'],
+            'line_suppliers.*' => ['required', 'exists:suppliers,id'],
+        ], [
+            'line_suppliers.required' => 'Choisissez le fournisseur de chaque article.',
         ]);
+
+        // Chaque article à commander a son fournisseur, choisi ici : aucun
+        // n'est attribué d'office.
+        $sansFournisseur = $purchaseRequest->lines
+            ->filter(fn ($l) => $l->quantiteRetenue() > 0 && empty($validated['line_suppliers'][$l->id]))
+            ->map(fn ($l) => $l->item?->name ?? 'Un article');
+        if ($sansFournisseur->isNotEmpty()) {
+            return back()->with('error', 'Choisissez le fournisseur de chaque article : ' . $sansFournisseur->implode(', ') . '.');
+        }
 
         try {
             $orders = $this->requestService->convertToOrders(
                 $purchaseRequest,
                 Auth::user(),
-                !empty($validated['supplier_id']) ? (int) $validated['supplier_id'] : null,
-                $validated['line_suppliers'] ?? []
+                null,
+                $validated['line_suppliers']
             );
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());

@@ -89,7 +89,7 @@ test("un écran périmé n'écrase pas le travail d'un autre", function () {
 test("l'administrateur et le support ne se règlent pas", function () {
     $this->actingAs(compteDe('admin'))->put(route('droits.update'), [
         'empreinte' => empreinteHotel(), 'motif' => 'Essai',
-        'ecarts' => [['role' => 'admin', 'permission' => 'economat.items.creer', 'effect' => 'allow']],
+        'ecarts' => [['role' => 'admin', 'permission' => 'economat.items.transformation.cut', 'effect' => 'allow']],
     ])->assertSessionHas('error');
 
     expect(PermissionGrant::count())->toBe(0);
@@ -99,11 +99,11 @@ test("l'aperçu dit qui change de droits, sans rien enregistrer", function () {
     $econome = compteDe('econome', ['name' => 'Rose Ngo']);
 
     $this->actingAs(compteDe('admin'))->postJson(route('droits.apercu'), [
-        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny']],
+        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny']],
     ])->assertOk()->assertJsonPath('apercu.personnes.0.name', 'Rose Ngo');
 
     expect(PermissionGrant::count())->toBe(0)
-        ->and(app(PermissionResolver::class)->allows($econome, 'economat.items.creer'))->toBeTrue();
+        ->and(app(PermissionResolver::class)->allows($econome, 'economat.items.transformation.cut'))->toBeTrue();
 });
 
 test('une exception nominative se motive, agit, et se retire', function () {
@@ -145,7 +145,7 @@ test("aucune exception ne s'applique à l'administrateur", function () {
     $autreAdmin = compteDe('admin');
 
     $this->actingAs(compteDe('admin'))->post(route('droits.exceptions.store'), [
-        'user_id' => $autreAdmin->id, 'permission' => 'economat.items.creer', 'effect' => 'allow', 'reason' => 'Essai',
+        'user_id' => $autreAdmin->id, 'permission' => 'economat.items.transformation.cut', 'effect' => 'allow', 'reason' => 'Essai',
     ])->assertSessionHas('error');
 
     expect(PermissionGrant::count())->toBe(0);

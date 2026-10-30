@@ -76,7 +76,8 @@ test("renommer une unité renomme celle des articles ; une unité employée se m
 });
 
 test("l'unité d'un nouvel article se choisit dans la liste", function () {
-    $this->actingAs(membreEconomat('econome', 'Économe'));
+    // Les articles se créent au service achats.
+    $this->actingAs(membreEconomat('purchasing_manager', 'Acheteur'));
 
     $this->get(route('economat.items.index'))->assertOk()->assertSee('Gérer les unités');
 
@@ -87,7 +88,8 @@ test("l'unité d'un nouvel article se choisit dans la liste", function () {
 });
 
 test("l'import ramène l'unité à celle de la liste et refuse une unité inconnue", function () {
-    $this->actingAs(membreEconomat('econome', 'Économe'));
+    // L'import des articles : le service achats.
+    $this->actingAs(membreEconomat('purchasing_manager', 'Acheteur'));
 
     $chemin = tempnam(sys_get_temp_dir(), 'csv') . '.csv';
     $fichier = fopen($chemin, 'w');

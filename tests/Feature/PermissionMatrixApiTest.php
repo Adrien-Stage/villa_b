@@ -38,7 +38,7 @@ test('la lecture rend le gabarit, les écarts et les incompatibilités', functio
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE,
         'subject_id'   => 'accountant',
-        'permission'   => 'economat.items.creer',
+        'permission'   => 'economat.items.transformation.cut',
         'effect'       => PermissionGrant::EFFET_DENY,
         'reason'       => 'Séparation des tâches.',
     ]);
@@ -49,8 +49,8 @@ test('la lecture rend le gabarit, les écarts et les incompatibilités', functio
     // plutôt que de passer par la notation pointée.
     $catalogue = $reponse->json('catalogue');
 
-    expect($catalogue['economat.items.creer'])->toBe(['admin', 'econome'])
-        ->and($reponse->json('ecarts.0.permission'))->toBe('economat.items.creer')
+    expect($catalogue['economat.items.transformation.cut'])->toBe(['admin', 'econome'])
+        ->and($reponse->json('ecarts.0.permission'))->toBe('economat.items.transformation.cut')
         ->and($reponse->json('ecarts.0.effect'))->toBe('deny')
         ->and($reponse->json('incompatibilites'))->not->toBeEmpty()
         ->and($reponse->json('modules'))->toContain('economat');
@@ -76,7 +76,7 @@ test('les rôles envoyés remplacent les écarts précédents', function () {
 
     $this->putJson('/api/permissions/matrice', [
         'ecarts' => [
-            ['role' => 'accountant', 'permission' => 'economat.items.creer', 'effect' => 'deny', 'reason' => 'Séparation des tâches.'],
+            ['role' => 'accountant', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny', 'reason' => 'Séparation des tâches.'],
         ],
     ], entete())->assertOk()->assertJson(['appliques' => 1]);
 
@@ -90,7 +90,7 @@ test("les dérogations nominatives survivent à une mise à jour des rôles", fu
     $employe = User::factory()->create(['role' => 'econome']);
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $employe->id,
-        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'permission' => 'economat.items.transformation.cut', 'effect' => PermissionGrant::EFFET_ALLOW,
         'reason' => 'Dérogation du directeur.',
     ]);
 
@@ -111,7 +111,7 @@ test("la console ne remplace que sa couche : les écarts de l'hôtel survivent",
     ]);
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',
-        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_DENY,
+        'permission' => 'economat.items.transformation.cut', 'effect' => PermissionGrant::EFFET_DENY,
         'origin' => PermissionGrant::ORIGINE_ERP, 'reason' => 'Décision de la console.',
     ]);
 
@@ -124,16 +124,16 @@ test("la console ne remplace que sa couche : les écarts de l'hôtel survivent",
 test("la console peut poser un écart que l'hôtel a déjà posé", function () {
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_ROLE, 'subject_id' => 'econome',
-        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_DENY,
+        'permission' => 'economat.items.transformation.cut', 'effect' => PermissionGrant::EFFET_DENY,
         'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => "Décision de l'hôtel.",
     ]);
 
     $this->putJson('/api/permissions/matrice', ['ecarts' => [[
-        'role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny',
+        'role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny',
         'reason' => 'Même décision, prise par la console.',
     ]]], entete())->assertOk();
 
-    expect(PermissionGrant::where('permission', 'economat.items.creer')->count())->toBe(2);
+    expect(PermissionGrant::where('permission', 'economat.items.transformation.cut')->count())->toBe(2);
 });
 
 test('un droit absent du catalogue est refusé', function () {
@@ -149,20 +149,20 @@ test('un droit absent du catalogue est refusé', function () {
 
 test('un effet inconnu est rejeté', function () {
     $this->putJson('/api/permissions/matrice', [
-        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'peut-etre']],
+        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'peut-etre']],
     ], entete())->assertStatus(422);
 });
 
 test("l'écart posé par la console agit immédiatement", function () {
     $econome = User::factory()->create(['role' => 'econome']);
 
-    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.creer'))->toBeTrue();
+    expect(app(PermissionResolver::class)->allows($econome, 'economat.items.transformation.cut'))->toBeTrue();
 
     $this->putJson('/api/permissions/matrice', [
-        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny']],
+        'ecarts' => [['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny']],
     ], entete())->assertOk();
 
-    expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.creer'))->toBeFalse();
+    expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.transformation.cut'))->toBeFalse();
 });
 
 test("la portée fait l'aller-retour", function () {
@@ -215,7 +215,7 @@ test('la lecture annonce sa version, les écritures et les droits bornés', func
     $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
 
     expect($reponse->json('version'))->toBe(2)
-        ->and($reponse->json('ecritures'))->toContain('economat.items.creer')
+        ->and($reponse->json('ecritures'))->toContain('economat.items.transformation.cut')
         ->and($reponse->json('ecritures'))->not->toContain('economat.items.voir')
         ->and($reponse->json('droits_bornes'))->toBe(['users.voir'])
         ->and($reponse->json('empreinte'))->toBeString();
@@ -299,7 +299,7 @@ test("le contrôle ne reçoit aucune écriture sans dérogation", function () {
 
 test("la console ne règle ni l'administrateur ni un rôle retiré", function () {
     $this->putJson('/api/permissions/matrice', ['ecarts' => [
-        ['role' => 'admin', 'permission' => 'economat.items.creer', 'effect' => 'allow'],
+        ['role' => 'admin', 'permission' => 'economat.items.transformation.cut', 'effect' => 'allow'],
         ['role' => 'it_support', 'permission' => 'economat.items.voir', 'effect' => 'allow'],
     ]], entete())
         ->assertStatus(422)
@@ -308,9 +308,9 @@ test("la console ne règle ni l'administrateur ni un rôle retiré", function ()
 
 test('deux écarts sur la même case sont refusés', function () {
     $this->putJson('/api/permissions/matrice', ['ecarts' => [
-        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny'],
-        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'allow'],
-    ]], entete())->assertStatus(422)->assertJson(['doublons' => ['econome|economat.items.creer']]);
+        ['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny'],
+        ['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'allow'],
+    ]], entete())->assertStatus(422)->assertJson(['doublons' => ['econome|economat.items.transformation.cut']]);
 });
 
 test("un écran ouvert sur une couche périmée n'écrase pas le travail d'un autre", function () {
@@ -333,18 +333,18 @@ test("l'aperçu dit qui perd quoi, sans rien enregistrer", function () {
     $econome->roles()->sync(\App\Models\Role::where('slug', 'econome')->pluck('id'));
 
     $reponse = $this->postJson('/api/permissions/matrice/apercu', ['ecarts' => [
-        ['role' => 'econome', 'permission' => 'economat.items.creer', 'effect' => 'deny'],
+        ['role' => 'econome', 'permission' => 'economat.items.transformation.cut', 'effect' => 'deny'],
     ]], entete())->assertOk();
 
     $personne = collect($reponse->json('personnes'))->firstWhere('id', $econome->id);
 
     expect($personne['name'])->toBe('Rose Ngo')
-        ->and($personne['perdus'])->toBe(['economat.items.creer'])
+        ->and($personne['perdus'])->toBe(['economat.items.transformation.cut'])
         ->and($personne['gagnes'])->toBe([]);
 
     // Rien n'a été écrit : la décision reste celle d'avant.
     $this->assertDatabaseCount('permission_grants', 0);
-    expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.creer'))->toBeTrue();
+    expect(app(PermissionResolver::class)->allows($econome->fresh(), 'economat.items.transformation.cut'))->toBeTrue();
 });
 
 test("l'aperçu signale les cumuls du lot", function () {
@@ -370,14 +370,14 @@ test('les exceptions échues sont montrées', function () {
 
     PermissionGrant::create([
         'subject_type' => PermissionGrant::SUJET_USER, 'subject_id' => (string) $employe->id,
-        'permission' => 'economat.items.creer', 'effect' => PermissionGrant::EFFET_ALLOW,
+        'permission' => 'economat.items.transformation.cut', 'effect' => PermissionGrant::EFFET_ALLOW,
         'origin' => PermissionGrant::ORIGINE_ETABLISSEMENT, 'reason' => 'Inventaire de fin d’année.',
         'expires_at' => now()->subDay(),
     ]);
 
     $reponse = $this->getJson('/api/permissions/matrice', entete())->assertOk();
 
-    expect($reponse->json('exceptions_echues.0.permission'))->toBe('economat.items.creer')
+    expect($reponse->json('exceptions_echues.0.permission'))->toBe('economat.items.transformation.cut')
         // Échue : elle n'est plus en vigueur.
         ->and(collect($reponse->json('ecarts'))->where('subject_type', 'user')->count())->toBe(0);
 });

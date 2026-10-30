@@ -30,8 +30,9 @@ class StockItemBelowThreshold extends Notification
     {
         $droits = app(\App\Services\PermissionResolver::class);
 
-        if ($notifiable instanceof \App\Models\User && ! $droits->allows($notifiable, 'economat.items.voir')
-            && $droits->allows($notifiable, 'economat.control.suggestions.voir')) {
+        // L'acheteur réapprovisionne ; l'économat surveille le stock de l'article.
+        if ($notifiable instanceof \App\Models\User && $droits->allows($notifiable, 'economat.control.suggestions.voir')
+            && ($notifiable->exerce(['purchasing_manager']) || ! $droits->allows($notifiable, 'economat.items.voir'))) {
             return route('economat.control.suggestions.index');
         }
 

@@ -13,7 +13,7 @@
     ];
 @endphp
 
-<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false, globalSupplier: '{{ $request->supplier_id }}', applyGlobalSupplier() { if(this.globalSupplier) { document.querySelectorAll('.line-supplier-select').forEach(el => el.value = this.globalSupplier); } } }">
+<div class="max-w-4xl mx-auto space-y-6" x-data="{ showRejectModal: false, showConvertModal: false }">
     <div class="flex items-center justify-between">
         <a href="{{ route('economat.purchase_requests.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux demandes d'achat
@@ -262,81 +262,222 @@
         </div>
     </div>
 
-    {{-- Modal de conversion en bon de commande --}}
+@php
+        $aCommander = $request->lines->filter(fn ($l) => $l->quantiteRetenue() > 0)->values();
+        $lignesConversion = $aCommander->map(fn ($l) => [
+            'id' => $l->id,
+            'nom' => $l->item?->name ?? 'Article',
+            'quantite' => (float) $l->quantiteRetenue(),
+            'unite' => $l->item?->shortUnit() ?? '',
+            'item_id' => $l->stock_item_id,
+            // Une demande antérieure portait déjà son fournisseur : il est proposé.
+            'fournisseurs' => $comparaisons[$l->id] ?? [],
+        ])->values();
+    @endphp
+    {{-- Modal de conversion en bons de commande : le fournisseur de chaque article se choisit ici. --}}
     <div x-show="showConvertModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col" @click.outside="showConvertModal = false">
-            <div>
+        <div class="bg-white rounded-xl shadow-xl max-w-6xl w-full p-6 space-y-4 max-h-[92vh] flex flex-col"
+             @click.outside="showConvertModal = false"
+             x-data="conversionEnBons({{ Js::from($lignesConversion) }}, {{ Js::from($suppliers->map(fn ($s) => ['id' => $s->id, 'nom' => $s->name])->values()) }}, {{ Js::from($request->supplier_id) }})">
+            <div class="shrink-0">
                 <h3 class="text-base font-bold text-primary">Générer les bons de commande</h3>
                 <p class="text-xs text-primary/60 mt-0.5">
-                    Sélectionnez le fournisseur correspondant au lot complet ou spécifiez un fournisseur pour chaque article. Les articles d'un même fournisseur seront regroupés dans un même bon.
+                    Choisissez le fournisseur de chaque article : la carte compare leur dernière livraison et leurs prix sur une période.
+                    Un bon est créé par fournisseur, au prix de sa dernière livraison.
                 </p>
             </div>
 
-            <form method="POST" action="{{ route('economat.purchase_requests.convert', $request) }}" class="space-y-4 flex flex-col overflow-hidden">
+            <form method="POST" action="{{ route('economat.purchase_requests.convert', $request) }}" @submit="verifier($event)"
+                  class="grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-0 flex-1 overflow-hidden">
                 @csrf
 
-                {{-- Sélecteur global rapide --}}
-                <div class="bg-gray-50 border border-secondary/20 p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-                    <div>
-                        <label class="block text-xs font-semibold text-primary uppercase">Fournisseur global (lot complet)</label>
-                        <span class="text-[11px] text-primary/50">Applique le même fournisseur à tous les articles ci-dessous</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <select x-model="globalSupplier" @change="applyGlobalSupplier()" name="supplier_id" class="px-3 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
-                            <option value="">Sélectionner pour tout appliquer...</option>
-                            @foreach($suppliers as $sup)
-                                <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                {{-- Liste des articles avec choix du fournisseur par article --}}
-                <div class="border border-secondary/20 rounded-lg overflow-hidden flex flex-col flex-1">
+                {{-- Les articles et leur fournisseur --}}
+                <div class="lg:col-span-3 flex flex-col min-h-0 border border-secondary/20 rounded-lg overflow-hidden">
                     <div class="px-4 py-2 bg-gray-50 border-b border-secondary/15 flex items-center justify-between shrink-0">
                         <span class="text-xs font-semibold text-primary uppercase">Fournisseur par article</span>
-                        <span class="text-[11px] text-primary/50">{{ $request->lines->filter(fn($l) => $l->quantiteRetenue() > 0)->count() }} article(s) à commander</span>
+                        <button type="button" @click="moinsCherPartout()" class="text-[11px] font-semibold text-primary underline hover:text-primary/70">Prendre le moins cher partout</button>
                     </div>
-                    <div class="overflow-y-auto max-h-[300px] divide-y divide-secondary/10">
-                        @foreach($request->lines as $line)
-                            @if($line->quantiteRetenue() > 0)
-                                @php
-                                    $defaultSupId = $request->supplier_id ?? ($line->item?->supplier_id ?? ($suppliers->first()?->id ?? ''));
-                                @endphp
-                                <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-gray-50/50">
-                                    <div class="min-w-0">
-                                        <div class="text-sm font-medium text-primary truncate">{{ $line->item?->name ?? 'Article' }}</div>
-                                        <div class="text-xs text-primary/50">
-                                            Qté : <strong>{{ rtrim(rtrim(number_format($line->quantiteRetenue(), 3, ',', ' '), '0'), ',') }} {{ $line->item?->unit }}</strong>
-                                            @if($line->item?->supplier)
-                                                · Habituel : <span class="italic text-primary/70">{{ $line->item->supplier->name }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="shrink-0 w-full sm:w-60">
-                                        <select name="line_suppliers[{{ $line->id }}]" class="line-supplier-select w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
-                                            @foreach($suppliers as $sup)
-                                                <option value="{{ $sup->id }}" @selected($sup->id == $defaultSupId)>{{ $sup->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                    <div class="overflow-y-auto divide-y divide-secondary/10 flex-1">
+                        <template x-for="ligne in lignes" :key="ligne.id">
+                            <div class="p-3 flex items-center justify-between gap-3" :class="active === ligne.id ? 'bg-accent/20' : 'hover:bg-gray-50/50'">
+                                <div class="min-w-0">
+                                    <div class="text-sm font-medium text-primary truncate" x-text="ligne.nom"></div>
+                                    <div class="text-xs text-primary/50" x-text="'Qté : ' + formatNombre(ligne.quantite) + ' ' + ligne.unite"></div>
                                 </div>
-                            @endif
-                        @endforeach
+                                <div class="shrink-0 text-right">
+                                    <input type="hidden" :name="'line_suppliers[' + ligne.id + ']'" :value="ligne.choix?.id ?? ''">
+                                    <template x-if="ligne.choix">
+                                        <div>
+                                            <div class="text-xs font-semibold text-primary" x-text="ligne.choix.nom"></div>
+                                            <div class="text-[11px] text-primary/60">
+                                                <span class="font-mono" x-text="ligne.choix.prix ? formatMontant(ligne.choix.prix / 100) + ' F / ' + ligne.unite : 'Prix au bon'"></span>
+                                                · <button type="button" @click="activer(ligne)" class="underline hover:text-primary">changer</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!ligne.choix">
+                                        <button type="button" @click="activer(ligne)" class="rounded-lg border border-primary/30 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-accent/30">Choisir le fournisseur →</button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="px-4 py-2 border-t border-secondary/15 bg-gray-50/70 text-[11px] text-primary/70 shrink-0" role="status">
+                        <span x-text="bons().length === 0 ? 'Aucun fournisseur choisi.' : bons().length + ' bon(s) de commande : ' + bons().map(b => b.nom + ' (' + b.lignes + ' article' + (b.lignes > 1 ? 's' : '') + ')').join(' · ')"></span>
+                        <p x-show="erreur" x-text="erreur" class="mt-1 font-semibold text-red-700" role="alert"></p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-2 shrink-0">
-                    <span class="text-[11px] text-primary/50">1 bon sera créé par fournisseur distinct sélectionné.</span>
-                    <div class="flex items-center gap-2">
-                        <button type="button" @click="showConvertModal = false" class="px-4 py-2 text-xs text-primary/60 hover:text-primary">Annuler</button>
-                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Générer le(s) bon(s)
-                        </button>
+                {{-- La carte des fournisseurs de l'article --}}
+                <aside class="lg:col-span-2 border border-secondary/20 rounded-lg overflow-y-auto" aria-live="polite">
+                    <div class="px-4 py-2.5 bg-gray-50 border-b border-secondary/15">
+                        <h4 class="text-xs font-semibold text-primary uppercase">Fournisseurs de l'article</h4>
+                        <p class="text-[11px] text-primary/50" x-text="ligneActive() ? ligneActive().nom + ' — prix par ' + ligneActive().unite : 'Choisissez un article à gauche.'"></p>
                     </div>
+                    <template x-if="ligneActive()">
+                        <div class="p-3 space-y-3">
+                            <fieldset class="rounded-lg border border-secondary/20 p-2.5">
+                                <legend class="px-1 text-[10px] font-semibold uppercase tracking-wider text-primary/50">Comparer sur une période</legend>
+                                <div class="flex items-end gap-2">
+                                    <label class="flex-1 text-[11px] text-primary/60">Du
+                                        <input type="date" x-model="du" class="mt-0.5 w-full px-2 py-1 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                    </label>
+                                    <label class="flex-1 text-[11px] text-primary/60">Au
+                                        <input type="date" x-model="au" class="mt-0.5 w-full px-2 py-1 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                    </label>
+                                    <button type="button" @click="comparer()" class="px-2.5 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">Comparer</button>
+                                </div>
+                            </fieldset>
+                            <p x-show="chargement" class="text-xs text-primary/50">Chargement…</p>
+                            <template x-if="!chargement && ligneActive().fournisseurs.length === 0">
+                                <p class="text-xs text-primary/60">Aucun fournisseur ne livre encore cet article. Choisissez-en un ci-dessous ; son prix se fixera sur le bon.</p>
+                            </template>
+                            <template x-for="f in (chargement ? [] : ligneActive().fournisseurs)" :key="f.id">
+                                <div class="rounded-lg border border-secondary/20 p-2.5">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="font-semibold text-sm text-primary" x-text="f.nom"></p>
+                                            <div class="flex flex-wrap gap-1 mt-0.5">
+                                                <span x-show="f.moinsCher" class="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-sky-200 bg-sky-50 text-sky-700">Moins cher</span>
+                                                <span x-show="f.habituel" class="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">Habituel</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="choisir(f)" class="shrink-0 px-2.5 py-1 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">Choisir</button>
+                                    </div>
+                                    <p class="mt-1 text-xs text-primary/80">
+                                        <template x-if="f.derniere"><span>Dernière livraison : <strong class="font-mono" x-text="formatMontant(f.derniere.prix / 100) + ' F'"></strong> le <span x-text="formatDate(f.derniere.date)"></span></span></template>
+                                        <template x-if="!f.derniere"><span class="text-primary/50" x-text="f.tarif ? 'Pas encore livré — tarif ' + formatMontant(f.tarif / 100) + ' F' : 'Pas encore livré, aucun prix connu'"></span></template>
+                                    </p>
+                                    <template x-if="f.periode">
+                                        <p class="mt-0.5 text-[11px] text-primary/60" x-text="f.periode.livraisons === 0 ? 'Aucune livraison sur la période'
+                                            : f.periode.livraisons + ' livraison(s) sur la période : de ' + formatMontant(f.periode.min / 100) + ' à ' + formatMontant(f.periode.max / 100) + ' F, dernière à ' + formatMontant(f.periode.dernier / 100) + ' F'"></p>
+                                    </template>
+                                </div>
+                            </template>
+                            <div class="flex items-center gap-2 pt-1">
+                                <select x-model="autre" aria-label="Autre fournisseur" class="flex-1 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                    <option value="">Autre fournisseur…</option>
+                                    <template x-for="s in autresFournisseurs()" :key="s.id"><option :value="s.id" x-text="s.nom"></option></template>
+                                </select>
+                                <button type="button" @click="choisirAutre()" :disabled="!autre" class="px-2.5 py-1.5 border border-primary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/30 disabled:opacity-40">Choisir</button>
+                            </div>
+                        </div>
+                    </template>
+                </aside>
+
+                <div class="lg:col-span-5 flex items-center justify-end gap-2 pt-1 shrink-0">
+                    <button type="button" @click="showConvertModal = false" class="px-4 py-2 text-xs text-primary/60 hover:text-primary">Annuler</button>
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                        <span x-text="bons().length > 1 ? 'Générer les ' + bons().length + ' bons' : 'Générer le bon'"></span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
+<script>
+function conversionEnBons(lignes, fournisseurs, fournisseurDeLaDemande) {
+    const baseUrl = @js(url('/economat/demandes-achat/articles'));
+    const prixDe = (f) => f.derniere ? f.derniere.prix : f.tarif;
+
+    return {
+        // Une demande antérieure portait déjà son fournisseur : il est repris.
+        lignes: lignes.map(l => {
+            const deja = fournisseurDeLaDemande ? l.fournisseurs.find(f => f.id === fournisseurDeLaDemande) : null;
+            return { ...l, choix: deja ? { id: deja.id, nom: deja.nom, prix: prixDe(deja) } : null };
+        }),
+        fournisseurs,
+        active: null,
+        chargement: false,
+        du: '',
+        au: '',
+        autre: '',
+        erreur: '',
+        ligneActive() {
+            return this.lignes.find(l => l.id === this.active) || null;
+        },
+        activer(ligne) {
+            this.active = ligne.id;
+            this.autre = '';
+            if (this.du || this.au) this.comparer();
+        },
+        async comparer() {
+            const ligne = this.ligneActive();
+            if (!ligne) return;
+            const params = new URLSearchParams();
+            if (this.du) params.set('du', this.du);
+            if (this.au) params.set('au', this.au);
+            this.chargement = true;
+            try {
+                const reponse = await fetch(`${baseUrl}/${ligne.item_id}/fournisseurs?${params}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                if (reponse.ok) ligne.fournisseurs = (await reponse.json()).fournisseurs;
+            } finally {
+                this.chargement = false;
+            }
+        },
+        // Le fournisseur choisi passe sur l'article ; la carte s'efface pour le suivant.
+        choisir(f) {
+            const ligne = this.ligneActive();
+            if (!ligne) return;
+            ligne.choix = { id: f.id, nom: f.nom, prix: prixDe(f) };
+            this.erreur = '';
+            this.active = null;
+        },
+        autresFournisseurs() {
+            const connus = (this.ligneActive()?.fournisseurs || []).map(f => f.id);
+            return this.fournisseurs.filter(s => !connus.includes(s.id));
+        },
+        choisirAutre() {
+            const s = this.fournisseurs.find(x => String(x.id) === String(this.autre));
+            if (s) this.choisir({ id: s.id, nom: s.nom, derniere: null, tarif: null });
+        },
+        moinsCherPartout() {
+            this.lignes.forEach(l => {
+                const f = l.fournisseurs.find(x => x.moinsCher) || (l.fournisseurs.length === 1 && prixDe(l.fournisseurs[0]) ? l.fournisseurs[0] : null);
+                if (f) l.choix = { id: f.id, nom: f.nom, prix: prixDe(f) };
+            });
+            this.active = null;
+        },
+        // Un bon par fournisseur.
+        bons() {
+            const groupes = {};
+            this.lignes.filter(l => l.choix).forEach(l => {
+                const g = groupes[l.choix.id] ??= { nom: l.choix.nom, lignes: 0 };
+                g.lignes++;
+            });
+            return Object.values(groupes);
+        },
+        verifier(event) {
+            const sans = this.lignes.filter(l => !l.choix).length;
+            this.erreur = sans > 0 ? (sans > 1 ? sans + ' articles n\'ont' : 'Un article n\'a') + ' pas encore de fournisseur.' : '';
+            if (this.erreur) event.preventDefault();
+        },
+        formatMontant(v) { return new Intl.NumberFormat('fr-FR').format(Math.round(v || 0)); },
+        formatNombre(v) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(v || 0); },
+        formatDate(iso) { if (!iso) return ''; const [a, m, j] = String(iso).slice(0, 10).split('-'); return `${j}/${m}/${a}`; },
+    };
+}
+</script>
 </div>
 @endsection

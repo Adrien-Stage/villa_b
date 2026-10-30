@@ -106,6 +106,10 @@ class StockItemTransformationController extends Controller
             . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " de {$item->name} vers {$decoupe->restaurant->name}",
             'economat', ['stock_cut_id' => $decoupe->id]);
 
+        $this->prevenirLesAchats($item, 'découpe ' . $decoupe->number . ' — '
+            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " vers {$decoupe->restaurant->name}",
+            route('economat.cuts.show', $decoupe));
+
         return redirect()->route('economat.cuts.show', $decoupe)
             ->with('success', "Découpe {$decoupe->number} enregistrée : les portions sont au garde-manger de {$decoupe->restaurant->name}.");
     }
@@ -126,7 +130,17 @@ class StockItemTransformationController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
+        $this->prevenirLesAchats($item, $mouvement->ouvertures() ?? 'ouverture de conditionnement',
+            route('economat.items.transformation.show', $item));
+
         return redirect()->route('economat.items.transformation.show', $item)
             ->with('success', ucfirst($mouvement->ouvertures() ?? 'Ouverture enregistrée') . '. Stock : ' . $item->fresh()->stockDecompose() . '.');
+    }
+
+    /** Le service achats, qui tient le catalogue, apprend chaque transformation. */
+    private function prevenirLesAchats(StockItem $item, string $quoi, string $url): void
+    {
+        app(\App\Services\Notifier::class)->toRoles(['purchasing_manager'],
+            new \App\Notifications\StockItemTransformed($item, $quoi, $url, Auth::user()?->name), Auth::id());
     }
 }

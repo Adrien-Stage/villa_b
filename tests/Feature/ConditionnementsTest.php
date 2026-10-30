@@ -34,12 +34,19 @@ function agentConditionnement(string $role, string $nom = 'Agent'): User
     return $user->fresh();
 }
 
+/** Les conditionnements se définissent au service achats, qui tient le catalogue. */
 function cartonsDeGants($test, int $cartonsFermes = 5): void
 {
+    $acteur = auth()->user();
+    $test->actingAs(agentConditionnement('purchasing_manager'));
     $test->post(route('economat.items.transformation.packagings', $test->gants), ['niveaux' => [
         ['nom' => 'paquet', 'contenance' => 10, 'fermes' => 0],
         ['nom' => 'carton', 'contenance' => 20, 'fermes' => $cartonsFermes],
     ]])->assertSessionHas('success');
+
+    if ($acteur) {
+        $test->actingAs($acteur);
+    }
 }
 
 function etatDesGants($test): string
@@ -47,7 +54,7 @@ function etatDesGants($test): string
     return (string) $test->gants->fresh()->load('packagings')->stockDecompose();
 }
 
-test("l'économe définit les conditionnements : 1 carton = 20 paquets = 200 pièces", function () {
+test("le service achats définit les conditionnements : 1 carton = 20 paquets = 200 pièces", function () {
     $this->actingAs(agentConditionnement('econome'));
 
     $this->get(route('economat.items.transformation.show', $this->gants))->assertOk()
@@ -67,7 +74,7 @@ test("l'économe définit les conditionnements : 1 carton = 20 paquets = 200 pi�
 });
 
 test('une définition incohérente est refusée', function () {
-    $this->actingAs(agentConditionnement('econome'));
+    $this->actingAs(agentConditionnement('purchasing_manager'));
 
     $refus = fn (array $niveaux) => $this->post(route('economat.items.transformation.packagings', $this->gants), ['niveaux' => $niveaux])
         ->assertSessionHas('error');

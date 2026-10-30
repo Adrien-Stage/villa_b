@@ -471,6 +471,8 @@ class PermissionCatalog
     private const AUDIT_QUALITE_EXCLUS = [
         'bookings.cash_register.', 'bookings.handovers.', 'shop.cash_register.', 'restaurant.cash_register.', 'rooms.cost_sheets.', 'customers.export',
         'bookings.drafts.',
+        // Contrôle & ratios, écarts d'inventaire : au contrôle de gestion seul.
+        'economat.control.voir', 'economat.control.variances.',
     ];
 
     /** Catalogues de prestations, rangés dans les paramètres. */
@@ -792,47 +794,47 @@ class PermissionCatalog
             'bookings.voir' => ['controller', 'manager', 'reception'],
 
             // ── Économat ──
-            'economat.categories.creer' => ['econome'],
-            'economat.categories.modifier' => ['econome'],
-            'economat.categories.supprimer' => ['econome'],
-            'economat.categories.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.categories.creer' => ['purchasing_manager'],
+            'economat.categories.modifier' => ['purchasing_manager'],
+            'economat.categories.supprimer' => ['purchasing_manager'],
+            'economat.categories.voir' => ['controller', 'manager', 'purchasing_manager'],
             // Classeur Excel d'un magasin : tous ceux qui suivent le stock le
             // lisent et l'exportent ; seul l'économe l'importe.
-            'economat.classeur.confirm' => ['econome'],
-            'economat.classeur.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.classeur.import' => ['econome'],
-            'economat.classeur.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.classeur.confirm' => ['purchasing_manager'],
+            'economat.classeur.export' => ['controller', 'manager', 'purchasing_manager'],
+            'economat.classeur.import' => ['purchasing_manager'],
+            'economat.classeur.voir' => ['controller', 'manager', 'purchasing_manager'],
             'economat.control.suggestions.creer' => ['econome', 'purchasing_manager'],
-            'economat.count_sheets.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.count_sheets.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.control.suggestions.voir' => ['controller', 'econome', 'manager', 'purchasing_manager'],
-            'economat.control.variances.voir' => ['controller', 'econome', 'manager'],
-            'economat.control.voir' => ['controller', 'econome', 'manager'],
+            'economat.control.variances.voir' => ['controller'],
+            'economat.control.voir' => ['controller'],
             // Sortie de matériel hors de l'établissement : l'économe la valide.
             'economat.external_issues.cancel' => ['econome'],
             'economat.external_issues.creer' => ['econome'],
-            'economat.external_issues.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.external_issues.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.items.adjust' => ['econome'],
-            'economat.items.creer' => ['econome'],
-            'economat.items.export' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.items.import' => ['econome'],
-            'economat.items.modifier' => ['econome'],
-            'economat.items.opening' => ['econome'],
-            'economat.items.supprimer' => ['econome'],
+            'economat.external_issues.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.external_issues.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.items.adjust' => ['purchasing_manager'],
+            'economat.items.creer' => ['purchasing_manager'],
+            'economat.items.export' => ['controller', 'manager', 'purchasing_manager'],
+            'economat.items.import' => ['purchasing_manager'],
+            'economat.items.modifier' => ['purchasing_manager'],
+            'economat.items.opening' => ['purchasing_manager'],
+            'economat.items.supprimer' => ['purchasing_manager'],
             // Le prix d'un article chez un fournisseur : le responsable des
             // achats, qui tient les fournisseurs, et l'économe, qui crée les
             // articles. Le catalogue complet reste à la fiche du fournisseur.
-            'economat.items.suppliers.link' => ['econome', 'purchasing_manager'],
-            'economat.items.suppliers.unlink' => ['econome', 'purchasing_manager'],
-            'economat.items.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.items.suppliers.link' => ['purchasing_manager'],
+            'economat.items.suppliers.unlink' => ['purchasing_manager'],
+            'economat.items.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Transformation : l'économe définit les conditionnements ; le
             // magasinier peut aussi ouvrir un carton ou un paquet.
-            'economat.items.transformation.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.items.transformation.packagings' => ['econome'],
+            'economat.items.transformation.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.items.transformation.packagings' => ['purchasing_manager'],
             'economat.items.transformation.open' => ['econome', 'storekeeper'],
             // La découpe vers le garde-manger : l'économe la saisit, en présence du chef.
             'economat.items.transformation.cut' => ['econome'],
-            'economat.cuts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.cuts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Le responsable des achats commande ; l'économat réceptionne. Tout
             // bon naît d'une demande d'achat approuvée : le bon saisi de toutes
             // pièces, qui engagerait une dépense sans approbation, n'est plus
@@ -846,8 +848,8 @@ class PermissionCatalog
             'economat.orders.transmit' => ['purchasing_manager'],
             'economat.orders.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Le journal des mouvements : qui consulte le stock le lit.
-            'economat.movements.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.movements.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.movements.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.movements.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // La demande d'achat part au responsable des achats : il la vérifie,
             // en ajuste les quantités, la valide ou la refuse, puis en tire les
             // bons. Le contrôleur de gestion, le responsable financier et la
@@ -858,7 +860,7 @@ class PermissionCatalog
             'economat.purchase_requests.convert' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             // Comparer les fournisseurs d'un article en saisissant une demande.
-            'economat.purchase_requests.fournisseurs' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.fournisseurs' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
@@ -882,9 +884,9 @@ class PermissionCatalog
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
             'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
             // Extraire une liste n'est pas la consulter : droit distinct.
-            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
+            'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
             // Le fichier des fournisseurs : le responsable des achats le tient.
             'economat.suppliers.creer' => ['purchasing_manager'],
             'economat.suppliers.modifier' => ['purchasing_manager'],
@@ -893,28 +895,28 @@ class PermissionCatalog
             'economat.suppliers.voir' => ['accountant', 'controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :
             // un référentiel de l'hôtel que l'économe et la direction tiennent.
-            'economat.units.creer' => ['econome', 'manager'],
-            'economat.units.modifier' => ['econome', 'manager'],
-            'economat.units.supprimer' => ['econome', 'manager'],
+            'economat.units.creer' => ['econome', 'manager', 'purchasing_manager'],
+            'economat.units.modifier' => ['econome', 'manager', 'purchasing_manager'],
+            'economat.units.supprimer' => ['econome', 'manager', 'purchasing_manager'],
             'economat.stores.counts.cancel' => ['econome'],
             'economat.stores.counts.close' => ['econome'],
             'economat.stores.counts.creer' => ['econome'],
             'economat.stores.counts.modifier' => ['econome', 'storekeeper'],
-            'economat.stores.counts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stores.counts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.stores.creer' => ['econome'],
             'economat.stores.modifier' => ['econome'],
             'economat.stores.supprimer' => ['econome'],
-            'economat.stores.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stores.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.stock_counts.cancel' => ['econome'],
             'economat.stock_counts.close' => ['econome'],
             'economat.stock_counts.creer' => ['econome'],
             // Le fichier de comptage : qui compte le télécharge et l'importe.
-            'economat.stock_counts.export' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stock_counts.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.stock_counts.import' => ['econome', 'storekeeper'],
             'economat.stock_counts.modifier' => ['econome', 'storekeeper'],
-            'economat.stock_counts.report' => ['controller', 'econome', 'manager'],
-            'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
-            'economat.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
+            'economat.stock_counts.report' => ['controller', 'econome', 'manager', 'purchasing_manager'],
+            'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
 
             // ── Chambres ──
             'rooms.cost_sheets.assumptions' => ['accountant', 'manager'],

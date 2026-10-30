@@ -612,79 +612,69 @@
  ],
  "economat.categories.destroy": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.categories.index": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.categories.store": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.categories.update": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.classeur.confirm": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.classeur.export": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
-  "quality_auditor",
-  "storekeeper"
+  "purchasing_manager",
+  "quality_auditor"
  ],
  "economat.classeur.import": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.classeur.index": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.classeur.show": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.control.index": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
-  "manager",
-  "quality_auditor",
   "support"
  ],
  "economat.control.print": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
-  "manager",
-  "quality_auditor",
   "support"
  ],
  "economat.control.suggestions.index": [
@@ -705,10 +695,7 @@
  "economat.control.variances.index": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
-  "manager",
-  "quality_auditor",
   "support"
  ],
  "economat.count_sheets.index": [
@@ -717,6 +704,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -727,6 +715,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -737,6 +726,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -747,6 +737,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -765,6 +756,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper"
  ],
@@ -774,6 +766,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -784,6 +777,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -794,6 +788,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -808,30 +803,30 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.adjust": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.destroy": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.export": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
-  "quality_auditor",
-  "storekeeper"
+  "purchasing_manager",
+  "quality_auditor"
  ],
  "economat.items.import": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.index": [
   "admin",
@@ -839,13 +834,14 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.opening": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.show": [
   "admin",
@@ -853,22 +849,21 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.store": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.suppliers.link": [
   "admin",
-  "econome",
   "purchasing_manager"
  ],
  "economat.items.suppliers.unlink": [
   "admin",
-  "econome",
   "purchasing_manager"
  ],
  "economat.items.transformation.cut": [
@@ -882,7 +877,7 @@
  ],
  "economat.items.transformation.packagings": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.items.transformation.show": [
   "admin",
@@ -890,13 +885,14 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.update": [
   "admin",
-  "econome"
+  "purchasing_manager"
  ],
  "economat.movements.export": [
   "admin",
@@ -904,6 +900,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper"
  ],
@@ -913,6 +910,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1253,6 +1251,7 @@
   "finance_manager",
   "housekeeping_leader",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1272,6 +1271,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1296,6 +1296,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1324,6 +1325,7 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "reception",
   "reception_chief",
@@ -1375,6 +1377,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper"
  ],
@@ -1389,6 +1392,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1399,6 +1403,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "support"
  ],
@@ -1408,6 +1413,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1435,6 +1441,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1458,6 +1465,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1468,6 +1476,7 @@
   "econome",
   "finance_manager",
   "manager",
+  "purchasing_manager",
   "quality_auditor",
   "storekeeper",
   "support"
@@ -1519,17 +1528,20 @@
  "economat.units.destroy": [
   "admin",
   "econome",
-  "manager"
+  "manager",
+  "purchasing_manager"
  ],
  "economat.units.store": [
   "admin",
   "econome",
-  "manager"
+  "manager",
+  "purchasing_manager"
  ],
  "economat.units.update": [
   "admin",
   "econome",
-  "manager"
+  "manager",
+  "purchasing_manager"
  ],
  "editions.export": [
   "accountant",

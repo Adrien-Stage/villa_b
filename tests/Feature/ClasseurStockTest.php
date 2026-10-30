@@ -39,7 +39,8 @@ beforeEach(function () {
     Storage::fake();
     RoleCatalog::sync();
     activerModules(['economat']);
-    $this->econome = employeDuClasseur('econome');
+    // Le classeur Excel est tenu par le service achats.
+    $this->econome = employeDuClasseur('purchasing_manager');
     $this->actingAs($this->econome);
 });
 
@@ -334,12 +335,16 @@ test("un classeur numéroté d'un autre magasin est refusé", function () {
         ->toContain('Ce classeur est celui de « Magasin central (économat) »');
 });
 
-test("le magasinier exporte et consulte, seul l'économe importe", function () {
-    $this->actingAs(employeDuClasseur('storekeeper'));
+test("le contrôleur exporte et consulte, seul le service achats importe ; l'économat n'y a plus accès", function () {
+    $this->actingAs(employeDuClasseur('controller'));
 
     $this->get(route('economat.classeur.index'))->assertOk()->assertSee('Télécharger le classeur')->assertDontSee('Analyser le fichier');
     $this->get(route('economat.classeur.export'))->assertOk();
     $this->post(route('economat.classeur.import'), [])->assertSessionHas('access_denied_popup');
+
+    foreach (['econome', 'storekeeper'] as $role) {
+        $this->actingAs(employeDuClasseur($role))->get(route('economat.classeur.index'))->assertSessionHas('access_denied_popup');
+    }
 
     $this->actingAs($this->econome)->get(route('economat.classeur.index'))->assertSee('Analyser le fichier');
 });

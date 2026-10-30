@@ -287,7 +287,10 @@ test("le manager valide la dépense et peut en tirer la commande ; l'économe, n
 
     // … la direction peut la tirer, comme le responsable des achats.
     $this->actingAs($manager);
-    $this->post(route('economat.purchase_requests.convert', $demande), ['supplier_id' => $fournisseur->id])->assertRedirect();
+    // Le fournisseur de chaque article se choisit à la conversion.
+    $this->post(route('economat.purchase_requests.convert', $demande), [
+        'line_suppliers' => $demande->lines->mapWithKeys(fn ($l) => [$l->id => $fournisseur->id])->all(),
+    ])->assertRedirect();
     expect(PurchaseOrder::where('purchase_request_id', $demande->id)->exists())->toBeTrue();
 });
 

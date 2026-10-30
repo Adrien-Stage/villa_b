@@ -105,7 +105,7 @@ test('import boutique convertit le prix en centimes et génère un SKU si vide',
 
 test('import économat crée les articles avec stock à zéro et fournisseur par nom', function () {
     test()->seed(\Database\Seeders\TenantSeeder::class);
-    $this->actingAs(User::factory()->create(['role' => 'econome']));
+    $this->actingAs(User::factory()->create(['role' => 'purchasing_manager']));
     StockCategory::create(['name' => 'Entretien']);
     Supplier::create(['name' => 'Grossiste Central', 'is_active' => true]);
 

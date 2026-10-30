@@ -79,7 +79,8 @@ test("un fournisseur se crée avec les articles qu'il livre, chacun à son prix 
 
 test("le formulaire d'un article ne propose plus de fournisseur, et l'enregistrement l'ignore", function () {
     $grossiste = Supplier::create(['name' => 'Mboppi Distribution', 'is_active' => true]);
-    $econome = agentTarifs('econome');
+    // Les articles se créent au service achats.
+    $econome = agentTarifs('purchasing_manager');
 
     $this->actingAs($econome)->get(route('economat.items.index'))->assertOk()
         ->assertDontSee('name="supplier_id"', false)->assertDontSee('Fournisseur habituel');
@@ -115,7 +116,7 @@ test("la demande d'achat prend le prix du fournisseur choisi, pas la moyenne ; h
         ->and($riz->fresh()->supplierPriceFor($autre))->toBeNull();
 
     // La carte du formulaire compare les fournisseurs de l'article, chacun à son prix.
-    $carte = $this->actingAs($econome)->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertOk()->json('fournisseurs');
+    $carte = $this->actingAs(agentTarifs('purchasing_manager'))->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertOk()->json('fournisseurs');
     expect(array_column($carte, 'nom'))->toBe(['Mboppi Distribution', 'Supérette du Port'])
         ->and(array_column($carte, 'tarif'))->toBe([2200000, 2600000]);
 });
@@ -151,27 +152,27 @@ test("retirer le fournisseur habituel donne la place au moins cher des autres", 
     $tarifs->fixer($riz, $moinsCher, 2200000);
     expect($riz->fresh()->supplier_id)->toBe($habituel->id);
 
-    $this->actingAs(agentTarifs('econome'))
+    $this->actingAs(agentTarifs('purchasing_manager'))
         ->delete(route('economat.items.suppliers.unlink', [$riz, $habituel]))->assertSessionHas('success');
 
     expect($riz->fresh()->supplier_id)->toBe($moinsCher->id)
         ->and($riz->fresh()->supplierPriceFor($habituel))->toBeNull();
 });
 
-test("l'économe et le responsable des achats fixent un prix sur la fiche de l'article ; le magasinier non", function () {
+test("seul le responsable des achats fixe un prix sur la fiche de l'article ; ni l'économe ni le magasinier", function () {
     $grossiste = Supplier::create(['name' => 'Mboppi Distribution', 'is_active' => true]);
     $riz = articleTarifs('Riz parfumé');
 
-    foreach (['econome' => 2200000, 'purchasing_manager' => 2300000] as $role => $prix) {
-        $this->actingAs(agentTarifs($role))->post(route('economat.items.suppliers.link', $riz), [
-            'supplier_id' => $grossiste->id, 'purchase_price' => $prix / 100,
-        ])->assertSessionHas('success');
-        expect($riz->fresh()->supplierPriceFor($grossiste))->toBe($prix);
-    }
+    $this->actingAs(agentTarifs('purchasing_manager'))->post(route('economat.items.suppliers.link', $riz), [
+        'supplier_id' => $grossiste->id, 'purchase_price' => 23000,
+    ])->assertSessionHas('success');
+    expect($riz->fresh()->supplierPriceFor($grossiste))->toBe(2300000);
 
-    $this->actingAs(agentTarifs('storekeeper'))->post(route('economat.items.suppliers.link', $riz), [
-        'supplier_id' => $grossiste->id, 'purchase_price' => 1,
-    ])->assertSessionHas('access_denied_popup', true);
+    foreach (['econome', 'storekeeper'] as $role) {
+        $this->actingAs(agentTarifs($role))->post(route('economat.items.suppliers.link', $riz), [
+            'supplier_id' => $grossiste->id, 'purchase_price' => 1,
+        ])->assertSessionHas('access_denied_popup', true);
+    }
     expect($riz->fresh()->supplierPriceFor($grossiste))->toBe(2300000);
 });
 
