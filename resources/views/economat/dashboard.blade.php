@@ -60,7 +60,15 @@
                 <p class="px-5 py-8 text-center text-sm text-primary/40">Aucun article sous le seuil. Le stock est sain.</p>
             @else
                 <div class="divide-y divide-secondary/10 max-h-96 overflow-y-auto">
-                    @foreach($alerts as $item)
+                    @foreach($alertsByZone as $zoneNom => $articlesDeLaZone)
+                        {{-- Une seule zone : pas d'en-tête, la liste suffit. --}}
+                        @if($alertsByZone->count() > 1)
+                            <p class="sticky top-0 z-10 flex items-center justify-between bg-gray-50/95 px-5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary/60 backdrop-blur-sm">
+                                <span class="inline-flex items-center gap-1.5"><i data-lucide="warehouse" class="w-3 h-3" aria-hidden="true"></i> {{ $zoneNom }}</span>
+                                <span class="font-mono text-primary/40">{{ $articlesDeLaZone->count() }}</span>
+                            </p>
+                        @endif
+                    @foreach($articlesDeLaZone as $item)
                         <a href="{{ route('economat.items.show', $item) }}" class="flex items-center justify-between px-5 py-3 hover:bg-accent/10 transition-colors">
                             <div class="min-w-0">
                                 <p class="text-sm text-primary truncate">{{ $item->name }}</p>
@@ -73,6 +81,7 @@
                                 <p class="text-[10px] text-primary/40">seuil {{ rtrim(rtrim(number_format($item->min_stock, 3, ',', ' '), '0'), ',') }}</p>
                             </div>
                         </a>
+                    @endforeach
                     @endforeach
                 </div>
             @endif

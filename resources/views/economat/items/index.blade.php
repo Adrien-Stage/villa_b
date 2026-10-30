@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto"
-     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }}, {{ Js::from($recherche) }}, {{ Js::from($filter) }})">
+     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }}, {{ Js::from($recherche) }}, {{ Js::from($filter) }}, {{ Js::from($zones->where('is_active', true)->map(fn($z) => ['id' => $z->id, 'name' => $z->name])->values()) }}, {{ Js::from($zone?->id) }})">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
@@ -49,6 +49,7 @@
          page ni perdre le curseur. Sans JavaScript, Entrée envoie le formulaire. --}}
     <form method="GET" action="{{ route('economat.items.index') }}" role="search" class="mb-3" @submit.prevent="chercher(true)">
         @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
+        @if($zone)<input type="hidden" name="zone" value="{{ $zone->id }}">@endif
         <label for="recherche-articles" class="sr-only">Rechercher un article</label>
         <div class="relative max-w-md">
             <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" aria-hidden="true"></i>
@@ -64,8 +65,24 @@
 
     <div id="liste-articles" aria-live="polite">
     <div class="flex flex-wrap items-center gap-2 mb-4">
-        <a href="{{ route('economat.items.index', array_filter(['q' => $recherche])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
-        <a href="{{ route('economat.items.index', array_filter(['filter' => 'alert', 'q' => $recherche])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
+        <a href="{{ route('economat.items.index', array_filter(['q' => $recherche, 'zone' => $zone?->id])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
+        <a href="{{ route('economat.items.index', array_filter(['filter' => 'alert', 'q' => $recherche, 'zone' => $zone?->id])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
+        {{-- La zone de rangement : ce qui se trouve en cave, en chambre froide… --}}
+        @if($zones->count() > 1)
+            <form method="GET" action="{{ route('economat.items.index') }}" class="flex items-center gap-1.5">
+                @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
+                @if($recherche !== '')<input type="hidden" name="q" value="{{ $recherche }}">@endif
+                <label for="filtre-zone" class="sr-only">Zone de rangement</label>
+                <select id="filtre-zone" name="zone" onchange="this.form.submit()"
+                        class="rounded-lg border px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-primary {{ $zone ? 'border-primary bg-primary/5 text-primary' : 'border-secondary/30 bg-white text-primary/60' }}">
+                    <option value="">Toutes les zones</option>
+                    @foreach($zones as $z)
+                        <option value="{{ $z->id }}" @selected($zone?->is($z))>{{ $z->name }}{{ $z->is_active ? '' : ' (hors service)' }}</option>
+                    @endforeach
+                </select>
+                <noscript><button type="submit" class="text-xs underline text-primary/60">Filtrer</button></noscript>
+            </form>
+        @endif
         @if($recherche !== '')
             <span class="text-xs text-primary/55">{{ $items->total() }} article(s) pour « {{ $recherche }} »</span>
         @endif
@@ -75,6 +92,7 @@
         <x-slot:head>
             <x-table.col>Article</x-table.col>
             <x-table.col hide="xl">Catégorie</x-table.col>
+            <x-table.col hide="sm">Zone</x-table.col>
             <x-table.col align="right">Stock</x-table.col>
             <x-table.col align="center">Unité</x-table.col>
             <x-table.col align="right" hide="lg">Coût moyen</x-table.col>
@@ -97,6 +115,7 @@
                     'id' => $item->id, 'name' => $item->name,
                     'unit' => $item->unit, 'current' => (float) $item->current_stock,
                 ];
+                $zonePayload = ['id' => $item->id, 'name' => $item->name, 'storage_zone_id' => $item->storage_zone_id];
                 $openingPayload = [
                     'id' => $item->id, 'name' => $item->name, 'unit' => $item->unit,
                     'unit_cost' => (int) round($item->average_cost / 100),
@@ -108,6 +127,7 @@
                     @if($item->reference)<span class="block font-mono text-[10px] text-primary/45">{{ $item->reference }}</span>@endif
                 </x-table.cell>
                 <x-table.cell hide="xl" class="text-xs text-primary/60">{{ $item->category?->name ?? '—' }}</x-table.cell>
+                <x-table.cell hide="sm" class="text-xs text-primary/60">{{ $item->zone?->name ?? '—' }}</x-table.cell>
                 <x-table.cell align="right" nowrap>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}" aria-hidden="true"></span>
@@ -129,6 +149,9 @@
                     @endif
                     @droit('economat.items.transformation.voir')
                         <x-table.action :href="route('economat.items.transformation.show', $item)" icon="boxes">Transformation</x-table.action>
+                    @enddroit
+                    @droit('economat.items.zone')
+                        <x-table.action icon="warehouse" x-on:click="openZone({{ Js::from($zonePayload) }})">Changer de zone</x-table.action>
                     @enddroit
                     @droit('economat.items.adjust')
                         <x-table.action icon="scale" x-on:click="openAdjust({{ Js::from($adjustPayload) }})">Ajuster le stock</x-table.action>
@@ -177,12 +200,23 @@
                         </div>
                     </div>
                     {{-- Les fournisseurs et leurs prix se tiennent au catalogue de chaque fournisseur. --}}
-                    <div>
-                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
-                        <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <option value="">—</option>
-                            <template x-for="c in categories" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
-                        </select>
+                    <div class="grid grid-cols-1 gap-4" :class="!editing && zones.length > 0 ? 'sm:grid-cols-2' : ''">
+                        <div>
+                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
+                            <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                <option value="">—</option>
+                                <template x-for="c in categories" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+                            </select>
+                        </div>
+                        {{-- La zone se propose à la création ; l'économat la change ensuite. --}}
+                        <template x-if="!editing && zones.length > 0">
+                            <div>
+                                <label for="article-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Zone de rangement</label>
+                                <select id="article-zone" name="storage_zone_id" x-model="form.storage_zone_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                    <template x-for="z in zones" :key="z.id"><option :value="z.id" x-text="z.name" :selected="String(z.id) === String(form.storage_zone_id)"></option></template>
+                                </select>
+                            </div>
+                        </template>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -250,6 +284,36 @@
         </div>
     </div>
 
+    {{-- Modal changement de zone : un geste de l'économat, sans toucher au reste de la fiche --}}
+    <div x-show="zoneOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
+         @keydown.escape.window="zoneOpen = false">
+        <div class="absolute inset-0" @click="zoneOpen = false"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10" role="dialog" aria-modal="true" aria-labelledby="titre-zone">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
+                <h3 id="titre-zone" class="font-heading font-semibold text-primary">Changer de zone de rangement</h3>
+                <button type="button" @click="zoneOpen = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form method="POST" :action="zoneAction">
+                @csrf @method('PUT')
+                <div class="px-6 py-5 space-y-4">
+                    <p class="text-sm text-primary/70">Article : <strong x-text="zoneItem.name"></strong></p>
+                    <div>
+                        <label for="changer-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Se range désormais dans</label>
+                        <select id="changer-zone" name="storage_zone_id" x-model="zoneItem.storage_zone_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <option value="">— Sans zone —</option>
+                            <template x-for="z in zones" :key="z.id"><option :value="z.id" x-text="z.name" :selected="String(z.id) === String(zoneItem.storage_zone_id)"></option></template>
+                        </select>
+                        <p class="text-[11px] text-primary/40 mt-1">Le stock ne bouge pas : seule la zone où l'on trouve l'article change.</p>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                    <button type="button" @click="zoneOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Déplacer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Modal ajustement de stock --}}
     <div x-show="adjustOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
         <div class="absolute inset-0" @click="adjustOpen = false"></div>
@@ -285,14 +349,14 @@
 
 @push('scripts')
 <script>
-    function stockItems(categories, suppliers, unites, recherche, filtre) {
+    function stockItems(categories, suppliers, unites, recherche, filtre, zones, zone) {
         const storeUrl = @js(route('economat.items.store'));
         const baseUrl = @js(url('/economat/articles'));
         const listeUrl = @js(route('economat.items.index'));
         let minuterie = null;
         let requete = null;
         return {
-            categories, suppliers, unites,
+            categories, suppliers, unites, zones: zones || [],
             recherche: recherche ?? '', enRecherche: false,
             /**
              * Recharge la liste pour la saisie en cours : la page suivante est
@@ -305,6 +369,7 @@
                 minuterie = setTimeout(async () => {
                     const params = new URLSearchParams();
                     if (filtre) params.set('filter', filtre);
+                    if (zone) params.set('zone', zone);
                     if (this.recherche.trim() !== '') params.set('q', this.recherche.trim());
                     const url = listeUrl + (params.toString() ? '?' + params : '');
 
@@ -330,11 +395,14 @@
             open: false, editing: false, formAction: storeUrl, form: {},
             adjustOpen: false, adjustAction: '', adjust: {},
             openingOpen: false, openingAction: '', opening: {},
+            zoneOpen: false, zoneAction: '', zoneItem: {},
             autoCode: true,
             blank() {
                 let premiere = this.unites.length > 0 ? (this.unites[0].value || this.unites[0]) : '';
                 return { id: null, name: '', reference: '', unit: premiere, description: '',
-                    stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true };
+                    stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true,
+                    // La zone filtrée, si elle est en service ; sinon la première.
+                    storage_zone_id: (this.zones.some(z => z.id === zone) ? zone : this.zones[0]?.id) ?? '' };
             },
             // L'unité d'un article mise hors service depuis reste proposée pour lui.
             get unitesProposees() {
@@ -361,6 +429,11 @@
                 this.opening = { ...item, unit_cost: item.unit_cost || '' };
                 this.openingAction = `${baseUrl}/${item.id}/reprise`;
                 this.openingOpen = true;
+            },
+            openZone(item) {
+                this.zoneItem = { ...item, storage_zone_id: item.storage_zone_id ?? '' };
+                this.zoneAction = `${baseUrl}/${item.id}/zone`;
+                this.zoneOpen = true;
             },
             openAdjust(item) {
                 this.adjust = { ...item, counted: item.current };

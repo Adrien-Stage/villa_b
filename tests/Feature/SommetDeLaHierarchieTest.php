@@ -93,6 +93,11 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         'economat.units.creer',
         'economat.units.modifier',
         'economat.units.supprimer',
+        // Les zones de rangement du magasin, de même : la liste se règle par
+        // l'économe et la direction (décision du 2026-10-30).
+        'economat.zones.creer',
+        'economat.zones.modifier',
+        'economat.zones.supprimer',
     ];
 
     $ecrituresIndues = [];

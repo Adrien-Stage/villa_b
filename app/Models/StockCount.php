@@ -32,6 +32,7 @@ class StockCount extends Model
         'reference',
         'department',
         'stock_category_id',
+        'storage_zone_id',
         'status',
         'count_date',
         'notes',
@@ -108,6 +109,18 @@ class StockCount extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(StockCategory::class, 'stock_category_id');
+    }
+
+    /** La zone de rangement comptée, quand l'inventaire s'y limite. */
+    public function zone(): BelongsTo
+    {
+        return $this->belongsTo(StorageZone::class, 'storage_zone_id');
+    }
+
+    /** Ce que l'inventaire compte : « Chambre froide 1 · Viandes », ou tout le magasin. */
+    public function perimetre(string $tout = 'Tout le magasin'): string
+    {
+        return collect([$this->zone?->name, $this->category?->name])->filter()->implode(' · ') ?: $tout;
     }
 
     public function openedBy(): BelongsTo

@@ -34,7 +34,7 @@ class StockCountController extends Controller
             ...StockRequisition::DEPARTMENTS,
         ];
 
-        $query = StockCount::with(['category', 'openedBy', 'closedBy'])->withCount('lines');
+        $query = StockCount::with(['category', 'zone', 'openedBy', 'closedBy'])->withCount('lines');
 
         if ($request->filled('service')) {
             $service = $request->input('service');
@@ -119,6 +119,7 @@ class StockCountController extends Controller
 
         return view('economat.stock_counts.create', [
             'categories'  => $categories,
+            'zones'       => \App\Models\StorageZone::query()->dansLOrdre()->whereHas('items')->get(),
             'departments' => $departments,
         ]);
     }
@@ -134,6 +135,7 @@ class StockCountController extends Controller
             'department'        => ['nullable', 'string', Rule::in(array_keys($departments))],
             'count_date'        => ['nullable', 'date'],
             'stock_category_id' => ['nullable', 'exists:stock_categories,id'],
+            'storage_zone_id'   => ['nullable', 'exists:storage_zones,id'],
             'notes'             => ['nullable', 'string', 'max:1000'],
             // Le comptage déjà fait sur papier peut s'importer dès l'ouverture.
             'fichier'           => ['nullable', 'file', 'mimes:xlsx,xls,csv,txt', 'max:5120'],
@@ -164,12 +166,13 @@ class StockCountController extends Controller
     {
         $inventaire = $request->filled('inventaire') ? StockCount::findOrFail((int) $request->query('inventaire')) : null;
         $categorie = $inventaire ? null : ((int) $request->query('categorie') ?: null);
+        $zone = $inventaire ? null : ((int) $request->query('zone') ?: null);
 
         return $this->streamXlsx(
             'comptage_' . ($inventaire?->reference ?? 'economat_' . now()->format('Ymd')) . '.xlsx',
             'Comptage',
             StockCountImportService::COLONNES,
-            $import->modele($inventaire, $categorie),
+            $import->modele($inventaire, $categorie, $zone),
         );
     }
 
@@ -240,7 +243,7 @@ class StockCountController extends Controller
 
     public function show(StockCount $stockCount): View
     {
-        $stockCount->load(['category', 'openedBy', 'closedBy', 'lines.item.category', 'lines.item.packagings']);
+        $stockCount->load(['category', 'zone', 'openedBy', 'closedBy', 'lines.item.category', 'lines.item.packagings']);
 
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
 
@@ -321,7 +324,7 @@ class StockCountController extends Controller
      */
     public function report(StockCount $stockCount): View
     {
-        $stockCount->load(['category', 'openedBy', 'closedBy', 'lines.item.category']);
+        $stockCount->load(['category', 'zone', 'openedBy', 'closedBy', 'lines.item.category']);
 
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
 

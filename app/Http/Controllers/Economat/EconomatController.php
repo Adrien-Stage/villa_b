@@ -30,9 +30,15 @@ class EconomatController extends Controller
 
         // Articles à réapprovisionner en tête : ce que l'économe doit traiter.
         $alerts = StockItem::active()->belowThreshold()
-            ->with('category', 'supplier')
+            ->with('category', 'supplier', 'zone')
             ->orderBy('current_stock')
             ->get();
+
+        // Rangées par zone, dans l'ordre de la tournée : l'économe sait où
+        // aller voir. Les articles sans zone ferment la marche.
+        $alertsByZone = $alerts
+            ->sortBy(fn (StockItem $i) => $i->zone ? sprintf('0-%05d-%s', $i->zone->sort_order, $i->zone->name) : '1')
+            ->groupBy(fn (StockItem $i) => $i->zone?->name ?? 'Sans zone de rangement');
 
         $pendingRequisitions = StockRequisition::pending()
             ->with('requestedBy', 'lines')
@@ -45,6 +51,6 @@ class EconomatController extends Controller
             ->take(12)
             ->get();
 
-        return view('economat.dashboard', compact('stats', 'alerts', 'pendingRequisitions', 'recentMovements'));
+        return view('economat.dashboard', compact('stats', 'alerts', 'alertsByZone', 'pendingRequisitions', 'recentMovements'));
     }
 }

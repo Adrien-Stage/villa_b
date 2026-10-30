@@ -16,6 +16,7 @@ use App\Models\StockCategory;
 use App\Models\StockCount;
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Models\StorageZone;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
@@ -46,6 +47,11 @@ class CountSheetService
     public const SHOP = 'boutique';
     public const STORE_PREFIX = 'depot-';
     public const ALL = 'tout';
+
+    /** Économat : une fiche par zone de rangement, chacune pour son équipe de comptage. */
+    public const ZONE_CHAQUE = 'chaque';
+    /** Économat : les articles rangés dans aucune zone. */
+    public const ZONE_AUCUNE = 0;
 
     public const ARTICLES_TOUS = 'tous';
     public const ARTICLES_EN_STOCK = 'en_stock';
@@ -97,10 +103,18 @@ class CountSheetService
     /**
      * @param  string  $selection  une clé de SELECTIONS
      * @param  CarbonInterface|null  $depuis  début de la période des mouvements ; par défaut, le dernier inventaire du service
+     * @param  int|string|null  $zone  économat : une zone de rangement, ZONE_AUCUNE, ou ZONE_CHAQUE pour une fiche par zone
      * @return list<array<string, mixed>>
      */
-    public function sheets(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null): array
+    public function sheets(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null, int|string|null $zone = null): array
     {
+        if ($key === self::ECONOMAT && $zone === self::ZONE_CHAQUE) {
+            return array_values(array_filter(array_map(
+                fn (int $zoneId) => $this->sheet($key, $categoryId, $selection, $depuis, $zoneId),
+                $this->zonesAvecArticles()
+            ), fn (?array $fiche) => $fiche !== null && $fiche['groups'] !== []));
+        }
+
         if ($key === self::ALL) {
             return array_values(array_filter(array_map(
                 fn (string $service) => $this->sheet($service, null, $selection, $depuis),
@@ -108,19 +122,19 @@ class CountSheetService
             )));
         }
 
-        $sheet = $this->sheet($key, $categoryId, $selection, $depuis);
+        $sheet = $this->sheet($key, $categoryId, $selection, $depuis, is_numeric($zone) ? (int) $zone : null);
 
         return $sheet === null ? [] : [$sheet];
     }
 
     /** @return array<string, mixed>|null */
-    public function sheet(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null): ?array
+    public function sheet(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null, ?int $zoneId = null): ?array
     {
         $this->selection = array_key_exists($selection, self::SELECTIONS) ? $selection : self::ARTICLES_TOUS;
         $this->depuis = $depuis;
 
         return match (true) {
-            $key === self::ECONOMAT                 => $this->economat($categoryId),
+            $key === self::ECONOMAT                 => $this->economat($categoryId, $zoneId),
             str_starts_with($key, self::PANTRY)     => $this->pantry($key, $categoryId),
             $key === self::SHOP                     => $this->shop(),
             str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX))),
@@ -128,20 +142,27 @@ class CountSheetService
         };
     }
 
-    private function economat(?int $categoryId): array
+    private function economat(?int $categoryId, ?int $zoneId = null): array
     {
         $categorie = $categoryId ? StockCategory::find($categoryId) : null;
+        // Une zone de rangement : la fiche de l'équipe qui compte la cave, la chambre froide…
+        $zone = $zoneId ? StorageZone::find($zoneId) : null;
+        $sansZone = $zoneId === self::ZONE_AUCUNE;
+        $dansLaZone = fn (?int $idZone): bool => $sansZone ? $idZone === null : (! $zone || $idZone === $zone->id);
         $inventaire = StockCount::inProgress();
 
         // Inventaire ouvert : son théorique figé, limité à son périmètre.
         if ($inventaire !== null) {
             $lignes = $inventaire->lines()->with('item.category', 'item.packagings')->get()
-                ->filter(fn ($l) => $l->item && (!$categorie || $l->item->stock_category_id === $categorie->id))
+                ->filter(fn ($l) => $l->item && (!$categorie || $l->item->stock_category_id === $categorie->id)
+                    && $dansLaZone($l->item->storage_zone_id))
                 ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name)
                     + ['conditionnements' => $l->item->packagings->sortByDesc('factor')->pluck('name')->all()]);
         } else {
             $lignes = StockItem::active()->with('category', 'packagings')
                 ->when($categorie, fn ($q) => $q->where('stock_category_id', $categorie->id))
+                ->when($zone, fn ($q) => $q->where('storage_zone_id', $zone->id))
+                ->when($sansZone, fn ($q) => $q->whereNull('storage_zone_id'))
                 ->get()
                 ->map(fn (StockItem $i) => $this->ligne($i->id, $i->reference, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name)
                     // Un article conditionné se compte par niveau : cartons fermés, paquets, vrac.
@@ -150,6 +171,7 @@ class CountSheetService
 
         $dernierInventaire = StockCount::query()->where('status', StockCount::STATUS_CLOSED)
             ->where(fn ($q) => $q->whereNull('stock_category_id')->when($categorie, fn ($c) => $c->orWhere('stock_category_id', $categorie->id)))
+            ->where(fn ($q) => $q->whereNull('storage_zone_id')->when($zone, fn ($z) => $z->orWhere('storage_zone_id', $zone->id)))
             ->max('closed_at');
 
         [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire, fn (CarbonInterface $debut) => StockMovement::query()
@@ -158,12 +180,31 @@ class CountSheetService
         return $this->fiche(
             self::ECONOMAT,
             'Économat — magasin central',
-            $categorie?->name,
+            collect([$zone?->name ?? ($sansZone ? 'Sans zone de rangement' : null), $categorie?->name])->filter()->implode(' · ') ?: null,
             $inventaire?->reference,
             $lignes,
             $inventaire?->created_at,
             $libelle
         );
+    }
+
+    /**
+     * Les zones qui rangent des articles actifs, dans l'ordre de la tournée ;
+     * ZONE_AUCUNE en dernier s'il reste des articles sans zone.
+     *
+     * @return list<int>
+     */
+    private function zonesAvecArticles(): array
+    {
+        $zones = StorageZone::query()->dansLOrdre()
+            ->whereHas('items', fn ($q) => $q->where('is_active', true))
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        if (StockItem::active()->whereNull('storage_zone_id')->exists()) {
+            $zones[] = self::ZONE_AUCUNE;
+        }
+
+        return $zones;
     }
 
     private function pantry(string $key, ?int $categoryId): ?array

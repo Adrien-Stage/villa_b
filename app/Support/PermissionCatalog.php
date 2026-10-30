@@ -140,6 +140,7 @@ class PermissionCatalog
         'economat.items.suppliers.link',
         'economat.items.suppliers.unlink',
         'economat.items.transformation.cut',
+        'economat.items.zone',
         'economat.items.transformation.open',
         'economat.items.transformation.packagings',
         'economat.orders.cancel',
@@ -167,6 +168,9 @@ class PermissionCatalog
         'economat.suppliers.creer',
         'economat.suppliers.modifier',
         'economat.suppliers.supprimer',
+        'economat.zones.creer',
+        'economat.zones.modifier',
+        'economat.zones.supprimer',
         'economat.units.creer',
         'economat.units.modifier',
         'economat.units.supprimer',
@@ -834,6 +838,8 @@ class PermissionCatalog
             'economat.items.transformation.open' => ['econome', 'storekeeper'],
             // La découpe vers le garde-manger : l'économe la saisit, en présence du chef.
             'economat.items.transformation.cut' => ['econome'],
+            // Ranger la marchandise : l'économat déplace un article d'une zone à l'autre.
+            'economat.items.zone' => ['econome'],
             'economat.cuts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Le responsable des achats commande ; l'économat réceptionne. Tout
             // bon naît d'une demande d'achat approuvée : le bon saisi de toutes
@@ -895,6 +901,10 @@ class PermissionCatalog
             'economat.suppliers.voir' => ['accountant', 'controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :
             // un référentiel de l'hôtel que l'économe et la direction tiennent.
+            // Les zones de rangement : l'économat et la direction.
+            'economat.zones.creer' => ['econome', 'manager'],
+            'economat.zones.modifier' => ['econome', 'manager'],
+            'economat.zones.supprimer' => ['econome', 'manager'],
             'economat.units.creer' => ['econome', 'manager', 'purchasing_manager'],
             'economat.units.modifier' => ['econome', 'manager', 'purchasing_manager'],
             'economat.units.supprimer' => ['econome', 'manager', 'purchasing_manager'],

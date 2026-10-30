@@ -125,7 +125,7 @@ class GoodsReceiptController extends Controller
                 ->with('error', "Ce bon de commande ne peut pas être réceptionné dans son état actuel.");
         }
 
-        $order->load(['supplier', 'lines.item.packagings']);
+        $order->load(['supplier', 'lines.item.packagings', 'lines.item.zone']);
 
         // Le bon en attente, ouvert à l'envoi du bon de commande ; un bon
         // envoyé avant les bons en attente reçoit le sien maintenant.
@@ -281,7 +281,7 @@ class GoodsReceiptController extends Controller
 
     public function show(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments', 'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'attachments.uploadedBy']);
+        $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments', 'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'lines.item.zone', 'attachments.uploadedBy']);
 
         return view('economat.receipts.show', [
             'receipt' => $receipt,
@@ -294,7 +294,7 @@ class GoodsReceiptController extends Controller
      */
     public function print(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings']);
+        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'lines.item.zone']);
 
         return view('economat.receipts.print', [
             'receipt' => $receipt,

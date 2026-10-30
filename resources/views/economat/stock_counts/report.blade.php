@@ -324,7 +324,7 @@
             <td class="meta-label">Service / Département :</td>
             <td class="meta-val"><strong>{{ $count->departmentLabel() }}</strong></td>
             <td class="meta-label">Périmètre / Catégorie :</td>
-            <td class="meta-val">{{ $count->category?->name ?? 'Magasin complet (Tous articles)' }}</td>
+            <td class="meta-val">{{ $count->perimetre('Magasin complet (Tous articles)') }}</td>
         </tr>
         <tr>
             <td class="meta-label">Statut du PV :</td>

@@ -86,7 +86,7 @@
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">En cours de comptage</span>
                     </div>
                     <p class="text-xs text-amber-900/70 mt-1">
-                        Périmètre : <strong>{{ $openCount->category?->name ?? 'Tout le magasin central' }}</strong> · 
+                        Périmètre : <strong>{{ $openCount->perimetre('Tout le magasin central') }}</strong> · 
                         Ouvert le {{ $openCount->created_at->format('d/m/Y à H:i') }} par {{ $openCount->openedBy?->name ?? '—' }}
                         · {{ $openCount->lines()->whereNotNull('counted_quantity')->count() }} / {{ $openCount->lines()->count() }} articles comptés ({{ $openCount->progressPercentage() }}%)
                     </p>
@@ -188,7 +188,7 @@
             </x-table.cell>
             <x-table.cell hide="lg" nowrap class="text-primary/70">{{ $count->count_date->format('d/m/Y') }}</x-table.cell>
             <x-table.cell hide="xl" nowrap class="text-primary/80">
-                {{ $count->category?->name ?? 'Tout le magasin' }}
+                {{ $count->perimetre() }}
                 <span class="block text-xs text-primary/45">({{ $count->lines_count }} articles)</span>
             </x-table.cell>
             <x-table.cell nowrap>

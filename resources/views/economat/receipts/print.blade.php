@@ -339,6 +339,9 @@
                 <tr>
                     <td>
                         <div class="font-bold">{{ $line->item?->name ?? '—' }}</div>
+                        @if($line->item?->zone)
+                            <div style="font-size: 8px; color: #555; margin-top: 1px;">Ranger en : {{ $line->item->zone->name }}</div>
+                        @endif
                         @if($line->quantity_rejected > 0)
                             <div style="font-size: 8px; color: #b91c1c; font-weight: bold; margin-top: 2px;">
                                 Litige : {{ $line->rejectionReasonLabel() }} @if($line->notes) — {{ $line->notes }}@endif

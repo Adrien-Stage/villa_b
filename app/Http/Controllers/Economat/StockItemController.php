@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockUnit;
+use App\Models\StorageZone;
 use App\Models\Supplier;
 use App\Services\StockAccountService;
 use App\Services\StockService;
@@ -25,11 +26,18 @@ class StockItemController extends Controller
     public function index(Request $request): View
     {
         // Le nombre de mouvements dit si l'article peut encore recevoir sa reprise.
-        $query = StockItem::with('category', 'supplier', 'packagings')->withCount('movements');
+        $query = StockItem::with('category', 'supplier', 'packagings', 'zone')->withCount('movements');
 
         // Filtre rapide sur les articles à traiter.
         if ($request->query('filter') === 'alert') {
             $query->belowThreshold();
+        }
+
+        // Une zone de rangement : ce qui se trouve en cave, en chambre froide…
+        $zones = StorageZone::query()->dansLOrdre()->get();
+        $zone = $zones->firstWhere('id', (int) $request->query('zone'));
+        if ($zone) {
+            $query->where('storage_zone_id', $zone->id);
         }
 
         // Recherche à la saisie : le nom, la référence ou la catégorie.
@@ -53,13 +61,15 @@ class StockItemController extends Controller
             'unites'     => StockUnit::selectOptions(),
             'filter'     => $request->query('filter'),
             'recherche'  => $recherche,
+            'zones'      => $zones,
+            'zone'       => $zone,
         ]);
     }
 
     public function show(StockItem $item): View
     {
         // Les tarifs du moins cher au plus cher ; ceux sans prix à la fin.
-        $item->load(['category', 'supplier', 'packagings', 'suppliers' => fn ($q) => $q
+        $item->load(['category', 'supplier', 'packagings', 'zone', 'suppliers' => fn ($q) => $q
             ->orderByRaw('CASE WHEN stock_item_supplier.purchase_price > 0 THEN 0 ELSE 1 END')
             ->orderBy('stock_item_supplier.purchase_price')->orderBy('suppliers.name')]);
 
@@ -67,8 +77,9 @@ class StockItemController extends Controller
         $movements = $item->movements()->with('user', 'item')->latest('occurred_at')->latest('id')->take(50)->get();
 
         $allSuppliers = Supplier::active()->orderBy('name')->get();
+        $zones = StorageZone::active()->dansLOrdre()->get();
 
-        return view('economat.items.show', compact('item', 'movements', 'allSuppliers'));
+        return view('economat.items.show', compact('item', 'movements', 'allSuppliers', 'zones'));
     }
 
     /** Fixe le prix de l'article chez un fournisseur, depuis la fiche de l'article. */
@@ -111,6 +122,8 @@ class StockItemController extends Controller
 
         StockItem::create([
             'stock_category_id' => $validated['stock_category_id'] ?? null,
+            // Le service achats propose la zone ; l'économat la change ensuite.
+            'storage_zone_id'   => $validated['storage_zone_id'] ?? StorageZone::parDefaut()?->id,
             'name'              => trim($validated['name']),
             'reference'         => $validated['reference'] ?? null,
             'unit'              => StockUnit::symbolFor($validated['unit']),
@@ -213,6 +226,7 @@ class StockItemController extends Controller
             'unit'              => ['required', 'string', Rule::in(StockUnit::choix($item?->unit))],
             'description'       => ['nullable', 'string', 'max:500'],
             'stock_category_id' => ['nullable', 'exists:stock_categories,id'],
+            'storage_zone_id'   => ['nullable', Rule::exists('storage_zones', 'id')->where('is_active', true)],
             'min_stock'         => ['nullable', 'numeric', 'min:0'],
             // Coût moyen initial (FCFA), utile si l'article existe déjà en stock
             // au démarrage du module ; sinon il se construit aux réceptions.

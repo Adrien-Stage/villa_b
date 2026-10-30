@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Economat;
 use App\Http\Controllers\Controller;
 use App\Models\RestaurantPantryCategory;
 use App\Models\StockCategory;
+use App\Models\StorageZone;
 use App\Services\CountSheetService;
 use App\Support\InventorySchedule;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class CountSheetController extends Controller
             'services'          => $this->sheets->services(),
             'stockCategories'   => StockCategory::orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
             'pantryCategories'  => RestaurantPantryCategory::orderBy('name')->get(['id', 'name']),
+            'zones'             => StorageZone::query()->dansLOrdre()->whereHas('items')->get(['id', 'name']),
             'prochainInventaire' => $calendrier->next(now()),
             'selections'        => CountSheetService::SELECTIONS,
         ]);
@@ -43,6 +45,8 @@ class CountSheetController extends Controller
             // tombés à 0 après un mouvement depuis une date.
             'articles'  => ['nullable', 'in:' . implode(',', array_keys(CountSheetService::SELECTIONS))],
             'depuis'    => ['nullable', 'date', 'before_or_equal:today'],
+            // Économat : une zone de rangement, ou une fiche par zone.
+            'zone'      => ['nullable', 'regex:/^(\d+|' . CountSheetService::ZONE_CHAQUE . ')$/'],
         ]);
 
         return view('economat.count_sheets.print', [
@@ -51,6 +55,7 @@ class CountSheetController extends Controller
                 $validated['categorie'] ?? null,
                 $validated['articles'] ?? CountSheetService::ARTICLES_TOUS,
                 !empty($validated['depuis']) ? Carbon::parse($validated['depuis']) : null,
+                $validated['zone'] ?? null,
             ),
             'showTheoretical' => (bool) ($validated['theorique'] ?? false),
             'tenant'         => \App\Models\Tenant::first(),

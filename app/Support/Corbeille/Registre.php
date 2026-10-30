@@ -30,6 +30,7 @@ final class Registre
         'stock_items'                 => ['Article', 'economat'],
         'stock_categories'            => ['Catégorie d\'articles', 'economat'],
         'stock_units'                 => ['Unité de stockage', 'economat'],
+        'storage_zones'               => ['Zone de rangement', 'economat'],
         'service_stores'              => ['Dépôt de service', 'economat'],
         'suppliers'                   => ['Fournisseur', 'economat'],
         'goods_receipt_attachments'   => ['Bordereau de livraison', 'economat'],

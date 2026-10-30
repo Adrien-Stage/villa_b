@@ -57,6 +57,21 @@
                     @error('stock_category_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                 </div>
 
+                {{-- L'économat se compte aussi zone par zone : la cave, une chambre froide… --}}
+                @if($zones->count() > 1)
+                    <div>
+                        <label for="inventaire-zone" class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Zone de rangement</label>
+                        <select id="inventaire-zone" name="storage_zone_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                            <option value="">Toutes les zones</option>
+                            @foreach($zones as $zone)
+                                <option value="{{ $zone->id }}" @selected((string) old('storage_zone_id') === (string) $zone->id)>{{ $zone->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-[11px] text-primary/45 mt-1">Pour compter une seule zone (ex : la cave, une chambre froide) ; elle se combine avec la catégorie.</p>
+                        @error('storage_zone_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                @endif
+
                 <div>
                     <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Notes & Contexte (optionnel)</label>
                     <textarea name="notes" rows="3" placeholder="Ex: Inventaire mensuel de clôture, contrôle inopiné suite à rotation d'équipe..."
@@ -73,7 +88,7 @@
                             @droit('economat.stock_counts.export')
                                 <a href="{{ route('economat.stock_counts.export') }}" class="font-semibold text-emerald-800 underline"
                                    {{-- Le fichier suit le périmètre choisi plus haut. --}}
-                                   x-on:click="const c = document.querySelector('[name=stock_category_id]').value; $el.href = @js(route('economat.stock_counts.export')) + (c ? '?categorie=' + c : '')">Télécharger le fichier de comptage</a>
+                                   x-on:click="const p = new URLSearchParams(); const c = document.querySelector('[name=stock_category_id]').value; const z = document.querySelector('[name=storage_zone_id]')?.value; if (c) p.set('categorie', c); if (z) p.set('zone', z); $el.href = @js(route('economat.stock_counts.export')) + (p.toString() ? '?' + p : '')">Télécharger le fichier de comptage</a>
                             @enddroit
                         </p>
                         <label for="fichier-ouverture" class="sr-only">Fichier de comptage</label>
