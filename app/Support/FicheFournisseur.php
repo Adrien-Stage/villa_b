@@ -13,18 +13,18 @@ use Illuminate\Support\Facades\DB;
  * La fiche d'un fournisseur : qui il est, ce qu'il nous livre et à quel prix,
  * ce qu'on lui a commandé et ce qu'il a livré.
  *
- * Une seule source pour l'écran et pour sa version imprimable (Éditions) :
- * les deux montrent la même chose, chacune à sa façon.
+ * Seul l'historique des livraisons s'imprime et s'exporte, par l'édition
+ * « Historique des livraisons » (App\Editions\Documents\HistoriqueLivraisons).
  */
 class FicheFournisseur
 {
-    /** Livraisons montrées par l'écran ; l'impression couvre douze mois. */
+    /** Livraisons montrées par l'écran ; l'édition donne tout l'historique. */
     public const LIVRAISONS_A_L_ECRAN = 30;
 
     /**
      * @return array<string, mixed>
      */
-    public static function pour(Supplier $supplier, User $user, bool $impression = false): array
+    public static function pour(Supplier $supplier, User $user): array
     {
         $droits = app(PermissionResolver::class);
 
@@ -36,7 +36,7 @@ class FicheFournisseur
             'voitBons' => $droits->allows($user, 'economat.orders.voir'),
             'voitReceptions' => $droits->allows($user, 'economat.receipts.voir'),
             'catalogue' => self::catalogue($supplier),
-            'livraisons' => self::livraisons($supplier, $impression),
+            'livraisons' => self::livraisons($supplier),
             'attendues' => $supplier->goodsReceipts()->where('status', GoodsReceipt::STATUS_PENDING)
                 ->with('purchaseOrder:id,number,sent_at,expected_at')->latest('id')->get(),
             'enCours' => $supplier->purchaseOrders()
@@ -79,15 +79,14 @@ class FicheFournisseur
     }
 
     /** Ses livraisons réceptionnées ou annulées, les plus récentes d'abord. */
-    private static function livraisons(Supplier $supplier, bool $impression)
+    private static function livraisons(Supplier $supplier)
     {
         return $supplier->goodsReceipts()
             ->where('status', '!=', GoodsReceipt::STATUS_PENDING)
             ->with(['purchaseOrder:id,number', 'receivedBy:id,name'])
             ->withCount('attachments')
-            ->when($impression, fn ($q) => $q->where('received_at', '>=', now()->subYear()->startOfDay()))
             ->latest('received_at')->latest('id')
-            ->when(! $impression, fn ($q) => $q->limit(self::LIVRAISONS_A_L_ECRAN))
+            ->limit(self::LIVRAISONS_A_L_ECRAN)
             ->get();
     }
 

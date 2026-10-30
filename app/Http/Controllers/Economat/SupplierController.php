@@ -91,14 +91,6 @@ class SupplierController extends Controller
         return view('economat.suppliers.show', FicheFournisseur::pour($supplier, Auth::user()));
     }
 
-    /** La même fiche, à imprimer ; les livraisons des douze derniers mois. */
-    public function print(Supplier $supplier): View
-    {
-        return view('economat.suppliers.print', FicheFournisseur::pour($supplier, Auth::user(), impression: true) + [
-            'tenant' => \App\Models\Tenant::first(),
-        ]);
-    }
-
     public function store(Request $request, SupplierTariffService $tarifs): RedirectResponse
     {
         $validated = $this->validated($request);

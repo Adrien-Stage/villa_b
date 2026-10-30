@@ -101,22 +101,35 @@ test("le magasinier et le comptable lisent la fiche ; seul le comptable voit la 
         ->assertRedirect()->assertSessionHas('access_denied_popup', true);
 });
 
-test("la fiche s'imprime, et se retrouve dans les Éditions par le nom du fournisseur", function () {
+test("seul l'historique des livraisons s'imprime et s'exporte, au nom du fournisseur ; la fiche entière, non", function () {
     $grossiste = grossisteLivre();
     $acheteur = lecteurFiche('purchasing_manager');
 
-    $this->actingAs($acheteur)->get(route('economat.suppliers.print', $grossiste))->assertOk()
-        ->assertSee('Fiche fournisseur')->assertSee('Riz parfumé')->assertSee('BL-7781')->assertSee('Livraisons des douze derniers mois');
+    expect(\Illuminate\Support\Facades\Route::has('economat.suppliers.print'))->toBeFalse();
+    $this->actingAs($acheteur)->get(route('economat.suppliers.show', $grossiste))->assertOk()
+        ->assertDontSee('Imprimer la fiche')
+        ->assertSee(route('editions.print', ['edition' => 'historique-livraisons', 'fournisseur' => $grossiste->id]))
+        ->assertSee(route('editions.export', ['edition' => 'historique-livraisons', 'fournisseur' => $grossiste->id, 'format' => 'excel']));
+    expect(app(Pieces::class)->chercher('mboppi', $acheteur)->where('sorte', 'Fiche fournisseur'))->toBeEmpty();
 
-    $pieces = app(Pieces::class)->chercher('mboppi', $acheteur);
-    expect($pieces->firstWhere('sorte', 'Fiche fournisseur'))->toMatchArray([
-        'numero' => 'Mboppi Distribution', 'url' => route('economat.suppliers.print', $grossiste),
-    ]);
+    // Le nom du fournisseur fait le titre ; sa colonne disparaît, inutile.
+    $edition = app(Catalogue::class)->trouver('historique-livraisons');
+    $document = $edition->document($edition->valeurs(['fournisseur' => (string) $grossiste->id], $acheteur), $acheteur);
+    expect($document->titre)->toBe('Historique des livraisons — Mboppi Distribution')
+        ->and($document->lesLignes()->pluck('bordereau')->all())->toBe(['BL-7781'])
+        ->and($document->lesLignes()->sole()['montant'])->toBe(6600000);
 
-    $edition = app(Catalogue::class)->trouver('tarifs-fournisseurs');
+    $this->actingAs($acheteur)->get(route('editions.print', ['edition' => 'historique-livraisons', 'fournisseur' => $grossiste->id]))
+        ->assertOk()->assertSee('Historique des livraisons — Mboppi Distribution')->assertSee('BL-7781')->assertSee('Pièces jointes');
+    $this->actingAs($acheteur)->get(route('editions.export', ['edition' => 'historique-livraisons', 'fournisseur' => $grossiste->id, 'format' => 'excel']))
+        ->assertOk();
+
+    // Tous les fournisseurs : chaque ligne nomme le sien.
+    $tous = $edition->document($edition->valeurs([], $acheteur), $acheteur);
+    expect($tous->titre)->toBe('Historique des livraisons — tous les fournisseurs')
+        ->and($tous->lesLignes()->sole()['fournisseur'])->toBe('Mboppi Distribution');
+
     expect($edition->accessiblePour(lecteurFiche('storekeeper')))->toBeTrue()
+        ->and($edition->accessiblePour(lecteurFiche('accountant')))->toBeTrue()
         ->and($edition->accessiblePour(lecteurFiche('reception')))->toBeFalse();
-
-    $this->actingAs($acheteur)->get(route('editions.show', ['edition' => 'tarifs-fournisseurs', 'fournisseur' => $grossiste->id]))
-        ->assertOk()->assertSee('Tarifs des fournisseurs')->assertSee('Riz parfumé')->assertSee('Fournisseur habituel · Moins cher');
 });

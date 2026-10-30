@@ -1496,18 +1496,6 @@
   "storekeeper",
   "support"
  ],
- "economat.suppliers.print": [
-  "accountant",
-  "admin",
-  "controller",
-  "econome",
-  "finance_manager",
-  "manager",
-  "purchasing_manager",
-  "quality_auditor",
-  "storekeeper",
-  "support"
- ],
  "economat.suppliers.show": [
   "accountant",
   "admin",

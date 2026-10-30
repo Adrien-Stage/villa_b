@@ -43,10 +43,6 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('economat.suppliers.print', $supplier) }}" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors">
-                <i data-lucide="printer" class="w-4 h-4"></i> Imprimer la fiche
-            </a>
             @droit('economat.orders.creer')
                 <a href="{{ route('economat.orders.create', ['fournisseur' => $supplier->id]) }}"
                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
@@ -193,10 +189,33 @@
     {{-- Historique des livraisons --}}
     <section class="bg-white border border-secondary/20 rounded-xl overflow-hidden" aria-labelledby="titre-livraisons">
         <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80 flex flex-wrap items-center justify-between gap-2">
-            <h2 id="titre-livraisons" class="text-sm font-semibold text-primary">Historique des livraisons</h2>
-            @if($livraisons->count() >= \App\Support\FicheFournisseur::LIVRAISONS_A_L_ECRAN)
-                <p class="text-xs text-primary/50">Les {{ \App\Support\FicheFournisseur::LIVRAISONS_A_L_ECRAN }} plus récentes ; le registre complet est dans Éditions.</p>
-            @endif
+            <div>
+                <h2 id="titre-livraisons" class="text-sm font-semibold text-primary">Historique des livraisons</h2>
+                @if($livraisons->count() >= \App\Support\FicheFournisseur::LIVRAISONS_A_L_ECRAN)
+                    <p class="text-xs text-primary/50">Les {{ \App\Support\FicheFournisseur::LIVRAISONS_A_L_ECRAN }} plus récentes ; l'impression et l'export donnent tout l'historique de la période.</p>
+                @endif
+            </div>
+            {{-- Seul l'historique s'imprime et s'exporte : l'édition des Éditions, au nom du fournisseur. --}}
+            @droit('editions.voir')
+                @php $historique = ['edition' => 'historique-livraisons', 'fournisseur' => $supplier->id]; @endphp
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('editions.print', $historique) }}" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                        <i data-lucide="printer" class="h-3.5 w-3.5" aria-hidden="true"></i> Imprimer
+                    </a>
+                    @droit('editions.export')
+                        <a href="{{ route('editions.export', $historique + ['format' => 'excel']) }}"
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                            <i data-lucide="sheet" class="h-3.5 w-3.5" aria-hidden="true"></i> Excel
+                        </a>
+                        <a href="{{ route('editions.export', $historique + ['format' => 'pdf']) }}"
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                            <i data-lucide="file-text" class="h-3.5 w-3.5" aria-hidden="true"></i> PDF
+                        </a>
+                    @enddroit
+                    <a href="{{ route('editions.show', $historique) }}" class="text-xs text-primary/50 underline hover:text-primary">Choisir la période</a>
+                </div>
+            @enddroit
         </div>
         @if($livraisons->isEmpty())
             <p class="px-5 py-8 text-center text-sm text-primary/50">Aucune livraison réceptionnée pour l'instant.</p>
