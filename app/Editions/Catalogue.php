@@ -52,6 +52,7 @@ class Catalogue
         Documents\DemandesAchat::class,
         Documents\BonsCommande::class,
         Documents\Fournisseurs::class,
+        Documents\HistoriqueLivraisons::class,
         Documents\BonsReception::class,
         Documents\BonsRequisition::class,
         Documents\SortiesHorsEtablissement::class,

@@ -808,6 +808,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
+            Route::get('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'show'])->whereNumber('supplier')->name('suppliers.show');
             Route::post('/fournisseurs', [$eco . 'SupplierController', 'store'])->name('suppliers.store');
             Route::put('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'update'])->name('suppliers.update');
             Route::delete('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'destroy'])->name('suppliers.destroy');

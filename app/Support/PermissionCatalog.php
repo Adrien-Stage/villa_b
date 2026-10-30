@@ -887,7 +887,8 @@ class PermissionCatalog
             'economat.suppliers.creer' => ['purchasing_manager'],
             'economat.suppliers.modifier' => ['purchasing_manager'],
             'economat.suppliers.supprimer' => ['purchasing_manager'],
-            'economat.suppliers.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            // Le comptable rapproche et paie les factures fournisseurs : il lit leur fiche.
+            'economat.suppliers.voir' => ['accountant', 'controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :
             // un référentiel de l'hôtel que l'économe et la direction tiennent.
             'economat.units.creer' => ['econome', 'manager'],

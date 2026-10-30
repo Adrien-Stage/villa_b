@@ -82,9 +82,12 @@ class Filtre
     /** @return array{0: CarbonImmutable, 1: CarbonImmutable} */
     private function lirePeriode(array $saisie): array
     {
-        [$du, $au] = $this->defaut === 'mois'
-            ? [CarbonImmutable::today()->startOfMonth(), CarbonImmutable::today()]
-            : [CarbonImmutable::today(), CarbonImmutable::today()];
+        [$du, $au] = match ($this->defaut) {
+            'mois' => [CarbonImmutable::today()->startOfMonth(), CarbonImmutable::today()],
+            // Un historique : les douze derniers mois, jusqu'à aujourd'hui.
+            'douze_mois' => [CarbonImmutable::today()->subYear()->addDay(), CarbonImmutable::today()],
+            default => [CarbonImmutable::today(), CarbonImmutable::today()],
+        };
 
         $du = $this->date($saisie['du'] ?? null) ?? $du;
         $au = $this->date($saisie['au'] ?? null) ?? $au;

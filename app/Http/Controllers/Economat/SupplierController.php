@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Services\SupplierTariffService;
+use App\Support\FicheFournisseur;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +83,12 @@ class SupplierController extends Controller
         return view('economat.suppliers.index', compact(
             'suppliers', 'availableItems', 'kpis', 'categories', 'paymentTerms', 'paymentMethods'
         ));
+    }
+
+    /** La fiche du fournisseur : ses informations, son catalogue, ses commandes et ses livraisons. */
+    public function show(Supplier $supplier): View
+    {
+        return view('economat.suppliers.show', FicheFournisseur::pour($supplier, Auth::user()));
     }
 
     public function store(Request $request, SupplierTariffService $tarifs): RedirectResponse

@@ -861,6 +861,16 @@
   "admin",
   "econome"
  ],
+ "economat.items.suppliers.link": [
+  "admin",
+  "econome",
+  "purchasing_manager"
+ ],
+ "economat.items.suppliers.unlink": [
+  "admin",
+  "econome",
+  "purchasing_manager"
+ ],
  "economat.items.transformation.cut": [
   "admin",
   "econome"
@@ -1475,6 +1485,19 @@
   "purchasing_manager"
  ],
  "economat.suppliers.index": [
+  "accountant",
+  "admin",
+  "controller",
+  "econome",
+  "finance_manager",
+  "manager",
+  "purchasing_manager",
+  "quality_auditor",
+  "storekeeper",
+  "support"
+ ],
+ "economat.suppliers.show": [
+  "accountant",
   "admin",
   "controller",
   "econome",
