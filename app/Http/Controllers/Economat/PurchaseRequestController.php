@@ -8,9 +8,13 @@ use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Services\PermissionResolver;
 use App\Services\PurchaseRequestService;
+use App\Support\PrixFournisseurs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -77,9 +81,9 @@ class PurchaseRequestController extends Controller
 
     public function create(): View
     {
+        // Les fournisseurs de chaque article viennent de la carte, à la demande.
         $items = StockItem::query()
             ->active()
-            ->with('suppliers')
             ->orderBy('name')
             ->get();
 
@@ -101,31 +105,71 @@ class PurchaseRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'supplier_id'                   => ['required', 'exists:suppliers,id'],
             'department'                    => ['required', 'string', 'max:50'],
             'priority'                      => ['required', 'in:low,normal,urgent'],
             'purpose'                       => ['nullable', 'string', 'max:1000'],
             'lines'                         => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id'         => ['required', 'exists:stock_items,id'],
+            // Chaque ligne a son fournisseur : une demande par fournisseur.
+            'lines.*.supplier_id'           => ['required', 'exists:suppliers,id'],
             'lines.*.quantity_requested'    => ['required', 'numeric', 'min:0.001'],
             'lines.*.estimated_unit_price'  => ['nullable', 'numeric', 'min:0'],
             'lines.*.notes'                 => ['nullable', 'string', 'max:255'],
         ], [
-            'supplier_id.required' => 'Veuillez sélectionner le fournisseur pour cette demande d\'achat.',
-            'lines.required'       => 'Veuillez ajouter au moins un article à la demande d\'achat.',
+            'lines.required'               => 'Veuillez ajouter au moins un article à la demande d\'achat.',
+            'lines.*.supplier_id.required' => 'Choisissez le fournisseur de chaque article, dans la carte des fournisseurs.',
         ]);
 
+        // Deux fournisseurs, deux demandes : chacune part, se vérifie et se
+        // commande de son côté. Toutes ou aucune.
+        $parFournisseur = collect($validated['lines'])->groupBy(fn (array $l) => (int) $l['supplier_id']);
+
         try {
-            $purchaseRequest = $this->requestService->create($validated, Auth::user());
+            $demandes = DB::transaction(fn () => $parFournisseur->map(fn ($lignes, $supplierId) => $this->requestService->create(
+                ['supplier_id' => $supplierId, 'lines' => $lignes->values()->all()] + $validated,
+                Auth::user()
+            ))->values());
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
+
+        if ($demandes->count() > 1) {
+            $liste = $demandes->map(fn (PurchaseRequest $d) => "{$d->number} ({$d->supplier?->name})")->implode(', ');
+
+            return redirect()
+                ->route('economat.purchase_requests.index')
+                ->with('success', "{$demandes->count()} demandes d'achat créées, une par fournisseur : {$liste}. Elles partent au responsable des achats, qui les vérifie.");
+        }
+
+        $purchaseRequest = $demandes->first();
 
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
             ->with('success', $purchaseRequest->status === PurchaseRequest::STATUS_PENDING
                 ? "Demande d'achat {$purchaseRequest->number} envoyée au responsable des achats, qui la vérifie."
                 : "Demande d'achat {$purchaseRequest->number} créée.");
+    }
+
+    /**
+     * Les fournisseurs d'un article, pour la carte de la demande d'achat :
+     * le prix et la date de la dernière livraison de chacun, son tarif, et
+     * ses prix livrés sur la période choisie.
+     */
+    public function fournisseurs(Request $request, StockItem $item): JsonResponse
+    {
+        $periode = $request->validate([
+            'du' => ['nullable', 'date'],
+            'au' => ['nullable', 'date', 'after_or_equal:du'],
+        ]);
+
+        $du = ! empty($periode['du']) ? Carbon::parse($periode['du']) : null;
+        $au = ! empty($periode['au']) ? Carbon::parse($periode['au']) : ($du ? now() : null);
+
+        return response()->json([
+            'article' => ['id' => $item->id, 'nom' => $item->name, 'unite' => $item->shortUnit()],
+            'periode' => $du ? ['du' => $du->toDateString(), 'au' => $au->toDateString()] : null,
+            'fournisseurs' => PrixFournisseurs::comparer($item, $du, $au),
+        ]);
     }
 
     public function edit(PurchaseRequest $purchaseRequest): View

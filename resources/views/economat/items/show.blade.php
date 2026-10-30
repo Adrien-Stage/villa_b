@@ -52,9 +52,9 @@
                 <p class="text-base font-bold text-primary mt-1">{{ number_format($item->average_cost / 100, 0, ',', ' ') }} <span class="text-xs text-primary/40">F</span></p>
             </div>
             <div class="bg-primary/5 border border-primary/10 rounded-lg p-3">
-                <p class="text-[11px] uppercase tracking-wider text-primary/70 font-semibold">Prix moyen fournisseurs</p>
-                <p class="text-base font-bold text-primary mt-1">{{ number_format($item->averageSupplierPriceFcfa(), 0, ',', ' ') }} <span class="text-xs text-primary/40">F</span></p>
-                <p class="text-[10px] text-primary/50">{{ $item->suppliers->count() }} fournisseur(s)</p>
+                <p class="text-[11px] uppercase tracking-wider text-primary/70 font-semibold">Fournisseurs</p>
+                <p class="text-base font-bold text-primary mt-1">{{ $item->suppliers->count() }}</p>
+                <p class="text-[10px] text-primary/50">Chacun à son prix de livraison</p>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
                 <p class="text-[11px] uppercase tracking-wider text-primary/50">Dernier prix d'achat</p>
@@ -106,19 +106,20 @@
                             <th class="px-4 py-3 text-left">Contact</th>
                             <th class="px-4 py-3 text-center">Délai</th>
                             <th class="px-5 py-3 text-right">Prix d'achat (FCFA / {{ $item->shortUnit() }})</th>
-                            <th class="px-4 py-3 text-right">Écart vs Moyenne</th>
+                            <th class="px-4 py-3 text-right">Dernière livraison</th>
                             <th class="px-4 py-3 text-center"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
                         @php
-                            $prixMoyen = $item->averageSupplierPriceFcfa();
                             $moinsCher = $item->suppliers->first(fn ($s) => (int) $s->pivot->purchase_price > 0)?->id;
+                            // La dernière livraison de chacun : son prix livré, pas une moyenne.
+                            $livrees = collect(\App\Support\PrixFournisseurs::comparer($item))->keyBy('id');
                         @endphp
                         @foreach($item->suppliers as $sup)
                             @php
                                 $prixConvenu = (int) ($sup->pivot->purchase_price ?? 0) / 100;
-                                $ecart = $prixMoyen > 0 ? (($prixConvenu - $prixMoyen) / $prixMoyen) * 100 : 0;
+                                $derniere = $livrees[$sup->id]['derniere'] ?? null;
                             @endphp
                             <tr class="hover:bg-gray-50/40">
                                 <td class="px-5 py-3">
@@ -148,18 +149,11 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right font-mono text-xs">
-                                    @if($prixConvenu <= 0)
-                                        <span class="text-primary/30">—</span>
-                                    @elseif(abs($ecart) < 0.1)
-                                        <span class="text-primary/50">Moyenne</span>
-                                    @elseif($ecart < 0)
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            {{ number_format($ecart, 1, ',', ' ') }} %
-                                        </span>
+                                    @if($derniere)
+                                        {{ number_format($derniere['prix'] / 100, 0, ',', ' ') }} F
+                                        <div class="text-[10px] font-sans text-primary/40">le {{ \Illuminate\Support\Carbon::parse($derniere['date'])->format('d/m/Y') }}</div>
                                     @else
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                            +{{ number_format($ecart, 1, ',', ' ') }} %
-                                        </span>
+                                        <span class="font-sans text-primary/40">Pas encore livré</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">

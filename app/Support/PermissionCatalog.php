@@ -857,6 +857,8 @@ class PermissionCatalog
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.convert' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            // Comparer les fournisseurs d'un article en saisissant une demande.
+            'economat.purchase_requests.fournisseurs' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],

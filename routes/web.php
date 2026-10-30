@@ -884,6 +884,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/demandes-achat', [$eco . 'PurchaseRequestController', 'index'])->name('purchase_requests.index');
             Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])->name('purchase_requests.create');
             Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])->name('purchase_requests.store');
+            // La carte des fournisseurs d'un article, à la saisie d'une demande.
+            Route::get('/demandes-achat/articles/{item}/fournisseurs', [$eco . 'PurchaseRequestController', 'fournisseurs'])->whereNumber('item')->name('purchase_requests.fournisseurs');
             Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])->whereNumber('purchaseRequest')->name('purchase_requests.show');
             Route::get('/demandes-achat/{purchaseRequest}/modifier', [$eco . 'PurchaseRequestController', 'edit'])->whereNumber('purchaseRequest')->name('purchase_requests.edit');
             Route::put('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'update'])->whereNumber('purchaseRequest')->name('purchase_requests.update');

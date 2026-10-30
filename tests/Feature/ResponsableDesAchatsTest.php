@@ -109,8 +109,8 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
         'supplier_id' => $fournisseur->id,
         'priority' => 'normal',
         'lines' => [
-            ['stock_item_id' => $riz->id, 'quantity_requested' => 10],
-            ['stock_item_id' => $huile->id, 'quantity_requested' => 5],
+            ['stock_item_id' => $riz->id, 'supplier_id' => $fournisseur->id, 'quantity_requested' => 10],
+            ['stock_item_id' => $huile->id, 'supplier_id' => $fournisseur->id, 'quantity_requested' => 5],
         ],
     ])->assertRedirect()->assertSessionHas('success');
     $demande = PurchaseRequest::with('lines')->latest('id')->firstOrFail();

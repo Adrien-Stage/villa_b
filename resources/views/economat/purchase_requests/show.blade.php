@@ -190,7 +190,7 @@
                         @if($approuvee)
                             <th class="px-5 py-3 text-right">Quantité approuvée</th>
                         @endif
-                        <th class="px-5 py-3 text-right">Prix moyen unitaire</th>
+                        <th class="px-5 py-3 text-right">Prix du fournisseur</th>
                         <th class="px-5 py-3 text-right">Total estimé</th>
                     </tr>
                 </thead>
