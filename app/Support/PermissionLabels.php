@@ -151,6 +151,8 @@ class PermissionLabels
         'economat.items.creer' => ['Articles', 'Créer'],
         'economat.items.modifier' => ['Articles', 'Modifier'],
         'economat.items.supprimer' => ['Articles', 'Supprimer'],
+        'economat.items.suppliers.link' => ['Articles', 'Fixer le prix d\'un fournisseur'],
+        'economat.items.suppliers.unlink' => ['Articles', 'Retirer un fournisseur'],
         'economat.items.adjust' => ['Articles', 'Ajuster le stock'],
         'economat.items.opening' => ['Articles', 'Saisir le stock initial'],
         'economat.items.export' => ['Articles', 'Exporter'],

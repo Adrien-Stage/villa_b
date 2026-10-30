@@ -94,30 +94,7 @@ class PurchaseRequestService
                     continue;
                 }
 
-                // Prix estimé : prix moyen calculé en fonction des fournisseurs approvisionnant l'article
-                $unitPrice = $item->averageSupplierPrice();
-                if ($unitPrice <= 0 && !empty($lineData['estimated_unit_price'])) {
-                    $unitPrice = (int) round(((float) $lineData['estimated_unit_price']) * 100);
-                }
-
-                // Si l'article n'est pas encore rattaché au fournisseur de la demande, l'ajouter à son catalogue
-                if ($request->supplier_id) {
-                    $dejaLie = DB::table('stock_item_supplier')
-                        ->where('stock_item_id', $item->id)
-                        ->where('supplier_id', $request->supplier_id)
-                        ->exists();
-
-                    if (! $dejaLie) {
-                        DB::table('stock_item_supplier')->insert([
-                            'stock_item_id'  => $item->id,
-                            'supplier_id'    => $request->supplier_id,
-                            'purchase_price' => $unitPrice > 0 ? $unitPrice : (int) $item->average_cost,
-                            'unit'           => $item->unit,
-                            'created_at'     => now(),
-                            'updated_at'     => now(),
-                        ]);
-                    }
-                }
+                $unitPrice = $this->prixEstime($item, $request->supplier_id, $lineData['estimated_unit_price'] ?? null);
 
                 $lineTotal = (int) round($qty * $unitPrice);
 
@@ -176,28 +153,7 @@ class PurchaseRequestService
                     continue;
                 }
 
-                $unitPrice = $item->averageSupplierPrice();
-                if ($unitPrice <= 0 && !empty($lineData['estimated_unit_price'])) {
-                    $unitPrice = (int) round(((float) $lineData['estimated_unit_price']) * 100);
-                }
-
-                if ($request->supplier_id) {
-                    $dejaLie = DB::table('stock_item_supplier')
-                        ->where('stock_item_id', $item->id)
-                        ->where('supplier_id', $request->supplier_id)
-                        ->exists();
-
-                    if (! $dejaLie) {
-                        DB::table('stock_item_supplier')->insert([
-                            'stock_item_id'  => $item->id,
-                            'supplier_id'    => $request->supplier_id,
-                            'purchase_price' => $unitPrice > 0 ? $unitPrice : (int) $item->average_cost,
-                            'unit'           => $item->unit,
-                            'created_at'     => now(),
-                            'updated_at'     => now(),
-                        ]);
-                    }
-                }
+                $unitPrice = $this->prixEstime($item, $request->supplier_id, $lineData['estimated_unit_price'] ?? null);
 
                 $lineTotal = (int) round($qty * $unitPrice);
 
@@ -361,6 +317,25 @@ class PurchaseRequestService
         return (int) $request->requested_by === (int) $reviewer->id;
     }
 
+    /**
+     * Prix d'une ligne de demande, en centimes : le tarif du fournisseur de la
+     * demande. Un article absent de son catalogue prend le prix saisi — la
+     * demande le signale, et rien n'est ajouté au catalogue en silence —,
+     * sinon son dernier prix payé, sinon son coût moyen.
+     */
+    private function prixEstime(StockItem $item, ?int $supplierId, mixed $saisi): int
+    {
+        if ($supplierId && ($tarif = $item->supplierPriceFor($supplierId)) !== null) {
+            return $tarif;
+        }
+
+        if (is_numeric($saisi) && (float) $saisi > 0) {
+            return (int) round((float) $saisi * 100);
+        }
+
+        return (int) $item->last_purchase_price > 0 ? (int) $item->last_purchase_price : (int) $item->average_cost;
+    }
+
     private function refuserSaPropreDemande(PurchaseRequest $request, User $reviewer): void
     {
         if (self::estSaPropreDemande($request, $reviewer)) {
@@ -472,7 +447,8 @@ class PurchaseRequestService
                 'purchase_order_id' => $order->id,
                 'stock_item_id'     => $reqLine->stock_item_id,
                 'quantity_ordered'  => $reqLine->quantiteRetenue(),
-                'unit_price'        => $reqLine->estimated_unit_price, // en centimes
+                // Le prix du fournisseur qui reçoit le bon, sinon celui de la demande.
+                'unit_price'        => $reqLine->item?->supplierPriceFor($supplier) ?? $reqLine->estimated_unit_price, // en centimes
             ]);
         }
 

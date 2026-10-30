@@ -165,21 +165,13 @@
                             <input type="text" name="reference" x-model="form.reference" @input="autoCode = false" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
-                            <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                                <option value="">—</option>
-                                <template x-for="c in categories" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-primary/70 mb-1.5">Fournisseur habituel</label>
-                            <select name="supplier_id" x-model="form.supplier_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                                <option value="">—</option>
-                                <template x-for="s in suppliers" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-                            </select>
-                        </div>
+                    {{-- Les fournisseurs et leurs prix se tiennent au catalogue de chaque fournisseur. --}}
+                    <div>
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
+                        <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <option value="">—</option>
+                            <template x-for="c in categories" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+                        </select>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -200,7 +192,7 @@
                         <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
                         <span class="text-xs text-primary/80">Article actif</span>
                     </label>
-                    <p class="text-[11px] text-primary/40" x-show="!editing">Le stock démarre à 0. Marchandise déjà en magasin : utilisez « Reprise » ; sinon, une réception de bon l'alimente.</p>
+                    <p class="text-[11px] text-primary/40" x-show="!editing">Le stock démarre à 0. Marchandise déjà en magasin : utilisez « Reprise » ; sinon, une réception de bon l'alimente. Les fournisseurs et leurs prix s'ajoutent au catalogue de chaque fournisseur.</p>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
                     <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>

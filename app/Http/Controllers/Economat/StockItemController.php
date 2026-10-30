@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockUnit;
 use App\Models\Supplier;
 use App\Services\StockAccountService;
 use App\Services\StockService;
+use App\Services\SupplierTariffService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -55,7 +58,10 @@ class StockItemController extends Controller
 
     public function show(StockItem $item): View
     {
-        $item->load(['category', 'supplier', 'packagings', 'suppliers' => fn ($q) => $q->orderBy('name')]);
+        // Les tarifs du moins cher au plus cher ; ceux sans prix à la fin.
+        $item->load(['category', 'supplier', 'packagings', 'suppliers' => fn ($q) => $q
+            ->orderByRaw('CASE WHEN stock_item_supplier.purchase_price > 0 THEN 0 ELSE 1 END')
+            ->orderBy('stock_item_supplier.purchase_price')->orderBy('suppliers.name')]);
 
         // Historique des mouvements : l'audit de l'article.
         $movements = $item->movements()->with('user', 'item')->latest('occurred_at')->latest('id')->take(50)->get();
@@ -65,34 +71,36 @@ class StockItemController extends Controller
         return view('economat.items.show', compact('item', 'movements', 'allSuppliers'));
     }
 
-    public function linkSupplier(Request $request, StockItem $item): RedirectResponse
+    /** Fixe le prix de l'article chez un fournisseur, depuis la fiche de l'article. */
+    public function linkSupplier(Request $request, StockItem $item, SupplierTariffService $tarifs): RedirectResponse
     {
         $validated = $request->validate([
             'supplier_id'    => ['required', 'exists:suppliers,id'],
-            'purchase_price' => ['required', 'numeric', 'min:0'],
-            'unit'           => ['nullable', 'string', 'max:30'],
+            // FCFA, dans l'unité de stock de l'article.
+            'purchase_price' => ['required', 'numeric', 'gt:0', 'max:999999999'],
+        ], [
+            'purchase_price.gt' => 'Le prix d\'achat est supérieur à 0.',
         ]);
 
-        $item->suppliers()->syncWithoutDetaching([
-            $validated['supplier_id'] => [
-                'purchase_price' => (int) round((float) $validated['purchase_price'] * 100),
-                'unit'           => StockUnit::symbolFor($validated['unit'] ?? $item->unit),
-            ],
-        ]);
+        $supplier = Supplier::findOrFail($validated['supplier_id']);
+        $prix = (int) round((float) $validated['purchase_price'] * 100);
 
-        if (! $item->supplier_id) {
-            $item->update(['supplier_id' => $validated['supplier_id']]);
-        }
+        DB::transaction(fn () => $tarifs->fixer($item, $supplier, $prix));
 
-        return back()->with('success', 'Fournisseur associé à cet article.');
+        AuditLog::record(Auth::id(), 'stock_item_tarif',
+            "Tarif de « {$item->name} » chez {$supplier->name} : " . number_format($prix / 100, 0, ',', ' ') . ' FCFA',
+            'economat', ['stock_item_id' => $item->id, 'supplier_id' => $supplier->id, 'prix' => $prix]);
+
+        return back()->with('success', "Prix de {$supplier->name} enregistré pour cet article.");
     }
 
-    public function unlinkSupplier(StockItem $item, Supplier $supplier): RedirectResponse
+    public function unlinkSupplier(StockItem $item, Supplier $supplier, SupplierTariffService $tarifs): RedirectResponse
     {
-        $item->suppliers()->detach($supplier->id);
-        if ((int) $item->supplier_id === (int) $supplier->id) {
-            $item->update(['supplier_id' => $item->suppliers()->value('suppliers.id')]);
-        }
+        DB::transaction(fn () => $tarifs->retirer($item, $supplier));
+
+        AuditLog::record(Auth::id(), 'stock_item_tarif',
+            "Tarif de « {$item->name} » chez {$supplier->name} retiré",
+            'economat', ['stock_item_id' => $item->id, 'supplier_id' => $supplier->id]);
 
         return back()->with('success', 'Fournisseur détaché de cet article.');
     }
@@ -108,7 +116,8 @@ class StockItemController extends Controller
             'unit'              => StockUnit::symbolFor($validated['unit']),
             'description'       => $validated['description'] ?? null,
             'min_stock'         => $validated['min_stock'] ?? 0,
-            'supplier_id'       => $validated['supplier_id'] ?? null,
+            // Les fournisseurs et leurs prix se tiennent au catalogue de
+            // chaque fournisseur, ou sur la fiche de l'article.
             // Le stock initial se cale via un ajustement, jamais en saisie
             // directe : ainsi toute quantité présente a un mouvement d'origine.
             'current_stock'     => 0,
@@ -133,7 +142,6 @@ class StockItemController extends Controller
                     'unit'        => StockUnit::symbolFor($validated['unit']),
                     'description' => $validated['description'] ?? null,
                     'min_stock'   => $validated['min_stock'] ?? 0,
-                    'supplier_id' => $validated['supplier_id'] ?? null,
                     'is_active'   => $request->boolean('is_active', true),
                 ]);
 
@@ -205,7 +213,6 @@ class StockItemController extends Controller
             'unit'              => ['required', 'string', Rule::in(StockUnit::choix($item?->unit))],
             'description'       => ['nullable', 'string', 'max:500'],
             'stock_category_id' => ['nullable', 'exists:stock_categories,id'],
-            'supplier_id'       => ['nullable', 'exists:suppliers,id'],
             'min_stock'         => ['nullable', 'numeric', 'min:0'],
             // Coût moyen initial (FCFA), utile si l'article existe déjà en stock
             // au démarrage du module ; sinon il se construit aux réceptions.

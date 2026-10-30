@@ -181,7 +181,7 @@ class PurchaseOrderController extends Controller
     public function create(Request $request): View
     {
         $suppliers = Supplier::active()->orderBy('name')->withCount('stockItems')->get();
-        $items     = StockItem::active()->with(['category', 'supplier'])->orderBy('name')->get();
+        $items     = StockItem::active()->with(['category', 'supplier', 'suppliers'])->orderBy('name')->get();
         $selectedSupplierId = (int) ($request->query('supplier_id') ?: $request->query('fournisseur') ?: 0);
 
         return view('economat.orders.create', compact('suppliers', 'items', 'selectedSupplierId'));
@@ -227,10 +227,11 @@ class PurchaseOrderController extends Controller
                     'unit_price'        => $unitPriceCentimes,
                 ]);
 
-                // Si l'article n'était rattaché à aucun fournisseur, on lui associe ce fournisseur
+                // Un article sans fournisseur habituel prend celui-ci, avec le
+                // prix du bon comme premier tarif.
                 $item = StockItem::find($line['stock_item_id']);
                 if ($item && empty($item->supplier_id)) {
-                    $item->update(['supplier_id' => $validated['supplier_id']]);
+                    app(\App\Services\SupplierTariffService::class)->fixer($item, (int) $validated['supplier_id'], $unitPriceCentimes);
                 }
             }
 

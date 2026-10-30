@@ -52,7 +52,7 @@ class StockItem extends Model
     public function suppliers(): BelongsToMany
     {
         return $this->belongsToMany(Supplier::class, 'stock_item_supplier')
-            ->withPivot(['purchase_price', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
+            ->withPivot(['purchase_price', 'priced_at', 'unit', 'supplier_reference', 'delivery_lead_time_days'])
             ->withTimestamps();
     }
 
@@ -81,6 +81,20 @@ class StockItem extends Model
     public function averageSupplierPriceFcfa(): float
     {
         return round($this->averageSupplierPrice() / 100);
+    }
+
+    /**
+     * Les tarifs connus de l'article, fournisseur => prix en FCFA entiers :
+     * ce que les formulaires de demande et de commande proposent.
+     *
+     * @return array<int, int>
+     */
+    public function tarifsFcfa(): array
+    {
+        return $this->suppliers
+            ->filter(fn ($s) => (int) $s->pivot->purchase_price > 0)
+            ->mapWithKeys(fn ($s) => [(int) $s->id => (int) round($s->pivot->purchase_price / 100)])
+            ->all();
     }
 
     /** Prix convenu auprès d'un fournisseur précis (en centimes FCFA), ou null si non lié. */

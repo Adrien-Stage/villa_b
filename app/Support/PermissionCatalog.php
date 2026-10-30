@@ -137,6 +137,8 @@ class PermissionCatalog
         'economat.items.modifier',
         'economat.items.opening',
         'economat.items.supprimer',
+        'economat.items.suppliers.link',
+        'economat.items.suppliers.unlink',
         'economat.items.transformation.cut',
         'economat.items.transformation.open',
         'economat.items.transformation.packagings',
@@ -817,6 +819,11 @@ class PermissionCatalog
             'economat.items.modifier' => ['econome'],
             'economat.items.opening' => ['econome'],
             'economat.items.supprimer' => ['econome'],
+            // Le prix d'un article chez un fournisseur : le responsable des
+            // achats, qui tient les fournisseurs, et l'économe, qui crée les
+            // articles. Le catalogue complet reste à la fiche du fournisseur.
+            'economat.items.suppliers.link' => ['econome', 'purchasing_manager'],
+            'economat.items.suppliers.unlink' => ['econome', 'purchasing_manager'],
             'economat.items.voir' => ['controller', 'econome', 'manager', 'storekeeper'],
             // Transformation : l'économe définit les conditionnements ; le
             // magasinier peut aussi ouvrir un carton ou un paquet.

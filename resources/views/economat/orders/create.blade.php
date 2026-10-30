@@ -24,8 +24,11 @@
         'name'          => $i->name,
         'reference'     => $i->reference,
         'unit'          => $i->shortUnit(),
+        // Dernier prix payé : repère pour un article hors catalogue du fournisseur.
         'price'         => (int) round(($i->last_purchase_price ?: $i->average_cost) / 100), // en FCFA
         'supplier_id'   => $i->supplier_id ? (int) $i->supplier_id : null,
+        // Le prix de l'article chez chaque fournisseur, en FCFA.
+        'tarifs'        => (object) $i->tarifsFcfa(),
         'category_name' => $i->category?->name ?? 'Général',
         'current_stock' => (float) $i->current_stock,
     ])->values();
@@ -354,7 +357,10 @@
 
             get supplierItems() {
                 if (!this.supplierId) return [];
-                return this.allItems.filter(i => i.supplier_id === this.supplierId);
+                // Le catalogue du fournisseur : les articles qui ont un prix chez lui.
+                return this.allItems
+                    .filter(i => i.tarifs && i.tarifs[this.supplierId])
+                    .map(i => ({ ...i, price: i.tarifs[this.supplierId] }));
             },
 
             // Les articles du fournisseur d'abord, puis le reste de l'économat.
@@ -389,7 +395,7 @@
                     itemId: item.id,
                     name: item.name,
                     unit: item.unit,
-                    price: item.price,
+                    price: this.prixChezLeFournisseur(item),
                     qty: 1,
                     currentStock: item.current_stock,
                 });
@@ -423,12 +429,17 @@
                 this.lines.splice(idx, 1);
             },
 
+            // Le tarif du fournisseur du bon, sinon le dernier prix payé.
+            prixChezLeFournisseur(item) {
+                return (item.tarifs && item.tarifs[this.supplierId]) || item.price || 0;
+            },
+
             onItemChange(line) {
                 const item = this.allItems.find(i => i.id === line.itemId);
                 if (item) {
                     line.name = item.name;
                     line.unit = item.unit;
-                    line.price = item.price;
+                    line.price = this.prixChezLeFournisseur(item);
                     line.currentStock = item.current_stock;
                 } else {
                     line.unit = '';

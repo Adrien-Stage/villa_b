@@ -8,10 +8,11 @@
     'name' => $i->name,
     'reference' => $i->reference,
     'unit' => $i->shortUnit(),
-    'price' => $i->last_purchase_price ? ($i->last_purchase_price / 100) : ($i->average_cost / 100),
+    // Point de départ d'un nouveau tarif : le dernier prix payé, s'il existe.
+    'price' => $i->last_purchase_price > 0 ? (int) round($i->last_purchase_price / 100) : '',
     'category_name' => $i->category?->name ?? 'Général',
     'supplier_id' => $i->supplier_id
-])->values()) }}, {{ Js::from(\App\Models\StockUnit::selectOptions()) }})">
+])->values()) }})">
 
     {{-- En-tête de page --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -165,8 +166,10 @@
                                         'id'        => $item->id,
                                         'name'      => $item->name,
                                         'reference' => $item->reference,
-                                        'unit'      => $item->pivot?->unit ?: $item->shortUnit(),
-                                        'price'     => $item->pivot && (int) $item->pivot->purchase_price > 0 ? ($item->pivot->purchase_price / 100) : ($item->last_purchase_price ? ($item->last_purchase_price / 100) : ($item->average_cost / 100)),
+                                        // Un tarif s'exprime dans l'unité de stock de l'article.
+                                        'unit'      => $item->shortUnit(),
+                                        'price'     => (int) $item->pivot->purchase_price > 0 ? (int) round($item->pivot->purchase_price / 100) : '',
+                                        'priced_at' => $item->pivot->priced_at ? \Illuminate\Support\Carbon::parse($item->pivot->priced_at)->format('d/m/Y') : null,
                                     ])->values()->all(),
                                 ];
                             @endphp
@@ -510,9 +513,9 @@
                                 <div class="text-xs text-purple-900">
                                     <p class="font-semibold text-sm mb-0.5">Catalogue des Articles Fournis</p>
                                     <p class="text-purple-800/80">
-                                        Associez les articles que ce fournisseur livre habituellement. Pour chaque article, spécifiez le 
-                                        <strong>prix unitaire d'achat convenu (en FCFA)</strong> et l'<strong>unité de mesure contractuelle</strong>.
-                                        Lors de la création d'un bon de commande pour ce fournisseur, seuls ses articles seront proposés.
+                                        Ajoutez les articles que ce fournisseur livre, chacun avec son <strong>prix d'achat (FCFA)</strong>,
+                                        exprimé dans l'unité de stock de l'article. Un article peut avoir plusieurs fournisseurs : chacun a son prix.
+                                        Les demandes et les bons de commande pour ce fournisseur reprennent ces prix ; chaque réception met à jour celui de l'article livré.
                                     </p>
                                 </div>
                             </div>
@@ -548,8 +551,8 @@
                                         <thead class="bg-gray-50 border-b border-secondary/15 text-primary/60 font-semibold uppercase">
                                             <tr>
                                                 <th class="px-4 py-2 text-left">Article</th>
-                                                <th class="px-4 py-2 text-left w-36">Unité Convenu</th>
-                                                <th class="px-4 py-2 text-right w-44">Prix Unitaire Convenu (FCFA)</th>
+                                                <th class="px-4 py-2 text-left w-28">Unité</th>
+                                                <th class="px-4 py-2 text-right w-44">Prix d'achat (FCFA)</th>
                                                 <th class="px-3 py-2 w-12 text-center"></th>
                                             </tr>
                                         </thead>
@@ -563,25 +566,17 @@
                                                         <div class="text-[11px] text-primary/40" x-text="line.reference ? 'Réf: ' + line.reference : 'Sans référence'"></div>
                                                     </td>
 
-                                                    {{-- Unité --}}
-                                                    <td class="px-4 py-2.5">
-                                                        <select :name="`linked_items[${idx}][unit]`" x-model="line.unit" required aria-label="Unité"
-                                                            class="w-full px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                                                            <template x-if="line.unit && !unites.some(u => (u.value || u) === line.unit)">
-                                                                <option :value="line.unit" x-text="line.unit" selected></option>
-                                                            </template>
-                                                            <template x-for="u in unites" :key="u.value || u">
-                                                                <option :value="u.value || u" x-text="u.label || u" :selected="(u.value || u) === line.unit"></option>
-                                                            </template>
-                                                        </select>
-                                                    </td>
+                                                    {{-- Unité : celle du stock de l'article --}}
+                                                    <td class="px-4 py-2.5 text-primary/70" x-text="line.unit"></td>
 
                                                     {{-- Prix Unitaire --}}
                                                     <td class="px-4 py-2.5 text-right">
                                                         <div class="relative">
-                                                            <input type="number" :name="`linked_items[${idx}][price]`" x-model="line.price" min="0" step="1" required
+                                                            <input type="number" :name="`linked_items[${idx}][price]`" x-model="line.price" min="1" step="1" required
+                                                                :aria-label="`Prix d'achat de ${line.name}`"
                                                                 class="w-full px-2.5 py-1.5 text-right text-xs font-mono font-semibold border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                                         </div>
+                                                        <div class="text-[10px] text-primary/40 mt-0.5" x-show="line.priced_at" x-text="`Prix du ${line.priced_at}`"></div>
                                                     </td>
 
                                                     {{-- Supprimer --}}
@@ -637,7 +632,7 @@
 
 @push('scripts')
 <script>
-    function suppliersManagement(allAvailableItems, unites) {
+    function suppliersManagement(allAvailableItems) {
         const storeUrl = @js(route('economat.suppliers.store'));
         const baseUrl = @js(url('/economat/fournisseurs'));
 
@@ -649,7 +644,6 @@
             autoCode: true,
             selectedItemIdToAdd: '',
             availableItems: allAvailableItems,
-            unites,
             form: {
                 id: null,
                 name: '',
@@ -745,8 +739,9 @@
                         id: item.id,
                         name: item.name,
                         reference: item.reference || '',
-                        unit: item.unit || (this.unites[0]?.value ?? this.unites[0] ?? ''),
-                        price: item.price || 0,
+                        unit: item.unit || '',
+                        price: item.price,
+                        priced_at: null,
                     });
                     this.selectedItemIdToAdd = '';
                     this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });

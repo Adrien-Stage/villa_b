@@ -38,97 +38,43 @@ return new class extends Migration
             });
         }
 
-        // 3. Migration des données existantes
-        // 3.a) Migrer chaque supplier_id existant de stock_items dans la table pivot
+        // 3. Reprise des données existantes — rien d'inventé : un tarif est
+        //    une donnée d'achat réelle.
+        // 3.a) Le fournisseur habituel de chaque article reçoit sa ligne de
+        //      tarif, au dernier prix d'achat connu (0 : à renseigner).
         $items = DB::table('stock_items')->whereNotNull('supplier_id')->get();
         $now = now();
 
         foreach ($items as $item) {
-            $price = $item->last_purchase_price > 0 ? $item->last_purchase_price : ($item->average_cost > 0 ? $item->average_cost : 0);
+            $price = $item->last_purchase_price > 0 ? $item->last_purchase_price : 0;
             DB::table('stock_item_supplier')->updateOrInsert(
                 [
                     'stock_item_id' => $item->id,
                     'supplier_id'   => $item->supplier_id,
                 ],
                 [
-                    'purchase_price'          => $price,
-                    'unit'                    => $item->unit,
-                    'delivery_lead_time_days' => 2,
-                    'created_at'              => $now,
-                    'updated_at'              => $now,
+                    'purchase_price' => $price,
+                    'unit'           => $item->unit,
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
                 ]
             );
         }
 
-        // 3.b) Enrichir les données de démo avec plusieurs fournisseurs par article
-        // pour que le calcul du prix moyen soit immédiatement démontrable
-        $activeSuppliers = DB::table('suppliers')->where('is_active', true)->orderBy('id')->get();
-        if ($activeSuppliers->count() >= 2) {
-            $allStockItems = DB::table('stock_items')->orderBy('id')->get();
-            $suppA = $activeSuppliers->get(0);
-            $suppB = $activeSuppliers->get(1);
-            $suppC = $activeSuppliers->get(2) ?? $suppA;
+        // 3.b) Une demande d'achat existante prend le fournisseur de ses
+        //      articles seulement s'ils l'ont tous en commun ; sinon le
+        //      responsable des achats le choisira.
+        $requests = DB::table('purchase_requests')->whereNull('supplier_id')->pluck('id');
 
-            foreach ($allStockItems as $item) {
-                $basePrice = $item->last_purchase_price > 0 ? $item->last_purchase_price : ($item->average_cost > 0 ? $item->average_cost : 50000);
-                if ($basePrice <= 0) {
-                    $basePrice = 25000;
-                }
-
-                // S'assurer qu'au moins 2 fournisseurs approvisionnent l'article
-                // Fournisseur 1 : basePrice
-                DB::table('stock_item_supplier')->updateOrInsert(
-                    ['stock_item_id' => $item->id, 'supplier_id' => $suppA->id],
-                    [
-                        'purchase_price' => $basePrice,
-                        'unit'           => $item->unit,
-                        'created_at'     => $now,
-                        'updated_at'     => $now,
-                    ]
-                );
-
-                // Fournisseur 2 : variation réaliste (+10%)
-                $priceB = (int) round($basePrice * 1.10);
-                DB::table('stock_item_supplier')->updateOrInsert(
-                    ['stock_item_id' => $item->id, 'supplier_id' => $suppB->id],
-                    [
-                        'purchase_price' => $priceB,
-                        'unit'           => $item->unit,
-                        'created_at'     => $now,
-                        'updated_at'     => $now,
-                    ]
-                );
-
-                // Pour un article sur deux, ajouter un 3ème fournisseur (-5%)
-                if ($item->id % 2 === 0 && $suppC->id !== $suppA->id && $suppC->id !== $suppB->id) {
-                    $priceC = (int) round($basePrice * 0.95);
-                    DB::table('stock_item_supplier')->updateOrInsert(
-                        ['stock_item_id' => $item->id, 'supplier_id' => $suppC->id],
-                        [
-                            'purchase_price' => $priceC,
-                            'unit'           => $item->unit,
-                            'created_at'     => $now,
-                            'updated_at'     => $now,
-                        ]
-                    );
-                }
-            }
-        }
-
-        // 3.c) Renseigner le supplier_id des demandes d'achat existantes
-        $requests = DB::table('purchase_requests')->whereNull('supplier_id')->get();
-        $premierFournisseur = DB::table('suppliers')->where('is_active', true)->value('id');
-
-        foreach ($requests as $req) {
-            $premierArticleFournisseur = DB::table('purchase_request_lines')
+        foreach ($requests as $requestId) {
+            $fournisseurs = DB::table('purchase_request_lines')
                 ->join('stock_items', 'purchase_request_lines.stock_item_id', '=', 'stock_items.id')
-                ->where('purchase_request_lines.purchase_request_id', $req->id)
-                ->whereNotNull('stock_items.supplier_id')
-                ->value('stock_items.supplier_id');
+                ->where('purchase_request_lines.purchase_request_id', $requestId)
+                ->pluck('stock_items.supplier_id')
+                ->unique();
 
-            $supId = $premierArticleFournisseur ?: $premierFournisseur;
-            if ($supId) {
-                DB::table('purchase_requests')->where('id', $req->id)->update(['supplier_id' => $supId]);
+            if ($fournisseurs->count() === 1 && $fournisseurs->first() !== null) {
+                DB::table('purchase_requests')->where('id', $requestId)->update(['supplier_id' => $fournisseurs->first()]);
             }
         }
     }

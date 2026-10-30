@@ -6,9 +6,9 @@
 <div class="max-w-4xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
     'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
     'stock' => (float) $it->current_stock,
-    'price' => $it->averageSupplierPriceFcfa(),
-    'suppliers_count' => $it->suppliers->count(),
-])->values()) }})">
+    // Le prix de l'article chez chaque fournisseur : la demande prend celui du fournisseur choisi.
+    'tarifs' => (object) $it->tarifsFcfa(),
+])->values()) }}, {{ Js::from((string) old('supplier_id', '')) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.purchase_requests.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -29,7 +29,7 @@
             <div class="grid grid-cols-1 {{ $choisitDepartement ? 'md:grid-cols-4' : 'md:grid-cols-3' }} gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Fournisseur *</label>
-                    <select name="supplier_id" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                    <select name="supplier_id" required x-model="supplierId" @change="appliquerFournisseur()" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
                         <option value="">Sélectionner un fournisseur...</option>
                         @foreach($suppliers as $supplier)
                             <option value="{{ $supplier->id }}" @selected(old('supplier_id') == $supplier->id)>{{ $supplier->name }}</option>
@@ -108,12 +108,23 @@
                                     <input type="number" step="0.001" min="0.001" :name="'lines[' + index + '][quantity_requested]'" x-model="line.quantity" required class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
                                 </td>
                                 <td class="px-4 py-2.5 text-right font-mono">
-                                    <input type="hidden" :name="'lines[' + index + '][estimated_unit_price]'" :value="line.unit_price">
-                                    <div class="inline-flex flex-col items-end">
-                                        <span class="font-bold text-primary" x-text="formatMoney(line.unit_price) + ' F'"></span>
-                                        <span class="text-[10px] text-primary/50" x-show="line.suppliers_count > 0" x-text="line.suppliers_count + (line.suppliers_count > 1 ? ' fournisseurs' : ' fournisseur')"></span>
-                                        <span class="text-[10px] text-amber-700 bg-amber-50 px-1 rounded" x-show="line.stock_item_id && line.suppliers_count === 0">Coût moyen</span>
-                                    </div>
+                                    <template x-if="!line.hors_catalogue">
+                                        <div class="inline-flex flex-col items-end">
+                                            <input type="hidden" :name="'lines[' + index + '][estimated_unit_price]'" :value="line.unit_price">
+                                            <span class="font-bold text-primary" x-text="formatMoney(line.unit_price) + ' F'"></span>
+                                            <span class="text-[10px] text-primary/50" x-show="line.stock_item_id && supplierId">Tarif du fournisseur</span>
+                                        </div>
+                                    </template>
+                                    {{-- Absent du catalogue du fournisseur : le prix se saisit, et la demande le signale. --}}
+                                    <template x-if="line.hors_catalogue">
+                                        <div class="inline-flex flex-col items-end gap-0.5">
+                                            <input type="number" min="1" step="1" :name="'lines[' + index + '][estimated_unit_price]'" x-model="line.prix_saisi"
+                                                   @input="line.unit_price = parseFloat(line.prix_saisi) || 0" required
+                                                   :aria-label="'Prix estimé de la ligne ' + (index + 1)"
+                                                   class="w-24 px-2 py-1.5 text-sm border border-amber-300 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="Prix">
+                                            <span class="text-[10px] text-amber-700 bg-amber-50 px-1 rounded">Hors catalogue de ce fournisseur</span>
+                                        </div>
+                                    </template>
                                 </td>
                                 <td class="px-4 py-2.5 text-right font-mono font-bold text-primary">
                                     <span x-text="formatMoney(lineTotal(line))"></span> F
@@ -156,15 +167,16 @@
 </div>
 
 <script>
-function purchaseRequestForm(catalogue) {
+function purchaseRequestForm(catalogue, fournisseurInitial) {
     return {
+        supplierId: fournisseurInitial || '',
         catalogue,
         prochain: 1,
         lines: [
-            { uid: 0, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, suppliers_count: 0, notes: '' }
+            { uid: 0, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, tarifs: {}, prix_saisi: '', hors_catalogue: false, notes: '' }
         ],
         nouvelleLigne() {
-            return { uid: this.prochain++, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, suppliers_count: 0, notes: '' };
+            return { uid: this.prochain++, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, tarifs: {}, prix_saisi: '', hors_catalogue: false, notes: '' };
         },
         addLine() {
             this.lines.push(this.nouvelleLigne());
@@ -182,18 +194,32 @@ function purchaseRequestForm(catalogue) {
                 this.lines.push(this.nouvelleLigne());
             }
         },
+        // Le prix d'une ligne : le tarif du fournisseur choisi, sinon un prix saisi.
+        prixLigne(line) {
+            const tarif = line.tarifs ? line.tarifs[this.supplierId] : undefined;
+            if (line.stock_item_id && this.supplierId && tarif) {
+                line.unit_price = tarif;
+                line.hors_catalogue = false;
+            } else {
+                line.hors_catalogue = !!(line.stock_item_id && this.supplierId);
+                line.unit_price = parseFloat(line.prix_saisi) || 0;
+            }
+        },
+        appliquerFournisseur() {
+            this.lines.forEach(l => this.prixLigne(l));
+        },
         onItemChange(line, article) {
             if (article) {
                 line.unit = article.unit || '';
                 line.current_stock = parseFloat(article.stock || 0);
-                line.unit_price = Math.round(parseFloat(article.price || 0));
-                line.suppliers_count = article.suppliers_count || 0;
+                line.tarifs = article.tarifs || {};
             } else {
                 line.unit = '';
                 line.current_stock = null;
-                line.unit_price = 0;
-                line.suppliers_count = 0;
+                line.tarifs = {};
             }
+            line.prix_saisi = '';
+            this.prixLigne(line);
         },
         lineTotal(line) {
             const q = parseFloat(line.quantity) || 0;
