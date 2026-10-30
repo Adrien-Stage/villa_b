@@ -27,6 +27,126 @@ class PermissionLabels
         'test-popup' => 'Divers',
     ];
 
+    /**
+     * Groupes de la matrice des droits, dans leur ordre d'affichage : le
+     * service qui fait le travail, pas le préfixe technique du droit — les
+     * fournisseurs et les bons de commande relèvent des achats, même si leurs
+     * routes vivent sous /economat.
+     */
+    public const GROUPES = [
+        'direction' => 'Direction & pilotage',
+        'hebergement' => 'Hébergement',
+        'caisse_reception' => 'Caisse & facturation réception',
+        'offre' => 'Offre commerciale',
+        'housekeeping' => 'Housekeeping',
+        'restaurant' => 'Restaurant',
+        'boutique' => 'Boutique',
+        'achats' => 'Achats',
+        'economat' => 'Économat',
+        'technique' => 'Technique',
+        'comptabilite' => 'Comptabilité & finances',
+        'commun' => 'Commun à tout le personnel',
+        'administration' => 'Administration',
+        'autre' => 'Autres',
+    ];
+
+    /**
+     * Préfixe de droit => groupe. Le préfixe le plus précis l'emporte :
+     * economat.suppliers passe avant economat. Dans un groupe, les écrans
+     * suivent l'ordre de cette liste.
+     */
+    private const CLASSEMENT = [
+        'analytics' => 'direction',
+        'pilotage' => 'direction',
+
+        'bookings' => 'hebergement',
+        'groups' => 'hebergement',
+        'agenda' => 'hebergement',
+        'rooms' => 'hebergement',
+        'rooms.types' => 'hebergement',
+        'rooms.rates' => 'hebergement',
+        'customers' => 'hebergement',
+
+        'bookings.cash_register' => 'caisse_reception',
+        'reception' => 'caisse_reception',
+        'bookings.folio' => 'caisse_reception',
+        'bookings.payment' => 'caisse_reception',
+        'invoices' => 'caisse_reception',
+        'bookings.handovers' => 'caisse_reception',
+
+        'settings.services' => 'offre',
+        'settings.packages' => 'offre',
+        'settings.cancellation_policies' => 'offre',
+        'settings.partners' => 'offre',
+
+        'housekeeping' => 'housekeeping',
+        'housekeeping.minibar' => 'housekeeping',
+
+        // Le restaurant : la salle, la caisse, la cuisine, puis la configuration.
+        'restaurant.orders' => 'restaurant',
+        'restaurant.bar' => 'restaurant',
+        'restaurant.buffets' => 'restaurant',
+        'restaurant.banquets' => 'restaurant',
+        'restaurant.breakfast' => 'restaurant',
+        'restaurant.shifts' => 'restaurant',
+        'restaurant.kitchen' => 'restaurant',
+        'restaurant.cash_register' => 'restaurant',
+        'restaurant.billing' => 'restaurant',
+        'restaurant.menus' => 'restaurant',
+        'restaurant.recipes' => 'restaurant',
+        'restaurant.pantry' => 'restaurant',
+        'restaurant.stock_counts' => 'restaurant',
+        'restaurant.consumption' => 'restaurant',
+        'restaurant.waste' => 'restaurant',
+        'restaurant.restaurants' => 'restaurant',
+        'restaurant' => 'restaurant',
+
+        'shop' => 'boutique',
+
+        // Le responsable des achats tient les fournisseurs et les bons de commande.
+        'achats' => 'achats',
+        'economat.purchase_requests' => 'achats',
+        'economat.control.suggestions' => 'achats',
+        'economat.suppliers' => 'achats',
+        'economat.items.suppliers' => 'achats',
+        'economat.orders' => 'achats',
+
+        // Le magasin : ce que l'économe et le magasinier tiennent.
+        'economat' => 'economat',
+        'economat.items' => 'economat',
+        'economat.categories' => 'economat',
+        'economat.units' => 'economat',
+        'economat.receipts' => 'economat',
+        'economat.movements' => 'economat',
+        'economat.requisitions' => 'economat',
+        'economat.stores' => 'economat',
+        'economat.stock_counts' => 'economat',
+        'economat.count_sheets' => 'economat',
+        'economat.cuts' => 'economat',
+        'economat.external_issues' => 'economat',
+        'economat.classeur' => 'economat',
+        'economat.control' => 'economat',
+
+        'technique' => 'technique',
+
+        'accounting' => 'comptabilite',
+        'rooms.cost_sheets' => 'comptabilite',
+
+        'editions' => 'commun',
+        'planning' => 'commun',
+
+        'users' => 'administration',
+        'droits' => 'administration',
+        'settings' => 'administration',
+        'settings.quarts' => 'administration',
+        'audit' => 'administration',
+        'interventions' => 'administration',
+        'support' => 'administration',
+    ];
+
+    /** Droits de développement, absents de la matrice. */
+    private const HORS_MATRICE = ['test-popup'];
+
     /** Droit => [écran, action]. */
     private const LIBELLES = [
         // ── Comptabilité ──
@@ -140,6 +260,9 @@ class PermissionLabels
         'technique.demandes.start' => ['Demandes d\'intervention', 'Commencer l\'intervention'],
         'technique.demandes.parts' => ['Demandes d\'intervention', 'Employer des pièces du dépôt'],
         'technique.demandes.complete' => ['Demandes d\'intervention', 'Terminer avec un compte rendu'],
+        'technique.demandes.submit' => ['Demandes d\'intervention', 'Soumettre le compte rendu au visa'],
+        'technique.demandes.approve' => ['Demandes d\'intervention', 'Viser une intervention terminée'],
+        'technique.demandes.rework' => ['Demandes d\'intervention', 'Renvoyer une intervention en reprise'],
         'technique.equipe.voir' => ['Équipe technique', 'Consulter'],
         'technique.equipe.modifier' => ['Équipe technique', 'Régler les spécialités'],
         'technique.depot.voir' => ['Dépôt technique', 'Consulter'],
@@ -251,6 +374,8 @@ class PermissionLabels
         'housekeeping.reject' => ['Housekeeping', 'Refuser une chambre'],
         'housekeeping.available' => ['Housekeeping', 'Remettre une chambre en vente'],
         'housekeeping.issue' => ['Housekeeping', 'Signaler un problème'],
+        'housekeeping.resolve_issue' => ['Housekeeping', 'Lever un signalement'],
+        'housekeeping.transmettre_technique' => ['Housekeeping', 'Transmettre un signalement au service technique'],
         'housekeeping.stayover' => ['Housekeeping', 'Terminer une recouche'],
         'housekeeping.journal.voir' => ['Housekeeping', 'Consulter le suivi des chambres'],
         'housekeeping.minibar.voir' => ['Mini-bars', 'Consulter les réglages et les montants'],
@@ -486,6 +611,93 @@ class PermissionLabels
         return isset(self::LIBELLES[$droit]);
     }
 
+    /** Préfixe de classement d'un droit : le plus précis connu, ou null. */
+    private static function prefixe(string $droit): ?string
+    {
+        $segments = explode('.', $droit);
+
+        for ($n = count($segments); $n >= 1; $n--) {
+            $prefixe = implode('.', array_slice($segments, 0, $n));
+            if (array_key_exists($prefixe, self::CLASSEMENT)) {
+                return $prefixe;
+            }
+        }
+
+        return null;
+    }
+
+    /** Groupe de la matrice d'un droit ; null pour un droit hors matrice. */
+    public static function groupe(string $droit): ?string
+    {
+        if (in_array(explode('.', $droit)[0], self::HORS_MATRICE, true)) {
+            return null;
+        }
+
+        $prefixe = self::prefixe($droit);
+
+        return $prefixe === null ? 'autre' : self::CLASSEMENT[$prefixe];
+    }
+
+    /**
+     * Droits rangés pour la matrice : groupe => droits, dans l'ordre des
+     * groupes, puis des écrans, puis des actions.
+     *
+     * @param  iterable<string>  $droits
+     * @return array<string, list<string>>
+     */
+    public static function matrice(iterable $droits): array
+    {
+        $ordreDesEcrans = array_flip(array_keys(self::CLASSEMENT));
+        $ordreDesActions = array_flip(array_keys(self::LIBELLES));
+        $groupes = [];
+
+        foreach ($droits as $droit) {
+            if (($groupe = self::groupe($droit)) !== null) {
+                $groupes[$groupe][] = $droit;
+            }
+        }
+
+        foreach ($groupes as &$liste) {
+            usort($liste, fn (string $a, string $b): int => ($ordreDesEcrans[self::prefixe($a)] ?? PHP_INT_MAX) <=> ($ordreDesEcrans[self::prefixe($b)] ?? PHP_INT_MAX)
+                ?: strcmp(self::ecran($a), self::ecran($b))
+                ?: ($ordreDesActions[$a] ?? PHP_INT_MAX) <=> ($ordreDesActions[$b] ?? PHP_INT_MAX)
+                ?: strcmp($a, $b));
+        }
+        unset($liste);
+
+        $rang = array_flip(array_keys(self::GROUPES));
+        uksort($groupes, fn (string $a, string $b): int => ($rang[$a] ?? PHP_INT_MAX) <=> ($rang[$b] ?? PHP_INT_MAX));
+
+        return $groupes;
+    }
+
+    /**
+     * Ce que la console d'orchestration affiche de chaque droit : son groupe,
+     * son écran, son action. Elle range sa matrice comme celle de l'hôtel.
+     *
+     * @param  iterable<string>  $droits
+     * @return array<string, array{groupe: string, groupe_libelle: string, ecran: string, action: string, rang: int}>
+     */
+    public static function classement(iterable $droits): array
+    {
+        $resultat = [];
+        $rang = 0;
+
+        foreach (self::matrice($droits) as $groupe => $liste) {
+            foreach ($liste as $droit) {
+                $resultat[$droit] = [
+                    'groupe' => $groupe,
+                    'groupe_libelle' => self::GROUPES[$groupe],
+                    'ecran' => self::ecran($droit),
+                    'action' => self::action($droit),
+                    'rang' => $rang++,
+                ];
+            }
+        }
+
+        return $resultat;
+    }
+
     /**
      * Droits rangés par service puis par écran, dans l'ordre des services.
      *
@@ -494,29 +706,12 @@ class PermissionLabels
      */
     public static function ranger(iterable $droits): array
     {
-        $ranges = [];
-
-        foreach ($droits as $droit) {
-            $ranges[explode('.', $droit)[0]][self::ecran($droit)][] = $droit;
-        }
-
-        // Dans un écran, les actions dans l'ordre où elles sont nommées :
-        // consulter d'abord, puis créer, modifier…
-        $rang = array_flip(array_keys(self::LIBELLES));
-        foreach ($ranges as &$ecrans) {
-            foreach ($ecrans as &$liste) {
-                usort($liste, fn (string $a, string $b): int => ($rang[$a] ?? PHP_INT_MAX) <=> ($rang[$b] ?? PHP_INT_MAX) ?: strcmp($a, $b));
-            }
-            unset($liste);
-        }
-        unset($ecrans);
-
-        $ordre = array_flip(array_keys(self::MODULES));
-        uksort($ranges, fn (string $a, string $b): int => ($ordre[$a] ?? 999) <=> ($ordre[$b] ?? 999) ?: strcmp($a, $b));
-
         $resultat = [];
-        foreach ($ranges as $prefixe => $ecrans) {
-            $resultat[self::MODULES[$prefixe] ?? $prefixe] = $ecrans;
+
+        foreach (self::matrice($droits) as $groupe => $liste) {
+            foreach ($liste as $droit) {
+                $resultat[self::GROUPES[$groupe]][self::ecran($droit)][] = $droit;
+            }
         }
 
         return $resultat;

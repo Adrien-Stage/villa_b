@@ -6,6 +6,7 @@ use App\Models\PermissionGrant;
 use App\Models\User;
 use App\Support\DutySegregation;
 use App\Support\PermissionCatalog;
+use App\Support\PermissionLabels;
 use App\Support\PermissionScope;
 use App\Support\RoleCatalog;
 use App\Support\RoleReview;
@@ -66,6 +67,9 @@ class PermissionMatrix
 
         return [
             'catalogue' => PermissionCatalog::all(),
+            // Groupe, écran et action de chaque droit : la console range sa
+            // matrice comme celle de l'hôtel.
+            'classement' => PermissionLabels::classement(array_keys(PermissionCatalog::all())),
             'modules' => PermissionCatalog::modules(),
             'ecritures' => array_values(array_intersect(PermissionCatalog::ecritures(), array_keys(PermissionCatalog::all()))),
             'roles' => array_map(
