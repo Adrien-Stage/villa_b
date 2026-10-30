@@ -101,6 +101,9 @@ class Pieces
             ['sorte' => 'Bon de sortie hors établissement', 'modele' => ExternalIssue::class, 'colonne' => 'number', 'date' => 'issued_at',
                 'route' => 'economat.external_issues.print', 'droit' => 'economat.external_issues.voir',
                 'detail' => fn (ExternalIssue $s) => $s->beneficiaire . ' — ' . $s->reasonLabel()],
+            ['sorte' => 'Bon de transfert', 'modele' => \App\Models\StockTransfer::class, 'colonne' => 'number', 'date' => 'transferred_at',
+                'route' => 'economat.transfers.print', 'droit' => 'economat.transfers.voir',
+                'detail' => fn (\App\Models\StockTransfer $t) => 'Vers ' . ($t->depot?->name ?? '—') . ' — ' . $t->statusLabel()],
             ['sorte' => 'Bon de découpe', 'modele' => \App\Models\StockCut::class, 'colonne' => 'number', 'date' => 'cut_at',
                 'route' => 'economat.cuts.print', 'droit' => 'economat.cuts.voir',
                 'detail' => fn (\App\Models\StockCut $d) => \App\Support\Conditionnement::libelle((float) $d->quantity, (string) $d->item?->unit)

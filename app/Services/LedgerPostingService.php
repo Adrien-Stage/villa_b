@@ -527,6 +527,13 @@ class LedgerPostingService
                 continue;
             }
 
+            // Transféré à un dépôt de l'économat (ou revenu de lui à
+            // l'annulation) : même article, même compte de stock, seul le
+            // lieu change. La charge naîtra à l'inventaire du dépôt.
+            if ($mouvement->source_type === StockMovement::SOURCE_TRANSFER) {
+                continue;
+            }
+
             $valeur = (int) round(abs((float) $mouvement->quantity) * $mouvement->unit_cost);
 
             if ($valeur <= 0) {

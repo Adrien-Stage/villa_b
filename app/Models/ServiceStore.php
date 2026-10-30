@@ -28,6 +28,12 @@ class ServiceStore extends Model
         return $this->hasMany(ServiceStoreStock::class);
     }
 
+    /** Les bons de transfert qui l'ont approvisionné depuis le magasin central (dépôt de l'économat). */
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(StockTransfer::class);
+    }
+
     public function movements(): HasMany
     {
         return $this->hasMany(ServiceStoreMovement::class);

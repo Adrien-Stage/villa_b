@@ -806,6 +806,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')->name('stores.show');
             Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')->name('stores.update');
             Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')->name('stores.destroy');
+            // Bons de transfert : l'économat approvisionne ses propres dépôts.
+            Route::get('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'create'])->whereNumber('store')->name('transfers.create');
+            Route::post('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'store'])->whereNumber('store')->name('transfers.store');
+            Route::get('/transferts/{transfert}', [$eco . 'StockTransferController', 'show'])->whereNumber('transfert')->name('transfers.show');
+            Route::get('/transferts/{transfert}/imprimer', [$eco . 'StockTransferController', 'print'])->whereNumber('transfert')->name('transfers.print');
+            Route::post('/transferts/{transfert}/annuler', [$eco . 'StockTransferController', 'cancel'])->whereNumber('transfert')->name('transfers.cancel');
             Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])->whereNumber('store')->name('stores.counts.store');
             Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])->whereNumber('count')->name('stores.counts.show');
             Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])->whereNumber('count')->name('stores.counts.update');

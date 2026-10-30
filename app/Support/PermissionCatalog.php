@@ -181,6 +181,8 @@ class PermissionCatalog
         'economat.stores.creer',
         'economat.stores.modifier',
         'economat.stores.supprimer',
+        'economat.transfers.cancel',
+        'economat.transfers.creer',
         'economat.stock_counts.cancel',
         'economat.stock_counts.close',
         'economat.stock_counts.creer',
@@ -901,13 +903,13 @@ class PermissionCatalog
             'economat.suppliers.voir' => ['accountant', 'controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :
             // un référentiel de l'hôtel que l'économe et la direction tiennent.
+            'economat.units.creer' => ['econome', 'manager', 'purchasing_manager'],
+            'economat.units.modifier' => ['econome', 'manager', 'purchasing_manager'],
+            'economat.units.supprimer' => ['econome', 'manager', 'purchasing_manager'],
             // Les zones de rangement : l'économat et la direction.
             'economat.zones.creer' => ['econome', 'manager'],
             'economat.zones.modifier' => ['econome', 'manager'],
             'economat.zones.supprimer' => ['econome', 'manager'],
-            'economat.units.creer' => ['econome', 'manager', 'purchasing_manager'],
-            'economat.units.modifier' => ['econome', 'manager', 'purchasing_manager'],
-            'economat.units.supprimer' => ['econome', 'manager', 'purchasing_manager'],
             'economat.stores.counts.cancel' => ['econome'],
             'economat.stores.counts.close' => ['econome'],
             'economat.stores.counts.creer' => ['econome'],
@@ -917,6 +919,11 @@ class PermissionCatalog
             'economat.stores.modifier' => ['econome'],
             'economat.stores.supprimer' => ['econome'],
             'economat.stores.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            // Le bon de transfert vers un dépôt de l'économat : le même geste
+            // qu'une livraison sur demande, sans demande. L'économe seul annule.
+            'economat.transfers.cancel' => ['econome'],
+            'economat.transfers.creer' => ['econome', 'storekeeper'],
+            'economat.transfers.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.stock_counts.cancel' => ['econome'],
             'economat.stock_counts.close' => ['econome'],
             'economat.stock_counts.creer' => ['econome'],

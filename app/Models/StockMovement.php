@@ -39,6 +39,8 @@ class StockMovement extends Model
      * hors établissement) ; stock_import_id les relie aussi à l'import.
      */
     public const SOURCE_IMPORT         = 'import';
+    /** Bon de transfert vers un dépôt de l'économat : le stock change de lieu, il ne se consomme pas. */
+    public const SOURCE_TRANSFER       = 'transfer';
 
     public const SOURCES = [
         self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
@@ -51,6 +53,7 @@ class StockMovement extends Model
         self::SOURCE_PACKAGING      => 'Conditionnement',
         self::SOURCE_CUT            => 'Découpe',
         self::SOURCE_IMPORT         => 'Import Excel',
+        self::SOURCE_TRANSFER       => 'Transfert vers un dépôt',
     ];
 
     public const TYPES = [
