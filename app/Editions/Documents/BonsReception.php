@@ -21,7 +21,7 @@ class BonsReception extends Edition
 
     public function description(): string
     {
-        return 'Les livraisons réceptionnées au magasin sur la période : bon de commande, fournisseur, bon de livraison, montant, réceptionnaire.';
+        return "Les livraisons réceptionnées au magasin sur la période : bon de commande, fournisseur, bon de livraison, montant, réceptionnaire. Filtré sur un fournisseur, c'est l'historique de ses livraisons.";
     }
 
     public function droits(): array { return ['economat.receipts.voir']; }

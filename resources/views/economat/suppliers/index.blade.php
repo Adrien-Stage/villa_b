@@ -181,7 +181,7 @@
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="font-semibold text-primary">{{ $supplier->name }}</span>
+                                                <a href="{{ route('economat.suppliers.show', $supplier) }}" class="font-semibold text-primary hover:underline">{{ $supplier->name }}</a>
                                                 @if($supplier->code)
                                                     <span class="px-1.5 py-0.5 text-[10px] font-mono bg-gray-100 text-primary/70 rounded">{{ $supplier->code }}</span>
                                                 @endif
@@ -265,6 +265,7 @@
                                     </span>
                 </x-table.cell>
                 <x-table.actions :label="'Actions pour le fournisseur '.$supplier->name">
+                    <x-table.action :href="route('economat.suppliers.show', $supplier)" icon="file-text" title="Ses informations, ses articles et ses livraisons">Fiche</x-table.action>
                     @droit('economat.orders.creer')
                         <x-table.action :href="route('economat.orders.create', ['fournisseur' => $supplier->id])" icon="shopping-cart" title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
                     @enddroit

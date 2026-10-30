@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 /**
  * Retrouver une pièce par son numéro — facture, bon de commande, bon
- * d'entrée, réquisition, réservation, vente, procès-verbal de perte — et
- * l'imprimer.
+ * d'entrée, réquisition, réservation, vente, procès-verbal de perte — ou un
+ * fournisseur par son nom, et l'imprimer.
  *
  * Chaque sorte de pièce mène à son document imprimable existant ; elle
  * n'apparaît qu'à qui peut ouvrir ce document.
@@ -92,6 +92,10 @@ class Pieces
             ['sorte' => 'Bon de commande (sans prix)', 'modele' => PurchaseOrder::class, 'colonne' => 'number', 'date' => 'created_at',
                 'route' => 'economat.orders.print', 'params' => ['prix' => 0], 'droit' => 'economat.orders.voir',
                 'detail' => fn (PurchaseOrder $o) => ($o->supplier?->name ?? '') . ' — Non chiffré — ' . $o->statusLabel()],
+            // Un fournisseur se retrouve par son nom : sa fiche, à imprimer.
+            ['sorte' => 'Fiche fournisseur', 'modele' => \App\Models\Supplier::class, 'colonne' => 'name', 'date' => 'created_at',
+                'route' => 'economat.suppliers.print', 'droit' => 'economat.suppliers.voir',
+                'detail' => fn (\App\Models\Supplier $f) => collect([$f->category ? $f->category_label : null, $f->city, $f->is_active ? null : 'Inactif'])->filter()->implode(' — ') ?: 'Fournisseur'],
             ['sorte' => "Bon d'entrée", 'modele' => GoodsReceipt::class, 'colonne' => 'number', 'date' => 'received_at',
                 'route' => 'economat.receipts.print', 'droit' => 'economat.receipts.voir',
                 'detail' => fn (GoodsReceipt $r) => ($r->supplier?->name ?? '') . ' — ' . $r->statusLabel()],

@@ -68,7 +68,9 @@ test("le groupe de menu s'ouvre dès qu'une de ses entrées est permise", functi
     expect($page)->toContain('Économat')
         ->and(liens($comptable))->toContain('Articles')
         // Seule l'entrée permise apparaît : le reste du groupe reste fermé.
-        ->and(liens($comptable))->not->toContain('Fournisseurs');
+        // (Le comptable lit les fournisseurs qu'il paie : les mouvements
+        // de stock, eux, ne le regardent pas.)
+        ->and(liens($comptable))->not->toContain('Mouvements');
 });
 
 test("un droit retiré fait disparaître son entrée", function () {

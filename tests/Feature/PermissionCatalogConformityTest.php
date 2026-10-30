@@ -112,7 +112,8 @@ test("il décrit le cumul de rôles qui pose problème aujourd'hui", function ()
     $droitsComptable = PermissionCatalog::forRole('accountant');
     $economat = array_values(array_filter($droitsComptable, fn ($d) => str_starts_with($d, 'economat.')));
 
-    expect($economat)->toBe(['economat.requisitions.creer', 'economat.requisitions.voir']);
+    // Il lit la fiche des fournisseurs qu'il paie, sans pouvoir la modifier.
+    expect($economat)->toEqualCanonicalizing(['economat.requisitions.creer', 'economat.requisitions.voir', 'economat.suppliers.voir']);
 
     // Et l'économe, lui, crée les articles — la fonction à retirer au comptable.
     expect(PermissionCatalog::roles('economat.items.creer'))->toContain('econome');

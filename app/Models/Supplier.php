@@ -69,6 +69,12 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
+    /** Ses livraisons : les bons d'entrée établis à réception. */
+    public function goodsReceipts(): HasMany
+    {
+        return $this->hasMany(GoodsReceipt::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
