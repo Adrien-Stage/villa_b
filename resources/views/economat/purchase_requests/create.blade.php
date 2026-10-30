@@ -5,9 +5,6 @@
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
     'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
-    'stock' => (float) $it->current_stock,
-    // Une estimation : le dernier prix payé. Le fournisseur et son prix se choisissent aux achats.
-    'prix' => (int) round(((int) $it->last_purchase_price) / 100),
 ])->values()) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.purchase_requests.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors" aria-label="Retour aux demandes d'achat">
@@ -15,7 +12,7 @@
         </a>
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Exprimer un besoin d'approvisionnement</h1>
-            <p class="text-sm text-primary/60 mt-0.5">Saisissez les articles et les quantités voulues. Le responsable des achats vérifie la demande, puis choisit le fournisseur de chaque article en la passant en bons de commande.</p>
+            <p class="text-sm text-primary/60 mt-0.5">Saisissez les articles et les quantités voulues. Le responsable des achats vérifie la demande, puis choisit le fournisseur et le prix de chaque article en la passant en bons de commande.</p>
         </div>
     </div>
 
@@ -63,7 +60,7 @@
                 <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between shrink-0">
                     <div>
                         <h2 class="text-sm font-semibold text-primary">Articles demandés</h2>
-                        <p class="text-xs text-primary/50">Le prix affiché est une estimation : le dernier prix payé pour l'article.</p>
+                        <p class="text-xs text-primary/50">L'article et la quantité voulue : le prix et le fournisseur se fixent aux achats.</p>
                     </div>
                     <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
@@ -74,11 +71,8 @@
                     <table class="min-w-full text-sm">
                         <thead class="bg-gray-50/95 sticky top-0 z-10 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10 backdrop-blur-sm">
                             <tr>
-                                <th class="px-3 py-2.5 text-left min-w-[12rem]">Article</th>
-                                <th class="px-3 py-2.5 text-right w-16">Stock</th>
-                                <th class="px-3 py-2.5 text-right w-24">Quantité</th>
-                                <th class="px-3 py-2.5 text-right w-32">Prix estimé (F)</th>
-                                <th class="px-3 py-2.5 text-right w-24">Total (F)</th>
+                                <th class="px-3 py-2.5 text-left">Article</th>
+                                <th class="px-3 py-2.5 text-right w-40">Quantité</th>
                                 <th class="px-2 py-2.5 text-center w-10"><span class="sr-only">Retirer</span></th>
                             </tr>
                         </thead>
@@ -89,19 +83,11 @@
                                         <x-article-picker source="catalogue" model="line.stock_item_id" name-bind="'lines[' + index + '][stock_item_id]'" size="sm" required
                                             on-select="onItemChange(line, $event.detail.article)" aria-label="Article" />
                                     </td>
-                                    <td class="px-3 py-2.5 text-right font-mono text-xs text-primary/60 whitespace-nowrap">
-                                        <span x-text="line.current_stock !== null ? formatNumber(line.current_stock) + ' ' + line.unit : '—'"></span>
-                                    </td>
-                                    <td class="px-3 py-2.5 text-right">
+                                    <td class="px-3 py-2.5 text-right whitespace-nowrap">
                                         <input type="number" step="0.001" min="0.001" :name="'lines[' + index + '][quantity_requested]'" x-model="line.quantity" required
                                                :aria-label="'Quantité de la ligne ' + (index + 1)"
-                                               class="w-20 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
-                                    </td>
-                                    <td class="px-3 py-2.5 text-right font-mono text-primary/80 whitespace-nowrap">
-                                        <span x-text="line.stock_item_id ? (line.unit_price > 0 ? formatMoney(line.unit_price) + ' F' : 'Jamais acheté') : '—'"></span>
-                                    </td>
-                                    <td class="px-3 py-2.5 text-right font-mono font-bold text-primary whitespace-nowrap">
-                                        <span x-text="formatMoney(lineTotal(line))"></span> F
+                                               class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
+                                        <span class="ml-1 inline-block w-10 text-left font-mono text-xs text-primary/60" x-text="line.unit"></span>
                                     </td>
                                     <td class="px-2 py-2.5 text-center">
                                         <button type="button" @click="removeLine(index)"
@@ -117,16 +103,10 @@
                     </table>
                 </div>
 
-                <div class="px-5 py-3 border-t border-secondary/15 bg-gray-50/70 space-y-2 text-sm shrink-0">
-                    <div class="flex items-center justify-between">
-                        <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
-                        </button>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-primary/60">Montant estimé :</span>
-                            <span class="font-mono text-base font-bold text-primary" x-text="formatMoney(grandTotal()) + ' FCFA'"></span>
-                        </div>
-                    </div>
+                <div class="px-5 py-3 border-t border-secondary/15 bg-gray-50/70 text-sm shrink-0">
+                    <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
+                    </button>
                 </div>
             </div>
 
@@ -146,7 +126,7 @@
 
 <script>
 function purchaseRequestForm(catalogue) {
-    const ligneVide = (uid) => ({ uid, stock_item_id: '', unit: '', current_stock: null, quantity: 1, unit_price: 0, notes: '' });
+    const ligneVide = (uid) => ({ uid, stock_item_id: '', unit: '', quantity: 1, notes: '' });
 
     return {
         catalogue,
@@ -173,23 +153,6 @@ function purchaseRequestForm(catalogue) {
         },
         onItemChange(line, article) {
             line.unit = article ? (article.unit || '') : '';
-            line.current_stock = article ? parseFloat(article.stock || 0) : null;
-            line.unit_price = article ? (parseFloat(article.prix) || 0) : 0;
-        },
-        lineTotal(line) {
-            const q = parseFloat(line.quantity) || 0;
-            const p = parseFloat(line.unit_price) || 0;
-            return Math.round(q * p);
-        },
-        grandTotal() {
-            return this.lines.reduce((sum, l) => sum + this.lineTotal(l), 0);
-        },
-        formatMoney(amount) {
-            return new Intl.NumberFormat('fr-FR').format(Math.round(amount || 0));
-        },
-        formatNumber(num) {
-            if (num === null || num === undefined) return '—';
-            return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(num);
         }
     };
 }
