@@ -41,7 +41,8 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
         'unit' => 'bidon',
         'current_stock' => 3,
         'min_stock' => 10,
-        'average_cost' => 600000, // 6 000 F / bidon
+        'average_cost' => 550000, // le CUMP valorise le stock, il ne chiffre pas l'achat
+        'last_purchase_price' => 600000, // 6 000 F / bidon, dernier prix payé
         'is_active' => true,
     ]);
 
@@ -60,7 +61,7 @@ test('un responsable de departement peut creer une demande d achat chiffree', fu
             [
                 'stock_item_id'        => $item2->id,
                 'quantity_requested'   => 15,
-                // sans prix spécifié, reprend average_cost (6 000 F = 600 000 centimes)
+                // sans fournisseur ni prix saisi : le dernier prix payé (6 000 F = 600 000 centimes)
                 'notes'                => 'Cartons de 4',
             ],
         ],

@@ -114,12 +114,10 @@ test("la demande d'achat prend le prix du fournisseur choisi, pas la moyenne ; h
     expect((int) $horsCatalogue->lines->sole()->estimated_unit_price)->toBe(2500000)
         ->and($riz->fresh()->supplierPriceFor($autre))->toBeNull();
 
-    // Le formulaire connaît le prix de chaque fournisseur, pour suivre le choix.
-    $formulaire = $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
-        ->assertSee('Hors catalogue de ce fournisseur');
-    $connus = $formulaire->viewData('items')->firstWhere('id', $riz->id)->tarifsFcfa();
-    ksort($connus);
-    expect($connus)->toBe([$cher->id => 26000, $moinsCher->id => 22000]);
+    // La carte du formulaire compare les fournisseurs de l'article, chacun à son prix.
+    $carte = $this->actingAs($econome)->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertOk()->json('fournisseurs');
+    expect(array_column($carte, 'nom'))->toBe(['Mboppi Distribution', 'Supérette du Port'])
+        ->and(array_column($carte, 'tarif'))->toBe([2200000, 2600000]);
 });
 
 test("la réception met à jour le tarif du fournisseur qui livre, à la date de livraison", function () {

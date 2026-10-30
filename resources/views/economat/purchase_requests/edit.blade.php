@@ -82,7 +82,7 @@
             <div class="px-5 py-3.5 bg-gray-50/80 border-b border-secondary/15 flex items-center justify-between shrink-0">
                 <div>
                     <h2 class="text-sm font-semibold text-primary">Articles demandés</h2>
-                    <p class="text-xs text-primary/50">Modifiez les quantités voulues ou ajustez la sélection d'articles. Le prix moyen calculé est appliqué.</p>
+                    <p class="text-xs text-primary/50">Modifiez les quantités voulues ou ajustez la sélection d'articles. Chaque article prend le prix du fournisseur de la demande à sa dernière livraison.</p>
                 </div>
                 <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
@@ -97,7 +97,7 @@
                             <th class="px-4 py-2.5 text-right w-24">Stock actuel</th>
                             <th class="px-3 py-2.5 text-center w-16">Unité</th>
                             <th class="px-4 py-2.5 text-right w-28">Quantité voulue</th>
-                            <th class="px-4 py-2.5 text-right w-36">Prix moyen unitaire (F)</th>
+                            <th class="px-4 py-2.5 text-right w-36">Prix du fournisseur (F)</th>
                             <th class="px-4 py-2.5 text-right w-32">Total Estimé (F)</th>
                             <th class="px-4 py-2.5 text-center w-20"><span class="sr-only">Retirer</span></th>
                         </tr>

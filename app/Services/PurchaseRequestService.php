@@ -318,22 +318,23 @@ class PurchaseRequestService
     }
 
     /**
-     * Prix d'une ligne de demande, en centimes : le tarif du fournisseur de la
-     * demande. Un article absent de son catalogue prend le prix saisi — la
-     * demande le signale, et rien n'est ajouté au catalogue en silence —,
-     * sinon son dernier prix payé, sinon son coût moyen.
+     * Prix d'une ligne de demande, en centimes : le prix du fournisseur à la
+     * livraison — sa dernière livraison réceptionnée, sinon son tarif. Sans
+     * l'un ni l'autre, le prix saisi, sinon le dernier prix payé. Jamais une
+     * moyenne : le coût moyen pondéré valorise le stock, il ne chiffre pas
+     * un achat.
      */
     private function prixEstime(StockItem $item, ?int $supplierId, mixed $saisi): int
     {
-        if ($supplierId && ($tarif = $item->supplierPriceFor($supplierId)) !== null) {
-            return $tarif;
+        if ($supplierId && ($prix = \App\Support\PrixFournisseurs::prix($item, $supplierId)) !== null) {
+            return $prix;
         }
 
         if (is_numeric($saisi) && (float) $saisi > 0) {
             return (int) round((float) $saisi * 100);
         }
 
-        return (int) $item->last_purchase_price > 0 ? (int) $item->last_purchase_price : (int) $item->average_cost;
+        return max(0, (int) $item->last_purchase_price);
     }
 
     private function refuserSaPropreDemande(PurchaseRequest $request, User $reviewer): void
@@ -448,7 +449,7 @@ class PurchaseRequestService
                 'stock_item_id'     => $reqLine->stock_item_id,
                 'quantity_ordered'  => $reqLine->quantiteRetenue(),
                 // Le prix du fournisseur qui reçoit le bon, sinon celui de la demande.
-                'unit_price'        => $reqLine->item?->supplierPriceFor($supplier) ?? $reqLine->estimated_unit_price, // en centimes
+                'unit_price'        => ($reqLine->item ? \App\Support\PrixFournisseurs::prix($reqLine->item, $supplier->id) : null) ?? $reqLine->estimated_unit_price, // en centimes
             ]);
         }
 
