@@ -276,6 +276,8 @@ test("un inventaire ouvert sans établissement sur l utilisateur paraît dans l 
 
     expect($inventaire->fresh()->tenant_id)->toBe(\App\Models\Tenant::first()->id);
 
+    // Les écarts d'inventaire se lisent au contrôle de gestion.
+    createTestUser('controller');
     test()->get(route('economat.control.variances.index'))->assertOk()
         ->assertViewHas('variances', fn ($v) => $v['economat']['count'] === 1 && $v['economat']['loss_value'] === 50000)
         ->assertSee('Ecrou de 10');
@@ -336,7 +338,8 @@ test('le rapport consolide calcule le ratio food cost reel avec CA et pertes', f
 });
 
 test('les ecrans HTTP de controle des stocks sont accessibles aux roles autorises et proteges', function () {
-    // 1. Économe a accès au dashboard de contrôle
+    // 1. Le contrôle de gestion tient Contrôle & ratios et les écarts ;
+    //    l'économe garde les propositions d'achat.
     $econome = createTestUser('econome');
 
     $item = StockItem::create([
@@ -347,10 +350,6 @@ test('les ecrans HTTP de controle des stocks sont accessibles aux roles autorise
         'average_cost'  => 500000,
         'is_active'     => true,
     ]);
-
-    $res = test()->get(route('economat.control.index'));
-    $res->assertOk();
-    $res->assertSee('Contrôle général des stocks &amp; Food Cost', false);
 
     // Propositions
     $resS = test()->get(route('economat.control.suggestions.index'));
@@ -365,6 +364,16 @@ test('les ecrans HTTP de controle des stocks sont accessibles aux roles autorise
         'priority' => 'normal',
     ]);
     $postRes->assertRedirect();
+
+    // Contrôle & ratios, écarts, rapport : refusés à l'économe, ouverts au contrôleur.
+    foreach (['economat.control.index', 'economat.control.variances.index', 'economat.control.print'] as $route) {
+        test()->from(route('dashboard'))->get(route($route))->assertRedirect(route('dashboard'))->assertSessionHas('access_denied_popup');
+    }
+
+    createTestUser('controller');
+    $res = test()->get(route('economat.control.index'));
+    $res->assertOk();
+    $res->assertSee('Contrôle général des stocks &amp; Food Cost', false);
 
     // Écarts
     $resV = test()->get(route('economat.control.variances.index'));

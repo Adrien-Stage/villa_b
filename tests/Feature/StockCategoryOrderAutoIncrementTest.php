@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test('le champ ordre s auto-incremente lors de la creation de categories tout en restant modifiable', function () {
-    $econome = User::factory()->create(['role' => 'econome']);
+    $econome = User::factory()->create(['role' => 'purchasing_manager']);
 
     // Création d'une première catégorie avec ordre 0
     $res1 = $this->actingAs($econome)->post(route('economat.categories.store'), [
@@ -43,7 +43,7 @@ test('le champ ordre s auto-incremente lors de la creation de categories tout en
 });
 
 test('il est impossible de valider un ordre deja attribue a une autre categorie', function () {
-    $econome = User::factory()->create(['role' => 'econome']);
+    $econome = User::factory()->create(['role' => 'purchasing_manager']);
 
     StockCategory::create([
         'name'       => 'Catégorie Existante',
@@ -61,7 +61,7 @@ test('il est impossible de valider un ordre deja attribue a une autre categorie'
 });
 
 test('la mise a jour vers un ordre deja attribue est bloquee mais conserver son ordre est accepte', function () {
-    $econome = User::factory()->create(['role' => 'econome']);
+    $econome = User::factory()->create(['role' => 'purchasing_manager']);
 
     $catA = StockCategory::create(['name' => 'Cat A', 'sort_order' => 0]);
     $catB = StockCategory::create(['name' => 'Cat B', 'sort_order' => 1]);

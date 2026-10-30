@@ -22,7 +22,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Carbon::setTestNow('2026-06-15 10:00');
-    test()->actingAs(User::factory()->create(['role' => 'econome']));
+    // La reprise du stock et l'import des articles : le service achats.
+    test()->actingAs(User::factory()->create(['role' => 'purchasing_manager']));
 });
 
 afterEach(function () {
@@ -121,10 +122,15 @@ test('l’écran des à-nouveaux affiche le stock repris', function () {
         ->assertSee('321000 — 100 000 FCFA', false);
 });
 
-test('l’économe reprend le stock d’un article depuis l’écran', function () {
+test('le service achats reprend le stock d’un article depuis l’écran ; l’économe ne le peut plus', function () {
     $riz = articleSansHistorique();
 
-    $this->post(route('economat.items.opening', $riz), ['quantity' => 25, 'unit_cost' => 1200])
+    $this->actingAs(User::factory()->create(['role' => 'econome']))
+        ->post(route('economat.items.opening', $riz), ['quantity' => 25, 'unit_cost' => 1200])
+        ->assertSessionHas('access_denied_popup');
+
+    $this->actingAs(User::factory()->create(['role' => 'purchasing_manager']))
+        ->post(route('economat.items.opening', $riz), ['quantity' => 25, 'unit_cost' => 1200])
         ->assertSessionHas('success');
 
     $riz->refresh();

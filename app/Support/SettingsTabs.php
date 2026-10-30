@@ -45,7 +45,8 @@ class SettingsTabs
         // l'économe et la direction les tiennent. L'économat est un module
         // cœur, toujours actif : il ne figure jamais dans TENANT_MODULES, et
         // l'onglet ne doit donc pas en dépendre.
-        'economat' => ['manager', 'econome'],
+        // Les unités de stockage : l'économat, et le service achats qui crée les articles.
+        'economat' => ['manager', 'econome', 'purchasing_manager'],
     ];
 
     /**

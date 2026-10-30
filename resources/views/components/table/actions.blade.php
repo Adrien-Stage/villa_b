@@ -1,9 +1,10 @@
 {{--
-    Actions d'une ligne. En boutons quand le tableau a la place, dans un menu
-    ⋮ sinon (prop « inline » du tableau). Le contenu — des <x-table.action> —
-    est rendu dans les deux présentations ; une seule est visible.
+    Actions d'une ligne, dans le menu ⋮ : le modèle de tous les tableaux de
+    l'application. Un tableau peut les montrer en boutons au-delà d'une
+    largeur (prop « inline »). Le contenu — des <x-table.action> — est rendu
+    dans les deux présentations ; une seule est visible.
 --}}
-@aware(['inline' => 'xl'])
+@aware(['inline' => 'never'])
 @props(['label' => 'Actions'])
 
 @php
@@ -19,7 +20,7 @@
         '2xl' => ['hidden @6xl:flex', 'inline-block @6xl:hidden'],
         '3xl' => ['hidden @7xl:flex', 'inline-block @7xl:hidden'],
     ];
-    [$enLigne, $enMenu] = $presentations[$inline] ?? $presentations['xl'];
+    [$enLigne, $enMenu] = $presentations[$inline] ?? $presentations['never'];
 @endphp
 
 {{-- Collée à droite : quand le tableau défile (téléphone), ses actions restent à portée. --}}

@@ -116,10 +116,14 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
 
 test("le manager consulte tout ce qu'il n'écrit plus", function () {
     $manquants = [];
+    // Sauf le contrôle de gestion : Contrôle & ratios et les écarts
+    // d'inventaire sont au contrôleur et au responsable financier seuls.
+    $reservesAuControle = ['economat.control.voir', 'economat.control.variances.voir'];
 
     foreach (['restaurant', 'shop', 'economat', 'accounting'] as $module) {
         foreach (PermissionCatalog::all() as $droit => $roles) {
             if (str_starts_with($droit, $module . '.')
+                && !in_array($droit, $reservesAuControle, true)
                 && PermissionCatalog::estLecture($droit)
                 && !in_array('manager', $roles, true)) {
                 $manquants[] = $droit;
@@ -129,7 +133,8 @@ test("le manager consulte tout ce qu'il n'écrit plus", function () {
 
     // Lecture seule veut dire lecture : le priver des deux le rendrait aveugle
     // sur les services dont il répond.
-    expect($manquants)->toBe([]);
+    expect($manquants)->toBe([])
+        ->and(PermissionCatalog::roles('economat.control.voir'))->toBe(['admin', 'controller', 'finance_manager', 'support']);
 });
 
 test("le comptage de caisse est contresigné par la comptabilité, jamais par le manager", function () {

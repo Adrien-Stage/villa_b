@@ -115,8 +115,8 @@ test("il décrit le cumul de rôles qui pose problème aujourd'hui", function ()
     // Il lit la fiche des fournisseurs qu'il paie, sans pouvoir la modifier.
     expect($economat)->toEqualCanonicalizing(['economat.requisitions.creer', 'economat.requisitions.voir', 'economat.suppliers.voir']);
 
-    // Et l'économe, lui, crée les articles — la fonction à retirer au comptable.
-    expect(PermissionCatalog::roles('economat.items.creer'))->toContain('econome');
+    // Les articles, eux, sont créés par le service achats — ni par le comptable, ni par l'économe.
+    expect(PermissionCatalog::roles('economat.items.creer'))->toContain('purchasing_manager')->not->toContain('econome', 'accountant');
 });
 
 test("les droits déclarés en écriture sont ceux servis par une route qui écrit", function () {

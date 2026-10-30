@@ -21,10 +21,10 @@
 
     - rows : la page (paginateur) ou la collection affichée. Elle décide de
       l'état vide et, pour un paginateur, de la pagination en pied.
-    - inline : largeur du tableau à partir de laquelle les actions d'une ligne
-      s'affichent en boutons ; en dessous, elles passent dans le menu ⋮.
-      « always », « never », ou un palier (sm 672 px … 3xl 1280 px ; xl,
-      1024 px, par défaut).
+    - inline : les actions d'une ligne vivent dans le menu ⋮ — le modèle de
+      tous les tableaux de l'application (« never », par défaut). « always »
+      ou un palier (sm 672 px … 3xl 1280 px) les affiche en boutons au-delà
+      de cette largeur ; à réserver à un cas qui le justifie.
     - Emplacements facultatifs : toolbar (au-dessus), foot (pied du tableau,
       totaux), emptyActions (sous le message de l'état vide : « effacer les
       filtres »…).
@@ -33,7 +33,7 @@
     'rows' => null,
     'empty' => 'Aucun élément.',
     'emptyIcon' => 'inbox',
-    'inline' => 'xl',
+    'inline' => 'never',
     'caption' => null,
 ])
 

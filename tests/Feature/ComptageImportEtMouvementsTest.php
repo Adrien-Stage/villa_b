@@ -80,8 +80,9 @@ test("l'ajustement garde le stock initial et le stock après comptage", function
         ->and($ajustement->valeur())->toBe(-300000)
         ->and($ajustement->reason)->toContain('Casse / perte');
 
-    // Un ajustement à la main garde aussi son stock initial.
-    $this->post(route('economat.items.adjust', $this->eau), ['counted_quantity' => 32, 'reason' => 'Recomptage'])->assertSessionHasNoErrors();
+    // Un ajustement à la main — au service achats — garde aussi son stock initial.
+    $this->actingAs(membreMagasin('purchasing_manager'))
+        ->post(route('economat.items.adjust', $this->eau), ['counted_quantity' => 32, 'reason' => 'Recomptage'])->assertSessionHasNoErrors();
     $manuel = StockMovement::where('stock_item_id', $this->eau->id)->where('type', StockMovement::TYPE_ADJUSTMENT)->sole();
     expect((float) $manuel->stock_before)->toBe(30.0)->and((float) $manuel->stock_after)->toBe(32.0);
 });

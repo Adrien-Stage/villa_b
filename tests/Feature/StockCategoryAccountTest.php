@@ -25,9 +25,10 @@ beforeEach(function () {
 
 afterEach(fn () => Carbon::setTestNow());
 
+/** Les catégories d'articles sont tenues par le service achats. */
 function economeCategories(): User
 {
-    return User::factory()->create(['role' => 'econome']);
+    return User::factory()->create(['role' => 'purchasing_manager']);
 }
 
 /** Soldes de juin, indexés par compte. */
@@ -53,16 +54,19 @@ test('un compte hors de la classe 3 proposée est refusé', function () {
         ->assertSessionHasErrors('stock_account');
 });
 
-test('le magasinier consulte les catégories mais ne les modifie pas', function () {
+test('le contrôleur consulte les catégories sans les modifier ; le magasinier ne les voit plus', function () {
     $categorie = StockCategory::create(['name' => 'Épicerie']);
+    $controleur = User::factory()->create(['role' => 'controller']);
     $magasinier = User::factory()->create(['role' => 'storekeeper']);
 
-    $this->actingAs($magasinier)->get(route('economat.categories.index'))
+    $this->actingAs($controleur)->get(route('economat.categories.index'))
         ->assertOk()
         ->assertSee('Épicerie')
         ->assertDontSee('Nouvelle catégorie');
 
-    $this->actingAs($magasinier)
+    $this->actingAs($magasinier)->get(route('economat.categories.index'))->assertRedirect();
+
+    $this->actingAs($controleur)
         ->putJson(route('economat.categories.update', $categorie), ['name' => 'Épicerie', 'stock_account' => '321000'])
         ->assertForbidden();
 

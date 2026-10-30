@@ -11,15 +11,22 @@
             <p class="text-sm text-primary/60 mt-0.5">Catalogue du magasin central et niveaux de stock.</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('economat.items.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
-                <i data-lucide="download" class="w-4 h-4"></i> Exporter
-            </a>
-            <button type="button" onclick="document.getElementById('modal-import-stock').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
-                <i data-lucide="upload" class="w-4 h-4"></i> Importer
-            </button>
-            <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
-            </button>
+            {{-- Le catalogue est tenu par le service achats ; l'économat voit les stocks et transforme. --}}
+            @droit('economat.items.export')
+                <a href="{{ route('economat.items.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+                    <i data-lucide="download" class="w-4 h-4"></i> Exporter
+                </a>
+            @enddroit
+            @droit('economat.items.import')
+                <button type="button" onclick="document.getElementById('modal-import-stock').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Importer
+                </button>
+            @enddroit
+            @droit('economat.items.creer')
+                <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
+                </button>
+            @enddroit
         </div>
     </div>
 
@@ -123,8 +130,12 @@
                     @droit('economat.items.transformation.voir')
                         <x-table.action :href="route('economat.items.transformation.show', $item)" icon="boxes">Transformation</x-table.action>
                     @enddroit
-                    <x-table.action icon="scale" x-on:click="openAdjust({{ Js::from($adjustPayload) }})">Ajuster le stock</x-table.action>
-                    <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                    @droit('economat.items.adjust')
+                        <x-table.action icon="scale" x-on:click="openAdjust({{ Js::from($adjustPayload) }})">Ajuster le stock</x-table.action>
+                    @enddroit
+                    @droit('economat.items.modifier')
+                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                    @enddroit
                 </x-table.actions>
             </x-table.row>
         @endforeach

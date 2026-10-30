@@ -106,11 +106,10 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
     $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
         ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
     $this->actingAs($econome)->post(route('economat.purchase_requests.store'), [
-        'supplier_id' => $fournisseur->id,
         'priority' => 'normal',
         'lines' => [
-            ['stock_item_id' => $riz->id, 'supplier_id' => $fournisseur->id, 'quantity_requested' => 10],
-            ['stock_item_id' => $huile->id, 'supplier_id' => $fournisseur->id, 'quantity_requested' => 5],
+            ['stock_item_id' => $riz->id, 'quantity_requested' => 10],
+            ['stock_item_id' => $huile->id, 'quantity_requested' => 5],
         ],
     ])->assertRedirect()->assertSessionHas('success');
     $demande = PurchaseRequest::with('lines')->latest('id')->firstOrFail();
@@ -144,8 +143,11 @@ test("le circuit complet : vérification ajustée par les achats, bon transmis, 
         return $n->etape === PurchaseRequestUpdated::APPROUVEE && str_contains($message, 'Riz 10 → 8 kg') && str_contains($message, 'Huile 5 → 0 kg');
     });
 
-    // 3. Il tire le bon : le riz seul, à 8 kg.
-    $this->actingAs($acheteur)->post(route('economat.purchase_requests.convert', $demande))->assertRedirect();
+    // 3. Il tire le bon, en choisissant le fournisseur de chaque article : le riz seul, à 8 kg.
+    $this->actingAs($acheteur)->post(route('economat.purchase_requests.convert', $demande), [
+        'line_suppliers' => $demande->fresh('lines')->lines->filter(fn ($l) => $l->quantiteRetenue() > 0)
+            ->mapWithKeys(fn ($l) => [$l->id => $fournisseur->id])->all(),
+    ])->assertRedirect();
     $bon = PurchaseOrder::with('lines')->where('purchase_request_id', $demande->id)->sole();
     expect($bon->lines)->toHaveCount(1)
         ->and((float) $bon->lines->first()->quantity_ordered)->toBe(8.0)
@@ -226,7 +228,6 @@ test("la demande modifiée par le responsable des achats avertit son demandeur d
     $this->actingAs($acheteur)->get(route('economat.purchase_requests.edit', $demande))->assertOk()
         ->assertDontSee('name="department"', false)->assertSee('Retirer cet article');
     $this->actingAs($acheteur)->put(route('economat.purchase_requests.update', $demande), [
-        'supplier_id' => Supplier::create(['name' => 'Grossiste Sud', 'is_active' => true])->id,
         'priority' => 'normal',
         'lines' => [
             ['id' => $ligneRiz->id, 'stock_item_id' => $riz->id, 'quantity_requested' => 40],
@@ -324,10 +325,10 @@ test("une approbation où tout est ramené à zéro est refusée : c'est un refu
     expect($demande->fresh()->status)->toBe(PurchaseRequest::STATUS_PENDING);
 });
 
-test('les tuiles : Achats et Éditions pour le responsable des achats, sans l\'Économat', function () {
+test('les tuiles : Achats, Économat (en lecture) et Éditions pour le responsable des achats', function () {
     $tuiles = fn (string $role) => collect(Navigation::getLauncherGroups(membreAchats($role)))->pluck('id');
 
-    expect($tuiles('purchasing_manager'))->toContain('achats', 'editions')->not->toContain('economat');
+    expect($tuiles('purchasing_manager'))->toContain('achats', 'economat', 'editions');
     expect($tuiles('econome'))->toContain('economat', 'editions')->not->toContain('achats');
     foreach (['controller', 'finance_manager', 'manager'] as $role) {
         expect($tuiles($role))->toContain('achats');
@@ -366,7 +367,9 @@ test("le tableau des achats montre à chacun ce qu'il doit faire", function () {
 
     // Le contrôle de gestion suit le circuit.
     $this->actingAs(membreAchats('controller'))->get(route('achats.index'))->assertOk()->assertSee($demande->number);
-    refuseAuxAchats($this->actingAs($acheteur)->get(route('economat.index')));
+    // Il lit la tuile Économat, sans y écrire.
+    $this->actingAs($acheteur)->get(route('economat.index'))->assertOk();
+    refuseAuxAchats($this->actingAs($acheteur)->post(route('economat.receipts.direct.store'), []));
 
     refuseAuxAchats($this->actingAs(membreAchats('econome'))->get(route('achats.index')));
 });

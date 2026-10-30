@@ -107,7 +107,7 @@
                             <th class="px-4 py-3 text-center">Délai</th>
                             <th class="px-5 py-3 text-right">Prix d'achat (FCFA / {{ $item->shortUnit() }})</th>
                             <th class="px-4 py-3 text-right">Dernière livraison</th>
-                            <th class="px-4 py-3 text-center"><span class="sr-only">Actions</span></th>
+                            <th class="px-4 py-3 text-right"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
@@ -156,16 +156,15 @@
                                         <span class="font-sans text-primary/40">Pas encore livré</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-center">
-                                    @droit('economat.items.suppliers.unlink')
-                                        <form method="POST" action="{{ route('economat.items.suppliers.unlink', [$item, $sup]) }}" onsubmit="return confirm('Détacher ce fournisseur de l\'article ?');" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50" title="Détacher">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        </form>
-                                    @enddroit
+                                <td class="px-4 py-3 text-right">
+                                    {{-- Les options de la ligne : le menu ⋮, comme tous les tableaux. --}}
+                                    <x-menu-actions :label="'Actions pour '.$sup->name" class="inline-block">
+                                        <x-table.action :href="route('economat.suppliers.show', $sup)" icon="file-text">Fiche du fournisseur</x-table.action>
+                                        @droit('economat.items.suppliers.unlink')
+                                            <x-table.action :action="route('economat.items.suppliers.unlink', [$item, $sup])" method="DELETE" icon="unlink" tone="danger"
+                                                confirm="Retirer ce fournisseur de l'article ?">Retirer ce fournisseur</x-table.action>
+                                        @enddroit
+                                    </x-menu-actions>
                                 </td>
                             </tr>
                         @endforeach

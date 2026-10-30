@@ -1,10 +1,11 @@
 <?php
 
 /**
- * La demande d'achat se chiffre au prix du fournisseur à la livraison :
- * une carte compare les fournisseurs de l'article (dernière livraison, prix
- * sur une période), chaque ligne prend le sien, et deux fournisseurs font
- * deux demandes.
+ * L'économat exprime un besoin, sans fournisseur. Le responsable des achats
+ * choisit le fournisseur de chaque article en passant la demande en bons :
+ * une carte compare leurs dernières livraisons et leurs prix sur une
+ * période, et chaque fournisseur reçoit son bon, au prix de sa dernière
+ * livraison.
  */
 
 use App\Models\PurchaseOrder;
@@ -62,7 +63,9 @@ test("la carte montre les fournisseurs de l'article : dernière livraison, date,
     livrer($cash, $riz, 2250000, 10);
     app(SupplierTariffService::class)->fixer($riz, $nouveau, 2400000);
 
-    $carte = $this->actingAs(demandeur())->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertOk()->json();
+    $acheteur = demandeur('purchasing_manager');
+    $this->actingAs(demandeur())->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertForbidden();
+    $carte = $this->actingAs($acheteur)->getJson(route('economat.purchase_requests.fournisseurs', $riz))->assertOk()->json();
     $parNom = collect($carte['fournisseurs'])->keyBy('nom');
 
     expect(array_keys($parNom->all()))->toBe(['Cash & Carry Bonanjo', 'Mboppi Distribution', 'Épicerie Akwa'])
@@ -72,7 +75,7 @@ test("la carte montre les fournisseurs de l'article : dernière livraison, date,
         ->and($parNom['Épicerie Akwa']['tarif'])->toBe(2400000);
 
     // Sur une période : les livraisons de chacun, leur prix le plus bas, le plus haut, le dernier.
-    $periode = $this->actingAs(demandeur())->getJson(route('economat.purchase_requests.fournisseurs', [
+    $periode = $this->actingAs($acheteur)->getJson(route('economat.purchase_requests.fournisseurs', [
         'item' => $riz, 'du' => now()->subDays(90)->toDateString(), 'au' => now()->toDateString(),
     ]))->assertOk()->json('fournisseurs');
     $mboppiPeriode = collect($periode)->firstWhere('nom', 'Mboppi Distribution')['periode'];
@@ -80,7 +83,7 @@ test("la carte montre les fournisseurs de l'article : dernière livraison, date,
     expect($mboppiPeriode)->toBe(['livraisons' => 2, 'min' => 2100000, 'max' => 2300000, 'dernier' => 2300000]);
 });
 
-test("deux lignes chez deux fournisseurs font deux demandes, chacune au prix de sa dernière livraison", function () {
+test("l'économe exprime un besoin sans fournisseur ; l'acheteur choisit le fournisseur de chaque article et tire un bon par fournisseur", function () {
     $mboppi = Supplier::create(['name' => 'Mboppi Distribution', 'is_active' => true]);
     $laiterie = Supplier::create(['name' => 'Laiterie du Littoral', 'is_active' => true]);
     $riz = StockItem::create(['name' => 'Riz parfumé', 'unit' => 'sac', 'is_active' => true, 'average_cost' => 1500000]);
@@ -90,40 +93,58 @@ test("deux lignes chez deux fournisseurs font deux demandes, chacune au prix de 
     // Un tarif saisi depuis : la dernière livraison l'emporte.
     \Illuminate\Support\Facades\DB::table('stock_item_supplier')->where('stock_item_id', $riz->id)->update(['purchase_price' => 2000000]);
 
+    // L'économe : articles et quantités, ni fournisseur ni carte.
     $econome = demandeur();
     $this->actingAs($econome)->get(route('economat.purchase_requests.create'))->assertOk()
-        ->assertSee("Fournisseurs de l'article", false)->assertDontSee('name="supplier_id"', false)->assertDontSee('Prix moyen');
-
+        ->assertDontSee("Fournisseurs de l'article", false)->assertDontSee('name="supplier_id"', false)->assertDontSee('Prix moyen');
     $this->actingAs($econome)->post(route('economat.purchase_requests.store'), [
         'priority' => 'normal',
         'lines' => [
-            ['stock_item_id' => $riz->id, 'supplier_id' => $mboppi->id, 'quantity_requested' => 4, 'estimated_unit_price' => 1],
-            ['stock_item_id' => $beurre->id, 'supplier_id' => $laiterie->id, 'quantity_requested' => 10],
+            ['stock_item_id' => $riz->id, 'quantity_requested' => 4],
+            ['stock_item_id' => $beurre->id, 'quantity_requested' => 10],
         ],
-    ])->assertRedirect(route('economat.purchase_requests.index'))->assertSessionHas('success', fn ($m) => str_contains($m, '2 demandes'));
+    ])->assertRedirect()->assertSessionHas('success');
 
-    $demandes = PurchaseRequest::with('lines')->orderBy('id')->get();
-    expect($demandes)->toHaveCount(2)
-        ->and($demandes->pluck('supplier_id')->all())->toBe([$mboppi->id, $laiterie->id])
-        ->and((int) $demandes[0]->lines->sole()->estimated_unit_price)->toBe(2300000)
-        ->and((int) $demandes[1]->lines->sole()->estimated_unit_price)->toBe(150000)
-        ->and((int) $demandes[0]->total_estimated_amount)->toBe(9200000);
+    $demande = PurchaseRequest::with('lines')->sole();
+    expect($demande->supplier_id)->toBeNull();
+
+    // L'acheteur approuve, puis passe la demande en bons : la carte est là, et l'économe n'y a pas la main.
+    $acheteur = demandeur('purchasing_manager');
+    app(\App\Services\PurchaseRequestService::class)->approve($demande, $acheteur);
+    $this->actingAs($acheteur)->get(route('economat.purchase_requests.show', $demande))->assertOk()
+        ->assertSee("Fournisseurs de l'article", false)->assertSee('Prendre le moins cher partout');
+    $this->actingAs($econome)->post(route('economat.purchase_requests.convert', $demande), ['line_suppliers' => []])
+        ->assertSessionHas('access_denied_popup', true);
+
+    $ligneRiz = $demande->lines->firstWhere('stock_item_id', $riz->id);
+    $ligneBeurre = $demande->lines->firstWhere('stock_item_id', $beurre->id);
+    $this->actingAs($acheteur)->post(route('economat.purchase_requests.convert', $demande), [
+        'line_suppliers' => [$ligneRiz->id => $mboppi->id, $ligneBeurre->id => $laiterie->id],
+    ])->assertRedirect(route('economat.orders.index'));
+
+    $bons = PurchaseOrder::with('lines')->where('purchase_request_id', $demande->id)->orderBy('supplier_id')->get();
+    expect($bons)->toHaveCount(2)
+        ->and($bons->pluck('supplier_id')->all())->toBe([$mboppi->id, $laiterie->id])
+        ->and((int) $bons[0]->lines->sole()->unit_price)->toBe(2300000)
+        ->and((int) $bons[1]->lines->sole()->unit_price)->toBe(150000);
 });
 
-test("une ligne sans fournisseur est refusée, et rien n'est créé", function () {
+test("la conversion refuse un article sans fournisseur, et ne tire aucun bon", function () {
     $mboppi = Supplier::create(['name' => 'Mboppi Distribution', 'is_active' => true]);
     $riz = StockItem::create(['name' => 'Riz parfumé', 'unit' => 'sac', 'is_active' => true]);
     $sel = StockItem::create(['name' => 'Sel fin', 'unit' => 'kg', 'is_active' => true]);
+    $demande = app(\App\Services\PurchaseRequestService::class)->create(['lines' => [
+        ['stock_item_id' => $riz->id, 'quantity_requested' => 1],
+        ['stock_item_id' => $sel->id, 'quantity_requested' => 1],
+    ]], demandeur());
+    $acheteur = demandeur('purchasing_manager');
+    app(\App\Services\PurchaseRequestService::class)->approve($demande, $acheteur);
 
-    $this->actingAs(demandeur())->post(route('economat.purchase_requests.store'), [
-        'priority' => 'normal',
-        'lines' => [
-            ['stock_item_id' => $riz->id, 'supplier_id' => $mboppi->id, 'quantity_requested' => 1, 'estimated_unit_price' => 22000],
-            ['stock_item_id' => $sel->id, 'quantity_requested' => 1],
-        ],
-    ])->assertSessionHasErrors('lines.1.supplier_id');
+    $this->actingAs($acheteur)->post(route('economat.purchase_requests.convert', $demande), [
+        'line_suppliers' => [$demande->lines->firstWhere('stock_item_id', $riz->id)->id => $mboppi->id],
+    ])->assertSessionHas('error', fn ($m) => str_contains($m, 'Sel fin'));
 
-    expect(PurchaseRequest::count())->toBe(0);
+    expect(PurchaseOrder::count())->toBe(0);
 });
 
 test("la fiche d'un article ne parle plus de prix moyen des fournisseurs, mais garde le CUMP du stock", function () {

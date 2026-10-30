@@ -221,10 +221,12 @@ test("une réception directe incohérente n'enregistre rien", function () {
 test("annuler une réception directe sort la marchandise et annule son bon de régularisation", function () {
     $econome = personnelEconomat('econome', 'Économe');
     $marche = Supplier::create(['name' => 'Marché central', 'is_active' => true]);
+    // L'article existe déjà : l'économat n'en crée plus, le service achats tient le catalogue.
+    $tomates = StockItem::create(['name' => 'Tomates', 'unit' => 'kg', 'is_active' => true]);
     $this->actingAs($econome)->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'         => $marche->id,
         'motif'               => 'achat_comptant',
-        'lines'               => [['nouvel_article' => ['name' => 'Tomates', 'unit' => 'kg'], 'quantity_delivered' => 12, 'unit_price' => 600]],
+        'lines'               => [['stock_item_id' => $tomates->id, 'quantity_delivered' => 12, 'unit_price' => 600]],
     ]);
 
     $recu = GoodsReceipt::sole();
