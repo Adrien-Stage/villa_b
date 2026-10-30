@@ -40,7 +40,18 @@ class ServiceStore extends Model
 
     public function departmentLabel(): string
     {
-        return StockRequisition::DEPARTMENTS[$this->department] ?? $this->department;
+        return self::services()[$this->department] ?? $this->department;
+    }
+
+    /**
+     * Les services auxquels un dépôt peut appartenir : l'économat lui-même
+     * (une réserve du magasin central), puis les services demandeurs.
+     *
+     * @return array<string, string>
+     */
+    public static function services(): array
+    {
+        return ['economat' => 'Économat (Magasin central)', ...StockRequisition::DEPARTMENTS];
     }
 
     /** Valeur du stock détenu, au coût moyen du dépôt. */
