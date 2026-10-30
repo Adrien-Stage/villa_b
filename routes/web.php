@@ -768,6 +768,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
             Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
 
+            // Zones de rangement de l'économat (Paramètres › Économat), et la zone d'un article.
+            Route::post('/zones', [$eco . 'StorageZoneController', 'store'])->name('zones.store');
+            Route::put('/zones/{zone}', [$eco . 'StorageZoneController', 'update'])->whereNumber('zone')->name('zones.update');
+            Route::delete('/zones/{zone}', [$eco . 'StorageZoneController', 'destroy'])->whereNumber('zone')->name('zones.destroy');
+            Route::put('/articles/{item}/zone', [$eco . 'StorageZoneController', 'moveItem'])->whereNumber('item')->name('items.zone');
+
             // Sorties de matériel hors de l'établissement (prêt, réparation, don…)
             Route::get('/sorties-externes', [$eco . 'ExternalIssueController', 'index'])->name('external_issues.index');
             Route::get('/sorties-externes/export', [$eco . 'ExternalIssueController', 'export'])->name('external_issues.export');

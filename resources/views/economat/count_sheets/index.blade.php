@@ -72,15 +72,28 @@
                     <input type="hidden" name="depuis" :value="articles === 'mouvementes' ? depuis : ''">
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-primary">{{ $libelle }}</p>
-                        @if($categories->isNotEmpty())
-                            <label for="categorie-{{ $cle }}" class="sr-only">Catégorie — {{ $libelle }}</label>
-                            <select id="categorie-{{ $cle }}" name="categorie" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
-                                <option value="">Toutes les catégories</option>
-                                @foreach($categories as $categorie)
-                                    <option value="{{ $categorie->id }}">{{ $categorie->name }}</option>
-                                @endforeach
-                            </select>
-                        @endif
+                        <div class="flex flex-wrap gap-2">
+                            {{-- L'économat se compte zone par zone : une équipe à la cave, une autre en chambre froide… --}}
+                            @if($cle === \App\Services\CountSheetService::ECONOMAT && $zones->count() > 1)
+                                <label for="zone-{{ $cle }}" class="sr-only">Zone de rangement — {{ $libelle }}</label>
+                                <select id="zone-{{ $cle }}" name="zone" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                    <option value="">Toutes les zones, une seule fiche</option>
+                                    <option value="{{ \App\Services\CountSheetService::ZONE_CHAQUE }}">Une fiche par zone</option>
+                                    @foreach($zones as $zone)
+                                        <option value="{{ $zone->id }}">{{ $zone->name }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                            @if($categories->isNotEmpty())
+                                <label for="categorie-{{ $cle }}" class="sr-only">Catégorie — {{ $libelle }}</label>
+                                <select id="categorie-{{ $cle }}" name="categorie" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                    <option value="">Toutes les catégories</option>
+                                    @foreach($categories as $categorie)
+                                        <option value="{{ $categorie->id }}">{{ $categorie->name }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                        </div>
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" name="theorique" value="0"

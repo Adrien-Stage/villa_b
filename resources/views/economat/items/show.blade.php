@@ -66,6 +66,25 @@
             </div>
         </div>
 
+        {{-- Où trouver l'article : l'économat le range, et le déplace d'une zone à l'autre. --}}
+        <div class="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-secondary/15 px-4 py-3">
+            <i data-lucide="warehouse" class="w-4 h-4 text-primary/50" aria-hidden="true"></i>
+            <p class="text-sm text-primary/70">Zone de rangement : <strong class="text-primary">{{ $item->zone?->name ?? 'Sans zone' }}</strong></p>
+            @droit('economat.items.zone')
+                <form method="POST" action="{{ route('economat.items.zone', $item) }}" class="ml-auto flex items-center gap-2">
+                    @csrf @method('PUT')
+                    <label for="fiche-zone" class="sr-only">Nouvelle zone de rangement</label>
+                    <select id="fiche-zone" name="storage_zone_id" class="px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        <option value="">— Sans zone —</option>
+                        @foreach($zones as $z)
+                            <option value="{{ $z->id }}" @selected($item->storage_zone_id === $z->id)>{{ $z->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="px-3 py-1.5 border border-secondary/30 rounded-lg text-xs font-semibold text-primary hover:bg-gray-50">Déplacer</button>
+                </form>
+            @enddroit
+        </div>
+
         @if($item->description)
             <p class="text-sm text-primary/60 mt-4">{{ $item->description }}</p>
         @endif

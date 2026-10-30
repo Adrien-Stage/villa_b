@@ -28,7 +28,7 @@ class StockCountImportService
      *
      * @return list<list<mixed>>
      */
-    public function modele(?StockCount $inventaire, ?int $categorieId = null): array
+    public function modele(?StockCount $inventaire, ?int $categorieId = null, ?int $zoneId = null): array
     {
         $articles = $inventaire
             ? $inventaire->lines()->with('item.category')->get()
@@ -36,6 +36,7 @@ class StockCountImportService
                 ->map(fn (StockCountLine $l) => [$l->item, (float) $l->theoretical_quantity, $l->counted_quantity, $l->reason, $l->notes])
             : StockItem::query()->active()->with('category')
                 ->when($categorieId, fn ($q) => $q->where('stock_category_id', $categorieId))
+                ->when($zoneId, fn ($q) => $q->where('storage_zone_id', $zoneId))
                 ->get()
                 ->map(fn (StockItem $i) => [$i, (float) $i->current_stock, null, null, null]);
 

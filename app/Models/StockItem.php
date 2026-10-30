@@ -24,7 +24,7 @@ class StockItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'stock_category_id', 'name', 'reference', 'unit', 'description',
+        'stock_category_id', 'storage_zone_id', 'name', 'reference', 'unit', 'description',
         'current_stock', 'min_stock', 'average_cost', 'last_purchase_price',
         'supplier_id', 'is_active', 'tenant_id',
     ];
@@ -37,6 +37,17 @@ class StockItem extends Model
         'is_active'           => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // Un article créé sans zone (import, réception directe…) se range dans
+        // la première zone en service ; une zone laissée vide exprès le reste.
+        static::creating(function (self $item) {
+            if (! array_key_exists('storage_zone_id', $item->getAttributes())) {
+                $item->storage_zone_id = StorageZone::parDefaut()?->id;
+            }
+        });
+    }
+
     // ── Relations ────────────────────────────────────────────────────────────
 
     public function category(): BelongsTo
@@ -47,6 +58,12 @@ class StockItem extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /** Où l'article se range : cave, épicerie, chambre froide… */
+    public function zone(): BelongsTo
+    {
+        return $this->belongsTo(StorageZone::class, 'storage_zone_id');
     }
 
     public function suppliers(): BelongsToMany

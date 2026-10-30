@@ -894,6 +894,10 @@
   "admin",
   "purchasing_manager"
  ],
+ "economat.items.zone": [
+  "admin",
+  "econome"
+ ],
  "economat.movements.export": [
   "admin",
   "controller",
@@ -1542,6 +1546,21 @@
   "econome",
   "manager",
   "purchasing_manager"
+ ],
+ "economat.zones.destroy": [
+  "admin",
+  "econome",
+  "manager"
+ ],
+ "economat.zones.store": [
+  "admin",
+  "econome",
+  "manager"
+ ],
+ "economat.zones.update": [
+  "admin",
+  "econome",
+  "manager"
  ],
  "editions.export": [
   "accountant",

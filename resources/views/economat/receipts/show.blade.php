@@ -281,6 +281,12 @@
                                         · <span>{{ $line->item->category->name }}</span>
                                     @endif
                                 </div>
+                                @if($line->item?->zone)
+                                    <div class="text-[11px] text-primary/60 flex items-center gap-1 mt-0.5">
+                                        <i data-lucide="warehouse" class="w-3 h-3" aria-hidden="true"></i>
+                                        <span>Ranger en : <strong>{{ $line->item->zone->name }}</strong></span>
+                                    </div>
+                                @endif
                                 @if($line->quantity_rejected > 0)
                                     <div class="text-xs text-rose-700 mt-1 font-medium flex items-center gap-1">
                                         <i data-lucide="alert-circle" class="w-3 h-3 text-rose-600"></i>

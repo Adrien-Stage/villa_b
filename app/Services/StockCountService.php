@@ -43,10 +43,13 @@ class StockCountService
         return DB::transaction(function () use ($data, $user, $department) {
             $countDate = !empty($data['count_date']) ? Carbon::parse($data['count_date'])->toDateString() : now()->toDateString();
             $categoryId = !empty($data['stock_category_id']) ? (int) $data['stock_category_id'] : null;
+            // Une zone de rangement : la cave, une chambre froide… comptée à part.
+            $zoneId = !empty($data['storage_zone_id']) ? (int) $data['storage_zone_id'] : null;
 
             $stockCount = StockCount::create([
                 'department'        => $department,
                 'stock_category_id' => $categoryId,
+                'storage_zone_id'   => $zoneId,
                 'status'            => StockCount::STATUS_DRAFT,
                 'count_date'        => $countDate,
                 'notes'             => $data['notes'] ?? null,
@@ -59,6 +62,9 @@ class StockCountService
             $query = StockItem::query()->active()->orderBy('name');
             if ($categoryId) {
                 $query->where('stock_category_id', $categoryId);
+            }
+            if ($zoneId) {
+                $query->where('storage_zone_id', $zoneId);
             }
 
             // Verrou des articles : un mouvement en cours se termine avant le

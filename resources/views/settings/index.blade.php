@@ -840,9 +840,10 @@
         @endif
 
         {{-- ONGLET: INVENTAIRE (Manager) --}}
-        {{-- ONGLET : ÉCONOMAT — les unités de stockage des articles. --}}
+        {{-- ONGLET : ÉCONOMAT — les unités de stockage des articles et les zones de rangement. --}}
         @if($tab === 'economat' && \App\Support\SettingsTabs::peutRegler($user, 'economat'))
             @include('settings.partials.unites')
+            @include('settings.partials.zones')
         @endif
 
         {{-- ONGLET : QUARTS — les quarts de travail de l'hôtel. --}}
