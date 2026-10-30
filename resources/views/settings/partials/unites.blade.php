@@ -131,38 +131,38 @@
                                     </form>
                                 @enddroit
 
-                                <div class="flex items-center justify-end gap-2">
-                                    @droit('economat.units.modifier')
-                                        <template x-if="!modeEdition">
-                                            <button type="button" @click="modeEdition = true" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-secondary/15">
-                                                Modifier
+                                @php
+                                    $droits = app(\App\Services\PermissionResolver::class);
+                                    $peutModifier = $droits->allows(auth()->user(), 'economat.units.modifier');
+                                    $peutSupprimer = $articles === 0 && $unite->subUnits->isEmpty() && $droits->allows(auth()->user(), 'economat.units.supprimer');
+                                @endphp
+                                {{-- Les options de la ligne : le menu ⋮, comme tous les tableaux. --}}
+                                @if($peutModifier || $peutSupprimer)
+                                    <template x-if="!modeEdition">
+                                        <x-menu-actions :label="'Actions pour l\'unité '.$unite->name" class="inline-block">
+                                            @if($peutModifier)
+                                                <x-table.action icon="pencil" x-on:click="modeEdition = true">Modifier</x-table.action>
+                                            @endif
+                                            @if($peutSupprimer)
+                                                <x-table.action :action="route('economat.units.destroy', $unite)" method="DELETE" icon="trash-2" tone="danger"
+                                                    :confirm="'Supprimer l\'unité « '.$unite->name.' » ?'">Supprimer</x-table.action>
+                                            @endif
+                                        </x-menu-actions>
+                                    </template>
+                                @endif
+                                {{-- En cours de modification : enregistrer ou annuler restent sous la main. --}}
+                                @if($peutModifier)
+                                    <template x-if="modeEdition">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <button type="submit" form="form-unite-{{ $unite->id }}" class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-surface-dark">
+                                                Enregistrer
                                             </button>
-                                        </template>
-                                        <template x-if="modeEdition">
-                                            <div class="flex items-center gap-1.5">
-                                                <button type="submit" form="form-unite-{{ $unite->id }}" class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-surface-dark">
-                                                    Enregistrer
-                                                </button>
-                                                <button type="button" @click="modeEdition = false" class="rounded border border-secondary/30 px-2 py-1 text-xs text-primary/70 hover:bg-gray-100">
-                                                    Annuler
-                                                </button>
-                                            </div>
-                                        </template>
-                                    @enddroit
-
-                                    @if($articles === 0 && $unite->subUnits->isEmpty())
-                                        @droit('economat.units.supprimer')
-                                            <template x-if="!modeEdition">
-                                                <form method="POST" action="{{ route('economat.units.destroy', $unite) }}" onsubmit="return confirm(@js('Supprimer l\'unité « '.$unite->name.' » ?'))">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit" class="rounded px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">
-                                                        Supprimer
-                                                    </button>
-                                                </form>
-                                            </template>
-                                        @enddroit
-                                    @endif
-                                </div>
+                                            <button type="button" @click="modeEdition = false" class="rounded border border-secondary/30 px-2 py-1 text-xs text-primary/70 hover:bg-gray-100">
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </template>
+                                @endif
                             </td>
                         </tr>
                     @empty

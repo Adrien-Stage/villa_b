@@ -617,7 +617,7 @@
                             <th class="px-4 py-3 font-semibold text-right">Réglé</th>
                             <th class="px-4 py-3 font-semibold text-right">Reste à payer</th>
                             <th class="px-4 py-3 font-semibold text-center">Statut</th>
-                            <th class="no-print px-4 py-3 font-semibold text-center">Actions</th>
+                            <th class="no-print px-4 py-3 font-semibold text-right"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
@@ -689,24 +689,18 @@
                                     </span>
                                 </td>
 
-                                {{-- Actions --}}
-                                <td class="no-print px-4 py-3 whitespace-nowrap text-center">
-                                    <div class="flex items-center justify-center gap-1.5">
-                                        @if(!empty($doc->url_show))
-                                            <a href="{{ $doc->url_show }}"
-                                               class="p-1.5 text-primary/70 hover:text-primary hover:bg-accent/20 rounded-md transition-colors"
-                                               title="Consulter les détails">
-                                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                            </a>
-                                        @endif
-                                        @if(!empty($doc->url_print))
-                                            <a href="{{ $doc->url_print }}" target="_blank"
-                                               class="p-1.5 text-primary/70 hover:text-primary hover:bg-secondary/10 rounded-md transition-colors"
-                                               title="Imprimer le document ou reçu">
-                                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                            </a>
-                                        @endif
-                                    </div>
+                                {{-- Les options de la ligne : le menu ⋮, comme tous les tableaux. --}}
+                                <td class="no-print px-4 py-3 whitespace-nowrap text-right">
+                                    @if(!empty($doc->url_show) || !empty($doc->url_print))
+                                        <x-menu-actions label="Actions pour ce document" class="inline-block">
+                                            @if(!empty($doc->url_show))
+                                                <x-table.action :href="$doc->url_show" icon="eye">Consulter</x-table.action>
+                                            @endif
+                                            @if(!empty($doc->url_print))
+                                                <x-table.action :href="$doc->url_print" target="_blank" icon="printer">Imprimer</x-table.action>
+                                            @endif
+                                        </x-menu-actions>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

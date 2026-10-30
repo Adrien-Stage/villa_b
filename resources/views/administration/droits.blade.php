@@ -312,11 +312,12 @@
                         <td class="px-4 py-2 text-primary/60">{{ $e['expires_at'] ? \Illuminate\Support\Carbon::parse($e['expires_at'])->format('d/m/Y') : 'Sans échéance' }}</td>
                         <td class="px-4 py-2 text-right">
                             @if($e['origin'] === 'etablissement')
+                                {{-- Les options de la ligne : le menu ⋮, comme tous les tableaux. --}}
                                 @droit('droits.exceptions.supprimer')
-                                    <form method="POST" action="{{ route('droits.exceptions.destroy', $e['id']) }}" onsubmit="return confirm('Retirer cette exception ?');">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-[11px] font-semibold text-red-700 hover:underline">Retirer</button>
-                                    </form>
+                                    <x-menu-actions label="Actions pour cette exception" class="inline-block">
+                                        <x-table.action :action="route('droits.exceptions.destroy', $e['id'])" method="DELETE" icon="x-circle" tone="danger"
+                                            confirm="Retirer cette exception ?">Retirer l'exception</x-table.action>
+                                    </x-menu-actions>
                                 @enddroit
                             @endif
                         </td>
