@@ -136,8 +136,8 @@ class CountSheetService
         return match (true) {
             $key === self::ECONOMAT                 => $this->economat($categoryId, $zoneId),
             str_starts_with($key, self::PANTRY)     => $this->pantry($key, $categoryId),
-            $key === self::SHOP                     => $this->shop(),
-            str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX))),
+            $key === self::SHOP                     => $this->shop($categoryId),
+            str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX)), $categoryId),
             default                                 => null,
         };
     }
@@ -256,9 +256,13 @@ class CountSheetService
         );
     }
 
-    private function shop(): array
+    private function shop(?int $categoryId = null): array
     {
-        $lignes = ShopProduct::query()->where('is_active', true)->with('category')->get()
+        $categorie = $categoryId ? \App\Models\ShopCategory::find($categoryId) : null;
+
+        $lignes = ShopProduct::query()->where('is_active', true)->with('category')
+            ->when($categorie, fn ($q) => $q->where('shop_category_id', $categorie->id))
+            ->get()
             ->map(fn (ShopProduct $p) => $this->ligne($p->id, $p->sku, $p->name, 'pièce', (float) $p->stock_quantity, $p->category?->name));
 
         // La boutique n'a pas d'inventaire ni de journal : un produit a bougé
@@ -266,10 +270,10 @@ class CountSheetService
         [$lignes, $libelle] = $this->selectionner($lignes, null, fn (CarbonInterface $debut) => ShopOrderItem::query()
             ->whereHas('order', fn ($q) => $q->where('created_at', '>=', $debut))->distinct()->pluck('shop_product_id'));
 
-        return $this->fiche(self::SHOP, 'Boutique', null, null, $lignes, null, $libelle);
+        return $this->fiche(self::SHOP, 'Boutique', $categorie?->name, null, $lignes, null, $libelle);
     }
 
-    private function store(int $id): ?array
+    private function store(int $id, ?int $categoryId = null): ?array
     {
         $depot = ServiceStore::find($id);
 
@@ -277,12 +281,15 @@ class CountSheetService
             return null;
         }
 
+        $categorie = $categoryId ? StockCategory::find($categoryId) : null;
         $inventaire = ServiceStoreCountService::inProgress($depot);
 
         $lignes = $inventaire !== null
-            ? $inventaire->lines()->with('item.category')->get()->filter(fn ($l) => $l->item)
+            ? $inventaire->lines()->with('item.category')->get()
+                ->filter(fn ($l) => $l->item && (! $categorie || $l->item->stock_category_id === $categorie->id))
                 ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name))
-            : $depot->stocks()->with('item.category')->get()->filter(fn ($s) => $s->item)
+            : $depot->stocks()->with('item.category')->get()
+                ->filter(fn ($s) => $s->item && (! $categorie || $s->item->stock_category_id === $categorie->id))
                 ->map(fn ($s) => $this->ligne($s->item->id, $s->item->reference, $s->item->name, $s->item->unit, (float) $s->current_stock, $s->item->category?->name));
 
         $dernierInventaire = ServiceStoreCount::query()->where('service_store_id', $depot->id)
@@ -294,7 +301,7 @@ class CountSheetService
         return $this->fiche(
             self::STORE_PREFIX . $depot->id,
             $depot->name,
-            $depot->departmentLabel(),
+            collect([$depot->departmentLabel(), $categorie?->name])->filter()->implode(' · '),
             $inventaire?->reference,
             $lignes,
             $inventaire?->created_at,

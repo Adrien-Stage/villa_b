@@ -59,9 +59,11 @@
         @foreach($services as $cle => $libelle)
             @php
                 $categories = match (true) {
-                    $cle === \App\Services\CountSheetService::ECONOMAT              => $stockCategories,
-                    str_starts_with($cle, \App\Services\CountSheetService::PANTRY) => $pantryCategories,
-                    default                                                         => collect(),
+                    $cle === \App\Services\CountSheetService::ECONOMAT                    => $stockCategories,
+                    str_starts_with($cle, \App\Services\CountSheetService::PANTRY)       => $pantryCategories,
+                    $cle === \App\Services\CountSheetService::SHOP                        => $shopCategories ?? collect(),
+                    str_starts_with($cle, \App\Services\CountSheetService::STORE_PREFIX) => $stockCategories,
+                    default                                                               => $stockCategories,
                 };
             @endphp
             <li class="bg-white border border-secondary/20 rounded-xl p-4">
@@ -74,11 +76,13 @@
                         <p class="text-sm font-semibold text-primary">{{ $libelle }}</p>
                         <div class="flex flex-wrap gap-2">
                             {{-- L'économat se compte zone par zone : une équipe à la cave, une autre en chambre froide… --}}
-                            @if($cle === \App\Services\CountSheetService::ECONOMAT && $zones->count() > 1)
-                                <label for="zone-{{ $cle }}" class="sr-only">Zone de rangement — {{ $libelle }}</label>
+                            @if($cle === \App\Services\CountSheetService::ECONOMAT && $zones->isNotEmpty())
+                                <label for="zone-{{ $cle }}" class="sr-only">Zone de stockage — {{ $libelle }}</label>
                                 <select id="zone-{{ $cle }}" name="zone" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
-                                    <option value="">Toutes les zones, une seule fiche</option>
-                                    <option value="{{ \App\Services\CountSheetService::ZONE_CHAQUE }}">Une fiche par zone</option>
+                                    <option value="">Toutes les zones de stockage</option>
+                                    @if($zones->count() > 1)
+                                        <option value="{{ \App\Services\CountSheetService::ZONE_CHAQUE }}">Une fiche par zone</option>
+                                    @endif
                                     @foreach($zones as $zone)
                                         <option value="{{ $zone->id }}">{{ $zone->name }}</option>
                                     @endforeach
