@@ -214,13 +214,10 @@
                     @enderror
                 </div>
 
-                {{-- Bouton connexion --}}
+                {{-- Le survol conserve la teinte du bouton : l'accent du thème peut être trop clair pour son texte. --}}
                 <div class="animate-up-4">
                     <button type="submit"
-                            class="w-full py-3 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                            style="background: var(--color-secondary); color: var(--color-text-on-light);"
-                            onmouseover="this.style.background='var(--color-accent)'"
-                            onmouseout="this.style.background='var(--color-secondary)'">
+                            class="w-full py-3 rounded-lg bg-secondary text-text-on-light text-sm font-semibold tracking-wide transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer hover:bg-[color-mix(in_srgb,var(--color-secondary)_75%,black)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary">
                         Se connecter
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
