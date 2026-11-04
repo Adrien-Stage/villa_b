@@ -65,7 +65,6 @@
         'cumuls' => $matrice['cumuls'] ?: (object) [],
         'regles' => $matrice['regles_de_cumul'],
         'noms' => $roles->map(fn ($r) => $r['name'])->all(),
-        'apercu' => route('droits.apercu'),
     ];
 @endphp
 
@@ -230,18 +229,15 @@
                     J'accorde ces dérogations à la séparation des tâches, pour le motif indiqué ci-dessous.
                 </label>
             </div>
-            <div id="panneau-apercu" class="mb-3 hidden rounded-xl bg-white px-4 py-3 text-xs text-primary/80 shadow-sm" aria-live="polite"></div>
-
             <div class="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-secondary/20 bg-white px-4 py-3 shadow-lg">
                 <div class="min-w-[16rem] flex-1">
                     <label for="motif" class="sr-only">Motif</label>
-                    <input type="text" id="motif" name="motif" maxlength="255" value="{{ old('motif') }}"
+                    <input type="text" id="motif" name="motif" required maxlength="255" value="{{ old('motif') }}"
                            placeholder="Motif — consigné au journal et sur chaque droit modifié"
                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs">
                     <p class="mt-1 text-[11px] text-primary/50"><span id="compteur">0</span> case(s) modifiée(s). <span id="exigence" class="hidden font-medium text-amber-700"></span></p>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                    <button type="button" id="voir-apercu" disabled class="rounded-lg border border-secondary/30 px-4 py-2 text-xs font-semibold text-primary disabled:opacity-50">Voir l'aperçu</button>
                     <button type="submit" id="appliquer" disabled class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">Enregistrer</button>
                 </div>
             </div>
@@ -378,13 +374,10 @@
         const compteur = document.getElementById('compteur');
         const exigence = document.getElementById('exigence');
         const derogation = document.getElementById('derogation');
-        const boutonApercu = document.getElementById('voir-apercu');
         const boutonEnregistrer = document.getElementById('appliquer');
-        const panneauApercu = document.getElementById('panneau-apercu');
         const panneauCumuls = document.getElementById('panneau-cumuls');
         const listeCumuls = document.getElementById('liste-cumuls');
         const touchees = new Set();
-        let apercuAJour = false;
 
         const cle = (c) => `${c.dataset.role}|${c.dataset.droit}`;
         const portee = (c) => document.querySelector(`[data-portee-de="${cle(c)}"]`);
@@ -458,11 +451,9 @@
             const manques = [];
             if (changements > 0 && motif.value.trim() === '') manques.push('indiquez un motif');
             if (changements > 0 && cumuls.length > 0 && !derogation.checked) manques.push('accordez ou retirez les dérogations');
-            if (changements > 0 && !apercuAJour) manques.push("consultez l'aperçu");
             exigence.textContent = manques.length ? 'Pour enregistrer : ' + manques.join(', ') + '.' : '';
             exigence.classList.toggle('hidden', manques.length === 0);
 
-            boutonApercu.disabled = changements === 0;
             boutonEnregistrer.disabled = changements === 0 || manques.length > 0;
 
             document.querySelectorAll('.module').forEach((module) => {
@@ -476,8 +467,6 @@
 
         function toucher(c) {
             touchees.add(cle(c));
-            apercuAJour = false;
-            panneauApercu.classList.add('hidden');
             recalculer();
         }
 
@@ -492,61 +481,6 @@
         }));
         motif.addEventListener('input', recalculer);
         derogation.addEventListener('change', recalculer);
-
-        function puce(texte, classes) {
-            const span = document.createElement('span');
-            span.className = 'mr-1 mb-1 inline-block rounded px-1.5 py-0.5 font-mono text-[10px] ' + classes;
-            span.textContent = texte;
-            return span;
-        }
-
-        boutonApercu.addEventListener('click', async () => {
-            boutonApercu.disabled = true;
-            panneauApercu.classList.remove('hidden');
-            panneauApercu.textContent = "Calcul de l'aperçu…";
-            try {
-                const reponse = await fetch(donnees.apercu, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json', 'Accept': 'application/json',
-                        'X-CSRF-TOKEN': formulaire.querySelector('input[name="_token"]').value,
-                    },
-                    body: JSON.stringify({ ecarts: lot() }),
-                });
-                const corps = await reponse.json();
-                panneauApercu.innerHTML = '';
-                if (!reponse.ok || !corps.ok) {
-                    panneauApercu.textContent = corps.message || "L'aperçu n'a pas pu être calculé.";
-                    apercuAJour = false;
-                } else {
-                    const personnes = corps.apercu.personnes;
-                    const titre = document.createElement('p');
-                    titre.className = 'font-semibold text-primary';
-                    titre.textContent = personnes.length === 0 ? 'Aucune personne ne change de droits.' : `${personnes.length} personne(s) touchée(s) :`;
-                    panneauApercu.appendChild(titre);
-                    personnes.forEach((p) => {
-                        const bloc = document.createElement('div');
-                        bloc.className = 'mt-2 border-t border-secondary/15 pt-2';
-                        const nom = document.createElement('p');
-                        nom.className = 'font-semibold text-primary/80';
-                        nom.textContent = `${p.name} — ${p.roles.map((r) => donnees.noms[r] || r).join(', ')}`;
-                        bloc.appendChild(nom);
-                        const droits = document.createElement('div');
-                        droits.className = 'mt-1';
-                        p.gagnes.forEach((d) => droits.appendChild(puce('+ ' + d, 'bg-emerald-50 text-emerald-700')));
-                        p.perdus.forEach((d) => droits.appendChild(puce('− ' + d, 'bg-red-50 text-red-700')));
-                        p.portees.forEach((d) => droits.appendChild(puce(`${d.permission} : ${d.avant} → ${d.apres}`, 'bg-amber-50 text-amber-800')));
-                        bloc.appendChild(droits);
-                        panneauApercu.appendChild(bloc);
-                    });
-                    apercuAJour = true;
-                }
-            } catch (e) {
-                panneauApercu.textContent = "L'aperçu n'a pas pu être calculé.";
-                apercuAJour = false;
-            }
-            recalculer();
-        });
 
         formulaire.addEventListener('submit', (evenement) => {
             if (boutonEnregistrer.disabled) { evenement.preventDefault(); return; }
