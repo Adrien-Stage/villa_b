@@ -84,7 +84,9 @@
                 <h2>Demande</h2>
                 <p><strong>{{ $request->departmentLabel() }}</strong> — priorité {{ mb_strtolower($request->priorityLabel()) }}</p>
                 <p>Par : {{ $request->requestedBy?->name ?? '—' }}</p>
-                <p>Fournisseur retenu : <strong>{{ $request->supplier?->name ?? 'Non spécifié' }}</strong></p>
+                @if($peutVoirPrix)
+                    <p>Fournisseur retenu : <strong>{{ $request->supplier?->name ?? 'Non spécifié' }}</strong></p>
+                @endif
                 @if($request->purpose)<p class="muted" style="font-size:9.5px">{{ $request->purpose }}</p>@endif
             </div>
             <div class="cadre">
@@ -97,7 +99,7 @@
                     <p>En attente d'approbation par le contrôle de gestion.</p>
                 @endif
                 @if($request->purchaseOrders->isNotEmpty())
-                    <p>Bon(s) : {{ $request->purchaseOrders->map(fn ($o) => $o->number . ' (' . ($o->supplier?->name ?? '—') . ')')->implode(', ') }}</p>
+                    <p>Bon(s) : {{ $request->purchaseOrders->map(fn ($o) => $o->number . ($peutVoirPrix ? ' (' . ($o->supplier?->name ?? '—') . ')' : ''))->implode(', ') }}</p>
                 @endif
             </div>
         </div>
@@ -110,8 +112,10 @@
                     <th style="width:40px" class="text-center">Unité</th>
                     <th class="num">Demandée</th>
                     <th class="num">Approuvée</th>
-                    <th class="num">P.U. estimé</th>
-                    <th class="num">Total estimé</th>
+                    @if($peutVoirPrix)
+                        <th class="num">P.U. estimé</th>
+                        <th class="num">Total estimé</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -122,17 +126,21 @@
                         <td class="text-center font-bold" style="font-size: 8.5px;">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
                         <td class="num">{{ $qte($ligne->quantity_requested) }}</td>
                         <td class="num {{ $ligne->estAjustee() ? 'ajuste' : '' }}">{{ $ligne->quantity_approved !== null ? $qte($ligne->quantity_approved) : '—' }}</td>
-                        <td class="num">{{ $fcfa($ligne->estimated_unit_price) }} F</td>
-                        <td class="num">{{ $fcfa($ligne->estimatedTotal()) }} F</td>
+                        @if($peutVoirPrix)
+                            <td class="num">{{ $fcfa($ligne->estimated_unit_price) }} F</td>
+                            <td class="num">{{ $fcfa($ligne->estimatedTotal()) }} F</td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="6">Total estimé</td>
-                    <td class="num">{{ $fcfa($request->total_estimated_amount) }} F</td>
-                </tr>
-            </tfoot>
+            @if($peutVoirPrix)
+                <tfoot>
+                    <tr>
+                        <td colspan="6">Total estimé</td>
+                        <td class="num">{{ $fcfa($request->total_estimated_amount) }} F</td>
+                    </tr>
+                </tfoot>
+            @endif
         </table>
 
         @if($request->aEteAjustee())

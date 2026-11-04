@@ -108,12 +108,16 @@
         <x-slot:head>
             <x-table.col>Numéro</x-table.col>
             <x-table.col>Département</x-table.col>
-            <x-table.col hide="md">Fournisseur</x-table.col>
+            @if($peutVoirPrix)
+                <x-table.col hide="md">Fournisseur</x-table.col>
+            @endif
             <x-table.col hide="xl">Demandeur</x-table.col>
             <x-table.col align="center" hide="lg">Priorité</x-table.col>
             <x-table.col align="center">Statut</x-table.col>
             <x-table.col align="right" hide="2xl">Articles</x-table.col>
-            <x-table.col align="right">Montant est.</x-table.col>
+            @if($peutVoirPrix)
+                <x-table.col align="right">Montant est.</x-table.col>
+            @endif
             <x-table.col hide="xl">Date</x-table.col>
             <x-table.col actions />
         </x-slot:head>
@@ -124,7 +128,9 @@
                     <a href="{{ route('economat.purchase_requests.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
                 </x-table.cell>
                 <x-table.cell class="text-primary/70">{{ $req->departmentLabel() }}</x-table.cell>
-                <x-table.cell hide="md" class="text-primary/80 font-medium">{{ $req->supplier?->name ?? '—' }}</x-table.cell>
+                @if($peutVoirPrix)
+                    <x-table.cell hide="md" class="text-primary/80 font-medium">{{ $req->supplier?->name ?? '—' }}</x-table.cell>
+                @endif
                 <x-table.cell hide="xl" class="text-primary/80">{{ $req->requestedBy?->name ?? '—' }}</x-table.cell>
                 <x-table.cell align="center" hide="lg" nowrap>
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $priorityBadges[$req->priority] ?? 'bg-gray-100' }}">{{ $req->priorityLabel() }}</span>
@@ -133,7 +139,9 @@
                     <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold {{ $statusStyles[$req->status] ?? 'bg-gray-100' }}">{{ $req->statusLabel() }}</span>
                 </x-table.cell>
                 <x-table.cell align="right" hide="2xl" class="font-mono text-primary/70">{{ $req->lines_count }}</x-table.cell>
-                <x-table.cell align="right" nowrap class="font-mono font-semibold">{{ number_format($req->total_estimated_amount / 100, 0, ',', ' ') }} F</x-table.cell>
+                @if($peutVoirPrix)
+                    <x-table.cell align="right" nowrap class="font-mono font-semibold">{{ number_format($req->total_estimated_amount / 100, 0, ',', ' ') }} F</x-table.cell>
+                @endif
                 <x-table.cell hide="xl" nowrap class="text-xs text-primary/50">{{ $req->created_at->format('d/m/Y') }}</x-table.cell>
                 <x-table.actions :label="'Actions pour la demande '.$req->number">
                     <x-table.action :href="route('economat.purchase_requests.show', $req)" icon="eye">Ouvrir</x-table.action>
