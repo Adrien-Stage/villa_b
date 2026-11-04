@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto"
-     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }}, {{ Js::from($recherche) }}, {{ Js::from($filter) }}, {{ Js::from($zones->where('is_active', true)->map(fn($z) => ['id' => $z->id, 'name' => $z->name])->values()) }}, {{ Js::from($zone?->id) }})">
+     x-data="stockItems({{ Js::from($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()) }}, {{ Js::from($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) }}, {{ Js::from($unites) }}, {{ Js::from($recherche) }}, {{ Js::from($filter) }}, {{ Js::from($zones->where('is_active', true)->map(fn($z) => ['id' => $z->id, 'name' => $z->name])->values()) }}, {{ Js::from($zone?->id ?? request('zone')) }}, {{ Js::from($category?->id ?? request('category')) }})">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Articles</h1>
@@ -45,50 +45,84 @@
         <li><strong>stock_initial</strong> facultatif : quantité déjà en magasin, reprise au <strong>cout_moyen_fcfa</strong> (obligatoire dans ce cas). Sans elle, le stock démarre à 0</li>
     </x-csv-import-modal>
 
-    {{-- Recherche à la saisie : la liste se recharge seule, sans quitter la
-         page ni perdre le curseur. Sans JavaScript, Entrée envoie le formulaire. --}}
-    <form method="GET" action="{{ route('economat.items.index') }}" role="search" class="mb-3" @submit.prevent="chercher(true)">
-        @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
-        @if($zone)<input type="hidden" name="zone" value="{{ $zone->id }}">@endif
-        <label for="recherche-articles" class="sr-only">Rechercher un article</label>
-        <div class="relative max-w-md">
-            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" aria-hidden="true"></i>
-            <input id="recherche-articles" type="search" name="q" value="{{ $recherche }}" autocomplete="off"
-                   x-model="recherche" @input="chercher()" @keydown.escape="recherche = ''; chercher(true)"
-                   placeholder="Rechercher par nom, référence ou catégorie…"
-                   class="w-full rounded-lg border border-secondary/30 bg-white py-2 pl-9 pr-9 text-sm text-primary placeholder:text-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15">
-            <span x-show="enRecherche" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                <i data-lucide="loader-circle" class="h-4 w-4 animate-spin text-primary/40 motion-reduce:animate-none"></i>
-            </span>
-        </div>
-    </form>
+    {{-- Barre de filtres et recherche multicritères --}}
+    <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm mb-5">
+        <form method="GET" action="{{ route('economat.items.index') }}" role="search" @submit.prevent="chercher(true)" class="flex flex-wrap items-center gap-3">
+            {{-- Recherche textuelle --}}
+            <div class="relative flex-1 min-w-[220px]">
+                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" aria-hidden="true"></i>
+                <input id="recherche-articles" type="search" name="q" value="{{ $recherche }}" autocomplete="off"
+                       x-model="recherche" @input="chercher()" @keydown.escape="recherche = ''; chercher(true)"
+                       placeholder="Rechercher par nom, référence ou catégorie…"
+                       class="w-full rounded-lg border border-secondary/20 bg-white py-2 pl-9 pr-9 text-sm text-primary placeholder:text-primary/40 focus:border-primary focus:outline-none">
+                <span x-show="enRecherche" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+                    <i data-lucide="loader-circle" class="h-4 w-4 animate-spin text-primary/40 motion-reduce:animate-none"></i>
+                </span>
+            </div>
 
-    <div id="liste-articles" aria-live="polite">
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-        <a href="{{ route('economat.items.index', array_filter(['q' => $recherche, 'zone' => $zone?->id])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ !$filter ? 'bg-primary text-white border-primary' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Tous</a>
-        <a href="{{ route('economat.items.index', array_filter(['filter' => 'alert', 'q' => $recherche, 'zone' => $zone?->id])) }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border {{ $filter === 'alert' ? 'bg-amber-500 text-white border-amber-500' : 'border-secondary/30 text-primary/60 hover:bg-accent/10' }}">Sous le seuil</a>
-        {{-- La zone de rangement : ce qui se trouve en cave, en chambre froide… --}}
-        @if($zones->count() > 1)
-            <form method="GET" action="{{ route('economat.items.index') }}" class="flex items-center gap-1.5">
-                @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
-                @if($recherche !== '')<input type="hidden" name="q" value="{{ $recherche }}">@endif
-                <label for="filtre-zone" class="sr-only">Zone de rangement</label>
-                <select id="filtre-zone" name="zone" onchange="this.form.submit()"
-                        class="rounded-lg border px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-primary {{ $zone ? 'border-primary bg-primary/5 text-primary' : 'border-secondary/30 bg-white text-primary/60' }}">
+            {{-- Filtre par Catégorie --}}
+            <div class="w-full sm:w-auto min-w-[190px]">
+                <label for="filtre-categorie" class="sr-only">Catégorie</label>
+                <select id="filtre-categorie" name="category" x-model="selectedCategory" @change="chercher(true)"
+                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-primary {{ $category || request('category') === 'none' ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-secondary/20 bg-white text-primary' }}">
+                    <option value="">Toutes les catégories</option>
+                    @foreach($categories as $c)
+                        <option value="{{ $c->id }}" @selected($category?->is($c) || (string) request('category') === (string) $c->id)>{{ $c->name }}</option>
+                    @endforeach
+                    <option value="none" @selected(request('category') === 'none')>Sans catégorie</option>
+                </select>
+            </div>
+
+            {{-- Filtre par Zone de stockage --}}
+            <div class="w-full sm:w-auto min-w-[180px]">
+                <label for="filtre-zone" class="sr-only">Zone de stockage</label>
+                <select id="filtre-zone" name="zone" x-model="selectedZone" @change="chercher(true)"
+                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-primary {{ $zone || request('zone') === 'none' ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-secondary/20 bg-white text-primary' }}">
                     <option value="">Toutes les zones</option>
                     @foreach($zones as $z)
-                        <option value="{{ $z->id }}" @selected($zone?->is($z))>{{ $z->name }}{{ $z->is_active ? '' : ' (hors service)' }}</option>
+                        <option value="{{ $z->id }}" @selected($zone?->is($z) || (string) request('zone') === (string) $z->id)>{{ $z->name }}{{ $z->is_active ? '' : ' (hors service)' }}</option>
                     @endforeach
+                    <option value="none" @selected(request('zone') === 'none')>Sans zone</option>
                 </select>
-                <noscript><button type="submit" class="text-xs underline text-primary/60">Filtrer</button></noscript>
-            </form>
-        @endif
-        @if($recherche !== '')
-            <span class="text-xs text-primary/55">{{ $items->total() }} article(s) pour « {{ $recherche }} »</span>
-        @endif
+            </div>
+
+            {{-- Filtre rapide seuil / tous --}}
+            <div class="flex items-center gap-1.5">
+                <input type="hidden" name="filter" x-model="selectedFilter">
+                <button type="button" @click="selectedFilter = ''; chercher(true)"
+                        class="px-3 py-2 text-xs font-semibold rounded-lg border transition-colors"
+                        :class="!selectedFilter ? 'bg-primary text-white border-primary shadow-sm' : 'border-secondary/20 bg-white text-primary/70 hover:bg-gray-50'">
+                    Tous
+                </button>
+                <button type="button" @click="selectedFilter = (selectedFilter === 'alert' ? '' : 'alert'); chercher(true)"
+                        class="px-3 py-2 text-xs font-semibold rounded-lg border transition-colors inline-flex items-center gap-1.5"
+                        :class="selectedFilter === 'alert' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'border-secondary/20 bg-white text-amber-700 hover:bg-amber-50/50'">
+                    <span class="w-2 h-2 rounded-full" :class="selectedFilter === 'alert' ? 'bg-white' : 'bg-amber-500'"></span>
+                    Sous le seuil
+                </button>
+            </div>
+
+            {{-- Bouton réinitialiser si des filtres sont actifs --}}
+            @if($category || request('category') || $zone || request('zone') || $filter || $recherche !== '')
+                <a href="{{ route('economat.items.index') }}" class="px-3 py-2 text-xs text-primary/60 hover:text-primary underline whitespace-nowrap">
+                    Effacer les filtres
+                </a>
+            @endif
+        </form>
     </div>
 
-    <x-table :rows="$items" :empty="$recherche !== '' ? 'Aucun article ne correspond à « ' . $recherche . ' ».' : ($filter === 'alert' ? 'Aucun article sous le seuil.' : 'Aucun article. Créez-en un pour démarrer le magasin.')" empty-icon="boxes" caption="Articles du magasin central">
+    <div id="liste-articles" aria-live="polite">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span class="text-xs text-primary/60">
+                <strong>{{ $items->total() }}</strong> article{{ $items->total() > 1 ? 's' : '' }}
+                @if($category) · Catégorie : <strong>{{ $category->name }}</strong>@elseif(request('category') === 'none') · <strong>Sans catégorie</strong>@endif
+                @if($zone) · Zone : <strong>{{ $zone->name }}</strong>@elseif(request('zone') === 'none') · <strong>Sans zone</strong>@endif
+                @if($filter === 'alert') · <span class="text-amber-700 font-medium">Sous le seuil</span>@endif
+                @if($recherche !== '') · Recherche : « {{ $recherche }} »@endif
+            </span>
+        </div>
+
+        <x-table :rows="$items" :empty="$recherche !== '' ? 'Aucun article ne correspond à « ' . $recherche . ' ».' : ($filter === 'alert' ? 'Aucun article sous le seuil.' : ($category || $zone || request('category') || request('zone') ? 'Aucun article ne correspond aux critères sélectionnés.' : 'Aucun article. Créez-en un pour démarrer le magasin.'))" empty-icon="boxes" caption="Articles du magasin central">
         <x-slot:head>
             <x-table.col>Article</x-table.col>
             <x-table.col hide="xl">Catégorie</x-table.col>
@@ -349,7 +383,7 @@
 
 @push('scripts')
 <script>
-    function stockItems(categories, suppliers, unites, recherche, filtre, zones, zone) {
+    function stockItems(categories, suppliers, unites, recherche, filtre, zones, zone, categorie) {
         const storeUrl = @js(route('economat.items.store'));
         const baseUrl = @js(url('/economat/articles'));
         const listeUrl = @js(route('economat.items.index'));
@@ -357,7 +391,11 @@
         let requete = null;
         return {
             categories, suppliers, unites, zones: zones || [],
-            recherche: recherche ?? '', enRecherche: false,
+            recherche: recherche ?? '',
+            selectedFilter: filtre ?? '',
+            selectedZone: zone !== null && zone !== undefined && zone !== '' ? String(zone) : '',
+            selectedCategory: categorie !== null && categorie !== undefined && categorie !== '' ? String(categorie) : '',
+            enRecherche: false,
             /**
              * Recharge la liste pour la saisie en cours : la page suivante est
              * demandée au serveur, et seule la liste est remplacée — le champ
@@ -368,8 +406,9 @@
                 clearTimeout(minuterie);
                 minuterie = setTimeout(async () => {
                     const params = new URLSearchParams();
-                    if (filtre) params.set('filter', filtre);
-                    if (zone) params.set('zone', zone);
+                    if (this.selectedFilter) params.set('filter', this.selectedFilter);
+                    if (this.selectedZone) params.set('zone', this.selectedZone);
+                    if (this.selectedCategory) params.set('category', this.selectedCategory);
                     if (this.recherche.trim() !== '') params.set('q', this.recherche.trim());
                     const url = listeUrl + (params.toString() ? '?' + params : '');
 
@@ -400,9 +439,10 @@
             blank() {
                 let premiere = this.unites.length > 0 ? (this.unites[0].value || this.unites[0]) : '';
                 return { id: null, name: '', reference: '', unit: premiere, description: '',
-                    stock_category_id: '', supplier_id: '', min_stock: 0, average_cost: 0, is_active: true,
+                    stock_category_id: this.selectedCategory !== 'none' ? this.selectedCategory : '',
+                    supplier_id: '', min_stock: 0, average_cost: 0, is_active: true,
                     // La zone filtrée, si elle est en service ; sinon la première.
-                    storage_zone_id: (this.zones.some(z => z.id === zone) ? zone : this.zones[0]?.id) ?? '' };
+                    storage_zone_id: (this.selectedZone !== 'none' && this.zones.some(z => String(z.id) === String(this.selectedZone)) ? this.selectedZone : this.zones[0]?.id) ?? '' };
             },
             // L'unité d'un article mise hors service depuis reste proposée pour lui.
             get unitesProposees() {
