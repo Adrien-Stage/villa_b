@@ -125,6 +125,36 @@
         #sidebar-bascule-ouvrir { display: none; }
 
         /* ═════════════════════════════════════════════════════════════════════
+         * EFFET FOCUS ET VISIBILITÉ PERMANENTE DE LA RUBRIQUE ACTIVE (SIDEBAR)
+         * ═════════════════════════════════════════════════════════════════════ */
+        #mobile-sidebar .sidebar-lien-active {
+            background: linear-gradient(90deg, rgba(204, 171, 135, 0.22) 0%, rgba(44, 24, 16, 0.95) 100%) !important;
+            background-color: var(--color-surface-dark) !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            position: relative;
+            border-left: 3.5px solid var(--color-accent) !important;
+            border-top-left-radius: 2px !important;
+            border-bottom-left-radius: 2px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 0 14px rgba(238, 212, 163, 0.12) !important;
+        }
+
+        #mobile-sidebar .sidebar-lien-active svg,
+        #mobile-sidebar .sidebar-lien-active i,
+        #mobile-sidebar .sidebar-lien-active [data-lucide] {
+            color: var(--color-accent) !important;
+            filter: drop-shadow(0 0 5px rgba(238, 212, 163, 0.5));
+            transform: scale(1.1);
+            transition: transform 150ms ease, color 150ms ease;
+        }
+
+        /* Lorsque la barre est réduite sur desktop, conserver la pastille focus dorée */
+        html.sidebar-reduite #mobile-sidebar .sidebar-lien-active {
+            border-left: none !important;
+            box-shadow: inset 0 0 0 2px var(--color-accent), 0 0 10px rgba(238, 212, 163, 0.3) !important;
+        }
+
+        /* ═════════════════════════════════════════════════════════════════════
          * RÈGLES GLOBALES D'IMPRESSION PROFESSIONNELLE (STANDARDS HÔTELIERS)
          * ═════════════════════════════════════════════════════════════════════ */
         @page {
@@ -357,10 +387,11 @@
                                     <li>
                                         <a href="{{ route('bookings.index') }}"
                                             title="Réservations"
+                                            @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*')) aria-current="page" @endif
                                             class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
                                             {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
-                                                ? 'bg-surface-dark text-white'
-                                                : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
+                                                ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
+                                                : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
                                             <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
                                             <span class="sidebar-libelle">Réservations</span>
                                         </a>
@@ -819,7 +850,8 @@
                 <a id="sidebar-discussions-link"
                    href="{{ route('discussions.index') }}"
                    title="Discussions"
-                   class="sidebar-lien sidebar-lien-discussions flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'bg-surface-dark text-white' : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
+                   @if($isDiscussionActive) aria-current="page" @endif
+                   class="sidebar-lien sidebar-lien-discussions flex items-center justify-between gap-2.5 px-2 py-2 rounded-md text-xs font-medium transition-all {{ $isDiscussionActive ? 'sidebar-lien-active bg-surface-dark text-white font-semibold' : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
                     <span class="flex items-center gap-2.5 min-w-0">
                         <i data-lucide="message-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
                         <span class="sidebar-libelle truncate">Discussions</span>
@@ -1194,6 +1226,9 @@
             @if(request()->routeIs('restaurant.*') && auth()->check())
                 <x-restaurant.courant />
             @endif
+
+            <x-breadcrumbs />
+
             @yield('content')
         </main>
     </div>
@@ -1776,6 +1811,16 @@
             if (!manual) codeEl.value = window.suggestCode(nameEl.value);
         });
     };
+    </script>
+
+    <script>
+    // Fait défiler automatiquement la barre latérale pour toujours montrer la rubrique active avec effet focus
+    document.addEventListener('DOMContentLoaded', () => {
+        const activeNavEl = document.querySelector('#mobile-sidebar .sidebar-lien-active, #mobile-sidebar [aria-current="page"]');
+        if (activeNavEl) {
+            activeNavEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    });
     </script>
 
     @include('partials.pwa-install')

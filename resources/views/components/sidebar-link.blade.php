@@ -1,7 +1,7 @@
 @props(['route', 'icon'])
 
 @php
-    $isActive = request()->routeIs($route) || request()->routeIs($route . '.*');
+    $isActive = \App\Support\Navigation::isRouteActive($route);
 
     // Le lien pose lui-même la question que pose sa route.
     //
@@ -26,10 +26,11 @@
          l'utilisateur quand la barre est réduite à ses icônes. --}}
     <a href="{{ $route !== '#' ? route($route) : '#' }}"
        title="{{ trim(strip_tags($slot)) }}"
+       @if($isActive) aria-current="page" @endif
        class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
               {{ $isActive
-                  ? 'bg-surface-dark text-white'
-                  : 'text-text-on-dark hover:bg-surface-dark hover:text-white' }}">
+                  ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
+                  : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
 
         {{-- Icônes SVG selon le type --}}
         @if($icon === 'grid')

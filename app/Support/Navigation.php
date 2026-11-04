@@ -478,6 +478,66 @@ class Navigation
     }
 
     /**
+     * Détermine si un lien de la barre latérale correspond à la page active,
+     * y compris pour les vues détail, édition, création et actions associées.
+     */
+    public static function isRouteActive(string $linkRoute): bool
+    {
+        $current = request()->route()?->getName();
+        if (! $current) {
+            return false;
+        }
+
+        if ($current === $linkRoute) {
+            return true;
+        }
+
+        if (request()->routeIs($linkRoute . '.*')) {
+            return true;
+        }
+
+        // Cas des ressources indexées (ex: economat.items.index -> economat.items.show)
+        if (str_ends_with($linkRoute, '.index')) {
+            $prefix = substr($linkRoute, 0, -6);
+
+            // Ne pas sur-activer la vue d'ensemble racine si on est sur un sous-module
+            if (in_array($linkRoute, ['economat.index', 'technique.index', 'pilotage.index'], true)) {
+                return $current === $linkRoute;
+            }
+
+            if (str_starts_with($current, $prefix . '.')) {
+                // Exceptions pour les sous-ressources qui possèdent leur propre lien distinct dans le menu
+                if ($prefix === 'rooms' && (str_starts_with($current, 'rooms.rates.') || str_starts_with($current, 'rooms.cost_sheets.'))) {
+                    return false;
+                }
+                if ($prefix === 'housekeeping' && (str_starts_with($current, 'housekeeping.journal.') || str_starts_with($current, 'housekeeping.minibar.'))) {
+                    return false;
+                }
+                if ($prefix === 'accounting' && str_starts_with($current, 'accounting.ledger.')) {
+                    return false;
+                }
+                if ($prefix === 'technique' && (str_starts_with($current, 'technique.demandes.') || str_starts_with($current, 'technique.depot.') || str_starts_with($current, 'technique.equipe.'))) {
+                    return false;
+                }
+                if ($prefix === 'economat.control' && (str_starts_with($current, 'economat.control.suggestions.') || str_starts_with($current, 'economat.control.variances.'))) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        if ($linkRoute === 'dashboard') {
+            return request()->routeIs('dashboard*');
+        }
+
+        if ($linkRoute === 'settings.index' || $linkRoute === 'settings') {
+            return request()->routeIs('settings*');
+        }
+
+        return false;
+    }
+
+    /**
      * Détermine le groupe actif selon la route courante.
      *
      * @return array<string, mixed>|null
