@@ -230,93 +230,54 @@
         </div>
     </div>
 
-    {{-- Lignes + réception --}}
-    <form method="POST" action="{{ route('economat.orders.receive', $order) }}">
-        @csrf
-        <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-            <div class="px-5 py-3 border-b border-secondary/20">
-                <h2 class="text-sm font-semibold text-primary">Articles</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/70">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Commandé</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Déjà reçu</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">P.U.</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Total</th>
-                            @if($order->canBeReceived())
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Reçu maintenant</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-secondary/10">
-                        @foreach($order->lines as $line)
-                            <tr>
-                                <td class="px-5 py-3 text-primary">
-                                    <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
-                                    <div class="text-[11px] text-primary/40 flex items-center gap-1.5 mt-0.5">
-                                        @if($line->item?->code)
-                                            <span class="font-mono">{{ $line->item->code }}</span>
-                                        @endif
-                                        @if($line->item?->category)
-                                            · <span>{{ $line->item->category->name }}</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ number_format($line->unit_price / 100, 0, ',', ' ') }} F</td>
-                                <td class="px-5 py-3 text-right font-medium text-primary font-mono">{{ number_format($line->total() / 100, 0, ',', ' ') }} F</td>
-                                @if($order->canBeReceived())
-                                    <td class="px-5 py-3 text-right">
-                                        @if($line->outstanding() > 0)
-                                            <input type="number" step="0.001" min="0" name="received[{{ $line->id }}]"
-                                                placeholder="0" aria-label="Quantité reçue — {{ $line->item?->name }}"
-                                                class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary text-right">
-                                            {{-- Un article conditionné se reçoit en cartons ou en paquets ; des cartons entiers restent fermés. --}}
-                                            @if($line->item && $line->item->packagings->isNotEmpty())
-                                                <select name="received_packaging[{{ $line->id }}]" aria-label="Unité reçue — {{ $line->item->name }}"
-                                                    class="ml-1 px-1.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
-                                                    @foreach($line->item->unitesDeSaisie() as $u)
-                                                        <option value="{{ $u['nom'] }}">{{ $u['nom'] }}</option>
-                                                    @endforeach
-                                                </select>
-                                            @endif
-                                            {{-- Le reste dû s'affiche à côté, pas dans le champ : un chiffre grisé dans le champ se prend pour une saisie. --}}
-                                            <span class="block text-[10px] text-primary/45 mt-0.5">reste {{ rtrim(rtrim(number_format($line->outstanding(), 3, ',', ' '), '0'), ',') }}</span>
-                                        @else
-                                            <span class="text-green-600 text-xs font-semibold">Soldé</span>
-                                        @endif
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr class="bg-gray-50">
-                            <td colspan="5" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
-                            <td class="px-5 py-3 text-right font-bold text-primary font-mono text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
-                            @if($order->canBeReceived())
-                                <td class="px-5 py-3"></td>
-                            @endif
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            @if($order->canBeReceived())
-                <div class="px-5 py-3 border-t border-secondary/20 bg-gray-50 flex justify-between items-center">
-                    <p class="text-xs text-primary/50">Saisissez les quantités réellement livrées. L'entrée en stock met à jour le coût moyen.</p>
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
-                        <i data-lucide="package-check" class="w-4 h-4"></i> Valider la réception
-                    </button>
-                </div>
-            @endif
+    {{-- Lignes d'articles du bon de commande --}}
+    <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-3 border-b border-secondary/20">
+            <h2 class="text-sm font-semibold text-primary">Articles</h2>
         </div>
-    </form>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50/70">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
+                        <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Commandé</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Déjà reçu</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">P.U.</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-secondary/10">
+                    @foreach($order->lines as $line)
+                        <tr class="hover:bg-gray-50/40">
+                            <td class="px-5 py-3 text-primary">
+                                <div class="font-medium text-primary">{{ $line->item?->name ?? '—' }}</div>
+                                <div class="text-[11px] text-primary/40 flex items-center gap-1.5 mt-0.5">
+                                    @if($line->item?->code)
+                                        <span class="font-mono">{{ $line->item->code }}</span>
+                                    @endif
+                                    @if($line->item?->category)
+                                        · <span>{{ $line->item->category->name }}</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
+                            <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
+                            <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
+                            <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ number_format($line->unit_price / 100, 0, ',', ' ') }} F</td>
+                            <td class="px-5 py-3 text-right font-medium text-primary font-mono">{{ number_format($line->total() / 100, 0, ',', ' ') }} F</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50">
+                        <td colspan="5" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
+                        <td class="px-5 py-3 text-right font-bold text-primary font-mono text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
 
     @if($order->notes)
         <p class="text-sm text-primary/60 mt-4 bg-white border border-secondary/20 rounded-xl p-4 shadow-sm"><strong>Note :</strong> {{ $order->notes }}</p>
