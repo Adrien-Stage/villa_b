@@ -378,8 +378,10 @@ test('la réception rapide sur le bon refuse un formulaire vide, et fait entrer 
     $bon = PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => PurchaseOrder::STATUS_SENT]);
     $ligne = PurchaseOrderLine::create(['purchase_order_id' => $bon->id, 'stock_item_id' => $tuyau->id, 'quantity_ordered' => 7, 'unit_price' => 4700000]);
 
-    // Le reste dû s'affiche à côté du champ, pas dedans.
-    test()->get(route('economat.orders.show', $bon))->assertOk()->assertSee('reste 7');
+    // La carte Articles présente le récapitulatif sans saisie directe de réception
+    test()->get(route('economat.orders.show', $bon))->assertOk()
+        ->assertDontSee('Reçu maintenant')
+        ->assertDontSee('Valider la réception');
 
     // Rien de saisi : ce n'est pas une réception.
     test()->post(route('economat.orders.receive', $bon), ['received' => [$ligne->id => '']])
