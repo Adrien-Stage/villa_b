@@ -31,6 +31,42 @@ class PurchaseRequestController extends Controller
      */
     private const DEMANDENT_POUR_L_ECONOMAT = ['econome', 'purchasing_manager'];
 
+    /**
+     * Détermine si l'utilisateur connecté peut voir les montants et prix fournisseurs
+     * sur les demandes d'achat.
+     *
+     * L'économe et les demandeurs des services expriment des besoins en quantités :
+     * ils ne voient pas les tarifs négociés ni les valorisations d'achat.
+     * Seul le service achat (responsable des achats), le contrôle de gestion,
+     * la direction et les finances voient les prix et montants.
+     * De plus, un demandeur sur sa propre demande ne voit pas les prix fournisseurs.
+     */
+    public static function peutVoirPrix(?PurchaseRequest $request = null): bool
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        // L'économe et le magasinier gèrent les stocks physiques : ils n'ont pas accès aux prix d'achat fournisseurs.
+        if ($user->exerce(['econome', 'storekeeper'])) {
+            return false;
+        }
+
+        // Sur sa propre demande, un demandeur qui n'est pas du service achat / direction ne voit pas les prix.
+        if ($request && (int) $request->requested_by === (int) $user->id && ! $user->exerce(['purchasing_manager', 'manager'])) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Le service achat (responsable des achats), la direction, le contrôle de gestion et la finance.
+        return $user->exerce(['purchasing_manager', 'manager', 'controller', 'finance_manager'])
+            || app(PermissionResolver::class)->allows($user, 'economat.purchase_requests.convert');
+    }
+
     private static function choisitLeDepartement(): bool
     {
         return ! Auth::user()?->exerce(self::DEMANDENT_POUR_L_ECONOMAT);
@@ -75,6 +111,7 @@ class PurchaseRequestController extends Controller
             'departments' => PurchaseRequest::DEPARTMENTS,
             'statuses'    => PurchaseRequest::STATUSES,
             'canManage'   => app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'),
+            'peutVoirPrix' => self::peutVoirPrix(),
         ]);
     }
 
@@ -178,6 +215,7 @@ class PurchaseRequestController extends Controller
             'departments'        => PurchaseRequest::DEPARTMENTS,
             'priorities'         => PurchaseRequest::PRIORITIES,
             'choisitDepartement' => self::choisitLeDepartement(),
+            'peutVoirPrix'       => self::peutVoirPrix($purchaseRequest),
         ]);
     }
 
@@ -245,6 +283,7 @@ class PurchaseRequestController extends Controller
             'canEdit'   => (app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.modifier')
                 || app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert'))
                 && $purchaseRequest->canBeEdited(),
+            'peutVoirPrix' => self::peutVoirPrix($purchaseRequest),
         ]);
     }
 
@@ -254,8 +293,9 @@ class PurchaseRequestController extends Controller
         $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item', 'purchaseOrders.supplier', 'purchaseOrders.createdBy']);
 
         return view('economat.purchase_requests.print', [
-            'request' => $purchaseRequest,
-            'tenant'  => \App\Models\Tenant::first(),
+            'request'      => $purchaseRequest,
+            'tenant'       => \App\Models\Tenant::first(),
+            'peutVoirPrix' => self::peutVoirPrix($purchaseRequest),
         ]);
     }
 

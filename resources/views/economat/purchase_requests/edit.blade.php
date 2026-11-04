@@ -86,8 +86,10 @@
                             <th class="px-4 py-2.5 text-right w-24">Stock actuel</th>
                             <th class="px-3 py-2.5 text-center w-16">Unité</th>
                             <th class="px-4 py-2.5 text-right w-28">Quantité voulue</th>
-                            <th class="px-4 py-2.5 text-right w-36">Prix estimé (F)</th>
-                            <th class="px-4 py-2.5 text-right w-32">Total Estimé (F)</th>
+                            @if($peutVoirPrix)
+                                <th class="px-4 py-2.5 text-right w-36">Prix estimé (F)</th>
+                                <th class="px-4 py-2.5 text-right w-32">Total Estimé (F)</th>
+                            @endif
                             <th class="px-4 py-2.5 text-center w-20"><span class="sr-only">Retirer</span></th>
                         </tr>
                     </thead>
@@ -108,12 +110,14 @@
                                 <td class="px-4 py-2.5 text-right">
                                     <input type="number" step="0.001" min="0.001" :name="'lines[' + index + '][quantity_requested]'" x-model="line.quantity" required class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary" placeholder="0">
                                 </td>
-                                <td class="px-4 py-2.5 text-right font-mono text-primary/80 whitespace-nowrap">
-                                    <span x-text="line.stock_item_id ? (line.unit_price > 0 ? formatMoney(line.unit_price) + ' F' : 'Jamais acheté') : '—'"></span>
-                                </td>
-                                <td class="px-4 py-2.5 text-right font-mono font-bold text-primary">
-                                    <span x-text="formatMoney(lineTotal(line))"></span> F
-                                </td>
+                                @if($peutVoirPrix)
+                                    <td class="px-4 py-2.5 text-right font-mono text-primary/80 whitespace-nowrap">
+                                        <span x-text="line.stock_item_id ? (line.unit_price > 0 ? formatMoney(line.unit_price) + ' F' : 'Jamais acheté') : '—'"></span>
+                                    </td>
+                                    <td class="px-4 py-2.5 text-right font-mono font-bold text-primary">
+                                        <span x-text="formatMoney(lineTotal(line))"></span> F
+                                    </td>
+                                @endif
                                 <td class="px-4 py-2.5 text-center">
                                     <button type="button" @click="removeLine(index)"
                                             class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
@@ -132,10 +136,12 @@
                 <button type="button" @click="addLine()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
                 </button>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-primary/60">Montant estimé total de la demande :</span>
-                    <span class="font-mono text-base font-bold text-primary" x-text="formatMoney(grandTotal()) + ' FCFA'"></span>
-                </div>
+                @if($peutVoirPrix)
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-primary/60">Montant estimé total de la demande :</span>
+                        <span class="font-mono text-base font-bold text-primary" x-text="formatMoney(grandTotal()) + ' FCFA'"></span>
+                    </div>
+                @endif
             </div>
         </div>
 

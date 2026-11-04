@@ -48,15 +48,17 @@
                     Créé le {{ $request->created_at->format('d/m/Y à H:i') }} par {{ $request->requestedBy?->name ?? 'Demandeur' }}
                 </p>
             </div>
-            <div class="text-right">
-                <span class="text-xs text-primary/50 uppercase font-semibold">Montant estimé</span>
-                <div class="text-2xl font-bold font-mono text-primary mt-0.5">
-                    {{ number_format($request->total_estimated_amount / 100, 0, ',', ' ') }} FCFA
+            @if($peutVoirPrix)
+                <div class="text-right">
+                    <span class="text-xs text-primary/50 uppercase font-semibold">Montant estimé</span>
+                    <div class="text-2xl font-bold font-mono text-primary mt-0.5">
+                        {{ number_format($request->total_estimated_amount / 100, 0, ',', ' ') }} FCFA
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
 
-        @if($request->supplier)
+        @if($request->supplier && $peutVoirPrix)
             <div class="p-3.5 bg-gray-50 border border-secondary/15 rounded-lg flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
@@ -190,8 +192,10 @@
                         @if($approuvee)
                             <th class="px-5 py-3 text-right">Quantité approuvée</th>
                         @endif
-                        <th class="px-5 py-3 text-right">Prix du fournisseur</th>
-                        <th class="px-5 py-3 text-right">Total estimé</th>
+                        @if($peutVoirPrix)
+                            <th class="px-5 py-3 text-right">Prix du fournisseur</th>
+                            <th class="px-5 py-3 text-right">Total estimé</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
@@ -221,23 +225,27 @@
                                     @endif
                                 </td>
                             @endif
-                            <td class="px-5 py-3 text-right font-mono text-primary/70">
-                                {{ number_format($line->estimated_unit_price / 100, 0, ',', ' ') }} F
-                            </td>
-                            <td class="px-5 py-3 text-right font-mono font-semibold text-primary">
-                                {{ number_format($line->estimatedTotal() / 100, 0, ',', ' ') }} FCFA
-                            </td>
+                            @if($peutVoirPrix)
+                                <td class="px-5 py-3 text-right font-mono text-primary/70">
+                                    {{ number_format($line->estimated_unit_price / 100, 0, ',', ' ') }} F
+                                </td>
+                                <td class="px-5 py-3 text-right font-mono font-semibold text-primary">
+                                    {{ number_format($line->estimatedTotal() / 100, 0, ',', ' ') }} FCFA
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
-                <tfoot class="bg-gray-50/80 border-t border-secondary/15 font-semibold text-primary">
-                    <tr>
-                        <td colspan="{{ $approuvee ? 5 : 4 }}" class="px-5 py-3 text-right">Total estimé de la demande :</td>
-                        <td class="px-5 py-3 text-right font-mono text-base font-bold text-primary">
-                            {{ number_format($request->total_estimated_amount / 100, 0, ',', ' ') }} FCFA
-                        </td>
-                    </tr>
-                </tfoot>
+                @if($peutVoirPrix)
+                    <tfoot class="bg-gray-50/80 border-t border-secondary/15 font-semibold text-primary">
+                        <tr>
+                            <td colspan="{{ $approuvee ? 5 : 4 }}" class="px-5 py-3 text-right">Total estimé de la demande :</td>
+                            <td class="px-5 py-3 text-right font-mono text-base font-bold text-primary">
+                                {{ number_format($request->total_estimated_amount / 100, 0, ',', ' ') }} FCFA
+                            </td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
     </div>
