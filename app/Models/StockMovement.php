@@ -41,19 +41,28 @@ class StockMovement extends Model
     public const SOURCE_IMPORT         = 'import';
     /** Bon de transfert vers un dépôt de l'économat : le stock change de lieu, il ne se consomme pas. */
     public const SOURCE_TRANSFER       = 'transfer';
+    /** Correction du stock initial d'un article. */
+    public const SOURCE_ADJUST_INITIAL  = 'adjust_initial';
+    /** Régularisation d'une livraison / entrée fournisseur. */
+    public const SOURCE_ADJUST_DELIVERY = 'adjust_delivery';
+    /** Ajustement d'inventaire physique. */
+    public const SOURCE_ADJUST_COUNT    = 'adjust_inventory';
 
     public const SOURCES = [
-        self::SOURCE_PURCHASE_ORDER => 'Bon de commande fournisseur',
-        self::SOURCE_GOODS_RECEIPT  => 'Bon de réception fournisseur',
-        self::SOURCE_REQUISITION    => 'Demande interne',
-        self::SOURCE_MANUAL         => 'Saisie manuelle',
-        self::SOURCE_STOCK_COUNT    => 'Inventaire physique',
-        self::SOURCE_OPENING        => 'Reprise du stock initial',
-        self::SOURCE_EXTERNAL_ISSUE => 'Sortie hors établissement',
-        self::SOURCE_PACKAGING      => 'Conditionnement',
-        self::SOURCE_CUT            => 'Découpe',
-        self::SOURCE_IMPORT         => 'Import Excel',
-        self::SOURCE_TRANSFER       => 'Transfert vers un dépôt',
+        self::SOURCE_PURCHASE_ORDER  => 'Bon de commande fournisseur',
+        self::SOURCE_GOODS_RECEIPT   => 'Bon de réception fournisseur',
+        self::SOURCE_REQUISITION     => 'Demande interne',
+        self::SOURCE_MANUAL          => 'Saisie manuelle',
+        self::SOURCE_STOCK_COUNT     => 'Inventaire physique',
+        self::SOURCE_OPENING         => 'Reprise du stock initial',
+        self::SOURCE_EXTERNAL_ISSUE  => 'Sortie hors établissement',
+        self::SOURCE_PACKAGING       => 'Conditionnement',
+        self::SOURCE_CUT             => 'Découpe',
+        self::SOURCE_IMPORT          => 'Import Excel',
+        self::SOURCE_TRANSFER        => 'Transfert vers un dépôt',
+        self::SOURCE_ADJUST_INITIAL  => 'Correction stock initial',
+        self::SOURCE_ADJUST_DELIVERY => 'Régularisation livraison',
+        self::SOURCE_ADJUST_COUNT    => 'Ajustement d\'inventaire',
     ];
 
     public const TYPES = [
@@ -96,6 +105,16 @@ class StockMovement extends Model
 
     public function typeLabel(): string
     {
+        if ($this->type === self::TYPE_ADJUSTMENT) {
+            return match ($this->source_type) {
+                self::SOURCE_ADJUST_INITIAL  => 'Correction stock initial',
+                self::SOURCE_ADJUST_DELIVERY => 'Régularisation livraison',
+                self::SOURCE_STOCK_COUNT,
+                self::SOURCE_ADJUST_COUNT    => 'Ajustement d\'inventaire',
+                default                      => 'Ajustement de stock',
+            };
+        }
+
         return self::TYPES[$this->type] ?? $this->type;
     }
 

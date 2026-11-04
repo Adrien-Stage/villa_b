@@ -7,9 +7,12 @@
     $qte = fn ($v) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, 3, ',', ' '), '0'), ',');
     $fcfa = fn (int $v) => number_format(abs($v) / 100, 0, ',', ' ');
     $styles = [
-        'in'         => 'bg-green-50 text-green-700 border-green-200',
-        'out'        => 'bg-red-50 text-red-700 border-red-200',
-        'adjustment' => 'bg-amber-50 text-amber-800 border-amber-200',
+        'in'               => 'bg-green-50 text-green-700 border-green-200',
+        'out'              => 'bg-red-50 text-red-700 border-red-200',
+        'adjustment'       => 'bg-amber-50 text-amber-800 border-amber-200',
+        'adjust_initial'   => 'bg-blue-50 text-blue-700 border-blue-200',
+        'adjust_delivery'  => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        'adjust_inventory' => 'bg-amber-50 text-amber-800 border-amber-200',
     ];
     $champ = 'mt-1 rounded-lg border border-secondary/30 bg-white px-2.5 py-1.5 text-sm text-primary outline-none focus:border-primary';
 @endphp
@@ -195,7 +198,7 @@
                     </x-table.cell>
                 @endunless
                 <x-table.cell nowrap>
-                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold {{ $styles[$l['type']] ?? 'bg-gray-100 text-gray-600' }}">{{ $l['nature'] }}</span>
+                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold {{ $styles[$l['source_type'] ?? ''] ?? ($styles[$l['type']] ?? 'bg-gray-100 text-gray-600') }}">{{ $l['nature'] }}</span>
                 </x-table.cell>
                 <x-table.cell hide="lg" class="text-xs">
                     @if($l['url'])
@@ -213,7 +216,7 @@
                     @if($l['apres_decompose'])<span class="block text-[10px] font-sans font-normal text-primary/45">{{ $l['apres_decompose'] }}</span>@endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $fcfa($l['cout']) }}</x-table.cell>
-                <x-table.cell align="right" nowrap class="font-mono {{ $l['valeur'] < 0 ? 'text-red-700' : 'text-green-700' }}">{{ $l['valeur'] < 0 ? '−' : '+' }}{{ $fcfa($l['valeur']) }}</x-table.cell>
+                <x-table.cell align="right" nowrap class="font-mono {{ $l['valeur'] !== null && $l['valeur'] < 0 ? 'text-red-700' : 'text-primary/70' }}">{{ $l['valeur'] !== null ? (($l['valeur'] < 0 ? '−' : '+') . $fcfa($l['valeur'])) : '—' }}</x-table.cell>
                 <x-table.cell hide="2xl" class="max-w-xs text-xs text-primary/60">
                     {{ $l['motif'] }}
                     @if($l['ouvertures'])<span class="block text-amber-700">{{ ucfirst($l['ouvertures']) }}</span>@endif
