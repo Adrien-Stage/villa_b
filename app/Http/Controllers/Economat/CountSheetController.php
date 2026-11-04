@@ -24,12 +24,13 @@ class CountSheetController extends Controller
         $calendrier = InventorySchedule::current();
 
         return view('economat.count_sheets.index', [
-            'services'          => $this->sheets->services(),
-            'stockCategories'   => StockCategory::orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
-            'pantryCategories'  => RestaurantPantryCategory::orderBy('name')->get(['id', 'name']),
-            'zones'             => StorageZone::query()->dansLOrdre()->whereHas('items')->get(['id', 'name']),
+            'services'           => $this->sheets->services(),
+            'stockCategories'    => StockCategory::orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'pantryCategories'   => RestaurantPantryCategory::orderBy('name')->get(['id', 'name']),
+            'shopCategories'     => \App\Models\ShopCategory::orderBy('name')->get(['id', 'name']),
+            'zones'              => StorageZone::query()->dansLOrdre()->get(['id', 'name']),
             'prochainInventaire' => $calendrier->next(now()),
-            'selections'        => CountSheetService::SELECTIONS,
+            'selections'         => CountSheetService::SELECTIONS,
         ]);
     }
 

@@ -270,3 +270,40 @@ test('toutes les fiches appliquent le même choix, boutique et dépôts compris'
 
     $this->get(route('economat.count_sheets.print', ['service' => 'tout', 'articles' => 'en_stock']))->assertOk()->assertDontSee('Carte postale');
 });
+
+test('le sélecteur de zone est affiché pour l’économat même avec une seule zone', function () {
+    stocksDeTousLesServices();
+    \App\Models\StorageZone::create(['name' => 'Réserve principale', 'sort_order' => 1]);
+
+    $this->get(route('economat.count_sheets.index'))
+        ->assertOk()
+        ->assertSee('Toutes les zones de stockage')
+        ->assertSee('Réserve principale');
+});
+
+test('le sélecteur de catégorie est affiché pour les dépôts et la boutique', function () {
+    $minibar = stocksDeTousLesServices();
+
+    $this->get(route('economat.count_sheets.index'))
+        ->assertOk()
+        ->assertSee('id="categorie-depot-' . $minibar->id . '"', false)
+        ->assertSee('id="categorie-boutique"', false);
+});
+
+test('la fiche d’un dépôt est filtrée par sa catégorie de stock', function () {
+    $minibar = stocksDeTousLesServices();
+    $boisson = StockCategory::create(['name' => 'Boissons']);
+    $snack = StockCategory::create(['name' => 'Snacks']);
+
+    $jus = StockItem::create(['name' => 'Jus d’orange', 'unit' => 'bouteille', 'stock_category_id' => $boisson->id]);
+    $chips = StockItem::create(['name' => 'Chips', 'unit' => 'sachet', 'stock_category_id' => $snack->id]);
+
+    ServiceStoreStock::create(['service_store_id' => $minibar->id, 'stock_item_id' => $jus->id, 'current_stock' => 10, 'average_cost' => 1000]);
+    ServiceStoreStock::create(['service_store_id' => $minibar->id, 'stock_item_id' => $chips->id, 'current_stock' => 5, 'average_cost' => 500]);
+
+    $this->get(route('economat.count_sheets.print', ['service' => 'depot-' . $minibar->id, 'categorie' => $boisson->id]))
+        ->assertOk()
+        ->assertSee('Jus d’orange')
+        ->assertDontSee('Chips')
+        ->assertSee('Boissons');
+});
