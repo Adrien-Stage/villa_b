@@ -360,20 +360,31 @@
                 @csrf
                 <div class="px-6 py-5 space-y-4">
                     <p class="text-sm text-primary/70">Article : <strong x-text="adjust.name"></strong></p>
-                    <p class="text-xs text-primary/50">Stock actuel : <span x-text="adjust.current"></span> <span x-text="adjust.unit"></span></p>
+                    <p class="text-xs text-primary/50">Stock actuel : <span class="font-semibold text-primary" x-text="adjust.current"></span> <span x-text="adjust.unit"></span></p>
+
                     <div>
-                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Quantité constatée <span class="text-red-500">*</span></label>
-                        <input type="number" step="0.001" min="0" name="counted_quantity" x-model="adjust.counted" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                        <p class="text-[11px] text-primary/40 mt-1">Le stock sera fixé à cette valeur ; l'écart est journalisé.</p>
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Type de stock à modifier / Cause <span class="text-red-500">*</span></label>
+                        <select name="adjustment_type" x-model="adjust.adjustment_type" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <option value="initial_stock">Stock initial (Inventaire de départ)</option>
+                            <option value="delivery">Entrée de stock (Livraison fournisseur)</option>
+                            <option value="inventory">Ajustement d'inventaire physique (Écart constaté)</option>
+                        </select>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Motif</label>
-                        <input type="text" name="reason" maxlength="255" placeholder="Inventaire, casse, péremption…" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Nouveau stock total <span class="text-red-500">*</span></label>
+                        <input type="number" step="0.001" min="0" name="counted_quantity" x-model="adjust.counted" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <p class="text-[11px] text-primary/40 mt-1">Le stock de cet article passera directement à cette quantité dans les mouvements.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-primary/70 mb-1.5">Motif / Justification (facultatif)</label>
+                        <input type="text" name="reason" maxlength="255" placeholder="Ex: Rectification inventaire initial, BL oublié..." class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
                     </div>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
                     <button type="button" @click="adjustOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Ajuster</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Valider l'ajustement</button>
                 </div>
             </form>
         </div>
@@ -476,7 +487,7 @@
                 this.zoneOpen = true;
             },
             openAdjust(item) {
-                this.adjust = { ...item, counted: item.current };
+                this.adjust = { ...item, counted: item.current, adjustment_type: 'initial_stock' };
                 this.adjustAction = `${baseUrl}/${item.id}/ajustement`;
                 this.adjustOpen = true;
             },

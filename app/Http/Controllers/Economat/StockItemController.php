@@ -196,13 +196,35 @@ class StockItemController extends Controller
     public function adjust(Request $request, StockItem $item, StockService $stock): RedirectResponse
     {
         $validated = $request->validate([
+            'adjustment_type'  => ['nullable', 'string', 'in:initial_stock,delivery,inventory'],
             'counted_quantity' => ['required', 'numeric', 'min:0'],
             'reason'           => ['nullable', 'string', 'max:255'],
         ]);
 
-        $stock->adjust($item, (float) $validated['counted_quantity'], $validated['reason'] ?? null);
+        $type = $validated['adjustment_type'] ?? 'initial_stock';
+        $sourceType = match ($type) {
+            'initial_stock' => StockMovement::SOURCE_ADJUST_INITIAL,
+            'delivery'      => StockMovement::SOURCE_ADJUST_DELIVERY,
+            default         => StockMovement::SOURCE_ADJUST_COUNT,
+        };
 
-        return back()->with('success', "Stock de « {$item->name} » ajusté.");
+        $defaultReason = match ($type) {
+            'initial_stock' => 'Correction du stock initial',
+            'delivery'      => 'Régularisation de livraison',
+            default         => 'Ajustement d\'inventaire',
+        };
+
+        $customReason = trim((string) ($validated['reason'] ?? ''));
+        $reason = $customReason !== '' ? $customReason : $defaultReason;
+
+        $stock->adjust(
+            item: $item,
+            countedQuantity: (float) $validated['counted_quantity'],
+            reason: $reason,
+            sourceType: $sourceType
+        );
+
+        return back()->with('success', "Stock de « {$item->name} » ajusté à {$validated['counted_quantity']} {$item->unit}.");
     }
 
     /**

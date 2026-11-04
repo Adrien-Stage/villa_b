@@ -255,15 +255,30 @@
                             <tr>
                                 <td class="px-5 py-2.5 text-primary/50 text-xs whitespace-nowrap">{{ $m->occurred_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-5 py-2.5">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
-                                        {{ $m->type === 'in' ? 'bg-green-50 text-green-700' : ($m->type === 'out' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600') }}">
+                                    @php
+                                        $style = match($m->source_type) {
+                                            'adjust_initial' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                            'adjust_delivery' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                                            'adjust_inventory' => 'bg-amber-50 text-amber-800 border-amber-200',
+                                            default => match($m->type) {
+                                                'in' => 'bg-green-50 text-green-700 border-green-200',
+                                                'out' => 'bg-red-50 text-red-700 border-red-200',
+                                                default => 'bg-gray-100 text-gray-600 border-gray-200',
+                                            },
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border {{ $style }}">
                                         {{ $m->typeLabel() }}
                                     </span>
                                 </td>
                                 <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ $item->shortUnit() }}</td>
                                 <td class="px-5 py-2.5 text-right text-primary/60">{{ rtrim(rtrim(number_format($m->stockAvant(), 3, ',', ' '), '0'), ',') }}</td>
-                                <td class="px-5 py-2.5 text-right font-medium {{ $m->quantity > 0 ? 'text-green-700' : 'text-red-700' }}">
-                                    {{ $m->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($m->quantity, 3, ',', ' '), '0'), ',') }}
+                                <td class="px-5 py-2.5 text-right font-medium {{ $m->type === 'adjustment' ? 'text-primary/40' : ($m->quantity > 0 ? 'text-green-700' : 'text-red-700') }}">
+                                    @if($m->type === 'adjustment')
+                                        —
+                                    @else
+                                        {{ $m->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($m->quantity, 3, ',', ' '), '0'), ',') }}
+                                    @endif
                                 </td>
                                 <td class="px-5 py-2.5 text-right text-primary/70">
                                     {{ rtrim(rtrim(number_format($m->stock_after, 3, ',', ' '), '0'), ',') }}

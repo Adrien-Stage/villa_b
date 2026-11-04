@@ -330,28 +330,30 @@ class StockMovementJournal
     {
         $quantite = (float) $m->quantity;
         $document = $documents[$m->source_type][$m->source_id] ?? null;
+        $estAjustement = $m->type === StockMovement::TYPE_ADJUSTMENT;
 
         return [
-            'date'      => $m->occurred_at,
-            'article'   => $m->item?->name ?? '—',
-            'reference' => $m->item?->reference,
-            'unite'     => $m->item?->unit ?? '',
-            'type'      => $m->type,
-            'nature'    => $m->typeLabel(),
-            'origine'   => $m->sourceLabel() . ($document ? ' ' . $document['numero'] : '')
+            'date'        => $m->occurred_at,
+            'article'     => $m->item?->name ?? '—',
+            'reference'   => $m->item?->reference,
+            'unite'       => $m->item?->unit ?? '',
+            'type'        => $m->type,
+            'source_type' => $m->source_type,
+            'nature'      => $m->typeLabel(),
+            'origine'     => $m->sourceLabel() . ($document ? ' ' . $document['numero'] : '')
                 . ($m->stockImport && $m->source_type !== StockMovement::SOURCE_IMPORT ? ' · import ' . $m->stockImport->reference : ''),
-            'url'       => $document['url'] ?? null,
-            'avant'     => $m->stockAvant(),
-            'entree'    => $quantite > 0 ? $quantite : null,
-            'sortie'    => $quantite < 0 ? -$quantite : null,
-            'apres'     => (float) $m->stock_after,
+            'url'         => $document['url'] ?? null,
+            'avant'       => $m->stockAvant(),
+            'entree'      => $estAjustement ? null : ($quantite > 0 ? $quantite : null),
+            'sortie'      => $estAjustement ? null : ($quantite < 0 ? -$quantite : null),
+            'apres'       => (float) $m->stock_after,
             // Unités fermées après le mouvement, et ce qu'il a ouvert.
             'apres_decompose' => $m->stockApresDecompose(),
-            'ouvertures' => $m->source_type === StockMovement::SOURCE_PACKAGING ? null : $m->ouvertures(),
-            'cout'      => (int) $m->unit_cost,
-            'valeur'    => $m->valeur(),
-            'motif'     => $m->reason ?: '—',
-            'par'       => $m->user?->name ?? '—',
+            'ouvertures'  => $m->source_type === StockMovement::SOURCE_PACKAGING ? null : $m->ouvertures(),
+            'cout'        => (int) $m->unit_cost,
+            'valeur'      => $estAjustement ? null : $m->valeur(),
+            'motif'       => $m->reason ?: '—',
+            'par'         => $m->user?->name ?? '—',
         ];
     }
 }
