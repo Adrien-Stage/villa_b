@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\CashRegisterSession;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,10 +28,11 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->put('last_user_activity_at', now()->timestamp);
 
         $user = Auth::user();
-        if ($user && !$user->isAdmin()) {
-            $pausedSession = \App\Models\CashRegisterSession::where('user_id', $user->id)
+        if ($user && ! $user->isAdmin()) {
+            $pausedSession = CashRegisterSession::where('user_id', $user->id)
                 ->whereNull('closed_at')
                 ->where('status', 'paused')
                 ->first();
@@ -52,14 +54,14 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        if ($user && !$user->isAdmin()) {
-            $openSession = \App\Models\CashRegisterSession::where('user_id', $user->id)
+        if ($user && ! $user->isAdmin()) {
+            $openSession = CashRegisterSession::where('user_id', $user->id)
                 ->whereNull('closed_at')
                 ->where('status', 'open')
                 ->first();
 
             if ($openSession) {
-                if (!$request->has('force')) {
+                if (! $request->has('force')) {
                     return redirect()->back()->with([
                         'confirm_logout_caisse_open' => true,
                         'caisse_module' => $openSession->module,

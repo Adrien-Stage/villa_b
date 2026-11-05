@@ -1479,8 +1479,13 @@
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
+                        'X-Background-Poll': '1',
                     },
                 });
+                if (response.status === 401 || response.status === 419) {
+                    window.location.href = '{{ route('login') }}?expired=inactivity';
+                    return;
+                }
                 if (!response.ok) return;
 
                 const payload = await response.json();
@@ -1618,8 +1623,13 @@
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
+                            'X-Background-Poll': '1',
                         }
                     });
+                    if (response.status === 401 || response.status === 419) {
+                        window.location.href = '{{ route('login') }}?expired=inactivity';
+                        return;
+                    }
                     if (!response.ok) return;
                     const res = await response.json();
                     if (res.ok) {
@@ -1824,6 +1834,7 @@
     </script>
 
     @include('partials.pwa-install')
+    @include('partials.session-timeout')
 
     @stack('scripts')
 

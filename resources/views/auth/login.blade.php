@@ -139,9 +139,23 @@
                 </p>
             </div>
 
-            {{-- Erreurs de session --}}
-            @if(session('status'))
-                <div class="mb-4 text-sm text-text-on-dark">{{ session('status') }}</div>
+            {{-- Alertes et notifications de session (expiration, déconnexion) --}}
+            @if(request('expired') === 'inactivity' || session('status'))
+                <div class="mb-5 p-3.5 rounded-xl text-xs font-medium border border-amber-500/30 bg-amber-500/10 text-amber-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ session('status') ?? 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.' }}</span>
+                </div>
+            @endif
+
+            @if($errors->has('login'))
+                <div class="mb-5 p-3.5 rounded-xl text-xs font-medium border border-red-500/30 bg-red-500/10 text-red-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{{ $errors->first('login') }}</span>
+                </div>
             @endif
 
             <form method="POST" action="{{ route('login') }}">
