@@ -53,6 +53,18 @@
             border: 1px solid var(--color-secondary);
             opacity: 0.15;
         }
+
+        /* Neutraliser le fond jaune d'autofill sur le thème sombre */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-text-fill-color: var(--color-text-on-dark) !important;
+            -webkit-box-shadow: 0 0 0 1000px #180d07 inset !important;
+            box-shadow: 0 0 0 1000px #180d07 inset !important;
+            caret-color: var(--color-text-on-dark) !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
     </style>
 </head>
 {{-- min-h-screen plutôt que height/overflow fixes : sur mobile le clavier
@@ -139,23 +151,96 @@
                 </p>
             </div>
 
-            {{-- Alertes et notifications de session (expiration, déconnexion) --}}
-            @if(request('expired') === 'inactivity' || session('status'))
-                <div class="mb-5 p-3.5 rounded-xl text-xs font-medium border border-amber-500/30 bg-amber-500/10 text-amber-200 flex items-center gap-2">
-                    <svg class="w-4 h-4 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            @php
+                // Initialisation sécurisée du sac d'erreurs
+                $errors = $errors ?? new \Illuminate\Support\ViewErrorBag;
+                $mainError = $errors->first('login') ?: $errors->first('email') ?: $errors->first('password');
+                $isDeactivated = $mainError && (
+                    str_contains(mb_strtolower($mainError), 'désactivé') || 
+                    str_contains(mb_strtolower($mainError), 'desactive')
+                );
+                $isThrottled = $mainError && (
+                    str_contains(mb_strtolower($mainError), 'tentative') || 
+                    str_contains(mb_strtolower($mainError), 'secondes')
+                );
+                $isAuthFailed = $mainError && ! $isDeactivated && ! $isThrottled && (
+                    $mainError === trans('auth.failed') ||
+                    $mainError === trans('auth.password') ||
+                    str_contains(mb_strtolower($mainError), 'identifiant') ||
+                    str_contains(mb_strtolower($mainError), 'mot de passe') ||
+                    str_contains(mb_strtolower($mainError), 'correspondent pas')
+                );
+            @endphp
+
+            {{-- Message d'état de session optionnel (hors expiration d'inactivité) --}}
+            @if(session('status') && ! str_contains(mb_strtolower(session('status')), 'inactivit') && ! str_contains(mb_strtolower(session('status')), 'expir'))
+                <div class="mb-6 p-4 rounded-xl text-xs font-medium border border-secondary/30 bg-secondary/10 text-text-on-dark flex items-center gap-2.5 animate-up-1">
+                    <svg class="w-4 h-4 flex-shrink-0 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{{ session('status') ?? 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.' }}</span>
+                    <span>{{ session('status') }}</span>
                 </div>
             @endif
 
-            @if($errors->has('login'))
-                <div class="mb-5 p-3.5 rounded-xl text-xs font-medium border border-red-500/30 bg-red-500/10 text-red-200 flex items-center gap-2">
-                    <svg class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>{{ $errors->first('login') }}</span>
-                </div>
+            {{-- Bannière d'erreur contextuelle haut de gamme --}}
+            @if($mainError)
+                @if($isDeactivated)
+                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/60 via-red-900/20 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.25)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Compte désactivé</h3>
+                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
+                                Votre compte utilisateur a été désactivé par l'administration. Veuillez contacter votre responsable ou le support pour y accéder.
+                            </p>
+                        </div>
+                    </div>
+                @elseif($isThrottled)
+                    <div class="mb-6 p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/50 via-amber-900/20 to-surface-dark shadow-[0_4px_24px_-4px_rgba(245,158,11,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mt-0.5 shadow-inner">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-amber-200 tracking-wide">Trop de tentatives</h3>
+                            <p class="text-xs text-amber-300/80 mt-1 leading-relaxed">
+                                {{ $mainError }}
+                            </p>
+                        </div>
+                    </div>
+                @elseif($isAuthFailed)
+                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/45 via-red-900/15 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Identifiants incorrects</h3>
+                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
+                                L'adresse email ou le mot de passe est incorrect. Veuillez vérifier vos informations de connexion.
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/45 via-red-900/15 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Erreur de connexion</h3>
+                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
+                                {{ $mainError }}
+                            </p>
+                        </div>
+                    </div>
+                @endif
             @endif
 
             <form method="POST" action="{{ route('login') }}">
@@ -177,14 +262,22 @@
                         class="w-full px-4 py-3 rounded-lg text-sm text-text-on-dark placeholder-opacity-30 outline-none transition-all"
                         style="
                             background: color-mix(in srgb, var(--color-secondary) 7%, transparent);
-                            border: 1px solid color-mix(in srgb, var(--color-secondary) 15%, transparent);
+                            border: 1px solid {{ $errors->has('email') || ($errors->has('login') && !old('email')) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }};
                             color: var(--color-text-on-dark);
+                            {{ $errors->has('email') || ($errors->has('login') && !old('email')) ? 'box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);' : '' }}
                         "
-                        onfocus="this.style.borderColor='rgba(204,171,135,0.4)'"
-                        onblur="this.style.borderColor='rgba(204,171,135,0.15)'"
+                        onfocus="this.style.borderColor='{{ $errors->has('email') ? 'rgba(239, 68, 68, 0.8)' : 'rgba(204,171,135,0.4)' }}'"
+                        onblur="this.style.borderColor='{{ $errors->has('email') ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }}'"
                     >
                     @error('email')
-                        <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                        @if(! $isDeactivated && ! $isAuthFailed && ! $isThrottled)
+                            <p class="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-medium">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{{ $message }}</span>
+                            </p>
+                        @endif
                     @enderror
                 </div>
 
@@ -204,11 +297,12 @@
                             class="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all pr-12"
                             style="
                                 background: color-mix(in srgb, var(--color-secondary) 7%, transparent);
-                                border: 1px solid color-mix(in srgb, var(--color-secondary) 15%, transparent);
+                                border: 1px solid {{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }};
                                 color: var(--color-text-on-dark);
+                                {{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);' : '' }}
                             "
-                            onfocus="this.style.borderColor='rgba(204,171,135,0.4)'"
-                            onblur="this.style.borderColor='rgba(204,171,135,0.15)'"
+                            onfocus="this.style.borderColor='{{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.8)' : 'rgba(204,171,135,0.4)' }}'"
+                            onblur="this.style.borderColor='{{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }}'"
                         >
                         {{-- Toggle mot de passe visible --}}
                         <button type="button"
@@ -224,7 +318,14 @@
                         </button>
                     </div>
                     @error('password')
-                        <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                        @if(! $isDeactivated && ! $isAuthFailed && ! $isThrottled)
+                            <p class="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-medium">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{{ $message }}</span>
+                            </p>
+                        @endif
                     @enderror
                 </div>
 

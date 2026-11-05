@@ -9,7 +9,7 @@
 (function() {
     const TIMEOUT_MS = {{ (int) config('session.lifetime', 20) * 60 * 1000 }};
     const STORAGE_KEY = 'wetchah_last_user_activity';
-    const LOGIN_URL = '{{ route('login') }}?expired=inactivity';
+    const LOGIN_URL = '{{ route('login') }}';
 
     let lastRecorded = Date.now();
     try {
