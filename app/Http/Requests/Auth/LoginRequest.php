@@ -50,7 +50,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Votre compte a ete desactive. Veuillez contacter votre manager.',
+                'email' => 'Votre compte a été désactivé. Veuillez contacter votre responsable.',
             ]);
         }
 
