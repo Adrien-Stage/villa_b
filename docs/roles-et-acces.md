@@ -351,6 +351,7 @@ portés au folio.
 
 ## Pour aller plus loin
 
+- [Audit métier et sécurité — 5 novembre 2026](audits/2026-11-05-audit-metier-securite.md) — écarts avec l’organisation cible, preuves et plan de correction
 - [Architecture](architecture.md) — modules et catalogue
 - [Comptabilité](comptabilite.md) — sessions de caisse
 - [Hébergement](hebergement.md) — le cycle d'un séjour

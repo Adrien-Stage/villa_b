@@ -97,6 +97,8 @@ class RestaurantCustomerOrder extends Model
         'payment_status',
         'payment_method',
         'total_amount',
+        'tracking_token',
+        'tracking_token_expires_at',
         'amount_paid',
         'notes',
         'placed_at',
@@ -125,6 +127,7 @@ class RestaurantCustomerOrder extends Model
         'served_at' => 'datetime',
         'paid_at' => 'datetime',
         'stock_deducted_at' => 'datetime',
+        'tracking_token_expires_at' => 'datetime',
     ];
 
     public function isComplimentary(): bool

@@ -142,6 +142,7 @@
     </div>
     @endif
 
+    @include('partials.session-timeout')
     @stack('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {

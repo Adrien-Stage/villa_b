@@ -16,7 +16,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['reporting.secret' => 'jeton-de-service']);
+    config([
+        'orchestration.secret' => 'jeton-de-service',
+        'reporting.secret' => 'jeton-reporting',
+    ]);
     activerModules(['api', 'economat']);
 });
 
