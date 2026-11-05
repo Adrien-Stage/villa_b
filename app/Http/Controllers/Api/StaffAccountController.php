@@ -57,6 +57,7 @@ class StaffAccountController extends Controller
                 'email' => $email,
                 'phone' => $valide['phone'] ?? null,
                 'is_active' => true,
+                'must_change_password' => true,
                 'password' => Hash::make($valide['password']),
             ]);
 

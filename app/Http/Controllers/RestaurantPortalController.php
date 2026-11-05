@@ -131,7 +131,10 @@ class RestaurantPortalController extends Controller
             $notes = null;
         }
 
-        $order = DB::transaction(function () use ($restaurant, $tableNumber, $customerName, $customerPhone, $notes, $lines, $menuItems) {
+        $trackingToken = Str::random(40);
+        $trackingTokenExpiresAt = now()->addHours(24);
+
+        $order = DB::transaction(function () use ($restaurant, $tableNumber, $customerName, $customerPhone, $notes, $lines, $menuItems, $trackingToken, $trackingTokenExpiresAt) {
             $total = 0;
 
             foreach ($lines as $menuItemId => $qty) {
@@ -150,6 +153,8 @@ class RestaurantPortalController extends Controller
                     'customer_phone' => $customerPhone,
                     'status' => 'pending',
                     'total_amount' => $total,
+                    'tracking_token' => $trackingToken,
+                    'tracking_token_expires_at' => $trackingTokenExpiresAt,
                     'notes' => $notes,
                     'placed_at' => now(),
                 ]);
@@ -174,12 +179,21 @@ class RestaurantPortalController extends Controller
             return $order;
         });
 
+        // Sauvegarde de l'autorisation d'accès dans la session du visiteur
+        $sessionTokens = (array) $request->session()->get('portal_orders', []);
+        $sessionTokens[$order->id] = $trackingToken;
+        $request->session()->put('portal_orders', $sessionTokens);
+
         // Le client a validé : la commande est aussitôt confiée à un serveur en
         // salle (répartition au moins chargé), à charge de lui de la transmettre en
         // cuisine puis d'apporter le plat à la table.
         $this->assignment->assignPortalOrder($order);
 
-        return redirect()->route('portal.restaurant.order', ['tenant' => $tenant->slug, 'order' => $order->id]);
+        return redirect()->route('portal.restaurant.order', [
+            'tenant' => $tenant->slug,
+            'order' => $order->id,
+            'token' => $trackingToken,
+        ]);
     }
 
     public function order(Request $request, Tenant $tenant, int $order): View
@@ -188,13 +202,35 @@ class RestaurantPortalController extends Controller
 
         $orderModel = RestaurantCustomerOrder::query()
             ->withoutGlobalScopes()
-            
             ->with('items')
             ->findOrFail($order);
+
+        // S5 : Les commandes internes (créées par le personnel) ne sont jamais exposées publiquement
+        if ($orderModel->source !== 'portal') {
+            abort(404);
+        }
+
+        // S5 : Contrôle d'accès : vérification par jeton aléatoire d'URL ou par session visiteur
+        $queryToken = (string) $request->query('token');
+        $sessionTokens = (array) $request->session()->get('portal_orders', []);
+        $sessionToken = $sessionTokens[$orderModel->id] ?? null;
+
+        $hasValidSession = $sessionToken && hash_equals((string) $orderModel->tracking_token, (string) $sessionToken);
+        $hasValidToken = $queryToken !== '' && hash_equals((string) $orderModel->tracking_token, $queryToken);
+
+        if (! $hasValidSession && ! $hasValidToken) {
+            abort(403, 'Accès non autorisé à cette commande.');
+        }
+
+        // S5 : Expiration du jeton de suivi
+        if ($orderModel->tracking_token_expires_at && now()->isAfter($orderModel->tracking_token_expires_at)) {
+            abort(403, 'Le lien de suivi de cette commande a expiré.');
+        }
 
         return view('portal.restaurant.order', [
             'tenant' => $tenant,
             'order' => $orderModel,
+            'trackingToken' => $queryToken ?: $sessionToken,
         ]);
     }
 

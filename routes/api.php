@@ -52,10 +52,16 @@ Route::prefix('v1')->middleware('module:api')->group(function () {
 // ==========================================
 // Matrice : la console n'écrit que sa propre couche ; les écarts posés dans
 // l'établissement et les dérogations nominatives lui restent étrangers.
-Route::prefix('permissions')->middleware('orchestration.token:repli-reporting')->group(function () {
-    Route::get('/matrice', [PermissionMatrixController::class, 'show'])->name('api.permissions.matrice');
-    Route::put('/matrice', [PermissionMatrixController::class, 'update'])->name('api.permissions.matrice.update');
-    Route::post('/matrice/apercu', [PermissionMatrixController::class, 'apercu'])->name('api.permissions.matrice.apercu');
+Route::prefix('permissions')->group(function () {
+    Route::get('/matrice', [PermissionMatrixController::class, 'show'])
+        ->middleware('orchestration.token:repli-reporting')
+        ->name('api.permissions.matrice');
+    Route::put('/matrice', [PermissionMatrixController::class, 'update'])
+        ->middleware('orchestration.token')
+        ->name('api.permissions.matrice.update');
+    Route::post('/matrice/apercu', [PermissionMatrixController::class, 'apercu'])
+        ->middleware('orchestration.token')
+        ->name('api.permissions.matrice.apercu');
 });
 
 Route::middleware('orchestration.token')->group(function () {
