@@ -135,6 +135,15 @@ class EnsureRoleAccess
             }
         }
 
+        $title = 'Accès refusé';
+        $subtitle = 'Vous n\'avez pas les permissions nécessaires';
+
+        if (! $user->is_active) {
+            $title = 'Compte désactivé';
+            $subtitle = 'Votre compte utilisateur a été désactivé';
+            $message = 'Ce compte a été désactivé par l\'administration.';
+        }
+
         // Pour les requêtes AJAX ou qui attendent un popup
         if ($request->expectsJson() ||
             $request->header('X-Requested-With') === 'XMLHttpRequest' ||
@@ -142,8 +151,12 @@ class EnsureRoleAccess
 
             return response()->json([
                 'access_denied' => true,
+                'title' => $title,
+                'subtitle' => $subtitle,
                 'message' => $message,
-                'required_roles' => $authorizedRoles
+                'action_url' => route('login'),
+                'action_label' => 'Se connecter',
+                'required_roles' => $authorizedRoles,
             ], 403);
         }
 
@@ -166,7 +179,11 @@ class EnsureRoleAccess
 
         return redirect($fallbackUrl)->with([
             'access_denied_popup' => true,
+            'access_denied_title' => $title,
+            'access_denied_subtitle' => $subtitle,
             'access_denied_message' => $message,
+            'access_denied_url' => route('login'),
+            'access_denied_action_label' => 'Se connecter',
         ]);
     }
 
