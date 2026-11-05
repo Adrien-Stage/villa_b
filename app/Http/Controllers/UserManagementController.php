@@ -214,6 +214,7 @@ class UserManagementController extends Controller
             'phone' => $validated['phone'] ?? null,
             'department_id' => $validated['department_id'] ?? null,
             'is_active' => $request->boolean('is_active', true),
+            'must_change_password' => true,
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -269,6 +270,14 @@ class UserManagementController extends Controller
         }
 
         $user->update(['is_active' => ! $user->is_active]);
+
+        // S1 : Si désactivé, révoquer les sessions et le jeton de mémorisation
+        if (! $user->is_active) {
+            $user->forceFill(['remember_token' => Str::random(60)])->save();
+            if (config('session.driver') === 'database') {
+                DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+            }
+        }
         $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
 
         AuditLog::record(Auth::id(), 'user_management',

@@ -57,6 +57,19 @@ class EnsurePermission
             return redirect()->guest(route('login'));
         }
 
+        $user = Auth::user();
+        if (! $user->is_active) {
+            Auth::logout();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Ce compte a été désactivé.'], 403);
+            }
+            return redirect()->guest(route('login'))->withErrors(['login' => 'Ce compte a été désactivé.']);
+        }
+
         if ($this->resolver->allows(Auth::user(), $permission)) {
             return $next($request);
         }

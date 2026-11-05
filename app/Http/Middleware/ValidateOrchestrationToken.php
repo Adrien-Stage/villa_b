@@ -25,7 +25,9 @@ class ValidateOrchestrationToken
     {
         $secret = (string) config('orchestration.secret');
 
-        if ($secret === '' && $repli === 'repli-reporting') {
+        // S3 : Le jeton de reporting n'est accepté en repli que pour les requêtes sécurisées de lecture (GET/HEAD),
+        // jamais pour modifier les permissions ni pour toute action d'écriture.
+        if ($secret === '' && $repli === 'repli-reporting' && $request->isMethodSafe()) {
             $secret = (string) config('reporting.secret');
         }
 

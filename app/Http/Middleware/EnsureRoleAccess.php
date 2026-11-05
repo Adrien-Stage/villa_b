@@ -27,6 +27,19 @@ class EnsureRoleAccess
 
         $user = Auth::user();
 
+        // S1 : Si le compte a été désactivé, déconnecter et invalider la session
+        if (! $user->is_active) {
+            Auth::logout();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Ce compte a été désactivé.'], 403);
+            }
+            return redirect()->guest(route('login'))->withErrors(['login' => 'Ce compte a été désactivé.']);
+        }
+
         // Si aucun rôle n'est spécifié, autoriser (middleware neutre)
         if (empty($roles)) {
             return $next($request);
@@ -74,6 +87,19 @@ class EnsureRoleAccess
     public function refuser(Request $request, array $authorizedRoles): Response
     {
         $user = Auth::user();
+
+        // S1 : Si le compte a été désactivé, déconnecter et invalider la session
+        if (! $user->is_active) {
+            Auth::logout();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Ce compte a été désactivé.'], 403);
+            }
+            return redirect()->guest(route('login'))->withErrors(['login' => 'Ce compte a été désactivé.']);
+        }
 
         // Log l'accès refusé pour audit dans la base de données
         \App\Models\AuditLog::record(
