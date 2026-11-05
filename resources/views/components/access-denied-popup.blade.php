@@ -1,4 +1,4 @@
-{{-- Popup d'accès refusé --}}
+{{-- Popup d'accès refusé / information contextuelle --}}
 <div id="access-denied-popup"
      class="fixed inset-0 z-50 hidden"
      role="dialog"
@@ -7,7 +7,7 @@
 
     {{-- Overlay --}}
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-         onclick="hideAccessDeniedPopup()"></div>
+         onclick="redirectToLogin()"></div>
 
     {{-- Modal --}}
     <div class="relative flex min-h-full items-center justify-center p-4">
@@ -25,7 +25,7 @@
                     <h3 id="access-denied-title" class="text-lg font-heading font-semibold text-red-900">
                         Accès refusé
                     </h3>
-                    <p class="text-sm text-red-700">
+                    <p id="access-denied-subtitle" class="text-sm text-red-700">
                         Vous n'avez pas les permissions nécessaires
                     </p>
                 </div>
@@ -38,17 +38,13 @@
                 </p>
             </div>
 
-            {{-- Actions --}}
-            <div class="flex items-center justify-end gap-3 px-6 py-4 bg-accent/20 border-t border-secondary/10">
+            {{-- Actions : UN SEUL bouton renvoyant vers /login --}}
+            <div class="flex items-center justify-end px-6 py-4 bg-accent/20 border-t border-secondary/10">
                 <button type="button"
-                        onclick="hideAccessDeniedPopup()"
-                        class="px-4 py-2 text-sm font-medium text-primary/70 hover:text-primary transition-colors">
-                    Fermer
-                </button>
-                <button type="button"
-                        onclick="redirectToDashboard()"
-                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                    Retour au tableau de bord
+                        id="access-denied-action-btn"
+                        onclick="redirectToLogin()"
+                        class="w-full sm:w-auto px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors text-center shadow-xs">
+                    Se connecter
                 </button>
             </div>
         </div>
@@ -56,77 +52,99 @@
 </div>
 
 <script>
-// Fonctions globales pour le popup d'accès refusé
-window.showAccessDeniedPopup = function(message = null) {
-    console.log('showAccessDeniedPopup called with message:', message);
-    const popup = document.getElementById('access-denied-popup');
-    const messageEl = document.getElementById('access-denied-message');
+window.__accessDeniedTargetUrl = '{{ route("login") }}';
 
-    if (message) {
-        messageEl.textContent = message;
+// Fonctions globales pour le popup d'accès refusé
+window.showAccessDeniedPopup = function(message = null, title = null, subtitle = null, targetUrl = null, actionLabel = null) {
+    const popup = document.getElementById('access-denied-popup');
+    const titleEl = document.getElementById('access-denied-title');
+    const subtitleEl = document.getElementById('access-denied-subtitle');
+    const messageEl = document.getElementById('access-denied-message');
+    const actionBtn = document.getElementById('access-denied-action-btn');
+
+    let resolvedTitle = title || 'Accès refusé';
+    let resolvedSubtitle = subtitle || 'Vous n\'avez pas les permissions nécessaires';
+    let resolvedMessage = message || 'Accès non autorisé.';
+    let resolvedUrl = targetUrl || '{{ route("login") }}';
+    let resolvedLabel = actionLabel || 'Se connecter';
+
+    const lowerMessage = (resolvedMessage || '').toLowerCase();
+    if (lowerMessage.includes('désactivé') || lowerMessage.includes('desactive')) {
+        resolvedTitle = title || 'Compte désactivé';
+        resolvedSubtitle = subtitle || 'Votre compte a été désactivé';
+        resolvedMessage = message || 'Ce compte a été désactivé par l\'administration.';
+        resolvedUrl = '{{ route("login") }}';
+        resolvedLabel = 'Se connecter';
+    } else if (lowerMessage.includes('inactivité') || lowerMessage.includes('inactivite') || lowerMessage.includes('expiré') || lowerMessage.includes('expire')) {
+        resolvedTitle = title || 'Session expirée';
+        resolvedSubtitle = subtitle || 'Délai d\'inactivité dépassé';
+        resolvedMessage = message || 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.';
+        resolvedUrl = '{{ route("login") }}';
+        resolvedLabel = 'Se connecter';
     }
+
+    if (titleEl) titleEl.textContent = resolvedTitle;
+    if (subtitleEl) subtitleEl.textContent = resolvedSubtitle;
+    if (messageEl) messageEl.textContent = resolvedMessage;
+    if (actionBtn) actionBtn.textContent = resolvedLabel;
+
+    window.__accessDeniedTargetUrl = resolvedUrl;
 
     popup.classList.remove('hidden');
 
-    // Focus trap pour accessibilité
-    const closeBtn = popup.querySelector('[onclick="hideAccessDeniedPopup()"]');
-    if (closeBtn) closeBtn.focus();
-
-    // Empêcher le scroll du body
+    if (actionBtn) actionBtn.focus();
     document.body.style.overflow = 'hidden';
 };
 
 window.hideAccessDeniedPopup = function() {
-    console.log('hideAccessDeniedPopup called');
-    const popup = document.getElementById('access-denied-popup');
-    popup.classList.add('hidden');
+    window.redirectToLogin();
+};
 
-    // Restaurer le scroll du body
-    document.body.style.overflow = '';
+window.redirectToLogin = function() {
+    const url = window.__accessDeniedTargetUrl || '{{ route("login") }}';
+    window.location.href = url;
 };
 
 window.redirectToDashboard = function() {
-    console.log('redirectToDashboard called');
-    window.location.href = '{{ route("dashboard") }}';
+    window.redirectToLogin();
 };
 
 // Interception globale des erreurs 403
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Popup JavaScript loaded');
-
-    // Intercepter les réponses fetch (AJAX)
     const originalFetch = window.fetch;
     window.fetch = function(...args) {
         return originalFetch.apply(this, args).then(response => {
-            console.log('Fetch intercepted, status:', response.status);
             if (response.status === 403) {
                 return response.clone().json().then(data => {
-                    console.log('403 response data:', data);
-                    if (data.access_denied) {
-                        showAccessDeniedPopup(data.message);
-                        // Retourner une réponse rejetée pour éviter les callbacks success
-                        return Promise.reject(new Error('Access denied'));
+                    if (data && (data.access_denied || data.message)) {
+                        showAccessDeniedPopup(
+                            data.message,
+                            data.title,
+                            data.subtitle,
+                            data.action_url || data.target_url || '{{ route("login") }}',
+                            data.action_label || 'Se connecter'
+                        );
+                        return Promise.reject(new Error(data.message || 'Access denied'));
                     }
                     return response;
                 }).catch(() => {
-                    // Si pas de JSON, continuer normalement
                     return response;
                 });
             }
             return response;
         });
     };
-
-    // Note:
-    // On ne fait plus d'interception AJAX globale des formulaires.
-    // Les soumissions HTML classiques garantissent:
-    // - redirections serveur (302) suivies correctement
-    // - flash messages (success/errors) visibles
-    // - modals qui se referment naturellement via rechargement/navigation
 });
+
 document.addEventListener('DOMContentLoaded', function() {
     @if(session('access_denied_popup'))
-    showAccessDeniedPopup(@json(session('access_denied_message')));
+    showAccessDeniedPopup(
+        @json(session('access_denied_message')),
+        @json(session('access_denied_title')),
+        @json(session('access_denied_subtitle')),
+        @json(session('access_denied_url', route('login'))),
+        @json(session('access_denied_action_label', 'Se connecter'))
+    );
     @endif
 });
 </script>
