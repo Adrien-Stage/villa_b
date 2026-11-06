@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PurchaseOrder;
+use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -23,12 +24,12 @@ class PurchaseOrderMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $tenantName = MailIdentity::establishment();
+
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address(
-                config('mail.from.address'),
-                config('mail.from.name'),
-            ),
-            subject: "Bon de commande {$this->order->number} — " . config('mail.from.name'),
+            from: MailIdentity::from(),
+            replyTo: MailIdentity::replyTo(),
+            subject: "Bon de commande {$this->order->number} — {$tenantName}",
         );
     }
 

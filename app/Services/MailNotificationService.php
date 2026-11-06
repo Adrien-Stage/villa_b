@@ -96,8 +96,11 @@ class MailNotificationService
     {
         try {
             $appName = config('app.name', 'Wetchah PMS');
-            Mail::raw("Ceci est un e-mail de diagnostic envoyé depuis {$appName} via le transport " . config('mail.default') . ".", function ($message) use ($recipientEmail, $appName) {
+            $fromAddress = \App\Support\MailIdentity::from();
+
+            Mail::raw("Ceci est un e-mail de diagnostic envoyé depuis {$appName} via le transport " . config('mail.default') . ".", function ($message) use ($recipientEmail, $appName, $fromAddress) {
                 $message->to($recipientEmail)
+                    ->from($fromAddress->address, $fromAddress->name)
                     ->subject("Diagnostic Envoi E-mail — {$appName}");
             });
 

@@ -3,10 +3,10 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -30,13 +30,9 @@ class UserPasswordResetMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $appName = config('app.name', 'Wetchah PMS');
-
         return new Envelope(
-            from: new Address(
-                config('mail.from.address', 'notifications@wetchah.com'),
-                config('mail.from.name', $appName)
-            ),
+            from: MailIdentity::from(),
+            replyTo: MailIdentity::replyTo(),
             subject: "Réinitialisation de votre mot de passe — Accès temporaire (5h)",
         );
     }

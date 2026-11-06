@@ -3,10 +3,10 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,14 +29,12 @@ class UserWelcomeMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $appName = config('app.name', 'Wetchah PMS');
+        $tenantName = MailIdentity::establishment();
 
         return new Envelope(
-            from: new Address(
-                config('mail.from.address', 'notifications@wetchah.com'),
-                config('mail.from.name', $appName)
-            ),
-            subject: "Bienvenue sur {$appName} — Vos accès et première connexion",
+            from: MailIdentity::from(),
+            replyTo: MailIdentity::replyTo(),
+            subject: "Bienvenue sur {$tenantName} — Vos accès et première connexion",
         );
     }
 
