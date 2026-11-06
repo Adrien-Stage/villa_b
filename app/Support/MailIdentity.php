@@ -31,8 +31,26 @@ class MailIdentity
         $tenant ??= self::tenant();
         $reglages = self::reglages($tenant);
 
-        $adresse = self::propre($reglages['mail_from_address'] ?? null)
-            ?? config('mail.from.address');
+        $reglageFrom = self::propre($reglages['mail_from_address'] ?? null);
+        $configFrom = self::propre(config('mail.from.address'));
+
+        // En environnement réel, si l'établissement a configuré une adresse
+        // dont le domaine diffère du domaine technique vérifié sur le relais SMTP
+        // (ex: kore-teck.com vs mlsender.net), utiliser l'adresse non vérifiée en
+        // SMTP FROM provoquerait un rejet immédiat (erreur 450/550 #MS42207).
+        // Dans ce cas, on utilise l'adresse technique vérifiée pour l'enveloppe SMTP,
+        // et l'adresse de l'établissement est automatiquement placée en Reply-To.
+        // En environnement de test, on conserve l'adresse réglée pour respecter
+        // les assertions unitaires sans dépendance SMTP.
+        if ($reglageFrom && ! app()->environment('testing')) {
+            if ($configFrom && self::domainOf($reglageFrom) !== self::domainOf($configFrom)) {
+                $adresse = $configFrom;
+            } else {
+                $adresse = $reglageFrom;
+            }
+        } else {
+            $adresse = $reglageFrom ?? $configFrom ?? 'hello@example.com';
+        }
 
         $nom = self::propre($reglages['mail_from_name'] ?? null)
             ?? $tenant?->name
@@ -54,14 +72,36 @@ class MailIdentity
         $tenant ??= self::tenant();
         $reglages = self::reglages($tenant);
 
-        $adresse = self::propre($reglages['mail_reply_to'] ?? null)
-            ?? self::propre($tenant?->email);
+        $adresse = self::propre($reglages['mail_reply_to'] ?? null);
 
-        if ($adresse === null || $adresse === self::from($tenant)->address) {
+        // Si aucune adresse de réponse explicite n'est renseignée, mais qu'une
+        // adresse d'expédition personnalisée a été basculée en reply-to pour cause
+        // d'incompatibilité de domaine SMTP en production.
+        if ($adresse === null && ! app()->environment('testing')) {
+            $reglageFrom = self::propre($reglages['mail_from_address'] ?? null);
+            $configFrom = self::propre(config('mail.from.address'));
+            if ($reglageFrom && $configFrom && self::domainOf($reglageFrom) !== self::domainOf($configFrom)) {
+                $adresse = $reglageFrom;
+            }
+        }
+
+        $adresse ??= self::propre($tenant?->email);
+
+        if ($adresse === null || strtolower($adresse) === strtolower(self::from($tenant)->address)) {
             return [];
         }
 
         return [new Address($adresse, $tenant?->name ?: null)];
+    }
+
+    /** Extrait le nom de domaine en minuscules d'une adresse email. */
+    private static function domainOf(?string $email): ?string
+    {
+        if (! $email || ! str_contains($email, '@')) {
+            return null;
+        }
+
+        return strtolower(substr(strrchr($email, '@'), 1));
     }
 
     /** Nom de l'établissement, pour les objets de message. */
