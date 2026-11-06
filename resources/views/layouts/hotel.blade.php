@@ -1835,6 +1835,7 @@
 
     @include('partials.pwa-install')
     @include('partials.session-timeout')
+    @include('partials.force-password-change-modal')
 
     @stack('scripts')
 

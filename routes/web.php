@@ -617,6 +617,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggleStatus');
         Route::post('/{user}/reinitialiser-mot-de-passe', [UserManagementController::class, 'resetPassword'])->whereNumber('user')->name('resetPassword');
+        Route::post('/{user}/renvoyer-bienvenue', [App\Http\Controllers\MailNotificationController::class, 'resendWelcome'])->whereNumber('user')->name('resendWelcome');
+    });
+
+    // --- NOTIFICATIONS EMAIL (MailerSend) ---
+    Route::prefix('notifications/mail')->name('mail.')->middleware('auth')->group(function () {
+        Route::post('/test', [App\Http\Controllers\MailNotificationController::class, 'sendTest'])->name('test');
+        Route::post('/purchase-orders/{order}', [App\Http\Controllers\MailNotificationController::class, 'sendPurchaseOrder'])->whereNumber('order')->name('purchase_order');
     });
 
     // --- ADMINISTRATION (service informatique) ---
