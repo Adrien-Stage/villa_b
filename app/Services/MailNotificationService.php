@@ -18,7 +18,7 @@ use Throwable;
  * - Création de compte (identifiants initiaux et changement de mot de passe)
  * - Réinitialisation de mot de passe (mot de passe temporaire 5h)
  * - Envoi de bons de commande aux fournisseurs
- * - Notifications génériques et tests de diagnostic MailerSend
+ * - Notifications génériques et tests de diagnostic Brevo SMTP
  */
 class MailNotificationService
 {
