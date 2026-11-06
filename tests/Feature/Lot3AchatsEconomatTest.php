@@ -316,3 +316,111 @@ test('Lot 3 - Segregation des taches : interdiction stricte de cumuler Responsab
         expect($conflits)->not->toBeEmpty();
     }
 });
+
+test("Lot 3 - Responsable Achats ne peut plus creer d'expression de besoin (demande d'achat)", function () {
+    $acheteur = creerUtilisateurLot3('purchasing_manager');
+    $econome = creerUtilisateurLot3('econome');
+
+    // 1. Matrice des droits : purchasing_manager n'a plus economat.purchase_requests.creer
+    expect(PermissionCatalog::roles('economat.purchase_requests.creer'))
+        ->not->toContain('purchasing_manager')
+        ->toContain('econome');
+
+    // 2. Accès direct refusé pour l'acheteur (popup de refus en web, 403 en JSON)
+    $this->actingAs($acheteur)
+        ->get(route('economat.purchase_requests.create'))
+        ->assertSessionHas('access_denied_popup', true);
+
+    $this->actingAs($acheteur)
+        ->getJson(route('economat.purchase_requests.create'))
+        ->assertForbidden();
+
+    $this->actingAs($acheteur)
+        ->post(route('economat.purchase_requests.store'), [
+            'lines' => [['stock_item_id' => 1, 'quantity_requested' => 10]],
+        ])->assertSessionHas('access_denied_popup', true);
+
+    $this->actingAs($acheteur)
+        ->postJson(route('economat.purchase_requests.store'), [
+            'lines' => [['stock_item_id' => 1, 'quantity_requested' => 10]],
+        ])->assertForbidden();
+
+    // 3. L'économe peut toujours créer une demande d'achat
+    $this->actingAs($econome)
+        ->get(route('economat.purchase_requests.create'))
+        ->assertOk();
+
+    // 4. Sur le tableau de bord /achats, l'acheteur voit "Nouveau bon de commande" et non "Nouvelle demande d'achat"
+    $pageAchatsAcheteur = $this->actingAs($acheteur)
+        ->get(route('achats.index'))
+        ->assertOk()
+        ->getContent();
+
+    expect($pageAchatsAcheteur)
+        ->toContain(route('economat.orders.create'))
+        ->not->toContain(route('economat.purchase_requests.create'));
+});
+
+test("Lot 3 - Selection du fournisseur par article et comparateur integre aux bons de commande", function () {
+    $acheteur = creerUtilisateurLot3('purchasing_manager');
+
+    $fournisseurA = Supplier::create(['name' => 'Grossiste Alpha', 'phone' => '690000001', 'is_active' => true]);
+    $fournisseurB = Supplier::create(['name' => 'Grossiste Beta', 'phone' => '690000002', 'is_active' => true]);
+
+    $categorie = StockCategory::firstOrCreate(['name' => 'Épicerie'], ['sort_order' => 1]);
+    $article = StockItem::create([
+        'name' => 'Sucre en Poudre 50kg',
+        'unit' => 'kg',
+        'stock_category_id' => $categorie->id,
+        'supplier_id' => $fournisseurA->id,
+        'current_stock' => 15,
+        'is_active' => true,
+    ]);
+
+    // Fixer des tarifs contractuels pour comparer
+    DB::table('stock_item_supplier')->insert([
+        ['stock_item_id' => $article->id, 'supplier_id' => $fournisseurA->id, 'purchase_price' => 3000000], // 30 000 FCFA
+        ['stock_item_id' => $article->id, 'supplier_id' => $fournisseurB->id, 'purchase_price' => 2800000], // 28 000 FCFA (moins cher)
+    ]);
+
+    // 1. Route API de comparaison pour les bons de commande
+    $reponse = $this->actingAs($acheteur)
+        ->getJson(route('economat.orders.fournisseurs', $article))
+        ->assertOk()
+        ->json();
+
+    expect($reponse['article']['id'])->toBe($article->id)
+        ->and($reponse['fournisseurs'])->toHaveCount(2)
+        ->and($reponse['fournisseurs'][0]['id'])->toBe($fournisseurB->id)
+        ->and($reponse['fournisseurs'][0]['moinsCher'])->toBeTrue();
+
+    // 2. Affichage de la page /economat/bons/nouveau avec le comparateur
+    $vue = $this->actingAs($acheteur)
+        ->get(route('economat.orders.create', ['article' => $article->id]))
+        ->assertOk()
+        ->getContent();
+
+    expect($vue)
+        ->toContain('Comparateur de Prix Fournisseurs')
+        ->toContain('Comparer les fournisseurs par article')
+        ->toContain(route('economat.orders.store'));
+
+    // 3. Soumission d'un bon de commande issu du choix comparatif
+    $this->actingAs($acheteur)
+        ->post(route('economat.orders.store'), [
+            'supplier_id' => $fournisseurB->id,
+            'expected_at' => now()->addDays(2)->format('Y-m-d'),
+            'lines' => [
+                [
+                    'stock_item_id' => $article->id,
+                    'quantity' => 5,
+                    'unit_price' => 28000,
+                ],
+            ],
+        ])->assertRedirect();
+
+    $bon = PurchaseOrder::where('supplier_id', $fournisseurB->id)->latest()->first();
+    expect($bon)->not->toBeNull()
+        ->and($bon->total_amount)->toBe(14000000) // 140 000 FCFA en centimes
+        ->and($bon->issuer_signature)->not->toBeNull();
+});

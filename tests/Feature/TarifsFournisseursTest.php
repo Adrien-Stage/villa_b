@@ -27,12 +27,13 @@ beforeEach(function () {
     activerModules(['economat']);
 });
 
-function agentTarifs(string $role): User
+function agentTarifs(string $roleSlug): User
 {
     $user = User::factory()->create(['is_active' => true]);
-    $user->roles()->sync(Role::where('slug', $role)->pluck('id'));
+    $role = Role::where('slug', $roleSlug)->firstOrFail();
+    $user->roles()->attach($role->id, ['level' => $role->level]);
 
-    return $user->fresh();
+    return $user;
 }
 
 function articleTarifs(string $nom, array $plus = []): StockItem
@@ -152,23 +153,23 @@ test("retirer le fournisseur habituel donne la place au moins cher des autres", 
     $tarifs->fixer($riz, $moinsCher, 2200000);
     expect($riz->fresh()->supplier_id)->toBe($habituel->id);
 
-    $this->actingAs(agentTarifs('purchasing_manager'))
+    $this->actingAs(agentTarifs('controller'))
         ->delete(route('economat.items.suppliers.unlink', [$riz, $habituel]))->assertSessionHas('success');
 
     expect($riz->fresh()->supplier_id)->toBe($moinsCher->id)
         ->and($riz->fresh()->supplierPriceFor($habituel))->toBeNull();
 });
 
-test("seul le responsable des achats fixe un prix sur la fiche de l'article ; ni l'économe ni le magasinier", function () {
+test("seul le contrôleur de gestion fixe un prix sur la fiche de l'article ; ni l'acheteur, ni l'économe, ni le magasinier", function () {
     $grossiste = Supplier::create(['name' => 'Mboppi Distribution', 'is_active' => true]);
     $riz = articleTarifs('Riz parfumé');
 
-    $this->actingAs(agentTarifs('purchasing_manager'))->post(route('economat.items.suppliers.link', $riz), [
+    $this->actingAs(agentTarifs('controller'))->post(route('economat.items.suppliers.link', $riz), [
         'supplier_id' => $grossiste->id, 'purchase_price' => 23000,
     ])->assertSessionHas('success');
     expect($riz->fresh()->supplierPriceFor($grossiste))->toBe(2300000);
 
-    foreach (['econome', 'storekeeper'] as $role) {
+    foreach (['purchasing_manager', 'econome', 'storekeeper'] as $role) {
         $this->actingAs(agentTarifs($role))->post(route('economat.items.suppliers.link', $riz), [
             'supplier_id' => $grossiste->id, 'purchase_price' => 1,
         ])->assertSessionHas('access_denied_popup', true);

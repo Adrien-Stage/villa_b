@@ -310,6 +310,7 @@ class PermissionLabels
         'economat.purchase_requests.convert' => ["Demandes d'achat", 'Transformer en bon de commande'],
         'economat.orders.voir' => ['Bons de commande', 'Consulter'],
         'economat.orders.creer' => ['Bons de commande', 'Créer'],
+        'economat.orders.fournisseurs' => ['Bons de commande', 'Comparer les fournisseurs d\'un article'],
         'economat.orders.send' => ['Bons de commande', 'Envoyer au fournisseur'],
         'economat.orders.transmit' => ['Bons de commande', 'Marquer comme transmis sans email'],
         'economat.orders.receive' => ['Bons de commande', 'Réceptionner'],

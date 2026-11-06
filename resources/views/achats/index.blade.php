@@ -20,6 +20,12 @@
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
+            @droit('economat.orders.creer')
+                <a href="{{ route('economat.orders.create') }}" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Nouveau bon de commande</span>
+                </a>
+            @enddroit
             @droit('economat.purchase_requests.creer')
                 <a href="{{ route('economat.purchase_requests.create') }}" class="px-4 py-2 border border-secondary/30 text-sm font-semibold rounded-lg text-primary hover:bg-accent/20">Nouvelle demande d'achat</a>
             @enddroit

@@ -145,6 +145,7 @@ class PermissionCatalog
         'economat.items.transformation.packagings',
         'economat.orders.cancel',
         'economat.orders.creer',
+        'economat.orders.fournisseurs',
         'economat.orders.receive',
         'economat.orders.send',
         'economat.orders.transmit',
@@ -996,6 +997,7 @@ class PermissionCatalog
             'economat.orders.cancel' => ['purchasing_manager'],
             'economat.orders.creer' => ['purchasing_manager'],
             'economat.orders.export' => ['controller', 'manager', 'purchasing_manager'],
+            'economat.orders.fournisseurs' => ['manager', 'purchasing_manager'],
             'economat.orders.receive' => ['econome', 'storekeeper'],
             'economat.orders.send' => ['purchasing_manager'],
             // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
@@ -1012,7 +1014,7 @@ class PermissionCatalog
             'economat.purchase_requests.approve' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.purchase_requests.convert' => ['manager', 'purchasing_manager'],
-            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             // Comparer les fournisseurs d'un article en saisissant une demande.
             'economat.purchase_requests.fournisseurs' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],

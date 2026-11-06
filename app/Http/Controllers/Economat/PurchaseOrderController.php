@@ -14,7 +14,9 @@ use App\Services\Notifier;
 use App\Services\PurchaseOrderService;
 use App\Support\Document\Colonne;
 use App\Support\Document\Document;
+use App\Support\PrixFournisseurs;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -183,66 +185,122 @@ class PurchaseOrderController extends Controller
         $suppliers = Supplier::active()->orderBy('name')->withCount('stockItems')->get();
         $items     = StockItem::active()->with(['category', 'supplier', 'suppliers'])->orderBy('name')->get();
         $selectedSupplierId = (int) ($request->query('supplier_id') ?: $request->query('fournisseur') ?: 0);
+        $selectedItemId     = (int) ($request->query('item_id') ?: $request->query('article') ?: 0);
 
-        return view('economat.orders.create', compact('suppliers', 'items', 'selectedSupplierId'));
+        return view('economat.orders.create', compact('suppliers', 'items', 'selectedSupplierId', 'selectedItemId'));
+    }
+
+    /**
+     * Fournisseurs d'un article, ordonnés par prix (dernière livraison ou tarif catalogue),
+     * pour alimenter le comparateur lors de l'émission d'un bon de commande.
+     */
+    public function fournisseurs(Request $request, StockItem $item): JsonResponse
+    {
+        $periode = $request->validate([
+            'du' => ['nullable', 'date'],
+            'au' => ['nullable', 'date'],
+        ]);
+
+        $du = ! empty($periode['du']) ? Carbon::parse($periode['du']) : null;
+        $au = ! empty($periode['au']) ? Carbon::parse($periode['au']) : ($du ? now() : null);
+
+        return response()->json([
+            'article' => [
+                'id'            => $item->id,
+                'nom'           => $item->name,
+                'reference'     => $item->reference,
+                'unite'         => $item->shortUnit(),
+                'stock_actuel'  => (float) $item->current_stock,
+                'category_name' => $item->category?->name ?? 'Général',
+            ],
+            'periode' => $du ? ['du' => $du->toDateString(), 'au' => $au->toDateString()] : null,
+            'fournisseurs' => PrixFournisseurs::comparer($item, $du, $au),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'supplier_id'           => ['required', 'exists:suppliers,id'],
+            'supplier_id'           => ['required_without:lines.*.supplier_id', 'nullable', 'exists:suppliers,id'],
             'expected_at'           => ['nullable', 'date'],
             'notes'                 => ['nullable', 'string', 'max:1000'],
             'lines'                 => ['required', 'array', 'min:1'],
             'lines.*.stock_item_id' => ['required', 'exists:stock_items,id'],
+            'lines.*.supplier_id'   => ['nullable', 'exists:suppliers,id'],
             'lines.*.quantity'      => ['required', 'numeric', 'min:0.001'],
             'lines.*.unit_price'    => ['required', 'numeric', 'min:0'],   // en FCFA
         ], [
-            'lines.required'       => 'Sélectionnez au moins un article pour ce bon de commande.',
-            'supplier_id.required' => 'Veuillez sélectionner un fournisseur.',
+            'lines.required'               => 'Sélectionnez au moins un article pour ce bon de commande.',
+            'supplier_id.required'         => 'Veuillez sélectionner un fournisseur.',
+            'supplier_id.required_without' => 'Veuillez sélectionner un fournisseur.',
         ]);
 
-        $order = DB::transaction(function () use ($validated) {
+        $globalSupplierId = $validated['supplier_id'] ?? null;
+        foreach ($validated['lines'] as $line) {
+            $ligneSupId = $line['supplier_id'] ?? $globalSupplierId;
+            if (empty($ligneSupId)) {
+                return back()->withInput()->with('error', 'Chaque article doit être rattaché à un fournisseur.');
+            }
+        }
+
+        $createdOrders = DB::transaction(function () use ($validated, $globalSupplierId) {
             $user = Auth::user();
             $signature = $user ? $user->signatureName() : null;
+            $tenantId = Auth::user()?->tenant_id
+                ?? \App\Models\Tenant::current()?->id;
 
-            $order = PurchaseOrder::create([
-                'supplier_id'      => $validated['supplier_id'],
-                'expected_at'      => $validated['expected_at'] ?? null,
-                'notes'            => $validated['notes'] ?? null,
-                'created_by'       => Auth::id(),
-                'issuer_signature' => $signature,
-                'tenant_id'        => Auth::user()?->tenant_id
-                    ?? \App\Models\Tenant::current()?->id,
-            ]);
+            $linesBySupplier = collect($validated['lines'])->groupBy(function ($line) use ($globalSupplierId) {
+                return (int) ($line['supplier_id'] ?? $globalSupplierId);
+            });
 
-            foreach ($validated['lines'] as $line) {
-                // Stocke en centimes FCFA
-                $unitPriceCentimes = (int) round((float) $line['unit_price'] * 100);
+            $orders = collect();
 
-                PurchaseOrderLine::create([
-                    'purchase_order_id' => $order->id,
-                    'stock_item_id'     => $line['stock_item_id'],
-                    'quantity_ordered'  => $line['quantity'],
-                    'unit_price'        => $unitPriceCentimes,
+            foreach ($linesBySupplier as $supplierId => $lines) {
+                $order = PurchaseOrder::create([
+                    'supplier_id'      => $supplierId,
+                    'expected_at'      => $validated['expected_at'] ?? null,
+                    'notes'            => $validated['notes'] ?? null,
+                    'created_by'       => Auth::id(),
+                    'issuer_signature' => $signature,
+                    'tenant_id'        => $tenantId,
                 ]);
 
-                // Un article sans fournisseur habituel prend celui-ci, avec le
-                // prix du bon comme premier tarif.
-                $item = StockItem::find($line['stock_item_id']);
-                if ($item && empty($item->supplier_id)) {
-                    app(\App\Services\SupplierTariffService::class)->fixer($item, (int) $validated['supplier_id'], $unitPriceCentimes);
+                foreach ($lines as $line) {
+                    $unitPriceCentimes = (int) round((float) $line['unit_price'] * 100);
+
+                    PurchaseOrderLine::create([
+                        'purchase_order_id' => $order->id,
+                        'stock_item_id'     => $line['stock_item_id'],
+                        'quantity_ordered'  => $line['quantity'],
+                        'unit_price'        => $unitPriceCentimes,
+                    ]);
+
+                    $item = StockItem::find($line['stock_item_id']);
+                    if ($item && empty($item->supplier_id)) {
+                        app(\App\Services\SupplierTariffService::class)->fixer($item, (int) $supplierId, $unitPriceCentimes);
+                    }
                 }
+
+                $order->recalculateTotal();
+                $orders->push($order);
             }
 
-            $order->recalculateTotal();
-
-            return $order;
+            return $orders;
         });
 
+        if ($createdOrders->count() === 1) {
+            $order = $createdOrders->first();
+
+            return redirect()
+                ->route('economat.orders.show', $order)
+                ->with('success', "Bon de commande {$order->number} créé et signé numériquement.");
+        }
+
+        $numeros = $createdOrders->pluck('number')->implode(', ');
+
         return redirect()
-            ->route('economat.orders.show', $order)
-            ->with('success', "Bon de commande {$order->number} créé et signé numériquement.");
+            ->route('economat.orders.index')
+            ->with('success', "{$createdOrders->count()} bons de commande créés et signés : {$numeros}.");
     }
 
     public function show(PurchaseOrder $order): View
