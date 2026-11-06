@@ -72,6 +72,11 @@ class PermissionResolver
 
         // L'administrateur n'écrit dans l'exploitation que pendant une
         // intervention déclarée, et seulement dans les services qu'elle couvre.
+        // Les actes exclusifs métier lui restent formellement interdits (Constat S6).
+        if (PermissionCatalog::estNonDerogeable($permission)) {
+            return false;
+        }
+
         return $this->interventionDe($user)?->couvre($permission) ?? false;
     }
 
@@ -154,13 +159,15 @@ class PermissionResolver
         $roles = $this->rolesDe($user);
         $enEcriture = $this->rolesEnEcritureDe($user);
         $effets = [];
+        $refusNonDerogeables = [];
+        $refusErpSurRole = [];
 
         if ($roles !== []) {
             $lignes = PermissionGrant::query()
                 ->enVigueur()
                 ->where('subject_type', PermissionGrant::SUJET_ROLE)
                 ->whereIn('subject_id', $roles)
-                ->get(['subject_id', 'permission', 'effect', 'scope']);
+                ->get(['subject_id', 'permission', 'effect', 'scope', 'origin']);
 
             foreach ($lignes as $ligne) {
                 // Le rôle est tenu en lecture seule : l'autorisation d'écrire
@@ -174,14 +181,27 @@ class PermissionResolver
 
                 $connu = $effets[$ligne->permission] ?? null;
 
+                $estRefus = ($connu['effect'] ?? null) === PermissionGrant::EFFET_DENY
+                    || $ligne->effect === PermissionGrant::EFFET_DENY;
+
                 // Un refus déjà posé par un autre rôle ne se lève pas ; la
                 // portée, elle, se resserre toujours vers la plus étroite.
                 $effets[$ligne->permission] = [
-                    'effect' => ($connu['effect'] ?? null) === PermissionGrant::EFFET_DENY
+                    'effect' => $estRefus
                         ? PermissionGrant::EFFET_DENY
                         : $ligne->effect,
                     'scope'  => PermissionScope::laPlusEtroite($connu['scope'] ?? null, $ligne->scope),
                 ];
+
+                // Identifier les refus non dérogeables et les refus de la console ERP (Constat S9)
+                if ($ligne->effect === PermissionGrant::EFFET_DENY) {
+                    if (PermissionCatalog::estNonDerogeable($ligne->permission)) {
+                        $refusNonDerogeables[$ligne->permission] = true;
+                    }
+                    if ($ligne->origin === PermissionGrant::ORIGINE_ERP) {
+                        $refusErpSurRole[$ligne->permission] = true;
+                    }
+                }
             }
         }
 
@@ -189,7 +209,7 @@ class PermissionResolver
             ->enVigueur()
             ->where('subject_type', PermissionGrant::SUJET_USER)
             ->where('subject_id', (string) $user->id)
-            ->get(['permission', 'effect', 'scope']);
+            ->get(['permission', 'effect', 'scope', 'origin']);
 
         // Une personne peut porter un écart dans chaque couche (console et
         // établissement) : entre eux aussi, le refus l'emporte.
@@ -198,10 +218,22 @@ class PermissionResolver
             if (($propres[$ligne->permission]['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
                 continue;
             }
-            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope];
+            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope, 'origin' => $ligne->origin];
         }
 
         foreach ($propres as $permission => $effet) {
+            // 1. Un droit non dérogeable ayant un refus sur le rôle ne peut jamais être levé (Constat S9)
+            if ($effet['effect'] === PermissionGrant::EFFET_ALLOW && isset($refusNonDerogeables[$permission])) {
+                continue;
+            }
+
+            // 2. Un refus ERP sur un rôle ne peut être levé par une exception nominative de l'établissement (Constat S9)
+            if ($effet['effect'] === PermissionGrant::EFFET_ALLOW
+                && ($effet['origin'] ?? null) === PermissionGrant::ORIGINE_ETABLISSEMENT
+                && isset($refusErpSurRole[$permission])) {
+                continue;
+            }
+
             $effets[$permission] = $effet;
         }
 

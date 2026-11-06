@@ -44,21 +44,23 @@ function creerArticle(): void
     test()->post('/economat/articles', ['name' => 'Savon de Marseille', 'unit' => 'pièce']);
 }
 
-test("sans intervention, l'administrateur écrit dans l'exploitation, et le journal le marque", function () {
+test("sans intervention, l'administrateur n'écrit pas dans l'exploitation (Lot 1, S6)", function () {
     $admin = avecLeRole('admin');
     $this->actingAs($admin);
 
     creerArticle();
 
-    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue();
-    $trace = AuditLog::where('event_type', 'action_administrateur')->sole();
-    expect($trace->user_id)->toBe($admin->id)
-        ->and($trace->action)->toStartWith('[Administrateur]')
-        ->and($trace->payload['administrateur'] ?? null)->toBeTrue();
+    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
 
-    // Régler l'application n'est pas une opération métier : pas de marque.
-    $this->post(route('rooms.types.store'), ['name' => 'Suite Océan', 'base_price' => 50000, 'max_occupancy' => 2]);
-    expect(AuditLog::where('event_type', 'action_administrateur')->count())->toBe(1);
+    // Régler l'application relève de la configuration : autorisé
+    $this->post(route('rooms.types.store'), [
+        'name' => 'Suite Océan',
+        'code' => 'OCN',
+        'base_capacity' => 2,
+        'max_capacity' => 2,
+        'base_price' => 50000,
+    ]);
+    expect(\App\Models\RoomType::where('code', 'OCN')->exists())->toBeTrue();
 });
 
 test("une intervention s'annonce : chaque action porte sa référence, la trace part à la console et le manager est prévenu", function () {
@@ -92,7 +94,7 @@ test("une intervention s'annonce : chaque action porte sa référence, la trace 
         && $r['perimetres'] === ['Économat']);
 });
 
-test("une intervention annonce un travail sans restreindre l'administrateur", function () {
+test("l'intervention ne couvre que les services déclarés (Lot 1, S6)", function () {
     Http::fake();
     $admin = avecLeRole('admin');
     Intervention::create([
@@ -103,10 +105,12 @@ test("une intervention annonce un travail sans restreindre l'administrateur", fu
     $resolveur = app(\App\Services\PermissionResolver::class);
 
     expect($resolveur->allows($admin, 'economat.items.creer'))->toBeTrue()
-        ->and($resolveur->allows($admin, 'restaurant.billing.paid'))->toBeTrue();
+        ->and($resolveur->allows($admin, 'restaurant.billing.paid'))->toBeFalse()
+        // Même sous intervention, un acte exclusif reste formellement interdit
+        ->and($resolveur->allows($admin, 'economat.items.adjust'))->toBeFalse();
 });
 
-test("terminée, l'intervention est close ; l'administrateur garde ses droits", function () {
+test("terminée, l'intervention referme l'écriture (Lot 1, S6)", function () {
     Http::fake();
     $admin = avecLeRole('admin');
     $intervention = Intervention::create([
@@ -118,7 +122,7 @@ test("terminée, l'intervention est close ; l'administrateur garde ses droits", 
 
     expect($intervention->fresh()->cloture)->toBe(Intervention::TERMINEE);
     creerArticle();
-    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeTrue();
+    expect(StockItem::where('name', 'Savon de Marseille')->exists())->toBeFalse();
     Http::assertSentCount(1);
 });
 

@@ -183,7 +183,7 @@ class StockRequisition extends Model
      */
     public function scopeVisiblesPour(Builder $query, User $user): Builder
     {
-        if ($user->isAdmin() || $user->exerce(['storekeeper', 'manager', 'controller', 'quality_auditor'])) {
+        if ($user->isAdmin() || $user->exerce(['storekeeper', 'manager', 'controller'])) {
             return $query;
         }
 

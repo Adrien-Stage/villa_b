@@ -31,7 +31,7 @@ class PlanningService
     public const DROIT_PLANIFIER = 'planning.affectations.creer';
 
     /** Voient tous les services. Le responsable financier, comme le contrôle de gestion. */
-    public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'finance_manager', 'quality_auditor', 'support'];
+    public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'finance_manager', 'support'];
 
     /** Planifient tous les services, et non le seul leur. */
     public const PLANIFIENT_TOUT = ['manager'];

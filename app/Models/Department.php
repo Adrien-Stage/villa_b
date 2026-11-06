@@ -66,7 +66,7 @@ class Department extends Model
             self::CODE_RESTAURATION => ['restaurant_staff'],
             'BTQ' => ['shop_cashier'],
             'FIN' => ['accountant'],
-            'QLT' => ['quality_auditor'],
+            'QLT' => ['controller'],
             'TEC' => ['technician'],
         ];
 

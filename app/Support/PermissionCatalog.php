@@ -407,7 +407,7 @@ class PermissionCatalog
     /** Toutes les fonctions de l'établissement, hors administration et support. */
     private const TOUT_LE_PERSONNEL = [
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
-        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'quality_auditor', 'reception', 'reception_chief',
+        'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'reception_chief',
         'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
@@ -484,6 +484,138 @@ class PermissionCatalog
     /** Catalogues de prestations, rangés dans les paramètres. */
     private const AUDIT_QUALITE_CATALOGUES = ['settings.services.export', 'settings.packages.export'];
 
+    /**
+     * Actes exclusifs métier non-dérogeables (Lot 1, Constats S6, S7, S8, S9).
+     *
+     * L'administrateur informatique ne les détient jamais dans son catalogue,
+     * et même une intervention de dépannage ne les lui ouvre pas.
+     * Aucune exception individuelle (allow) ne peut lever un refus portant
+     * sur ces actes.
+     */
+    public const ACTES_EXCLUSIFS = [
+        // Exclusivités Contrôleur de gestion (Constat S7)
+        'economat.items.adjust',
+        'economat.items.opening',
+        'economat.items.modifier',
+        'economat.items.supprimer',
+        'economat.suppliers.modifier',
+        'economat.suppliers.supprimer',
+        'economat.control.variances.voir',
+        'economat.control.voir',
+
+        // Exclusivités Achats (bons de commande)
+        'economat.orders.cancel',
+        'economat.orders.send',
+        'economat.orders.transmit',
+
+        // Exclusivités Magasinier / Économat (réception physique & mouvements)
+        'economat.orders.receive',
+        'economat.receipts.creer',
+        'economat.receipts.direct.creer',
+        'economat.receipts.cancel',
+        'economat.external_issues.cancel',
+        'economat.external_issues.creer',
+        'economat.items.transformation.cut',
+        'economat.items.transformation.open',
+        'economat.items.transformation.packagings',
+        'economat.items.zone',
+
+        // Exclusivités Comptabilité / Finance / RAF
+        'accounting.cash_reviews.creer',
+        'accounting.expenses.creer',
+        'accounting.expenses.modifier',
+        'accounting.expenses.supprimer',
+        'accounting.ledger.analytic.mirror',
+        'accounting.ledger.entry.reverse',
+        'accounting.ledger.night_audit.run',
+        'accounting.ledger.opening.creer',
+        'accounting.ledger.periods.lock',
+        'accounting.ledger.reconcile',
+        'accounting.ledger.reconcile.auto',
+        'accounting.ledger.reconcile.undo',
+        'accounting.ledger.suppliers.creer',
+        'accounting.ledger.years.open',
+        'pilotage.budget.modifier',
+        'pilotage.seuils.modifier',
+
+        // Validation / Clôture inventaire (Constat S8)
+        'economat.stock_counts.close',
+        'economat.stock_counts.cancel',
+        'economat.stores.counts.close',
+        'economat.stores.counts.cancel',
+        'restaurant.stock_counts.close',
+        'restaurant.stock_counts.cancel',
+
+        // Caisses opérationnelles
+        'bookings.cash_register.close.creer',
+        'bookings.cash_register.disbursements.creer',
+        'bookings.cash_register.open.creer',
+        'restaurant.cash_register.close.creer',
+        'restaurant.cash_register.open.creer',
+        'shop.cash_register.close.creer',
+        'shop.cash_register.open.creer',
+    ];
+
+    /**
+     * Actes strictement non-dérogeables (Lot 1, Constats S6, S7, S8, S9).
+     *
+     * Un refus posé sur ces actes ne peut être levé par aucune exception locale
+     * de l'établissement (Constat S9). De même, un refus posé par la console
+     * ERP (ORIGINE_ERP) prime toujours sur une exception locale.
+     */
+    public const NON_DEROGEABLES = [
+        // Exclusivités de contrôle de gestion (Constat S7)
+        'economat.items.adjust',
+        'economat.items.opening',
+        'economat.items.modifier',
+        'economat.items.supprimer',
+        'economat.suppliers.modifier',
+        'economat.suppliers.supprimer',
+        'economat.control.variances.voir',
+        'economat.control.voir',
+
+        // Validation / Clôture inventaire (Constat S8)
+        'economat.stock_counts.close',
+        'economat.stores.counts.close',
+        'restaurant.stock_counts.close',
+
+        // Écritures comptables réservées
+        'accounting.ledger.entry.reverse',
+        'accounting.ledger.periods.lock',
+        'accounting.ledger.reconcile',
+        'accounting.ledger.years.open',
+        'accounting.cash_reviews.creer',
+    ];
+
+    /** Indique si un droit est strictement non dérogeable */
+    public static function estNonDerogeable(string $permission): bool
+    {
+        return in_array($permission, self::NON_DEROGEABLES, true);
+    }
+
+    /** Indique si un droit relève de l'administration technique et informatique */
+    public static function estDroitAdmin(string $droit): bool
+    {
+        $prefix = explode('.', $droit)[0];
+
+        if (in_array($prefix, ['users', 'droits', 'audit', 'interventions', 'support', 'technique', 'test-popup'], true)) {
+            return true;
+        }
+
+        if (str_starts_with($droit, 'settings.')) {
+            return true;
+        }
+
+        if (in_array($droit, self::CONFIGURATION, true)
+            || in_array($droit, self::CONFIGURATION_RESTAURANTS, true)
+            || in_array($droit, self::CONFIGURATION_QUARTS, true)
+            || in_array($droit, self::ADMINISTRATION, true)) {
+            return true;
+        }
+
+        return false;
+    }
+
     /** @var array<string, list<string>>|null */
     private static ?array $complet = null;
 
@@ -500,13 +632,13 @@ class PermissionCatalog
      * Le gabarit, complété de ce que la hiérarchie et les fonctions de
      * contrôle impliquent :
      *  - un chef détient les droits de ses membres, en chaîne ;
-     *  - l'administrateur détient tous les droits du PMS. Chacune de ses
-     *    opérations métier est marquée « administrateur » au journal
-     *    d'audit (LogUserActivity) ;
+     *  - l'administrateur détient les droits techniques et administratifs,
+     *    consulte l'exploitation (hors exclusivités contrôle), et n'écrit
+     *    dans l'exploitation que sous intervention déclarée (Constat S6) ;
      *  - le responsable financier consulte ce que consulte le contrôle de
      *    gestion ;
      *  - le support de l'éditeur consulte tout, sans rien extraire ;
-     *  - l'auditeur qualité consulte les services d'exploitation.
+     *  - le contrôleur de gestion assure l'audit qualité et conformité.
      *
      * @param  array<string, list<string>>  $gabarit
      * @return array<string, list<string>>
@@ -518,7 +650,16 @@ class PermissionCatalog
         foreach ($gabarit as $droit => $roles) {
             $roles = RoleCatalog::avecCeuxQuiLesIncluent($roles);
 
-            $roles[] = RoleCatalog::ADMIN;
+            // Attribution des droits à l'administrateur (Constat S6) :
+            // 1. Administration des comptes, de la sécurité, des droits et technique
+            // 2. Configuration et maintenance
+            // 3. Consultation de l'exploitation (hors exclusivités de contrôle de gestion)
+            // L'administrateur n'a aucun droit d'écriture sur l'exploitation dans le gabarit.
+            if (self::estDroitAdmin($droit)) {
+                $roles[] = RoleCatalog::ADMIN;
+            } elseif (self::estLecture($droit) && !in_array($droit, ['economat.control.voir', 'economat.control.variances.voir'], true)) {
+                $roles[] = RoleCatalog::ADMIN;
+            }
 
             // Le responsable financier consulte tout ce que consulte le
             // contrôle de gestion : les chiffres de tous les services. Il
@@ -534,8 +675,9 @@ class PermissionCatalog
                 $roles[] = RoleCatalog::SUPPORT;
             }
 
+            // L'audit qualité est fusionné avec le contrôle de gestion
             if (self::pourAuditQualite($droit)) {
-                $roles[] = DutySegregation::CONTROLE_INDEPENDANT;
+                $roles[] = DutySegregation::CONTROLE_DE_GESTION;
             }
 
             $roles = array_values(array_unique($roles));
@@ -820,13 +962,13 @@ class PermissionCatalog
             'economat.external_issues.creer' => ['econome'],
             'economat.external_issues.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.external_issues.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
-            'economat.items.adjust' => ['purchasing_manager'],
+            'economat.items.adjust' => ['controller'],
             'economat.items.creer' => ['purchasing_manager'],
             'economat.items.export' => ['controller', 'manager', 'purchasing_manager'],
             'economat.items.import' => ['purchasing_manager'],
-            'economat.items.modifier' => ['purchasing_manager'],
-            'economat.items.opening' => ['purchasing_manager'],
-            'economat.items.supprimer' => ['purchasing_manager'],
+            'economat.items.modifier' => ['controller'],
+            'economat.items.opening' => ['controller'],
+            'economat.items.supprimer' => ['controller'],
             // Le prix d'un article chez un fournisseur : le responsable des
             // achats, qui tient les fournisseurs, et l'économe, qui crée les
             // articles. Le catalogue complet reste à la fiche du fournisseur.
@@ -848,13 +990,13 @@ class PermissionCatalog
             // pièces, qui engagerait une dépense sans approbation, n'est plus
             // ouvert qu'à l'administrateur.
             'economat.orders.cancel' => ['purchasing_manager'],
-            'economat.orders.creer' => [],
-            'economat.orders.export' => ['controller', 'econome', 'manager', 'purchasing_manager'],
+            'economat.orders.creer' => ['purchasing_manager'],
+            'economat.orders.export' => ['controller', 'manager', 'purchasing_manager'],
             'economat.orders.receive' => ['econome', 'storekeeper'],
             'economat.orders.send' => ['purchasing_manager'],
             // Le bon parvenu sans email (main propre, téléphone) : même acte qu'un envoi.
             'economat.orders.transmit' => ['purchasing_manager'],
-            'economat.orders.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
+            'economat.orders.voir' => ['controller', 'manager', 'purchasing_manager'],
             // Le journal des mouvements : qui consulte le stock le lit.
             'economat.movements.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.movements.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
@@ -895,10 +1037,10 @@ class PermissionCatalog
             'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
-            // Le fichier des fournisseurs : le responsable des achats le tient.
+            // Le fichier des fournisseurs : les achats créent, le contrôle modifie et supprime.
             'economat.suppliers.creer' => ['purchasing_manager'],
-            'economat.suppliers.modifier' => ['purchasing_manager'],
-            'economat.suppliers.supprimer' => ['purchasing_manager'],
+            'economat.suppliers.modifier' => ['controller'],
+            'economat.suppliers.supprimer' => ['controller'],
             // Le comptable rapproche et paie les factures fournisseurs : il lit leur fiche.
             'economat.suppliers.voir' => ['accountant', 'controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Les unités de mesure des articles, employées dans tout le PMS :

@@ -244,19 +244,12 @@ class RoleCatalog
                 'level' => 4, 'statut' => self::ACTIF,
             ],
 
-            // ── Contrôle : hors hiérarchie, lecture seule des services ──
+            // ── Contrôle : hors hiérarchie, pilotage et référentiel ──
             [
                 'name' => 'Contrôleur de gestion',
                 'slug' => 'controller',
-                'description' => 'Pilotage économique : budget, indicateurs, écarts et alertes, approbation des demandes d\'achat ; vue sur tous les services sans y écrire',
+                'description' => 'Pilotage économique, contrôle des marges, audit qualité et conformité, tenue exclusive du référentiel articles/fournisseurs et ajustements de stock',
                 'module' => 'comptabilite', 'icon' => 'shield-check', 'sort_order' => 41, 'is_assignable' => true,
-                'level' => null, 'statut' => self::ACTIF,
-            ],
-            [
-                'name' => 'Contrôleur Qualité & Audit',
-                'slug' => 'quality_auditor',
-                'description' => 'Audit des normes d’hygiène, qualité et conformité',
-                'module' => 'qualite', 'icon' => 'award', 'sort_order' => 90, 'is_assignable' => true,
                 'level' => null, 'statut' => self::ACTIF,
             ],
 
@@ -286,7 +279,15 @@ class RoleCatalog
             // ── Retirés ──
             // Les ressources humaines deviennent une plateforme sœur de
             // l'application ; l'administrateur appartient déjà au service
-            // informatique. Ni l'un ni l'autre ne portait de droit.
+            // informatique. Le rôle d'auditeur qualité est fusionné avec le
+            // contrôleur de gestion.
+            [
+                'name' => 'Contrôleur Qualité & Audit',
+                'slug' => 'quality_auditor',
+                'description' => 'Retiré : fusionné avec le rôle Contrôleur de gestion',
+                'module' => 'qualite', 'icon' => 'award', 'sort_order' => 90, 'is_assignable' => false,
+                'level' => null, 'statut' => self::RETIRE,
+            ],
             [
                 'name' => 'Responsable RH',
                 'slug' => 'rh_manager',
