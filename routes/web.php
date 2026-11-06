@@ -837,6 +837,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/bons/export', [$eco . 'PurchaseOrderController', 'export'])->name('orders.export');
             Route::get('/bons/nouveau', [$eco . 'PurchaseOrderController', 'create'])->name('orders.create');
             Route::post('/bons', [$eco . 'PurchaseOrderController', 'store'])->name('orders.store');
+            Route::get('/bons/articles/{item}/fournisseurs', [$eco . 'PurchaseOrderController', 'fournisseurs'])->whereNumber('item')->name('orders.fournisseurs');
             Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
             Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')->name('orders.print');
             Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
