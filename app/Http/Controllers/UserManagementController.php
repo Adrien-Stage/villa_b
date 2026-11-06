@@ -242,7 +242,7 @@ class UserManagementController extends Controller
         $flashKey = $mailSent ? 'success' : 'warning';
         $flashMsg = $mailSent
             ? "Membre du staff {$user->name} créé avec succès. Ses identifiants ont été envoyés par e-mail à {$user->email}."
-            : "Membre du staff {$user->name} créé avec succès. Attention : l'e-mail avec ses identifiants n'a pas pu être délivré (vérifiez la configuration Brevo SMTP).";
+            : "Membre du staff {$user->name} créé avec succès. Attention : l'e-mail avec ses identifiants n'a pas pu être délivré (vérifiez la configuration SMTP MailerSend).";
 
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
