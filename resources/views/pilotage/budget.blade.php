@@ -14,7 +14,18 @@
 <div class="max-w-full space-y-5">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <h1 class="text-xl font-heading font-semibold text-primary">Budget {{ $annee }}</h1>
+            <div class="flex items-center gap-2">
+                <h1 class="text-xl font-heading font-semibold text-primary">Budget {{ $annee }}</h1>
+                @if($grille['valide'])
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✓ Validé par le RAF
+                    </span>
+                @elseif($grille['existe'])
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        Brouillon en cours
+                    </span>
+                @endif
+            </div>
             <p class="text-sm text-primary/60 mt-0.5 max-w-3xl">
                 Produits et charges prévus, par centre et par mois, face au réalisé. Montants en FCFA.
                 Source du réalisé : {{ $sources[$grille['source']] }}. L'écart porte sur les mois écoulés
@@ -22,6 +33,7 @@
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('pilotage.forecast.index', ['annee' => $annee]) }}" class="px-3 py-1.5 border border-primary/40 bg-primary/5 text-xs font-semibold rounded-lg text-primary hover:bg-primary/10">📈 Prévisions (Forecast) {{ $annee }}</a>
             <a href="{{ route('pilotage.budget.index', ['annee' => $annee - 1]) }}" class="px-3 py-1.5 border border-secondary/30 text-xs font-semibold rounded-lg text-primary hover:bg-accent/20">← {{ $annee - 1 }}</a>
             <a href="{{ route('pilotage.budget.index', ['annee' => $annee + 1]) }}" class="px-3 py-1.5 border border-secondary/30 text-xs font-semibold rounded-lg text-primary hover:bg-accent/20">{{ $annee + 1 }} →</a>
             @if($peutModifier)
@@ -117,11 +129,27 @@
         </div>
         <p class="mt-2 text-[11px] text-primary/45">Vert : favorable à l'hôtel (recettes au-dessus, charges en dessous du budget). Rouge : défavorable. Le réalisé des mois à venir reste vide.</p>
 
-        @if($peutModifier)
-            <div class="mt-4 flex justify-end">
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            @if($peutValider && $grille['existe'] && !$grille['valide'])
+                <div>
+                    <button type="button" onclick="document.getElementById('form-valider-budget').submit()" class="px-4 py-2 bg-green-700 text-white text-sm font-semibold rounded-lg hover:bg-green-800 shadow-sm">
+                        ✓ Valider formellement le budget {{ $annee }} (Exclusivité RAF)
+                    </button>
+                </div>
+            @else
+                <div></div>
+            @endif
+
+            @if($peutModifier)
                 <button type="submit" class="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Enregistrer le budget {{ $annee }}</button>
-            </div>
-        @endif
+            @endif
+        </div>
     </form>
+
+    @if($peutValider && $grille['existe'] && !$grille['valide'])
+        <form id="form-valider-budget" method="POST" action="{{ route('pilotage.budget.valider', $annee) }}" class="hidden">
+            @csrf
+        </form>
+    @endif
 </div>
 @endsection
