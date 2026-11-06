@@ -145,7 +145,6 @@ class PermissionCatalog
         'economat.items.transformation.packagings',
         'economat.orders.cancel',
         'economat.orders.creer',
-        'economat.orders.fournisseurs',
         'economat.orders.receive',
         'economat.orders.send',
         'economat.orders.transmit',
@@ -179,6 +178,8 @@ class PermissionCatalog
         'economat.stores.counts.close',
         'economat.stores.counts.creer',
         'economat.stores.counts.modifier',
+        'economat.stores.counts.reject',
+        'economat.stores.counts.submit',
         'economat.stores.creer',
         'economat.stores.modifier',
         'economat.stores.supprimer',
@@ -189,6 +190,8 @@ class PermissionCatalog
         'economat.stock_counts.creer',
         'economat.stock_counts.import',
         'economat.stock_counts.modifier',
+        'economat.stock_counts.reject',
+        'economat.stock_counts.submit',
         'groups.addRoom',
         'groups.cancel',
         'groups.checkInAll',
@@ -272,9 +275,12 @@ class PermissionCatalog
         'restaurant.restaurants.team.modifier',
         'restaurant.shifts.close',
         'restaurant.shifts.open',
+        'restaurant.stock_counts.cancel',
         'restaurant.stock_counts.close',
         'restaurant.stock_counts.creer',
         'restaurant.stock_counts.modifier',
+        'restaurant.stock_counts.reject',
+        'restaurant.stock_counts.submit',
         'restaurant.stock_counts.supprimer',
         'restaurant.waste.creer',
         'rooms.cost_sheets.assumptions',
@@ -495,7 +501,7 @@ class PermissionCatalog
      * sur ces actes.
      */
     public const ACTES_EXCLUSIFS = [
-        // Exclusivités Contrôleur de gestion (Constat S7)
+        // Exclusivités Contrôleur de gestion (Constat S7 & S8)
         'economat.items.adjust',
         'economat.items.opening',
         'economat.items.modifier',
@@ -506,6 +512,16 @@ class PermissionCatalog
         'economat.items.suppliers.unlink',
         'economat.control.variances.voir',
         'economat.control.voir',
+        'economat.stock_counts.creer',
+        'economat.stock_counts.modifier',
+        'economat.stock_counts.import',
+        'economat.stock_counts.submit',
+        'economat.stores.counts.creer',
+        'economat.stores.counts.modifier',
+        'economat.stores.counts.submit',
+        'restaurant.stock_counts.creer',
+        'restaurant.stock_counts.modifier',
+        'restaurant.stock_counts.submit',
 
         // Exclusivités Achats (bons de commande)
         'economat.orders.cancel',
@@ -542,12 +558,15 @@ class PermissionCatalog
         'pilotage.budget.modifier',
         'pilotage.seuils.modifier',
 
-        // Validation / Clôture inventaire (Constat S8)
+        // Validation / Clôture inventaire (Constat S8 - Exclusivité RAF)
         'economat.stock_counts.close',
+        'economat.stock_counts.reject',
         'economat.stock_counts.cancel',
         'economat.stores.counts.close',
+        'economat.stores.counts.reject',
         'economat.stores.counts.cancel',
         'restaurant.stock_counts.close',
+        'restaurant.stock_counts.reject',
         'restaurant.stock_counts.cancel',
 
         // Caisses opérationnelles
@@ -568,7 +587,7 @@ class PermissionCatalog
      * ERP (ORIGINE_ERP) prime toujours sur une exception locale.
      */
     public const NON_DEROGEABLES = [
-        // Exclusivités de contrôle de gestion (Constat S7)
+        // Exclusivités de contrôle de gestion (Constat S7 & S8)
         'economat.items.adjust',
         'economat.items.opening',
         'economat.items.modifier',
@@ -579,11 +598,17 @@ class PermissionCatalog
         'economat.items.suppliers.unlink',
         'economat.control.variances.voir',
         'economat.control.voir',
+        'economat.stock_counts.submit',
+        'economat.stores.counts.submit',
+        'restaurant.stock_counts.submit',
 
         // Validation / Clôture inventaire (Constat S8)
         'economat.stock_counts.close',
+        'economat.stock_counts.reject',
         'economat.stores.counts.close',
+        'economat.stores.counts.reject',
         'restaurant.stock_counts.close',
+        'restaurant.stock_counts.reject',
 
         // Écritures comptables réservées
         'accounting.ledger.entry.reverse',
@@ -860,10 +885,13 @@ class PermissionCatalog
             'restaurant.recipes.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
             'restaurant.shifts.close' => ['restaurant_staff'],
             'restaurant.shifts.open' => ['restaurant_staff'],
-            'restaurant.stock_counts.close' => ['restaurant_chief'],
-            'restaurant.stock_counts.creer' => ['restaurant_chief'],
-            'restaurant.stock_counts.modifier' => ['restaurant_chief'],
-            'restaurant.stock_counts.supprimer' => ['restaurant_chief'],
+            'restaurant.stock_counts.cancel' => ['controller', 'manager'],
+            'restaurant.stock_counts.close' => ['manager'],
+            'restaurant.stock_counts.creer' => ['controller'],
+            'restaurant.stock_counts.modifier' => ['controller'],
+            'restaurant.stock_counts.reject' => ['manager'],
+            'restaurant.stock_counts.submit' => ['controller'],
+            'restaurant.stock_counts.supprimer' => ['controller', 'manager'],
             'restaurant.stock_counts.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager'],
             'restaurant.consumption.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_manager'],
             'restaurant.waste.creer' => ['restaurant_chief', 'restaurant_cook'],
@@ -1058,10 +1086,12 @@ class PermissionCatalog
             'economat.zones.creer' => ['econome', 'manager'],
             'economat.zones.modifier' => ['econome', 'manager'],
             'economat.zones.supprimer' => ['econome', 'manager'],
-            'economat.stores.counts.cancel' => ['econome'],
-            'economat.stores.counts.close' => ['econome'],
-            'economat.stores.counts.creer' => ['econome'],
-            'economat.stores.counts.modifier' => ['econome', 'storekeeper'],
+            'economat.stores.counts.cancel' => ['controller', 'manager'],
+            'economat.stores.counts.close' => ['manager'],
+            'economat.stores.counts.creer' => ['controller'],
+            'economat.stores.counts.modifier' => ['controller'],
+            'economat.stores.counts.reject' => ['manager'],
+            'economat.stores.counts.submit' => ['controller'],
             'economat.stores.counts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.stores.creer' => ['econome'],
             'economat.stores.modifier' => ['econome'],
@@ -1072,14 +1102,16 @@ class PermissionCatalog
             'economat.transfers.cancel' => ['econome'],
             'economat.transfers.creer' => ['econome', 'storekeeper'],
             'economat.transfers.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
-            'economat.stock_counts.cancel' => ['econome'],
-            'economat.stock_counts.close' => ['econome'],
-            'economat.stock_counts.creer' => ['econome'],
+            'economat.stock_counts.cancel' => ['controller', 'manager'],
+            'economat.stock_counts.close' => ['manager'],
+            'economat.stock_counts.creer' => ['controller'],
             // Le fichier de comptage : qui compte le télécharge et l'importe.
             'economat.stock_counts.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
-            'economat.stock_counts.import' => ['econome', 'storekeeper'],
-            'economat.stock_counts.modifier' => ['econome', 'storekeeper'],
+            'economat.stock_counts.import' => ['controller'],
+            'economat.stock_counts.modifier' => ['controller'],
+            'economat.stock_counts.reject' => ['manager'],
             'economat.stock_counts.report' => ['controller', 'econome', 'manager', 'purchasing_manager'],
+            'economat.stock_counts.submit' => ['controller'],
             'economat.stock_counts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
 
@@ -1150,8 +1182,6 @@ class PermissionCatalog
             'settings.services.import' => ['finance_manager', 'manager'],
             'settings.services.modifier' => ['finance_manager', 'manager'],
             'settings.services.supprimer' => ['finance_manager', 'manager'],
-            // L'économe y règle l'onglet Économat (unités de stockage).
-            'settings.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager'],
 
             // ── Boutique ──
             'shop.cash_register.close' => ['manager', 'shop_cashier', 'shop_manager'],

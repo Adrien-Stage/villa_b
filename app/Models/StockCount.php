@@ -19,12 +19,16 @@ class StockCount extends Model
     use HasFactory;
 
     public const STATUS_DRAFT     = 'draft';
+    public const STATUS_SUBMITTED = 'submitted';
     public const STATUS_CLOSED    = 'closed';
+    public const STATUS_REJECTED  = 'rejected';
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUSES = [
         self::STATUS_DRAFT     => 'En cours de comptage',
-        self::STATUS_CLOSED    => 'Clôturé & Régularisé',
+        self::STATUS_SUBMITTED => 'Soumis au RAF pour validation',
+        self::STATUS_CLOSED    => 'Validé & Régularisé',
+        self::STATUS_REJECTED  => 'Rejeté par le RAF',
         self::STATUS_CANCELLED => 'Annulé',
     ];
 
@@ -42,8 +46,18 @@ class StockCount extends Model
         'loss_value',
         'surplus_value',
         'opened_by',
+        'submitted_by',
+        'submitted_at',
         'closed_by',
         'closed_at',
+        'validated_by',
+        'validated_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
+        'cancelled_by',
+        'cancelled_at',
+        'cancellation_reason',
         'tenant_id',
     ];
 
@@ -54,7 +68,11 @@ class StockCount extends Model
         'variance_value'          => 'integer',
         'loss_value'              => 'integer',
         'surplus_value'           => 'integer',
+        'submitted_at'            => 'datetime',
         'closed_at'               => 'datetime',
+        'validated_at'            => 'datetime',
+        'rejected_at'             => 'datetime',
+        'cancelled_at'            => 'datetime',
     ];
 
     protected static function boot(): void
@@ -128,24 +146,49 @@ class StockCount extends Model
         return $this->belongsTo(User::class, 'opened_by');
     }
 
+    public function submittedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+
     public function closedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function validatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
     /**
-     * L'inventaire en cours de comptage, s'il y en a un. Tant qu'il existe,
+     * L'inventaire en cours de comptage ou soumis, s'il y en a un. Tant qu'il existe,
      * le magasin est gelé : aucun mouvement de stock ne doit fausser le
      * théorique relevé à l'ouverture.
      */
     public static function inProgress(): ?self
     {
-        return self::query()->draft()->latest('id')->first();
+        return self::query()->whereIn('status', [self::STATUS_DRAFT, self::STATUS_SUBMITTED])->latest('id')->first();
     }
 
     public function scopeDraft(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_DRAFT);
+    }
+
+    public function scopeSubmitted(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_SUBMITTED);
     }
 
     public function scopeClosed(Builder $query): Builder
@@ -158,14 +201,70 @@ class StockCount extends Model
         return $this->status === self::STATUS_DRAFT;
     }
 
+    public function isSubmitted(): bool
+    {
+        return $this->status === self::STATUS_SUBMITTED;
+    }
+
     public function isClosed(): bool
     {
         return $this->status === self::STATUS_CLOSED;
     }
 
+    public function isValidated(): bool
+    {
+        return $this->status === self::STATUS_CLOSED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
     public function isCancelled(): bool
     {
         return $this->status === self::STATUS_CANCELLED;
+    }
+
+    /**
+     * Un inventaire peut être modifié s'il est encore en brouillon ou rejeté
+     * ET s'il a été ouvert il y a moins de 48 heures.
+     */
+    public function canBeModified(): bool
+    {
+        if (!$this->isDraft() && !$this->isRejected()) {
+            return false;
+        }
+
+        if ($this->created_at && $this->created_at->diffInHours(now()) > 48) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Seul le RAF peut annuler un inventaire validé, et strictement dans les 48h suivant la validation.
+     */
+    public function canBeCancelledByRaf(): bool
+    {
+        if (!$this->isClosed()) {
+            return false;
+        }
+
+        $dateValidation = $this->validated_at ?? $this->closed_at;
+        if (!$dateValidation) {
+            return false;
+        }
+
+        return $dateValidation->diffInHours(now()) <= 48;
+    }
+
+    /** Échéance limite d'annulation (48h après validation) */
+    public function cancellationDeadline(): ?\Carbon\Carbon
+    {
+        $dateValidation = $this->validated_at ?? $this->closed_at;
+        return $dateValidation ? $dateValidation->copy()->addHours(48) : null;
     }
 
     public function statusLabel(): string

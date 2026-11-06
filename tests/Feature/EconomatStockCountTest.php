@@ -267,12 +267,13 @@ test('la cloture de l inventaire regularise physiquement les stocks et cree des 
 
     expect($movement2)->toBeNull();
 
-    // 5. Impossible de re-modifier ou d'annuler un inventaire clôturé
+    // 5. Impossible de re-modifier un inventaire clôturé ou d'annuler passé 48h
     expect(fn () => $service->updateCounts($closedCount, []))
         ->toThrow(RuntimeException::class, "déjà clôturé");
 
+    $closedCount->update(['validated_at' => now()->subHours(49)]);
     expect(fn () => $service->cancel($closedCount))
-        ->toThrow(RuntimeException::class, "ne peut pas être annulé");
+        ->toThrow(RuntimeException::class, "délai légal de 48h");
 });
 
 test('l annulation d un inventaire en cours annule la feuille sans modifier les stocks', function () {
@@ -310,7 +311,8 @@ test('l annulation d un inventaire en cours annule la feuille sans modifier les 
 });
 
 test('les routes http d inventaire et le rapport PV fonctionnent et respectent les permissions', function () {
-    $econome = createEconomeStaff();
+    $controller = agentRole('controller');
+    $raf        = agentRole('manager');
 
     $item = StockItem::create([
         'name' => 'Jus d Ananas Frais',
@@ -320,17 +322,18 @@ test('les routes http d inventaire et le rapport PV fonctionnent et respectent l
         'is_active' => true,
     ]);
 
-    // 1. Accès à la liste
+    // 1. Accès à la liste (contrôleur)
+    $this->actingAs($controller);
     $response = test()->get(route('economat.stock_counts.index'));
     $response->assertOk()
         ->assertViewIs('economat.stock_counts.index');
 
-    // 2. Accès au formulaire de création
+    // 2. Accès au formulaire de création (réservé au contrôleur)
     $response = test()->get(route('economat.stock_counts.create'));
     $response->assertOk()
         ->assertViewIs('economat.stock_counts.create');
 
-    // 3. Ouverture via POST
+    // 3. Ouverture via POST (contrôleur)
     $response = test()->post(route('economat.stock_counts.store'), [
         'count_date' => now()->toDateString(),
         'notes' => 'Inventaire hebdomadaire bar',
@@ -346,7 +349,7 @@ test('les routes http d inventaire et le rapport PV fonctionnent et respectent l
         ->assertViewIs('economat.stock_counts.show')
         ->assertSee('Jus d Ananas Frais');
 
-    // 5. Saisie du comptage via POST
+    // 5. Saisie du comptage via POST (contrôleur)
     $line = $stockCount->lines->first();
     $response = test()->put(route('economat.stock_counts.update', $stockCount), [
         'lines' => [
@@ -360,7 +363,12 @@ test('les routes http d inventaire et le rapport PV fonctionnent et respectent l
     $response->assertRedirect();
     expect((float) $line->fresh()->counted_quantity)->toBe(48.0);
 
-    // 6. Clôture de l'inventaire via POST
+    // 6. Soumission au RAF par le contrôleur
+    test()->post(route('economat.stock_counts.submit', $stockCount))->assertRedirect();
+    expect($stockCount->fresh()->isSubmitted())->toBeTrue();
+
+    // 7. Validation / Clôture de l'inventaire par le RAF
+    $this->actingAs($raf);
     $response = test()->post(route('economat.stock_counts.close', $stockCount));
     $response->assertRedirect(route('economat.stock_counts.show', $stockCount));
     expect($stockCount->fresh()->status)->toBe(StockCount::STATUS_CLOSED)

@@ -37,17 +37,57 @@
         </p>
     </div>
 
-    @if($canManage && $count->isDraft())
-        <form method="POST" action="{{ route('restaurant.stock_counts.close', $count) }}" class="shrink-0"
-            onsubmit="return confirm('Clôturer l\'inventaire ? Le stock sera aligné sur les quantités comptées et les écarts seront figés.');">
-            @csrf
-            <button type="submit"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                <i data-lucide="check-circle" class="w-4 h-4"></i>
-                Clôturer l'inventaire
-            </button>
-        </form>
-    @endif
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+        @if($canSubmit && ($count->isDraft() || $count->isRejected()))
+            <form method="POST" action="{{ route('restaurant.stock_counts.submit', $count) }}"
+                onsubmit="return confirm('Soumettre cet inventaire au RAF pour validation ? Les comptages seront verrouillés.');">
+                @csrf
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    Soumettre au RAF
+                </button>
+            </form>
+        @endif
+
+        @if($canClose && ($count->isSubmitted() || $count->isDraft()))
+            @if($canReject && $count->isSubmitted())
+                <form method="POST" action="{{ route('restaurant.stock_counts.reject', $count) }}"
+                    onsubmit="const r = prompt('Motif du rejet :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+                    @csrf
+                    <input type="hidden" name="reason" value="">
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        Rejeter
+                    </button>
+                </form>
+            @endif
+
+            <form method="POST" action="{{ route('restaurant.stock_counts.close', $count) }}"
+                onsubmit="return confirm('Valider l\'inventaire ? Le stock sera aligné sur les quantités comptées et les écarts seront régularisés.');">
+                @csrf
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Valider l'inventaire
+                </button>
+            </form>
+        @endif
+
+        @if($count->isClosed() && $canClose && $count->canBeCancelledByRaf())
+            <form method="POST" action="{{ route('restaurant.stock_counts.cancel', $count) }}"
+                onsubmit="const r = prompt('Motif de l\'annulation avec contre-passation (délai 48h) :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+                @csrf
+                <input type="hidden" name="reason" value="">
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
+                    <i data-lucide="undo-2" class="w-4 h-4"></i>
+                    Annuler validation (48h)
+                </button>
+            </form>
+        @endif
+    </div>
 </div>
 
 @if(session('success'))
@@ -205,12 +245,15 @@
             </table>
         </div>
 
-        @if($count->isDraft() && $canManage)
+        @if($canCount)
             <div class="px-5 py-4 border-t border-secondary/20 bg-gray-50 flex items-center justify-between gap-3">
-                {{-- Le formulaire d'abandon vit hors de celui-ci : deux <form> ne s'imbriquent pas. --}}
-                <button type="submit" form="abandon-count" class="text-xs text-red-600 hover:underline">
-                    Abandonner l'inventaire
-                </button>
+                @if($canCancel && !$count->isClosed())
+                    <button type="submit" form="abandon-count" class="text-xs text-red-600 hover:underline">
+                        Abandonner l'inventaire
+                    </button>
+                @else
+                    <div></div>
+                @endif
 
                 <button type="submit"
                     class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">

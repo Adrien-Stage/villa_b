@@ -34,14 +34,51 @@ class ServiceStoreCountController extends Controller
 
     public function show(ServiceStoreCount $count): View
     {
-        $count->load('store', 'openedBy', 'closedBy', 'lines.item.category');
+        $count->load('store', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy', 'lines.item.category');
+        $droits = app(PermissionResolver::class);
+        $user = auth()->user();
 
         return view('economat.stores.count', [
             'count'     => $count,
             'lines'     => $count->lines->sortBy(fn ($l) => $l->item?->name ?? ''),
-            'canCount'  => app(PermissionResolver::class)->allows(auth()->user(), 'economat.stores.counts.modifier'),
-            'canClose'  => app(PermissionResolver::class)->allows(auth()->user(), 'economat.stores.counts.close'),
+            'canCount'  => $droits->allows($user, 'economat.stores.counts.modifier') && $count->canBeModified(),
+            'canSubmit' => $droits->allows($user, 'economat.stores.counts.submit'),
+            'canClose'  => $droits->allows($user, 'economat.stores.counts.close'),
+            'canReject' => $droits->allows($user, 'economat.stores.counts.reject'),
+            'canCancel' => $droits->allows($user, 'economat.stores.counts.cancel') && (!$count->isClosed() || ($droits->allows($user, 'economat.stores.counts.close') && $count->canBeCancelledByRaf())),
         ]);
+    }
+
+    public function submit(Request $request, ServiceStoreCount $count): RedirectResponse
+    {
+        try {
+            $count = $this->counts->submit($count, $request->user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('economat.stores.counts.show', $count)
+            ->with('success', "Inventaire {$count->reference} soumis au RAF avec succès. Les comptages sont verrouillés en attente de validation.");
+    }
+
+    public function reject(Request $request, ServiceStoreCount $count): RedirectResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ], [
+            'reason.required' => 'Le motif du rejet est obligatoire pour renvoyer la feuille au contrôleur.',
+        ]);
+
+        try {
+            $count = $this->counts->reject($count, $validated['reason'], $request->user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('economat.stores.counts.show', $count)
+            ->with('success', "Inventaire {$count->reference} rejeté. La feuille est renvoyée en correction au contrôleur de gestion.");
     }
 
     public function update(Request $request, ServiceStoreCount $count): RedirectResponse
@@ -71,19 +108,31 @@ class ServiceStoreCountController extends Controller
 
         $consommation = number_format($count->consumptionValue() / 100, 0, ',', ' ');
 
-        return back()->with('success', "Inventaire {$count->reference} clôturé. Consommation constatée : {$consommation} FCFA.");
+        return back()->with('success', "Inventaire {$count->reference} validé par le RAF. Consommation constatée : {$consommation} FCFA.");
     }
 
-    public function cancel(ServiceStoreCount $count): RedirectResponse
+    public function cancel(Request $request, ServiceStoreCount $count): RedirectResponse
     {
+        if ($count->isClosed()) {
+            if (!app(PermissionResolver::class)->allows($request->user(), 'economat.stores.counts.close')) {
+                return back()->with('access_denied_popup', true);
+            }
+        }
+
+        $reason = $request->input('reason');
+
         try {
-            $this->counts->cancel($count);
+            $this->counts->cancel($count, $request->user(), $reason);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        $message = $count->isClosed()
+            ? "Inventaire {$count->reference} annulé par le RAF sous 48h. Les contre-écritures de stock ont été passées et l'ancien niveau de stock est rétabli."
+            : "Inventaire {$count->reference} annulé : le dépôt reçoit de nouveau les livraisons.";
+
         return redirect()
             ->route('economat.stores.show', $count->service_store_id)
-            ->with('success', "Inventaire {$count->reference} annulé : le dépôt reçoit de nouveau les livraisons.");
+            ->with('success', $message);
     }
 }

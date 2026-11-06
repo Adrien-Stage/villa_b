@@ -100,23 +100,57 @@
         </div>
 
         @if($editable && $lines->isNotEmpty())
-            <div class="flex justify-end mb-4">
-                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Enregistrer les comptages</button>
+            <div class="flex justify-end gap-2 mb-4">
+                <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20">Enregistrer les comptages</button>
             </div>
         @endif
     </form>
 
-    @if($count->isDraft() && $canClose)
-        <div class="flex flex-wrap justify-end gap-2">
-            <form method="POST" action="{{ route('economat.stores.counts.cancel', $count) }}" onsubmit="return confirm('Annuler cet inventaire ? Le stock du dépôt ne change pas.')">
+    <div class="flex flex-wrap justify-end gap-2 mb-6">
+        @if($canSubmit && ($count->isDraft() || $count->isRejected()))
+            <form method="POST" action="{{ route('economat.stores.counts.submit', $count) }}" onsubmit="return confirm('Soumettre cet inventaire de dépôt au RAF pour validation ? Les comptages seront verrouillés.')">
                 @csrf
-                <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary/70 text-sm rounded-lg hover:bg-accent/20">Annuler l'inventaire</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                    <i data-lucide="send" class="w-4 h-4 inline mr-1"></i> Soumettre au RAF
+                </button>
             </form>
-            <form method="POST" action="{{ route('economat.stores.counts.close', $count) }}" onsubmit="return confirm('Clôturer ? Les écarts deviennent la consommation du service.')">
+        @endif
+
+        @if($canClose && ($count->isSubmitted() || $count->isDraft()))
+            @if($canReject && $count->isSubmitted())
+                <form method="POST" action="{{ route('economat.stores.counts.reject', $count) }}" onsubmit="const r = prompt('Motif du rejet :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+                    @csrf
+                    <input type="hidden" name="reason" value="">
+                    <button type="submit" class="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50">
+                        <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i> Rejeter
+                    </button>
+                </form>
+            @endif
+
+            <form method="POST" action="{{ route('economat.stores.counts.close', $count) }}" onsubmit="return confirm('Valider cet inventaire ? Les écarts deviennent la consommation du service et sont régularisés.')">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Clôturer et régulariser</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 inline mr-1"></i> Valider et régulariser
+                </button>
             </form>
-        </div>
-    @endif
+        @endif
+
+        @if($count->isClosed() && $canClose && $count->canBeCancelledByRaf())
+            <form method="POST" action="{{ route('economat.stores.counts.cancel', $count) }}" onsubmit="const r = prompt('Motif de l\'annulation avec contre-passation (délai 48h) :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+                @csrf
+                <input type="hidden" name="reason" value="">
+                <button type="submit" class="px-4 py-2 bg-red-50 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100">
+                    <i data-lucide="undo-2" class="w-4 h-4 inline mr-1"></i> Annuler validation (Contre-passation 48h)
+                </button>
+            </form>
+        @endif
+
+        @if(!$count->isClosed() && !$count->isCancelled() && $canCancel)
+            <form method="POST" action="{{ route('economat.stores.counts.cancel', $count) }}" onsubmit="return confirm('Abandonner cet inventaire ? Le stock du dépôt ne change pas.')">
+                @csrf
+                <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary/70 text-sm rounded-lg hover:bg-accent/20">Abandonner l'inventaire</button>
+            </form>
+        @endif
+    </div>
 </div>
 @endsection

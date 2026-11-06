@@ -243,15 +243,21 @@ class StockCountController extends Controller
 
     public function show(StockCount $stockCount): View
     {
-        $stockCount->load(['category', 'zone', 'openedBy', 'closedBy', 'lines.item.category', 'lines.item.packagings']);
+        $stockCount->load(['category', 'zone', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy', 'lines.item.category', 'lines.item.packagings']);
 
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
+        $droits = app(\App\Services\PermissionResolver::class);
+        $user = Auth::user();
 
         return view('economat.stock_counts.show', [
             'count'     => $stockCount,
             'lines'     => $lines,
             'reasons'   => StockCountLine::REASONS,
-            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
+            'canManage' => $droits->allows($user, 'economat.stock_counts.close'),
+            'canSubmit' => $droits->allows($user, 'economat.stock_counts.submit'),
+            'canCount'  => $droits->allows($user, 'economat.stock_counts.modifier') && $stockCount->canBeModified(),
+            'canCancel' => $droits->allows($user, 'economat.stock_counts.cancel') && (!$stockCount->isClosed() || ($droits->allows($user, 'economat.stock_counts.close') && $stockCount->canBeCancelledByRaf())),
+            'canReject' => $droits->allows($user, 'economat.stock_counts.reject'),
         ]);
     }
 
@@ -281,6 +287,38 @@ class StockCountController extends Controller
         return back()->with('success', "Comptages physiques et motifs enregistrés avec succès.");
     }
 
+    public function submit(Request $request, StockCount $stockCount): RedirectResponse
+    {
+        try {
+            $stockCount = $this->stockCountService->submit($stockCount, Auth::user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('economat.stock_counts.show', $stockCount)
+            ->with('success', "Inventaire {$stockCount->reference} soumis au RAF avec succès. Les comptages sont verrouillés en attente de validation.");
+    }
+
+    public function reject(Request $request, StockCount $stockCount): RedirectResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ], [
+            'reason.required' => 'Le motif du rejet est obligatoire pour renvoyer la feuille au contrôleur.',
+        ]);
+
+        try {
+            $stockCount = $this->stockCountService->reject($stockCount, $validated['reason'], Auth::user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('economat.stock_counts.show', $stockCount)
+            ->with('success', "Inventaire {$stockCount->reference} rejeté. La feuille est renvoyée en correction au contrôleur de gestion.");
+    }
+
     public function close(Request $request, StockCount $stockCount): RedirectResponse
     {
         if ($stockCount->isClosed()) {
@@ -298,24 +336,32 @@ class StockCountController extends Controller
 
         return redirect()
             ->route('economat.stock_counts.show', $stockCount)
-            ->with('success', "Inventaire {$stockCount->reference} clôturé. Les stocks de l'économat ont été régularisés. Écart net : {$sign}{$varianceFCFA} FCFA.");
+            ->with('success', "Inventaire {$stockCount->reference} validé par le RAF. Les stocks de l'économat ont été régularisés. Écart net : {$sign}{$varianceFCFA} FCFA.");
     }
 
-    public function cancel(StockCount $stockCount): RedirectResponse
+    public function cancel(Request $request, StockCount $stockCount): RedirectResponse
     {
         if ($stockCount->isClosed()) {
-            return back()->with('error', "Un inventaire clôturé ne peut pas être annulé.");
+            if (!app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close')) {
+                return back()->with('access_denied_popup', true);
+            }
         }
 
+        $reason = $request->input('reason');
+
         try {
-            $this->stockCountService->cancel($stockCount);
+            $this->stockCountService->cancel($stockCount, Auth::user(), $reason);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        $message = $stockCount->isClosed()
+            ? "Inventaire {$stockCount->reference} annulé par le RAF sous 48h. Les contre-écritures de stock ont été passées et l'ancien niveau de stock est rétabli."
+            : "Feuille d'inventaire {$stockCount->reference} annulée.";
+
         return redirect()
             ->route('economat.stock_counts.index')
-            ->with('success', "Feuille d'inventaire {$stockCount->reference} annulée.");
+            ->with('success', $message);
     }
 
     /**
