@@ -154,7 +154,11 @@
                 </x-table.cell>
                 <x-table.cell hide="xl" nowrap>
                     @if($rc->purchaseOrder)
-                        <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
+                        @droit('economat.orders.voir')
+                            <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
+                        @else
+                            <span class="font-mono text-xs text-primary/80">{{ $rc->purchaseOrder->number }}</span>
+                        @enddroit
                         @if($rc->purchaseOrder->isRegularisation())
                             <span class="block text-[10px] text-sky-800">Réception directe</span>
                         @endif

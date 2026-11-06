@@ -19,9 +19,15 @@
 
 <div class="max-w-5xl mx-auto space-y-6" x-data="goodsReceiptForm()">
     <div class="flex items-center gap-3">
-        <a href="{{ route('economat.orders.show', $order) }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
-            <i data-lucide="arrow-left" class="w-5 h-5"></i>
-        </a>
+        @droit('economat.orders.voir')
+            <a href="{{ route('economat.orders.show', $order) }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+        @else
+            <a href="{{ route('economat.receipts.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+        @enddroit
         <div>
             <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Établissement du Bon d'Entrée en Stock (BR)</span>
             <h1 class="text-xl font-heading font-semibold text-primary">Réception de livraison — Commande {{ $order->number }}</h1>
@@ -248,9 +254,15 @@
 
         {{-- Actions --}}
         <div class="flex items-center justify-between pt-2">
-            <a href="{{ route('economat.orders.show', $order) }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
-                Annuler
-            </a>
+            @droit('economat.orders.voir')
+                <a href="{{ route('economat.orders.show', $order) }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                    Annuler
+                </a>
+            @else
+                <a href="{{ route('economat.receipts.index') }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                    Annuler
+                </a>
+            @enddroit
             <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                 <i data-lucide="package-check" class="w-4 h-4"></i> Valider et Signer le Bon d'Entrée
             </button>

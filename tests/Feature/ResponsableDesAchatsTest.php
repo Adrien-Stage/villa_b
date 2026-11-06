@@ -67,11 +67,19 @@ test('le responsable des achats commande, ne réceptionne pas et ne décide pas 
     $droits = fn (string $role) => collect(PermissionCatalog::forRole($role));
 
     $acheteur = $droits('purchasing_manager');
-    expect($acheteur)->toContain('achats.voir', 'economat.suppliers.creer', 'economat.suppliers.modifier',
+    expect($acheteur)->toContain('achats.voir', 'economat.suppliers.creer',
         'economat.purchase_requests.approve', 'economat.purchase_requests.reject', 'economat.purchase_requests.modifier',
         'economat.purchase_requests.convert', 'economat.orders.send', 'economat.orders.transmit', 'economat.orders.cancel',
-        'economat.control.suggestions.creer', 'economat.receipts.voir', 'editions.voir')
-        ->not->toContain('economat.orders.receive', 'economat.receipts.creer', 'economat.orders.creer', 'economat.items.voir');
+        'economat.control.suggestions.creer', 'economat.receipts.voir', 'editions.voir', 'economat.orders.creer', 'economat.items.creer', 'economat.items.voir')
+        ->not->toContain('economat.suppliers.modifier', 'economat.suppliers.supprimer', 'economat.items.modifier', 'economat.items.supprimer', 'economat.items.suppliers.link', 'economat.items.suppliers.unlink', 'economat.orders.receive', 'economat.receipts.creer');
+
+    // Le contrôleur de gestion détient l'exclusivité des modifications/suppressions sur articles, tiers et ajustements.
+    expect($droits('controller'))->toContain(
+        'economat.items.modifier', 'economat.items.supprimer',
+        'economat.suppliers.modifier', 'economat.suppliers.supprimer',
+        'economat.items.adjust', 'economat.items.opening',
+        'economat.items.suppliers.link', 'economat.items.suppliers.unlink'
+    );
 
     // L'économat réceptionne, gère le stock et demande ; il ne commande plus.
     $econome = $droits('econome');

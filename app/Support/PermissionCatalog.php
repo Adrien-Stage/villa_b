@@ -501,6 +501,8 @@ class PermissionCatalog
         'economat.items.supprimer',
         'economat.suppliers.modifier',
         'economat.suppliers.supprimer',
+        'economat.items.suppliers.link',
+        'economat.items.suppliers.unlink',
         'economat.control.variances.voir',
         'economat.control.voir',
 
@@ -572,6 +574,8 @@ class PermissionCatalog
         'economat.items.supprimer',
         'economat.suppliers.modifier',
         'economat.suppliers.supprimer',
+        'economat.items.suppliers.link',
+        'economat.items.suppliers.unlink',
         'economat.control.variances.voir',
         'economat.control.voir',
 
@@ -948,7 +952,7 @@ class PermissionCatalog
             'economat.categories.supprimer' => ['purchasing_manager'],
             'economat.categories.voir' => ['controller', 'manager', 'purchasing_manager'],
             // Classeur Excel d'un magasin : tous ceux qui suivent le stock le
-            // lisent et l'exportent ; seul l'économe l'importe.
+            // lisent et l'exportent ; seul le service achats l'importe et le confirme.
             'economat.classeur.confirm' => ['purchasing_manager'],
             'economat.classeur.export' => ['controller', 'manager', 'purchasing_manager'],
             'economat.classeur.import' => ['purchasing_manager'],
@@ -970,11 +974,10 @@ class PermissionCatalog
             'economat.items.modifier' => ['controller'],
             'economat.items.opening' => ['controller'],
             'economat.items.supprimer' => ['controller'],
-            // Le prix d'un article chez un fournisseur : le responsable des
-            // achats, qui tient les fournisseurs, et l'économe, qui crée les
-            // articles. Le catalogue complet reste à la fiche du fournisseur.
-            'economat.items.suppliers.link' => ['purchasing_manager'],
-            'economat.items.suppliers.unlink' => ['purchasing_manager'],
+            // Le prix d'un article chez un fournisseur : seul le contrôleur
+            // de gestion le modifie ou le délie (Constat S7).
+            'economat.items.suppliers.link' => ['controller'],
+            'economat.items.suppliers.unlink' => ['controller'],
             'economat.items.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             // Transformation : l'économe définit les conditionnements ; le
             // magasinier peut aussi ouvrir un carton ou un paquet.
@@ -1023,7 +1026,7 @@ class PermissionCatalog
             'economat.receipts.cancel' => ['econome'],
             'economat.receipts.creer' => ['econome', 'storekeeper'],
             // Recevoir sans commande engage une dépense : c'est l'économe qui
-            // en décide, pas le magasinier qui pointe les livraisons attendues.
+            // en décide, pas le responsable des achats (qui commande mais ne réceptionne pas).
             'economat.receipts.direct.creer' => ['econome'],
             // Le responsable des achats suit les livraisons de ses commandes.
             'economat.receipts.voir' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],

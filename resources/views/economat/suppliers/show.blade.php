@@ -53,14 +53,19 @@
     </div>
 
     {{-- Chiffres --}}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        @foreach([
+    @php
+        $statsItems = [
             ['Articles au catalogue', $chiffres['articles'], null],
             ['Livraisons reçues', $chiffres['livraisons'], $chiffres['derniere'] ? 'Dernière le ' . \Illuminate\Support\Carbon::parse($chiffres['derniere'])->format('d/m/Y') : 'Aucune encore'],
-            ['Livré sur 12 mois', $fcfa($chiffres['montant_12_mois']) . ' F', null],
-            ['Livré depuis le début', $fcfa($chiffres['montant_total']) . ' F', null],
-            ['Bons en cours', $chiffres['bons_en_cours'], $attendues->count() > 0 ? $attendues->count() . ' livraison(s) attendue(s)' : null],
-        ] as [$libelle, $valeur, $detail])
+        ];
+        if ($voitBons) {
+            $statsItems[] = ['Livré sur 12 mois', $fcfa($chiffres['montant_12_mois']) . ' F', null];
+            $statsItems[] = ['Livré depuis le début', $fcfa($chiffres['montant_total']) . ' F', null];
+            $statsItems[] = ['Bons en cours', $chiffres['bons_en_cours'], $attendues->count() > 0 ? $attendues->count() . ' livraison(s) attendue(s)' : null];
+        }
+    @endphp
+    <div class="grid grid-cols-2 {{ $voitBons ? 'md:grid-cols-5' : 'md:grid-cols-2' }} gap-3">
+        @foreach($statsItems as [$libelle, $valeur, $detail])
             <div class="bg-white border border-secondary/20 rounded-xl p-4">
                 <p class="text-[11px] uppercase tracking-wider text-primary/50">{{ $libelle }}</p>
                 <p class="text-lg font-heading font-bold text-primary mt-1">{{ $valeur }}</p>
@@ -152,7 +157,7 @@
     </section>
 
     {{-- Commandes en cours et livraisons attendues --}}
-    @if($enCours->isNotEmpty())
+    @if($voitBons && $enCours->isNotEmpty())
         <section class="bg-white border border-secondary/20 rounded-xl overflow-hidden" aria-labelledby="titre-en-cours">
             <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80">
                 <h2 id="titre-en-cours" class="text-sm font-semibold text-primary">Bons de commande en cours <span class="text-primary/40 font-normal">({{ $enCours->count() }})</span></h2>

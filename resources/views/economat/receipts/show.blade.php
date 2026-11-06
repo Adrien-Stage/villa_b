@@ -120,9 +120,15 @@
                 <div>
                     <span class="text-primary/50">Bon de commande d'origine :</span>
                     @if($receipt->purchaseOrder)
-                        <a href="{{ route('economat.orders.show', $receipt->purchaseOrder) }}" class="font-mono font-bold text-primary hover:underline ml-1">
-                            {{ $receipt->purchaseOrder->number }}
-                        </a>
+                        @droit('economat.orders.voir')
+                            <a href="{{ route('economat.orders.show', $receipt->purchaseOrder) }}" class="font-mono font-bold text-primary hover:underline ml-1">
+                                {{ $receipt->purchaseOrder->number }}
+                            </a>
+                        @else
+                            <span class="font-mono font-bold text-primary ml-1">
+                                {{ $receipt->purchaseOrder->number }}
+                            </span>
+                        @enddroit
                         @if($receipt->purchaseOrder->isRegularisation())
                             <span class="block text-[11px] text-sky-800 mt-0.5">Réception directe, sans commande préalable : bon de régularisation.</span>
                         @endif
