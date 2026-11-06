@@ -33,6 +33,8 @@
             {{ $slot }}
         </main>
     </div>
+
+    @include('partials.toasts')
 </body>
 
 </html>

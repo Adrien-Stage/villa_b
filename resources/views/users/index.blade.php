@@ -285,30 +285,54 @@
     <input type="hidden" name="view" value="{{ $viewMode }}">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-            <label class="text-xs text-primary/60">Nom complet</label>
-            <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            <label class="text-xs font-medium text-primary/70">Nom complet <span class="text-red-500">*</span></label>
+            <input type="text" name="name" value="{{ old('name') }}" required
+                   placeholder="Ex: Clyde Fotso"
+                   class="mt-1 w-full px-3 py-2 text-sm border @error('name') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none transition-colors">
+            @error('name')
+                <p class="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    {{ $message }}
+                </p>
+            @enderror
         </div>
         <div>
-            <label class="text-xs text-primary/60">Email</label>
-            <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            <label class="text-xs font-medium text-primary/70">Email professionnel <span class="text-red-500">*</span></label>
+            <input type="email" name="email" value="{{ old('email') }}" required
+                   placeholder="Ex: collaborateur@entreprise.com"
+                   class="mt-1 w-full px-3 py-2 text-sm border @error('email') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none transition-colors">
+            @error('email')
+                <p class="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    {{ $message }}
+                </p>
+            @enderror
         </div>
     </div>
 
     <div>
-        <label class="text-xs text-primary/60">Téléphone</label>
-        <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+        <label class="text-xs font-medium text-primary/70">Téléphone</label>
+        <input type="text" name="phone" value="{{ old('phone') }}"
+               placeholder="Ex: +237 690 00 00 00"
+               class="mt-1 w-full px-3 py-2 text-sm border @error('phone') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none transition-colors">
+        @error('phone')
+            <p class="text-[11px] text-red-600 font-medium mt-1">{{ $message }}</p>
+        @enderror
     </div>
 
     <div>
         <label class="text-xs font-semibold text-primary">Département d'affectation</label>
         <select name="department_id" id="create-user-dept-select"
                 onchange="onUserDepartmentSelect(this.value, 'create')"
-                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none bg-white">
+                class="mt-1 w-full px-3 py-2 text-sm border @error('department_id') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none bg-white">
             <option value="">-- Aucun / Sélection manuelle --</option>
             @foreach($departments as $dept)
                 <option value="{{ $dept->id }}" @selected(old('department_id') == $dept->id)>{{ $dept->name }} ({{ $dept->code ?: 'N/A' }})</option>
             @endforeach
         </select>
+        @error('department_id')
+            <p class="text-[11px] text-red-600 font-medium mt-1">{{ $message }}</p>
+        @enderror
         <p class="text-[11px] text-primary/50 mt-1">
             ⭐ Sélectionner un département pré-coche automatiquement ses rôles & modules ci-dessous.
         </p>
@@ -317,8 +341,14 @@
     @include('users.partials.restaurants', ['contexte' => 'create', 'departements' => $departments, 'personne' => null])
 
     <div>
-        <label class="text-xs text-primary/60">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
+        <label class="text-xs font-medium text-primary/70">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
         <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles. Chaque rôle donne accès à son module ; choisissez le niveau (lecture ou lecture / écriture).</p>
+        @error('roles')
+            <div class="mb-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>{{ $message }}</span>
+            </div>
+        @enderror
         <x-role-picker :rolesByModule="$rolesByModule" :moduleLabels="$moduleLabels"
                        :selected="old('roles', [])" :levels="old('levels', [])" context="create" />
     </div>
@@ -366,21 +396,29 @@ if (searchInput) {
 }
 
 window.openCreateModal = function() {
-    document.getElementById('create-user-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    const deptSelect = document.getElementById('create-user-dept-select');
-    if (deptSelect && deptSelect.value) {
-        window.onUserDepartmentSelect(deptSelect.value, 'create');
+    const modal = document.getElementById('create-user-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        const deptSelect = document.getElementById('create-user-dept-select');
+        if (deptSelect && deptSelect.value) {
+            window.onUserDepartmentSelect(deptSelect.value, 'create');
+        }
     }
 };
 
 window.closeCreateModal = function() {
-    document.getElementById('create-user-modal').classList.add('hidden');
-    document.body.style.overflow = '';
+    const modal = document.getElementById('create-user-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
 };
 
-@if($errors->any() && old('form_type') === 'create')
-    openCreateModal();
+@if($errors->any() && (old('form_type') === 'create' || !old('staff_id')))
+    document.addEventListener('DOMContentLoaded', () => {
+        openCreateModal();
+    });
 @endif
 </script>
 

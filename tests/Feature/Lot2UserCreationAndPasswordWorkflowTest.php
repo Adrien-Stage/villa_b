@@ -62,8 +62,8 @@ test('Lot 2 - V1 : Création d\'un compte sans champ mot de passe avec attributi
         ->and(Hash::check(config('auth.default_user_password'), $user->password))->toBeTrue()
         ->and($user->hasRole('reception'))->toBeTrue();
 
-    // Mail de bienvenue expédié / mis en file
-    Mail::assertQueued(UserWelcomeMail::class, function ($mail) use ($user) {
+    // Mail de bienvenue expédié immédiatement (sans dépendance à une file d'attente)
+    Mail::assertSent(UserWelcomeMail::class, function ($mail) use ($user) {
         return $mail->hasTo('sophie.mbarga@wetchah.test')
             && $mail->defaultPassword === config('auth.default_user_password');
     });
@@ -205,8 +205,8 @@ test('Lot 2 - V7 : Réinitialisation du mot de passe par l\'admin/manager génè
         ->and($employe->temporary_password_expires_at->greaterThan(now()->addHours(4)->addMinutes(50)))->toBeTrue()
         ->and(Hash::check($provisoire, $employe->password))->toBeTrue();
 
-    // Mail de réinitialisation envoyé / mis en file
-    Mail::assertQueued(UserPasswordResetMail::class, function ($mail) use ($employe, $provisoire) {
+    // Mail de réinitialisation envoyé immédiatement
+    Mail::assertSent(UserPasswordResetMail::class, function ($mail) use ($employe, $provisoire) {
         return $mail->hasTo($employe->email)
             && $mail->temporaryPassword === $provisoire
             && $mail->expiresInHours === 5;
@@ -311,7 +311,7 @@ test('Lot 2 - V11 : Diagnostic e-mail et réexpédition via MailNotificationCont
     $responseResend->assertRedirect();
     $responseResend->assertSessionHas('success');
 
-    Mail::assertQueued(UserWelcomeMail::class, function ($mail) use ($employe) {
+    Mail::assertSent(UserWelcomeMail::class, function ($mail) use ($employe) {
         return $mail->hasTo($employe->email);
     });
 });

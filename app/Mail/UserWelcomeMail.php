@@ -5,7 +5,6 @@ namespace App\Mail;
 use App\Models\User;
 use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -15,8 +14,11 @@ use Illuminate\Queue\SerializesModels;
  * E-mail de bienvenue envoyé lors de la création d'un utilisateur.
  * Contient ses identifiants et l'instruction de changer son mot de passe
  * à sa première connexion.
+ *
+ * Envoyé de manière synchrone (immédiate) pour garantir la réception
+ * des identifiants sans dépendance à un démon de queue worker.
  */
-class UserWelcomeMail extends Mailable implements ShouldQueue
+class UserWelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
