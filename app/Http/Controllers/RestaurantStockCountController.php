@@ -55,14 +55,21 @@ class RestaurantStockCountController extends Controller
 
     public function show(RestaurantStockCount $stockCount): View
     {
-        $stockCount->load(['lines.item.category', 'openedBy', 'closedBy']);
+        $stockCount->load(['lines.item.category', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy']);
 
         $lines = $stockCount->lines->sortBy(fn ($line) => $line->item?->name ?? '');
+        $droits = app(\App\Services\PermissionResolver::class);
+        $user = Auth::user();
 
         return view('restaurant.stock_counts.show', [
-            'count' => $stockCount,
-            'lines' => $lines,
-            'canManage' => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.stock_counts.creer'),
+            'count'     => $stockCount,
+            'lines'     => $lines,
+            'canManage' => $droits->allows($user, 'restaurant.stock_counts.close'),
+            'canSubmit' => $droits->allows($user, 'restaurant.stock_counts.submit'),
+            'canCount'  => $droits->allows($user, 'restaurant.stock_counts.modifier') && $stockCount->canBeModified(),
+            'canClose'  => $droits->allows($user, 'restaurant.stock_counts.close'),
+            'canReject' => $droits->allows($user, 'restaurant.stock_counts.reject'),
+            'canCancel' => $droits->allows($user, 'restaurant.stock_counts.cancel') && (!$stockCount->isClosed() || ($droits->allows($user, 'restaurant.stock_counts.close') && $stockCount->canBeCancelledByRaf())),
         ]);
     }
 
@@ -106,6 +113,18 @@ class RestaurantStockCountController extends Controller
                 ->withErrors(['count' => 'Cet inventaire est clôturé : il n\'est plus modifiable.']);
         }
 
+        if ($stockCount->isSubmitted()) {
+            return redirect()
+                ->route('restaurant.stock_counts.show', $stockCount)
+                ->withErrors(['count' => "L'inventaire {$stockCount->reference} est soumis au RAF pour validation et ne peut plus être modifié."]);
+        }
+
+        if ($stockCount->created_at && now()->greaterThan($stockCount->created_at->copy()->addHours(48))) {
+            return redirect()
+                ->route('restaurant.stock_counts.show', $stockCount)
+                ->withErrors(['count' => "Le délai de 48h pour la saisie de l'inventaire {$stockCount->reference} est expiré. L'inventaire est verrouillé."]);
+        }
+
         $validated = $request->validate([
             'lines' => ['required', 'array'],
             'lines.*.counted_quantity' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
@@ -141,10 +160,42 @@ class RestaurantStockCountController extends Controller
             ->with('success', 'Comptage enregistré.');
     }
 
-    public function close(RestaurantStockCount $stockCount): RedirectResponse
+    public function submit(Request $request, RestaurantStockCount $stockCount): RedirectResponse
     {
         try {
-            $stockCount = $this->stock->closeStockCount($stockCount);
+            $stockCount = $this->stock->submitStockCount($stockCount, Auth::user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('restaurant.stock_counts.show', $stockCount)
+            ->with('success', "Inventaire {$stockCount->reference} soumis au RAF avec succès. Les comptages sont verrouillés en attente de validation.");
+    }
+
+    public function reject(Request $request, RestaurantStockCount $stockCount): RedirectResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ], [
+            'reason.required' => 'Le motif du rejet est obligatoire pour renvoyer la feuille au contrôleur.',
+        ]);
+
+        try {
+            $stockCount = $this->stock->rejectStockCount($stockCount, $validated['reason'], Auth::user());
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('restaurant.stock_counts.show', $stockCount)
+            ->with('success', "Inventaire {$stockCount->reference} rejeté. La feuille est renvoyée en correction au contrôleur de gestion.");
+    }
+
+    public function close(Request $request, RestaurantStockCount $stockCount): RedirectResponse
+    {
+        try {
+            $stockCount = $this->stock->closeStockCount($stockCount, Auth::user());
         } catch (RuntimeException $e) {
             return redirect()
                 ->route('restaurant.stock_counts.show', $stockCount)
@@ -154,15 +205,40 @@ class RestaurantStockCountController extends Controller
         $variance = (int) $stockCount->variance_value;
 
         $message = $variance === 0
-            ? "Inventaire {$stockCount->reference} clôturé : aucun écart."
+            ? "Inventaire {$stockCount->reference} validé par le RAF : aucun écart."
             : sprintf(
-                'Inventaire %s clôturé. Écart valorisé : %s FCFA. Le stock est aligné sur le comptage réel.',
+                'Inventaire %s validé par le RAF. Écart valorisé : %s FCFA. Le stock est aligné sur le comptage réel.',
                 $stockCount->reference,
                 number_format($variance / 100, 0, ',', ' '),
             );
 
         return redirect()
             ->route('restaurant.stock_counts.show', $stockCount)
+            ->with('success', $message);
+    }
+
+    public function cancel(Request $request, RestaurantStockCount $stockCount): RedirectResponse
+    {
+        if ($stockCount->isClosed()) {
+            if (!app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.stock_counts.close')) {
+                return back()->with('access_denied_popup', true);
+            }
+        }
+
+        $reason = $request->input('reason');
+
+        try {
+            $this->stock->cancelStockCount($stockCount, Auth::user(), $reason);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $message = $stockCount->isClosed()
+            ? "Inventaire {$stockCount->reference} annulé par le RAF sous 48h. Les contre-écritures de stock ont été passées et l'ancien niveau de stock est rétabli."
+            : "Inventaire {$stockCount->reference} abandonné.";
+
+        return redirect()
+            ->route('restaurant.stock_counts.index')
             ->with('success', $message);
     }
 

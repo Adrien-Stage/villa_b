@@ -131,29 +131,35 @@ test('un seul inventaire à la fois par dépôt, et une clôture ne se rejoue pa
 
 test('l’écran du dépôt ouvre, saisit et clôture l’inventaire', function () {
     $minibar = minibarApprovisionne();
+    $controller = agentRole('controller');
+    $raf        = agentRole('manager');
 
-    $this->post(route('economat.stores.counts.store', $minibar))->assertRedirect();
+    $this->actingAs($controller)->post(route('economat.stores.counts.store', $minibar))->assertRedirect();
     $inventaire = ServiceStoreCount::sole();
 
-    $this->get(route('economat.stores.counts.show', $inventaire))->assertOk()->assertSee('Eau minérale');
+    $this->actingAs($controller)->get(route('economat.stores.counts.show', $inventaire))->assertOk()->assertSee('Eau minérale');
 
-    $this->put(route('economat.stores.counts.update', $inventaire), [
+    $this->actingAs($controller)->put(route('economat.stores.counts.update', $inventaire), [
         'lines' => [$inventaire->lines()->value('id') => ['counted_quantity' => 20, 'notes' => 'Chambres 101-110']],
     ])->assertSessionHas('success');
 
-    $this->post(route('economat.stores.counts.close', $inventaire))->assertSessionHas('success');
+    $this->actingAs($controller)->post(route('economat.stores.counts.submit', $inventaire))->assertRedirect();
+
+    $this->actingAs($raf)->post(route('economat.stores.counts.close', $inventaire))->assertSessionHas('success');
 
     expect((float) ServiceStoreStock::where('service_store_id', $minibar->id)->value('current_stock'))->toBe(20.0);
 });
 
-test('le magasinier saisit les comptages sans clôturer', function () {
+test('le magasinier ne peut ni saisir les comptages ni clôturer', function () {
     $minibar = minibarApprovisionne();
     $inventaire = app(ServiceStoreCountService::class)->open($minibar);
     $magasinier = User::factory()->create(['role' => 'storekeeper']);
 
+    // Le magasinier est interdit de saisie de comptage
     $this->actingAs($magasinier)->put(route('economat.stores.counts.update', $inventaire), [
         'lines' => [$inventaire->lines()->value('id') => ['counted_quantity' => 20]],
-    ])->assertSessionHas('success');
+    ])->assertSessionHas('access_denied_popup', true);
 
-    $this->actingAs($magasinier)->postJson(route('economat.stores.counts.close', $inventaire))->assertForbidden();
+    // Le magasinier est interdit de clôture
+    $this->actingAs($magasinier)->post(route('economat.stores.counts.close', $inventaire))->assertSessionHas('access_denied_popup', true);
 });

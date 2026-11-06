@@ -518,7 +518,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Inventaire physique
             Route::post('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'store'])->name('stock_counts.store');
             Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
+            Route::post('/stock-counts/{stockCount}/soumettre', [App\Http\Controllers\RestaurantStockCountController::class, 'submit'])->whereNumber('stockCount')->name('stock_counts.submit');
+            Route::post('/stock-counts/{stockCount}/rejeter', [App\Http\Controllers\RestaurantStockCountController::class, 'reject'])->whereNumber('stockCount')->name('stock_counts.reject');
             Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
+            Route::post('/stock-counts/{stockCount}/annuler', [App\Http\Controllers\RestaurantStockCountController::class, 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
             Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
 
             // Déclaration de pertes & gaspillage
@@ -822,6 +825,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])->whereNumber('store')->name('stores.counts.store');
             Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])->whereNumber('count')->name('stores.counts.show');
             Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])->whereNumber('count')->name('stores.counts.update');
+            Route::post('/depots/inventaires/{count}/soumettre', [$eco . 'ServiceStoreCountController', 'submit'])->whereNumber('count')->name('stores.counts.submit');
+            Route::post('/depots/inventaires/{count}/rejeter', [$eco . 'ServiceStoreCountController', 'reject'])->whereNumber('count')->name('stores.counts.reject');
             Route::post('/depots/inventaires/{count}/cloturer', [$eco . 'ServiceStoreCountController', 'close'])->whereNumber('count')->name('stores.counts.close');
             Route::post('/depots/inventaires/{count}/annuler', [$eco . 'ServiceStoreCountController', 'cancel'])->whereNumber('count')->name('stores.counts.cancel');
 
@@ -885,6 +890,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/inventaires', [$eco . 'StockCountController', 'store'])->name('stock_counts.store');
             Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')->name('stock_counts.show');
             Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])->whereNumber('stockCount')->name('stock_counts.update');
+            Route::post('/inventaires/{stockCount}/soumettre', [$eco . 'StockCountController', 'submit'])->whereNumber('stockCount')->name('stock_counts.submit');
+            Route::post('/inventaires/{stockCount}/rejeter', [$eco . 'StockCountController', 'reject'])->whereNumber('stockCount')->name('stock_counts.reject');
             Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])->whereNumber('stockCount')->name('stock_counts.close');
             Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
             Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])->whereNumber('stockCount')->name('stock_counts.report');

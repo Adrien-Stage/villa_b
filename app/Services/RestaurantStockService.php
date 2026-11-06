@@ -12,6 +12,7 @@ use App\Models\RestaurantStockCount;
 use App\Models\RestaurantStockCountLine;
 use App\Models\RestaurantWasteLog;
 use App\Models\StockRequisition;
+use App\Models\User;
 use App\Notifications\PantryItemLowStock;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
@@ -426,11 +427,64 @@ class RestaurantStockService
     }
 
     /**
-     * Clôture l'inventaire : chaque ligne comptée génère un ajustement de stock, et
+     * Soumet la feuille d'inventaire de restaurant au RAF pour validation.
+     */
+    public function submitStockCount(RestaurantStockCount $count, ?User $user = null): RestaurantStockCount
+    {
+        return DB::transaction(function () use ($count, $user) {
+            $count = RestaurantStockCount::query()->lockForUpdate()->findOrFail($count->id);
+
+            if ($count->isClosed()) {
+                throw new RuntimeException("Cet inventaire est déjà validé.");
+            }
+
+            if (!$count->isDraft() && !$count->isRejected()) {
+                throw new RuntimeException("Seul un inventaire en brouillon ou rejeté peut être soumis au RAF.");
+            }
+
+            $count->update([
+                'status'       => RestaurantStockCount::STATUS_SUBMITTED,
+                'submitted_at' => now(),
+                'submitted_by' => $user?->id ?? Auth::id(),
+            ]);
+
+            return $count->fresh(['lines.item']);
+        });
+    }
+
+    /**
+     * Rejette la soumission d'inventaire par le RAF avec un motif obligatoire.
+     */
+    public function rejectStockCount(RestaurantStockCount $count, string $reason, ?User $user = null): RestaurantStockCount
+    {
+        if (empty(trim($reason))) {
+            throw new RuntimeException("Un motif de rejet est obligatoire.");
+        }
+
+        return DB::transaction(function () use ($count, $reason, $user) {
+            $count = RestaurantStockCount::query()->lockForUpdate()->findOrFail($count->id);
+
+            if (!$count->isSubmitted()) {
+                throw new RuntimeException("Seul un inventaire soumis au RAF peut être rejeté.");
+            }
+
+            $count->update([
+                'status'           => RestaurantStockCount::STATUS_REJECTED,
+                'rejected_at'      => now(),
+                'rejected_by'      => $user?->id ?? Auth::id(),
+                'rejection_reason' => trim($reason),
+            ]);
+
+            return $count->fresh(['lines.item']);
+        });
+    }
+
+    /**
+     * Clôture l'inventaire (Exclusivité RAF) : chaque ligne comptée génère un ajustement de stock, et
      * l'écart valorisé est figé. C'est le chiffre qui compte — l'argent parti en
      * fumée entre ce que les recettes disaient et ce qui est réellement là.
      */
-    public function closeStockCount(RestaurantStockCount $count): RestaurantStockCount
+    public function closeStockCount(RestaurantStockCount $count, ?User $user = null): RestaurantStockCount
     {
         if ($count->isClosed()) {
             throw new RuntimeException('Cet inventaire est déjà clôturé.');
@@ -438,7 +492,13 @@ class RestaurantStockService
 
         $count->loadMissing('lines.item');
 
-        return DB::transaction(function () use ($count) {
+        return DB::transaction(function () use ($count, $user) {
+            $count = RestaurantStockCount::query()->lockForUpdate()->findOrFail($count->id);
+
+            if ($count->isClosed()) {
+                throw new RuntimeException('Cet inventaire est déjà clôturé.');
+            }
+
             $totalVariance = 0;
 
             foreach ($count->lines as $line) {
@@ -473,15 +533,79 @@ class RestaurantStockService
                 );
             }
 
+            $maintenant = now();
             $count->update([
-                'status' => RestaurantStockCount::STATUS_CLOSED,
+                'status'         => RestaurantStockCount::STATUS_CLOSED,
                 'variance_value' => $totalVariance,
-                'closed_by' => Auth::id(),
-                'closed_at' => now(),
+                'closed_by'      => $user?->id ?? Auth::id(),
+                'closed_at'      => $maintenant,
+                'validated_by'   => $user?->id ?? Auth::id(),
+                'validated_at'   => $maintenant,
             ]);
 
             return $count->fresh(['lines.item']);
         });
+    }
+
+    /**
+     * Annule une feuille d'inventaire de restaurant :
+     * - En cours (draft/submitted/rejected) : sans impact de stock.
+     * - Validée : annulation par le RAF sous 48h maximum avec contre-passation complète des mouvements.
+     */
+    public function cancelStockCount(RestaurantStockCount $count, ?User $user = null, ?string $reason = null): void
+    {
+        DB::transaction(function () use ($count, $user, $reason) {
+            $count = RestaurantStockCount::query()->lockForUpdate()->findOrFail($count->id);
+
+            if ($count->isCancelled()) {
+                throw new RuntimeException("Cet inventaire est déjà annulé.");
+            }
+
+            if ($count->isClosed()) {
+                // Règle stricte des 48h
+                $dateValidation = $count->validated_at ?? $count->closed_at;
+                if ($dateValidation && now()->greaterThan($dateValidation->copy()->addHours(48))) {
+                    throw new RuntimeException("Le délai légal de 48h pour annuler la validation de cet inventaire est expiré. L'inventaire {$count->reference} est définitivement verrouillé.");
+                }
+
+                // Contre-passation des ajustements
+                $count->loadMissing('lines.item');
+                foreach ($count->lines as $line) {
+                    if (!$line->isCounted() || !$line->item) {
+                        continue;
+                    }
+
+                    $variance = (float) $line->variance_quantity;
+                    if (abs($variance) >= 0.0005) {
+                        $item = $line->item->fresh();
+                        $this->recordMovement(
+                            item: $item,
+                            type: RestaurantPantryMovement::TYPE_ADJUST,
+                            quantity: max(0, (float) $item->current_stock - $variance),
+                            reason: RestaurantPantryMovement::REASON_COUNT,
+                            unitCost: (float) $line->unit_cost,
+                            notes: "Contre-passation annulation inventaire {$count->reference} par RAF" . ($reason ? " ({$reason})" : ''),
+                        );
+                    }
+                }
+
+                $count->update([
+                    'status'              => RestaurantStockCount::STATUS_CANCELLED,
+                    'cancelled_at'        => now(),
+                    'cancelled_by'        => $user?->id ?? Auth::id(),
+                    'cancellation_reason' => $reason ?? 'Annulation par le RAF sous 48h',
+                ]);
+            } else {
+                $count->update([
+                    'status'              => RestaurantStockCount::STATUS_CANCELLED,
+                    'cancelled_at'        => now(),
+                    'cancelled_by'        => $user?->id ?? Auth::id(),
+                    'cancellation_reason' => $reason ?? 'Annulation de la feuille de comptage',
+                ]);
+            }
+        });
+
+        $count->refresh();
     }
 
     /**

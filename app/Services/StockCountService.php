@@ -26,8 +26,8 @@ class StockCountService
     {
         $department = !empty($data['department']) ? (string) $data['department'] : 'economat';
 
-        // Un seul inventaire ouvert à la fois pour ce service pour éviter la concurrence sur les stocks théoriques
-        $existing = StockCount::where('status', StockCount::STATUS_DRAFT)
+        // Un seul inventaire ouvert ou soumis à la fois pour ce service
+        $existing = StockCount::whereIn('status', [StockCount::STATUS_DRAFT, StockCount::STATUS_SUBMITTED])
             ->where(function ($q) use ($department) {
                 if ($department === 'economat') {
                     $q->where('department', 'economat')->orWhereNull('department');
@@ -110,6 +110,14 @@ class StockCountService
             throw new RuntimeException("Cet inventaire est déjà clôturé.");
         }
 
+        if ($stockCount->isSubmitted()) {
+            throw new RuntimeException("L'inventaire {$stockCount->reference} est soumis au RAF pour validation et ne peut plus être modifié.");
+        }
+
+        if ($stockCount->created_at && now()->greaterThan($stockCount->created_at->copy()->addHours(48))) {
+            throw new RuntimeException("Le délai de 48h pour la saisie de l'inventaire {$stockCount->reference} est expiré. L'inventaire est verrouillé.");
+        }
+
         return DB::transaction(function () use ($stockCount, $linesData) {
             $stockCount = $this->lockDraft($stockCount);
             $stockCount->load('lines.item.packagings');
@@ -188,7 +196,60 @@ class StockCountService
     }
 
     /**
-     * Clôture l'inventaire physique :
+     * Soumet la feuille d'inventaire saisie par le contrôleur au RAF pour validation.
+     */
+    public function submit(StockCount $stockCount, ?User $user = null): StockCount
+    {
+        return DB::transaction(function () use ($stockCount, $user) {
+            $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
+
+            if ($stockCount->isClosed()) {
+                throw new RuntimeException("Cet inventaire est déjà validé.");
+            }
+
+            if (!$stockCount->isDraft() && !$stockCount->isRejected()) {
+                throw new RuntimeException("Seul un inventaire en brouillon ou rejeté peut être soumis au RAF.");
+            }
+
+            $stockCount->update([
+                'status'       => StockCount::STATUS_SUBMITTED,
+                'submitted_at' => now(),
+                'submitted_by' => $user?->id ?? Auth::id(),
+            ]);
+
+            return $stockCount->fresh('lines.item');
+        });
+    }
+
+    /**
+     * Rejette la soumission d'inventaire par le RAF avec un motif obligatoire.
+     */
+    public function reject(StockCount $stockCount, string $reason, ?User $user = null): StockCount
+    {
+        if (empty(trim($reason))) {
+            throw new RuntimeException("Un motif de rejet est obligatoire.");
+        }
+
+        return DB::transaction(function () use ($stockCount, $reason, $user) {
+            $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
+
+            if (!$stockCount->isSubmitted()) {
+                throw new RuntimeException("Seul un inventaire soumis au RAF peut être rejeté.");
+            }
+
+            $stockCount->update([
+                'status'           => StockCount::STATUS_REJECTED,
+                'rejected_at'      => now(),
+                'rejected_by'      => $user?->id ?? Auth::id(),
+                'rejection_reason' => trim($reason),
+            ]);
+
+            return $stockCount->fresh('lines.item');
+        });
+    }
+
+    /**
+     * Valide et clôture l'inventaire physique (Exclusivité RAF) :
      * 1. Ajuste le stock réel de chaque article ayant un écart via StockService::adjust
      * 2. Fige les montants financiers et passe le statut à closed
      */
@@ -199,9 +260,12 @@ class StockCountService
         }
 
         return DB::transaction(function () use ($stockCount, $user) {
-            // Une clôture rejouée appliquerait deux fois les ajustements ; une
-            // feuille annulée ne doit jamais toucher au stock.
-            $stockCount = $this->lockDraft($stockCount);
+            $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
+
+            if (!$stockCount->isDraft() && !$stockCount->isSubmitted() && !$stockCount->isRejected()) {
+                throw new RuntimeException("L'inventaire {$stockCount->reference} n'est pas dans un état validable.");
+            }
+
             $stockCount->load('lines.item.packagings');
 
             $totalCountedValue = 0;
@@ -271,6 +335,7 @@ class StockCountService
                 }
             }
 
+            $maintenant = now();
             $stockCount->update([
                 'status'              => StockCount::STATUS_CLOSED,
                 'total_counted_value' => $totalCountedValue,
@@ -278,7 +343,9 @@ class StockCountService
                 'loss_value'          => $totalLoss,
                 'surplus_value'       => $totalSurplus,
                 'closed_by'           => $user?->id ?? Auth::id(),
-                'closed_at'           => now(),
+                'closed_at'           => $maintenant,
+                'validated_by'        => $user?->id ?? Auth::id(),
+                'validated_at'        => $maintenant,
             ]);
 
             return $stockCount->fresh('lines.item');
@@ -286,33 +353,77 @@ class StockCountService
     }
 
     /**
-     * Annule une feuille d'inventaire en cours sans modifier les stocks.
+     * Annule une feuille d'inventaire :
+     * - En cours (draft/submitted/rejected) : annulation sans impact de stock.
+     * - Déjà validée (closed) : annulation exclusive RAF sous 48h maximum avec contre-écritures complètes.
      */
-    public function cancel(StockCount $stockCount): void
+    public function cancel(StockCount $stockCount, ?User $user = null, ?string $reason = null): void
     {
-        if ($stockCount->isClosed()) {
-            throw new RuntimeException("Un inventaire clôturé ne peut pas être annulé.");
-        }
+        DB::transaction(function () use ($stockCount, $user, $reason) {
+            $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
 
-        DB::transaction(function () use ($stockCount) {
-            $this->lockDraft($stockCount)->update([
-                'status' => StockCount::STATUS_CANCELLED,
-            ]);
+            if ($stockCount->isCancelled()) {
+                throw new RuntimeException("Cet inventaire est déjà annulé.");
+            }
+
+            if ($stockCount->isClosed()) {
+                // Règle stricte des 48h
+                $dateValidation = $stockCount->validated_at ?? $stockCount->closed_at;
+                if ($dateValidation && now()->greaterThan($dateValidation->copy()->addHours(48))) {
+                    throw new RuntimeException("Le délai légal de 48h pour annuler la validation de cet inventaire est expiré. L'inventaire {$stockCount->reference} est définitivement verrouillé.");
+                }
+
+                // Contre-passation des ajustements de stocks
+                $stockCount->loadMissing('lines.item');
+                foreach ($stockCount->lines as $line) {
+                    if (!$line->isCounted() || !$line->item) {
+                        continue;
+                    }
+
+                    $variance = (float) $line->variance_quantity;
+                    if (abs($variance) >= 0.0005) {
+                        $this->stockService->adjust(
+                            item: $line->item,
+                            countedQuantity: max(0, (float) $line->item->current_stock - $variance),
+                            reason: "Contre-passation annulation inventaire {$stockCount->reference} par RAF" . ($reason ? " ({$reason})" : ''),
+                            sourceType: StockMovement::SOURCE_STOCK_COUNT,
+                            sourceId: $stockCount->id,
+                        );
+                    }
+                }
+
+                $stockCount->update([
+                    'status'              => StockCount::STATUS_CANCELLED,
+                    'cancelled_at'        => now(),
+                    'cancelled_by'        => $user?->id ?? Auth::id(),
+                    'cancellation_reason' => $reason ?? 'Annulation par le RAF sous 48h',
+                ]);
+            } else {
+                $stockCount->update([
+                    'status'              => StockCount::STATUS_CANCELLED,
+                    'cancelled_at'        => now(),
+                    'cancelled_by'        => $user?->id ?? Auth::id(),
+                    'cancellation_reason' => $reason ?? 'Annulation de la feuille de comptage',
+                ]);
+            }
         });
 
         $stockCount->refresh();
     }
 
     /**
-     * Relit la feuille sous verrou et exige qu'elle soit encore en cours de
-     * comptage : seul un brouillon se modifie, se clôture ou s'annule.
+     * Relit la feuille sous verrou et exige qu'elle soit encore modifiable (draft ou rejected, < 48h).
      */
     private function lockDraft(StockCount $stockCount): StockCount
     {
         $stockCount = StockCount::query()->lockForUpdate()->findOrFail($stockCount->id);
 
-        if (!$stockCount->isDraft()) {
+        if (!$stockCount->isDraft() && !$stockCount->isRejected()) {
             throw new RuntimeException("L'inventaire {$stockCount->reference} n'est plus en cours de comptage.");
+        }
+
+        if ($stockCount->created_at && now()->greaterThan($stockCount->created_at->copy()->addHours(48))) {
+            throw new RuntimeException("Le délai de 48h pour la saisie de l'inventaire {$stockCount->reference} est expiré. L'inventaire est verrouillé.");
         }
 
         return $stockCount;
