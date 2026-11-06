@@ -66,6 +66,9 @@ class StaffAccountController extends Controller
             return $admin;
         });
 
+        // Envoi immédiat du courriel de bienvenue avec ses identifiants de connexion
+        app(\App\Services\MailNotificationService::class)->sendWelcomeNotification($admin, $valide['password']);
+
         AuditLog::record(null, 'admin_account_console',
             "Compte administrateur {$admin->name} <{$admin->email}> créé depuis la console",
             'security', ['user_id' => $admin->id, 'auteur' => $valide['auteur'] ?? null]);
@@ -104,7 +107,11 @@ class StaffAccountController extends Controller
         }
         if (! empty($valide['password'])) {
             $user->password = Hash::make($valide['password']);
+            $user->must_change_password = true;
             $changements[] = 'mot de passe';
+
+            // Envoi immédiat du mot de passe temporaire par courriel
+            app(\App\Services\MailNotificationService::class)->sendPasswordResetNotification($user, $valide['password']);
         }
         if (array_key_exists('actif', $valide)) {
             $user->is_active = (bool) $valide['actif'];
