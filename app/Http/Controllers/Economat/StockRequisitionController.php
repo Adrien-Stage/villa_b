@@ -465,7 +465,7 @@ class StockRequisitionController extends Controller
         $user = Auth::user();
 
         return $user->isAdmin()
-            || $user->exerce(['storekeeper', 'manager', 'controller', 'quality_auditor']);
+            || $user->exerce(['storekeeper', 'manager', 'controller']);
     }
 
     /** Traiter une demande pose le droit de son geste : approuver, refuser, servir. */

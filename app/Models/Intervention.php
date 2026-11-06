@@ -72,6 +72,11 @@ class Intervention extends Model
     /** L'intervention ouvre-t-elle l'écriture sur ce droit ? */
     public function couvre(string $permission): bool
     {
+        // Une intervention de dépannage n'ouvre JAMAIS les actes exclusifs réservés (Constat S6)
+        if (\App\Support\PermissionCatalog::estNonDerogeable($permission)) {
+            return false;
+        }
+
         $module = explode('.', $permission)[0];
 
         foreach ($this->perimetres ?? [] as $perimetre) {

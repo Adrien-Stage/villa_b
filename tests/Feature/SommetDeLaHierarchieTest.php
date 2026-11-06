@@ -33,21 +33,27 @@ test("l'administrateur figure au référentiel, au sommet, et ne s'attribue pas 
         ->and($admin['is_assignable'])->toBeFalse();
 });
 
-test("l'administrateur consulte tout", function () {
+test("l'administrateur consulte l'exploitation, hors exclusivités de contrôle (Lot 1, S6)", function () {
     $aveugle = array_keys(array_filter(
         PermissionCatalog::all(),
-        fn (array $roles, string $droit) => PermissionCatalog::estLecture($droit) && !in_array('admin', $roles, true),
+        fn (array $roles, string $droit) => PermissionCatalog::estLecture($droit)
+            && !in_array($droit, ['economat.control.voir', 'economat.control.variances.voir'], true)
+            && !in_array('admin', $roles, true),
         ARRAY_FILTER_USE_BOTH
     ));
 
     expect($aveugle)->toBe([]);
 });
 
-test("l'administrateur détient tous les droits du PMS", function () {
-    $sansAdmin = array_keys(array_filter(PermissionCatalog::all(), fn (array $roles) => !in_array('admin', $roles, true)));
+test("l'administrateur ne détient pas les actes exclusifs métier dans son catalogue (Lot 1, S6)", function () {
+    $droitsAdmin = PermissionCatalog::forRole('admin');
 
-    expect($sansAdmin)->toBe([])
-        ->and(PermissionCatalog::forRole('admin'))->toContain('rooms.types.creer', 'users.creer', 'economat.items.creer', 'bookings.payment.add');
+    foreach (PermissionCatalog::ACTES_EXCLUSIFS as $exclusif) {
+        expect($droitsAdmin)->not->toContain($exclusif, "L'administrateur ne doit pas détenir {$exclusif}");
+    }
+
+    // Il détient les droits de configuration, sécurité et administration
+    expect($droitsAdmin)->toContain('rooms.types.creer', 'users.creer', 'droits.modifier', 'settings.modifier');
 });
 
 test('aucun département ne confère admin', function () {
@@ -139,7 +145,7 @@ test("le manager consulte tout ce qu'il n'écrit plus", function () {
     // Lecture seule veut dire lecture : le priver des deux le rendrait aveugle
     // sur les services dont il répond.
     expect($manquants)->toBe([])
-        ->and(PermissionCatalog::roles('economat.control.voir'))->toBe(['admin', 'controller', 'finance_manager', 'support']);
+        ->and(PermissionCatalog::roles('economat.control.voir'))->toBe(['controller', 'finance_manager', 'support']);
 });
 
 test("le comptage de caisse est contresigné par la comptabilité, jamais par le manager", function () {
@@ -187,10 +193,17 @@ test("l'administrateur se connecte par la page commune", function () {
     $this->assertAuthenticatedAs($admin);
 });
 
-test("l'administrateur écrit à l'économat, et le journal le marque", function () {
+test("l'administrateur écrit à l'économat sous intervention déclarée, et le journal le marque (Lot 1)", function () {
     activerModules(['economat', 'comptabilite', 'accounting', 'hebergement']);
 
     $admin = User::factory()->create(['role' => 'admin']);
+    \App\Models\Intervention::create([
+        'user_id' => $admin->id,
+        'motif' => 'Dépannage catalogue économat',
+        'perimetres' => ['economat'],
+        'debut' => now(),
+        'fin_prevue' => now()->addHour(),
+    ]);
 
     $this->actingAs($admin)->get('/economat/articles')->assertOk();
     $this->post('/economat/articles', ['name' => 'Savon de Marseille', 'unit' => 'pièce']);

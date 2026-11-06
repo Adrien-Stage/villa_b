@@ -75,15 +75,18 @@ test("chaque écran qu'il peut consulter s'ouvre sans erreur", function () {
     expect($enErreur)->toBe([]);
 });
 
-test("il n'écrit que le budget, les seuils d'alerte et l'approbation des demandes d'achat", function () {
+test("ses écritures sont strictement limitées au pilotage, aux demandes d'achat et au référentiel / ajustement (Lot 1)", function () {
     $ecritures = collect(PermissionCatalog::all())
         ->filter(fn ($roles, $droit) => in_array('controller', $roles, true) && ! PermissionCatalog::estLecture($droit))
         ->keys()->sort()->values()->all();
 
-    // Établir un budget, approuver une dépense ne sont pas des opérations : il
-    // n'achète ni ne reçoit, sa vue d'ensemble n'en souffre pas.
+    // Lot 1 (Constat S7) : Le contrôleur de gestion est seul habilité à modifier/supprimer
+    // les articles et fournisseurs, et à ajuster le stock. Il tient également le budget
+    // et approuve les demandes d'achat. Il n'achète ni ne réceptionne.
     expect($ecritures)->toBe([
+        'economat.items.adjust', 'economat.items.modifier', 'economat.items.opening', 'economat.items.supprimer',
         'economat.purchase_requests.approve', 'economat.purchase_requests.modifier', 'economat.purchase_requests.reject',
+        'economat.suppliers.modifier', 'economat.suppliers.supprimer',
         'pilotage.budget.modifier', 'pilotage.seuils.modifier',
     ]);
 });

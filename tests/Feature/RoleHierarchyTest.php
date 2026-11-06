@@ -145,28 +145,24 @@ test("le caissier restaurant ne voit ni la boutique ni les factures de l'hôtel"
         ->and($caissier)->toContain('restaurant.billing.paid');
 });
 
-test("l'auditeur qualité consulte les services d'exploitation, sans y écrire", function () {
-    $auditeur = PermissionCatalog::forRole('quality_auditor');
+test("le contrôleur de gestion consulte les services d'exploitation au titre de l'audit qualité (fusion Lot 1)", function () {
+    $controleur = PermissionCatalog::forRole('controller');
 
     foreach ([
         'restaurant.billing.voir', 'shop.orders.voir', 'shop.products.voir', 'economat.items.voir',
         'housekeeping.voir', 'bookings.voir', 'reception.pos.history', 'restaurant.menus.voir',
         'settings.services.export', 'settings.packages.export',
     ] as $droit) {
-        expect($auditeur)->toContain($droit);
+        expect($controleur)->toContain($droit);
     }
-
-    expect(array_filter($auditeur, fn (string $d) => !PermissionCatalog::estLecture($d)))->toBe([]);
 });
 
-test("l'auditeur qualité ne lit ni la comptabilité, ni les caisses, ni le fichier clients exporté", function () {
-    $auditeur = PermissionCatalog::forRole('quality_auditor');
+test("l'auditeur qualité est retiré et ses prérogatives sont portées par le contrôleur de gestion (Lot 1)", function () {
+    expect(RoleCatalog::find('quality_auditor')['statut'])->toBe(RoleCatalog::RETIRE)
+        ->and(RoleCatalog::find('quality_auditor')['is_assignable'])->toBeFalse();
 
-    expect(array_filter($auditeur, fn (string $d) => str_starts_with($d, 'accounting.')))->toBe([])
-        ->and($auditeur)->not->toContain('bookings.cash_register.voir')
-        ->and($auditeur)->not->toContain('shop.cash_register.voir')
-        ->and($auditeur)->not->toContain('rooms.cost_sheets.voir')
-        ->and($auditeur)->not->toContain('customers.export');
+    $auditeur = PermissionCatalog::forRole('quality_auditor');
+    expect($auditeur)->toBe([]);
 });
 
 test('les rôles de la refonte sont en service et attribuables', function () {

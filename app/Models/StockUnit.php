@@ -295,6 +295,8 @@ class StockUnit extends Model
             if ($opt['name'] !== $opt['short_name']) {
                 $valeurs[] = $opt['name'];
             }
+            $valeurs[] = mb_strtolower($opt['short_name']);
+            $valeurs[] = mb_strtolower($opt['name']);
         }
 
         return array_values(array_unique($valeurs));

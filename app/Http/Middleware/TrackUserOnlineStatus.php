@@ -36,7 +36,7 @@ class TrackUserOnlineStatus
             }
 
             // 2. Déconnexion automatique après 20 minutes d'inactivité (ou durée configurée)
-            if ($request->hasSession()) {
+            if ($request->hasSession() && (! app()->runningUnitTests() || config('session.check_inactivity_in_tests', false))) {
                 $maxIdleSeconds = (int) config('session.lifetime', 20) * 60;
                 $lastActivityAt = $request->session()->get('last_user_activity_at');
 

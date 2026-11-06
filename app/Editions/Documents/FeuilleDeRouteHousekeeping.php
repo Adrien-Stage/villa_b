@@ -46,7 +46,7 @@ class FeuilleDeRouteHousekeeping extends Edition
     {
         $requete = HousekeepingTeam::query()->where('is_active', true)->orderBy('name');
 
-        if (! $user->isAdmin() && ! $user->exerce(['manager', 'housekeeping_leader', 'housekeeping_supervisor', 'controller', 'quality_auditor'])) {
+        if (! $user->isAdmin() && ! $user->exerce(['manager', 'housekeeping_leader', 'housekeeping_supervisor', 'controller'])) {
             $requete->whereHas('members', fn ($q) => $q->where('users.id', $user->id));
         }
 
