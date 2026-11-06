@@ -1,14 +1,18 @@
 {{--
-    Mot de passe provisoire tout juste généré : affiché une seule fois, au
-    responsable qui le remettra à la personne.
+    Mot de passe provisoire tout juste généré : affiché au responsable
+    et expédié par e-mail à l'employé avec validité temporaire stricte de 5h.
 --}}
 @if($provisoire = session('motDePasseProvisoire'))
     <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status"
          x-data="{ copie: false }">
-        <p class="font-semibold">Mot de passe de {{ $provisoire['nom'] }} réinitialisé</p>
+        <p class="font-semibold flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Mot de passe de {{ $provisoire['nom'] }} réinitialisé (validité 5h)
+        </p>
         <p class="mt-1 text-xs">
-            Remettez-lui ce mot de passe provisoire. À sa prochaine connexion, il lui sera demandé d'en choisir un nouveau.
-            Il ne sera plus affiché après cette page.
+            Un e-mail a été envoyé à l'utilisateur avec ses identifiants. Ce mot de passe temporaire est valable pendant <strong>5 heures</strong>. À sa connexion, il devra obligatoirement définir son mot de passe personnel.
         </p>
         <div class="mt-2 flex flex-wrap items-center gap-2">
             <code class="rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-mono text-base tracking-wider text-primary select-all">{{ $provisoire['valeur'] }}</code>

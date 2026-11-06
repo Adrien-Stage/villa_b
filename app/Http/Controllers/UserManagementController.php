@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\MailNotificationService;
 use App\Support\DutySegregation;
 use App\Support\RoleCatalog;
 use Illuminate\Http\RedirectResponse;
@@ -204,85 +205,111 @@ class UserManagementController extends Controller
         $validated = $this->validatePayload($request);
         [$roleSlugs, $levels] = $this->extractRoles($validated);
 
+        if (in_array(RoleCatalog::ADMIN, $roleSlugs, true)) {
+            abort(403, 'Un compte administrateur ne peut être créé que depuis la console d\'orchestration (ERP).');
+        }
+
         if ($refus = $this->refuserCumulIncompatible($request, $roleSlugs)) {
             return $refus;
         }
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => strtolower($validated['email']),
-            'phone' => $validated['phone'] ?? null,
-            'department_id' => $validated['department_id'] ?? null,
-            'is_active' => $request->boolean('is_active', true),
-            'must_change_password' => true,
-            'password' => Hash::make($validated['password']),
-        ]);
+        $defaultPassword = config('auth.default_user_password', 'Wetchah@2026!');
 
-        $this->syncUserRoles($user, $roleSlugs, $levels);
-        $this->syncRestaurants($user, $validated, $roleSlugs);
+        $user = DB::transaction(function () use ($manager, $validated, $roleSlugs, $levels, $defaultPassword, $request) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'phone' => $validated['phone'] ?? null,
+                'department_id' => $validated['department_id'] ?? null,
+                'is_active' => $request->boolean('is_active', true),
+                'must_change_password' => true,
+                'password' => Hash::make($defaultPassword),
+            ]);
 
-        AuditLog::record($manager->id, 'user_management',
-            "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
-            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
+            $this->syncUserRoles($user, $roleSlugs, $levels);
+            $this->syncRestaurants($user, $validated, $roleSlugs);
+
+            AuditLog::record($manager->id, 'user_management',
+                "Création de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
+                'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
+
+            return $user;
+        });
+
+        // Envoi du mail de bienvenue avec identifiants et mot de passe par défaut
+        app(MailNotificationService::class)->sendWelcomeNotification($user, $defaultPassword);
 
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
-            ->with('success', 'Membre du staff créé avec succès.');
+            ->with('success', 'Membre du staff créé avec succès. Ses identifiants ont été envoyés par e-mail.');
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
         $this->ensureManageableByCurrentManager($user);
 
+        // Interdiction formelle d'auto-élévation de privilèges ou de modification de son propre rôle/statut
+        if ($user->is($request->user())) {
+            abort(403, 'Vous ne pouvez pas modifier votre propre compte ou vos propres rôles depuis cet écran.');
+        }
+
         $validated = $this->validatePayload($request, $user);
         [$roleSlugs, $levels] = $this->extractRoles($validated);
+
+        if (in_array(RoleCatalog::ADMIN, $roleSlugs, true)) {
+            abort(403, 'Le rôle administrateur ne peut pas être assigné depuis l\'application hôtelière.');
+        }
 
         if ($refus = $this->refuserCumulIncompatible($request, $roleSlugs)) {
             return $refus;
         }
 
-        $payload = [
-            'name' => $validated['name'],
-            'email' => strtolower($validated['email']),
-            'phone' => $validated['phone'] ?? null,
-            'department_id' => $validated['department_id'] ?? null,
-            'is_active' => $request->boolean('is_active'),
-        ];
+        DB::transaction(function () use ($user, $validated, $roleSlugs, $levels, $request) {
+            $payload = [
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'phone' => $validated['phone'] ?? null,
+                'department_id' => $validated['department_id'] ?? null,
+                'is_active' => $request->boolean('is_active'),
+            ];
 
-        $user->update($payload);
-        $this->syncUserRoles($user, $roleSlugs, $levels);
-        $this->syncRestaurants($user->fresh(), $validated, $roleSlugs);
+            $user->update($payload);
+            $this->syncUserRoles($user, $roleSlugs, $levels);
+            $this->syncRestaurants($user->fresh(), $validated, $roleSlugs);
 
-        AuditLog::record(Auth::id(), 'user_management',
-            "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
-            'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
+            AuditLog::record(Auth::id(), 'user_management',
+                "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
+                'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
+        });
 
         return $this->retour($request, $user)->with('success', 'Profil staff mis à jour avec succès.');
     }
 
     public function toggleStatus(Request $request, User $user): RedirectResponse
     {
-        $this->ensureManageableByCurrentManager($user);
-
         // Se désactiver soi-même fermerait la porte derrière soi.
         if ($user->is($request->user())) {
-            return back()->with('error', 'Vous ne pouvez pas désactiver votre propre compte.');
+            abort(403, 'Vous ne pouvez pas désactiver votre propre compte.');
         }
 
-        $user->update(['is_active' => ! $user->is_active]);
+        $this->ensureManageableByCurrentManager($user);
 
-        // S1 : Si désactivé, révoquer les sessions et le jeton de mémorisation
-        if (! $user->is_active) {
-            $user->forceFill(['remember_token' => Str::random(60)])->save();
-            if (config('session.driver') === 'database') {
-                DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        DB::transaction(function () use ($user) {
+            $user->update(['is_active' => ! $user->is_active]);
+
+            // Si désactivé : révoquer le remember_token et purger les sessions immédiatement
+            if (! $user->is_active) {
+                $user->forceFill(['remember_token' => Str::random(60)])->save();
+                if (config('session.driver') === 'database') {
+                    DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+                }
             }
-        }
-        $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
+            $statusStr = $user->is_active ? 'réactivé' : 'désactivé';
 
-        AuditLog::record(Auth::id(), 'user_management',
-            "Le compte de {$user->name} ({$user->email}) a été {$statusStr}",
-            'users', ['target_user_id' => $user->id, 'is_active' => $user->is_active]);
+            AuditLog::record(Auth::id(), 'user_management',
+                "Le compte de {$user->name} ({$user->email}) a été {$statusStr}",
+                'users', ['target_user_id' => $user->id, 'is_active' => $user->is_active]);
+        });
 
         return $this->retour($request, $user)
             ->with('success', $user->is_active ? 'Compte staff réactivé.' : 'Compte staff désactivé.');
@@ -291,19 +318,16 @@ class UserManagementController extends Controller
     /**
      * Réinitialise le mot de passe d'un employé.
      *
-     * Le responsable reçoit un mot de passe provisoire, affiché une seule
-     * fois, qu'il remet à la personne. Celle-ci choisit le sien à sa
-     * connexion suivante (ExigerNouveauMotDePasse) ; ses sessions ouvertes
-     * sont fermées. Le provisoire n'est écrit nulle part ailleurs : ni au
-     * journal, ni en clair en base.
+     * Génère un mot de passe temporaire valable 5 heures, ferme toutes ses sessions,
+     * et expédie automatiquement les identifiants par e-mail.
      */
     public function resetPassword(Request $request, User $user): RedirectResponse
     {
-        $this->ensureManageableByCurrentManager($user);
-
         if ($user->is($request->user())) {
-            return back()->with('error', 'Votre propre mot de passe se change depuis votre profil.');
+            abort(403, 'Votre propre mot de passe se change depuis votre profil.');
         }
+
+        $this->ensureManageableByCurrentManager($user);
 
         $provisoire = $this->motDePasseProvisoire();
 
@@ -311,24 +335,27 @@ class UserManagementController extends Controller
             $user->forceFill([
                 'password' => Hash::make($provisoire),
                 'must_change_password' => true,
+                'temporary_password_expires_at' => now()->addHours(5),
                 'remember_token' => Str::random(60),
             ])->save();
 
-            // Ses sessions ouvertes se ferment : l'ancien mot de passe ne
-            // laisse personne connecté.
+            // Ses sessions ouvertes se ferment : l'ancien mot de passe ne laisse personne connecté.
             if (config('session.driver') === 'database') {
                 DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
             }
 
             AuditLog::record(Auth::id(), 'user_management',
-                "Mot de passe de {$user->name} ({$user->email}) réinitialisé",
+                "Mot de passe de {$user->name} ({$user->email}) réinitialisé (validité 5h)",
                 'users', ['target_user_id' => $user->id]);
         });
+
+        // Envoi de l'e-mail avec mot de passe temporaire valable 5 heures
+        app(MailNotificationService::class)->sendPasswordResetNotification($user, $provisoire, 5);
 
         return $this->retour($request, $user)->with('motDePasseProvisoire', [
             'nom' => $user->name,
             'valeur' => $provisoire,
-        ]);
+        ])->with('success', "Mot de passe réinitialisé. Un e-mail contenant le mot de passe temporaire (validité 5h) a été envoyé à {$user->email}.");
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -400,9 +427,10 @@ class UserManagementController extends Controller
             // Niveau par rôle : lecture ou lecture/écriture.
             'levels' => ['nullable', 'array'],
             'levels.*' => [Rule::in(['read', 'write'])],
-            // Le mot de passe se choisit à la création ; ensuite, il se
-            // réinitialise (resetPassword), il ne se modifie pas ici.
-            'password' => $user ? ['exclude'] : ['required', 'string', 'min:8', 'confirmed'],
+            // Le mot de passe initial est désormais attribué automatiquement par le système
+            // et transmis par e-mail. Le champ n'est plus requis dans le formulaire.
+            'password' => ['exclude'],
+            'password_confirmation' => ['exclude'],
             'is_active' => ['nullable', 'boolean'],
             // Restaurant où travaille un membre du département Restauration.
             'restaurant_id' => ['nullable', 'integer', Rule::exists('points_of_sale', 'id')
@@ -419,10 +447,13 @@ class UserManagementController extends Controller
             'restaurant_id.exists' => 'Ce restaurant n\'existe pas ou est fermé.',
         ]);
 
-        // Le département Restauration travaille dans un restaurant précis :
-        // le formulaire le demande, le serveur l'exige.
+        // Le personnel de restauration (par département ou par fonction F&B) doit obligatoirement
+        // être affecté à un restaurant précis si l'établissement en possède.
         $departement = isset($validated['department_id']) ? Department::find($validated['department_id']) : null;
-        if ($departement?->estLaRestauration() && empty($validated['restaurant_id'])
+        $roleSlugs = $validated['roles'] ?? [];
+        $hasRestaurantRole = array_intersect($roleSlugs, \App\Services\RestaurantContext::ROLES_DU_RESTAURANT) !== [];
+
+        if (($departement?->estLaRestauration() || $hasRestaurantRole) && empty($validated['restaurant_id'])
             && \App\Support\TenantModules::has('restaurant')
             && app(\App\Services\RestaurantContext::class)->restaurants()->isNotEmpty()) {
             throw ValidationException::withMessages([

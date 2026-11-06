@@ -46,12 +46,22 @@ class LoginRequest extends FormRequest
 
         $user = User::where('email', $this->string('email')->toString())->first();
 
-        if ($user && !$user->is_active && Hash::check($this->string('password')->toString(), $user->password)) {
-            RateLimiter::hit($this->throttleKey());
+        if ($user && Hash::check($this->string('password')->toString(), $user->password)) {
+            if (! $user->is_active) {
+                RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'email' => 'Votre compte a été désactivé. Veuillez contacter votre responsable.',
-            ]);
+                throw ValidationException::withMessages([
+                    'email' => 'Votre compte a été désactivé. Veuillez contacter votre responsable.',
+                ]);
+            }
+
+            if ($user->hasExpiredTemporaryPassword()) {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'email' => 'Votre mot de passe temporaire a expiré (validité de 5 heures dépassée). Veuillez contacter votre administrateur pour réinitialiser vos accès.',
+                ]);
+            }
         }
 
         // Le compte du support ne s'ouvre que par le mode assistance de la

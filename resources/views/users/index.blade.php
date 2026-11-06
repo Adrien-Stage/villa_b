@@ -326,14 +326,13 @@
     @include('users.partials.derogation')
 
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-secondary/30 bg-accent/10 p-3.5 text-xs text-primary/80 flex items-start gap-3">
+        <svg class="w-5 h-5 text-secondary shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
         <div>
-            <label class="text-xs text-primary/60">Mot de passe</label>
-            <input type="password" name="password" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
-        </div>
-        <div>
-            <label class="text-xs text-primary/60">Confirmation mot de passe</label>
-            <input type="password" name="password_confirmation" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            <p class="font-semibold text-primary">Génération automatique du mot de passe</p>
+            <p class="text-[11px] text-primary/70 mt-0.5">Un mot de passe par défaut sécurisé sera automatiquement attribué et transmis par e-mail avec ses identifiants. L'utilisateur aura pour consigne de le modifier obligatoirement dès sa première connexion.</p>
         </div>
     </div>
 

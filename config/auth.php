@@ -114,4 +114,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mot de passe initial par défaut
+    |--------------------------------------------------------------------------
+    |
+    | Mot de passe initial attribué aux nouveaux comptes créés sans saisie
+    | de mot de passe dans l'interface. Configurable via .env, jamais codé
+    | en dur dans le code métier. Oblige l'utilisateur à changer de mot de
+    | passe à sa première connexion.
+    |
+    */
+    'default_user_password' => env('DEFAULT_USER_PASSWORD', 'Wetchah@2026!'),
+
 ];

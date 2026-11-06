@@ -43,6 +43,7 @@ class User extends Authenticatable
         'phone',
         'is_active',
         'must_change_password',
+        'temporary_password_expires_at',
         'last_login_at',
     ];
 
@@ -61,6 +62,7 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
         'must_change_password' => 'boolean',
+        'temporary_password_expires_at' => 'datetime',
     ];
 
     /**
@@ -375,6 +377,24 @@ class User extends Authenticatable
 
         // Prend un des noms de l'utilisateur s'il en a deux ou plus
         return mb_convert_case($parts[0], MB_CASE_TITLE, 'UTF-8');
+    }
+
+    /**
+     * Le mot de passe temporaire a-t-il dépassé son délai de validité (5h) ?
+     */
+    public function hasExpiredTemporaryPassword(): bool
+    {
+        return $this->temporary_password_expires_at !== null
+            && $this->temporary_password_expires_at->isPast();
+    }
+
+    /**
+     * Le mot de passe temporaire est-il encore valide ?
+     */
+    public function hasValidTemporaryPassword(): bool
+    {
+        return $this->temporary_password_expires_at !== null
+            && ! $this->temporary_password_expires_at->isPast();
     }
 
     /** Ce que la corbeille affiche pour cette fiche. */
