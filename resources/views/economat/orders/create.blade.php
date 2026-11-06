@@ -324,7 +324,9 @@
                                             <button type="button" @click="ouvrirComparateurPourLigne(line, idx)"
                                                 class="text-[10px] font-semibold text-primary/70 hover:text-primary flex items-center gap-1 underline"
                                                 title="Comparer les prix des autres fournisseurs pour cet article">
-                                                <i data-lucide="git-compare" class="w-3 h-3"></i>
+                                                <svg class="w-3 h-3 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/>
+                                                </svg>
                                                 <span>Comparer les fournisseurs</span>
                                             </button>
                                         </template>
@@ -360,14 +362,20 @@
                                     </div>
                                 </div>
 
-                                {{-- Suppression --}}
-                                <div class="col-span-1 text-right flex items-center justify-end">
-                                    <button type="button" @click="removeLine(idx)" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Supprimer la ligne">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                {{-- Bouton Supprimer la ligne --}}
+                                <div class="col-span-1 flex flex-col items-center justify-end">
+                                    <span class="block text-[10px] font-semibold text-transparent mb-0.5 select-none uppercase hidden md:block">&nbsp;</span>
+                                    <button type="button" @click="removeLine(idx)"
+                                        class="p-2 rounded-lg text-red-600 hover:text-white hover:bg-red-600 bg-red-50 border border-red-200 transition-all shadow-2xs flex items-center justify-center shrink-0 cursor-pointer"
+                                        title="Supprimer cette ligne">
+                                        <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2m-6 5v6m4-6v6"/>
+                                        </svg>
+                                        <span class="sr-only">Supprimer</span>
                                     </button>
                                 </div>
 
-                                {{-- Ligne récapitulative sous-total et stock --}}
+                                {{-- Ligne récapitulative sous-total, stock et actions --}}
                                 <div class="col-span-12 pt-1 border-t border-secondary/10 flex justify-between items-center text-[10px] text-primary/60">
                                     <div class="flex items-center gap-2">
                                         <span>
@@ -375,11 +383,19 @@
                                             <span x-text="line.unit"></span>
                                         </span>
                                         <template x-if="line.itemId">
-                                            <button type="button" @click="ouvrirComparateurPourLigne(line, idx)" class="text-primary hover:underline font-semibold flex items-center gap-0.5 ml-2">
-                                                <i data-lucide="git-compare" class="w-3 h-3"></i>
+                                            <button type="button" @click="ouvrirComparateurPourLigne(line, idx)" class="text-primary hover:underline font-semibold flex items-center gap-1 ml-2">
+                                                <svg class="w-3 h-3 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/>
+                                                </svg>
                                                 <span>Comparer les prix fournisseurs</span>
                                             </button>
                                         </template>
+                                        <button type="button" @click="removeLine(idx)" class="text-red-600 hover:text-red-800 hover:underline font-semibold flex items-center gap-1 ml-4 border-l border-secondary/20 pl-3">
+                                            <svg class="w-3 h-3 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                            </svg>
+                                            <span>Supprimer la ligne</span>
+                                        </button>
                                     </div>
                                     <span>
                                         Total ligne : <strong class="font-mono text-primary text-xs" x-text="formatMoney((parseFloat(line.qty) || 0) * (parseInt(line.price) || 0)) + ' FCFA'"></strong>
