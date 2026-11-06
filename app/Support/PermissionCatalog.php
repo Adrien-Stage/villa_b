@@ -294,6 +294,9 @@ class PermissionCatalog
         'rooms.import',
         'rooms.modifier',
         'pilotage.budget.modifier',
+        'pilotage.budget.valider',
+        'pilotage.forecast.modifier',
+        'pilotage.forecast.valider',
         'pilotage.seuils.modifier',
         'rooms.rates.creer',
         'rooms.rates.modifier',
@@ -556,6 +559,9 @@ class PermissionCatalog
         'accounting.ledger.suppliers.creer',
         'accounting.ledger.years.open',
         'pilotage.budget.modifier',
+        'pilotage.budget.valider',
+        'pilotage.forecast.modifier',
+        'pilotage.forecast.valider',
         'pilotage.seuils.modifier',
 
         // Validation / Clôture inventaire (Constat S8 - Exclusivité RAF)
@@ -616,6 +622,8 @@ class PermissionCatalog
         'accounting.ledger.reconcile',
         'accounting.ledger.years.open',
         'accounting.cash_reviews.creer',
+        'pilotage.budget.valider',
+        'pilotage.forecast.valider',
     ];
 
     /** Indique si un droit est strictement non dérogeable */
@@ -1143,6 +1151,10 @@ class PermissionCatalog
             'pilotage.voir' => ['controller', 'finance_manager', 'manager'],
             'pilotage.budget.voir' => ['controller', 'finance_manager', 'manager'],
             'pilotage.budget.modifier' => ['controller', 'finance_manager'],
+            'pilotage.budget.valider' => ['finance_manager', 'manager'],
+            'pilotage.forecast.voir' => ['controller', 'finance_manager', 'manager'],
+            'pilotage.forecast.modifier' => ['controller', 'finance_manager'],
+            'pilotage.forecast.valider' => ['finance_manager', 'manager'],
             'pilotage.seuils.modifier' => ['controller', 'finance_manager'],
             // La grille tarifaire des chambres : prix de base de chaque type
             // et tarifs par critère (saison, week-end, événement, long séjour,

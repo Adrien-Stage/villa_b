@@ -72,10 +72,13 @@ class BudgetDeGestion
             $centres[] = ['centre' => $centre, 'libelle' => $libelle, 'lignes' => $parNature];
         }
 
+        $estValide = $lignes->isNotEmpty() && $lignes->every(fn (BudgetLine $l) => $l->status === BudgetLine::STATUS_VALIDATED);
+
         return [
             'annee' => $annee,
             'source' => $this->realise->source($annee),
             'existe' => $lignes->isNotEmpty(),
+            'valide' => $estValide,
             'mois_ecoules' => $moisEcoules,
             'centres' => $centres,
             'resultat' => [
@@ -107,12 +110,20 @@ class BudgetDeGestion
     /**
      * Enregistre le budget saisi en FCFA : centre => nature => mois => montant.
      */
-    public function enregistrer(int $annee, array $saisie, User $par): void
+    public function enregistrer(int $annee, array $saisie, User $par, bool $forcer = false): void
     {
+        $dejaValide = BudgetLine::where('year', $annee)->where('status', BudgetLine::STATUS_VALIDATED)->exists();
+        if ($dejaValide && !$forcer) {
+            throw new \RuntimeException("Le budget {$annee} est validé par le RAF et ne peut plus être modifié sans réouverture.");
+        }
+
         DB::transaction(function () use ($annee, $saisie, $par) {
             foreach (BudgetLine::centres() as $centre => $libelle) {
                 foreach (array_keys(BudgetLine::NATURES) as $nature) {
-                    $valeurs = ['updated_by' => $par->id];
+                    $valeurs = [
+                        'updated_by' => $par->id,
+                        'status' => BudgetLine::STATUS_DRAFT,
+                    ];
                     foreach (range(1, 12) as $m) {
                         $valeurs['m' . $m] = max(0, (int) round(((float) ($saisie[$centre][$nature][$m] ?? 0)) * 100));
                     }
@@ -126,6 +137,27 @@ class BudgetDeGestion
 
         AuditLog::record($par->id, 'budget', "Budget {$annee} enregistré : produits " . number_format($produits / 100, 0, ',', ' ')
             . ' FCFA, charges ' . number_format($charges / 100, 0, ',', ' ') . ' FCFA', 'pilotage', ['annee' => $annee]);
+    }
+
+    /**
+     * Validation formelle du budget par le RAF.
+     */
+    public function valider(int $annee, User $raf): void
+    {
+        $existe = BudgetLine::where('year', $annee)->exists();
+        if (!$existe) {
+            throw new \RuntimeException("Aucun budget à valider pour {$annee}.");
+        }
+
+        DB::transaction(function () use ($annee, $raf) {
+            BudgetLine::where('year', $annee)->update([
+                'status' => BudgetLine::STATUS_VALIDATED,
+                'validated_by' => $raf->id,
+                'validated_at' => now(),
+            ]);
+        });
+
+        AuditLog::record($raf->id, 'budget', "Budget {$annee} validé formellement par le RAF", 'pilotage', ['annee' => $annee]);
     }
 
     /**

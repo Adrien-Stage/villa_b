@@ -30,6 +30,7 @@ class TableauDeBordGestion
         private readonly AccountingService $caisse,
         private readonly RestaurantStockService $cuisine,
         private readonly BudgetDeGestion $budget,
+        private readonly ?PrevisionDeGestion $prevision = null,
     ) {
     }
 
@@ -37,49 +38,77 @@ class TableauDeBordGestion
     public function pour(CarbonImmutable $mois): array
     {
         $debut = $mois->startOfMonth()->startOfDay();
-        // Le mois en cours s'arrête à aujourd'hui ; le précédent se compare
-        // sur le même nombre de jours, sinon un mois commencé perdrait
-        // toujours face à un mois plein.
+        // Le mois en cours s'arrête à aujourd'hui ; le précédent et l'année N-1
+        // se comparent sur le même nombre exact de jours, sinon un mois commencé
+        // perdrait toujours face à une période pleine.
         $fin = $debut->isSameMonth(CarbonImmutable::now()) ? CarbonImmutable::now()->endOfDay() : $debut->endOfMonth();
         $jours = (int) $debut->diffInDays($fin->startOfDay()) + 1;
+
+        // Période précédente M-1 (mois précédent)
         $avantDebut = $debut->subMonthNoOverflow()->startOfMonth();
         $avantFin = $avantDebut->addDays(min($jours, $avantDebut->daysInMonth) - 1)->endOfDay();
 
+        // Période précédente N-1 (même mois de l'année précédente, avec gestion bissextile)
+        $n1Debut = $debut->subYearNoOverflow()->startOfMonth();
+        $n1Jours = min($jours, $n1Debut->daysInMonth);
+        $n1Fin = $n1Debut->addDays($n1Jours - 1)->endOfDay();
+
         $hebergement = $this->hebergement($debut, $fin);
         $hebergementAvant = $this->hebergement($avantDebut, $avantFin);
+        $hebergementN1 = $this->hebergement($n1Debut, $n1Fin);
 
         $restaurant = TenantModules::has('restaurant') ? $this->restaurant($debut, $fin) : null;
         $restaurantAvant = $restaurant !== null ? $this->restaurant($avantDebut, $avantFin) : null;
+        $restaurantN1 = $restaurant !== null ? $this->restaurant($n1Debut, $n1Fin) : null;
 
         $recettes = $this->caisse->recettes($debut, $fin);
         $recettesAvant = $this->caisse->recettes($avantDebut, $avantFin);
+        $recettesN1 = $this->caisse->recettes($n1Debut, $n1Fin);
+
         $depenses = $this->caisse->depenses($debut, $fin)['total'];
         $depensesAvant = $this->caisse->depenses($avantDebut, $avantFin)['total'];
+        $depensesN1 = $this->caisse->depenses($n1Debut, $n1Fin)['total'];
 
         $budget = $this->budget->existe($debut->year)
             ? $this->budget->mois($debut->year, $debut->month, $fin->isSameDay($debut->endOfMonth()) ? null : $fin)
             : null;
+
+        $prevService = $this->prevision ?? app(PrevisionDeGestion::class);
+        $forecast = $prevService->existe($debut->year)
+            ? $prevService->mois($debut->year, $debut->month, $fin->isSameDay($debut->endOfMonth()) ? null : $fin)
+            : null;
+
+        $rapprochement = $this->rapprochement($debut, $fin, $hebergement, $restaurant, $recettes);
 
         return [
             'debut' => $debut,
             'fin' => $fin,
             'avant_debut' => $avantDebut,
             'avant_fin' => $avantFin,
+            'n1_debut' => $n1Debut,
+            'n1_fin' => $n1Fin,
             'hebergement' => $hebergement,
             'hebergement_avant' => $hebergementAvant,
+            'hebergement_n1' => $hebergementN1,
             'restaurant' => $restaurant,
             'restaurant_avant' => $restaurantAvant,
+            'restaurant_n1' => $restaurantN1,
             'tresorerie' => [
                 'encaissements' => $recettes['total'],
                 'encaissements_avant' => $recettesAvant['total'],
+                'encaissements_n1' => $recettesN1['total'],
                 'par_moyen' => $recettes['by_method'],
                 'par_activite' => ['hebergement' => $recettes['hebergement'], 'restaurant' => $recettes['restaurant'], 'boutique' => $recettes['boutique']],
                 'boutique_avant' => $recettesAvant['boutique'],
+                'boutique_n1' => $recettesN1['boutique'],
                 'depenses' => $depenses,
                 'depenses_avant' => $depensesAvant,
+                'depenses_n1' => $depensesN1,
                 'creances' => (int) ($this->caisse->creances()['total'] ?? 0),
             ],
             'budget' => $budget,
+            'forecast' => $forecast,
+            'rapprochement' => $rapprochement,
             'alertes' => ManagementAlert::query()->where('period', $debut->format('Y-m'))->latest('updated_at')->get(),
             'seuils' => self::seuils(),
         ];
@@ -198,6 +227,45 @@ class TableauDeBordGestion
         }
 
         return round(($valeur - $avant) * 100 / abs($avant), 1);
+    }
+
+    /**
+     * Rapprochement d'intégrité financière :
+     * Exploitation (ventes brutes PMS/Resto/Boutique) vs Encaissements Caisse vs Grand Livre.
+     *
+     * @return array<string, mixed>
+     */
+    public function rapprochement(CarbonImmutable $debut, CarbonImmutable $fin, array $hebergement, ?array $restaurant, array $recettes): array
+    {
+        $caHebergement = (int) ($hebergement['revenu'] ?? 0);
+        $caRestaurant = (int) ($restaurant['chiffre_affaires'] ?? 0);
+        $caBoutique = (int) ($recettes['boutique'] ?? 0);
+        $totalExploitation = $caHebergement + $caRestaurant + $caBoutique;
+
+        $totalCaisse = (int) ($recettes['total'] ?? 0);
+        $ecartCaisse = $totalExploitation - $totalCaisse;
+
+        $caCompta = null;
+        $ecartCompta = null;
+        if (TenantModules::has('ledger')) {
+            $produits = app(AnalyticReportService::class)->resultByCenter($debut, $fin)['totals']['revenue'] ?? null;
+            if ($produits !== null) {
+                $caCompta = (int) $produits;
+                $ecartCompta = $totalExploitation - $caCompta;
+            }
+        }
+
+        return [
+            'ca_hebergement'     => $caHebergement,
+            'ca_restaurant'      => $caRestaurant,
+            'ca_boutique'        => $caBoutique,
+            'ca_exploitation'    => $totalExploitation,
+            'encaissements'      => $totalCaisse,
+            'ecart_caisse'       => $ecartCaisse,
+            'ca_comptabilise'    => $caCompta,
+            'ecart_comptabilite' => $ecartCompta,
+            'conforme'           => $ecartCompta === null || abs($ecartCompta) < 100,
+        ];
     }
 
     /** Libellé d'un centre du budget. */

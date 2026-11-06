@@ -225,8 +225,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- PILOTAGE (contrôle de gestion) ---
-    // Tableau de bord, budget et seuils d'alerte : le contrôleur de gestion et
-    // le responsable financier les établissent, la direction les consulte.
+    // Tableau de bord, budget, prévisions et seuils d'alerte : le contrôleur de gestion et
+    // le responsable financier les établissent, la direction les valide et consulte.
     Route::prefix('pilotage')->name('pilotage.')->middleware('permission')->group(function () {
         $c = App\Http\Controllers\PilotageController::class;
 
@@ -234,6 +234,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/seuils', [$c, 'updateSeuils'])->name('seuils.update');
         Route::get('/budget', [$c, 'budget'])->name('budget.index');
         Route::put('/budget/{annee}', [$c, 'updateBudget'])->whereNumber('annee')->name('budget.update');
+        Route::post('/budget/{annee}/valider', [$c, 'validateBudget'])->whereNumber('annee')->name('budget.valider');
+        Route::get('/previsions', [$c, 'forecast'])->name('forecast.index');
+        Route::put('/previsions/{annee}', [$c, 'updateForecast'])->whereNumber('annee')->name('forecast.update');
+        Route::post('/previsions/{annee}/valider', [$c, 'validateForecast'])->whereNumber('annee')->name('forecast.valider');
     });
 
     // --- GRILLE TARIFAIRE DES CHAMBRES ---
