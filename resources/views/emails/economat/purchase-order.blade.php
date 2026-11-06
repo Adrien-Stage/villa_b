@@ -61,7 +61,7 @@
                                             <td style="padding:8px; border-bottom:1px solid #efeae1;">
                                                 {{ $line->item?->name ?? 'Article' }}
                                             </td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
+                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
                                             <td align="center" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace; font-weight:bold; color:#5a5045;">{{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
                                         </tr>
                                     @endforeach

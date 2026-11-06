@@ -53,10 +53,8 @@ test("un bon transmis sans email se réceptionne comme un bon envoyé", function
     $bon = bonSansEmail();
     $econome = personnelEconomat('econome', 'Économe');
 
-    // L'économat attend l'envoi : il ne transmet pas le bon.
-    $this->actingAs($econome)->get(route('economat.orders.show', $bon))->assertOk()
-        ->assertDontSee('Marquer comme transmis')
-        ->assertSee("En attente d'envoi par le responsable des achats", false);
+    // L'économat ne voit pas les bons de commande (Constat S7, Lot 3)
+    $this->actingAs($econome)->get(route('economat.orders.show', $bon))->assertSessionHas('access_denied_popup', true);
 
     // Le responsable des achats le transmet.
     $this->actingAs(personnelEconomat('purchasing_manager', 'Acheteur'));
@@ -80,9 +78,8 @@ test("un bon transmis sans email se réceptionne comme un bon envoyé", function
     $this->post(route('economat.orders.transmit', $bon), ['moyen' => 'main_propre'])->assertSessionHas('error');
     expect($bon->fresh()->transmission)->toBe('telephone');
 
-    // L'économat réceptionne la livraison.
+    // L'économat réceptionne la livraison via le formulaire de réception
     $this->actingAs($econome);
-    $this->get(route('economat.orders.show', $bon))->assertSee('dicté par téléphone')->assertSee('Réceptionner la livraison');
     $this->get(route('economat.receipts.create', $bon))->assertOk();
 
     // Le magasinier pointe les livraisons, il ne transmet pas les bons.
@@ -98,8 +95,11 @@ test("dans un magasin vide, la réception directe crée les articles et le bon d
     $comptable = personnelEconomat('accountant', 'Comptable');
     $acheteur = personnelEconomat('purchasing_manager', 'Acheteur');
     $linge = StockCategory::create(['name' => 'Linge']);
-    // Le fichier des fournisseurs est tenu par le responsable des achats.
+    // Le fichier des fournisseurs et articles est tenu par le responsable des achats.
     $fournisseur = Supplier::create(['name' => 'Quincaillerie du Centre', 'phone' => '+237 677 11 22 33', 'is_active' => true]);
+    $drap = StockItem::create(['name' => 'Drap blanc 2 places', 'unit' => 'pièce', 'stock_category_id' => $linge->id, 'current_stock' => 0, 'supplier_id' => $fournisseur->id, 'is_active' => true]);
+    $ampoule = StockItem::create(['name' => 'Ampoule LED 9W', 'unit' => 'pièce', 'current_stock' => 0, 'is_active' => true]);
+
     $econome = personnelEconomat('econome', 'Économe');
     $this->actingAs($econome);
 
@@ -111,7 +111,7 @@ test("dans un magasin vide, la réception directe crée les articles et le bon d
     $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'nouveau_fournisseur' => ['name' => 'Inconnu du fichier'],
         'motif'               => 'achat_comptant',
-        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'pièce'], 'quantity_delivered' => 1, 'unit_price' => 500]],
+        'lines'               => [['stock_item_id' => $drap->id, 'quantity_delivered' => 1, 'unit_price' => 500]],
     ])->assertSessionHasErrors('nouveau_fournisseur.name');
 
     $reponse = $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
@@ -120,26 +120,23 @@ test("dans un magasin vide, la réception directe crée les articles et le bon d
         'delivery_note_number' => 'TICKET-552',
         'notes'                => 'Payé en espèces',
         'lines'                => [
-            ['nouvel_article' => ['name' => 'Drap blanc 2 places', 'unit' => 'pièce', 'stock_category_id' => $linge->id],
-                'quantity_delivered' => 20, 'quantity_rejected' => 2, 'rejection_reason' => 'damaged', 'unit_price' => 8000],
-            ['nouvel_article' => ['name' => 'Ampoule LED 9W', 'unit' => 'pièce'], 'quantity_delivered' => 10, 'unit_price' => 1500],
+            ['stock_item_id' => $drap->id, 'quantity_delivered' => 20, 'quantity_rejected' => 2, 'rejection_reason' => 'damaged', 'unit_price' => 8000],
+            ['stock_item_id' => $ampoule->id, 'quantity_delivered' => 10, 'unit_price' => 1500],
         ],
     ]);
 
     $recu = GoodsReceipt::sole();
     $reponse->assertRedirect(route('economat.receipts.show', $recu));
 
-    $drap = StockItem::where('name', 'Drap blanc 2 places')->sole();
-    $ampoule = StockItem::where('name', 'Ampoule LED 9W')->sole();
     $bon = $recu->purchaseOrder;
 
     // Ce qui est gardé : 18 draps à 8 000 et 10 ampoules à 1 500.
     expect($fournisseur->phone)->toBe('+237 677 11 22 33')
         ->and($drap->stock_category_id)->toBe($linge->id)
         ->and($drap->supplier_id)->toBe($fournisseur->id)
-        ->and((float) $drap->current_stock)->toBe(18.0)
-        ->and((int) $drap->average_cost)->toBe(800000)
-        ->and((float) $ampoule->current_stock)->toBe(10.0)
+        ->and((float) $drap->fresh()->current_stock)->toBe(18.0)
+        ->and((int) $drap->fresh()->average_cost)->toBe(800000)
+        ->and((float) $ampoule->fresh()->current_stock)->toBe(10.0)
         ->and($recu->total_amount)->toBe(18 * 800000 + 10 * 150000)
         ->and($recu->delivery_note_number)->toBe('TICKET-552')
         ->and((float) $recu->lines->firstWhere('stock_item_id', $drap->id)->quantity_rejected)->toBe(2.0)
@@ -157,8 +154,8 @@ test("dans un magasin vide, la réception directe crée les articles et le bon d
     Notification::assertSentTo($acheteur, PurchaseOrderUpdated::class);
 
     $this->get(route('economat.receipts.show', $recu))->assertOk()->assertSee('Réception directe, sans commande préalable');
-    $this->get(route('economat.orders.print', $bon))->assertOk()->assertSee('Bon de Commande de Régularisation');
-    $this->get(route('economat.receipts.index'))->assertOk()->assertSee('Réception directe');
+    $this->actingAs($acheteur)->get(route('economat.orders.print', $bon))->assertOk()->assertSee('Bon de Commande de Régularisation');
+    $this->actingAs($econome)->get(route('economat.receipts.index'))->assertOk()->assertSee('Réception directe');
 });
 
 test("un article déjà au magasin reçoit la marchandise au coût moyen", function () {
@@ -187,11 +184,13 @@ test("une réception directe incohérente n'enregistre rien", function () {
     $fournisseur = Supplier::sole();
 
     // Tout refusé : rien n'est gardé, rien ne s'enregistre.
+    $savon = StockItem::create(['name' => 'Savon Liquide', 'unit' => 'litre', 'current_stock' => 0, 'min_stock' => 1, 'is_active' => true]);
     $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 
         'supplier_id'         => $fournisseur->id,
         'motif'               => 'urgence',
-        'lines'               => [['nouvel_article' => ['name' => 'Savon', 'unit' => 'litre'], 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
+        'lines'               => [['stock_item_id' => $savon->id, 'quantity_delivered' => 5, 'quantity_rejected' => 5, 'unit_price' => 500]],
     ])->assertSessionHas('error');
+    $savon->delete();
 
     // Un fournisseur se choisit dans la liste : l'économe n'en crée pas.
     $this->post(route('economat.receipts.direct.store'), ['received_at' => now()->subMinute()->format('Y-m-d H:i'), 

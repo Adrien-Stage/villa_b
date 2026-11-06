@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
+use App\Models\StockMovement;
 use App\Models\StockUnit;
 use App\Models\StorageZone;
 use App\Models\Supplier;

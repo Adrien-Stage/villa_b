@@ -124,8 +124,8 @@
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $ligne->item?->name ?? '—' }}</td>
                         <td class="text-center font-bold" style="font-size: 8.5px;">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
-                        <td class="num">{{ $qte($ligne->quantity_requested) }}</td>
-                        <td class="num {{ $ligne->estAjustee() ? 'ajuste' : '' }}">{{ $ligne->quantity_approved !== null ? $qte($ligne->quantity_approved) : '—' }}</td>
+                        <td class="num">{{ $qte($ligne->quantity_requested) }} {{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
+                        <td class="num {{ $ligne->estAjustee() ? 'ajuste' : '' }}">{{ $ligne->quantity_approved !== null ? $qte($ligne->quantity_approved) . ' ' . ($ligne->item?->shortUnit() ?? $ligne->item?->unit) : '—' }}</td>
                         @if($peutVoirPrix)
                             <td class="num">{{ $fcfa($ligne->estimated_unit_price) }} F</td>
                             <td class="num">{{ $fcfa($ligne->estimatedTotal()) }} F</td>

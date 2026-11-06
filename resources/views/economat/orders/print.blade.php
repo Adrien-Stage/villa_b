@@ -387,7 +387,7 @@
                         <div style="font-size: 8px; color: #64748b;">Réf : {{ $line->item?->reference ?? '—' }}</div>
                     </td>
                     <td class="text-right font-mono font-bold">
-                        {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
+                        {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ $line->item?->shortUnit() ?? $line->item?->unit }}
                     </td>
                     <td class="text-center font-mono font-bold" style="font-size: 8.5px;">
                         {{ $line->item?->shortUnit() ?? $line->item?->unit }}

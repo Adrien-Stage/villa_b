@@ -142,8 +142,12 @@ test('le responsable des achats cree un fournisseur avec toutes ses informations
         ->and($itemB->supplierPriceFor($supplier))->toBe(1200000);
 });
 
-test('le responsable des achats met a jour un fournisseur et dissocie un article retire', function () {
-    $econome = User::factory()->create([
+test('le controleur de gestion met a jour un fournisseur et dissocie un article retire ; le responsable des achats ne peut pas modifier', function () {
+    $controleur = User::factory()->create([
+        'name' => 'Paul Contrôleur',
+        'role' => 'controller',
+    ]);
+    $acheteur = User::factory()->create([
         'name' => 'Jean-Pierre Eboule',
         'role' => 'purchasing_manager',
     ]);
@@ -196,7 +200,15 @@ test('le responsable des achats met a jour un fournisseur et dissocie un article
         ],
     ];
 
-    $response = $this->actingAs($econome)
+    // Le responsable des achats se voit refuser la modification (Constat S7, Lot 3)
+    $this->actingAs($acheteur)
+        ->from(route('economat.suppliers.index'))
+        ->put(route('economat.suppliers.update', $supplier), $updatePayload)
+        ->assertRedirect(route('economat.suppliers.index'))
+        ->assertSessionHas('access_denied_popup', true);
+
+    // Seul le contrôleur de gestion peut valider la modification
+    $response = $this->actingAs($controleur)
         ->from(route('economat.suppliers.index'))
         ->put(route('economat.suppliers.update', $supplier), $updatePayload);
 
