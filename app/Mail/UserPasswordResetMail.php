@@ -5,7 +5,6 @@ namespace App\Mail;
 use App\Models\User;
 use App\Support\MailIdentity;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -15,8 +14,11 @@ use Illuminate\Queue\SerializesModels;
  * E-mail de réinitialisation de mot de passe déclenché par un responsable.
  * Transmet le mot de passe temporaire valable 5 heures et rappelle
  * l'obligation de choisir un mot de passe personnel dès la connexion.
+ *
+ * Envoyé de manière synchrone (immédiate) pour garantir la réception
+ * du mot de passe temporaire sans blocage dans la file d'attente.
  */
-class UserPasswordResetMail extends Mailable implements ShouldQueue
+class UserPasswordResetMail extends Mailable
 {
     use Queueable, SerializesModels;
 

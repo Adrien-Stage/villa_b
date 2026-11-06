@@ -143,6 +143,7 @@
     @endif
 
     @include('partials.session-timeout')
+    @include('partials.toasts')
     @stack('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {

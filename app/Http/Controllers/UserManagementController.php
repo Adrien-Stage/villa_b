@@ -237,11 +237,16 @@ class UserManagementController extends Controller
         });
 
         // Envoi du mail de bienvenue avec identifiants et mot de passe par défaut
-        app(MailNotificationService::class)->sendWelcomeNotification($user, $defaultPassword);
+        $mailSent = app(MailNotificationService::class)->sendWelcomeNotification($user, $defaultPassword);
+
+        $flashKey = $mailSent ? 'success' : 'warning';
+        $flashMsg = $mailSent
+            ? "Membre du staff {$user->name} créé avec succès. Ses identifiants ont été envoyés par e-mail à {$user->email}."
+            : "Membre du staff {$user->name} créé avec succès. Attention : l'e-mail avec ses identifiants n'a pas pu être délivré (vérifiez la configuration Brevo SMTP).";
 
         return redirect()
             ->route('users.index', $this->resolveViewMode($request))
-            ->with('success', 'Membre du staff créé avec succès. Ses identifiants ont été envoyés par e-mail.');
+            ->with($flashKey, $flashMsg);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -350,12 +355,17 @@ class UserManagementController extends Controller
         });
 
         // Envoi de l'e-mail avec mot de passe temporaire valable 5 heures
-        app(MailNotificationService::class)->sendPasswordResetNotification($user, $provisoire, 5);
+        $mailSent = app(MailNotificationService::class)->sendPasswordResetNotification($user, $provisoire, 5);
+
+        $flashType = $mailSent ? 'success' : 'warning';
+        $flashMsg = $mailSent
+            ? "Mot de passe réinitialisé. Un e-mail contenant le mot de passe temporaire (validité 5h) a été envoyé à {$user->email}."
+            : "Mot de passe réinitialisé (provisoire : {$provisoire}). Attention : l'e-mail n'a pas pu être délivré à {$user->email} (vérifiez Brevo SMTP).";
 
         return $this->retour($request, $user)->with('motDePasseProvisoire', [
             'nom' => $user->name,
             'valeur' => $provisoire,
-        ])->with('success', "Mot de passe réinitialisé. Un e-mail contenant le mot de passe temporaire (validité 5h) a été envoyé à {$user->email}.");
+        ])->with($flashType, $flashMsg);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -441,9 +451,17 @@ class UserManagementController extends Controller
             'derogation' => ['nullable', 'boolean'],
             'derogation_motif' => ['nullable', 'string', 'max:255', 'required_if:derogation,1'],
         ], [
-            'roles.required' => 'Sélectionnez au moins un rôle.',
-            'roles.*.in' => 'Un des rôles sélectionnés n\'est pas autorisé.',
-            'derogation_motif.required_if' => 'Indiquez pourquoi ce cumul est accordé malgré tout.',
+            'name.required' => 'Le nom complet du collaborateur est obligatoire.',
+            'name.string' => 'Le nom doit être une chaîne de caractères valide.',
+            'name.max' => 'Le nom ne peut pas dépasser 255 caractères.',
+            'email.required' => 'L\'adresse e-mail est obligatoire pour transmettre les identifiants d\'accès.',
+            'email.email' => 'Veuillez saisir une adresse e-mail valide (ex: collaborateur@entreprise.com).',
+            'email.unique' => 'Cette adresse e-mail est déjà attribuée à un compte existant.',
+            'department_id.exists' => 'Le département sélectionné est invalide.',
+            'roles.required' => 'Veuillez sélectionner au moins un rôle ou choisir un département.',
+            'roles.min' => 'Veuillez sélectionner au moins un rôle.',
+            'roles.*.in' => 'L\'un des rôles sélectionnés n\'est pas autorisé.',
+            'derogation_motif.required_if' => 'Indiquez le motif justifiant la dérogation au cumul de rôles.',
             'restaurant_id.exists' => 'Ce restaurant n\'existe pas ou est fermé.',
         ]);
 
