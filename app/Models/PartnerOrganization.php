@@ -10,11 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
- * PartnerOrganization : organisation avec laquelle l'établissement a négocié
- * une convention (entreprise, ONG, ambassade, agence de voyage…).
+ * Entreprise ou organisme, avec ou sans convention tarifaire.
  *
  * Porte les privilèges accordés à ses membres. Quand un client déclaré membre
- * réserve, ces privilèges lui sont appliqués automatiquement.
+ * réserve et que la convention est applicable, il peut bénéficier des privilèges.
  *
  * Tous les montants sont en centimes FCFA, comme partout ailleurs.
  */
@@ -38,10 +37,12 @@ class PartnerOrganization extends Model
     public const DISCOUNT_PERCENT = 'percent';
     public const DISCOUNT_AMOUNT  = 'amount';
 
+    protected $attributes = ['has_convention' => true];
+
     protected $fillable = [
         'name', 'code', 'type',
         'contact_name', 'contact_email', 'contact_phone',
-        'valid_from', 'valid_until', 'is_active',
+        'valid_from', 'valid_until', 'is_active', 'has_convention',
         'room_discount_type', 'room_discount_value',
         'restaurant_discount_percent', 'shop_discount_percent',
         'free_service_item_ids',
@@ -53,6 +54,7 @@ class PartnerOrganization extends Model
         'valid_from'                  => 'date',
         'valid_until'                 => 'date',
         'is_active'                   => 'boolean',
+        'has_convention'              => 'boolean',
         'room_discount_value'         => 'integer',
         'restaurant_discount_percent' => 'integer',
         'shop_discount_percent'       => 'integer',
@@ -62,6 +64,16 @@ class PartnerOrganization extends Model
     ];
 
     // ── Relations ────────────────────────────────────────────────────────────
+
+    public function conventionAttachments(): HasMany
+    {
+        return $this->hasMany(PartnerConventionAttachment::class);
+    }
+
+    public function wallet(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Wallet::class, 'owner')->where('currency', 'XAF');
+    }
 
     public function customers(): HasMany
     {
@@ -85,7 +97,7 @@ class PartnerOrganization extends Model
     {
         $date = $date ?: Carbon::today();
 
-        return $query->where('is_active', true)
+        return $query->where('is_active', true)->where('has_convention', true)
             ->where(fn ($q) => $q->whereNull('valid_from')->orWhere('valid_from', '<=', $date))
             ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $date));
     }
@@ -101,7 +113,7 @@ class PartnerOrganization extends Model
     {
         $date = $date ?: Carbon::today();
 
-        if (!$this->is_active) {
+        if (!$this->is_active || !$this->has_convention) {
             return false;
         }
         if ($this->valid_from && $date->lt($this->valid_from)) {
@@ -123,7 +135,7 @@ class PartnerOrganization extends Model
      */
     public function roomDiscountFor(int $grossRoomAmount, int $nights = 1): int
     {
-        if ($grossRoomAmount <= 0) {
+        if (!$this->has_convention || $grossRoomAmount <= 0) {
             return 0;
         }
 
@@ -141,7 +153,7 @@ class PartnerOrganization extends Model
     /** Prestations du catalogue offertes aux membres. */
     public function freeServiceItems(): Collection
     {
-        $ids = $this->free_service_item_ids ?: [];
+        $ids = $this->has_convention ? ($this->free_service_item_ids ?: []) : [];
 
         if (empty($ids)) {
             return collect();
@@ -152,7 +164,7 @@ class PartnerOrganization extends Model
 
     public function grantsFreeServiceItem(int $serviceItemId): bool
     {
-        return in_array($serviceItemId, $this->free_service_item_ids ?: [], false);
+        return $this->has_convention && in_array($serviceItemId, $this->free_service_item_ids ?: [], false);
     }
 
     // ── Affichage ────────────────────────────────────────────────────────────
@@ -180,6 +192,9 @@ class PartnerOrganization extends Model
      */
     public function privilegeLabels(): array
     {
+        if (!$this->has_convention) {
+            return [];
+        }
         $labels = [];
 
         if ($this->room_discount_type !== self::DISCOUNT_NONE && $this->room_discount_value > 0) {

@@ -129,6 +129,7 @@ class CheckOutService
 
         // Paiements déjà reçus
         $paidAmount = $booking->payments()
+            ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', Invoice::where('kind', Invoice::KIND_SEJOUR)->select('id')))
             ->where('status', 'completed')
             ->sum('amount');
 

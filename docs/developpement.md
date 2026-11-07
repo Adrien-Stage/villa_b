@@ -76,6 +76,9 @@ casserait silencieusement le coût moyen pondéré et la piste d'audit.
 
 Même logique pour les autres invariants : `CheckOutService` pour le départ,
 `RoomAvailabilityService` pour la disponibilité, `Notifier` pour les notifications.
+Les soldes de portefeuille passent exclusivement par `WalletService` ;
+`PartnerWalletService` ajoute les règles et règlements de l'hôtel. Voir les
+[exemples de réutilisation](partenaires-et-comptes-depot.md#réutiliser-le-moteur).
 
 ### Les montants sont en centimes
 

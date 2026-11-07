@@ -120,6 +120,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.partners.export');
         Route::post('/settings/partners-import', [App\Http\Controllers\SettingsCsvController::class, 'importPartners'])
             ->name('settings.partners.import');
+        Route::get('/settings/partners/{partnerOrganization}/attachments/{attachment}', [App\Http\Controllers\PartnerOrganizationController::class, 'attachment'])
+            ->name('settings.partners.attachments.show');
 
         // Packs d'hébergement (onglet "Hébergement" des paramètres).
         Route::post('/settings/packages', [App\Http\Controllers\RoomPackageController::class, 'store'])
@@ -142,6 +144,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.cancellation_policies.destroy');
         Route::post('/settings/cancellation-policies/{cancellationPolicy}/default', [App\Http\Controllers\CancellationPolicyController::class, 'setDefault'])
             ->name('settings.cancellation_policies.default');
+    });
+
+    // --- COMPTES DÉPÔT PARTENAIRES ---
+    Route::middleware('permission')->group(function () {
+        $wallets = App\Http\Controllers\PartnerWalletController::class;
+        Route::get('/partners/deposits', [$wallets, 'index'])->name('partners.wallet.index');
+        Route::get('/partners/{partner}/deposit', [$wallets, 'show'])->name('partners.wallet.show');
+        Route::post('/partners/{partner}/deposit/credit', [$wallets, 'credit'])->name('partners.wallet.credit');
+        Route::post('/partners/{partner}/deposit/debit', [$wallets, 'debit'])->name('partners.wallet.debit');
+        Route::post('/partners/{partner}/deposit/{entry}/reverse', [$wallets, 'reverse'])->name('partners.wallet.reverse');
+        Route::get('/partners/{partner}/deposit/{entry}/proof', [$wallets, 'proof'])->name('partners.wallet.proof');
     });
 
     // --- ASSISTANT IA (Kuété) ---

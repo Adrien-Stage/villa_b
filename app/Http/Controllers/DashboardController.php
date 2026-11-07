@@ -187,7 +187,7 @@ class DashboardController extends Controller
             $e = $today->copy()->setHour($h + 2)->endOfHour();
 
             $pSum = Schema::hasTable('payments')
-                ? (int) (\App\Models\Payment::whereBetween('created_at', [$s, $e])->sum('amount') / 100)
+                ? (int) (\App\Models\Payment::serviceSettlements()->whereBetween('created_at', [$s, $e])->sum('amount') / 100)
                 : 0;
             $rSum = Schema::hasTable('restaurant_customer_orders')
                 ? (int) (RestaurantCustomerOrder::where('payment_status', 'paid')->whereBetween('created_at', [$s, $e])->sum('total_amount') / 100)

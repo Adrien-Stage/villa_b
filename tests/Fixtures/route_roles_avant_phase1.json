@@ -1949,6 +1949,48 @@
   "reception_chief",
   "support"
  ],
+ "partners.wallet.credit": [
+  "accountant",
+  "finance_manager"
+ ],
+ "partners.wallet.debit": [
+  "reception",
+  "reception_chief"
+ ],
+ "partners.wallet.index": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
+ "partners.wallet.proof": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
+ "partners.wallet.reverse": [
+  "accountant",
+  "finance_manager"
+ ],
+ "partners.wallet.show": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
+ ],
  "pilotage.budget.index": [
   "admin",
   "controller",
@@ -2907,6 +2949,16 @@
   "admin",
   "finance_manager",
   "manager"
+ ],
+ "settings.partners.attachments.show": [
+  "accountant",
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "support"
  ],
  "settings.partners.destroy": [
   "admin",

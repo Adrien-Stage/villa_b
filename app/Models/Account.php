@@ -15,6 +15,7 @@ class Account extends Model
 {
     /** Comptes collectifs de référence. */
     public const CLIENTS = '411000';
+    public const PARTNER_DEPOSITS = '419000';
     public const SUPPLIERS = '401000';
     public const PERSONNEL = '421000';
 

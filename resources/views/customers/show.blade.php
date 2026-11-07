@@ -95,7 +95,7 @@
         </div>
         <div class="text-right">
             @if($customer->partnerOrganization)
-                <p><span class="font-semibold text-gray-700">Convention :</span> {{ $customer->partnerOrganization->name }}</p>
+                <p><span class="font-semibold text-gray-700">Organisation :</span> {{ $customer->partnerOrganization->name }}</p>
             @endif
             <p><span class="font-semibold text-gray-700">Niveau fidélité :</span> <span class="capitalize">{{ $customer->loyalty_level }}</span> ({{ number_format($customer->loyalty_points) }} pts)</p>
             @if(!empty($billingData['filters']['start_date']) || !empty($billingData['filters']['end_date']))
@@ -162,9 +162,11 @@
                         <span class="flex items-center gap-1.5 px-2 py-0.5 bg-secondary/10 rounded-md text-xs font-medium text-primary">
                             <i data-lucide="handshake" class="w-3 h-3 text-primary"></i>
                             {{ $customer->partnerOrganization->name }}
-                            @unless($customer->partnerOrganization->isValidOn())
+                            @if(!$customer->partnerOrganization->has_convention)
+                                <span class="text-[10px] text-primary/60">(sans convention)</span>
+                            @elseif(!$customer->partnerOrganization->isValidOn())
                                 <span class="text-[10px] text-red-500 font-semibold">(convention expirée)</span>
-                            @endunless
+                            @endif
                         </span>
                     @endif
                 </div>

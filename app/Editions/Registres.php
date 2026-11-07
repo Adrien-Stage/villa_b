@@ -77,7 +77,7 @@ class Registres
      */
     public function services(User $user): array
     {
-        $services = [self::SERVICE_HEBERGEMENT => 'Hébergement', self::SERVICE_RECEPTION => 'POS Réception'];
+        $services = ['depots_partenaires' => 'Dépôts partenaires', self::SERVICE_HEBERGEMENT => 'Hébergement', self::SERVICE_RECEPTION => 'POS Réception'];
 
         if (TenantModules::has('restaurant')) {
             foreach (app(RestaurantContext::class)->accessibles($user) as $restaurant) {
@@ -115,11 +115,16 @@ class Registres
 
         // Règlements : séjours, groupes et ventes de la réception qui en portent un.
         $ventesReception = ReceptionSale::query()->whereNotNull('payment_id')->pluck('sale_number', 'payment_id');
-        $reglements = Payment::query()->where('status', 'completed')->whereBetween('paid_at', [$debut, $fin])->get();
+        $reglements = Payment::query()->cashFlows()->with('partnerOrganization')->where('status', 'completed')->whereBetween('paid_at', [$debut, $fin])->get();
         $sejours = Booking::query()->whereIn('id', $reglements->pluck('booking_id')->filter()->unique())->pluck('booking_number', 'id');
         $clients = $this->clients($reglements->pluck('customer_id'));
 
         foreach ($reglements as $r) {
+            if ($r->purpose === Payment::PURPOSE_PARTNER_DEPOSIT) {
+                $lignes->push($this->ligne($r->paid_at, 'depots_partenaires', 'Dépôts partenaires', $r->reference,
+                    $r->partnerOrganization?->name ?? 'Partenaire', $r->method, $r->processed_by, (int) $r->amount));
+                continue;
+            }
             $pos = isset($ventesReception[$r->id]);
             $lignes->push($this->ligne(
                 $r->paid_at, $pos ? self::SERVICE_RECEPTION : self::SERVICE_HEBERGEMENT, $pos ? 'POS Réception' : 'Hébergement',

@@ -595,7 +595,7 @@ class Navigation
             return self::groupInfo('hotel');
         }
 
-        if (str_starts_with($routeName, 'accounting.')) {
+        if (str_starts_with($routeName, 'accounting.') || str_starts_with($routeName, 'partners.wallet.')) {
             return self::groupInfo('accounting');
         }
 
@@ -1015,6 +1015,10 @@ class Navigation
                 ];
             }
         } elseif ($groupId === 'accounting') {
+            if ($droits->allows($user, 'partners.wallet.voir')) {
+                $tabs[] = ['label' => 'Comptes dépôt', 'icon' => 'wallet', 'url' => route('partners.wallet.index'),
+                    'active' => request()->routeIs('partners.wallet.*')];
+            }
             if ($droits->allows($user, 'accounting.voir')) {
                 $tabs[] = [
                     'label'  => 'Compta',

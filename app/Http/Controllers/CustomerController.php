@@ -49,8 +49,8 @@ class CustomerController extends Controller
 
     public function create()
     {
-        // Seules les conventions en cours sont proposées : contrairement à
-        // l'édition, il n'y a pas de rattachement existant à préserver.
+        // Le rattachement à une organisation est indépendant de sa convention.
+        // Tous les partenaires actifs peuvent avoir des membres.
         $partnerOrganizations = \App\Models\PartnerOrganization::query()
             ->where('is_active', true)
             ->orderBy('name')

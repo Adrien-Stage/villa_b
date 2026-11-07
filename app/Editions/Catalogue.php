@@ -29,6 +29,7 @@ class Catalogue
         Documents\SituationSynthetique::class,
         Documents\JournalVentes::class,
         Documents\JournalEncaissements::class,
+        Documents\ComptesDepotPartenaires::class,
         Documents\RecapEncaissements::class,
         Documents\SessionsCaisse::class,
         Documents\Factures::class,

@@ -949,6 +949,7 @@
                             Les plats du restaurant, eux, se gèrent dans le menu du restaurant.
                         </p>
                     </div>
+                    <a href="{{ route('partners.wallet.index') }}" class="text-sm font-medium text-primary underline">Comptes dépôt</a>
                     <button type="button" @click="openCreate()"
                         class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
@@ -1832,6 +1833,8 @@
                     'valid_from'                  => $o->valid_from?->format('Y-m-d'),
                     'valid_until'                 => $o->valid_until?->format('Y-m-d'),
                     'is_active'                   => (bool) $o->is_active,
+                    'has_convention'              => (bool) $o->has_convention,
+                    'attachments' => $o->conventionAttachments->map(fn ($a) => ['name' => $a->original_name, 'url' => route('settings.partners.attachments.show', [$o, $a])])->all(),
                     'room_discount_type'          => $o->room_discount_type,
                     // Un montant est stocké en centimes mais se saisit en FCFA.
                     'room_discount_value'         => $o->room_discount_type === 'amount'
@@ -1858,11 +1861,10 @@
                     <div>
                         <h2 class="text-lg font-semibold text-primary">Organisations partenaires</h2>
                         <p class="text-sm text-primary/60 mt-1 max-w-2xl">
-                            Entreprises, ONG, ambassades ou agences avec lesquelles vous avez une convention.
-                            La remise sur l'hébergement est appliquée automatiquement quand un client déclaré
-                            membre réserve ; les autres privilèges sont les conditions de la convention, à honorer à la main.
+                            Entreprises et organismes, avec ou sans convention. Sans convention, leurs membres bénéficient des tarifs particuliers. Le compte dépôt reste indépendant des conditions tarifaires.
                         </p>
                     </div>
+                    <a href="{{ route('partners.wallet.index') }}" class="text-sm font-medium text-primary underline">Comptes dépôt</a>
                     <button type="button" @click="openCreate()"
                         class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
@@ -1895,7 +1897,7 @@
                     @foreach($partnerOrganizations as $organization)
                         @php
                             $privileges = $organization->privilegeLabels();
-                            $expired    = ! $organization->isValidOn();
+                            $expired    = ! $organization->is_active || ($organization->has_convention && !$organization->isValidOn());
                         @endphp
                         <x-table.row :muted="$expired">
                             <x-table.cell>
@@ -1917,7 +1919,9 @@
                                 @endif
                             </x-table.cell>
                             <x-table.cell hide="lg" nowrap class="text-[11px] text-primary/60">
-                                @if($organization->valid_from || $organization->valid_until)
+                                @if(!$organization->has_convention)
+                                    <span>Sans convention · tarifs particuliers</span>
+                                @elseif($organization->valid_from || $organization->valid_until)
                                     {{ $organization->valid_from?->format('d/m/Y') ?? '…' }} &rarr; {{ $organization->valid_until?->format('d/m/Y') ?? '…' }}
                                 @else
                                     <span class="text-primary/30">Sans échéance</span>
@@ -1926,9 +1930,10 @@
                                     <span class="mt-1 block w-fit rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700">{{ $organization->is_active ? 'Hors période' : 'Désactivée' }}</span>
                                 @endif
                             </x-table.cell>
-                            <x-table.cell align="right" class="text-primary/70">{{ $organization->customers()->count() }}</x-table.cell>
+                            <x-table.cell align="right" class="text-primary/70">{{ $organization->customers_count }}</x-table.cell>
                             <x-table.actions :label="'Actions pour '.$organization->name">
                                 <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($partnerPayloads[$organization->id]) }})">Modifier</x-table.action>
+                                <x-table.action icon="wallet" :href="route('partners.wallet.show', $organization)">Compte dépôt</x-table.action>
                                 <x-table.action :action="route('settings.partners.destroy', $organization)" method="DELETE" icon="trash-2" tone="danger"
                                     :confirm="'Supprimer « '.$organization->name.' » ? Les clients rattachés gardent leur historique, mais perdent les privilèges.'">Supprimer</x-table.action>
                             </x-table.actions>
@@ -1949,7 +1954,7 @@
                             </button>
                         </div>
 
-                        <form data-reglages-fenetre="Partenaire" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form x-ref="partnerForm" enctype="multipart/form-data" data-reglages-fenetre="Partenaire" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -2023,9 +2028,13 @@
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
                                     <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
                                         <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
-                                        Validité de la convention
+                                        Convention tarifaire
                                     </h4>
 
+                                    <input type="hidden" name="has_convention" :value="form.has_convention ? 1 : 0">
+                                    <label class="flex items-center gap-2 mb-4 text-sm"><input type="checkbox" x-model="form.has_convention" class="rounded border-secondary/40 text-primary"> Une convention tarifaire est signée avec cette organisation</label>
+                                    <p x-show="!form.has_convention" class="text-sm text-primary/60 mb-3">Les membres sont traités aux tarifs particuliers. Le compte dépôt peut être utilisé sur accord.</p>
+                                    <div x-show="form.has_convention">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Du</label>
@@ -2042,15 +2051,18 @@
                                         Laisser vide pour une convention sans échéance. Hors de cette période, les privilèges cessent de s'appliquer.
                                     </p>
 
+                                    <label class="block mt-4"><span class="block text-sm mb-2">Convention signée, version scannée</span><input type="file" name="conventions[]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" class="block max-w-full text-sm"><span class="block text-xs text-primary/60 mt-1">Jusqu’à 5 fichiers PDF ou images, 10 Mo par fichier. Les versions précédentes restent conservées.</span></label>
+                                    <ul class="mt-3 space-y-1"><template x-for="attachment in (form.attachments || [])" :key="attachment.url"><li><a :href="attachment.url" x-text="attachment.name" class="text-sm underline text-primary"></a></li></template></ul>
+                                    </div>
                                     <label class="mt-4 flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
                                         <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
                                         <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
-                                        <span class="text-xs text-primary/80">Convention active</span>
+                                        <span class="text-xs text-primary/80">Organisation active</span>
                                     </label>
                                 </section>
 
                                 {{-- ── Privilèges ── --}}
-                                <section class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
+                                <section x-show="form.has_convention" class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
                                     <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/60 mb-1">
                                         <i data-lucide="gift" class="w-3.5 h-3.5"></i>
                                         Privilèges accordés aux membres
@@ -2474,6 +2486,8 @@
                     valid_from: '',
                     valid_until: '',
                     is_active: true,
+                    has_convention: false,
+                    attachments: [],
                     room_discount_type: 'none',
                     room_discount_value: 0,
                     restaurant_discount_percent: 0,
@@ -2489,6 +2503,7 @@
             applyAutoCode() { if (this.autoCode) this.form.code = window.suggestCode(this.form.name || ''); },
 
             openCreate() {
+                this.$refs.partnerForm?.reset();
                 this.form = this.blank();
                 this.autoCode = true;
                 this.editing = false;
@@ -2497,6 +2512,7 @@
             },
 
             openEdit(organization) {
+                this.$refs.partnerForm?.reset();
                 // Les champs date et texte doivent être des chaînes, pas null,
                 // sinon Alpine affiche "null" dans les inputs.
                 this.form = {

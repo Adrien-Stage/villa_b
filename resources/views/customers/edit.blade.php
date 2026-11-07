@@ -120,13 +120,12 @@
                     @foreach($partnerOrganizations as $organization)
                         <option value="{{ $organization->id }}"
                             @selected((int) old('partner_organization_id', $customer->partner_organization_id) === $organization->id)>
-                            {{ $organization->name }}@if(!$organization->isValidOn()) (convention inactive)@endif
+                            {{ $organization->name }}@if(!$organization->has_convention) (sans convention)@elseif(!$organization->isValidOn()) (convention inactive)@endif
                         </option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-primary/50 mt-1.5">
-                    Une fois renseignée, l'organisation est reproposée automatiquement à chaque nouvelle réservation
-                    et ses privilèges sont appliqués au séjour.
+                    L’organisation reste associée au client. Ses conditions tarifaires s’appliquent uniquement si une convention est en cours ; le règlement par compte dépôt nécessite un accord distinct.
                 </p>
                 @error('partner_organization_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
 

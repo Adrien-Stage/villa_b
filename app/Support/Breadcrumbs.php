@@ -60,6 +60,7 @@ class Breadcrumbs
 
         // Comptabilité & Finance
         'accounting'                       => 'Comptabilité',
+        'partners.wallet'                  => 'Comptes dépôt partenaires',
         'accounting.ledger'                => 'Grand livre',
         'accounting.journal'               => 'Journal général',
         'accounting.revenue_journal'       => 'Journal des encaissements',
