@@ -305,8 +305,8 @@ class SettingsCsvController extends Controller
     public function exportPartners(Request $request)
     {
         if ($request->boolean('template')) {
-            return $this->streamCsv('modele_partenaires.csv', self::PARTNER_HEADERS, [
-                ['Total Energies', 'TOT-2026', 'Entreprise', 'Jean Dupont', 'contact@total.cm', '+237 600000000', 'percent', '15', '10', '5', 'oui', 'non', '2026-01-01', '2026-12-31', 'oui', 'Convention cadres'],
+            return $this->streamCsv('modele_partenaires.csv', [...self::PARTNER_HEADERS, 'convention'], [
+                ['Total Energies', 'TOT-2026', 'Entreprise', 'Jean Dupont', 'contact@total.cm', '+237 600000000', 'percent', '15', '10', '5', 'oui', 'non', '2026-01-01', '2026-12-31', 'oui', 'Convention cadres', 'oui'],
             ]);
         }
 
@@ -328,9 +328,10 @@ class SettingsCsvController extends Controller
                 $p->valid_until?->format('Y-m-d'),
                 $p->is_active ? 'oui' : 'non',
                 CsvSanitizer::sanitizeCell($p->notes),
+                $p->has_convention ? 'oui' : 'non',
             ])->all();
 
-        return $this->streamCsv('partenaires_' . now()->format('Ymd_His') . '.csv', self::PARTNER_HEADERS, $rows);
+        return $this->streamCsv('partenaires_' . now()->format('Ymd_His') . '.csv', [...self::PARTNER_HEADERS, 'convention'], $rows);
     }
 
     public function importPartners(Request $request)
@@ -399,6 +400,7 @@ class SettingsCsvController extends Controller
                 }
 
                 $attributes = [
+                    'has_convention' => isset($row['convention']) ? $this->parseBool($row['convention']) : ($partner?->has_convention ?? true),
                     'name'                        => $name,
                     'code'                        => $code ?: null,
                     'type'                        => $type,

@@ -6,6 +6,7 @@
         'accounting.expenses'         => ['Dépenses', 'receipt'],
         'accounting.receivables'      => ['Créances', 'hand-coins'],
         'accounting.cash'             => ['Caisse', 'calculator'],
+        'partners.wallet.index'       => ['Comptes dépôt', 'wallet'],
         'accounting.revenue_journal'  => ['Journal des encaissements', 'landmark'],
         'accounting.income_statement' => ['Compte de résultat', 'scale'],
     ];

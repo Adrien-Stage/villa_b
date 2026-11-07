@@ -20,6 +20,7 @@ class PermissionLabels
     public const MODULES = [
         'rooms' => 'Chambres', 'bookings' => 'Réservations', 'groups' => 'Groupes', 'agenda' => 'Agenda',
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
+        'partners' => 'Partenaires et comptes dépôt',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
         'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'achats' => 'Achats', 'pilotage' => 'Pilotage', 'analytics' => 'Analytique',
         'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
@@ -78,6 +79,7 @@ class PermissionLabels
         'settings.packages' => 'offre',
         'settings.cancellation_policies' => 'offre',
         'settings.partners' => 'offre',
+        'partners.wallet' => 'comptabilite',
 
         'housekeeping' => 'housekeeping',
         'housekeeping.minibar' => 'housekeeping',
@@ -553,6 +555,12 @@ class PermissionLabels
         'settings.services.export' => ['Prestations', 'Exporter'],
         'settings.services.import' => ['Prestations', 'Importer'],
         'settings.partners.creer' => ['Partenaires', 'Créer'],
+        'settings.partners.attachments.voir' => ['Partenaires', 'Télécharger les conventions signées'],
+        'partners.wallet.voir' => ['Comptes dépôt partenaires', 'Consulter les soldes et mouvements'],
+        'partners.wallet.proof' => ['Comptes dépôt partenaires', 'Télécharger un justificatif'],
+        'partners.wallet.credit' => ['Comptes dépôt partenaires', 'Approvisionner'],
+        'partners.wallet.debit' => ['Comptes dépôt partenaires', 'Régler sur accord du partenaire'],
+        'partners.wallet.reverse' => ['Comptes dépôt partenaires', 'Annuler par contre-opération'],
         'settings.partners.modifier' => ['Partenaires', 'Modifier'],
         'settings.partners.supprimer' => ['Partenaires', 'Supprimer'],
         'settings.partners.export' => ['Partenaires', 'Exporter'],

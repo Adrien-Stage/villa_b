@@ -73,6 +73,10 @@
                     </div>
                 </div>
             @endforeach
+            <div class="pt-3 border-t border-secondary/15 flex items-center justify-between text-sm">
+                <a href="{{ route('partners.wallet.index') }}" class="text-primary underline">Approvisionnements des comptes dépôt</a>
+                <span class="font-semibold tabular-nums">{{ $fcfa($recettes['depots_partenaires'] ?? 0) }}</span>
+            </div>
         </div>
     </section>
 

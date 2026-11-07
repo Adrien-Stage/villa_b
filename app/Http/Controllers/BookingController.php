@@ -349,9 +349,8 @@ class BookingController extends Controller
             $booker = Customer::find($request->booker_id);
         }
 
-        // Conventions en cours de validité, pour rattacher un nouveau client
-        // à son organisation dès sa création.
-        $partnerOrganizations = \App\Models\PartnerOrganization::validOn()
+        // L'appartenance au corporate est indépendante d'une convention tarifaire.
+        $partnerOrganizations = \App\Models\PartnerOrganization::active()
             ->orderBy('name')
             ->get();
 

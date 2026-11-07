@@ -50,10 +50,13 @@ class AccountingService
     public function recettes(CarbonInterface $from, CarbonInterface $to): array
     {
         // Hébergement : paiements encaissés, net des remboursements (montants < 0).
-        $hebergement = (int) Payment::query()
+        $hebergement = (int) Payment::query()->cashFlows()->serviceSettlements()
             ->where('status', 'completed')
             ->whereBetween('paid_at', [$from, $to])
             ->sum('amount');
+
+        $depots = (int) Payment::query()->cashFlows()->where('purpose', Payment::PURPOSE_PARTNER_DEPOSIT)
+            ->where('status', 'completed')->whereBetween('paid_at', [$from, $to])->sum('amount');
 
         // Restaurant : commandes payées directement (hors room_charge).
         $restaurant = (int) RestaurantCustomerOrder::query()
@@ -73,7 +76,8 @@ class AccountingService
             'hebergement' => $hebergement,
             'restaurant'  => $restaurant,
             'boutique'    => $boutique,
-            'total'       => $hebergement + $restaurant + $boutique,
+            'depots_partenaires' => $depots,
+            'total'       => $hebergement + $restaurant + $boutique + $depots,
             'by_method'   => $this->recettesByMethod($from, $to),
         ];
     }
@@ -92,7 +96,7 @@ class AccountingService
             $totals[$method] = ($totals[$method] ?? 0) + $amount;
         };
 
-        Payment::query()
+        Payment::query()->cashFlows()
             ->where('status', 'completed')
             ->whereBetween('paid_at', [$from, $to])
             ->selectRaw('method, sum(amount) as total')
@@ -259,18 +263,19 @@ class AccountingService
         $entries = collect();
 
         // Hébergement (paiements) — un remboursement (montant < 0) est une sortie.
-        Payment::query()
+        Payment::query()->cashFlows()
             ->where('status', 'completed')
             ->whereBetween('paid_at', [$from, $to])
-            ->with('booking:id,booking_number')
+            ->with(['booking:id,booking_number', 'partnerOrganization'])
             ->get()
             ->each(function ($p) use ($entries) {
-                $ref = $p->booking?->booking_number ? "Séjour {$p->booking->booking_number}" : 'Paiement';
+                $deposit = $p->purpose === Payment::PURPOSE_PARTNER_DEPOSIT;
+                $ref = $deposit ? 'Compte dépôt '.$p->partnerOrganization?->name : ($p->booking?->booking_number ? "Séjour {$p->booking->booking_number}" : 'Paiement');
                 $amount = (int) $p->amount;
                 $entries->push([
                     'date'    => $p->paid_at,
-                    'libelle' => $amount < 0 ? "Remboursement — {$ref}" : "Hébergement — {$ref}",
-                    'source'  => 'hebergement',
+                    'libelle' => $amount < 0 ? "Remboursement — {$ref}" : ($deposit ? $ref : "Hébergement — {$ref}"),
+                    'source'  => $deposit ? 'depots_partenaires' : 'hebergement',
                     'recette' => $amount >= 0 ? $amount : 0,
                     'depense' => $amount < 0 ? abs($amount) : 0,
                 ]);

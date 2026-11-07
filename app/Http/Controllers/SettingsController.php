@@ -51,6 +51,7 @@ class SettingsController extends Controller
         // Organisations partenaires (onglet "Partenaires"). Le catalogue à plat
         // sert à cocher les prestations offertes dans le formulaire.
         $partnerOrganizations = \App\Models\PartnerOrganization::query()
+            ->with(['conventionAttachments', 'wallet'])->withCount('customers')
             ->orderBy('name')
             ->get();
 

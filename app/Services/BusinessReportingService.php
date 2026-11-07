@@ -72,12 +72,12 @@ class BusinessReportingService
     // ── Revenus ───────────────────────────────────────────────────────────────
 
     /**
-     * Revenu par pôle sur une période. Hôtel = paiements encaissés ;
+     * Revenu par pôle sur une période. Hôtel = prestations réglées, y compris sur dépôt ;
      * restaurant / boutique = commandes payées.
      */
     public function revenue(Carbon $start, Carbon $end): array
     {
-        $hotel = (int) Payment::where('status', 'completed')
+        $hotel = (int) Payment::serviceSettlements()->where('status', 'completed')
             ->whereBetween('paid_at', [$start, $end])
             ->sum('amount');
 
@@ -110,7 +110,7 @@ class BusinessReportingService
         $shop = [];
 
         if ($period === 'year') {
-            $mHotel = $this->monthlySum(Payment::where('status', 'completed'), 'paid_at', 'amount', $start, $end);
+            $mHotel = $this->monthlySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at', 'amount', $start, $end);
             $mResto = $this->monthlySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at', 'amount_paid', $start, $end);
             $mShop  = $this->monthlySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start, $end);
 
@@ -121,7 +121,7 @@ class BusinessReportingService
                 $shop[]       = ($mShop[$m] ?? 0) / 100;
             }
         } else {
-            $dHotel = $this->dailySum(Payment::where('status', 'completed'), 'paid_at', 'amount', $start, $end);
+            $dHotel = $this->dailySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at', 'amount', $start, $end);
             $dResto = $this->dailySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at', 'amount_paid', $start, $end);
             $dShop  = $this->dailySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start, $end);
 
@@ -165,7 +165,7 @@ class BusinessReportingService
      */
     public function paymentMethods(Carbon $start, Carbon $end): array
     {
-        return Payment::where('status', 'completed')
+        return Payment::serviceSettlements()->where('status', 'completed')
             ->whereBetween('paid_at', [$start, $end])
             ->selectRaw('method, COUNT(*) as n, SUM(amount) as total')
             ->groupBy('method')

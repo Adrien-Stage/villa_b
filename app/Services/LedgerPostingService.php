@@ -298,7 +298,10 @@ class LedgerPostingService
             return null;
         }
 
-        $tresorerie = $this->compteTresorerie($payment->method);
+        $walletSettlement = $payment->method === Payment::METHOD_PARTNER_WALLET;
+        $deposit = $payment->purpose === Payment::PURPOSE_PARTNER_DEPOSIT;
+        // Un dépôt est une avance du tiers ; l'utiliser n'est pas un second encaissement.
+        $tresorerie = $walletSettlement ? Account::PARTNER_DEPOSITS : $this->compteTresorerie($payment->method);
         $client = $payment->booking?->customer ?? $payment->customer;
         $remboursement = $montant < 0;
         $valeur = abs($montant);
@@ -308,16 +311,17 @@ class LedgerPostingService
             'label'   => $remboursement ? 'Remboursement' : 'Encaissement',
             'debit'   => $remboursement ? 0 : $valeur,
             'credit'  => $remboursement ? $valeur : 0,
+            'auxiliary' => $walletSettlement ? $payment->partnerOrganization : null,
         ], [
-            'account'   => Account::CLIENTS,
+            'account'   => $deposit ? Account::PARTNER_DEPOSITS : Account::CLIENTS,
             'label'     => $payment->reference ?: 'Règlement client',
             'debit'     => $remboursement ? $valeur : 0,
             'credit'    => $remboursement ? 0 : $valeur,
-            'auxiliary' => $client,
+            'auxiliary' => $deposit ? $payment->partnerOrganization : $client,
         ]];
 
         return $this->ledger->post(
-            journalCode: $tresorerie === Account::CASH ? Journal::CASH : Journal::BANK,
+            journalCode: $walletSettlement ? Journal::MISC : ($tresorerie === Account::CASH ? Journal::CASH : Journal::BANK),
             date: Carbon::parse($payment->paid_at ?? $payment->created_at),
             label: ($remboursement ? 'Remboursement' : 'Encaissement')
                 . ($payment->booking?->booking_number ? ' — séjour ' . $payment->booking->booking_number : ''),

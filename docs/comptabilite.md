@@ -7,7 +7,11 @@ quotidien, et la **comptabilité de caisse**, qui en tire les états financiers.
 
 ## Les sessions de caisse
 
-Aucune opération d'argent n'existe hors d'une session de caisse nominative.
+Les encaissements des caisses opérationnelles sont rattachés à une session
+nominative. Les [comptes dépôt partenaires](partenaires-et-comptes-depot.md) suivent
+un circuit distinct : la comptabilité enregistre les versements en trésorerie
+centrale ; leur utilisation pour régler un séjour ne fait pas entrer d'argent dans
+le tiroir de la réception.
 
 ### Le principe
 

@@ -40,6 +40,8 @@
 <div class="no-print mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg max-w-3xl">{{ session('success') }}</div>
 @endif
 
+@include('partners.wallets.settlement', ['walletInvoice' => $invoice])
+
 {{-- Facture complémentaire : le client règle plus tard ce qu'il a consommé. --}}
 @if($invoice->isComplementaire() && $invoice->balance_due > 0)
     @droit('invoices.payments.creer')

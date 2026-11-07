@@ -56,6 +56,6 @@ class JournalEncaissements extends Edition
             ])
             ->lignes($lignes)
             ->totaux(['montant' => (int) $lignes->sum('montant')])
-            ->note($recap !== '' ? 'Par mode de règlement — ' . $recap . '. Les consommations portées à la chambre seront encaissées au règlement du séjour.' : null);
+            ->note(($recap !== '' ? 'Par mode de règlement — ' . $recap . '. ' : '').'Les approvisionnements des comptes dépôt sont comptés à réception des fonds. Leur utilisation se suit dans le registre Comptes dépôt partenaires et ne compte pas un second encaissement.');
     }
 }

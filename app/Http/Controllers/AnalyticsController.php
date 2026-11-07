@@ -23,7 +23,7 @@ class AnalyticsController extends Controller
         $periodLabel = $this->libellePeriode($period, $year);
 
         // Hotel Revenue (Completed Payments)
-        $hotelRevenue = Payment::where('status', 'completed')
+        $hotelRevenue = Payment::serviceSettlements()->where('status', 'completed')
             ->whereBetween('paid_at', [$startDate, $endDate])
             ->sum('amount');
 
@@ -43,7 +43,7 @@ class AnalyticsController extends Controller
         $bookingsCount = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
 
         // Daily revenue data for charts
-        $dailyHotel = Payment::where('status', 'completed')
+        $dailyHotel = Payment::serviceSettlements()->where('status', 'completed')
             ->whereBetween('paid_at', [$startDate, $endDate])
             ->selectRaw('DATE(paid_at) as date, SUM(amount) as total')
             ->groupByRaw('DATE(paid_at)')
@@ -73,7 +73,7 @@ class AnalyticsController extends Controller
             // Group by month
             $mois = $this->extractionMois('paid_at');
 
-            $monthlyHotel = Payment::where('status', 'completed')
+            $monthlyHotel = Payment::serviceSettlements()->where('status', 'completed')
                 ->whereBetween('paid_at', [$startDate, $endDate])
                 ->selectRaw("{$mois} as month, SUM(amount) as total")
                 ->groupByRaw($mois)
@@ -187,7 +187,7 @@ class AnalyticsController extends Controller
     private function anneesDisponibles(): array
     {
         $premiers = array_filter([
-            Payment::where('status', 'completed')->min('paid_at'),
+            Payment::serviceSettlements()->where('status', 'completed')->min('paid_at'),
             RestaurantCustomerOrder::where('payment_status', 'paid')->min('paid_at'),
             ShopOrder::where('payment_status', 'paid')->min('paid_at'),
             Booking::min('created_at'),
@@ -237,7 +237,7 @@ class AnalyticsController extends Controller
         $periodLabel = $this->libellePeriode($period, $year);
 
         // Hotel
-        $hotelRevenue = Payment::where('status', 'completed')
+        $hotelRevenue = Payment::serviceSettlements()->where('status', 'completed')
             ->whereBetween('paid_at', [$startDate, $endDate])
             ->sum('amount');
         $bookingsCount = Booking::whereBetween('created_at', [$startDate, $endDate])->count();

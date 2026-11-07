@@ -46,10 +46,11 @@ class RevenueJournal
                 continue;
             }
 
+            $pointExpression = $table === 'payments' ? "CASE WHEN purpose = 'partner_deposit' THEN -1 ELSE COALESCE(point_of_sale_id, 0) END" : 'point_of_sale_id';
             $requete = DB::table($table)
-                ->selectRaw("point_of_sale_id, {$colonneMode} as mode, SUM({$colonneMontant}) as montant")
+                ->selectRaw("{$pointExpression} as point_of_sale_id, {$colonneMode} as mode, SUM({$colonneMontant}) as montant")
                 ->whereBetween($colonneDate, [$debut, $fin])
-                ->groupBy('point_of_sale_id', $colonneMode);
+                ->groupByRaw($pointExpression)->groupBy($colonneMode);
 
             if ($filtre !== null) {
                 $filtre($requete);
@@ -72,7 +73,7 @@ class RevenueJournal
 
             // Une recette sans point de vente n'est pas écartée : la taire
             // ferait un journal qui ne tombe pas juste.
-            $nom  = $point?->name ?? 'Non rattaché';
+            $nom  = (int) $pointId === -1 ? 'Dépôts partenaires' : ($point?->name ?? 'Non rattaché');
             $code = $point?->code ?? '—';
 
             $lignes[] = ['point_de_vente' => $nom, 'code' => $code, 'mode' => $mode, 'montant' => $montant];
@@ -99,7 +100,7 @@ class RevenueJournal
     {
         return [
             ['payments', 'amount', 'method', 'paid_at',
-                static fn ($q) => $q->where('status', 'completed')],
+                static fn ($q) => $q->where('status', 'completed')->where(fn ($f) => $f->where('method', '!=', 'partner_wallet')->orWhereNull('method'))],
 
             // Réglées sans pièce de règlement : les compter deux fois
             // gonflerait le journal du même argent.

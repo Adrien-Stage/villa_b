@@ -233,6 +233,7 @@ test("l'onglet Partenaires dit ce qui s'applique vraiment d'une convention", fun
     $this->actingAs(settingsManager());
 
     $this->get(route('settings.index', ['tab' => 'partners']))->assertOk()
-        ->assertSee("à honorer à la main")
+        ->assertSee('Sans convention')
+        ->assertSee('Le compte dépôt reste indépendant')
         ->assertDontSee('sont appliqués automatiquement');
 });

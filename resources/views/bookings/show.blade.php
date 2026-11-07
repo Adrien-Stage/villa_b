@@ -633,7 +633,7 @@
                 @foreach($booking->payments as $payment)
                 <div class="flex items-center justify-between px-5 py-3">
                     <div>
-                        <p class="text-xs font-medium text-primary capitalize">{{ $payment->method }}</p>
+                        <p class="text-xs font-medium text-primary capitalize">{{ $payment->methodLabel() }}</p>
                         <p class="text-[10px] text-primary/40">{{ $payment->paid_at?->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
                     </div>
                     <span class="text-sm font-semibold {{ $payment->amount > 0 ? 'text-green-600' : 'text-red-500' }}">
@@ -646,6 +646,10 @@
         </div>
     </div>
 </div>
+
+@if($booking->status->value === 'checked_in' && !$booking->invoice)
+    @include('partners.wallets.settlement', ['walletInvoice' => null])
+@endif
 
 {{-- Modal : Ajouter prestation au folio --}}
 <div id="modal-folio" class="hidden fixed inset-0 z-50 flex items-center justify-center"

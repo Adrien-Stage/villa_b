@@ -23,8 +23,14 @@ class Payment extends Model
 {
     use HasFactory;
 
+    public const METHOD_PARTNER_WALLET = 'partner_wallet';
+    public const PURPOSE_PARTNER_DEPOSIT = 'partner_deposit';
+
     protected $fillable = [
         'booking_id',
+        'partner_organization_id',
+        'wallet_entry_id',
+        'purpose',
         'invoice_id',           // Facture soldée, quand l'encaissement en vise une (facture complémentaire)
         'customer_id',          // Pour les paiements hors réservation (ex: client walk-in restaurant)
         'cash_register_session_id',
@@ -67,6 +73,33 @@ class Payment extends Model
         return $this->belongsTo(Booking::class);
     }
 
+    public function partnerOrganization(): BelongsTo
+    {
+        return $this->belongsTo(PartnerOrganization::class);
+    }
+
+    public function walletEntry(): BelongsTo
+    {
+        return $this->belongsTo(WalletEntry::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    /** Entrées/sorties d'argent ; l'utilisation d'un dépôt n'encaisse rien. */
+    public function scopeCashFlows($query)
+    {
+        return $query->where(fn ($q) => $q->where('method', '!=', self::METHOD_PARTNER_WALLET)->orWhereNull('method'));
+    }
+
+    /** Règlements de prestations, hors avances encore disponibles du partenaire. */
+    public function scopeServiceSettlements($query)
+    {
+        return $query->where('purpose', '!=', self::PURPOSE_PARTNER_DEPOSIT);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -85,6 +118,7 @@ class Payment extends Model
     public function methodLabel(): string
     {
         $methods = [
+            self::METHOD_PARTNER_WALLET => 'Compte dépôt partenaire',
             'orange_money'   => 'Orange Money',
             'mtn_momo'       => 'MTN MoMo',
             'cash'           => 'Espèces',

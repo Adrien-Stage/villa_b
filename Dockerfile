@@ -77,6 +77,7 @@ COPY docker/nginx.conf /etc/nginx/sites-available/default
 
 # ── Supervisord (gère nginx + php-fpm) ───────────────────────────────────────
 COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
 # Le script entrypoint : attend la DB, cache la config, lance supervisord
