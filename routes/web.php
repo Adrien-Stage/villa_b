@@ -50,9 +50,10 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // Entrée en mode assistance depuis le PMS (jeton signé, pas d'auth préalable)
 Route::get('/assistance/enter', [\App\Http\Controllers\AssistanceController::class, 'enter'])->name('assistance.enter');
 
-// Login
+// Login & page de veille (écran verrouillé après inactivité)
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::get('/veille', [AuthenticatedSessionController::class, 'standby'])->name('veille');
 
 // Logout
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

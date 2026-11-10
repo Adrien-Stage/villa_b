@@ -26,7 +26,7 @@ class PurchaseOrderUpdated extends Notification
 
     private function url(): string
     {
-        return route('economat.orders.show', $this->order);
+        return route('economat.orders.show', $this->order, false);
     }
 
     private function headline(): string

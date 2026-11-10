@@ -40,7 +40,7 @@ class ShiftPlanningReminder extends Notification
 
     private function url(): string
     {
-        return route('planning.index', ['semaine' => $this->lundi->toDateString(), 'departement' => $this->departementId]);
+        return route('planning.index', ['semaine' => $this->lundi->toDateString(), 'departement' => $this->departementId], false);
     }
 
     public function toArray(object $notifiable): array
@@ -59,7 +59,7 @@ class ShiftPlanningReminder extends Notification
             'body' => $this->detail(),
             'url' => $this->url(),
             'tag' => 'planning-rappel-' . $this->lundi->toDateString() . '-' . $this->departementId,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

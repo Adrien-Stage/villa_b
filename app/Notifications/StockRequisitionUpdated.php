@@ -25,7 +25,7 @@ class StockRequisitionUpdated extends Notification
 
     private function url(): string
     {
-        return route('economat.requisitions.show', $this->requisition);
+        return route('economat.requisitions.show', $this->requisition, false);
     }
 
     private function headline(): string

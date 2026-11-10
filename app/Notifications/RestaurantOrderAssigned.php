@@ -29,7 +29,7 @@ class RestaurantOrderAssigned extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/restaurant/orders/' . $this->order->id;
+        return '/restaurant/orders/' . $this->order->id;
     }
 
     private function table(): string
@@ -60,7 +60,7 @@ class RestaurantOrderAssigned extends Notification
             'body' => "{$this->table()} · commande #{$this->order->id} du portail",
             'url' => $this->url(),
             'tag' => 'resto-order-' . $this->order->id,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

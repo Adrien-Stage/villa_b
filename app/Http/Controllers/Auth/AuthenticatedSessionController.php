@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\CashRegisterSession;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +16,21 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View|RedirectResponse
+    public function create(Request $request): View|RedirectResponse
     {
-        return view('auth.login');
+        $forceStandby = $request->query('expired') === 'inactivity'
+            || $request->boolean('veille')
+            || (bool) session('veille');
+
+        return view('auth.login', ['forceStandby' => $forceStandby]);
+    }
+
+    /**
+     * Affiche la page de veille (reprise de session après inactivité).
+     */
+    public function standby(): View
+    {
+        return view('auth.login', ['forceStandby' => true]);
     }
 
     /**
@@ -51,7 +64,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
         if ($user && ! $user->isAdmin()) {
@@ -78,6 +91,20 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => $request->boolean('inactivity')
+                    ? route('login', ['expired' => 'inactivity'], false)
+                    : route('login', [], false),
+            ]);
+        }
+
+        if ($request->boolean('inactivity')) {
+            return redirect()->route('login', ['expired' => 'inactivity'])
+                ->with('veille', true);
+        }
 
         return redirect('/');
     }

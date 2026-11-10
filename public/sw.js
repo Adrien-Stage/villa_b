@@ -12,7 +12,7 @@
  * interceptées — un ERP ne doit pas rejouer une écriture depuis un cache.
  */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL_CACHE = `wetchah-shell-${VERSION}`;
 const ASSET_CACHE = `wetchah-assets-${VERSION}`;
 const PAGE_CACHE  = `wetchah-pages-${VERSION}`;
@@ -128,7 +128,61 @@ async function cacheFirst(request, cacheName) {
 	}
 }
 
-// ── Notifications Web Push (comportement d'origine, inchangé) ────────────
+// ── Notifications Web Push ───────────────────────────────────────────────
+
+function isInternalAppHost(rawHost) {
+	const host = (rawHost || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+	const currentHost = (self.location.hostname || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+
+	if (!host || host === currentHost || host === 'localhost') return true;
+	if (!host.includes('.')) return true;
+	if (host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal') || host.endsWith('.lan') || host.endsWith('.home.arpa')) return true;
+
+	// Adresses IP privées / loopback / link-local.
+	if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host)) return true;
+	if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+	if (host === '::1' || /^(fe80|fc[0-9a-f]{2}|fd[0-9a-f]{2}):/i.test(host)) return true;
+
+	return false;
+}
+
+function resolveNotificationTargetUrl(rawUrl, fallbackPath = '/') {
+	const fallback = new URL(fallbackPath, self.location.origin).href;
+	if (!rawUrl || typeof rawUrl !== 'string') return fallback;
+
+	const trimmed = rawUrl.trim();
+	if (!trimmed) return fallback;
+
+	if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+		return new URL(trimmed, self.location.origin).href;
+	}
+
+	try {
+		if (trimmed.startsWith('//')) {
+			const protoParsed = new URL('http:' + trimmed);
+			return isInternalAppHost(protoParsed.hostname)
+				? new URL((protoParsed.pathname || '/') + protoParsed.search + protoParsed.hash, self.location.origin).href
+				: fallback;
+		}
+
+		if (!trimmed.includes('://') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+			return new URL('/' + trimmed.replace(/^\/+/, ''), self.location.origin).href;
+		}
+
+		const parsed = new URL(trimmed, self.location.origin);
+		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+			return fallback;
+		}
+
+		if (isInternalAppHost(parsed.hostname)) {
+			return new URL((parsed.pathname || '/') + parsed.search + parsed.hash, self.location.origin).href;
+		}
+
+		return parsed.href;
+	} catch (e) {
+		return fallback;
+	}
+}
 
 self.addEventListener('push', (event) => {
 	let payload = {};
@@ -143,12 +197,12 @@ self.addEventListener('push', (event) => {
 		body: payload.body || '',
 		// Chemin sans extension : nginx sert directement les fichiers en .png
 		// et la requête n'atteindrait jamais PHP, qui compose l'icône.
-		icon: payload.icon || '/pwa/icon/192',
-		badge: payload.badge || '/pwa/icon/192',
+		icon: resolveNotificationTargetUrl(payload.icon, '/pwa/icon/192'),
+		badge: resolveNotificationTargetUrl(payload.badge, '/pwa/icon/192'),
 		tag: payload.tag || undefined,          // regroupe/évite les doublons
 		renotify: Boolean(payload.tag),         // re-sonne même si tag identique
 		requireInteraction: payload.requireInteraction || false,
-		data: { url: payload.url || '/' },
+		data: { url: resolveNotificationTargetUrl(payload.url, '/') },
 		vibrate: [180, 80, 180],                // léger retour haptique (mobile)
 	};
 
@@ -158,17 +212,21 @@ self.addEventListener('push', (event) => {
 // Clic sur la notification : focalise un onglet existant de l'app ou en ouvre un.
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close();
-	const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+	const rawTarget = (event.notification.data && event.notification.data.url) || '/';
+	const targetUrl = resolveNotificationTargetUrl(rawTarget, '/');
+	const isSameOrigin = targetUrl.startsWith(self.location.origin);
 
 	event.waitUntil(
 		clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-			for (const client of windowClients) {
-				if ('focus' in client) {
-					client.focus();
-					if ('navigate' in client) {
-						client.navigate(targetUrl).catch(() => {});
+			if (isSameOrigin) {
+				for (const client of windowClients) {
+					if ('focus' in client) {
+						client.focus();
+						if ('navigate' in client) {
+							client.navigate(targetUrl).catch(() => {});
+						}
+						return;
 					}
-					return;
 				}
 			}
 			if (clients.openWindow) {

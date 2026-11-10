@@ -25,7 +25,7 @@ class MinibarEmpty extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . "/housekeeping/{$this->room->id}/mini-bar";
+        return "/housekeeping/{$this->room->id}/mini-bar";
     }
 
     public function toArray(object $notifiable): array

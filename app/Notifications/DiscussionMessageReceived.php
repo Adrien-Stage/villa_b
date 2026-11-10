@@ -30,7 +30,7 @@ class DiscussionMessageReceived extends Notification
 
     private function url(): string
     {
-        return route('discussions.index', ['conversation' => $this->conversation->id]);
+        return route('discussions.index', ['conversation' => $this->conversation->id], false);
     }
 
     /**

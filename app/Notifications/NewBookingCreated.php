@@ -39,7 +39,7 @@ class NewBookingCreated extends Notification
         return [
             'room' => $room,
             'customer' => $customer !== '' ? $customer : 'Client',
-            'url' => rtrim((string) config('app.url'), '/') . '/bookings/' . $this->booking->id,
+            'url' => '/bookings/' . $this->booking->id,
         ];
     }
 
@@ -68,7 +68,7 @@ class NewBookingCreated extends Notification
             'body'  => "Chambre {$room} — {$customer} · {$this->booking->booking_number}",
             'url'   => $url,
             'tag'   => 'booking-' . $this->booking->id,
-            'icon'  => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon'  => '/favicon.ico',
         ];
     }
 }

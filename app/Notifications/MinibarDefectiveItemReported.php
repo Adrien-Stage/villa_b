@@ -35,9 +35,7 @@ class MinibarDefectiveItemReported extends Notification
 
     private function url(): string
     {
-        $base = rtrim((string) config('app.url'), '/');
-
-        return "{$base}/housekeeping/{$this->room->id}/mini-bar";
+        return "/housekeeping/{$this->room->id}/mini-bar";
     }
 
     private function message(): string

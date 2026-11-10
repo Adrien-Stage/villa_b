@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\StockItem;
+use App\Support\NotificationUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -39,7 +40,7 @@ class StockItemTransformed extends Notification
             'stock_item_id' => $this->item->id,
             'title' => 'Article transformé',
             'message' => $this->message(),
-            'url' => $this->url,
+            'url' => NotificationUrl::toAppPath($this->url) ?? $this->url,
         ];
     }
 
@@ -48,7 +49,7 @@ class StockItemTransformed extends Notification
         return [
             'title' => 'Article transformé',
             'body' => $this->message(),
-            'url' => $this->url,
+            'url' => NotificationUrl::toAppPath($this->url) ?? $this->url,
         ];
     }
 }

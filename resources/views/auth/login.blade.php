@@ -42,6 +42,48 @@
     $brandIsLight = $brandSurfaceLum > 0.32;
     $ctaText = $primaryLum > 0.17913 ? '#181410' : '#FFFFFF';
     $primaryReadableOnLight = $primaryLum <= 0.22;
+
+    // Initialisation sécurisée du sac d'erreurs et détermination de l'état de veille
+    $errors = $errors ?? new \Illuminate\Support\ViewErrorBag;
+    $mainError = $errors->first('login') ?: $errors->first('email') ?: $errors->first('password');
+    $isDeactivated = $mainError && (
+        str_contains(mb_strtolower($mainError), 'désactivé') ||
+        str_contains(mb_strtolower($mainError), 'desactive')
+    );
+    $isThrottled = $mainError && (
+        str_contains(mb_strtolower($mainError), 'tentative') ||
+        str_contains(mb_strtolower($mainError), 'secondes')
+    );
+    $isAuthFailed = $mainError && ! $isDeactivated && ! $isThrottled && (
+        $mainError === trans('auth.failed') ||
+        $mainError === trans('auth.password') ||
+        str_contains(mb_strtolower($mainError), 'identifiant') ||
+        str_contains(mb_strtolower($mainError), 'mot de passe') ||
+        str_contains(mb_strtolower($mainError), 'correspondent pas')
+    );
+    $showInlineEmailError = $errors->has('email')
+        && ! $isDeactivated
+        && ! $isAuthFailed
+        && ! $isThrottled
+        && (! $errors->has('login') || $errors->first('email') !== $errors->first('login'));
+    $showInlinePasswordError = $errors->has('password')
+        && ! $isDeactivated
+        && ! $isAuthFailed
+        && ! $isThrottled
+        && (! $errors->has('login') || $errors->first('password') !== $errors->first('login'));
+
+    $hasImmediateFormFeedback = old('email') !== null
+        || $isDeactivated
+        || $isThrottled
+        || $isAuthFailed
+        || $showInlineEmailError
+        || $showInlinePasswordError;
+
+    $isStandby = (bool) ($forceStandby
+        ?? (request()->query('expired') === 'inactivity'
+            || request()->boolean('veille')
+            || session('veille')))
+        && ! $hasImmediateFormFeedback;
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
@@ -83,6 +125,12 @@
             --login-brand-arch-fg: {{ $brandIsLight ? '#3f3730' : 'var(--color-secondary)' }};
             --login-cta-bg: var(--color-primary);
             --login-cta-fg: {{ $ctaText }};
+
+            --veille-bubble-bg: {{ $brandIsLight ? 'var(--color-dark)' : 'color-mix(in oklab, var(--color-accent) 22%, #ffffff)' }};
+            --veille-bubble-fg: {{ $brandIsLight ? '#FFFFFF' : 'color-mix(in oklab, var(--color-dark) 92%, #181410)' }};
+            --veille-bubble-muted: {{ $brandIsLight ? 'color-mix(in oklab, var(--color-accent) 75%, #e5e7eb)' : 'color-mix(in oklab, var(--color-dark) 62%, #4b5563)' }};
+            --veille-bubble-border: {{ $brandIsLight ? 'color-mix(in oklab, var(--color-accent) 45%, #374151)' : 'color-mix(in oklab, var(--color-secondary) 55%, #ffffff)' }};
+            --veille-halo: color-mix(in oklab, var(--color-accent) 32%, transparent);
         }
 
         body.login-body {
@@ -98,11 +146,17 @@
             min-height: 100dvh;
             display: grid;
             grid-template-columns: 1fr 1.12fr;
+            grid-template-rows: 1fr;
             background: var(--login-bg);
+            position: relative;
+            overflow-x: clip;
         }
 
         /* ── Panneau gauche : identité de l'établissement & thème ERP ───────── */
         .login-brand {
+            grid-column: 1;
+            grid-row: 1;
+            z-index: 1;
             background-color: var(--color-surface-dark);
             background: radial-gradient(
                 ellipse at 25% 18%,
@@ -118,7 +172,8 @@
             position: relative;
         }
 
-        .login-brand-wordmark {
+        .login-brand-wordmark,
+        .veille-wordmark {
             font-family: 'Playfair Display', Georgia, serif;
             font-weight: 600;
             font-size: clamp(24px, 2.4vw, 31px);
@@ -195,11 +250,331 @@
 
         /* ── Panneau droit : formulaire de connexion ─────────────────────────── */
         .login-content {
+            grid-column: 2;
+            grid-row: 1;
+            z-index: 2;
             padding: 55px 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--login-bg);
+        }
+
+        /* ── Page de veille (verrouillage après 20 min d'inactivité) ──────────── */
+        .login-standby {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            z-index: 15;
+            min-height: 100dvh;
+            padding: 42px 48px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--color-surface-dark);
+            background: radial-gradient(
+                ellipse at 50% 42%,
+                color-mix(in oklab, var(--color-primary) 90%, var(--color-surface-dark)) 0%,
+                var(--color-surface-dark) 56%,
+                var(--color-dark) 100%
+            );
+            color: var(--login-brand-fg);
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .veille-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .veille-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--login-brand-sub-fg) 30%, transparent);
+            background: color-mix(in oklab, var(--color-dark) 26%, transparent);
+            color: var(--login-brand-fg);
+            font-size: 11px;
+            font-weight: 550;
+            letter-spacing: 0.04em;
+        }
+
+        .veille-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            flex-shrink: 0;
+        }
+
+        .veille-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(14px, 2.4dvh, 24px);
+            padding: clamp(18px, 3dvh, 32px) 0;
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .veille-bubble {
+            position: relative;
+            max-width: min(370px, 88vw);
+            padding: 13px 20px;
+            border-radius: 16px;
+            background: var(--veille-bubble-bg);
+            color: var(--veille-bubble-fg);
+            border: 1px solid var(--veille-bubble-border);
+            box-shadow: 0 20px 44px -14px rgba(0, 0, 0, 0.45);
+            cursor: pointer;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .veille-bubble {
+                animation: veilleBubbleFloat 3.6s ease-in-out infinite;
+            }
+        }
+
+        .veille-bubble::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            width: 14px;
+            height: 14px;
+            background: var(--veille-bubble-bg);
+            border-right: 1px solid var(--veille-bubble-border);
+            border-bottom: 1px solid var(--veille-bubble-border);
+            transform: translateX(-50%) rotate(45deg);
+        }
+
+        .veille-bubble-kicker {
+            margin: 0 0 3px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--veille-bubble-muted);
+        }
+
+        .veille-bubble-text {
+            margin: 0;
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--veille-bubble-fg);
+        }
+
+        .veille-door-btn {
+            position: relative;
+            border: 0;
+            padding: 16px 24px 10px;
+            background: transparent;
+            color: var(--login-brand-arch-fg);
+            cursor: pointer;
+            border-radius: 220px 220px 22px 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            min-height: 180px;
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+        }
+
+        .veille-door-btn::before {
+            content: '';
+            position: absolute;
+            inset: 6% 12% 4%;
+            border-radius: 50% 50% 12% 12%;
+            background: radial-gradient(circle at 50% 58%, var(--veille-halo) 0%, transparent 72%);
+            opacity: 0.6;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .veille-door-btn:hover::before,
+        .veille-door-btn:focus-visible::before {
+            opacity: 1;
+            transform: scale(1.06);
+        }
+
+        .veille-door-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            color: var(--login-brand-fg);
+        }
+
+        .veille-door-btn:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        .veille-door-btn:focus-visible {
+            outline: 3px solid var(--login-brand-fg);
+            outline-offset: 6px;
+        }
+
+        .veille-architecture {
+            position: relative;
+            z-index: 1;
+            width: clamp(260px, 44vmin, 430px);
+            height: auto;
+            max-height: 44dvh;
+            opacity: 0.94;
+            overflow: visible;
+        }
+
+        .veille-door-leaf {
+            transform-box: fill-box;
+            transform-origin: 0% 50%;
+            transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .veille-door-panel {
+            fill: var(--color-accent);
+            fill-opacity: 0.22;
+            transition: fill-opacity 0.25s ease;
+        }
+
+        .veille-door-btn:hover .veille-door-panel,
+        .veille-door-btn:focus-visible .veille-door-panel {
+            fill-opacity: 0.36;
+        }
+
+        .veille-door-btn:hover .veille-door-leaf,
+        .veille-door-btn:focus-visible .veille-door-leaf {
+            transform: scaleX(0.9);
+        }
+
+        .veille-tagline {
+            margin: 0;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(16px, 2vw, 21px);
+            font-weight: 500;
+            color: var(--login-brand-fg);
+            opacity: 0.88;
+        }
+
+        /* États de veille et animation slide de la droite vers la gauche */
+        .login-page.is-standby .login-content {
+            transform: translate3d(100%, 0, 0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .login-page.is-revealing .login-content {
+            z-index: 25;
+            animation: loginPanelSlideIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .login-page.is-revealing .login-form-wrap {
+            animation: loginFormSettle 0.54s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
+        }
+
+        .login-page.is-revealing .login-standby {
+            pointer-events: none;
+            animation: veillePanelExit 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .login-page.is-revealing .veille-bubble,
+        .login-page.is-revealing .veille-tagline,
+        .login-page.is-revealing .veille-status-pill {
+            animation: veilleCueExit 0.32s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        .login-page.is-revealing .veille-architecture {
+            animation: veilleDoorSlideLeft 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .login-page.is-revealing .veille-door-leaf {
+            transform: scaleX(0.68);
+        }
+
+        .login-page.is-revealing .login-brand-copy {
+            animation: brandCopyReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+        }
+
+        @keyframes veilleBubbleFloat {
+            0%, 100% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(0, -5px, 0); }
+        }
+
+        @keyframes loginPanelSlideIn {
+            from {
+                transform: translate3d(100%, 0, 0);
+                opacity: 1;
+                box-shadow: -32px 0 80px color-mix(in oklab, var(--color-dark) 42%, transparent);
+            }
+            75% {
+                box-shadow: -16px 0 40px color-mix(in oklab, var(--color-dark) 22%, transparent);
+            }
+            to {
+                transform: translate3d(0, 0, 0);
+                opacity: 1;
+                box-shadow: 0 0 0 transparent;
+            }
+        }
+
+        @keyframes loginFormSettle {
+            from {
+                opacity: 0;
+                transform: translate3d(28px, 0, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+        }
+
+        @keyframes veillePanelExit {
+            0%, 48% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes veilleCueExit {
+            from {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+            to {
+                opacity: 0;
+                transform: translate3d(-32px, 0, 0);
+            }
+        }
+
+        @keyframes veilleDoorSlideLeft {
+            from {
+                opacity: 0.94;
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+            to {
+                opacity: 0.12;
+                transform: translate3d(-24vw, 0, 0) scale(0.76);
+            }
+        }
+
+        @keyframes brandCopyReveal {
+            from {
+                opacity: 0;
+                transform: translate3d(24px, 0, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
         }
 
         .login-form-wrap {
@@ -708,7 +1083,8 @@
 
         /* ── Responsive ──────────────────────────────────────────────────────── */
         @media (max-width: 1150px) {
-            .login-brand {
+            .login-brand,
+            .login-standby {
                 padding: 35px;
             }
             .login-brand-copy h2 {
@@ -732,8 +1108,29 @@
             .login-page {
                 display: block;
             }
+            .login-page.is-standby,
+            .login-page.is-revealing {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+            }
+            .login-page.is-standby .login-content,
+            .login-page.is-revealing .login-content {
+                grid-column: 1;
+                grid-row: 1;
+            }
             .login-brand {
                 display: none;
+            }
+            .login-standby {
+                padding: 28px 22px;
+            }
+            .veille-wordmark {
+                font-size: 24px;
+            }
+            .veille-architecture {
+                width: min(300px, 78vw);
+                max-height: 36dvh;
             }
             .login-content {
                 padding: 32px 24px;
@@ -804,8 +1201,13 @@
         }
 
         @media (forced-colors: active) {
-            .login-brand {
+            .login-brand,
+            .login-standby {
                 border-right: 1px solid CanvasText;
+            }
+            .veille-bubble,
+            .veille-status-pill {
+                border-color: CanvasText;
             }
             .place-seal,
             .login-submit,
@@ -818,10 +1220,63 @@
 </head>
 <body class="login-body">
 
-<main id="main" class="login-page">
+<main id="main" class="login-page {{ $isStandby ? 'is-standby' : '' }}" data-standby="{{ $isStandby ? 'true' : 'false' }}">
+
+    {{-- ===== PAGE DE VEILLE — Design plein écran avec porte interactive ===== --}}
+    <section
+        id="veille-panel"
+        class="login-standby"
+        aria-label="{{ $tenantName }} — Session en veille"
+        {!! $isStandby ? '' : 'hidden inert' !!}
+    >
+        <div class="veille-head">
+            <div>
+                <p class="veille-wordmark">{{ $tenantName }}<span class="login-brand-period">.</span></p>
+                <p class="login-brand-sub">Wetchah · Gestion hôtelière</p>
+            </div>
+            <span class="veille-status-pill">
+                <span class="veille-status-dot" aria-hidden="true"></span>
+                <span>Veille · 20 min d’inactivité</span>
+            </span>
+        </div>
+
+        <div class="veille-stage">
+            <h2 class="visually-hidden">Session mise en veille</h2>
+
+            <div id="veille-bubble" class="veille-bubble">
+                <p class="veille-bubble-kicker">Travail en pause</p>
+                <p id="veille-bubble-cta" class="veille-bubble-text">Cliquez sur la porte pour reprendre le travail</p>
+            </div>
+
+            <button
+                type="button"
+                id="veille-resume-btn"
+                class="veille-door-btn"
+                aria-labelledby="veille-bubble-cta"
+            >
+                <svg class="veille-architecture" viewBox="0 0 360 310" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M42 288V130a138 138 0 0 1 276 0v158M69 288V132a111 111 0 0 1 222 0v156M97 288V135a83 83 0 0 1 166 0v153M126 288V137a54 54 0 0 1 108 0v151" stroke-width="1"/>
+                    <path d="M15 289h330M15 300h330M180 84v205M126 184h108M97 154h29m108 0h29M69 123h29m164 0h29" stroke-width=".9"/>
+                    <g class="veille-door-leaf">
+                        <path class="veille-door-panel" d="M143 289V152a37 37 0 0 1 74 0v137" stroke-width="1.1"/>
+                        <path d="M153 284V156a27 27 0 0 1 54 0v128" stroke-width=".6" stroke-opacity=".55"/>
+                        <circle cx="196" cy="222" r="3.6" fill="currentColor"/>
+                    </g>
+                </svg>
+            </button>
+
+            <p class="veille-tagline">Une journée d’hôtel, bien organisée · {{ $tenantName }}</p>
+        </div>
+
+        <p class="login-brand-foot">RÉCEPTION · RESTAURATION · ÉCONOMAT · FINANCE</p>
+    </section>
 
     {{-- ===== PANNEAU GAUCHE — Identité de l'établissement & Wetchah ===== --}}
-    <section class="login-brand" aria-label="{{ $tenantName }} — Wetchah, gestion hôtelière">
+    <section
+        id="login-brand-panel"
+        class="login-brand"
+        aria-label="{{ $tenantName }} — Wetchah, gestion hôtelière"{{ $isStandby ? ' aria-hidden="true"' : '' }}
+    >
         <div>
             <p class="login-brand-wordmark">{{ $tenantName }}<span class="login-brand-period">.</span></p>
             <p class="login-brand-sub">Wetchah · Gestion hôtelière</p>
@@ -843,7 +1298,7 @@
     </section>
 
     {{-- ===== PANNEAU DROIT — Connexion à l'établissement ===== --}}
-    <section class="login-content" aria-labelledby="login-title">
+    <section id="login-content-panel" class="login-content" aria-labelledby="login-title"{{ $isStandby ? ' inert' : '' }}>
         <div class="login-form-wrap">
 
             {{-- Marque affichée sur mobile lorsque le panneau gauche est masqué --}}
@@ -869,37 +1324,6 @@
 
             <h1 id="login-title" tabindex="-1">Heureux de vous retrouver.</h1>
             <p class="intro">Connectez-vous à votre espace de travail.</p>
-
-            @php
-                // Initialisation sécurisée du sac d'erreurs
-                $errors = $errors ?? new \Illuminate\Support\ViewErrorBag;
-                $mainError = $errors->first('login') ?: $errors->first('email') ?: $errors->first('password');
-                $isDeactivated = $mainError && (
-                    str_contains(mb_strtolower($mainError), 'désactivé') ||
-                    str_contains(mb_strtolower($mainError), 'desactive')
-                );
-                $isThrottled = $mainError && (
-                    str_contains(mb_strtolower($mainError), 'tentative') ||
-                    str_contains(mb_strtolower($mainError), 'secondes')
-                );
-                $isAuthFailed = $mainError && ! $isDeactivated && ! $isThrottled && (
-                    $mainError === trans('auth.failed') ||
-                    $mainError === trans('auth.password') ||
-                    str_contains(mb_strtolower($mainError), 'identifiant') ||
-                    str_contains(mb_strtolower($mainError), 'mot de passe') ||
-                    str_contains(mb_strtolower($mainError), 'correspondent pas')
-                );
-                $showInlineEmailError = $errors->has('email')
-                    && ! $isDeactivated
-                    && ! $isAuthFailed
-                    && ! $isThrottled
-                    && (! $errors->has('login') || $errors->first('email') !== $errors->first('login'));
-                $showInlinePasswordError = $errors->has('password')
-                    && ! $isDeactivated
-                    && ! $isAuthFailed
-                    && ! $isThrottled
-                    && (! $errors->has('login') || $errors->first('password') !== $errors->first('login'));
-            @endphp
 
             {{-- Message d'état de session optionnel (hors expiration d'inactivité) --}}
             @if(session('status') && ! str_contains(mb_strtolower(session('status')), 'inactivit') && ! str_contains(mb_strtolower(session('status')), 'expir'))
@@ -984,7 +1408,7 @@
                         spellcheck="false"
                         enterkeyhint="next"
                         required
-                        autofocus
+                        @unless($isStandby) autofocus @endunless
                         @if($errors->has('email') || ($errors->has('login') && !old('email')) || $isAuthFailed) aria-invalid="true" @endif
                         @if($showInlineEmailError) aria-describedby="email-error" @endif
                     >
@@ -1104,6 +1528,77 @@
 <script>
 (() => {
     'use strict';
+
+    // Page de veille : transition slide de la droite vers la gauche au clic sur la porte
+    const loginPage = document.getElementById('main');
+    const brandPanel = document.getElementById('login-brand-panel');
+    const veillePanel = document.getElementById('veille-panel');
+    const contentPanel = document.getElementById('login-content-panel');
+    const resumeBtn = document.getElementById('veille-resume-btn');
+    const veilleBubble = document.getElementById('veille-bubble');
+    const emailInput = document.getElementById('email');
+
+    if (loginPage && veillePanel && contentPanel && resumeBtn) {
+        let unlocking = false;
+
+        const finishUnlock = () => {
+            veillePanel.hidden = true;
+            veillePanel.setAttribute('inert', '');
+            brandPanel?.removeAttribute('aria-hidden');
+            loginPage.classList.remove('is-revealing', 'is-standby');
+            loginPage.dataset.standby = 'false';
+
+            if (
+                window.location.pathname === '/veille' ||
+                window.location.search.includes('expired=inactivity') ||
+                window.location.search.includes('veille=')
+            ) {
+                window.history.replaceState(null, '', '{{ route('login', [], false) }}');
+            }
+
+            if (emailInput && !document.activeElement?.closest('#login-form')) {
+                emailInput.focus();
+            }
+        };
+
+        const unlockStandby = () => {
+            if (unlocking || loginPage.dataset.standby !== 'true') {
+                return;
+            }
+            unlocking = true;
+
+            contentPanel.removeAttribute('inert');
+
+            const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            if (prefersReducedMotion) {
+                finishUnlock();
+                return;
+            }
+
+            loginPage.classList.remove('is-standby');
+            loginPage.classList.add('is-revealing');
+
+            window.requestAnimationFrame(() => {
+                const activeAnimations = [
+                    ...(contentPanel.getAnimations ? contentPanel.getAnimations({ subtree: false }) : []),
+                    ...(veillePanel.getAnimations ? veillePanel.getAnimations({ subtree: false }) : []),
+                ];
+
+                if (activeAnimations.length === 0) {
+                    finishUnlock();
+                    return;
+                }
+
+                Promise.race([
+                    Promise.allSettled(activeAnimations.map((animation) => animation.finished)),
+                    new Promise((resolve) => window.setTimeout(resolve, 900)),
+                ]).then(finishUnlock);
+            });
+        };
+
+        resumeBtn.addEventListener('click', unlockStandby);
+        veilleBubble?.addEventListener('click', unlockStandby);
+    }
 
     // Bascule afficher / masquer le mot de passe
     const passwordInput = document.getElementById('password');

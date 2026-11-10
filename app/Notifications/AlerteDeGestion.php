@@ -30,7 +30,7 @@ class AlerteDeGestion extends Notification
             'management_alert_id' => $this->alerte->id,
             'title' => $this->alerte->ruleLabel(),
             'message' => $this->alerte->message,
-            'url' => route('pilotage.index', ['mois' => $this->alerte->period]),
+            'url' => route('pilotage.index', ['mois' => $this->alerte->period], false),
         ];
     }
 
@@ -39,7 +39,7 @@ class AlerteDeGestion extends Notification
         return [
             'title' => $this->alerte->ruleLabel(),
             'body' => $this->alerte->message,
-            'url' => route('pilotage.index', ['mois' => $this->alerte->period]),
+            'url' => route('pilotage.index', ['mois' => $this->alerte->period], false),
             // Une alerte par règle, centre et mois : les suivantes la remplacent.
             'tag' => 'gestion-' . $this->alerte->rule . '-' . ($this->alerte->center ?? 'hotel') . '-' . $this->alerte->period,
         ];

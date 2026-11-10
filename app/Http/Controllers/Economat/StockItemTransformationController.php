@@ -108,7 +108,7 @@ class StockItemTransformationController extends Controller
 
         $this->prevenirLesAchats($item, 'découpe ' . $decoupe->number . ' — '
             . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " vers {$decoupe->restaurant->name}",
-            route('economat.cuts.show', $decoupe));
+            route('economat.cuts.show', $decoupe, false));
 
         return redirect()->route('economat.cuts.show', $decoupe)
             ->with('success', "Découpe {$decoupe->number} enregistrée : les portions sont au garde-manger de {$decoupe->restaurant->name}.");
@@ -131,7 +131,7 @@ class StockItemTransformationController extends Controller
         }
 
         $this->prevenirLesAchats($item, $mouvement->ouvertures() ?? 'ouverture de conditionnement',
-            route('economat.items.transformation.show', $item));
+            route('economat.items.transformation.show', $item, false));
 
         return redirect()->route('economat.items.transformation.show', $item)
             ->with('success', ucfirst($mouvement->ouvertures() ?? 'Ouverture enregistrée') . '. Stock : ' . $item->fresh()->stockDecompose() . '.');

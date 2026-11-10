@@ -38,7 +38,7 @@ class MaintenanceRequestNotification extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/technique/demandes/' . $this->demande->id;
+        return '/technique/demandes/' . $this->demande->id;
     }
 
     private function titre(): string

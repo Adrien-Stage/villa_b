@@ -89,7 +89,7 @@ class ComplimentaryBookingRequested extends Notification
             'notes' => $this->booking->notes,
             'title' => 'Chambre Offerte - Validation Requise',
             'message' => "La réservation {$this->booking->booking_number} (Chambre {$roomNumber}) créée par {$this->receptionistName} pour {$customerName} est en attente de validation.",
-            'url' => route('bookings.show', $this->booking->id),
+            'url' => route('bookings.show', $this->booking->id, false),
         ];
     }
 }

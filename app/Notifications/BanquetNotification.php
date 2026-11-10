@@ -77,7 +77,7 @@ class BanquetNotification extends Notification
             'title' => $title,
             'message' => $message,
             'actor' => $actor,
-            'url' => rtrim((string) config('app.url'), '/') . '/restaurant/banquets/' . $this->banquet->id,
+            'url' => '/restaurant/banquets/' . $this->banquet->id,
         ];
     }
 
@@ -106,7 +106,7 @@ class BanquetNotification extends Notification
             'body' => $ctx['message'],
             'url' => $ctx['url'],
             'tag' => 'banquet-' . $this->banquet->id,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

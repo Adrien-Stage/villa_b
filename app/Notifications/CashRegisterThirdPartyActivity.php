@@ -43,7 +43,7 @@ class CashRegisterThirdPartyActivity extends Notification
         return [
             'actor_label' => $actorLabel,
             'message' => "{$actorLabel} a travaillé dans votre caisse Réception (#{$this->activity->cash_register_session_id}) à {$heure} : {$this->activity->description}{$montantText}.",
-            'url' => rtrim((string) config('app.url'), '/') . '/bookings/cash-register',
+            'url' => '/bookings/cash-register',
         ];
     }
 
@@ -71,7 +71,7 @@ class CashRegisterThirdPartyActivity extends Notification
             'body' => $ctx['message'],
             'url' => $ctx['url'],
             'tag' => 'caisse-tiers-' . $this->activity->cash_register_session_id,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

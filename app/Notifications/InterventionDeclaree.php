@@ -24,7 +24,7 @@ class InterventionDeclaree extends Notification
 
     private function url(): string
     {
-        return route('interventions.index');
+        return route('interventions.index', [], false);
     }
 
     private function message(): string

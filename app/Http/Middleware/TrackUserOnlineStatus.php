@@ -54,12 +54,13 @@ class TrackUserOnlineStatus
                     if ($request->expectsJson()) {
                         return response()->json([
                             'message' => 'Votre session a expiré après 20 minutes d\'inactivité.',
-                            'redirect' => route('login'),
+                            'redirect' => route('login', ['expired' => 'inactivity']),
                         ], 401);
                     }
 
                     return redirect()->guest(route('login'))
                         ->with('status', 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.')
+                        ->with('veille', true)
                         ->withErrors([
                             'login' => 'Votre session a expiré après 20 minutes d\'inactivité.',
                             'email' => 'Votre session a expiré après 20 minutes d\'inactivité.',
