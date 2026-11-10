@@ -136,9 +136,47 @@
                 <dd class="text-primary">{{ $banquet->confirmed_at->format('d/m/Y H:i') }}</dd>
             @endif
         </dl>
-        @if($banquet->menu)
-            <h3 class="mt-5 mb-1 text-xs font-bold uppercase tracking-wider text-primary/60">Menu & Prestations</h3>
-            <p class="whitespace-pre-line text-sm text-primary/80">{{ $banquet->menu }}</p>
+        @php $groupedMenu = $banquet->groupedMenuItems(); @endphp
+        @if($groupedMenu->isNotEmpty() || $banquet->menu)
+            <div class="mt-5 pt-4 border-t border-secondary/15">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-primary/60">Menu &amp; Prestations</h3>
+                    @if($groupedMenu->isNotEmpty() && $banquet->menuItemsUnitTotal() > 0)
+                        <span class="rounded-full bg-secondary/15 px-2.5 py-0.5 text-[11px] font-medium text-primary/75">
+                            Valeur carte : {{ $fcfa($banquet->menuItemsUnitTotal()) }} / couvert
+                        </span>
+                    @endif
+                </div>
+
+                @if($groupedMenu->isNotEmpty())
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
+                        @foreach($groupedMenu as $section)
+                            <div class="rounded-lg border border-secondary/15 bg-secondary/5 p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-primary/70 mb-1.5">{{ $section['label'] }}</p>
+                                <ul class="space-y-1.5 text-xs text-primary">
+                                    @foreach($section['items'] as $item)
+                                        <li class="flex items-start justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <span class="font-medium">{{ $item['name'] }}</span>
+                                                @if(!empty($item['notes']))
+                                                    <p class="text-[11px] text-primary/60">{{ $item['notes'] }}</p>
+                                                @endif
+                                            </div>
+                                            @if(((int) ($item['unit_price'] ?? 0)) > 0)
+                                                <span class="text-[11px] text-primary/60 tabular-nums whitespace-nowrap">{{ $fcfa($item['unit_price']) }}</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($banquet->menu)
+                    <p class="whitespace-pre-line text-sm text-primary/80">{{ $banquet->menu }}</p>
+                @endif
+            </div>
         @endif
         @if($banquet->notes)
             <h3 class="mt-5 mb-1 text-xs font-bold uppercase tracking-wider text-primary/60">Notes</h3>
@@ -250,7 +288,7 @@
 
 @if($banquet->estModifiable())
     @droit('restaurant.banquets.modifier')
-        <x-modal id="banquet-edit" title="Modifier {{ $banquet->reference }}" max-width="max-w-2xl" formAction="{{ route('restaurant.banquets.update', $banquet) }}">
+        <x-modal id="banquet-edit" title="Modifier {{ $banquet->reference }}" max-width="max-w-3xl" formAction="{{ route('restaurant.banquets.update', $banquet) }}">
             @method('PUT')
             @include('restaurant.banquets._champs', ['b' => $banquet, 'restaurantParDefaut' => null])
             <x-slot:footer>

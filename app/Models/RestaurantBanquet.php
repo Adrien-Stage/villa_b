@@ -6,6 +6,7 @@ use App\Models\Concerns\AppartientAUnRestaurant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Un banquet : un événement réservé dans l'un des restaurants — date, salle,
@@ -52,10 +53,20 @@ class RestaurantBanquet extends Model
         self::ANNULE => 'Annulé',
     ];
 
+    public const MENU_SECTIONS = [
+        'aperitif' => 'Cocktail / Mise en bouche',
+        'entree' => 'Entrée',
+        'plat' => 'Plat principal',
+        'accompagnement' => 'Accompagnement',
+        'dessert' => 'Dessert',
+        'boisson' => 'Boissons',
+        'autre' => 'Autre / Prestation',
+    ];
+
     protected $fillable = [
         'point_of_sale_id', 'reference', 'title', 'customer_id', 'booking_id', 'client_name', 'client_phone', 'client_email',
         'event_date', 'start_time', 'end_time', 'space_id', 'covers', 'price_per_cover', 'extras_amount',
-        'total_amount', 'deposit_required', 'menu', 'status', 'source', 'notes', 'created_by', 'confirmed_at', 'canceled_at',
+        'total_amount', 'deposit_required', 'menu', 'menu_items', 'status', 'source', 'notes', 'created_by', 'confirmed_at', 'canceled_at',
     ];
 
     protected $casts = [
@@ -65,6 +76,7 @@ class RestaurantBanquet extends Model
         'extras_amount' => 'integer',
         'total_amount' => 'integer',
         'deposit_required' => 'integer',
+        'menu_items' => 'array',
         'confirmed_at' => 'datetime',
         'canceled_at' => 'datetime',
     ];
@@ -128,5 +140,76 @@ class RestaurantBanquet extends Model
     public function estModifiable(): bool
     {
         return in_array($this->status, [self::DEVIS, self::CONFIRME], true);
+    }
+
+    /**
+     * Regroupe les éléments structurés du menu par temps de service dans l'ordre du catalogue.
+     *
+     * @return Collection<int, array{course: string, label: string, items: array<int, array<string, mixed>>}>
+     */
+    public function groupedMenuItems(): Collection
+    {
+        $raw = is_array($this->menu_items) ? $this->menu_items : [];
+        if ($raw === []) {
+            return collect();
+        }
+
+        $grouped = [];
+        foreach (self::MENU_SECTIONS as $code => $label) {
+            $items = array_values(array_filter(
+                $raw,
+                fn ($row) => is_array($row) && ($row['course'] ?? 'plat') === $code && trim((string) ($row['name'] ?? '')) !== ''
+            ));
+            if ($items !== []) {
+                $grouped[] = [
+                    'course' => $code,
+                    'label' => $label,
+                    'items' => $items,
+                ];
+            }
+        }
+
+        return collect($grouped);
+    }
+
+    /** Somme indicative par couvert des éléments structurés du menu (en centimes). */
+    public function menuItemsUnitTotal(): int
+    {
+        $raw = is_array($this->menu_items) ? $this->menu_items : [];
+
+        return (int) array_sum(array_map(
+            fn ($row) => is_array($row) ? max(0, (int) ($row['unit_price'] ?? 0)) : 0,
+            $raw
+        ));
+    }
+
+    /**
+     * Génère une synthèse textuelle lisible du menu structuré (utile en repli si la colonne JSON n'existe pas encore).
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    public static function formatMenuText(array $items): string
+    {
+        $lines = [];
+        foreach (self::MENU_SECTIONS as $code => $label) {
+            $sectionItems = array_values(array_filter(
+                $items,
+                fn ($row) => is_array($row) && ($row['course'] ?? 'plat') === $code && trim((string) ($row['name'] ?? '')) !== ''
+            ));
+            if ($sectionItems === []) {
+                continue;
+            }
+            $lines[] = $label . ' :';
+            foreach ($sectionItems as $row) {
+                $line = '- ' . trim((string) $row['name']);
+                $note = trim((string) ($row['notes'] ?? ''));
+                if ($note !== '') {
+                    $line .= ' (' . $note . ')';
+                }
+                $lines[] = $line;
+            }
+        }
+
+        return implode("\n", $lines);
     }
 }
