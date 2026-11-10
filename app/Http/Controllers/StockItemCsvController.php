@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockUnit;
+use App\Models\StorageZone;
 use App\Models\Supplier;
 use App\Services\StockService;
 use Illuminate\Http\Request;
@@ -25,22 +26,26 @@ class StockItemCsvController extends Controller
     private const HEADERS = ['nom', 'reference', 'unite', 'categorie', 'fournisseur', 'stock_min', 'cout_moyen_fcfa', 'actif'];
 
     /**
-     * Colonne facultative du modèle : la quantité déjà en magasin, reprise au
-     * coût moyen de la ligne. Facultative pour que les fichiers déjà préparés
-     * sans elle restent importables.
+     * Colonnes facultatives du modèle :
+     * - zone_stockage : nom de la zone de stockage où ranger l'article (par
+     *   défaut la première zone en service si la colonne est absente ou vide) ;
+     * - stock_initial : quantité déjà en magasin, reprise au coût moyen de la
+     *   ligne. Facultatives pour que les fichiers déjà préparés sans elles
+     *   restent importables.
      */
+    private const STORAGE_ZONE  = 'zone_stockage';
     private const OPENING_STOCK = 'stock_initial';
 
     public function export(Request $request)
     {
         if ($request->boolean('template')) {
-            return $this->streamCsv('modele_articles_economat.csv', [...self::HEADERS, self::OPENING_STOCK], [
-                ['Savon liquide', 'SAV-01', 'litre', 'Produits d\'entretien', 'Grossiste Central', '10', '1200', 'oui', '24'],
-                ['Drap blanc', '', 'pièce', 'Linge', '', '5', '8000', 'oui', ''],
+            return $this->streamCsv('modele_articles_economat.csv', [...self::HEADERS, self::STORAGE_ZONE, self::OPENING_STOCK], [
+                ['Savon liquide', 'SAV-01', 'litre', 'Produits d\'entretien', 'Grossiste Central', '10', '1200', 'oui', 'Magasin central', '24'],
+                ['Drap blanc', '', 'pièce', 'Linge', '', '5', '8000', 'oui', '', ''],
             ]);
         }
 
-        $rows = StockItem::with('category', 'supplier')->orderBy('name')->get()
+        $rows = StockItem::with('category', 'supplier', 'zone')->orderBy('name')->get()
             ->map(fn (StockItem $it) => [
                 $it->name,
                 $it->reference,
@@ -50,9 +55,10 @@ class StockItemCsvController extends Controller
                 rtrim(rtrim(number_format((float) $it->min_stock, 3, '.', ''), '0'), '.'),
                 (int) round($it->average_cost / 100),
                 $it->is_active ? 'oui' : 'non',
+                $it->zone?->name,
             ])->all();
 
-        return $this->streamCsv('articles_economat_' . now()->format('Ymd_His') . '.csv', self::HEADERS, $rows);
+        return $this->streamCsv('articles_economat_' . now()->format('Ymd_His') . '.csv', [...self::HEADERS, self::STORAGE_ZONE], $rows);
     }
 
     public function import(Request $request)
@@ -67,6 +73,7 @@ class StockItemCsvController extends Controller
         $tenantId       = $this->csvTenantId();
         $categoriesByName = StockCategory::all()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
         $suppliersByName  = Supplier::all()->keyBy(fn ($s) => mb_strtolower(trim($s->name)));
+        $zonesByName      = StorageZone::all()->keyBy(fn ($z) => mb_strtolower(trim($z->name)));
         $existingNames  = StockItem::pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
         // L'unité se choisit dans la liste de Paramètres › Économat ; « Kg » vaut « kg ».
         $unitesByName   = collect(StockUnit::choix())->keyBy(fn ($u) => mb_strtolower($u));
@@ -110,6 +117,16 @@ class StockItemCsvController extends Controller
                 }
             }
 
+            $zone = null;
+            $zoneName = trim((string) ($row[self::STORAGE_ZONE] ?? ''));
+            if ($zoneName !== '') {
+                $zone = $zonesByName->get(mb_strtolower($zoneName));
+                if (!$zone) {
+                    $errors[] = "Ligne {$line} : zone de stockage « {$zoneName} » introuvable.";
+                    continue;
+                }
+            }
+
             $uniteSaisie = trim((string) ($row['unite'] ?? ''));
             $unite = $unitesByName->get(mb_strtolower($uniteSaisie === '' ? 'pièce' : $uniteSaisie));
             if ($unite === null) {
@@ -137,7 +154,7 @@ class StockItemCsvController extends Controller
                 continue;
             }
 
-            $item = StockItem::create([
+            $attributs = [
                 'name'              => $name,
                 'reference'         => trim((string) ($row['reference'] ?? '')) ?: null,
                 'unit'              => $unite,
@@ -148,7 +165,12 @@ class StockItemCsvController extends Controller
                 'average_cost'      => $cost !== '' ? (int) round((float) $cost * 100) : 0,
                 'is_active'         => $this->parseBool($row['actif'] ?? 'oui'),
                 'tenant_id'         => $tenantId,
-            ]);
+            ];
+            if ($zone !== null) {
+                $attributs['storage_zone_id'] = $zone->id;
+            }
+
+            $item = StockItem::create($attributs);
             if ($initial > 0) {
                 try {
                     app(StockService::class)->recordOpening($item, $initial, (int) round((float) $cost * 100), 'Reprise du stock initial (import CSV)');

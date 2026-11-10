@@ -10,6 +10,7 @@ use App\Models\PurchaseOrder;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockUnit;
+use App\Models\StorageZone;
 use App\Models\Supplier;
 use App\Notifications\PurchaseOrderUpdated;
 use App\Services\DocumentExporter;
@@ -196,6 +197,7 @@ class GoodsReceiptController extends Controller
             'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
             'items'         => StockItem::active()->with('packagings')->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'zones'         => StorageZone::query()->active()->dansLOrdre()->get(['id', 'name']),
             'unites'        => StockUnit::selectOptions(),
             'motifs'        => PurchaseOrder::MOTIFS_REGULARISATION,
             'reasons'       => GoodsReceiptLine::REASONS,
@@ -219,6 +221,7 @@ class GoodsReceiptController extends Controller
             'lines.*.nouvel_article.name'              => ['nullable', 'string', 'max:160', 'required_without:lines.*.stock_item_id'],
             'lines.*.nouvel_article.unit'              => ['nullable', 'required_with:lines.*.nouvel_article.name', Rule::in(StockUnit::choix())],
             'lines.*.nouvel_article.stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
+            'lines.*.nouvel_article.storage_zone_id'   => ['nullable', 'integer', Rule::exists('storage_zones', 'id')->where('is_active', true)],
             'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'lines.*.packaging'          => ['nullable', 'string', 'max:40'],

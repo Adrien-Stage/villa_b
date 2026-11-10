@@ -9,6 +9,7 @@ use App\Models\PurchaseOrderLine;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\StockUnit;
+use App\Models\StorageZone;
 use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
@@ -419,10 +420,15 @@ class GoodsReceiptService
             throw new RuntimeException("L'article « {$nom} » existe déjà : choisissez-le dans la liste.");
         }
 
+        $nouvelArticle = $ligne['nouvel_article'] ?? [];
+
         return $nouveaux[$cle] = StockItem::create([
             'name'              => $nom,
-            'unit'              => StockUnit::symbolFor($ligne['nouvel_article']['unit'] ?? 'pcs'),
-            'stock_category_id' => $ligne['nouvel_article']['stock_category_id'] ?? null,
+            'unit'              => StockUnit::symbolFor($nouvelArticle['unit'] ?? 'pcs'),
+            'stock_category_id' => $nouvelArticle['stock_category_id'] ?? null,
+            'storage_zone_id'   => array_key_exists('storage_zone_id', $nouvelArticle)
+                ? $nouvelArticle['storage_zone_id']
+                : StorageZone::parDefaut()?->id,
             'supplier_id'       => $supplier->id,
             // Le stock et le coût moyen naissent de la réception qui suit.
             'current_stock'     => 0,

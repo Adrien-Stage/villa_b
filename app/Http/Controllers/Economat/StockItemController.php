@@ -144,7 +144,10 @@ class StockItemController extends Controller
         StockItem::create([
             'stock_category_id' => $validated['stock_category_id'] ?? null,
             // Le service achats propose la zone ; l'économat la change ensuite.
-            'storage_zone_id'   => $validated['storage_zone_id'] ?? StorageZone::parDefaut()?->id,
+            // Si le champ est transmis vide (« Sans zone »), null est conservé.
+            'storage_zone_id'   => array_key_exists('storage_zone_id', $validated)
+                ? $validated['storage_zone_id']
+                : StorageZone::parDefaut()?->id,
             'name'              => trim($validated['name']),
             'reference'         => $validated['reference'] ?? null,
             'unit'              => StockUnit::symbolFor($validated['unit']),
