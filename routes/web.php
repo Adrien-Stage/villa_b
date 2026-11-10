@@ -195,6 +195,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/conversations/list', [DiscussionController::class, 'conversationsList'])->name('conversations.list');
         Route::get('/unread-summary', [DiscussionController::class, 'unreadSummary'])->name('unreadSummary');
         Route::post('/conversations', [DiscussionController::class, 'createConversation'])->name('conversations.store');
+        Route::patch('/conversations/{conversation}', [DiscussionController::class, 'updateGroup'])->name('conversations.update');
+        Route::post('/conversations/{conversation}/members', [DiscussionController::class, 'addGroupMembers'])->name('conversations.members.store');
+        Route::delete('/conversations/{conversation}/members/{member}', [DiscussionController::class, 'removeGroupMember'])->name('conversations.members.destroy');
+        Route::post('/conversations/{conversation}/leave', [DiscussionController::class, 'leaveGroup'])->name('conversations.leave');
         Route::get('/conversations/{conversation}/poll', [DiscussionController::class, 'poll'])->name('conversations.poll');
         Route::post('/conversations/{conversation}/archive', [DiscussionController::class, 'archiveConversation'])->name('conversations.archive');
         Route::delete('/conversations/{conversation}', [DiscussionController::class, 'destroyConversation'])->name('conversations.destroy');
