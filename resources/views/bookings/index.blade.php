@@ -168,7 +168,16 @@
                 <span class="text-[10px] text-primary/45">FCFA</span>
             </x-table.cell>
             <x-table.cell nowrap>
-                <span class="rounded-full border px-2 py-0.5 text-xs font-medium {{ $sc }}">{{ $booking->status->label() }}</span>
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="rounded-full border px-2 py-0.5 text-xs font-medium {{ $sc }}">{{ $booking->status->label() }}</span>
+                    @if($booking->hasOverstayedCheckout($checkOutTime ?? null))
+                        <span class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+                              title="Date de check-out prévue dépassée">
+                            <i data-lucide="alert-triangle" class="w-3 h-3" aria-hidden="true"></i>
+                            Dépassement
+                        </span>
+                    @endif
+                </div>
             </x-table.cell>
             <x-table.actions :label="'Actions pour la réservation '.$booking->booking_number">
                 <x-table.action :href="$fiche" icon="eye">Ouvrir</x-table.action>

@@ -4,11 +4,14 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
+use App\Services\RoomAvailabilityService;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * Booking : Réservation individuelle ou groupe
@@ -372,5 +375,102 @@ class Booking extends Model
     public function folioItems(): HasMany
     {
         return $this->hasMany(FolioItem::class)->orderBy('occurred_at');
+    }
+
+    /**
+     * Date et heure d'arrivée effectives pour le calcul de durée de séjour.
+     *
+     * Retombe sur l'arrivée prévue lorsque `actual_check_in` n'est pas
+     * renseigné (séjours de démonstration ou check-ins sans horodatage).
+     */
+    public function effectiveCheckInAt(?string $defaultCheckInTime = null): Carbon
+    {
+        if ($this->actual_check_in) {
+            return $this->actual_check_in->copy();
+        }
+
+        $fallbackTime = self::normalizeClockTime(
+            $defaultCheckInTime,
+            RoomAvailabilityService::DEFAULT_CHECK_IN_TIME
+        );
+        $checkInTime = self::normalizeClockTime($this->check_in_time, $fallbackTime);
+
+        if ($this->check_in) {
+            return $this->check_in->copy()->setTimeFromTimeString($checkInTime);
+        }
+
+        return ($this->created_at ?? now())->copy();
+    }
+
+    /**
+     * Date et heure limites de départ prévues pour le séjour.
+     */
+    public function scheduledCheckOutAt(?string $defaultCheckOutTime = null): Carbon
+    {
+        $checkOutTime = self::normalizeClockTime(
+            $defaultCheckOutTime,
+            RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME
+        );
+
+        if ($this->check_out) {
+            return $this->check_out->copy()->setTimeFromTimeString($checkOutTime);
+        }
+
+        return $this->effectiveCheckInAt()
+            ->copy()
+            ->addDays(max(1, (int) $this->total_nights))
+            ->setTimeFromTimeString($checkOutTime);
+    }
+
+    /**
+     * Indique si un séjour toujours en cours a dépassé sa date/heure de check-out.
+     */
+    public function hasOverstayedCheckout(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): bool
+    {
+        if ($this->status !== BookingStatus::CHECKED_IN) {
+            return false;
+        }
+
+        return ($at ?? now())->greaterThan($this->scheduledCheckOutAt($defaultCheckOutTime));
+    }
+
+    /**
+     * Détermine si le minuteur de séjour doit s'afficher sur la fiche.
+     *
+     * Un séjour en cours avec dépassement continue d'afficher le minuteur même
+     * si un règlement intermédiaire a figé `actual_check_out`.
+     */
+    public function shouldDisplayStayTimer(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): bool
+    {
+        if ($this->status !== BookingStatus::CHECKED_IN) {
+            return false;
+        }
+
+        if (! $this->actual_check_out) {
+            return true;
+        }
+
+        return $this->hasOverstayedCheckout($defaultCheckOutTime, $at);
+    }
+
+    private static function normalizeClockTime(?string $time, string $fallback): string
+    {
+        $candidate = trim((string) $time);
+
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $candidate, $matches)) {
+            $hour = (int) $matches[1];
+            $minute = (int) $matches[2];
+            $second = isset($matches[3]) ? (int) $matches[3] : 0;
+
+            if ($hour <= 23 && $minute <= 59 && $second <= 59) {
+                return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
+            }
+        }
+
+        if ($candidate !== $fallback) {
+            return self::normalizeClockTime($fallback, '00:00:00');
+        }
+
+        return '00:00:00';
     }
 }
