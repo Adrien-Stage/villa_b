@@ -1,10 +1,11 @@
 @php
-    $tenant = \App\Models\Tenant::first();
+    $tenant = \App\Models\Tenant::current();
     $tenantName = $tenant?->name ?? 'Établissement';
     // Logo importé par le manager depuis les paramètres de l'application
-    // (stocké localement dans le storage de ce tenant, pas de l'admin).
+    // (stocké localement dans le storage de ce tenant).
     $tenantLogo = ($tenant && !empty($tenant->settings['logo'])) ? asset('storage/' . $tenant->settings['logo']) : null;
-    $tenantInitial = mb_strtoupper(mb_substr($tenantName, 0, 1));
+    $contactEmail = $tenant?->email;
+    $contactPhone = $tenant?->phone;
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
@@ -15,7 +16,8 @@
     @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&family=Inter:wght@300..700&display=swap" rel="stylesheet">
     <style>
         :root {
             --color-primary: {{ $tenant->settings['theme']['primary'] ?? '#391F0E' }};
@@ -25,142 +27,759 @@
             --color-surface-dark: {{ $tenant->settings['theme']['surface_dark'] ?? '#2C1810' }};
             --color-text-on-light: {{ $tenant->settings['theme']['text_on_light'] ?? '#391F0E' }};
             --color-text-on-dark: {{ $tenant->settings['theme']['text_on_dark'] ?? '#CCAB87' }};
-        }
-        /* Animations fade-in */
-        @keyframes fadeInLeft {
-            from { opacity: 0; transform: translateX(-30px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .animate-left  { animation: fadeInLeft  0.7s ease forwards; }
-        .animate-right { animation: fadeInRight 0.7s ease 0.2s forwards; opacity: 0; }
-        .animate-up-1  { animation: fadeInUp 0.6s ease 0.3s forwards; opacity: 0; }
-        .animate-up-2  { animation: fadeInUp 0.6s ease 0.45s forwards; opacity: 0; }
-        .animate-up-3  { animation: fadeInUp 0.6s ease 0.6s forwards; opacity: 0; }
-        .animate-up-4  { animation: fadeInUp 0.6s ease 0.75s forwards; opacity: 0; }
 
-        /* Cercles décoratifs */
-        .circle-deco {
+            --login-ink: #30271f;
+            --login-brown: #3b281d;
+            --login-brown-hover: #553927;
+            --login-muted: #70675e;
+            --login-quiet: #786e64;
+            --login-bg: #fffdfa;
+            --login-line: #e6e1d8;
+            --login-input-border: #968978;
+            --login-sage: #3d6957;
+            --login-red: #a03735;
+        }
+
+        body.login-body {
+            margin: 0;
+            min-height: 100dvh;
+            background: var(--login-bg);
+            color: var(--login-ink);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-page {
+            min-height: 100dvh;
+            display: grid;
+            grid-template-columns: 1fr 1.12fr;
+            background: var(--login-bg);
+        }
+
+        /* ── Panneau gauche : identité Wetchah ───────────────────────────────── */
+        .login-brand {
+            background: var(--login-brown);
+            color: #f7eddd;
+            padding: 42px 48px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .login-brand-wordmark {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 600;
+            font-size: 31px;
+            line-height: 1;
+            letter-spacing: -1.1px;
+            color: #f7eddd;
+            margin: 0;
+        }
+
+        .login-brand-period {
+            color: #985331;
+        }
+
+        .login-brand-sub {
+            margin: 6px 0 0;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 600;
+            color: #dac3a9;
+        }
+
+        .login-brand-copy {
+            margin-top: auto;
+            padding-top: 26px;
+            z-index: 1;
+        }
+
+        .login-brand-copy h2 {
+            margin: 0;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 500;
+            font-size: 36px;
+            line-height: 1.25;
+            letter-spacing: -.02em;
+            color: #f7eddd;
+        }
+
+        .login-brand-copy p {
+            margin: 16px 0 0;
+            color: #d6bfa5;
+            font-size: 12.5px;
+            line-height: 1.8;
+            max-width: 310px;
+        }
+
+        .login-architecture {
+            max-width: 340px;
+            width: 85%;
+            margin: 32px auto 20px;
+            flex: 1;
+            max-height: 340px;
+            min-height: 150px;
+            color: #a38362;
+        }
+
+        .login-brand-foot {
+            border-top: 1px solid #d5b28f3b;
+            padding-top: 18px;
+            margin: auto 0 0;
+            font-size: 9px;
+            color: #d6bfa5;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        /* ── Panneau droit : formulaire de connexion ─────────────────────────── */
+        .login-content {
+            padding: 55px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--login-bg);
+        }
+
+        .login-form-wrap {
+            width: 100%;
+            max-width: 366px;
+        }
+
+        .mobile-login-brand {
+            display: none;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 600;
+            font-size: 26px;
+            line-height: 1;
+            letter-spacing: -1px;
+            color: var(--login-brown);
+            margin: 0 0 35px;
+        }
+
+        .login-place {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 29px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--login-ink);
+        }
+
+        .place-seal {
+            border: 1px solid #dacdbb;
+            background: #f2ecdf;
+            width: 39px;
+            height: 43px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px 18px 4px 4px;
+            color: #8b6c4d;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .place-seal svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .place-seal-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 3px;
+            background: #ffffff;
+        }
+
+        .login-form-wrap h1 {
+            margin: 0;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 550;
+            font-size: 34px;
+            line-height: 1.2;
+            letter-spacing: -.025em;
+            color: var(--login-ink);
+        }
+
+        .login-form-wrap h1:focus {
+            outline: none;
+        }
+
+        .login-form-wrap > .intro {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--login-muted);
+            margin: 10px 0 29px;
+        }
+
+        /* ── Alertes statut / erreurs serveur ────────────────────────────────── */
+        .login-alert {
+            margin-bottom: 21px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+
+        .login-alert svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .login-alert-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 12.5px;
+        }
+
+        .login-alert-text {
+            margin: 3px 0 0;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .login-alert--error {
+            background: #fff4ef;
+            border: 1px solid #e8c6be;
+            color: #8b3e35;
+        }
+
+        .login-alert--warning {
+            background: #faf3e7;
+            border: 1px solid #e3cfa8;
+            color: #73531f;
+        }
+
+        .login-alert--info {
+            background: #eef6ef;
+            border: 1px solid #c5decb;
+            color: #2b503b;
+        }
+
+        /* ── Champs et contrôles de formulaire ───────────────────────────────── */
+        .login-form .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 19px;
+        }
+
+        .login-form .field > label {
+            font-size: 12px;
+            font-weight: 550;
+            color: #594839;
+        }
+
+        .login-form .field input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--login-input-border);
+            border-radius: 6px;
+            background: #ffffff;
+            color: var(--login-ink);
+            font-family: inherit;
+            font-size: max(1rem, 14px);
+            line-height: 1.5;
+            box-sizing: border-box;
+            transition: border-color .15s, background-color .15s;
+        }
+
+        .login-form .field input::placeholder {
+            color: var(--login-quiet);
+            opacity: 1;
+        }
+
+        .login-form .field input:hover {
+            border-color: #756859;
+        }
+
+        .login-form .field input[aria-invalid="true"],
+        .login-form .field input:user-invalid {
+            border-color: var(--login-red);
+            background: #fffaf8;
+        }
+
+        .login-field-error {
+            margin: 2px 0 0;
+            color: var(--login-red);
+            font-size: 11.5px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .login-field-error svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .password-wrap {
+            position: relative;
+        }
+
+        .password-wrap input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
             position: absolute;
-            border-radius: 50%;
-            border: 1px solid var(--color-secondary);
-            opacity: 0.15;
+            right: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            color: var(--login-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color .15s, background-color .15s;
         }
 
-        /* Neutraliser le fond jaune d'autofill sur le thème sombre */
+        .password-toggle:hover {
+            background: #efeae1;
+            color: var(--login-ink);
+        }
+
+        .password-toggle svg {
+            width: 17px;
+            height: 17px;
+            pointer-events: none;
+        }
+
+        .login-submit {
+            width: 100%;
+            min-height: 46px;
+            margin-top: 3px;
+            padding: 10px 16px;
+            border: 1px solid var(--login-brown);
+            border-radius: 7px;
+            background: var(--login-brown);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 550;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            cursor: pointer;
+            transition: background-color .15s, border-color .15s, opacity .15s;
+        }
+
+        .login-submit:hover {
+            background: var(--login-brown-hover);
+            border-color: var(--login-brown-hover);
+        }
+
+        .login-submit:disabled {
+            opacity: .72;
+            cursor: wait;
+        }
+
+        .login-submit svg {
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
+        }
+
+        .login-support {
+            text-align: center;
+            font-size: 12px;
+            margin: 19px 0 22px;
+            color: var(--login-muted);
+        }
+
+        .login-support button {
+            border: 0;
+            background: transparent;
+            color: var(--login-brown);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 550;
+            padding: 6px 4px;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .login-support button:hover {
+            color: var(--login-brown-hover);
+        }
+
+        .login-foot {
+            border-top: 1px solid var(--login-line);
+            padding-top: 18px;
+            margin: 0;
+            text-align: center;
+            font-size: 11px;
+            color: var(--login-quiet);
+        }
+
+        /* Focus clavier haute visibilité sur le thème clair */
+        .login-page :where(button, input, a):focus-visible,
+        dialog.login-dialog :where(button, a):focus-visible {
+            outline: 2px solid var(--login-sage);
+            outline-offset: 2px;
+        }
+
+        .visually-hidden {
+            position: absolute !important;
+            clip-path: inset(50%) !important;
+            overflow: hidden !important;
+            width: 1px !important;
+            height: 1px !important;
+            margin: -1px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            white-space: nowrap !important;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        /* Neutraliser le fond jaune d'autofill sur thème clair */
         input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:hover,
         input:-webkit-autofill:focus,
         input:-webkit-autofill:active {
-            -webkit-text-fill-color: var(--color-text-on-dark) !important;
-            -webkit-box-shadow: 0 0 0 1000px #180d07 inset !important;
-            box-shadow: 0 0 0 1000px #180d07 inset !important;
-            caret-color: var(--color-text-on-dark) !important;
+            -webkit-text-fill-color: var(--login-ink) !important;
+            -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+            box-shadow: 0 0 0 1000px #ffffff inset !important;
+            caret-color: var(--login-ink) !important;
             transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* ── Boîte de dialogue native : Contacter l'administrateur ────────────── */
+        dialog.login-dialog {
+            width: 460px;
+            max-width: calc(100% - 32px);
+            max-height: calc(100dvh - 44px);
+            margin: auto;
+            border: 1px solid #ded5c7;
+            border-radius: 14px;
+            padding: 0;
+            background: #ffffff;
+            color: var(--login-ink);
+            box-shadow: 0 24px 90px rgba(38, 24, 11, 0.22);
+            overflow: auto;
+        }
+
+        dialog.login-dialog:modal {
+            overscroll-behavior: contain;
+        }
+
+        dialog.login-dialog::backdrop {
+            background: rgba(36, 27, 18, 0.42);
+            overflow: hidden;
+            overscroll-behavior: contain;
+        }
+
+        dialog.login-dialog[open] {
+            animation: dialogReveal .13s ease-out;
+        }
+
+        @keyframes dialogReveal {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .login-dialog-head {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--login-line);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .login-dialog-head h2 {
+            margin: 0;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 550;
+            font-size: 22px;
+            line-height: 1.25;
+            color: var(--login-ink);
+        }
+
+        .dialog-close {
+            width: 36px;
+            height: 36px;
+            margin: -4px -8px 0 0;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--login-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .dialog-close:hover {
+            background: #efeae1;
+            color: var(--login-ink);
+        }
+
+        .dialog-close svg {
+            width: 17px;
+            height: 17px;
+            pointer-events: none;
+        }
+
+        .login-dialog-body {
+            padding: 20px 24px;
+            font-size: 13px;
+            line-height: 1.75;
+            color: var(--login-muted);
+        }
+
+        .login-dialog-body p {
+            margin: 0;
+        }
+
+        .login-dialog-body p + p {
+            margin-top: 12px;
+        }
+
+        .login-contact-list {
+            margin: 14px 0 0;
+            padding: 12px 14px;
+            list-style: none;
+            background: #faf8f4;
+            border: 1px solid var(--login-line);
+            border-radius: 8px;
+            display: grid;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--login-ink);
+        }
+
+        .login-contact-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .login-contact-list span {
+            color: var(--login-muted);
+        }
+
+        .login-contact-list a {
+            color: var(--login-brown);
+            font-weight: 550;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .login-dialog-foot {
+            padding: 14px 24px;
+            border-top: 1px solid var(--login-line);
+            display: flex;
+            justify-content: flex-end;
+            background: #faf8f4;
+        }
+
+        .dialog-btn-primary {
+            border: 1px solid var(--login-brown);
+            background: var(--login-brown);
+            color: #ffffff;
+            border-radius: 7px;
+            min-height: 39px;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 550;
+            cursor: pointer;
+        }
+
+        .dialog-btn-primary:hover {
+            background: var(--login-brown-hover);
+            border-color: var(--login-brown-hover);
+        }
+
+        /* ── Responsive ──────────────────────────────────────────────────────── */
+        @media (max-width: 1150px) {
+            .login-brand {
+                padding: 35px;
+            }
+            .login-brand-copy h2 {
+                font-size: 31px;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .login-content {
+                padding: 35px 28px;
+            }
+            .login-brand-copy h2 {
+                font-size: 27px;
+            }
+            .login-form-wrap h1 {
+                font-size: 30px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .login-page {
+                display: block;
+            }
+            .login-brand {
+                display: none;
+            }
+            .login-content {
+                padding: 32px 24px;
+                min-height: 100dvh;
+            }
+            .login-form-wrap {
+                max-width: 390px;
+            }
+            .mobile-login-brand {
+                display: block;
+            }
+            .login-place {
+                font-size: 12px;
+                margin-bottom: 22px;
+            }
+            .place-seal {
+                width: 34px;
+                height: 37px;
+            }
+            .login-form-wrap h1 {
+                font-size: 32px;
+            }
+            .login-form-wrap > .intro {
+                font-size: 13px;
+                margin-bottom: 26px;
+            }
+            .login-form .field {
+                margin-bottom: 20px;
+            }
+            .login-submit {
+                min-height: 48px;
+            }
+        }
+
+        @media (pointer: coarse) {
+            .login-form .field input {
+                min-height: 48px;
+            }
+            .password-toggle {
+                width: 44px;
+                height: 44px;
+            }
+            .login-submit,
+            .dialog-btn-primary,
+            .dialog-close {
+                min-height: 48px;
+            }
+            .login-support button {
+                padding: 10px 8px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        @media (prefers-contrast: more) {
+            :root {
+                --login-muted: #4b4034;
+                --login-quiet: #4b4034;
+                --login-line: #b9a68d;
+                --login-input-border: #5e5144;
+            }
         }
     </style>
 </head>
-{{-- min-h-screen plutôt que height/overflow fixes : sur mobile le clavier
-     virtuel réduit la hauteur utile, un overflow:hidden couperait le formulaire. --}}
-<body class="bg-dark font-body" style="min-height:100vh;">
+<body class="login-body">
 
-<div class="flex min-h-screen">
+<main id="main" class="login-page">
 
-    {{-- ===== PANNEAU GAUCHE — Branding (écrans larges uniquement) =====
-         Décoratif : masqué sur mobile pour laisser toute la place au formulaire. --}}
-    <div class="hidden lg:flex w-5/12 relative flex-col items-center justify-center bg-surface-dark animate-left overflow-hidden"
-         style="background: radial-gradient(ellipse at 30% 50%, var(--color-surface-dark) 0%, var(--color-dark) 70%);">
-
-        {{-- Cercles décoratifs --}}
-        <div class="circle-deco" style="width:400px; height:400px; top:-80px; left:-80px;"></div>
-        <div class="circle-deco" style="width:250px; height:250px; bottom:60px; right:-60px;"></div>
-        <div class="circle-deco" style="width:150px; height:150px; bottom:120px; right:20px;"></div>
-
-        {{-- Contenu centré --}}
-        <div class="relative z-10 flex flex-col items-center text-center px-12">
-
-            {{-- Logo --}}
-            <div class="animate-up-1 w-28 h-28 rounded-full shadow-2xl mb-6 flex items-center justify-center overflow-hidden"
-                 style="box-shadow: 0 0 40px rgba(204,171,135,0.2); background: {{ $tenantLogo ? 'white' : 'var(--color-secondary)' }};">
-                @if($tenantLogo)
-                    <img src="{{ $tenantLogo }}"
-                         alt="{{ $tenantName }}"
-                         class="w-full h-full object-cover rounded-full p-1">
-                @else
-                    <span class="font-heading text-5xl font-semibold" style="color: var(--color-text-on-light);">{{ $tenantInitial }}</span>
-                @endif
-            </div>
-
-            {{-- Nom --}}
-            <h1 class="animate-up-2 font-heading text-4xl font-semibold text-text-on-dark mb-3">
-                {{ $tenantName }}
-            </h1>
-
-            {{-- Sous-titre --}}
-            <p class="animate-up-3 text-sm leading-relaxed font-light"
-               style="color: var(--color-text-on-dark); opacity: 0.6;">
-                Plateforme de gestion hôtelière<br>
-                pour la conservation du patrimoine culturel
-            </p>
-
-            {{-- Séparateur ONG --}}
-            <div class="animate-up-4 flex items-center gap-3 mt-6">
-                <div class="h-px w-10" style="background: var(--color-text-on-dark); opacity: 0.3;"></div>
-                <span class="text-xs tracking-[0.3em] font-medium"
-                      style="color: var(--color-text-on-dark); opacity: 0.4;">ONG</span>
-                <div class="h-px w-10" style="background: var(--color-text-on-dark); opacity: 0.3;"></div>
-            </div>
+    {{-- ===== PANNEAU GAUCHE — Branding Wetchah ===== --}}
+    <section class="login-brand" aria-label="Wetchah, gestion hôtelière">
+        <div>
+            <p class="login-brand-wordmark">Wetchah<span class="login-brand-period">.</span></p>
+            <p class="login-brand-sub">Gestion hôtelière</p>
         </div>
-    </div>
 
-    {{-- ===== PANNEAU DROIT — Formulaire (pleine largeur sur mobile) ===== --}}
-    <div class="w-full lg:w-7/12 flex items-center justify-center animate-right py-10 px-5"
-         style="background: #080100;">
+        <div class="login-brand-copy">
+            <h2>Une journée d’hôtel,<br>bien organisée.</h2>
+            <p>Les services de votre établissement.<br>Un espace pour travailler ensemble.</p>
+        </div>
 
-        <div class="w-full max-w-sm">
+        <svg class="login-architecture" viewBox="0 0 360 310" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+            <path d="M42 288V130a138 138 0 0 1 276 0v158M69 288V132a111 111 0 0 1 222 0v156M97 288V135a83 83 0 0 1 166 0v153M126 288V137a54 54 0 0 1 108 0v151" stroke-width=".8"/>
+            <path d="M15 289h330M15 300h330M180 84v205M126 184h108M97 154h29m108 0h29M69 123h29m164 0h29" stroke-width=".8"/>
+            <path d="M143 289V152a37 37 0 0 1 74 0v137" fill="#684a34" fill-opacity=".2" stroke-width=".7"/>
+            <circle cx="196" cy="222" r="3"/>
+        </svg>
 
-            {{-- Identité de l'établissement : visible uniquement sur mobile,
-                 où le panneau de marque latéral est masqué. --}}
-            <div class="lg:hidden flex flex-col items-center text-center mb-8">
-                <div class="w-20 h-20 rounded-full shadow-2xl mb-4 flex items-center justify-center overflow-hidden"
-                     style="box-shadow: 0 0 30px rgba(204,171,135,0.2); background: {{ $tenantLogo ? 'white' : 'var(--color-secondary)' }};">
+        <p class="login-brand-foot">RÉCEPTION · RESTAURATION · ÉCONOMAT · FINANCE</p>
+    </section>
+
+    {{-- ===== PANNEAU DROIT — Connexion à l'établissement ===== --}}
+    <section class="login-content" aria-labelledby="login-title">
+        <div class="login-form-wrap">
+
+            {{-- Marque affichée sur mobile lorsque le panneau gauche est masqué --}}
+            <p class="mobile-login-brand">Wetchah<span class="login-brand-period">.</span></p>
+
+            {{-- Sceau et nom de l'établissement --}}
+            <div class="login-place">
+                <span class="place-seal">
                     @if($tenantLogo)
-                        <img src="{{ $tenantLogo }}" alt="{{ $tenantName }}" class="w-full h-full object-cover rounded-full p-1">
+                        <img src="{{ $tenantLogo }}" alt="" class="place-seal-img">
                     @else
-                        <span class="font-heading text-3xl font-semibold" style="color: var(--color-text-on-light);">{{ $tenantInitial }}</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <path d="M10 12h4"/>
+                            <path d="M10 8h4"/>
+                            <path d="M14 21v-3a2 2 0 0 0-4 0v3"/>
+                            <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/>
+                            <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>
+                        </svg>
                     @endif
-                </div>
-                <h1 class="font-heading text-2xl font-semibold text-text-on-dark">{{ $tenantName }}</h1>
-                <p class="text-xs mt-1" style="color: var(--color-text-on-dark); opacity: 0.5;">
-                    Plateforme de gestion hôtelière
-                </p>
+                </span>
+                <span>{{ $tenantName }}</span>
             </div>
 
-            {{-- Titre formulaire --}}
-            <div class="animate-up-1 mb-8">
-                <h2 class="font-heading text-2xl sm:text-3xl font-semibold text-text-on-dark mb-1">Connexion</h2>
-                <p class="text-sm" style="color: var(--color-text-on-dark); opacity: 0.5;">
-                    Entrez vos identifiants pour continuer
-                </p>
-            </div>
+            <h1 id="login-title" tabindex="-1">Heureux de vous retrouver.</h1>
+            <p class="intro">Connectez-vous à votre espace de travail.</p>
 
             @php
                 // Initialisation sécurisée du sac d'erreurs
                 $errors = $errors ?? new \Illuminate\Support\ViewErrorBag;
                 $mainError = $errors->first('login') ?: $errors->first('email') ?: $errors->first('password');
                 $isDeactivated = $mainError && (
-                    str_contains(mb_strtolower($mainError), 'désactivé') || 
+                    str_contains(mb_strtolower($mainError), 'désactivé') ||
                     str_contains(mb_strtolower($mainError), 'desactive')
                 );
                 $isThrottled = $mainError && (
-                    str_contains(mb_strtolower($mainError), 'tentative') || 
+                    str_contains(mb_strtolower($mainError), 'tentative') ||
                     str_contains(mb_strtolower($mainError), 'secondes')
                 );
                 $isAuthFailed = $mainError && ! $isDeactivated && ! $isThrottled && (
@@ -170,205 +789,297 @@
                     str_contains(mb_strtolower($mainError), 'mot de passe') ||
                     str_contains(mb_strtolower($mainError), 'correspondent pas')
                 );
+                $showInlineEmailError = $errors->has('email')
+                    && ! $isDeactivated
+                    && ! $isAuthFailed
+                    && ! $isThrottled
+                    && (! $errors->has('login') || $errors->first('email') !== $errors->first('login'));
+                $showInlinePasswordError = $errors->has('password')
+                    && ! $isDeactivated
+                    && ! $isAuthFailed
+                    && ! $isThrottled
+                    && (! $errors->has('login') || $errors->first('password') !== $errors->first('login'));
             @endphp
 
             {{-- Message d'état de session optionnel (hors expiration d'inactivité) --}}
             @if(session('status') && ! str_contains(mb_strtolower(session('status')), 'inactivit') && ! str_contains(mb_strtolower(session('status')), 'expir'))
-                <div class="mb-6 p-4 rounded-xl text-xs font-medium border border-secondary/30 bg-secondary/10 text-text-on-dark flex items-center gap-2.5 animate-up-1">
-                    <svg class="w-4 h-4 flex-shrink-0 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div class="login-alert login-alert--info" role="status">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/>
                     </svg>
-                    <span>{{ session('status') }}</span>
+                    <div>
+                        <p class="login-alert-text" style="margin-top: 0;">{{ session('status') }}</p>
+                    </div>
                 </div>
             @endif
 
-            {{-- Bannière d'erreur contextuelle haut de gamme --}}
+            {{-- Bannière d'erreur contextuelle --}}
             @if($mainError)
                 @if($isDeactivated)
-                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/60 via-red-900/20 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.25)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
-                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                            </svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Compte désactivé</h3>
-                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
+                    <div class="login-alert login-alert--error" role="alert">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.93 4.93l14.14 14.14"/>
+                        </svg>
+                        <div>
+                            <p class="login-alert-title">Compte désactivé</p>
+                            <p class="login-alert-text">
                                 Votre compte utilisateur a été désactivé par l'administration. Veuillez contacter votre responsable ou le support pour y accéder.
                             </p>
                         </div>
                     </div>
                 @elseif($isThrottled)
-                    <div class="mb-6 p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/50 via-amber-900/20 to-surface-dark shadow-[0_4px_24px_-4px_rgba(245,158,11,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
-                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mt-0.5 shadow-inner">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-amber-200 tracking-wide">Trop de tentatives</h3>
-                            <p class="text-xs text-amber-300/80 mt-1 leading-relaxed">
-                                {{ $mainError }}
-                            </p>
+                    <div class="login-alert login-alert--warning" role="alert">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 2"/>
+                        </svg>
+                        <div>
+                            <p class="login-alert-title">Trop de tentatives</p>
+                            <p class="login-alert-text">{{ $mainError }}</p>
                         </div>
                     </div>
                 @elseif($isAuthFailed)
-                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/45 via-red-900/15 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
-                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Identifiants incorrects</h3>
-                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
+                    <div class="login-alert login-alert--error" role="alert">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/>
+                        </svg>
+                        <div>
+                            <p class="login-alert-title">Identifiants incorrects</p>
+                            <p class="login-alert-text">
                                 L'adresse email ou le mot de passe est incorrect. Veuillez vérifier vos informations de connexion.
                             </p>
                         </div>
                     </div>
                 @else
-                    <div class="mb-6 p-4 rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-950/45 via-red-900/15 to-surface-dark shadow-[0_4px_24px_-4px_rgba(239,68,68,0.2)] backdrop-blur-md flex items-start gap-3.5 animate-up-1">
-                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 mt-0.5 shadow-inner">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-red-200 tracking-wide">Erreur de connexion</h3>
-                            <p class="text-xs text-red-300/80 mt-1 leading-relaxed">
-                                {{ $mainError }}
-                            </p>
+                    <div class="login-alert login-alert--error" role="alert">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/>
+                        </svg>
+                        <div>
+                            <p class="login-alert-title">Erreur de connexion</p>
+                            <p class="login-alert-text">{{ $mainError }}</p>
                         </div>
                     </div>
                 @endif
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            <form id="login-form" class="login-form" method="POST" action="{{ route('login') }}">
                 @csrf
 
-                {{-- Email --}}
-                <div class="animate-up-2 mb-4">
-                    <label class="block text-xs font-semibold tracking-widest mb-2"
-                           style="color: var(--color-text-on-dark); opacity: 0.6;">
-                        ADRESSE EMAIL
-                    </label>
+                <div class="field">
+                    <label for="email">Adresse email</label>
                     <input
                         type="email"
+                        id="email"
                         name="email"
                         value="{{ old('email') }}"
-                        placeholder="vous@villaboutanga.com"
+                        placeholder="prenom@exemple.test"
+                        autocomplete="username"
+                        autocorrect="off"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        enterkeyhint="next"
                         required
                         autofocus
-                        class="w-full px-4 py-3 rounded-lg text-sm text-text-on-dark placeholder-opacity-30 outline-none transition-all"
-                        style="
-                            background: color-mix(in srgb, var(--color-secondary) 7%, transparent);
-                            border: 1px solid {{ $errors->has('email') || ($errors->has('login') && !old('email')) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }};
-                            color: var(--color-text-on-dark);
-                            {{ $errors->has('email') || ($errors->has('login') && !old('email')) ? 'box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);' : '' }}
-                        "
-                        onfocus="this.style.borderColor='{{ $errors->has('email') ? 'rgba(239, 68, 68, 0.8)' : 'rgba(204,171,135,0.4)' }}'"
-                        onblur="this.style.borderColor='{{ $errors->has('email') ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }}'"
+                        @if($errors->has('email') || ($errors->has('login') && !old('email')) || $isAuthFailed) aria-invalid="true" @endif
+                        @if($showInlineEmailError) aria-describedby="email-error" @endif
                     >
-                    @error('email')
-                        @if(! $isDeactivated && ! $isAuthFailed && ! $isThrottled)
-                            <p class="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-medium">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>{{ $message }}</span>
-                            </p>
-                        @endif
-                    @enderror
+                    @if($showInlineEmailError)
+                        <p id="email-error" class="login-field-error">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/>
+                            </svg>
+                            <span>{{ $errors->first('email') }}</span>
+                        </p>
+                    @endif
                 </div>
 
-                {{-- Mot de passe --}}
-                <div class="animate-up-3 mb-6">
-                    <label class="block text-xs font-semibold tracking-widest mb-2"
-                           style="color: var(--color-text-on-dark); opacity: 0.6;">
-                        MOT DE PASSE
-                    </label>
-                    <div class="relative">
+                <div class="field">
+                    <label for="password">Mot de passe</label>
+                    <div class="password-wrap">
                         <input
-                            id="password"
                             type="password"
+                            id="password"
                             name="password"
-                            placeholder="••••••••"
+                            placeholder="Votre mot de passe"
+                            autocomplete="current-password"
+                            enterkeyhint="done"
                             required
-                            class="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all pr-12"
-                            style="
-                                background: color-mix(in srgb, var(--color-secondary) 7%, transparent);
-                                border: 1px solid {{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }};
-                                color: var(--color-text-on-dark);
-                                {{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);' : '' }}
-                            "
-                            onfocus="this.style.borderColor='{{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.8)' : 'rgba(204,171,135,0.4)' }}'"
-                            onblur="this.style.borderColor='{{ $errors->has('password') || ($errors->has('email') && $isAuthFailed) ? 'rgba(239, 68, 68, 0.6)' : 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' }}'"
+                            @if($errors->has('password') || ($errors->has('email') && $isAuthFailed)) aria-invalid="true" @endif
+                            @if($showInlinePasswordError) aria-describedby="password-error" @endif
                         >
-                        {{-- Toggle mot de passe visible --}}
-                        <button type="button"
-                                onclick="togglePassword()"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100"
-                                style="color: var(--color-text-on-dark); opacity: 0.4;">
-                            <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        <button
+                            type="button"
+                            id="toggle-password"
+                            class="password-toggle"
+                            aria-label="Afficher le mot de passe"
+                            aria-pressed="false"
+                            aria-describedby="toggle-password-warning"
+                        >
+                            <svg id="eye-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg id="eye-icon-closed" hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/>
+                                <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/>
+                                <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/>
+                                <path d="m2 2 20 20"/>
                             </svg>
                         </button>
                     </div>
-                    @error('password')
-                        @if(! $isDeactivated && ! $isAuthFailed && ! $isThrottled)
-                            <p class="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-medium">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>{{ $message }}</span>
-                            </p>
-                        @endif
-                    @enderror
+                    <span id="toggle-password-warning" class="visually-hidden">Attention : le mot de passe sera affiché en clair à l’écran.</span>
+                    @if($showInlinePasswordError)
+                        <p id="password-error" class="login-field-error">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/>
+                            </svg>
+                            <span>{{ $errors->first('password') }}</span>
+                        </p>
+                    @endif
                 </div>
 
-                {{-- Le survol conserve la teinte du bouton : l'accent du thème peut être trop clair pour son texte. --}}
-                <div class="animate-up-4">
-                    <button type="submit"
-                            class="w-full py-3 rounded-lg bg-secondary text-text-on-light text-sm font-semibold tracking-wide transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer hover:bg-[color-mix(in_srgb,var(--color-secondary)_75%,black)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary">
-                        Se connecter
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-
+                <button type="submit" id="login-submit" class="login-submit">
+                    <span id="login-submit-label">Se connecter</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+                    </svg>
+                </button>
             </form>
 
-            {{-- Footer --}}
-            <p class="mt-10 text-center text-xs"
-               style="color: var(--color-text-on-dark); opacity: 0.25;">
-                {{ $tenantName }} PMS · v1.0
+            <p class="login-support">
+                Besoin d’un accès ?
+                <button type="button" id="login-help-btn" command="show-modal" commandfor="login-help-dialog">Contacter l’administrateur</button>
             </p>
-        </div>
-    </div>
 
-</div>
+            <p class="login-foot">{{ $tenantName }} · Wetchah PMS</p>
+        </div>
+    </section>
+
+</main>
+
+{{-- Boîte de dialogue native pour l'aide à la connexion --}}
+<dialog id="login-help-dialog" class="login-dialog" closedby="any" aria-labelledby="login-help-title">
+    <header class="login-dialog-head">
+        <h2 id="login-help-title">Contacter l’administrateur</h2>
+        <button type="button" id="login-help-close-icon" class="dialog-close" command="close" commandfor="login-help-dialog" aria-label="Fermer la fenêtre">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M18 6 6 18"/>
+                <path d="m6 6 12 12"/>
+            </svg>
+        </button>
+    </header>
+    <div class="login-dialog-body">
+        <p>
+            Les comptes d’accès à <strong>{{ $tenantName }}</strong> sont créés et administrés en interne par la direction de l’établissement.
+        </p>
+        <p>
+            Si vous n’avez pas encore d’identifiants, si votre mot de passe provisoire a expiré ou si votre compte est verrouillé, veuillez solliciter votre responsable ou l’administrateur système.
+        </p>
+        @if($contactEmail || $contactPhone)
+            <ul class="login-contact-list">
+                @if($contactEmail)
+                    <li><span>Email</span><a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></li>
+                @endif
+                @if($contactPhone)
+                    <li><span>Téléphone</span><a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}">{{ $contactPhone }}</a></li>
+                @endif
+            </ul>
+        @endif
+    </div>
+    <footer class="login-dialog-foot">
+        <form method="dialog">
+            <button type="submit" class="dialog-btn-primary" autofocus>Fermer</button>
+        </form>
+    </footer>
+</dialog>
 
 <script>
-function togglePassword() {
-    const input = document.getElementById('password');
-    const icon  = document.getElementById('eye-icon');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.innerHTML = `
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-        `;
-    } else {
-        input.type = 'password';
-        icon.innerHTML = `
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-        `;
+(() => {
+    'use strict';
+
+    // Bascule afficher / masquer le mot de passe
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('toggle-password');
+    const eyeOpen = document.getElementById('eye-icon-open');
+    const eyeClosed = document.getElementById('eye-icon-closed');
+
+    if (passwordInput && toggleBtn && eyeOpen && eyeClosed) {
+        toggleBtn.addEventListener('click', () => {
+            const show = passwordInput.type === 'password';
+            passwordInput.type = show ? 'text' : 'password';
+            toggleBtn.setAttribute('aria-pressed', String(show));
+            toggleBtn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+            eyeOpen.hidden = show;
+            eyeClosed.hidden = !show;
+        });
     }
-}
+
+    // Prévenir les doubles soumissions tout en laissant la validation native agir
+    const loginForm = document.getElementById('login-form');
+    const submitBtn = document.getElementById('login-submit');
+    const submitLabel = document.getElementById('login-submit-label');
+
+    if (loginForm && submitBtn && submitLabel) {
+        loginForm.addEventListener('submit', () => {
+            if (!loginForm.checkValidity()) {
+                return;
+            }
+            submitBtn.disabled = true;
+            submitLabel.textContent = 'Connexion…';
+        });
+
+        window.addEventListener('pageshow', () => {
+            submitBtn.disabled = false;
+            submitLabel.textContent = 'Se connecter';
+        });
+    }
+
+    // Dialogue « Contacter l'administrateur » : secours si Invoker Commands ou closedby="any" ne sont pas encore natifs
+    const helpDialog = document.getElementById('login-help-dialog');
+    const helpBtn = document.getElementById('login-help-btn');
+    const helpCloseIcon = document.getElementById('login-help-close-icon');
+
+    if (helpDialog) {
+        if (!('commandForElement' in HTMLButtonElement.prototype)) {
+            helpBtn?.addEventListener('click', () => {
+                if (!helpDialog.open) helpDialog.showModal();
+            });
+            helpCloseIcon?.addEventListener('click', () => {
+                if (helpDialog.open) helpDialog.close();
+            });
+        }
+
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const isOutsideDialog = (event) => {
+                const r = helpDialog.getBoundingClientRect();
+                return (
+                    event.clientX < r.left ||
+                    event.clientX > r.right ||
+                    event.clientY < r.top ||
+                    event.clientY > r.bottom
+                );
+            };
+            let pressedOutside = false;
+            helpDialog.addEventListener('pointerdown', (event) => {
+                pressedOutside = isOutsideDialog(event);
+            });
+            helpDialog.addEventListener('pointerup', (event) => {
+                if (pressedOutside && isOutsideDialog(event)) {
+                    helpDialog.close();
+                }
+                pressedOutside = false;
+            });
+        }
+    }
+})();
 </script>
 
 @include('partials.pwa-install')
