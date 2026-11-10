@@ -3,6 +3,7 @@ import './reglages';
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import articlePicker from './article-picker';
+import bookingTimer from './booking-timer';
 
 window.Alpine = Alpine;
 
@@ -11,6 +12,9 @@ window.refreshLucideIcons = () => createIcons({ icons });
 document.addEventListener('alpine:init', () => {
     // Choix d'un article par sa saisie (x-article-picker).
     Alpine.data('articlePicker', articlePicker);
+
+    // Minuteur en direct des séjours en cours (fiche réservation).
+    Alpine.data('bookingTimer', bookingTimer);
 
     /*
      * Menu ⋮ des actions d'une ligne de tableau (x-table.actions).

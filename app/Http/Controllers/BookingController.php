@@ -22,7 +22,8 @@ class BookingController extends Controller
         private CheckOutService $checkOutService,
         private \App\Services\Notifier $notifier,
         private \App\Services\TaxationService $taxation,
-        private \App\Services\CancellationPolicyService $cancellationPolicyService
+        private \App\Services\CancellationPolicyService $cancellationPolicyService,
+        private \App\Services\RoomAvailabilityService $roomAvailability
     ) {}
 
     // ===== LISTE =====
@@ -68,8 +69,9 @@ class BookingController extends Controller
             ->whereNull('closed_at')
             ->first();
         $isCashRegisterOpen = $activeSession !== null;
+        $checkOutTime = $this->roomAvailability->checkOutTime();
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen', 'checkOutTime'));
     }
 
     // ===== PARCOURS DE LA LISTE =====
@@ -1451,6 +1453,22 @@ class BookingController extends Controller
         // dans le catalogue du folio.
         $partnerOrganization = $booking->partnerOrganization;
 
+        $defaultCheckInTime = $this->roomAvailability->checkInTime();
+        $defaultCheckOutTime = $this->roomAvailability->checkOutTime();
+        $effectiveCheckInAt = $booking->effectiveCheckInAt($defaultCheckInTime);
+        $scheduledCheckOutAt = $booking->scheduledCheckOutAt($defaultCheckOutTime);
+        $stayTimer = $booking->shouldDisplayStayTimer($defaultCheckOutTime)
+            ? [
+                'timeZone'        => config('app.timezone', 'Africa/Douala'),
+                'checkInInstant'  => $booking->actual_check_in?->toIso8601String(),
+                'checkInDate'     => $effectiveCheckInAt->toDateString(),
+                'checkInTime'     => $effectiveCheckInAt->format('H:i:s'),
+                'checkOutDate'    => $scheduledCheckOutAt->toDateString(),
+                'checkOutTime'    => $scheduledCheckOutAt->format('H:i:s'),
+                'initialOverstay' => $booking->hasOverstayedCheckout($defaultCheckOutTime),
+            ]
+            : null;
+
         return view('bookings.show', [
             'booking'              => $booking,
             'isCashRegisterOpen'   => $isCashRegisterOpen,
@@ -1458,6 +1476,9 @@ class BookingController extends Controller
             'folioCatalog'         => $this->folioCatalog($partnerOrganization),
             'partnerOrganization'  => $partnerOrganization,
             'navigation'           => $navigation,
+            'stayTimer'            => $stayTimer,
+            'effectiveCheckInAt'   => $effectiveCheckInAt,
+            'scheduledCheckOutAt'  => $scheduledCheckOutAt,
         ]);
     }
 

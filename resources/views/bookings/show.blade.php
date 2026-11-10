@@ -267,32 +267,55 @@
 </div>
 @endif
 
-    {{-- Minuteur Intelligent (Si Checked In) --}}
-    @if($booking->status->value === 'checked_in' && $booking->actual_check_in && !$booking->actual_check_out)
-    <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg p-5 text-white flex items-center justify-between" 
-         x-data="bookingTimer('{{ $booking->actual_check_in->toIso8601String() }}', '{{ $booking->check_out->copy()->setTime(12, 0, 0)->toIso8601String() }}')">
+    {{-- Minuteur Intelligent (Si Checked In — y compris données démo et dépassements) --}}
+    @php
+        $stayTimer ??= null;
+        $effectiveCheckInAt ??= $booking->effectiveCheckInAt();
+        $scheduledCheckOutAt ??= $booking->scheduledCheckOutAt();
+    @endphp
+    @if($stayTimer)
+    <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg border p-5 text-white flex flex-wrap items-center justify-between gap-4"
+         :class="isOverstay ? 'border-red-300/70' : 'border-blue-300/25'"
+         x-data="bookingTimer(@js($stayTimer))">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
                 <i data-lucide="clock" class="w-6 h-6 text-blue-100"></i>
             </div>
             <div>
-                <h3 class="font-heading font-semibold text-blue-50 text-sm mb-1">Minuteur de séjour en cours</h3>
-                <p class="text-xs text-blue-200">
-                    Client présent depuis : <strong x-text="timeSpent">Calcul...</strong>
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <h2 class="font-heading font-semibold text-blue-50 text-sm">Minuteur de séjour en cours</h2>
+                    <span x-show="isOverstay"
+                          @unless($stayTimer['initialOverstay']) style="display: none;" @endunless
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-950/70 text-red-100 border border-red-300/60">
+                        <i data-lucide="alert-triangle" class="w-3 h-3" aria-hidden="true"></i>
+                        Check-out dépassé
+                    </span>
+                </div>
+                <p class="text-xs text-blue-100">
+                    Client présent depuis : <strong aria-live="off" x-text="timeSpent">Calcul...</strong>
                 </p>
+                @unless($booking->actual_check_in)
+                    <p class="text-[11px] text-blue-200/80 mt-0.5">
+                        Basé sur l'arrivée prévue le {{ $effectiveCheckInAt->format('d/m/Y') }} à {{ $effectiveCheckInAt->format('H\hi') }}
+                    </p>
+                @endunless
             </div>
         </div>
-        <div class="text-right">
-            <p class="text-xs text-blue-200 uppercase tracking-wider font-semibold mb-1" x-text="isOverstay ? 'Temps de dépassement' : 'Temps restant estimé'"></p>
-            <div class="flex items-baseline justify-end gap-2">
-                <span x-show="isOverstay" class="flex h-3 w-3 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                <p class="text-2xl font-bold font-mono" :class="isOverstay ? 'text-red-300' : 'text-white'" x-text="timeLeft"></p>
+        <div class="text-right ml-auto">
+            <p class="text-xs text-blue-100 uppercase tracking-wider font-semibold mb-1" x-text="isOverstay ? 'Temps de dépassement' : 'Temps restant estimé'"></p>
+            <div class="flex items-center justify-end gap-2">
+                <span x-show="isOverstay"
+                      @unless($stayTimer['initialOverstay']) style="display: none;" @endunless
+                      aria-hidden="true"
+                      class="inline-flex h-2.5 w-2.5 rounded-full bg-red-400 ring-4 ring-red-400/30"></span>
+                <p aria-live="off" class="text-2xl font-bold font-mono" :class="isOverstay ? 'text-red-200' : 'text-white'" x-text="timeLeft"></p>
             </div>
-            <p class="text-[10px] text-blue-300 mt-1" x-show="isOverstay">Départ initialement prévu à 12h00</p>
-            <p class="text-[10px] text-blue-300 mt-1" x-show="!isOverstay">Fin prévue le {{ $booking->check_out->format('d/m/Y') }} à 12h00</p>
+            <p class="text-[11px] text-blue-200 mt-1" x-show="isOverstay" @unless($stayTimer['initialOverstay']) style="display: none;" @endunless>
+                Départ initialement prévu le {{ $scheduledCheckOutAt->format('d/m/Y') }} à {{ $scheduledCheckOutAt->format('H\hi') }}
+            </p>
+            <p class="text-[11px] text-blue-200 mt-1" x-show="!isOverstay" @if($stayTimer['initialOverstay']) style="display: none;" @endif>
+                Fin prévue le {{ $scheduledCheckOutAt->format('d/m/Y') }} à {{ $scheduledCheckOutAt->format('H\hi') }}
+            </p>
         </div>
     </div>
     @endif
@@ -1397,58 +1420,6 @@
             format(amount) {
                 return new Intl.NumberFormat('fr-FR').format(amount || 0);
             },
-        }));
-
-        Alpine.data('bookingTimer', (checkInStr, checkOutStr) => ({
-            timeSpent: 'Calcul...',
-            timeLeft: 'Calcul...',
-            isOverstay: false,
-            interval: null,
-
-            init() {
-                this.updateTimer();
-                this.interval = setInterval(() => this.updateTimer(), 1000);
-            },
-
-            destroy() {
-                if (this.interval) clearInterval(this.interval);
-            },
-
-            updateTimer() {
-                const now = new Date();
-                const checkInDate = new Date(checkInStr);
-                const checkOutDate = new Date(checkOutStr);
-
-                // --- 1. Calcul du temps passé ---
-                let diffSpent = now - checkInDate;
-                if (diffSpent < 0) diffSpent = 0; // Au cas où
-                this.timeSpent = this.formatDuration(diffSpent);
-
-                // --- 2. Calcul du temps restant ou dépassé ---
-                let diffLeft = checkOutDate - now;
-                if (diffLeft < 0) {
-                    this.isOverstay = true;
-                    this.timeLeft = "+ " + this.formatDuration(Math.abs(diffLeft));
-                } else {
-                    this.isOverstay = false;
-                    this.timeLeft = this.formatDuration(diffLeft);
-                }
-            },
-
-            formatDuration(ms) {
-                const seconds = Math.floor((ms / 1000) % 60);
-                const minutes = Math.floor((ms / 1000 / 60) % 60);
-                const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-                const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-                let parts = [];
-                if (days > 0) parts.push(`${days}j`);
-                if (hours > 0 || days > 0) parts.push(`${hours}h`);
-                parts.push(`${minutes}m`);
-                parts.push(`${seconds}s`);
-
-                return parts.join(' ');
-            }
         }));
 
         // ===== OTP Check-in (validation automatique) =====
