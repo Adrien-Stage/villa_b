@@ -176,3 +176,53 @@ test('la page de connexion gère l’authentification, les identifiants incorrec
     $ok->assertRedirect(route('dashboard'));
     $this->assertAuthenticatedAs($actif);
 });
+
+test('la page de connexion standard n’active pas la veille alors que ?expired=inactivity et /veille l’affichent', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    $tenant = Tenant::current();
+
+    $normalHtml = $this->get(route('login'))->assertOk()->getContent();
+    expect($normalHtml)
+        ->toContain('data-standby="false"')
+        ->not->toContain('class="login-page is-standby"');
+
+    foreach ([route('login', ['expired' => 'inactivity']), route('veille')] as $standbyUrl) {
+        $standbyHtml = $this->get($standbyUrl)->assertOk()->getContent();
+
+        expect($standbyHtml)
+            ->toContain('class="login-page is-standby"')
+            ->toContain('data-standby="true"')
+            ->toContain('id="veille-panel"')
+            ->toContain('id="veille-resume-btn"')
+            ->toContain('Cliquez sur la porte pour reprendre le travail')
+            ->toContain('Veille · 20 min d’inactivité')
+            ->toContain('id="login-content-panel" class="login-content" aria-labelledby="login-title" inert')
+            ->toContain('loginPanelSlideIn')
+            ->toContain($tenant->name);
+    }
+});
+
+test('une tentative de connexion échouée depuis l’écran de veille réaffiche directement le formulaire avec l’erreur', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    RoleCatalog::sync();
+
+    User::factory()->create([
+        'role' => 'reception',
+        'email' => 'agent@hotel.test',
+        'password' => Hash::make('MotDePasseValide123!'),
+        'is_active' => true,
+    ]);
+
+    $response = $this->from(route('login', ['expired' => 'inactivity']))
+        ->followingRedirects()
+        ->post(route('login'), [
+            'email' => 'agent@hotel.test',
+            'password' => 'MauvaisMotDePasse',
+        ]);
+
+    $response->assertOk()
+        ->assertSee('data-standby="false"', false)
+        ->assertSee('Identifiants incorrects', false)
+        ->assertDontSee('class="login-page is-standby"', false);
+    $this->assertGuest();
+});

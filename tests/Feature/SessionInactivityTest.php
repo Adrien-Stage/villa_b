@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    config(['session.check_inactivity_in_tests' => true]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Tests de déconnexion automatique après inactivité (20 minutes)
@@ -74,6 +78,7 @@ test('une inactivité supérieure à 20 minutes déconnecte l\'utilisateur sur u
 
     $reponse->assertRedirect(route('login'));
     $reponse->assertSessionHas('status', 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.');
+    $reponse->assertSessionHas('veille', true);
     $reponse->assertSessionHasErrors(['email', 'login']);
     expect(Auth::check())->toBeFalse();
 });
@@ -91,6 +96,51 @@ test('une inactivité supérieure à 20 minutes retourne 401 sur un appel JSON o
     $reponse->assertStatus(401);
     $reponse->assertJsonFragment([
         'message' => 'Votre session a expiré après 20 minutes d\'inactivité.',
+        'redirect' => route('login', ['expired' => 'inactivity']),
     ]);
     expect(Auth::check())->toBeFalse();
+});
+
+test('la déconnexion côté client pour inactivité ferme la session, met la caisse en pause et renvoie vers la veille', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    RoleCatalog::sync();
+
+    $user = User::factory()->create(['role' => 'reception', 'is_active' => true]);
+    $user->roles()->sync(Role::where('slug', 'reception')->pluck('id'));
+
+    $caisse = \App\Models\CashRegisterSession::create([
+        'user_id' => $user->id,
+        'module' => 'reception',
+        'status' => 'open',
+        'opening_amount' => 10000,
+        'opened_at' => now(),
+    ]);
+
+    $response = $this->actingAs($user)->postJson(route('logout'), [
+        'force' => '1',
+        'inactivity' => '1',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'ok' => true,
+            'redirect' => route('login', ['expired' => 'inactivity'], false),
+        ]);
+
+    $this->assertGuest();
+    expect($caisse->fresh()->status)->toBe('paused');
+});
+
+test('le script session-timeout redirige vers la page de veille après fermeture de session', function () {
+    $this->seed(\Database\Seeders\TenantSeeder::class);
+    RoleCatalog::sync();
+
+    $user = User::factory()->create(['role' => 'reception', 'is_active' => true]);
+    $user->roles()->sync(Role::where('slug', 'reception')->pluck('id'));
+
+    $html = $this->actingAs($user)->get(route('dashboard'))->assertOk()->getContent();
+
+    expect($html)
+        ->toContain('?expired=inactivity')
+        ->toContain('triggerStandby');
 });

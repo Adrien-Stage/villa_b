@@ -79,7 +79,7 @@ window.showAccessDeniedPopup = function(message = null, title = null, subtitle =
         resolvedTitle = title || 'Session expirée';
         resolvedSubtitle = subtitle || 'Délai d\'inactivité dépassé';
         resolvedMessage = message || 'Votre session a expiré après 20 minutes d\'inactivité. Veuillez vous reconnecter.';
-        resolvedUrl = '{{ route("login") }}';
+        resolvedUrl = '{{ route("login", ["expired" => "inactivity"], false) }}';
         resolvedLabel = 'Se connecter';
     }
 
