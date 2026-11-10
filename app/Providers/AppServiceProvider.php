@@ -172,8 +172,11 @@ class AppServiceProvider extends ServiceProvider
                 && Schema::hasColumn('discussion_messages', 'conversation_id')) {
 
                 $userId = auth()->id();
+                $hasClearedCutoff = Schema::hasColumn('discussion_conversation_user', 'cleared_after_message_id');
+                $hasDeletedForAll = Schema::hasColumn('discussion_messages', 'deleted_for_all_at');
+                $hasMessageDeletions = Schema::hasTable('discussion_message_deletions');
 
-                $totalUnreadDiscussions = DB::table('discussion_conversation_user as dcu')
+                $unreadQuery = DB::table('discussion_conversation_user as dcu')
                     ->join('discussion_messages as dm', 'dm.conversation_id', '=', 'dcu.discussion_conversation_id')
                     ->where('dcu.user_id', $userId)
                     ->whereNull('dcu.archived_at')
@@ -182,8 +185,29 @@ class AppServiceProvider extends ServiceProvider
                     ->where(function ($query) {
                         $query->whereNull('dcu.last_read_at')
                             ->orWhereColumn('dm.created_at', '>', 'dcu.last_read_at');
-                    })
-                    ->count();
+                    });
+
+                if ($hasClearedCutoff) {
+                    $unreadQuery->where(function ($query) {
+                        $query->whereNull('dcu.cleared_after_message_id')
+                            ->orWhereColumn('dm.id', '>', 'dcu.cleared_after_message_id');
+                    });
+                }
+
+                if ($hasDeletedForAll) {
+                    $unreadQuery->whereNull('dm.deleted_for_all_at');
+                }
+
+                if ($hasMessageDeletions) {
+                    $unreadQuery->whereNotExists(function ($sub) use ($userId) {
+                        $sub->selectRaw('1')
+                            ->from('discussion_message_deletions as dmd')
+                            ->whereColumn('dmd.discussion_message_id', 'dm.id')
+                            ->where('dmd.user_id', $userId);
+                    });
+                }
+
+                $totalUnreadDiscussions = $unreadQuery->count();
 
                 $hasUnreadDiscussions = $totalUnreadDiscussions > 0;
             }

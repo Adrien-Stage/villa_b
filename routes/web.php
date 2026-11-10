@@ -198,6 +198,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/conversations/{conversation}/poll', [DiscussionController::class, 'poll'])->name('conversations.poll');
         Route::post('/conversations/{conversation}/archive', [DiscussionController::class, 'archiveConversation'])->name('conversations.archive');
         Route::delete('/conversations/{conversation}', [DiscussionController::class, 'destroyConversation'])->name('conversations.destroy');
+        Route::delete('/messages/{message}', [DiscussionController::class, 'destroyMessage'])->name('messages.destroy');
         Route::post('/', [DiscussionController::class, 'store'])->name('store');
     });
 

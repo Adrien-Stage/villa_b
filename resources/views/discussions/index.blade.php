@@ -67,9 +67,8 @@
                                                 Archiver
                                             </button>
                                             <button type="button"
-                                                    data-action="open-delete-modal"
+                                                    data-action="delete"
                                                     data-conversation-id="{{ $conversation->id }}"
-                                                    data-conversation-title="{{ $title }}"
                                                     data-action-url="{{ route('discussions.conversations.destroy', $conversation) }}"
                                                     class="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">
                                                 Supprimer
@@ -141,11 +140,25 @@
 
                     <div id="chat-messages"
                          data-current-user-id="{{ auth()->id() }}"
+                         data-is-group="{{ $selectedConversation->is_group ? '1' : '0' }}"
                          data-poll-url="{{ route('discussions.conversations.poll', $selectedConversation) }}"
                          class="flex-1 min-h-0 overflow-y-auto p-5 space-y-3 bg-gradient-to-b from-white to-accent/10">
                         @forelse($messages as $message)
                             @php $mine = $message->user_id === auth()->id(); @endphp
-                            <div class="flex {{ $mine ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
+                            <div class="flex items-end gap-1.5 {{ $mine ? 'justify-end' : 'justify-start' }} group" data-message-id="{{ $message->id }}">
+                                @if($mine)
+                                    <button type="button"
+                                            data-action="open-delete-message-modal"
+                                            data-message-id="{{ $message->id }}"
+                                            data-message-body="{{ $message->body }}"
+                                            data-can-delete-for-all="1"
+                                            data-delete-url="{{ route('discussions.messages.destroy', $message) }}"
+                                            title="Supprimer ce message"
+                                            aria-label="Supprimer ce message"
+                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center justify-center text-primary/40 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                @endif
                                 <div class="max-w-[72%] rounded-2xl px-4 py-3 shadow-sm {{ $mine ? 'bg-primary text-white' : 'bg-white border border-secondary/20 text-primary' }}">
                                     @if(!$mine)
                                         <p class="text-[11px] font-semibold text-primary/70 mb-1">{{ $message->user->name }}</p>
@@ -155,9 +168,22 @@
                                         {{ $message->created_at->locale('fr')->isoFormat('HH:mm') }}
                                     </p>
                                 </div>
+                                @if(!$mine)
+                                    <button type="button"
+                                            data-action="open-delete-message-modal"
+                                            data-message-id="{{ $message->id }}"
+                                            data-message-body="{{ $message->body }}"
+                                            data-can-delete-for-all="0"
+                                            data-delete-url="{{ route('discussions.messages.destroy', $message) }}"
+                                            title="Supprimer ce message"
+                                            aria-label="Supprimer ce message"
+                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center justify-center text-primary/40 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                @endif
                             </div>
                         @empty
-                            <div class="text-center text-sm text-primary/35 py-12">Aucun message dans cette conversation.</div>
+                            <div data-empty-messages class="text-center text-sm text-primary/35 py-12">Aucun message dans cette conversation.</div>
                         @endforelse
                     </div>
 
@@ -238,16 +264,17 @@
             </x-slot:footer>
         </x-modal>
 
-        <x-modal id="delete-discussion-modal" title="Supprimer la conversation" title-id="delete-discussion-title" formAction="#" closeAction="document.querySelector('[data-close-delete-modal]').click()">
-            <p class="text-sm text-primary/70 mb-4">
-                Choisis le mode de suppression.
+        <x-modal id="delete-message-modal" title="Supprimer le message" closeAction="closeDeleteMessageModal()">
+            <p class="text-sm text-primary/70 mb-2">
+                Choisis le mode de suppression de ce message.
             </p>
+            <div id="delete-message-preview" class="hidden text-xs text-primary/60 bg-accent/15 border border-secondary/20 rounded-lg px-3 py-2 mb-4 break-words line-clamp-3"></div>
             <div class="grid grid-cols-1 gap-2">
-                <button type="button" id="delete-for-me-btn" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary hover:bg-accent/20">
-                    Juste pour moi
+                <button type="button" id="delete-message-for-me-btn" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm font-medium text-primary hover:bg-accent/20 transition-colors">
+                    Uniquement pour moi
                 </button>
-                <button type="button" id="delete-for-all-btn" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">
-                    Supprimer pour tous
+                <button type="button" id="delete-message-for-all-btn" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
+                    Pour moi et mon interlocuteur
                 </button>
             </div>
         </x-modal>
@@ -257,9 +284,12 @@
 <script>
 const discussionState = {
     csrf: '{{ csrf_token() }}',
+    indexUrl: '{{ route('discussions.index') }}',
     selectedConversationId: Number(document.getElementById('conversation-list')?.dataset.selectedConversationId || 0),
-    deleteUrl: '',
-    deleteConversationId: null,
+    deleteMessageUrl: '',
+    deleteMessageId: null,
+    deletingConversationIds: new Set(),
+    deletingMessagePending: false,
 };
 
 window.openNewDiscussionModal = function() {
@@ -276,28 +306,50 @@ window.closeNewDiscussionModal = function() {
     document.body.style.overflow = '';
 };
 
-const deleteModal = document.getElementById('delete-discussion-modal');
-const deleteTitle = document.getElementById('delete-discussion-title');
+window.openDeleteMessageModal = function(messageId, messageBody, url, canDeleteForAll) {
+    discussionState.deleteMessageId = Number(messageId || 0);
+    discussionState.deleteMessageUrl = url || '';
 
-function openDeleteDiscussionModal(conversationId, title, url) {
-    discussionState.deleteConversationId = Number(conversationId);
-    discussionState.deleteUrl = url;
-    if (deleteTitle) {
-        deleteTitle.textContent = title || 'Conversation';
+    const previewEl = document.getElementById('delete-message-preview');
+    if (previewEl) {
+        const trimmed = (messageBody || '').trim();
+        if (trimmed) {
+            previewEl.textContent = trimmed;
+            previewEl.classList.remove('hidden');
+        } else {
+            previewEl.textContent = '';
+            previewEl.classList.add('hidden');
+        }
     }
-    deleteModal?.classList.remove('hidden');
+
+    const forAllBtn = document.getElementById('delete-message-for-all-btn');
+    if (forAllBtn) {
+        const isGroup = document.getElementById('chat-messages')?.dataset.isGroup === '1';
+        forAllBtn.textContent = isGroup ? 'Pour moi et les participants' : 'Pour moi et mon interlocuteur';
+        forAllBtn.classList.toggle('hidden', !canDeleteForAll);
+    }
+
+    const modal = document.getElementById('delete-message-modal');
+    modal?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-}
+};
 
-function closeDeleteDiscussionModal() {
-    discussionState.deleteConversationId = null;
-    discussionState.deleteUrl = '';
-    deleteModal?.classList.add('hidden');
+window.closeDeleteMessageModal = function() {
+    discussionState.deleteMessageId = null;
+    discussionState.deleteMessageUrl = '';
+    discussionState.deletingMessagePending = false;
+    const modal = document.getElementById('delete-message-modal');
+    modal?.classList.add('hidden');
     document.body.style.overflow = '';
-}
+};
 
-document.querySelectorAll('[data-close-delete-modal]').forEach((element) => {
-    element.addEventListener('click', closeDeleteDiscussionModal);
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const msgModal = document.getElementById('delete-message-modal');
+        if (msgModal && !msgModal.classList.contains('hidden')) {
+            closeDeleteMessageModal();
+        }
+    }
 });
 
 function escapeHtml(value) {
@@ -359,7 +411,7 @@ function renderConversationItem(conversation, isActive) {
                         <span class="text-[11px] text-primary/40 flex-shrink-0">${escapeHtml(conversation.last_time || '')}</span>
                         <div data-menu-panel class="hidden absolute right-0 top-6 z-20 w-44 rounded-lg border border-secondary/20 bg-white shadow-lg py-1">
                             <button type="button" data-action="archive" data-conversation-id="${conversation.id}" data-action-url="${escapeHtml(conversation.archive_url || '')}" class="w-full text-left px-3 py-2 text-xs text-primary hover:bg-accent/20">Archiver</button>
-                            <button type="button" data-action="open-delete-modal" data-conversation-id="${conversation.id}" data-conversation-title="${escapeHtml(conversation.title || 'Conversation')}" data-action-url="${escapeHtml(conversation.delete_url || '')}" class="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">Supprimer</button>
+                            <button type="button" data-action="delete" data-conversation-id="${conversation.id}" data-action-url="${escapeHtml(conversation.delete_url || '')}" class="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">Supprimer</button>
                         </div>
                     </div>
                 </div>
@@ -431,6 +483,15 @@ function showSelectConversationState() {
     if (!chatWindow) return;
 
     discussionState.selectedConversationId = 0;
+    const listEl = document.getElementById('conversation-list');
+    if (listEl) {
+        listEl.dataset.selectedConversationId = '';
+    }
+
+    if (window.location.search.includes('conversation=')) {
+        window.history.replaceState({}, '', discussionState.indexUrl);
+    }
+
     chatWindow.innerHTML = `
         <div class="h-full flex items-center justify-center text-center px-6">
             <div>
@@ -448,6 +509,24 @@ function showSelectConversationState() {
 
     if (typeof window.refreshLucideIcons === 'function') {
         window.refreshLucideIcons();
+    }
+}
+
+function removeMessageElement(messageId) {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+
+    const el = container.querySelector(`[data-message-id="${messageId}"]`);
+    if (el) {
+        el.remove();
+    }
+
+    if (!container.querySelector('[data-message-id]') && !container.querySelector('[data-empty-messages]')) {
+        const empty = document.createElement('div');
+        empty.setAttribute('data-empty-messages', '');
+        empty.className = 'text-center text-sm text-primary/35 py-12';
+        empty.textContent = 'Aucun message dans cette conversation.';
+        container.appendChild(empty);
     }
 }
 
@@ -472,6 +551,7 @@ document.addEventListener('click', async function(event) {
     const archiveButton = event.target.closest('[data-action="archive"]');
     if (archiveButton) {
         event.preventDefault();
+        document.querySelectorAll('[data-menu-panel]').forEach((panel) => panel.classList.add('hidden'));
         const url = archiveButton.getAttribute('data-action-url');
         if (!url) return;
 
@@ -485,6 +565,10 @@ document.addEventListener('click', async function(event) {
                 },
             });
             if (!response.ok) return;
+            const payload = await response.json();
+            if (payload?.unread_counts !== undefined) {
+                updateUnreadUI(payload.unread_counts || {}, payload.total_unread || 0);
+            }
             await syncConversationList();
         } catch (error) {
             console.error('Archive conversation failed', error);
@@ -492,21 +576,68 @@ document.addEventListener('click', async function(event) {
         return;
     }
 
-    const openDeleteButton = event.target.closest('[data-action="open-delete-modal"]');
-    if (openDeleteButton) {
+    const deleteConversationButton = event.target.closest('[data-action="delete"]');
+    if (deleteConversationButton) {
         event.preventDefault();
-        openDeleteDiscussionModal(
-            openDeleteButton.getAttribute('data-conversation-id'),
-            openDeleteButton.getAttribute('data-conversation-title'),
-            openDeleteButton.getAttribute('data-action-url'),
+        document.querySelectorAll('[data-menu-panel]').forEach((panel) => panel.classList.add('hidden'));
+
+        const conversationId = Number(deleteConversationButton.getAttribute('data-conversation-id') || 0);
+        const url = deleteConversationButton.getAttribute('data-action-url');
+        if (!url || discussionState.deletingConversationIds.has(conversationId)) return;
+
+        discussionState.deletingConversationIds.add(conversationId);
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': discussionState.csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+
+            if (Number(payload?.removed_conversation_id || 0) === Number(discussionState.selectedConversationId || 0)) {
+                showSelectConversationState();
+            }
+
+            if (payload?.unread_counts !== undefined) {
+                updateUnreadUI(payload.unread_counts || {}, payload.total_unread || 0);
+            }
+
+            await syncConversationList();
+        } catch (error) {
+            console.error('Delete conversation failed', error);
+        } finally {
+            discussionState.deletingConversationIds.delete(conversationId);
+        }
+        return;
+    }
+
+    const openDeleteMsgButton = event.target.closest('[data-action="open-delete-message-modal"]');
+    if (openDeleteMsgButton) {
+        event.preventDefault();
+        openDeleteMessageModal(
+            openDeleteMsgButton.getAttribute('data-message-id'),
+            openDeleteMsgButton.getAttribute('data-message-body'),
+            openDeleteMsgButton.getAttribute('data-delete-url'),
+            openDeleteMsgButton.getAttribute('data-can-delete-for-all') === '1',
         );
     }
 });
 
-document.getElementById('delete-for-me-btn')?.addEventListener('click', async function() {
-    if (!discussionState.deleteUrl) return;
+async function performMessageDeletion(mode) {
+    if (!discussionState.deleteMessageUrl || discussionState.deletingMessagePending) return;
+    discussionState.deletingMessagePending = true;
+
+    const forMeBtn = document.getElementById('delete-message-for-me-btn');
+    const forAllBtn = document.getElementById('delete-message-for-all-btn');
+    forMeBtn?.setAttribute('disabled', 'disabled');
+    forAllBtn?.setAttribute('disabled', 'disabled');
+
     try {
-        const response = await fetch(discussionState.deleteUrl, {
+        const response = await fetch(discussionState.deleteMessageUrl, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': discussionState.csrf,
@@ -514,46 +645,33 @@ document.getElementById('delete-for-me-btn')?.addEventListener('click', async fu
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ mode: 'me' }),
+            body: JSON.stringify({ mode }),
         });
         if (!response.ok) return;
         const payload = await response.json();
-        closeDeleteDiscussionModal();
-        await syncConversationList();
+        const removedId = Number(payload?.removed_message_id || discussionState.deleteMessageId || 0);
 
-        if (Number(payload?.removed_conversation_id || 0) === Number(discussionState.selectedConversationId || 0)) {
-            showSelectConversationState();
+        closeDeleteMessageModal();
+
+        if (removedId > 0) {
+            removeMessageElement(removedId);
         }
-    } catch (error) {
-        console.error('Delete for me failed', error);
-    }
-});
 
-document.getElementById('delete-for-all-btn')?.addEventListener('click', async function() {
-    if (!discussionState.deleteUrl) return;
-    try {
-        const response = await fetch(discussionState.deleteUrl, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': discussionState.csrf,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ mode: 'all' }),
-        });
-        if (!response.ok) return;
-        const payload = await response.json();
-        closeDeleteDiscussionModal();
-        await syncConversationList();
-
-        if (Number(payload?.removed_conversation_id || 0) === Number(discussionState.selectedConversationId || 0)) {
-            showSelectConversationState();
+        if (payload?.unread_counts !== undefined) {
+            updateUnreadUI(payload.unread_counts || {}, payload.total_unread || 0);
         }
+        await syncConversationList();
     } catch (error) {
-        console.error('Delete for all failed', error);
+        console.error('Delete message failed', error);
+    } finally {
+        discussionState.deletingMessagePending = false;
+        forMeBtn?.removeAttribute('disabled');
+        forAllBtn?.removeAttribute('disabled');
     }
-});
+}
+
+document.getElementById('delete-message-for-me-btn')?.addEventListener('click', () => performMessageDeletion('me'));
+document.getElementById('delete-message-for-all-btn')?.addEventListener('click', () => performMessageDeletion('all'));
 
 const chatContainer = document.getElementById('chat-messages');
 if (chatContainer) {
@@ -561,25 +679,49 @@ if (chatContainer) {
 }
 
 function appendMessage(message, currentUserId) {
-    if (!chatContainer) return;
-    if (chatContainer.querySelector(`[data-message-id="${message.id}"]`)) {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    if (container.querySelector(`[data-message-id="${message.id}"]`)) {
         return;
     }
 
+    container.querySelector('[data-empty-messages]')?.remove();
+
     const mine = Number(message.user_id) === Number(currentUserId);
+    const canDeleteForAll = mine || Boolean(message.can_delete_for_all);
     const wrapper = document.createElement('div');
-    wrapper.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+    wrapper.className = `flex items-end gap-1.5 ${mine ? 'justify-end' : 'justify-start'} group`;
     wrapper.setAttribute('data-message-id', message.id);
 
+    const deleteButtonHtml = `
+        <button type="button"
+                data-action="open-delete-message-modal"
+                data-message-id="${message.id}"
+                data-message-body="${escapeHtml(message.body || '')}"
+                data-can-delete-for-all="${canDeleteForAll ? '1' : '0'}"
+                data-delete-url="${escapeHtml(message.delete_url || '')}"
+                title="Supprimer ce message"
+                aria-label="Supprimer ce message"
+                class="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center justify-center text-primary/40 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+    `;
+
     wrapper.innerHTML = `
+        ${mine ? deleteButtonHtml : ''}
         <div class="max-w-[72%] rounded-2xl px-4 py-3 shadow-sm ${mine ? 'bg-primary text-white' : 'bg-white border border-secondary/20 text-primary'}">
             ${mine ? '' : `<p class="text-[11px] font-semibold text-primary/70 mb-1">${escapeHtml(message.user_name)}</p>`}
             <p class="text-sm whitespace-pre-wrap leading-relaxed">${escapeHtml(message.body)}</p>
             <p class="text-[10px] mt-1.5 ${mine ? 'text-white/70' : 'text-primary/40'} text-right">${escapeHtml(message.time || '')}</p>
         </div>
+        ${mine ? '' : deleteButtonHtml}
     `;
 
-    chatContainer.appendChild(wrapper);
+    container.appendChild(wrapper);
+
+    if (typeof window.refreshLucideIcons === 'function') {
+        window.refreshLucideIcons();
+    }
 }
 
 if (chatContainer) {
@@ -609,9 +751,20 @@ if (chatContainer) {
             });
             if (!response.ok) return;
             const payload = await response.json();
-            if (!payload.ok || !Array.isArray(payload.messages)) return;
+            if (!payload.ok) return;
 
-            if (payload.messages.length) {
+            if (payload.conversation_hidden) {
+                showSelectConversationState();
+                updateUnreadUI(payload.unread_counts || {}, payload.total_unread || 0);
+                await syncConversationList();
+                return;
+            }
+
+            if (Array.isArray(payload.removed_message_ids) && payload.removed_message_ids.length) {
+                payload.removed_message_ids.forEach((id) => removeMessageElement(Number(id)));
+            }
+
+            if (Array.isArray(payload.messages) && payload.messages.length) {
                 payload.messages.forEach((message) => {
                     appendMessage(message, currentUserId);
                     lastMessageId = Math.max(lastMessageId, Number(message.id));

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DiscussionConversation;
 use App\Models\DiscussionMessage;
+use App\Models\DiscussionMessageDeletion;
 use App\Models\User;
 use App\Notifications\DiscussionMessageReceived;
 use App\Services\Notifier;
@@ -33,6 +34,51 @@ class DiscussionController extends Controller
             && Schema::hasColumn('discussion_conversation_user', 'last_read_at')
             && Schema::hasColumn('discussion_conversation_user', 'archived_at')
             && Schema::hasColumn('discussion_conversation_user', 'deleted_at');
+    }
+
+    private function hasClearedCutoffSupport(): bool
+    {
+        return Schema::hasColumn('discussion_conversation_user', 'cleared_after_message_id');
+    }
+
+    private function hasMessageDeletionSupport(): bool
+    {
+        return Schema::hasTable('discussion_message_deletions')
+            && Schema::hasColumn('discussion_messages', 'deleted_for_all_at');
+    }
+
+    private function clearedCutoffsMap(int $userId, array $conversationIds): Collection
+    {
+        if (empty($conversationIds) || !$this->hasClearedCutoffSupport()) {
+            return collect();
+        }
+
+        return DB::table('discussion_conversation_user')
+            ->where('user_id', $userId)
+            ->whereIn('discussion_conversation_id', $conversationIds)
+            ->pluck('cleared_after_message_id', 'discussion_conversation_id');
+    }
+
+    private function visibleMessagesQuery(int $conversationId, int $userId, ?int $clearedAfterMessageId = null)
+    {
+        $query = DiscussionMessage::query()
+            ->where('conversation_id', $conversationId);
+
+        if ($clearedAfterMessageId !== null && $clearedAfterMessageId > 0) {
+            $query->where('id', '>', $clearedAfterMessageId);
+        }
+
+        if ($this->hasMessageDeletionSupport()) {
+            $query->whereNull('deleted_for_all_at')
+                ->whereNotExists(function ($sub) use ($userId) {
+                    $sub->selectRaw('1')
+                        ->from('discussion_message_deletions')
+                        ->whereColumn('discussion_message_deletions.discussion_message_id', 'discussion_messages.id')
+                        ->where('discussion_message_deletions.user_id', $userId);
+                });
+        }
+
+        return $query;
     }
 
     public function index(Request $request): View
@@ -67,15 +113,20 @@ class DiscussionController extends Controller
 
         $messages = collect();
         if ($selectedConversation) {
-            $messages = DiscussionMessage::query()
+            $cutoff = (int) ($this->clearedCutoffsMap($user->id, [$selectedConversation->id])
+                ->get($selectedConversation->id) ?? 0);
+
+            $messages = $this->visibleMessagesQuery(
+                $selectedConversation->id,
+                $user->id,
+                $cutoff > 0 ? $cutoff : null
+            )
                 ->with('user')
-                ->where('conversation_id', $selectedConversation->id)
                 ->orderBy('id')
                 ->get();
         }
 
         $availableUsers = User::query()
-            
             ->where('id', '!=', $user->id)
             ->where('is_active', true)
             ->orderBy('name')
@@ -262,8 +313,9 @@ class DiscussionController extends Controller
             'body' => $body,
         ]);
 
-        // Si un participant avait supprime la conversation "juste pour moi",
-        // un nouveau message la fait reapparaitre chez lui automatiquement.
+        // Si un participant avait supprime la conversation de son espace,
+        // un nouveau message la fait reapparaitre chez lui automatiquement
+        // (tout en conservant son historique anterieur efface via cleared_after_message_id).
         DB::table('discussion_conversation_user')
             ->where('discussion_conversation_id', $conversation->id)
             ->where('user_id', '!=', $userId)
@@ -284,7 +336,7 @@ class DiscussionController extends Controller
             $unreadData = $this->computeUnreadData($conversations, $userId);
             return response()->json([
                 'ok' => true,
-                'message' => $this->serializeMessage($message->load('user')),
+                'message' => $this->serializeMessage($message->load('user'), $userId),
                 'unread_counts' => $unreadData['counts'],
                 'total_unread' => $unreadData['total'],
             ]);
@@ -303,19 +355,70 @@ class DiscussionController extends Controller
         }
 
         $userId = Auth::id();
-        if (!$conversation->participants()->where('users.id', $userId)->exists()) {
+        $pivot = DB::table('discussion_conversation_user')
+            ->where('discussion_conversation_id', $conversation->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$pivot) {
             abort(403, 'Cette conversation ne t appartient pas.');
         }
 
+        if ($pivot->deleted_at !== null || $pivot->archived_at !== null) {
+            $user = Auth::user();
+            $conversations = $this->getVisibleConversations($user);
+            $unreadData = $this->computeUnreadData($conversations, $userId);
+
+            return response()->json([
+                'ok' => true,
+                'conversation_hidden' => true,
+                'messages' => [],
+                'removed_message_ids' => [],
+                'unread_counts' => $unreadData['counts'],
+                'total_unread' => $unreadData['total'],
+            ]);
+        }
+
         $afterId = (int) $request->integer('after_id', 0);
-        $messages = DiscussionMessage::query()
+        $cutoff = $this->hasClearedCutoffSupport() ? (int) ($pivot->cleared_after_message_id ?? 0) : 0;
+        $effectiveAfterId = max($afterId, $cutoff);
+
+        $messages = $this->visibleMessagesQuery($conversation->id, $userId)
+            ->where('id', '>', $effectiveAfterId)
             ->with('user')
-            ->where('conversation_id', $conversation->id)
-            ->where('id', '>', $afterId)
             ->orderBy('id')
             ->get()
-            ->map(fn (DiscussionMessage $message) => $this->serializeMessage($message))
+            ->map(fn (DiscussionMessage $message) => $this->serializeMessage($message, $userId))
             ->values();
+
+        $removedMessageIds = [];
+        if ($afterId > 0) {
+            $hasMsgDel = $this->hasMessageDeletionSupport();
+            if ($cutoff > 0 || $hasMsgDel) {
+                $removedMessageIds = DiscussionMessage::query()
+                    ->where('conversation_id', $conversation->id)
+                    ->where('id', '<=', $afterId)
+                    ->where(function ($q) use ($cutoff, $hasMsgDel, $userId) {
+                        if ($cutoff > 0) {
+                            $q->where('id', '<=', $cutoff);
+                        }
+                        if ($hasMsgDel) {
+                            $method = $cutoff > 0 ? 'orWhereNotNull' : 'whereNotNull';
+                            $q->{$method}('deleted_for_all_at');
+                            $q->orWhereExists(function ($sub) use ($userId) {
+                                $sub->selectRaw('1')
+                                    ->from('discussion_message_deletions')
+                                    ->whereColumn('discussion_message_deletions.discussion_message_id', 'discussion_messages.id')
+                                    ->where('discussion_message_deletions.user_id', $userId);
+                            });
+                        }
+                    })
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
+            }
+        }
 
         $user = Auth::user();
         $this->markConversationAsRead($conversation->id, $user->id);
@@ -324,7 +427,9 @@ class DiscussionController extends Controller
 
         return response()->json([
             'ok' => true,
+            'conversation_hidden' => false,
             'messages' => $messages,
+            'removed_message_ids' => $removedMessageIds,
             'unread_counts' => $unreadData['counts'],
             'total_unread' => $unreadData['total'],
         ]);
@@ -366,7 +471,16 @@ class DiscussionController extends Controller
         ]);
 
         if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json(['ok' => true, 'action' => 'archived', 'conversation_id' => $conversation->id]);
+            $conversations = $this->getVisibleConversations(Auth::user());
+            $unreadData = $this->computeUnreadData($conversations, $userId);
+
+            return response()->json([
+                'ok' => true,
+                'action' => 'archived',
+                'conversation_id' => $conversation->id,
+                'unread_counts' => $unreadData['counts'],
+                'total_unread' => $unreadData['total'],
+            ]);
         }
 
         return redirect()->route('discussions.index')->with('success', 'Conversation archivee.');
@@ -379,51 +493,108 @@ class DiscussionController extends Controller
             abort(403, 'Cette conversation ne t appartient pas.');
         }
 
-        $mode = $request->input('mode', 'me');
-        if (!in_array($mode, ['me', 'all'], true)) {
-            $mode = 'me';
-        }
-
-        if ($mode === 'all') {
-            $conversationId = $conversation->id;
-            $conversation->delete();
-
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'ok' => true,
-                    'action' => 'deleted_for_all',
-                    'removed_conversation_id' => $conversationId,
-                ]);
-            }
-
-            return redirect()->route('discussions.index')->with('success', 'Conversation supprimee pour tous.');
-        }
-
-        $conversation->participants()->updateExistingPivot($userId, [
-            'deleted_at' => Carbon::now(),
+        // La suppression d'une conversation est directe et strictement personnelle :
+        // elle ne supprime jamais le fil chez les autres participants.
+        $now = Carbon::now();
+        $pivotUpdate = [
+            'deleted_at' => $now,
             'archived_at' => null,
-        ]);
+            'last_read_at' => $now,
+        ];
+
+        if ($this->hasClearedCutoffSupport()) {
+            $latestMessageId = (int) DiscussionMessage::query()
+                ->where('conversation_id', $conversation->id)
+                ->max('id');
+            $pivotUpdate['cleared_after_message_id'] = $latestMessageId > 0 ? $latestMessageId : null;
+        }
+
+        $conversation->participants()->updateExistingPivot($userId, $pivotUpdate);
 
         if ($request->expectsJson() || $request->wantsJson()) {
+            $conversations = $this->getVisibleConversations(Auth::user());
+            $unreadData = $this->computeUnreadData($conversations, $userId);
+
             return response()->json([
                 'ok' => true,
                 'action' => 'deleted_for_me',
                 'removed_conversation_id' => $conversation->id,
+                'unread_counts' => $unreadData['counts'],
+                'total_unread' => $unreadData['total'],
             ]);
         }
 
-        return redirect()->route('discussions.index')->with('success', 'Conversation supprimee pour toi.');
+        return redirect()->route('discussions.index')->with('success', 'Conversation supprimee.');
+    }
+
+    public function destroyMessage(Request $request, DiscussionMessage $message): RedirectResponse|JsonResponse
+    {
+        if (!$this->isDiscussionSchemaReady() || !$this->hasMessageDeletionSupport()) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Module discussion non initialise',
+                ], 422);
+            }
+
+            return redirect()->route('discussions.index')->withErrors([
+                'message' => 'Le module discussion n est pas encore initialise. Lance les migrations.',
+            ]);
+        }
+
+        $userId = Auth::id();
+        $conversation = $message->conversation;
+        if (!$conversation || !$conversation->participants()->where('users.id', $userId)->exists()) {
+            abort(403, 'Ce message ne t appartient pas.');
+        }
+
+        $validated = $request->validate([
+            'mode' => ['nullable', Rule::in(['me', 'all'])],
+        ]);
+        $mode = $validated['mode'] ?? 'me';
+
+        if ($mode === 'all' && (int) $message->user_id !== (int) $userId) {
+            abort(403, 'Tu ne peux supprimer pour tous que tes propres messages.');
+        }
+
+        if ($mode === 'all') {
+            $message->forceFill([
+                'deleted_for_all_at' => Carbon::now(),
+                'deleted_for_all_by' => $userId,
+            ])->save();
+            $action = 'deleted_for_all';
+            $flash = 'Message supprime pour tous.';
+        } else {
+            DiscussionMessageDeletion::firstOrCreate([
+                'discussion_message_id' => $message->id,
+                'user_id' => $userId,
+            ]);
+            $action = 'deleted_for_me';
+            $flash = 'Message supprime pour toi.';
+        }
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            $conversations = $this->getVisibleConversations(Auth::user());
+            $unreadData = $this->computeUnreadData($conversations, $userId);
+
+            return response()->json([
+                'ok' => true,
+                'action' => $action,
+                'removed_message_id' => $message->id,
+                'unread_counts' => $unreadData['counts'],
+                'total_unread' => $unreadData['total'],
+            ]);
+        }
+
+        return redirect()->route('discussions.index', ['conversation' => $conversation->id])->with('success', $flash);
     }
 
     private function getVisibleConversations(User $user): Collection
     {
-        return $user->discussionConversations()
+        $conversations = $user->discussionConversations()
             ->wherePivotNull('archived_at')
             ->wherePivotNull('deleted_at')
-            ->with([
-                'participants',
-                'messages' => fn ($q) => $q->latest('id')->take(1),
-            ])
+            ->with(['participants'])
             ->get()
             ->filter(function (DiscussionConversation $conversation) use ($user) {
                 // Hide stale conversations with no counterpart and no explicit title.
@@ -432,6 +603,58 @@ class DiscussionController extends Controller
                 }
 
                 return $conversation->participants->contains(fn ($participant) => (int) $participant->id !== (int) $user->id);
+            })
+            ->values();
+
+        if ($conversations->isEmpty()) {
+            return $conversations;
+        }
+
+        $conversationIds = $conversations->pluck('id')->all();
+        $hasCleared = $this->hasClearedCutoffSupport();
+        $hasMsgDel = $this->hasMessageDeletionSupport();
+
+        $latestQuery = DB::table('discussion_messages as dm')
+            ->join('discussion_conversation_user as dcu', function ($join) use ($user) {
+                $join->on('dcu.discussion_conversation_id', '=', 'dm.conversation_id')
+                    ->where('dcu.user_id', '=', $user->id);
+            })
+            ->whereIn('dm.conversation_id', $conversationIds);
+
+        if ($hasCleared) {
+            $latestQuery->where(function ($q) {
+                $q->whereNull('dcu.cleared_after_message_id')
+                    ->orWhereColumn('dm.id', '>', 'dcu.cleared_after_message_id');
+            });
+        }
+
+        if ($hasMsgDel) {
+            $latestQuery->whereNull('dm.deleted_for_all_at')
+                ->whereNotExists(function ($sub) use ($user) {
+                    $sub->selectRaw('1')
+                        ->from('discussion_message_deletions as dmd')
+                        ->whereColumn('dmd.discussion_message_id', 'dm.id')
+                        ->where('dmd.user_id', $user->id);
+                });
+        }
+
+        $latestMessageIds = $latestQuery
+            ->groupBy('dm.conversation_id')
+            ->selectRaw('dm.conversation_id, MAX(dm.id) as latest_id')
+            ->pluck('latest_id', 'conversation_id');
+
+        $latestMessages = $latestMessageIds->isNotEmpty()
+            ? DiscussionMessage::query()
+                ->whereIn('id', $latestMessageIds->values()->all())
+                ->get()
+                ->keyBy('id')
+            : collect();
+
+        return $conversations
+            ->each(function (DiscussionConversation $conversation) use ($latestMessageIds, $latestMessages) {
+                $latestId = $latestMessageIds->get($conversation->id);
+                $latest = $latestId ? $latestMessages->get((int) $latestId) : null;
+                $conversation->setRelation('messages', $latest ? collect([$latest]) : collect());
             })
             ->sortByDesc(function (DiscussionConversation $conversation) {
                 $lastMessage = $conversation->messages->first();
@@ -459,14 +682,18 @@ class DiscussionController extends Controller
         ];
     }
 
-    private function serializeMessage(DiscussionMessage $message): array
+    private function serializeMessage(DiscussionMessage $message, ?int $currentUserId = null): array
     {
+        $currentUserId ??= Auth::id();
+
         return [
             'id' => $message->id,
             'user_id' => $message->user_id,
             'user_name' => $message->user?->name ?? 'Utilisateur',
             'body' => $message->body,
             'time' => optional($message->created_at)->locale('fr')->isoFormat('HH:mm'),
+            'delete_url' => route('discussions.messages.destroy', $message),
+            'can_delete_for_all' => (int) $message->user_id === (int) $currentUserId,
         ];
     }
 
@@ -483,10 +710,19 @@ class DiscussionController extends Controller
         $counts = [];
         $total = 0;
 
+        if ($conversations->isEmpty()) {
+            return ['counts' => [], 'total' => 0];
+        }
+
+        $clearedCutoffs = $this->clearedCutoffsMap($userId, $conversations->pluck('id')->all());
+
         foreach ($conversations as $conversation) {
-            $query = DiscussionMessage::query()
-                ->where('conversation_id', $conversation->id)
-                ->where('user_id', '!=', $userId);
+            $cutoff = (int) ($clearedCutoffs->get($conversation->id) ?? 0);
+            $query = $this->visibleMessagesQuery(
+                $conversation->id,
+                $userId,
+                $cutoff > 0 ? $cutoff : null
+            )->where('user_id', '!=', $userId);
 
             $lastReadAt = $conversation->pivot?->last_read_at;
             if ($lastReadAt) {
