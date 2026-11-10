@@ -2,7 +2,7 @@
     $walletInvoice = $walletInvoice ?? null;
     $walletBooking = $walletInvoice?->booking ?? $booking;
     $walletPartner = ($walletInvoice?->customer ?? $walletBooking->customer)?->partnerOrganization;
-    $walletDue = $walletInvoice?->balance_due ?? $walletBooking->balance_due;
+    $walletDue = $walletInvoice?->balance_due ?? $walletBooking->effectiveBalanceDue($defaultCheckOutTime ?? null);
 @endphp
 @droit('partners.wallet.debit')
 @if($walletPartner?->is_active && $walletDue > 0)

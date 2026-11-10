@@ -216,16 +216,18 @@ class GroupBookingController extends Controller
         // Clients pour assigner à une chambre
         $customers = Customer::orderBy('last_name')->get();
 
-        // Totaux du groupe
+        $checkOutTime = app(\App\Services\RoomAvailabilityService::class)->checkOutTime();
+
+        // Totaux du groupe (incluant les éventuelles nuits de dépassement des séjours en cours)
         $totals = [
             'rooms' => $groupBooking->bookings->count(),
-            'nights' => $groupBooking->bookings->sum('total_nights'),
-            'total' => $groupBooking->bookings->sum('total_amount'),
+            'nights' => $groupBooking->bookings->sum(fn (Booking $b) => $b->effectiveTotalNights($checkOutTime)),
+            'total' => $groupBooking->bookings->sum(fn (Booking $b) => $b->effectiveTotalAmount($checkOutTime)),
             'paid' => $groupBooking->bookings->sum('paid_amount'),
-            'balance_due' => $groupBooking->bookings->sum('balance_due'),
+            'balance_due' => $groupBooking->bookings->sum(fn (Booking $b) => $b->effectiveBalanceDue($checkOutTime)),
         ];
 
-        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals'));
+        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals', 'checkOutTime'));
     }
 
     // ===== AJOUTER UNE CHAMBRE AU GROUPE =====
@@ -421,8 +423,10 @@ class GroupBookingController extends Controller
             return back()->withErrors(['checkout' => 'Aucune réservation en cours à checker out.']);
         }
 
-        // Vérifie que toutes les réservations sont soldées
-        $unsettled = $checkedIn->where('balance_due', '>', 0);
+        $checkOutTime = app(\App\Services\RoomAvailabilityService::class)->checkOutTime();
+
+        // Vérifie que toutes les réservations sont soldées (surplus de dépassement inclus)
+        $unsettled = $checkedIn->filter(fn (Booking $booking) => $booking->effectiveBalanceDue($checkOutTime) > 0);
         if ($unsettled->isNotEmpty()) {
             return back()->withErrors([
                 'checkout' => "{$unsettled->count()} chambre(s) ont un solde impayé. Réglez avant le check-out.",
@@ -529,20 +533,43 @@ class GroupBookingController extends Controller
 
                 // Recalcule le solde de chaque booking
                 if (! $isComplimentary) {
-                    $extrasAmount = $booking->folioItems()
+                    $isAdditiveTax = $booking->hasAdditiveTax();
+
+                    $extrasAmount = (int) $booking->folioItems()
                         ->whereNotIn('type', [FolioItem::TYPE_ROOM, FolioItem::TYPE_PAYMENT, FolioItem::TYPE_DISCOUNT])
                         ->where('is_complimentary', false)
                         ->sum('total_price');
 
-                    $totalAmount = $booking->total_room_amount + $extrasAmount;
-                    // TVA extraite du total TTC, jamais ajoutée par dessus.
-                    $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
+                    $hasPackageFolio = $booking->folioItems()
+                        ->where('type', FolioItem::TYPE_OTHER)
+                        ->where('description', 'like', 'Formule —%')
+                        ->exists();
+                    $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
+
+                    $discountItems = $booking->folioItems()
+                        ->where('type', FolioItem::TYPE_DISCOUNT)
+                        ->get();
+                    $discountAmount = $discountItems->isNotEmpty()
+                        ? (int) $discountItems->sum(fn ($item) => abs((int) $item->total_price))
+                        : (int) $booking->discount_amount;
+
+                    $subtotal = (int) $booking->total_room_amount + $extrasAmount + $uninvoicedPackage - $discountAmount;
+
+                    if ($isAdditiveTax) {
+                        $taxAmount = (int) $booking->tax_amount;
+                        $totalAmount = $subtotal + $taxAmount;
+                    } else {
+                        $totalAmount = max(0, $subtotal);
+                        // TVA extraite du total TTC, jamais ajoutée par dessus.
+                        $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
+                    }
 
                     $booking->update([
                         'extras_amount' => $extrasAmount,
+                        'discount_amount' => $discountAmount,
                         'tax_amount' => $taxAmount,
                         'total_amount' => $totalAmount,
-                        'balance_due' => max(0, $totalAmount - $booking->paid_amount),
+                        'balance_due' => max(0, $totalAmount - (int) $booking->paid_amount),
                     ]);
                 }
             }
@@ -576,22 +603,30 @@ class GroupBookingController extends Controller
         ]);
 
         $totalCentimes = (int) $validated['amount'] * 100;
+        $checkOutTime = app(\App\Services\RoomAvailabilityService::class)->checkOutTime();
 
-        $bookings = $groupBooking->bookings()
+        $candidateBookings = $groupBooking->bookings()
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN])
-            ->where('balance_due', '>', 0)
             ->get();
-
-        if ($bookings->isEmpty()) {
-            return back()->withErrors(['payment' => 'Aucune chambre avec un solde impayé.']);
-        }
 
         $totalTargetBalance = 0;
         $targetBalances = [];
-        foreach ($bookings as $booking) {
-            $targetBalance = max($booking->balance_due, $booking->getConsumedBalance());
-            $targetBalances[$booking->id] = $targetBalance;
-            $totalTargetBalance += $targetBalance;
+        $bookings = collect();
+        foreach ($candidateBookings as $booking) {
+            $targetBalance = max(
+                $booking->effectiveBalanceDue($checkOutTime),
+                $booking->getConsumedBalance($checkOutTime)
+            );
+            if ($targetBalance > 0) {
+                $targetBalances[$booking->id] = $targetBalance;
+                $totalTargetBalance += $targetBalance;
+                $bookings->push($booking);
+            }
+        }
+        $bookings = $bookings->values();
+
+        if ($bookings->isEmpty()) {
+            return back()->withErrors(['payment' => 'Aucune chambre avec un solde impayé.']);
         }
 
         if ($totalCentimes > $totalTargetBalance + 100) {
@@ -606,7 +641,8 @@ class GroupBookingController extends Controller
             $tenantId,
             $groupBooking,
             $activeSession,
-            $targetBalances
+            $targetBalances,
+            $checkOutTime
         ) {
             $remaining = $totalCentimes;
 
@@ -681,21 +717,22 @@ class GroupBookingController extends Controller
 
             // Après avoir réparti le paiement, on vérifie si certaines chambres ont réglé leur solde consommé
             foreach ($bookings as $booking) {
-                if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
+                $booking->refresh();
+                if ($booking->getConsumedBalance($checkOutTime) <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
                     // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur
-                    if (!$booking->actual_check_out) {
+                    if (!$booking->actual_check_out || $booking->hasOverstayedCheckout($checkOutTime)) {
                         $booking->update(['actual_check_out' => now()]);
                     }
                     
                     // Actualise le folio et les coûts pour correspondre exactement à la durée réelle passée
-                    $this->checkOutService->syncDurationToNow($booking);
+                    $this->checkOutService->syncDurationToNow($booking, $checkOutTime);
                 }
             }
         });
 
         // Recharge pour avoir les totaux à jour
         $groupBooking->load('bookings');
-        $newTotalBalance = $groupBooking->bookings->sum('balance_due');
+        $newTotalBalance = $groupBooking->bookings->sum(fn (Booking $b) => $b->effectiveBalanceDue($checkOutTime));
 
         \App\Models\AuditLog::record(
             Auth::id(),

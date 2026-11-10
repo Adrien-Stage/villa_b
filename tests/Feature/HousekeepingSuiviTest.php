@@ -163,6 +163,8 @@ test("la recouche d'une chambre occupée la laisse au client et garde son auteur
 });
 
 test("le départ du client annule la recouche prévue", function () {
+    $this->travelTo(now()->setTime(10, 0));
+
     $reception = agentHk('reception', 'Joël Réception');
     $this->actingAs($reception);
     $valet = agentHk('housekeeping_staff', 'Marie Valet');

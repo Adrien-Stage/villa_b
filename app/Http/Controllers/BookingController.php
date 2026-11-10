@@ -1457,15 +1457,37 @@ class BookingController extends Controller
         $defaultCheckOutTime = $this->roomAvailability->checkOutTime();
         $effectiveCheckInAt = $booking->effectiveCheckInAt($defaultCheckInTime);
         $scheduledCheckOutAt = $booking->scheduledCheckOutAt($defaultCheckOutTime);
+        $overstayNights = $booking->overstayNights($defaultCheckOutTime);
+        $effectiveNightlyRate = $booking->effectiveNightlyRate();
+        $overstayRoomAmount = $overstayNights * $effectiveNightlyRate;
+        $effectiveTotalNights = (int) $booking->total_nights + $overstayNights;
+        $effectiveRoomAmount = (int) $booking->total_room_amount + $overstayRoomAmount;
+        $effectiveTotalAmount = (int) $booking->total_amount + $overstayRoomAmount;
+        $effectiveBalanceDue = $booking->effectiveBalanceDue($defaultCheckOutTime);
+        $consumedBalance = $booking->getConsumedBalance($defaultCheckOutTime);
+        $hasPackageFolio = $booking->folioItems
+            ->contains(fn ($item) => $item->type === FolioItem::TYPE_OTHER && str_starts_with((string) $item->description, 'Formule —'));
+        $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
+
         $stayTimer = $booking->shouldDisplayStayTimer($defaultCheckOutTime)
             ? [
-                'timeZone'        => config('app.timezone', 'Africa/Douala'),
-                'checkInInstant'  => $booking->actual_check_in?->toIso8601String(),
-                'checkInDate'     => $effectiveCheckInAt->toDateString(),
-                'checkInTime'     => $effectiveCheckInAt->format('H:i:s'),
-                'checkOutDate'    => $scheduledCheckOutAt->toDateString(),
-                'checkOutTime'    => $scheduledCheckOutAt->format('H:i:s'),
-                'initialOverstay' => $booking->hasOverstayedCheckout($defaultCheckOutTime),
+                'timeZone'                     => config('app.timezone', 'Africa/Douala'),
+                'checkInInstant'               => $booking->actual_check_in?->toIso8601String(),
+                'checkInDate'                  => $effectiveCheckInAt->toDateString(),
+                'checkInTime'                  => $effectiveCheckInAt->format('H:i:s'),
+                'checkOutDate'                 => $scheduledCheckOutAt->toDateString(),
+                'checkOutTime'                 => $scheduledCheckOutAt->format('H:i:s'),
+                'initialOverstay'              => $overstayNights > 0 || $booking->hasOverstayedCheckout($defaultCheckOutTime),
+                'initialOverstayNights'        => $overstayNights,
+                'plannedNights'                => (int) $booking->total_nights,
+                'nightlyRateCentimes'          => $effectiveNightlyRate,
+                'isComplimentary'              => (bool) $booking->is_complimentary,
+                'baseRoomAmountCentimes'       => (int) $booking->total_room_amount,
+                'baseExtrasAmountCentimes'     => (int) $booking->extras_amount + $uninvoicedPackage,
+                'baseDiscountAmountCentimes'   => (int) $booking->discount_amount,
+                'baseTotalAmountCentimes'      => (int) $booking->total_amount,
+                'baseCreditCentimes'           => max(0, (int) $booking->paid_amount - (int) $booking->total_amount),
+                'baseBalanceDueCentimes'       => (int) $booking->balance_due,
             ]
             : null;
 
@@ -1479,6 +1501,15 @@ class BookingController extends Controller
             'stayTimer'            => $stayTimer,
             'effectiveCheckInAt'   => $effectiveCheckInAt,
             'scheduledCheckOutAt'  => $scheduledCheckOutAt,
+            'defaultCheckOutTime'  => $defaultCheckOutTime,
+            'overstayNights'       => $overstayNights,
+            'effectiveNightlyRate' => $effectiveNightlyRate,
+            'overstayRoomAmount'   => $overstayRoomAmount,
+            'effectiveTotalNights' => $effectiveTotalNights,
+            'effectiveRoomAmount'  => $effectiveRoomAmount,
+            'effectiveTotalAmount' => $effectiveTotalAmount,
+            'effectiveBalanceDue'  => $effectiveBalanceDue,
+            'consumedBalance'      => $consumedBalance,
         ]);
     }
 
@@ -1836,21 +1867,45 @@ class BookingController extends Controller
 
         // Recalcule les extras et le solde du booking
         if (!$isComplimentary) {
-            $extrasAmount = $booking->folioItems()
+            $isAdditiveTax = $booking->hasAdditiveTax();
+
+            $extrasAmount = (int) $booking->folioItems()
                 ->whereNotIn('type', [FolioItem::TYPE_ROOM, FolioItem::TYPE_PAYMENT, FolioItem::TYPE_DISCOUNT])
                 ->where('is_complimentary', false)
                 ->sum('total_price');
 
-            $totalAmount  = $booking->total_room_amount + $extrasAmount - $booking->discount_amount;
-            // TVA extraite du total TTC, jamais ajoutée par dessus.
-            $taxAmount    = $this->taxation->breakdown($totalAmount)->vat;
-            $balanceDue   = max(0, $totalAmount - $booking->paid_amount);
+            $hasPackageFolio = $booking->folioItems()
+                ->where('type', FolioItem::TYPE_OTHER)
+                ->where('description', 'like', 'Formule —%')
+                ->exists();
+            $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
+
+            $discountItems = $booking->folioItems()
+                ->where('type', FolioItem::TYPE_DISCOUNT)
+                ->get();
+            $discountAmount = $discountItems->isNotEmpty()
+                ? (int) $discountItems->sum(fn ($item) => abs((int) $item->total_price))
+                : (int) $booking->discount_amount;
+
+            $subtotal = (int) $booking->total_room_amount + $extrasAmount + $uninvoicedPackage - $discountAmount;
+
+            if ($isAdditiveTax) {
+                $taxAmount   = (int) $booking->tax_amount;
+                $totalAmount = $subtotal + $taxAmount;
+            } else {
+                $totalAmount = max(0, $subtotal);
+                // TVA extraite du total TTC, jamais ajoutée par dessus.
+                $taxAmount   = $this->taxation->breakdown($totalAmount)->vat;
+            }
+
+            $balanceDue = max(0, $totalAmount - (int) $booking->paid_amount);
 
             $booking->update([
-                'extras_amount' => $extrasAmount,
-                'tax_amount'    => $taxAmount,
-                'total_amount'  => $totalAmount,
-                'balance_due'   => $balanceDue,
+                'extras_amount'   => $extrasAmount,
+                'discount_amount' => $discountAmount,
+                'tax_amount'      => $taxAmount,
+                'total_amount'    => $totalAmount,
+                'balance_due'     => $balanceDue,
             ]);
         }
 
@@ -1908,9 +1963,13 @@ class BookingController extends Controller
 
         // Montant saisi en FCFA → on stocke en centimes
         $amountCentimes = $validated['amount'] * 100;
+        $checkOutTime = $this->roomAvailability->checkOutTime();
 
         // Autorise le paiement du solde initialement prévu ou du solde consommé réel (en cas de dépassement)
-        $maxAllowed = max($booking->balance_due, $booking->getConsumedBalance());
+        $maxAllowed = max(
+            $booking->effectiveBalanceDue($checkOutTime),
+            $booking->getConsumedBalance($checkOutTime)
+        );
         if ($amountCentimes > $maxAllowed + 100) {
             return back()->withErrors(['payment' => 'Le montant dépasse le solde dû ou consommé.']);
         }
@@ -1957,19 +2016,20 @@ class BookingController extends Controller
             ['booking_id' => $booking->id, 'amount' => $amountCentimes, 'reference' => $reference]
         );
 
-        if ($booking->getConsumedBalance() <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
+        if ($booking->getConsumedBalance($checkOutTime) <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
             // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur
-            if (!$booking->actual_check_out) {
+            if (!$booking->actual_check_out || $booking->hasOverstayedCheckout($checkOutTime)) {
                 $booking->update(['actual_check_out' => now()]);
             }
-            
+
             // Actualise le folio et les coûts pour correspondre exactement à la durée réelle passée
-            $this->checkOutService->syncDurationToNow($booking);
+            $this->checkOutService->syncDurationToNow($booking, $checkOutTime);
+            $booking->refresh();
         }
 
         return redirect()->route('bookings.show', $booking)
             ->with('success', 'Paiement enregistré. Solde restant : ' .
-                number_format($booking->balance_due / 100, 0, ',', ' ') . ' FCFA');
+                number_format($booking->effectiveBalanceDue($checkOutTime) / 100, 0, ',', ' ') . ' FCFA');
     }
 
     public function edit(Booking $booking)

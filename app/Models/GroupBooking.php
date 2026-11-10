@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -152,10 +153,10 @@ class GroupBooking extends Model
     /**
      * Calcule le solde consommé réel pour tout le groupe
      */
-    public function getConsumedBalance(): int
+    public function getConsumedBalance(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
     {
-        return $this->bookings->sum(function ($booking) {
-            return $booking->getConsumedBalance();
+        return $this->bookings->sum(function ($booking) use ($defaultCheckOutTime, $at) {
+            return $booking->getConsumedBalance($defaultCheckOutTime, $at);
         });
     }
 }

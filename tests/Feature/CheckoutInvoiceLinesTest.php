@@ -14,6 +14,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test("la facture de départ ne porte la chambre qu'une fois", function () {
+    $this->travelTo(now()->setTime(10, 0));
+
     $this->seed([
         \Database\Seeders\TenantSeeder::class,
         \Database\Seeders\RoomTypeSeeder::class,
