@@ -23,6 +23,8 @@
         </p>
     </div>
 
+    @include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
+
     {{-- Indicateur d'étapes --}}
     <div class="flex items-center gap-3 mb-8">
         <div class="flex items-center gap-2">

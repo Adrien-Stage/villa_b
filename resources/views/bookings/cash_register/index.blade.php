@@ -11,54 +11,73 @@
         </div>
         
         @php
-            $activeSession = \App\Models\CashRegisterSession::where('user_id', auth()->id())
-                ->where('module', 'reception')
-                ->whereNull('closed_at')
-                ->first();
+            $circuit = app(\App\Services\CashRegisterCircuit::class);
+            $ctx = $cashRegisterContext ?? $circuit->receptionContextePour(auth()->user());
+            $ownEnCours = $circuit->enCours(auth()->user(), 'reception');
+            $estTitulaireCaisse = (bool) ($ctx['estTitulaire'] ?? false);
+            $caissePartagee = (bool) ($ctx['isOpen'] ?? false) && !$estTitulaireCaisse;
             $passationsEnAttente = app(\App\Services\PassationService::class)->enAttente()
                 ->reject(fn ($p) => $p->from_user_id === auth()->id());
+            $fcfaIndex = static fn ($centimes): string => number_format(((int) $centimes) / 100, 0, ',', ' ') . ' FCFA';
         @endphp
-        
+
         <div class="flex flex-wrap items-center gap-2">
             @droit('bookings.handovers.voir')
                 <a href="{{ route('bookings.handovers.index') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                    <i data-lucide="history" class="w-4 h-4"></i>
+                    <i data-lucide="history" class="w-4 h-4" aria-hidden="true"></i>
                     Passations
                 </a>
             @enddroit
-            @if ($activeSession?->isPendingReview())
+            @if ($ownEnCours?->isPendingReview())
                 {{-- Comptée (ou remise en passation) : elle attend le contrôle de la comptabilité. --}}
                 <span class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded-lg">
-                    <i data-lucide="hourglass" class="w-4 h-4"></i>
+                    <i data-lucide="hourglass" class="w-4 h-4" aria-hidden="true"></i>
                     Comptage en attente de contrôle
                 </span>
-            @elseif ($activeSession)
+            @elseif ($ownEnCours && $estTitulaireCaisse)
                 {{-- En fin de quart, le tiroir passe au collègue suivant ; en fin de
                      journée, la caisse se ferme et part au contrôle. --}}
                 @droit('bookings.handovers.creer')
                     <a href="{{ route('bookings.handovers.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                        <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                        <i data-lucide="hand-coins" class="w-4 h-4" aria-hidden="true"></i>
                         Terminer mon service (passation)
                     </a>
                 @enddroit
                 {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('bookings.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    <i data-lucide="lock" class="w-4 h-4" aria-hidden="true"></i>
                     Fermer la caisse
                 </a>
+            @elseif ($ownEnCours)
+                {{-- Propre session mise en pause lors d'une déconnexion : on la réactive avant clôture. --}}
+                <form method="POST" action="{{ route('cash_register.resume') }}">
+                    @csrf
+                    <input type="hidden" name="session_id" value="{{ $ownEnCours->id }}">
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                        <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>
+                        Reprendre ma caisse en pause
+                    </button>
+                </form>
+            @elseif ($caissePartagee)
+                <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium rounded-lg">
+                    <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i>
+                    Caisse active : {{ $ctx['titulaire']?->name ?? 'Réception' }}
+                </span>
             @elseif ($passationsEnAttente->isNotEmpty())
                 <a href="{{ route('bookings.handovers.take', $passationsEnAttente->first()) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors shadow-sm">
-                    <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                    <i data-lucide="hand-coins" class="w-4 h-4" aria-hidden="true"></i>
                     Prendre le service
                 </a>
             @else
                 <a href="{{ route('bookings.cash_register.open') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
-                    <i data-lucide="lock-open" class="w-4 h-4"></i>
+                    <i data-lucide="lock-open" class="w-4 h-4" aria-hidden="true"></i>
                     Ouvrir la caisse
                 </a>
             @endif
         </div>
     </div>
+
+    @include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $ctx])
 
     @if ($message = session('success'))
         <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
@@ -96,6 +115,37 @@
                             <p class="text-xs text-primary/50">Ouverte : {{ $session->opened_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
                             @if($session->closed_at)
                                 <p class="text-[10px] text-primary/50">Fermée : {{ $session->closed_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
+                            @endif
+                            @php $tiersSession = $tiersParSession[$session->id] ?? null; @endphp
+                            @if($tiersSession && ($tiersSession['has_activity'] ?? false))
+                                <div class="mt-1.5">
+                                    <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
+                                        <i data-lucide="users" class="w-3 h-3" aria-hidden="true"></i>
+                                        Intervention tiers :
+                                        {{ $tiersSession['actors']->map(fn ($a) => $a['name'] . ' (' . $a['count'] . ')')->join(', ') }}
+                                    </span>
+                                    <details class="mt-1">
+                                        <summary class="cursor-pointer select-none text-[11px] font-medium text-indigo-700 hover:text-indigo-900">
+                                            Détail ({{ $tiersSession['total_count'] }} op.)
+                                        </summary>
+                                        <ul class="mt-1 space-y-1 rounded-lg border border-indigo-100 bg-indigo-50/40 p-2 text-[11px] text-primary/80">
+                                            @foreach($tiersSession['items'] as $item)
+                                                <li class="flex flex-wrap justify-between gap-2">
+                                                    <span>
+                                                        <span class="tabular-nums text-primary/50">{{ $item['occurred_at']?->format('H:i') ?? '—' }}</span>
+                                                        <strong>{{ $item['actor_name'] }}</strong> — {{ $item['description'] }}
+                                                    </span>
+                                                    @if($item['is_financial'] && $item['amount'])
+                                                        <span class="tabular-nums font-semibold {{ $item['cash_impact'] < 0 ? 'text-red-600' : 'text-emerald-700' }}">
+                                                            {{ $item['cash_impact'] < 0 ? '−' : ($item['cash_impact'] > 0 ? '+' : '') }}{{ $fcfaIndex(abs((int) $item['amount'])) }}
+                                                            @if($item['method_label']) ({{ $item['method_label'] }}) @endif
+                                                        </span>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </details>
+                                </div>
                             @endif
                         </div>
                     </div>

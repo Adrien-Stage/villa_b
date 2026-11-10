@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\CashRegisterSession;
+use App\Services\CashRegisterCircuit;
 use App\Support\CashClosurePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,13 +26,30 @@ class CashClosureReviewController extends Controller
         $enAttente = CashRegisterSession::query()
             ->where('status', CashClosurePolicy::STATUS_PENDING_REVIEW)
             ->whereNull('closed_at')
-            ->with(['user', 'pointOfSale', 'handoverOut.toUser'])
+            ->with([
+                'user.roles',
+                'pointOfSale',
+                'handoverOut.toUser',
+                'activities.user.roles',
+                'disbursements.user.roles',
+                'receptionSales.user.roles',
+                'payments.processedBy.roles',
+                'payments.booking',
+                'banquetPayments.paidBy.roles',
+                'banquetPayments.banquet',
+            ])
             ->orderBy('updated_at')
             ->get();
 
+        $circuit = app(CashRegisterCircuit::class);
+        $tiersParSession = $enAttente->mapWithKeys(
+            fn (CashRegisterSession $s) => [$s->id => $circuit->resumeInterventionsTiers($s)]
+        );
+
         return view('accounting.cash_reviews', [
-            'sessions'     => $enAttente,
-            'witnessLabel' => CashClosurePolicy::witnessLabel(),
+            'sessions'        => $enAttente,
+            'witnessLabel'    => CashClosurePolicy::witnessLabel(),
+            'tiersParSession' => $tiersParSession,
         ]);
     }
 

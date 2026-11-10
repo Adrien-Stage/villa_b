@@ -16,6 +16,8 @@
         <p class="text-sm text-primary/50 mt-0.5">Étape 1 — Informations du groupe</p>
     </div>
 
+    @include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
+
     @if($errors->any())
         <div class="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
             {{ $errors->first() }}

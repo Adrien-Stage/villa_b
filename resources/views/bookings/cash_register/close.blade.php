@@ -45,6 +45,12 @@
                         <span>+ Encaissements Espèces (Cash) :</span>
                         <span class="font-medium">{{ number_format($cash_payments_total / 100, 0, ',', ' ') }} FCFA</span>
                     </div>
+                    @if(($banquet_cash_payments_total ?? 0) > 0)
+                    <div class="flex justify-between items-center text-sm text-green-600">
+                        <span>+ Encaissements Banquets Espèces (Acomptes / Soldes) :</span>
+                        <span class="font-medium">{{ number_format($banquet_cash_payments_total / 100, 0, ',', ' ') }} FCFA</span>
+                    </div>
+                    @endif
                     <div class="flex justify-between items-center text-sm text-red-500">
                         <span>- Sorties (Décaissements) :</span>
                         <span class="font-medium">{{ number_format($disbursements_total / 100, 0, ',', ' ') }} FCFA</span>
@@ -56,6 +62,70 @@
                     <span class="text-xl font-heading font-bold text-primary">{{ number_format($theoretical_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
             </div>
+
+            @if(($tiers['has_activity'] ?? false))
+                @php
+                    $fcfaClose = static fn ($centimes): string => number_format(((int) $centimes) / 100, 0, ',', ' ') . ' FCFA';
+                @endphp
+                <div role="status" class="bg-indigo-50/70 rounded-xl shadow-sm border border-indigo-200 p-5 mb-6">
+                    <h2 class="text-sm font-heading font-semibold text-indigo-950 flex items-center gap-2 mb-2">
+                        <i data-lucide="users" class="w-4 h-4 text-indigo-700" aria-hidden="true"></i>
+                        Interventions d'un tiers dans votre caisse ({{ $tiers['total_count'] }})
+                    </h2>
+                    <div class="space-y-1 text-xs text-indigo-900 mb-3">
+                        @foreach($tiers['actors'] as $actor)
+                            <p>
+                                <strong>{{ $actor['name'] }}</strong>@if($actor['role_label']) ({{ $actor['role_label'] }})@endif
+                                : {{ $actor['count'] }} opération{{ $actor['count'] > 1 ? 's' : '' }}
+                                @if($actor['net_cash_centimes'] !== 0)
+                                    · impact espèces inclus :
+                                    <strong class="{{ $actor['net_cash_centimes'] >= 0 ? 'text-emerald-700' : 'text-red-700' }}">
+                                        {{ $actor['net_cash_centimes'] > 0 ? '+' : '−' }}{{ $fcfaClose(abs($actor['net_cash_centimes'])) }}
+                                    </strong>
+                                @endif
+                                @if($actor['non_cash_centimes'] > 0)
+                                    · hors espèces : <strong>{{ $fcfaClose($actor['non_cash_centimes']) }}</strong>
+                                @endif
+                            </p>
+                        @endforeach
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-indigo-200 bg-white">
+                        <table class="w-full text-left text-xs">
+                            <caption class="sr-only">Détail des opérations réalisées par un tiers dans cette caisse</caption>
+                            <thead class="bg-indigo-50/70 text-[10px] uppercase tracking-wider text-indigo-900/70 border-b border-indigo-100">
+                                <tr>
+                                    <th scope="col" class="px-3 py-2">Heure</th>
+                                    <th scope="col" class="px-3 py-2">Collaborateur</th>
+                                    <th scope="col" class="px-3 py-2">Opération</th>
+                                    <th scope="col" class="px-3 py-2">Mode</th>
+                                    <th scope="col" class="px-3 py-2 text-right">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-indigo-100/70 text-primary">
+                                @foreach($tiers['items'] as $item)
+                                    <tr>
+                                        <td class="px-3 py-2 tabular-nums whitespace-nowrap text-primary/60">{{ $item['occurred_at']?->format('H:i') ?? '—' }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap font-medium">{{ $item['actor_name'] }}</td>
+                                        <td class="px-3 py-2">
+                                            <span class="font-medium">{{ $item['action_label'] }}</span>
+                                            <span class="block text-[11px] text-primary/65">{{ $item['description'] }}</span>
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-primary/70">{{ $item['method_label'] ?? '—' }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap font-semibold {{ $item['cash_impact'] < 0 ? 'text-red-600' : ($item['is_financial'] ? 'text-emerald-700' : 'text-primary/50') }}">
+                                            @if($item['is_financial'] && $item['amount'])
+                                                {{ $item['cash_impact'] < 0 ? '−' : ($item['cash_impact'] > 0 ? '+' : '') }}{{ $fcfaClose(abs((int) $item['amount'])) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
 
             <!-- Ajout manuel de décaissement avant de fermer -->
             <div class="bg-red-50/50 rounded-xl shadow-sm border border-red-100 p-6">

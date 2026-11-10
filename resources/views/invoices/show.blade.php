@@ -63,8 +63,17 @@
                 <option value="stripe">Carte</option>
             </select>
         </label>
+        @php $ctxInvoice = $cashRegisterContext ?? null; @endphp
         <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Encaisser</button>
-        <p class="text-xs text-primary/45 sm:ml-auto">Caisse de la réception ouverte requise.</p>
+        <p class="text-xs sm:ml-auto {{ ($ctxInvoice['isOpen'] ?? false) ? 'text-emerald-700 font-medium' : 'text-primary/45' }}">
+            @if(($ctxInvoice['isOpen'] ?? false) && !($ctxInvoice['estTitulaire'] ?? true) && ($ctxInvoice['titulaire'] ?? null))
+                Caisse ouverte par {{ $ctxInvoice['titulaire']->name }} (session #{{ $ctxInvoice['session']?->id }}).
+            @elseif($ctxInvoice['isOpen'] ?? false)
+                Caisse de réception ouverte (#{{ $ctxInvoice['session']?->id }}).
+            @else
+                Caisse de la réception ouverte requise.
+            @endif
+        </p>
     </form>
     @enddroit
 @endif

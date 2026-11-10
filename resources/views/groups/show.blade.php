@@ -79,6 +79,8 @@
     </div>
 </div>
 
+@include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
+
 {{-- Messages --}}
 @if(session('success'))
 <div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
