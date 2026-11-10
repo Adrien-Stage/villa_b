@@ -328,6 +328,9 @@ class PermissionCatalog
         'settings.quarts.creer',
         'settings.quarts.modifier',
         'settings.quarts.supprimer',
+        'settings.regimes.creer',
+        'settings.regimes.modifier',
+        'settings.regimes.supprimer',
         'settings.services.creer',
         'settings.services.import',
         'settings.services.modifier',
@@ -450,6 +453,7 @@ class PermissionCatalog
      */
     private const CONFIGURATION_QUARTS = [
         'settings.quarts.creer', 'settings.quarts.modifier', 'settings.quarts.supprimer',
+        'settings.regimes.creer', 'settings.regimes.modifier', 'settings.regimes.supprimer',
     ];
 
     /**
@@ -1358,6 +1362,9 @@ class PermissionCatalog
             'settings.quarts.creer' => ['manager'],
             'settings.quarts.modifier' => ['manager'],
             'settings.quarts.supprimer' => ['manager'],
+            'settings.regimes.creer' => ['manager'],
+            'settings.regimes.modifier' => ['manager'],
+            'settings.regimes.supprimer' => ['manager'],
 
             // ── Divers ──
             'test-popup.voir' => ['controller', 'manager'],

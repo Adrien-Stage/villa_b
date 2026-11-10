@@ -12,7 +12,7 @@ class ShiftAssignment extends Model
     // Effacé par un bouton « Supprimer », il passe par la corbeille.
     use \App\Models\Concerns\VaALaCorbeille;
 
-    protected $fillable = ['user_id', 'work_shift_id', 'department_id', 'date', 'assigned_by'];
+    protected $fillable = ['user_id', 'work_shift_id', 'department_id', 'date', 'assigned_by', 'source'];
 
     // « date » reste une chaîne AAAA-MM-JJ : un cast de date y ajouterait une
     // heure sous SQLite, et la date ne se comparerait plus à elle-même.

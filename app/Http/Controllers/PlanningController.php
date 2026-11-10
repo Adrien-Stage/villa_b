@@ -48,16 +48,20 @@ class PlanningController extends Controller
             ?? $visibles->firstWhere('id', $user->department_id)
             ?? $visibles->first();
 
+        $departement->load('workRegime');
         $affectations = $this->planning->semaine($departement, $lundi);
+        $personnel = $this->planning->personnel($departement);
+        $quarts = $this->planning->quartsDuDepartement($departement, $affectations, $personnel);
         $semaine = ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $lundi->toDateString())->first();
         $peutPlanifier = $this->planning->peutPlanifier($user, $departement, $lundi);
         $prochainLundi = PlanningService::lundi()->addWeek();
 
         return view('planning.index', $commun + [
             'departement' => $departement,
+            'regimeDepartement' => $departement->regimeEffectif(),
             'departements' => $visibles,
-            'quarts' => $this->planning->quarts(),
-            'personnel' => $this->planning->personnel($departement),
+            'quarts' => $quarts,
+            'personnel' => $personnel,
             // [date][quart] => affectations
             'grille' => $affectations->groupBy([fn ($a) => $a->jour()->toDateString(), 'work_shift_id']),
             'heures' => $affectations->groupBy('user_id')->map(fn ($quarts) => [
@@ -68,8 +72,9 @@ class PlanningController extends Controller
             'modifiee' => $this->planning->modifieeDepuisEnvoi($departement, $lundi, $semaine),
             'peutPlanifier' => $peutPlanifier,
             'enService' => $this->planning->enService([$departement->id]),
-            // Le dimanche, tant que la semaine suivante n'est pas envoyée.
+            // Le dimanche, tant que la semaine suivante n'est pas envoyée (hors services 100 % horaire fixe).
             'rappel' => CarbonImmutable::today()->isSunday()
+                && $this->planning->personnelEnQuarts($departement)->isNotEmpty()
                 && $this->planning->departementsPlanifiables($user)->contains('id', $departement->id)
                 && ! ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $prochainLundi->toDateString())->whereNotNull('published_at')->exists()
                     ? $prochainLundi : null,

@@ -623,7 +623,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/planning/recopier', [App\Http\Controllers\PlanningController::class, 'recopier'])->name('planning.recopier');
         Route::post('/planning/publier', [App\Http\Controllers\PlanningController::class, 'publier'])->name('planning.publier');
 
-        // Les quarts de l'hôtel, définis par la direction (Paramètres › Quarts).
+        // Les régimes et quarts de l'hôtel, définis par la direction (Paramètres › Horaires & quarts).
+        Route::post('/settings/regimes', [App\Http\Controllers\WorkRegimeController::class, 'store'])->name('settings.regimes.store');
+        Route::put('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'update'])->whereNumber('regime')->name('settings.regimes.update');
+        Route::delete('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'destroy'])->whereNumber('regime')->name('settings.regimes.destroy');
+
         Route::post('/settings/quarts', [App\Http\Controllers\WorkShiftController::class, 'store'])->name('settings.quarts.store');
         Route::put('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'update'])->whereNumber('quart')->name('settings.quarts.update');
         Route::delete('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'destroy'])->whereNumber('quart')->name('settings.quarts.destroy');

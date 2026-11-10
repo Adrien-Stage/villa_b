@@ -144,3 +144,110 @@
         padding-bottom: 8rem;
     }
 }
+
+/* Formulaires de régimes et horaires : accent-color natif + repli accessible */
+.regimes-form-scope {
+    accent-color: var(--color-primary);
+}
+
+.regimes-form-scope :where(input, select, button, summary):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.regimes-form-scope :where(input, select):user-invalid {
+    border-color: #dc2626;
+}
+
+.regimes-form-scope .wetchah-check {
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.regimes-form-scope .wetchah-check-input {
+    flex-shrink: 0;
+    inline-size: 1rem;
+    block-size: 1rem;
+}
+
+@media (pointer: coarse) {
+    .regimes-form-scope :where(input:not([type="checkbox"]):not([type="radio"]), select) {
+        font: inherit;
+        font-size: max(1rem, 1em);
+        min-block-size: 48px;
+    }
+
+    .regimes-form-scope :where(.wetchah-check, button[type="submit"]) {
+        min-block-size: 48px;
+    }
+}
+
+@supports not (accent-color: var(--color-primary)) {
+    .regimes-form-scope .wetchah-check-input {
+        position: absolute !important;
+        clip-path: inset(50%) !important;
+        overflow: hidden !important;
+        width: 1px !important;
+        height: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .regimes-form-scope .wetchah-check {
+        position: relative;
+        padding-inline-start: 2.1rem !important;
+    }
+
+    .regimes-form-scope .wetchah-check-input + span::before {
+        content: "";
+        position: absolute;
+        inset-inline-start: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        inline-size: 1.125rem;
+        block-size: 1.125rem;
+        border: 2px solid #767676;
+        background: #ffffff;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .regimes-form-scope input[type="checkbox"].wetchah-check-input + span::before {
+        border-radius: 0.25rem;
+    }
+
+    .regimes-form-scope input[type="radio"].wetchah-check-input + span::before {
+        border-radius: 9999px;
+    }
+
+    .regimes-form-scope .wetchah-check-input:focus-visible + span::before {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+
+    .regimes-form-scope .wetchah-check-input:checked + span::before {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    .regimes-form-scope input[type="checkbox"].wetchah-check-input:checked + span::after {
+        content: "✓";
+        position: absolute;
+        inset-inline-start: 0.84rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .regimes-form-scope input[type="radio"].wetchah-check-input:checked + span::before {
+        box-shadow: inset 0 0 0 3px #ffffff;
+    }
+}

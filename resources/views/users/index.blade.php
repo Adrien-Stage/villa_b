@@ -321,7 +321,7 @@
     </div>
 
     <div>
-        <label class="text-xs font-semibold text-primary">Département d'affectation</label>
+        <label for="create-user-dept-select" class="text-xs font-semibold text-primary">Département d'affectation</label>
         <select name="department_id" id="create-user-dept-select"
                 onchange="onUserDepartmentSelect(this.value, 'create')"
                 class="mt-1 w-full px-3 py-2 text-sm border @error('department_id') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none bg-white">
@@ -334,7 +334,26 @@
             <p class="text-[11px] text-red-600 font-medium mt-1">{{ $message }}</p>
         @enderror
         <p class="text-[11px] text-primary/50 mt-1">
-            ⭐ Sélectionner un département pré-coche automatiquement ses rôles & modules ci-dessous.
+            ⭐ Sélectionner un département pré-coche automatiquement ses rôles &amp; modules ci-dessous.
+        </p>
+    </div>
+
+    <div>
+        <label for="create-user-regime-select" class="text-xs font-semibold text-primary">Régime horaire <span class="font-normal text-primary/55">(optionnel — exception individuelle)</span></label>
+        <select name="work_regime_id" id="create-user-regime-select"
+                class="mt-1 w-full px-3 py-2 text-sm border @error('work_regime_id') border-red-500 bg-red-50/20 @else border-secondary/30 @enderror rounded-lg focus:border-secondary outline-none bg-white">
+            <option value="">— Suivre le régime du département —</option>
+            @foreach(($workRegimes ?? collect()) as $regime)
+                <option value="{{ $regime->id }}" @selected((string) old('work_regime_id') === (string) $regime->id)>
+                    {{ $regime->name }} ({{ $regime->estFixe() ? 'Fixe · ' . $regime->workingDaysLabel() : 'Quarts' }})
+                </option>
+            @endforeach
+        </select>
+        @error('work_regime_id')
+            <p class="text-[11px] text-red-600 font-medium mt-1">{{ $message }}</p>
+        @enderror
+        <p data-regime-hint-context="create" class="text-[11px] text-primary/50 mt-1">
+            Par défaut : régime du département choisi.
         </p>
     </div>
 

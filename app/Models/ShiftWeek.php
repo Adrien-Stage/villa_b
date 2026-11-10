@@ -11,12 +11,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ShiftWeek extends Model
 {
-    protected $fillable = ['department_id', 'week_start', 'published_at', 'published_by', 'sent'];
+    protected $fillable = ['department_id', 'week_start', 'published_at', 'published_by', 'sent', 'autofilled_users', 'autofilled_at'];
 
     // « week_start » reste une chaîne AAAA-MM-JJ (lundi), comme ShiftAssignment::date.
     protected $casts = [
-        'published_at' => 'datetime',
-        'sent' => 'array',
+        'published_at'     => 'datetime',
+        'autofilled_at'    => 'datetime',
+        'sent'             => 'array',
+        'autofilled_users' => 'array',
     ];
 
     public function department(): BelongsTo

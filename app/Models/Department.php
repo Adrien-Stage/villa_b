@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
@@ -25,12 +26,33 @@ class Department extends Model
         'accent',
         'sort_order',
         'is_active',
+        'work_regime_id',
     ];
 
     protected $casts = [
-        'is_active'   => 'boolean',
-        'sort_order'  => 'integer',
+        'is_active'      => 'boolean',
+        'sort_order'     => 'integer',
+        'work_regime_id' => 'integer',
     ];
+
+    public function workRegime(): BelongsTo
+    {
+        return $this->belongsTo(WorkRegime::class, 'work_regime_id');
+    }
+
+    /** Régime horaire effectif du service (son régime actif, sinon le défaut de l'hôtel). */
+    public function regimeEffectif(): ?WorkRegime
+    {
+        $propre = $this->relationLoaded('workRegime')
+            ? $this->workRegime
+            : ($this->work_regime_id ? $this->workRegime()->first() : null);
+
+        if ($propre !== null && $propre->is_active) {
+            return $propre;
+        }
+
+        return WorkRegime::defaut();
+    }
 
     /**
      * Employés rattachés à ce département.

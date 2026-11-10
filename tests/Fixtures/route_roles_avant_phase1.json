@@ -2998,6 +2998,18 @@
   "admin",
   "manager"
  ],
+ "settings.regimes.destroy": [
+  "admin",
+  "manager"
+ ],
+ "settings.regimes.store": [
+  "admin",
+  "manager"
+ ],
+ "settings.regimes.update": [
+  "admin",
+  "manager"
+ ],
  "settings.services.destroy": [
   "admin",
   "finance_manager",

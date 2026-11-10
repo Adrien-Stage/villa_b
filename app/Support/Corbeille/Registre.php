@@ -52,6 +52,7 @@ final class Registre
         'restaurant_stock_counts'     => ['Comptage du restaurant', 'restaurant'],
         'shop_products'               => ['Produit de la boutique', 'boutique'],
         'expenses'                    => ['Dépense', 'comptabilite'],
+        'work_regimes'                => ['Régime horaire', 'planning'],
         'work_shifts'                 => ['Quart de travail', 'planning'],
         'shift_assignments'           => ['Affectation au planning', 'planning'],
         'departments'                 => ['Département', 'personnel'],
