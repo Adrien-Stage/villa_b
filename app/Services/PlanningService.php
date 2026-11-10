@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftWeek;
 use App\Models\User;
+use App\Models\WorkRegime;
 use App\Models\WorkShift;
 use App\Notifications\ShiftPlanningPublished;
 use Carbon\CarbonImmutable;
@@ -57,6 +58,44 @@ class PlanningService
     }
 
     /**
+     * Plages horaires visibles dans la grille d'un service : celles de son
+     * régime effectif, celles des régimes individuels de son personnel, et
+     * toute plage déjà planifiée cette semaine-là.
+     *
+     * @param  Collection<int, ShiftAssignment>|null  $affectations
+     * @param  Collection<int, User>|null  $personnel
+     * @return Collection<int, WorkShift>
+     */
+    public function quartsDuDepartement(Department $departement, ?Collection $affectations = null, ?Collection $personnel = null): Collection
+    {
+        $departement->loadMissing('workRegime');
+        $personnel ??= $this->personnel($departement);
+
+        $regimeIds = collect([$departement->regimeEffectif()?->id])
+            ->merge($personnel->map(fn (User $u) => $u->regimeEffectif()?->id))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $quartIds = $regimeIds !== []
+            ? WorkShift::query()->active()->whereIn('work_regime_id', $regimeIds)->pluck('id')
+            : collect();
+
+        if ($affectations !== null && $affectations->isNotEmpty()) {
+            $quartIds = $quartIds->merge($affectations->pluck('work_shift_id'));
+        }
+
+        $ids = $quartIds->filter()->unique()->values()->all();
+
+        if ($ids === []) {
+            return collect();
+        }
+
+        return WorkShift::query()->whereIn('id', $ids)->dansLOrdre()->get();
+    }
+
+    /**
      * Services que cette personne planifie : tous pour la direction, le sien
      * pour un chef. Un chef sans département n'en planifie aucun.
      *
@@ -101,15 +140,26 @@ class PlanningService
     public function personnel(Department $departement): Collection
     {
         return User::query()->active()
+            ->with(['workRegime', 'department.workRegime'])
             ->where('department_id', $departement->id)
             ->whereDoesntHave('roles', fn ($q) => $q->whereIn('slug', ['admin', 'support']))
             ->orderBy('name')
             ->get();
     }
 
+    /** @return Collection<int, User> les membres du service travaillant par quarts (non fixes) */
+    public function personnelEnQuarts(Department $departement): Collection
+    {
+        return $this->personnel($departement)
+            ->filter(fn (User $u) => ! ($u->regimeEffectif()?->estFixe() ?? false))
+            ->values();
+    }
+
     /** @return Collection<int, ShiftAssignment> les quarts d'un service sur la semaine */
     public function semaine(Department $departement, CarbonImmutable $lundi): Collection
     {
+        $this->assurerPreRemplissage($departement, $lundi);
+
         return ShiftAssignment::query()
             ->with(['user:id,name', 'shift'])
             ->where('department_id', $departement->id)
@@ -122,6 +172,11 @@ class PlanningService
     /** @return Collection<int, ShiftAssignment> les quarts d'une personne sur la semaine */
     public function semaineDe(User $user, CarbonImmutable $lundi): Collection
     {
+        $user->loadMissing(['workRegime', 'department.workRegime']);
+        if ($user->department !== null && $user->regimeEffectif()?->estFixe()) {
+            $this->assurerPreRemplissage($user->department, $lundi);
+        }
+
         return ShiftAssignment::query()
             ->with(['shift', 'department:id,name'])
             ->where('user_id', $user->id)
@@ -146,7 +201,7 @@ class PlanningService
 
         return ShiftAssignment::firstOrCreate(
             ['user_id' => $employe->id, 'date' => $jour->toDateString(), 'work_shift_id' => $quart->id],
-            ['department_id' => $departement->id, 'assigned_by' => $par->id]
+            ['department_id' => $departement->id, 'assigned_by' => $par->id, 'source' => 'manual']
         );
     }
 
@@ -172,7 +227,7 @@ class PlanningService
         $this->exigerDePouvoirPlanifier($par, $departement, $lundi);
 
         $personnel = $this->personnel($departement)->pluck('id')->all();
-        $quarts = $this->quarts()->pluck('id')->all();
+        $quarts = $this->quartsDuDepartement($departement)->where('is_active', true)->pluck('id')->all();
         $ajoutes = 0;
 
         DB::transaction(function () use ($departement, $lundi, $personnel, $quarts, $par, &$ajoutes) {
@@ -183,7 +238,7 @@ class PlanningService
 
                 $copie = ShiftAssignment::firstOrCreate(
                     ['user_id' => $precedente->user_id, 'date' => $precedente->jour()->addWeek()->toDateString(), 'work_shift_id' => $precedente->work_shift_id],
-                    ['department_id' => $departement->id, 'assigned_by' => $par->id]
+                    ['department_id' => $departement->id, 'assigned_by' => $par->id, 'source' => 'manual']
                 );
                 $ajoutes += $copie->wasRecentlyCreated ? 1 : 0;
             }
@@ -256,6 +311,25 @@ class PlanningService
     {
         $instant ??= CarbonImmutable::now();
 
+        $lundiCourant = self::lundi();
+        $lundis = collect([self::lundi($instant), self::lundi($instant->subDay())])
+            ->unique(fn (CarbonImmutable $d) => $d->toDateString())
+            ->filter(fn (CarbonImmutable $d) => $d->greaterThanOrEqualTo($lundiCourant));
+
+        if ($lundis->isNotEmpty()) {
+            $cibles = Department::query()
+                ->where('is_active', true)
+                ->when($departements !== null, fn ($q) => $q->whereIn('id', $departements))
+                ->with('workRegime')
+                ->get();
+
+            foreach ($cibles as $dept) {
+                foreach ($lundis as $lundi) {
+                    $this->assurerPreRemplissage($dept, $lundi);
+                }
+            }
+        }
+
         return ShiftAssignment::query()
             ->with(['user:id,name', 'shift', 'department:id,name'])
             ->whereBetween('date', [$instant->subDay()->toDateString(), $instant->toDateString()])
@@ -271,6 +345,16 @@ class PlanningService
     {
         $instant ??= CarbonImmutable::now();
 
+        $user->loadMissing(['workRegime', 'department.workRegime']);
+        if ($user->department !== null && $user->regimeEffectif()?->estFixe()) {
+            $lundiCourant = self::lundi();
+            foreach ([self::lundi($instant), self::lundi($instant)->addWeek(), self::lundi($instant)->addWeeks(2)] as $lundi) {
+                if ($lundi->greaterThanOrEqualTo($lundiCourant)) {
+                    $this->assurerPreRemplissage($user->department, $lundi);
+                }
+            }
+        }
+
         return ShiftAssignment::query()
             ->with('shift')
             ->where('user_id', $user->id)
@@ -282,8 +366,9 @@ class PlanningService
     }
 
     /**
-     * Les services dont la semaine suivante n'est pas encore envoyée, avec
-     * ceux qui doivent la programmer.
+     * Les services en quarts dont la semaine suivante n'est pas encore envoyée,
+     * avec ceux qui doivent la programmer. Les services exclusivement en horaire
+     * fixe se pré-remplissent d'office et ne nécessitent pas ce rappel.
      *
      * @return Collection<int, array{departement: Department, chefs: Collection<int, User>}>
      */
@@ -291,11 +376,193 @@ class PlanningService
     {
         $envoyees = ShiftWeek::query()->where('week_start', $lundi->toDateString())->whereNotNull('published_at')->pluck('department_id')->all();
 
-        return Department::query()->where('is_active', true)->whereNotIn('id', $envoyees)->get()
-            ->filter(fn (Department $d) => $this->personnel($d)->isNotEmpty())
+        return Department::query()->where('is_active', true)->whereNotIn('id', $envoyees)->with('workRegime')->get()
+            ->filter(fn (Department $d) => $this->personnelEnQuarts($d)->isNotEmpty())
             ->map(fn (Department $d) => ['departement' => $d, 'chefs' => $this->chefsDe($d)])
             ->filter(fn (array $a) => $a['chefs']->isNotEmpty())
             ->values();
+    }
+
+    /**
+     * Pré-remplit les plages des collaborateurs en horaire fixe pour une
+     * semaine en cours ou future. Chaque personne n'est pré-remplie qu'une
+     * fois par semaine : une suppression ou modification manuelle reste respectée.
+     */
+    public function assurerPreRemplissage(Department $departement, CarbonImmutable $lundi): void
+    {
+        if ($lundi->lessThan(self::lundi())) {
+            return;
+        }
+
+        $fixes = $this->personnel($departement)
+            ->filter(fn (User $u) => $u->regimeEffectif()?->estFixe() ?? false);
+
+        if ($fixes->isEmpty()) {
+            return;
+        }
+
+        $semaine = ShiftWeek::query()
+            ->where('department_id', $departement->id)
+            ->where('week_start', $lundi->toDateString())
+            ->first();
+
+        $dejaPreRemplis = array_map('intval', $semaine?->autofilled_users ?? []);
+        $aTraiter = $fixes->filter(fn (User $u) => ! in_array((int) $u->id, $dejaPreRemplis, true));
+
+        if ($aTraiter->isEmpty()) {
+            return;
+        }
+
+        $regimeIds = $aTraiter->map(fn (User $u) => $u->regimeEffectif()?->id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $plagesParRegime = WorkShift::query()
+            ->active()
+            ->whereIn('work_regime_id', $regimeIds)
+            ->dansLOrdre()
+            ->get()
+            ->groupBy('work_regime_id');
+
+        $jours = self::jours($lundi);
+
+        DB::transaction(function () use ($departement, $lundi, $aTraiter, $plagesParRegime, $jours) {
+            $semaine = ShiftWeek::firstOrCreate([
+                'department_id' => $departement->id,
+                'week_start'    => $lundi->toDateString(),
+            ]);
+
+            $dejaPreRemplis = array_map('intval', $semaine->autofilled_users ?? []);
+            $nouveaux = [];
+
+            foreach ($aTraiter as $employe) {
+                if (in_array((int) $employe->id, $dejaPreRemplis, true)) {
+                    continue;
+                }
+
+                $regime = $employe->regimeEffectif();
+                if ($regime === null || ! $regime->estFixe()) {
+                    continue;
+                }
+
+                $joursOuvres = $regime->joursTravailles();
+                $plages = $plagesParRegime->get($regime->id, collect());
+
+                if ($joursOuvres !== [] && $plages->isNotEmpty()) {
+                    foreach ($jours as $jour) {
+                        if (! in_array($jour->dayOfWeekIso, $joursOuvres, true)) {
+                            continue;
+                        }
+
+                        foreach ($plages as $quart) {
+                            ShiftAssignment::firstOrCreate(
+                                [
+                                    'user_id'       => $employe->id,
+                                    'date'          => $jour->toDateString(),
+                                    'work_shift_id' => $quart->id,
+                                ],
+                                [
+                                    'department_id' => $departement->id,
+                                    'assigned_by'   => null,
+                                    'source'        => 'auto',
+                                ]
+                            );
+                        }
+                    }
+                }
+
+                $nouveaux[] = (int) $employe->id;
+            }
+
+            if ($nouveaux !== []) {
+                $semaine->forceFill([
+                    'autofilled_users' => array_values(array_unique(array_merge($dejaPreRemplis, $nouveaux))),
+                    'autofilled_at'    => now(),
+                ])->save();
+            }
+        });
+    }
+
+    /**
+     * Lorsqu'un régime, une affectation de service ou une exception individuelle
+     * change, purge les créneaux pré-remplis automatiquement à compter
+     * d'aujourd'hui pour les personnes concernées (les retouches manuelles
+     * restent intactes) et autorise le recalcul des semaines en cours et futures.
+     */
+    public function invaliderPreRemplissageFutur(?Department $departement = null, ?User $user = null, ?WorkRegime $regime = null): void
+    {
+        $aujourdhui = CarbonImmutable::today();
+        $lundiCourant = self::lundi($aujourdhui)->toDateString();
+        $aPartirDe = $aujourdhui->toDateString();
+
+        $userIds = collect();
+
+        if ($user !== null) {
+            $userIds->push((int) $user->id);
+        }
+
+        if ($departement !== null) {
+            $userIds = $userIds->merge(
+                User::query()->where('department_id', $departement->id)->pluck('id')
+            )->merge(
+                ShiftAssignment::query()
+                    ->where('department_id', $departement->id)
+                    ->where('date', '>=', $aPartirDe)
+                    ->where('source', 'auto')
+                    ->pluck('user_id')
+            );
+        }
+
+        if ($regime !== null) {
+            $deptIds = Department::query()->where('work_regime_id', $regime->id)->pluck('id');
+            if ($regime->is_default) {
+                $deptIds = $deptIds->merge(Department::query()->whereNull('work_regime_id')->pluck('id'));
+            }
+            $deptIds = $deptIds->unique()->values();
+
+            $shiftIds = WorkShift::query()->where('work_regime_id', $regime->id)->pluck('id');
+
+            $userIds = $userIds
+                ->merge(User::query()->where('work_regime_id', $regime->id)->pluck('id'))
+                ->when($deptIds->isNotEmpty(), fn ($c) => $c->merge(User::query()->whereIn('department_id', $deptIds)->pluck('id')))
+                ->when($shiftIds->isNotEmpty(), fn ($c) => $c->merge(
+                    ShiftAssignment::query()
+                        ->whereIn('work_shift_id', $shiftIds)
+                        ->where('date', '>=', $aPartirDe)
+                        ->where('source', 'auto')
+                        ->pluck('user_id')
+                ));
+        }
+
+        $cibles = $userIds->map(fn ($id) => (int) $id)->filter()->unique()->values()->all();
+
+        if ($cibles === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($cibles, $aPartirDe, $lundiCourant) {
+            ShiftAssignment::query()
+                ->whereIn('user_id', $cibles)
+                ->where('date', '>=', $aPartirDe)
+                ->where('source', 'auto')
+                ->delete();
+
+            $semaines = ShiftWeek::query()
+                ->where('week_start', '>=', $lundiCourant)
+                ->whereNotNull('autofilled_users')
+                ->get();
+
+            foreach ($semaines as $semaine) {
+                $avant = array_map('intval', $semaine->autofilled_users ?? []);
+                $apres = array_values(array_diff($avant, $cibles));
+
+                if ($apres !== $avant) {
+                    $semaine->forceFill(['autofilled_users' => $apres === [] ? null : $apres])->save();
+                }
+            }
+        });
     }
 
     /**

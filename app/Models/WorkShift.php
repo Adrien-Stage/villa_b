@@ -6,26 +6,33 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Un quart de travail de l'hôtel : « Jour, 07:00 – 19:00 ».
+ * Une plage ou un quart de travail d'un régime horaire (« Jour, 07:00 – 19:00 »,
+ * « Journée, 08:00 – 17:00 », « Quart Matin, 08:00 – 15:00 »…).
  *
- * Défini par la direction pour tout l'établissement. Un quart dont la fin
- * précède le début traverse minuit : il commence un jour et finit le
- * lendemain.
+ * Un quart dont la fin précède le début traverse minuit : il commence un jour
+ * et finit le lendemain.
  */
 class WorkShift extends Model
 {
     // Effacé par un bouton « Supprimer », il passe par la corbeille.
     use \App\Models\Concerns\VaALaCorbeille;
 
-    protected $fillable = ['name', 'starts_at', 'ends_at', 'sort_order', 'is_active'];
+    protected $fillable = ['work_regime_id', 'name', 'starts_at', 'ends_at', 'sort_order', 'is_active'];
 
     protected $casts = [
-        'sort_order' => 'integer',
-        'is_active' => 'boolean',
+        'work_regime_id' => 'integer',
+        'sort_order'     => 'integer',
+        'is_active'      => 'boolean',
     ];
+
+    public function regime(): BelongsTo
+    {
+        return $this->belongsTo(WorkRegime::class, 'work_regime_id');
+    }
 
     public function assignments(): HasMany
     {

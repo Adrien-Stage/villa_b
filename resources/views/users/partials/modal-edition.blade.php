@@ -49,6 +49,23 @@
         </select>
     </div>
 
+    @php $regimeDeptDefaut = $staff->department?->regimeEffectif(); @endphp
+    <div>
+        <label for="edit-{{ $staff->id }}-regime" class="text-xs font-semibold text-primary">Régime horaire <span class="font-normal text-primary/55">(optionnel — exception individuelle)</span></label>
+        <select id="edit-{{ $staff->id }}-regime" name="work_regime_id"
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none bg-white">
+            <option value="">— Suivre le régime du département —</option>
+            @foreach(($workRegimes ?? collect()) as $regime)
+                <option value="{{ $regime->id }}" @selected((string) $valeur('work_regime_id', $staff->work_regime_id) === (string) $regime->id)>
+                    {{ $regime->name }} ({{ $regime->estFixe() ? 'Fixe · ' . $regime->workingDaysLabel() : 'Quarts' }})
+                </option>
+            @endforeach
+        </select>
+        <p data-regime-hint-context="{{ $contexteEdition }}" class="mt-1 text-[11px] text-primary/50">
+            {{ $regimeDeptDefaut ? 'Par défaut avec ce département : ' . $regimeDeptDefaut->name . '.' : 'Par défaut : régime général de l\'établissement.' }}
+        </p>
+    </div>
+
     @include('users.partials.restaurants', ['contexte' => $contexteEdition, 'departements' => $departments, 'personne' => $staff])
 
     <div>

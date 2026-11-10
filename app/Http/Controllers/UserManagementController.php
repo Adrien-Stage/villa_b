@@ -6,7 +6,9 @@ use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\WorkRegime;
 use App\Services\MailNotificationService;
+use App\Services\PlanningService;
 use App\Support\DutySegregation;
 use App\Support\RoleCatalog;
 use Illuminate\Http\RedirectResponse;
@@ -63,24 +65,30 @@ class UserManagementController extends Controller
     private function donneesDuFormulaire(): array
     {
         $assignableRoles = $this->assignableRoles();
-        $departments = Department::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $departments = Department::where('is_active', true)->with('workRegime')->orderBy('sort_order')->orderBy('name')->get();
+        $workRegimes = WorkRegime::query()->active()->dansLOrdre()->with(['shifts' => fn ($q) => $q->active()])->get();
 
         $deptMap = [];
         foreach ($departments as $dept) {
             $resolved = $dept->resolveMatchingRoles($assignableRoles);
+            $regime = $dept->regimeEffectif();
             $deptMap[$dept->id] = [
-                'id'     => $dept->id,
-                'name'   => $dept->name,
-                'code'   => $dept->code,
-                'roles'  => $resolved['roles'],
-                'levels' => $resolved['levels'],
+                'id'          => $dept->id,
+                'name'        => $dept->name,
+                'code'        => $dept->code,
+                'roles'       => $resolved['roles'],
+                'levels'      => $resolved['levels'],
                 // Le formulaire demande alors le restaurant d'affectation.
                 'restauration' => $dept->estLaRestauration(),
+                'regime_id'    => $regime?->id,
+                'regime_name'  => $regime?->name,
+                'regime_mode'  => $regime?->mode,
             ];
         }
 
         return [
             'departments' => $departments,
+            'workRegimes' => $workRegimes,
             'deptMap' => $deptMap,
             'roles' => $assignableRoles,
             // Regroupés par module pour l'affichage en cartes du formulaire.
@@ -104,7 +112,7 @@ class UserManagementController extends Controller
             ->tap(fn ($q) => \App\Support\DepartmentScoping::apply(
                 $q, Auth::user(), 'users.voir', 'department_id', 'id'
             ))
-            ->with(['roles', 'department', 'restaurants:id']);
+            ->with(['roles', 'department.workRegime', 'workRegime', 'restaurants:id']);
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -155,7 +163,7 @@ class UserManagementController extends Controller
             ->exists();
         abort_unless($visible, 404);
 
-        $user->load(['roles', 'department']);
+        $user->load(['roles', 'department.workRegime', 'workRegime']);
         $resolveur = app(\App\Services\PermissionResolver::class);
         $catalogue = array_keys(\App\Support\PermissionCatalog::all());
 
@@ -221,6 +229,7 @@ class UserManagementController extends Controller
                 'email' => strtolower($validated['email']),
                 'phone' => $validated['phone'] ?? null,
                 'department_id' => $validated['department_id'] ?? null,
+                'work_regime_id' => $validated['work_regime_id'] ?? null,
                 'is_active' => $request->boolean('is_active', true),
                 'must_change_password' => true,
                 'password' => Hash::make($defaultPassword),
@@ -235,6 +244,8 @@ class UserManagementController extends Controller
 
             return $user;
         });
+
+        app(PlanningService::class)->invaliderPreRemplissageFutur(user: $user);
 
         // Envoi du mail de bienvenue avec identifiants et mot de passe par défaut
         $mailSent = app(MailNotificationService::class)->sendWelcomeNotification($user, $defaultPassword);
@@ -278,6 +289,10 @@ class UserManagementController extends Controller
                 'is_active' => $request->boolean('is_active'),
             ];
 
+            if (array_key_exists('work_regime_id', $validated)) {
+                $payload['work_regime_id'] = $validated['work_regime_id'] ?: null;
+            }
+
             $user->update($payload);
             $this->syncUserRoles($user, $roleSlugs, $levels);
             $this->syncRestaurants($user->fresh(), $validated, $roleSlugs);
@@ -286,6 +301,8 @@ class UserManagementController extends Controller
                 "Modification de l'utilisateur {$user->name} ({$user->email}) — rôles : ".implode(', ', $roleSlugs),
                 'users', ['target_user_id' => $user->id, 'roles' => $roleSlugs, 'restaurants' => $user->restaurants()->pluck('points_of_sale.id')->all()]);
         });
+
+        app(PlanningService::class)->invaliderPreRemplissageFutur(user: $user);
 
         return $this->retour($request, $user)->with('success', 'Profil staff mis à jour avec succès.');
     }
@@ -315,6 +332,8 @@ class UserManagementController extends Controller
                 "Le compte de {$user->name} ({$user->email}) a été {$statusStr}",
                 'users', ['target_user_id' => $user->id, 'is_active' => $user->is_active]);
         });
+
+        app(PlanningService::class)->invaliderPreRemplissageFutur(user: $user);
 
         return $this->retour($request, $user)
             ->with('success', $user->is_active ? 'Compte staff réactivé.' : 'Compte staff désactivé.');
@@ -432,6 +451,7 @@ class UserManagementController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'work_regime_id' => ['nullable', 'integer', Rule::exists('work_regimes', 'id')->where('is_active', true)],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => [Rule::in($assignableSlugs)],
             // Niveau par rôle : lecture ou lecture/écriture.
@@ -458,6 +478,7 @@ class UserManagementController extends Controller
             'email.email' => 'Veuillez saisir une adresse e-mail valide (ex: collaborateur@entreprise.com).',
             'email.unique' => 'Cette adresse e-mail est déjà attribuée à un compte existant.',
             'department_id.exists' => 'Le département sélectionné est invalide.',
+            'work_regime_id.exists' => 'Le régime horaire sélectionné est invalide ou hors service.',
             'roles.required' => 'Veuillez sélectionner au moins un rôle ou choisir un département.',
             'roles.min' => 'Veuillez sélectionner au moins un rôle.',
             'roles.*.in' => 'L\'un des rôles sélectionnés n\'est pas autorisé.',

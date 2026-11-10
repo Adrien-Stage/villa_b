@@ -9,6 +9,14 @@ const deptDataMap = @json($deptMap);
 window.onUserDepartmentSelect = function(deptId, context) {
     const dept = deptDataMap[deptId];
 
+    // Met à jour l'indice du régime horaire hérité du département choisi.
+    const hint = document.querySelector(`[data-regime-hint-context="${context}"]`);
+    if (hint) {
+        hint.textContent = dept && dept.regime_name
+            ? `Par défaut avec ce département : ${dept.regime_name}.`
+            : 'Par défaut : régime général de l\'établissement.';
+    }
+
     // La restauration demande le restaurant d'affectation ; les autres non.
     window.dispatchEvent(new CustomEvent('department-changed', {
         detail: { context: context, restauration: Boolean(dept && dept.restauration) }

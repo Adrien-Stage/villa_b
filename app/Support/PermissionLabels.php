@@ -143,6 +143,7 @@ class PermissionLabels
         'droits' => 'administration',
         'settings' => 'administration',
         'settings.quarts' => 'administration',
+        'settings.regimes' => 'administration',
         'audit' => 'administration',
         'interventions' => 'administration',
         'support' => 'administration',
@@ -577,6 +578,9 @@ class PermissionLabels
         'settings.quarts.creer' => ['Quarts de travail', 'Créer'],
         'settings.quarts.modifier' => ['Quarts de travail', 'Modifier'],
         'settings.quarts.supprimer' => ['Quarts de travail', 'Supprimer'],
+        'settings.regimes.creer' => ['Régimes horaires', 'Créer'],
+        'settings.regimes.modifier' => ['Régimes horaires', 'Modifier'],
+        'settings.regimes.supprimer' => ['Régimes horaires', 'Supprimer'],
 
         // ── Boutique ──
         'shop.products.voir' => ['Produits', 'Consulter'],

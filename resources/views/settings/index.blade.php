@@ -155,7 +155,7 @@
                 class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       {{ $tab === 'quarts' ? 'border-primary text-primary' : 'border-transparent text-primary/40 hover:text-primary/70' }}">
                 <i data-lucide="clock" class="w-4 h-4"></i>
-                Quarts
+                Horaires &amp; quarts
             </a>
         @endif
 

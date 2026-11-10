@@ -40,6 +40,7 @@ class User extends Authenticatable
         'password',
         'role',
         'department_id',
+        'work_regime_id',
         'phone',
         'is_active',
         'must_change_password',
@@ -71,6 +72,35 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /** Exception individuelle : régime horaire attribué à ce collaborateur. */
+    public function workRegime(): BelongsTo
+    {
+        return $this->belongsTo(WorkRegime::class, 'work_regime_id');
+    }
+
+    /** Régime horaire effectif : exception individuelle active, sinon celui du département. */
+    public function regimeEffectif(): ?WorkRegime
+    {
+        $propre = $this->relationLoaded('workRegime')
+            ? $this->workRegime
+            : ($this->work_regime_id ? $this->workRegime()->first() : null);
+
+        if ($propre !== null && $propre->is_active) {
+            return $propre;
+        }
+
+        $dept = $this->relationLoaded('department')
+            ? $this->department
+            : ($this->department_id ? $this->department()->first() : null);
+
+        return $dept?->regimeEffectif() ?? WorkRegime::defaut();
+    }
+
+    public function regimeEstDeroge(): bool
+    {
+        return $this->work_regime_id !== null;
     }
 
     /**

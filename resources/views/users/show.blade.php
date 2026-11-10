@@ -224,7 +224,22 @@
     <div class="space-y-5">
         <section class="rounded-xl bg-white p-5 shadow-sm">
             <h2 class="font-heading text-lg font-semibold text-primary">Périmètre</h2>
+            @php $regimeMembre = $membre->regimeEffectif(); @endphp
             <dl class="mt-3 space-y-1 text-xs">
+                @if($regimeMembre)
+                    <div class="flex justify-between gap-2">
+                        <dt class="text-primary/60">Régime horaire</dt>
+                        <dd class="text-right text-primary">
+                            {{ $regimeMembre->name }}
+                            <span class="block text-[10px] text-primary/50">
+                                {{ $membre->regimeEstDeroge() ? 'Exception individuelle' : 'Régime du service' }}
+                                @if($regimeMembre->estFixe())
+                                    · {{ $regimeMembre->workingDaysLabel() }}
+                                @endif
+                            </span>
+                        </dd>
+                    </div>
+                @endif
                 @foreach($portees as $droit => $libelle)
                     <div class="flex justify-between gap-2"><dt class="text-primary/60" title="{{ $droit }}">{{ \App\Support\PermissionLabels::ecran($droit) }}</dt><dd class="text-right text-primary">{{ $libelle }}</dd></div>
                 @endforeach
