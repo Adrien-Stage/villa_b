@@ -215,3 +215,55 @@ test('l\'affectation de chambres à une équipe s\'enregistre et se journalise s
         ->and(HousekeepingLog::where('room_id', $room2->id)->where('action', HousekeepingLog::ASSIGNED)->exists())->toBeTrue();
 });
 
+test('la page housekeeping s’affiche sans erreur 500 pour tout l’encadrement avec pipeline et incidents', function () {
+    $dirtyRoom = hkSetup();
+    activerModules(['housekeeping', 'technique']);
+    \App\Support\RoleCatalog::sync();
+
+    $chief = User::factory()->create(['role' => 'housekeeping_leader']);
+    $team  = hkTeamWithAssignment($dirtyRoom, $chief, [], 'pending');
+    $dirtyRoom->update(['status' => RoomStatus::DIRTY]);
+
+    $otherRooms = Room::where('id', '!=', $dirtyRoom->id)->take(3)->get();
+    $otherRooms[0]->update(['status' => RoomStatus::CLEANING]);
+    $otherRooms[1]->update(['status' => RoomStatus::CLEAN]);
+    $otherRooms[2]->update(['status' => RoomStatus::MAINTENANCE]);
+
+    $blockedAssignment = HousekeepingAssignment::create([
+        'housekeeping_team_id' => $team->id,
+        'room_id'              => $otherRooms[2]->id,
+        'assigned_by'          => $chief->id,
+        'reported_by'          => $chief->id,
+        'reported_at'          => now(),
+        'status'               => 'blocked',
+        'issue_type'           => HousekeepingAssignment::ISSUE_TECHNIQUE,
+        'issue_notes'          => 'Fuite climatisation signalée',
+        'assigned_at'          => now(),
+    ]);
+
+    $maintenance = \App\Models\MaintenanceRequest::create([
+        'reference'                  => 'DIT-2026-0099',
+        'title'                      => 'Fuite climatisation',
+        'description'                => 'Fuite climatisation signalée',
+        'specialty'                  => 'climatisation',
+        'priority'                   => \App\Models\MaintenanceRequest::PRIORITY_HIGH,
+        'status'                     => \App\Models\MaintenanceRequest::STATUS_OPEN,
+        'source'                     => \App\Models\MaintenanceRequest::SOURCE_HOUSEKEEPING,
+        'department'                 => 'housekeeping',
+        'room_id'                    => $otherRooms[2]->id,
+        'housekeeping_assignment_id' => $blockedAssignment->id,
+        'requested_by'               => $chief->id,
+        'room_blocked'               => true,
+    ]);
+
+    foreach (['admin', 'manager', 'housekeeping_leader', 'housekeeping_supervisor'] as $role) {
+        $user = User::factory()->create(['role' => $role]);
+
+        $this->actingAs($user)->get(route('housekeeping.index'))
+            ->assertOk()
+            ->assertSee('Pipeline du cycle')
+            ->assertSee('Signalements & Maintenance', false)
+            ->assertSee($maintenance->reference);
+    }
+});
+

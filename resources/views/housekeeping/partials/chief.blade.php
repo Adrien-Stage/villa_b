@@ -228,7 +228,9 @@
                 class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
                 <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 <span>Signalements & Maintenance</span>
-                @php($totalIncidents = $blockedAssignments->count() + (isset($maintenanceRooms) ? $maintenanceRooms->count() : 0))
+                @php
+                    $totalIncidents = $blockedAssignments->count() + (isset($maintenanceRooms) ? $maintenanceRooms->count() : 0);
+                @endphp
                 @if($totalIncidents > 0)
                     <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
                         {{ $totalIncidents }}
@@ -808,7 +810,11 @@
                 </div>
                 <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                     @foreach($maintenanceRooms as $room)
-                        @php($techReq = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('room_id', $room->id)->active()->latest('id')->first() : null)
+                        @php
+                            $techReq = \App\Services\MaintenanceService::actif()
+                                ? \App\Models\MaintenanceRequest::where('room_id', $room->id)->active()->latest('id')->first()
+                                : null;
+                        @endphp
                         <div class="p-3.5 rounded-xl border border-red-200 bg-red-50/30 flex flex-col justify-between">
                             <div>
                                 <div class="flex items-start justify-between gap-2 mb-1.5">
@@ -898,7 +904,11 @@
                             @endif
 
                             {{-- Action B : Suivi technique ou transmission --}}
-                            @php($intervention = \App\Services\MaintenanceService::actif() ? \App\Models\MaintenanceRequest::where('housekeeping_assignment_id', $assignment->id)->latest('id')->first() : null)
+                            @php
+                                $intervention = \App\Services\MaintenanceService::actif()
+                                    ? \App\Models\MaintenanceRequest::where('housekeeping_assignment_id', $assignment->id)->latest('id')->first()
+                                    : null;
+                            @endphp
                             @if($intervention)
                                 <a href="{{ route('technique.demandes.show', $intervention) }}" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-50 text-orange-800 border border-orange-200 hover:bg-orange-100 transition">
                                     <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i>
