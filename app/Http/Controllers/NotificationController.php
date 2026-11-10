@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\NotificationUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,11 +17,17 @@ class NotificationController extends Controller
 
         $unreadNotifications = $user->unreadNotifications()->get();
 
-        $notificationsData = $unreadNotifications->map(function ($notification) {
+        $notificationsData = $unreadNotifications->map(function ($notification) use ($request) {
+            $data = is_array($notification->data) ? $notification->data : [];
+
+            if (array_key_exists('url', $data)) {
+                $data['url'] = NotificationUrl::toAppPath($data['url'], $request);
+            }
+
             return [
                 'id' => $notification->id,
                 'type' => $notification->type,
-                'data' => $notification->data,
+                'data' => $data,
                 'created_at' => $notification->created_at->diffForHumans(),
             ];
         });
@@ -39,11 +46,16 @@ class NotificationController extends Controller
         $notification = $user->notifications()->findOrFail($id);
         $notification->markAsRead();
 
+        $url = NotificationUrl::toAppPath($notification->data['url'] ?? null, $request)
+            ?? route('dashboard', [], false);
+
         if ($request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json([
+                'ok' => true,
+                'url' => $url,
+            ]);
         }
 
-        $url = $notification->data['url'] ?? route('dashboard');
         return redirect($url);
     }
 

@@ -26,9 +26,7 @@ class MinibarCheckRecorded extends Notification
 
     private function url(): string
     {
-        $base = rtrim((string) config('app.url'), '/');
-
-        return $this->check->booking_id ? "{$base}/bookings/{$this->check->booking_id}" : "{$base}/rooms";
+        return $this->check->booking_id ? "/bookings/{$this->check->booking_id}" : '/rooms';
     }
 
     private function message(): string

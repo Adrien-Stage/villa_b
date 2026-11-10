@@ -30,7 +30,7 @@ class HousekeepingRoomsAssigned extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/housekeeping';
+        return '/housekeeping';
     }
 
     private function summary(): string

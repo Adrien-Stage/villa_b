@@ -26,7 +26,7 @@ class ShopProductLowStock extends Notification
 
     private function url(): string
     {
-        return route('shop.products.index');
+        return route('shop.products.index', [], false);
     }
 
     private function isOutOfStock(): bool

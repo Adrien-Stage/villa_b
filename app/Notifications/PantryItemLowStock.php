@@ -26,7 +26,7 @@ class PantryItemLowStock extends Notification
 
     private function url(): string
     {
-        return route('restaurant.pantry.index');
+        return route('restaurant.pantry.index', [], false);
     }
 
     private function isOutOfStock(): bool

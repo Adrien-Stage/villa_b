@@ -25,7 +25,7 @@ class RestaurantOrderSentToKitchen extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/restaurant/kitchen';
+        return '/restaurant/kitchen';
     }
 
     private function table(): string
@@ -53,7 +53,7 @@ class RestaurantOrderSentToKitchen extends Notification
             'body' => "{$this->table()} · bon #{$this->order->id} à préparer",
             'url' => $this->url(),
             'tag' => 'resto-kitchen-' . $this->order->id,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

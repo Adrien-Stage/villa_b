@@ -44,7 +44,7 @@ class PurchaseRequestUpdated extends Notification
 
     private function url(): string
     {
-        return route('economat.purchase_requests.show', $this->request);
+        return route('economat.purchase_requests.show', $this->request, false);
     }
 
     private function headline(): string

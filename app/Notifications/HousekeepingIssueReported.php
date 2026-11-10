@@ -29,7 +29,7 @@ class HousekeepingIssueReported extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/housekeeping';
+        return '/housekeeping';
     }
 
     private function shortIssue(): string

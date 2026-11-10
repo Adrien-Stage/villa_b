@@ -39,7 +39,7 @@ class GeneralInventoryScheduled extends Notification
 
     private function url(): string
     {
-        return route('economat.count_sheets.index');
+        return route('economat.count_sheets.index', [], false);
     }
 
     public function toArray(object $notifiable): array

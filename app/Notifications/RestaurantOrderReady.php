@@ -25,7 +25,7 @@ class RestaurantOrderReady extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/restaurant/orders/' . $this->order->id;
+        return '/restaurant/orders/' . $this->order->id;
     }
 
     private function table(): string
@@ -50,7 +50,7 @@ class RestaurantOrderReady extends Notification
             'body' => "{$this->table()} · commande #{$this->order->id} prête",
             'url' => $this->url(),
             'tag' => 'resto-ready-' . $this->order->id,
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

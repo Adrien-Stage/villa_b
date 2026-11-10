@@ -26,7 +26,7 @@ class StockRequisitionSubmitted extends Notification
 
     private function url(): string
     {
-        return route('economat.requisitions.show', $this->requisition);
+        return route('economat.requisitions.show', $this->requisition, false);
     }
 
     public function toArray(object $notifiable): array

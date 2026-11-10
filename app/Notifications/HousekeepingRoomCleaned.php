@@ -28,7 +28,7 @@ class HousekeepingRoomCleaned extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . '/rooms';
+        return '/rooms';
     }
 
     private function message(): string

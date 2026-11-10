@@ -48,7 +48,7 @@ class ShiftPlanningPublished extends Notification
 
     private function url(): string
     {
-        return route('planning.index', ['semaine' => $this->lundi->toDateString()]);
+        return route('planning.index', ['semaine' => $this->lundi->toDateString()], false);
     }
 
     public function toArray(object $notifiable): array
@@ -67,7 +67,7 @@ class ShiftPlanningPublished extends Notification
             'body' => $this->detail(),
             'url' => $this->url(),
             'tag' => 'planning-' . $this->lundi->toDateString(),
-            'icon' => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon' => '/favicon.ico',
         ];
     }
 }

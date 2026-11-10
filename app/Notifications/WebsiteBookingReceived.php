@@ -39,10 +39,9 @@ class WebsiteBookingReceived extends Notification
             'room' => $room,
             'customer' => $customer !== '' ? $customer : 'Client',
             'dates' => $dates,
-            // URL absolue basée sur APP_URL (navigable) : la notification est
-            // créée pendant l'appel API venant du site (hostname interne
-            // Docker), donc route() y produirait une URL injoignable.
-            'url' => rtrim((string) config('app.url'), '/') . '/bookings/' . $this->booking->id,
+            // Chemin relatif : évite d'ancrer un hôte interne Docker ou une adresse
+            // locale (localhost / 127.0.0.1) inaccessible depuis les postes du réseau.
+            'url' => '/bookings/' . $this->booking->id,
         ];
     }
 
@@ -72,7 +71,7 @@ class WebsiteBookingReceived extends Notification
             'url'   => $url,
             'tag'   => 'web-booking-' . $this->booking->id,
             'requireInteraction' => true,
-            'icon'  => rtrim((string) config('app.url'), '/') . '/favicon.ico',
+            'icon'  => '/favicon.ico',
         ];
     }
 }

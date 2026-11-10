@@ -45,7 +45,7 @@ class ComplimentaryBookingApproved extends Notification
             'room_number' => $roomNumber,
             'title' => 'Réservation Offerte Validée',
             'message' => "La réservation offerte {$this->booking->booking_number} (Chambre {$roomNumber}) a été validée par le manager.",
-            'url' => route('bookings.show', $this->booking->id),
+            'url' => route('bookings.show', $this->booking->id, false),
         ];
     }
 }

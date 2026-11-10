@@ -25,7 +25,7 @@ class ShiftHandoverPending extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . "/bookings/passations/{$this->passation->id}/reprendre";
+        return "/bookings/passations/{$this->passation->id}/reprendre";
     }
 
     private function message(): string

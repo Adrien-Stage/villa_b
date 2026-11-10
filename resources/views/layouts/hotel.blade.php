@@ -1449,6 +1449,60 @@
         }
     };
 
+    window.resolveAppNotificationUrl = function(rawUrl) {
+        if (!rawUrl || typeof rawUrl !== 'string') return null;
+
+        const trimmed = rawUrl.trim();
+        if (!trimmed) return null;
+
+        // Chemin déjà relatif à l'application (hors //host protocol-relative).
+        if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+            return trimmed;
+        }
+
+        const isInternalHost = (rawHost) => {
+            const host = (rawHost || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+            const currentHost = (window.location.hostname || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+
+            if (!host || host === currentHost || host === 'localhost') return true;
+            if (!host.includes('.')) return true;
+            if (host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal') || host.endsWith('.lan') || host.endsWith('.home.arpa')) return true;
+
+            // Adresses IP privées / loopback / link-local (RFC1918, 127.0.0.0/8, ::1, fe80::…).
+            if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host)) return true;
+            if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+            if (host === '::1' || /^(fe80|fc[0-9a-f]{2}|fd[0-9a-f]{2}):/i.test(host)) return true;
+
+            return false;
+        };
+
+        try {
+            if (trimmed.startsWith('//')) {
+                const protoParsed = new URL('http:' + trimmed);
+                return isInternalHost(protoParsed.hostname)
+                    ? ((protoParsed.pathname || '/') + protoParsed.search + protoParsed.hash)
+                    : null;
+            }
+
+            if (!trimmed.includes('://') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+                return '/' + trimmed.replace(/^\/+/, '');
+            }
+
+            const parsed = new URL(trimmed, window.location.origin);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                return null;
+            }
+
+            if (isInternalHost(parsed.hostname)) {
+                return (parsed.pathname || '/') + parsed.search + parsed.hash;
+            }
+
+            return parsed.href;
+        } catch (e) {
+            return null;
+        }
+    };
+
     window.showSystemToast = function(title, message, onClickUrl = null) {
         const container = document.getElementById('system-toast-container');
         if (!container) return;
@@ -1468,8 +1522,11 @@
             </div>
         `;
 
-        if (onClickUrl) {
-            toast.addEventListener('click', () => window.location.href = onClickUrl);
+        const targetUrl = window.resolveAppNotificationUrl(onClickUrl);
+        if (targetUrl) {
+            toast.addEventListener('click', () => {
+                window.location.href = targetUrl;
+            });
         } else {
             toast.addEventListener('click', () => toast.remove());
         }
@@ -1514,7 +1571,7 @@
         const dot = document.getElementById('sidebar-discussions-dot');
         if (!dot) return;
 
-        const endpoint = '{{ route('discussions.unreadSummary') }}';
+        const endpoint = '{{ route('discussions.unreadSummary', [], false) }}';
         let previousTotalUnread = null;
 
         const refreshUnreadDot = async () => {
@@ -1527,7 +1584,7 @@
                     },
                 });
                 if (response.status === 401 || response.status === 419) {
-                    window.location.href = '{{ route('login') }}?expired=inactivity';
+                    window.location.href = '{{ route('login', [], false) }}?expired=inactivity';
                     return;
                 }
                 if (!response.ok) return;
@@ -1547,7 +1604,7 @@
                             window.showSystemToast(
                                 'Nouveau message', 
                                 'Vous avez reçu un nouveau message dans vos discussions.',
-                                '{{ route('discussions.index') }}'
+                                '{{ route('discussions.index', [], false) }}'
                             );
                         }
                     }
@@ -1600,7 +1657,7 @@
             async charger() {
                 this.chargement = true;
                 try {
-                    const r = await fetch('{{ route('support-tickets.index') }}', {
+                    const r = await fetch('{{ route('support-tickets.index', [], false) }}', {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     if (r.ok) {
@@ -1618,7 +1675,7 @@
                 this.envoiEnCours = true;
                 this.erreur = '';
                 try {
-                    const r = await fetch('{{ route('support-tickets.store') }}', {
+                    const r = await fetch('{{ route('support-tickets.store', [], false) }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1661,9 +1718,13 @@
                 setInterval(() => this.poll(), 5000);
             },
 
+            normalizeItemUrl(rawUrl) {
+                return window.resolveAppNotificationUrl ? window.resolveAppNotificationUrl(rawUrl) : rawUrl;
+            },
+
             async poll() {
                 try {
-                    const response = await fetch('{{ route('notifications.unread') }}', {
+                    const response = await fetch('{{ route('notifications.unread', [], false) }}', {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
@@ -1671,14 +1732,20 @@
                         }
                     });
                     if (response.status === 401 || response.status === 419) {
-                        window.location.href = '{{ route('login') }}?expired=inactivity';
+                        window.location.href = '{{ route('login', [], false) }}?expired=inactivity';
                         return;
                     }
                     if (!response.ok) return;
                     const res = await response.json();
                     if (res.ok) {
                         const previousCount = this.totalUnread;
-                        this.notifications = res.notifications;
+                        this.notifications = (res.notifications || []).map((notif) => ({
+                            ...notif,
+                            data: {
+                                ...(notif.data || {}),
+                                url: this.normalizeItemUrl(notif?.data?.url),
+                            },
+                        }));
                         this.totalUnread = res.total_unread;
 
                         if (!this.isFirstPoll && res.total_unread > previousCount) {
@@ -1686,7 +1753,7 @@
                                 window.playNotificationSound();
                             }
                             
-                            const newNotif = res.notifications[0];
+                            const newNotif = this.notifications[0];
                             if (newNotif && window.showSystemToast) {
                                 window.showSystemToast(
                                     newNotif.data.title || 'Notification',
@@ -1712,10 +1779,16 @@
                             'X-Requested-With': 'XMLHttpRequest',
                         }
                     });
+                    if (response.status === 401 || response.status === 419) {
+                        window.location.href = '{{ route('login', [], false) }}?expired=inactivity';
+                        return;
+                    }
                     if (response.ok) {
+                        const payload = await response.json().catch(() => null);
                         this.poll();
-                        if (item.data.url) {
-                            window.location.href = item.data.url;
+                        const targetUrl = this.normalizeItemUrl((payload && payload.url) || item?.data?.url);
+                        if (targetUrl) {
+                            window.location.href = targetUrl;
                         }
                     }
                 } catch (e) {
@@ -1725,7 +1798,7 @@
 
             async markAllAsRead() {
                 try {
-                    const response = await fetch('{{ route('notifications.readAll') }}', {
+                    const response = await fetch('{{ route('notifications.readAll', [], false) }}', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -1746,7 +1819,7 @@
         // rouge en cas de perte réseau ou d'indisponibilité du site vitrine) + info-bulle accessible.
         Alpine.data('topbarConnectivityStatus', (hasWebsite = false) => ({
             hasWebsite: Boolean(hasWebsite),
-            statusUrl: '{{ route('site-sync.status') }}',
+            statusUrl: '{{ route('site-sync.status', [], false) }}',
             browserOnline: typeof navigator !== 'undefined' ? navigator.onLine !== false : true,
             websiteOnline: null,
             ouvertParSurvol: false,
@@ -1910,8 +1983,8 @@
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
         const CSRF = '{{ csrf_token() }}';
-        const VAPID_URL = '{{ route('push.vapid') }}';
-        const SUBSCRIBE_URL = '{{ route('push.subscribe') }}';
+        const VAPID_URL = '{{ route('push.vapid', [], false) }}';
+        const SUBSCRIBE_URL = '{{ route('push.subscribe', [], false) }}';
 
         // Affiche le bouton « Activer les notifications » tant que la
         // permission n'a pas été accordée (ni définitivement refusée).

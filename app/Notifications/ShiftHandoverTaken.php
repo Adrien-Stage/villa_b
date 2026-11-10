@@ -25,7 +25,7 @@ class ShiftHandoverTaken extends Notification
 
     private function url(): string
     {
-        return rtrim((string) config('app.url'), '/') . "/bookings/passations/{$this->passation->id}";
+        return "/bookings/passations/{$this->passation->id}";
     }
 
     private function message(): string

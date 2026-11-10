@@ -3,6 +3,7 @@
 namespace App\Notifications\Channels;
 
 use App\Models\PushSubscription;
+use App\Support\NotificationUrl;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\Subscription;
@@ -37,7 +38,12 @@ class WebPushChannel
             return;
         }
 
-        $payload = json_encode($notification->toWebPush($notifiable));
+        $rawPayload = $notification->toWebPush($notifiable);
+        if (is_array($rawPayload)) {
+            $rawPayload = $this->normalizePayload($rawPayload);
+        }
+
+        $payload = json_encode($rawPayload);
 
         try {
             $webPush = new WebPush([
@@ -77,5 +83,23 @@ class WebPushChannel
             } catch (\Throwable) {
             }
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function normalizePayload(array $payload): array
+    {
+        foreach (['url', 'icon', 'badge'] as $urlKey) {
+            if (isset($payload[$urlKey]) && is_string($payload[$urlKey])) {
+                $normalized = NotificationUrl::toAppPath($payload[$urlKey]);
+                if ($normalized !== null) {
+                    $payload[$urlKey] = $normalized;
+                }
+            }
+        }
+
+        return $payload;
     }
 }
