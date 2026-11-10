@@ -1,6 +1,21 @@
 {{-- Balises rendant l'application installable (à inclure dans <head>). --}}
+@php
+    $pwaTenant = $currentTenant ?? $tenant ?? null;
+    if (! $pwaTenant) {
+        try {
+            $pwaTenant = \App\Models\Tenant::current();
+        } catch (\Throwable) {
+            $pwaTenant = null;
+        }
+    }
+    $pwaRawPrimary = strtoupper(ltrim(trim((string) ($pwaTenant?->settings['theme']['primary'] ?? '')), '#'));
+    if (strlen($pwaRawPrimary) === 3 && ctype_xdigit($pwaRawPrimary)) {
+        $pwaRawPrimary = $pwaRawPrimary[0] . $pwaRawPrimary[0] . $pwaRawPrimary[1] . $pwaRawPrimary[1] . $pwaRawPrimary[2] . $pwaRawPrimary[2];
+    }
+    $pwaThemeColor = preg_match('/^[0-9A-F]{6}$/', $pwaRawPrimary) ? '#' . $pwaRawPrimary : '#391F0E';
+@endphp
 <link rel="manifest" href="{{ route('pwa.manifest') }}">
-<meta name="theme-color" content="#391F0E">
+<meta name="theme-color" content="{{ $pwaThemeColor }}">
 <meta name="mobile-web-app-capable" content="yes">
 
 {{-- iOS ignore le manifeste : ces balises lui sont indispensables. --}}

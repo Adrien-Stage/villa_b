@@ -28,13 +28,13 @@ class PwaController extends Controller
     /** Tailles que la route accepte de générer. */
     private const ICON_SIZES = [32, 180, 192, 512];
 
-    private const BRAND_BG = [0x39, 0x1F, 0x0E];   // --color-primary
-    private const BRAND_FG = [0xEE, 0xD4, 0xA3];   // --color-accent
+    private const BRAND_BG = [0x39, 0x1F, 0x0E];   // Repli --color-primary
+    private const BRAND_FG = [0xEE, 0xD4, 0xA3];   // Repli --color-accent
 
     /** Manifeste de l'application, construit à partir de l'établissement. */
     public function manifest()
     {
-        $tenant = Tenant::first();
+        $tenant = Tenant::current();
         $name   = $tenant?->name ?: 'WeTchah';
 
         $manifest = [
@@ -49,7 +49,7 @@ class PwaController extends Controller
             'display'          => 'standalone',
             'orientation'      => 'any',
             'background_color' => '#FFFFFF',
-            'theme_color'      => '#391F0E',
+            'theme_color'      => self::themeHex($tenant, 'primary', '#391F0E'),
             'icons'            => $this->iconEntries(),
             'shortcuts'        => $this->shortcuts(),
         ];
@@ -67,13 +67,19 @@ class PwaController extends Controller
             abort(404);
         }
 
-        $tenant   = Tenant::first();
+        $tenant   = Tenant::current();
         $logoPath = $tenant?->settings['logo'] ?? null;
-        // La clé de cache inclut le logo : changer de logo régénère l'icône.
+        // La clé de cache inclut le logo et le thème : changer l'identité régénère l'icône.
         $cacheKey = 'pwa-icon-' . $size . '-' . self::brandVersion();
 
         $png = Cache::remember($cacheKey, now()->addDay(), function () use ($size, $logoPath, $tenant) {
-            return $this->buildIcon($size, $logoPath, $tenant?->name ?? 'WT');
+            return $this->buildIcon(
+                $size,
+                $logoPath,
+                $tenant?->name ?? 'WT',
+                self::hexToRgb(self::themeHex($tenant, 'primary', '#391F0E'), self::BRAND_BG),
+                self::hexToRgb(self::themeHex($tenant, 'accent', '#EED4A3'), self::BRAND_FG),
+            );
         });
 
         return response($png, 200, [
@@ -133,12 +139,39 @@ class PwaController extends Controller
         return route('pwa.icon', ['size' => $size, 'v' => self::brandVersion()]);
     }
 
-    /** Empreinte courte du logo et du nom : change quand la marque change. */
+    /** Empreinte courte du logo, du nom et du thème : change quand la marque change. */
     public static function brandVersion(): string
     {
-        $tenant = Tenant::first();
+        $tenant = Tenant::current();
+        $theme = is_array($tenant?->settings['theme'] ?? null) ? $tenant->settings['theme'] : [];
 
-        return substr(md5(($tenant?->settings['logo'] ?? '') . ($tenant?->name ?? '')), 0, 8);
+        return substr(md5(($tenant?->settings['logo'] ?? '') . ($tenant?->name ?? '') . json_encode($theme)), 0, 8);
+    }
+
+    /** Couleur hexadécimale sûre issue du thème de l'établissement. */
+    private static function themeHex(?Tenant $tenant, string $key, string $fallback): string
+    {
+        $raw = strtoupper(ltrim(trim((string) ($tenant?->settings['theme'][$key] ?? '')), '#'));
+        if (strlen($raw) === 3 && ctype_xdigit($raw)) {
+            $raw = $raw[0] . $raw[0] . $raw[1] . $raw[1] . $raw[2] . $raw[2];
+        }
+
+        return preg_match('/^[0-9A-F]{6}$/', $raw) ? '#' . $raw : $fallback;
+    }
+
+    /** @return array{0:int,1:int,2:int} */
+    private static function hexToRgb(string $hex, array $fallback): array
+    {
+        $parsed = sscanf($hex, '#%02x%02x%02x');
+        if (! is_array($parsed) || count($parsed) !== 3 || in_array(null, $parsed, true)) {
+            return $fallback;
+        }
+
+        return [
+            max(0, min(255, (int) $parsed[0])),
+            max(0, min(255, (int) $parsed[1])),
+            max(0, min(255, (int) $parsed[2])),
+        ];
     }
 
     /** Raccourcis d'application (appui long sur l'icône), selon les modules actifs. */
@@ -172,13 +205,13 @@ class PwaController extends Controller
      * Compose l'icône : le logo de l'établissement centré sur le fond de marque,
      * ou ses initiales si aucun logo n'est configuré.
      */
-    private function buildIcon(int $size, ?string $logoPath, string $name): string
+    private function buildIcon(int $size, ?string $logoPath, string $name, array $brandBg = self::BRAND_BG, array $brandFg = self::BRAND_FG): string
     {
         $canvas = imagecreatetruecolor($size, $size);
         imagealphablending($canvas, true);
         imagesavealpha($canvas, true);
 
-        $bg = imagecolorallocate($canvas, ...self::BRAND_BG);
+        $bg = imagecolorallocate($canvas, ...$brandBg);
         imagefilledrectangle($canvas, 0, 0, $size, $size, $bg);
 
         $logo = $this->loadLogo($logoPath);
@@ -200,7 +233,7 @@ class PwaController extends Controller
             );
             imagedestroy($logo);
         } else {
-            $this->drawInitials($canvas, $size, $name);
+            $this->drawInitials($canvas, $size, $name, $brandBg, $brandFg);
         }
 
         ob_start();
@@ -270,7 +303,7 @@ class PwaController extends Controller
     }
 
     /** Repli sans logo : les initiales de l'établissement, centrées. */
-    private function drawInitials(\GdImage $canvas, int $size, string $name): void
+    private function drawInitials(\GdImage $canvas, int $size, string $name, array $brandBg = self::BRAND_BG, array $brandFg = self::BRAND_FG): void
     {
         $initials = collect(preg_split('/\s+/', trim($name)))
             ->filter()
@@ -282,7 +315,6 @@ class PwaController extends Controller
             $initials = 'WT';
         }
 
-        $fg = imagecolorallocate($canvas, ...self::BRAND_FG);
         // Police bitmap intégrée à GD : pas de dépendance à un fichier TTF.
         $font = 5;
         $scale = max(1, (int) round($size / 40));
@@ -291,9 +323,9 @@ class PwaController extends Controller
 
         // On dessine grand puis on rétrécit : la police bitmap est trop petite.
         $tmp = imagecreatetruecolor($textW, $textH);
-        $tmpBg = imagecolorallocate($tmp, ...self::BRAND_BG);
+        $tmpBg = imagecolorallocate($tmp, ...$brandBg);
         imagefilledrectangle($tmp, 0, 0, $textW, $textH, $tmpBg);
-        $tmpFg = imagecolorallocate($tmp, ...self::BRAND_FG);
+        $tmpFg = imagecolorallocate($tmp, ...$brandFg);
         imagestring($tmp, $font, 0, 0, $initials, $tmpFg);
 
         $targetW = (int) round($size * 0.5);

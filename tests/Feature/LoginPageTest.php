@@ -52,10 +52,72 @@ test('la page de connexion affiche le logo du tenant et ses coordonnées publiqu
     $this->get(route('login'))
         ->assertOk()
         ->assertSee('Hôtel Le Palmier', false)
+        ->assertSee('<p class="login-brand-wordmark">Hôtel Le Palmier<span', false)
+        ->assertSee('Les services de Hôtel Le Palmier.', false)
         ->assertSee('storage/logos/palmier.png', false)
         ->assertSee('accueil@lepalmier.test', false)
         ->assertSee('+237 699 00 11 22', false)
         ->assertDontSee('interne-prive@lepalmier.test', false);
+});
+
+test('la page de connexion applique le thème configuré dans Wetchah ERP et le nom de l’établissement', function () {
+    Tenant::create([
+        'name' => 'Kore-TecK',
+        'slug' => 'kore-teck',
+        'settings' => [
+            'theme' => [
+                'primary' => '#1E3A8A',
+                'secondary' => '#3B82F6',
+                'accent' => '#93C5FD',
+                'dark' => '#0F172A',
+                'surface_dark' => '#1E293B',
+                'text_on_light' => '#FFFFFF',
+                'text_on_dark' => '#93C5FD',
+            ],
+        ],
+    ]);
+
+    $html = $this->get(route('login'))->assertOk()->getContent();
+
+    expect($html)
+        ->toContain('--color-primary: #1E3A8A;')
+        ->toContain('--color-secondary: #3B82F6;')
+        ->toContain('--color-accent: #93C5FD;')
+        ->toContain('--color-dark: #0F172A;')
+        ->toContain('--color-surface-dark: #1E293B;')
+        ->toContain('--color-text-on-dark: #93C5FD;')
+        ->toContain('<meta name="theme-color" content="#1E3A8A">')
+        ->toContain('var(--color-surface-dark)')
+        ->toContain('var(--login-cta-bg)')
+        ->toContain('<p class="login-brand-wordmark">Kore-TecK<span')
+        ->toContain('<span>Kore-TecK</span>')
+        ->toContain('<p class="login-foot">Kore-TecK · Wetchah PMS</p>')
+        ->not->toContain('--login-brown')
+        ->not->toContain('#3b281d')
+        ->not->toContain('fill="#684a34"');
+});
+
+test('la page de connexion adapte le contraste du bouton lorsque la couleur principale est claire', function () {
+    Tenant::create([
+        'name' => 'Soleil Palace',
+        'slug' => 'soleil-palace',
+        'settings' => [
+            'theme' => [
+                'primary' => '#FACC15',
+                'secondary' => '#FDE047',
+                'accent' => '#FEF9C3',
+                'dark' => '#1C1917',
+                'surface_dark' => '#CA8A04',
+                'text_on_light' => '#1C1917',
+                'text_on_dark' => '#FEF9C3',
+            ],
+        ],
+    ]);
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('--login-cta-fg: #181410;', false)
+        ->assertSee('contrast-color(var(--login-cta-bg))', false);
 });
 
 test('la page de connexion gère l’authentification, les identifiants incorrects et les comptes désactivés', function () {
