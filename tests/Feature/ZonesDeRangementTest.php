@@ -181,3 +181,104 @@ test("les alertes de stock se rangent par zone, dans l'ordre de la tournée", fu
     $this->actingAs(agentDesZones('econome'))->get(route('economat.index'))->assertOk()
         ->assertSeeInOrder(['Magasin central', 'Détergent 5 L', 'Cave', 'Eau gazeuse 1 L']);
 });
+
+test("le formulaire de création d'article permet de choisir la zone de stockage ou de laisser l'article sans zone", function () {
+    $cave = StorageZone::create(['name' => 'Cave', 'sort_order' => 1]);
+    $acheteur = agentDesZones('purchasing_manager');
+
+    $this->actingAs($acheteur)->get(route('economat.items.index'))->assertOk()
+        ->assertSee('Zone de stockage')
+        ->assertSee('— Sans zone —');
+
+    // Création avec choix explicite d'une zone
+    $this->actingAs($acheteur)->post(route('economat.items.store'), [
+        'name'            => 'Huile d’olive 1 L',
+        'unit'            => 'pcs',
+        'storage_zone_id' => $cave->id,
+    ])->assertSessionHas('success');
+
+    expect(StockItem::where('name', 'Huile d’olive 1 L')->sole()->storage_zone_id)->toBe($cave->id);
+
+    // Création en laissant le champ vide (« Sans zone ») : storage_zone_id reste null
+    $this->actingAs($acheteur)->post(route('economat.items.store'), [
+        'name'            => 'Serviette papier',
+        'unit'            => 'pcs',
+        'storage_zone_id' => '',
+    ])->assertSessionHas('success');
+
+    expect(StockItem::where('name', 'Serviette papier')->sole()->storage_zone_id)->toBeNull();
+});
+
+test("la réception directe permet d'assigner la zone de stockage lors de la création d'un nouvel article", function () {
+    $froide = StorageZone::create(['name' => 'Chambre froide 1', 'sort_order' => 1]);
+    $fournisseur = \App\Models\Supplier::create(['name' => 'Poissonnerie Atlantique', 'phone' => '690112233', 'is_active' => true]);
+    $econome = agentDesZones('econome');
+    \App\Models\PermissionGrant::create([
+        'subject_type' => \App\Models\PermissionGrant::SUJET_USER,
+        'subject_id'   => $econome->id,
+        'permission'   => 'economat.items.creer',
+        'effect'       => \App\Models\PermissionGrant::EFFET_ALLOW,
+        'origin'       => \App\Models\PermissionGrant::ORIGINE_ETABLISSEMENT,
+    ]);
+
+    $this->actingAs($econome)->get(route('economat.receipts.direct.create'))->assertOk()
+        ->assertSee('Zone de stockage')
+        ->assertSee('Chambre froide 1');
+
+    $this->actingAs($econome)->post(route('economat.receipts.direct.store'), [
+        'supplier_id' => $fournisseur->id,
+        'motif'       => array_key_first(\App\Models\PurchaseOrder::MOTIFS_REGULARISATION),
+        'received_at' => now()->subMinutes(10)->format('Y-m-d\TH:i'),
+        'lines'       => [
+            [
+                'nouvel_article' => [
+                    'name'            => 'Filet de bar frais',
+                    'unit'            => 'kg',
+                    'storage_zone_id' => $froide->id,
+                ],
+                'quantity_delivered' => 5,
+                'unit_price'         => 4500,
+            ],
+        ],
+    ])->assertSessionHas('success');
+
+    $article = StockItem::where('name', 'Filet de bar frais')->sole();
+    expect($article->storage_zone_id)->toBe($froide->id);
+
+    // L'article apparaît immédiatement sur la fiche de comptage de sa zone
+    [$fiche] = app(CountSheetService::class)->sheets(CountSheetService::ECONOMAT, null, CountSheetService::ARTICLES_TOUS, null, (string) $froide->id);
+    $noms = collect($fiche['groups'])->flatten(1)->pluck('name')->all();
+    expect($noms)->toContain('Filet de bar frais');
+});
+
+test("l'import et l'export CSV prennent en charge la colonne zone_stockage", function () {
+    $cave = StorageZone::create(['name' => 'Cave', 'sort_order' => 1]);
+    $acheteur = agentDesZones('purchasing_manager');
+
+    // Modèle CSV contient la colonne zone_stockage
+    $template = $this->actingAs($acheteur)->get(route('economat.items.export', ['template' => 1]))->assertOk();
+    expect($template->streamedContent())->toContain('zone_stockage');
+
+    // Import avec zone_stockage renseignée + une ligne avec zone inconnue
+    $csv = implode("\n", [
+        'nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif;zone_stockage',
+        'Jus de pomme 1L;JUS-POM;pcs;;;5;1200;oui;Cave',
+        'Article Zone Inconnue;UNK-01;pcs;;;0;500;oui;Zone Fantome',
+    ]);
+    $tmp = tempnam(sys_get_temp_dir(), 'csv_') . '.csv';
+    file_put_contents($tmp, "\xEF\xBB\xBF" . $csv);
+    $upload = new \Illuminate\Http\UploadedFile($tmp, 'articles.csv', 'text/csv', null, true);
+
+    $this->actingAs($acheteur)->post(route('economat.items.import'), ['csv_file' => $upload])
+        ->assertSessionHas('success')
+        ->assertSessionHas('import_errors');
+
+    expect(StockItem::where('name', 'Jus de pomme 1L')->sole()->storage_zone_id)->toBe($cave->id)
+        ->and(StockItem::where('name', 'Article Zone Inconnue')->exists())->toBeFalse();
+
+    // L'export CSV restitue le nom de la zone de stockage
+    $export = $this->actingAs($acheteur)->get(route('economat.items.export'))->assertOk();
+    expect($export->streamedContent())->toContain('Jus de pomme 1L')->toContain('Cave');
+
+    @unlink($tmp);
+});

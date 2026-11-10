@@ -38,10 +38,10 @@
         title="Importer des articles (CSV)"
         :action="route('economat.items.import')"
         :template="route('economat.items.export', ['template' => 1])"
-        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif;stock_initial"
+        structure="nom;reference;unite;categorie;fournisseur;stock_min;cout_moyen_fcfa;actif;zone_stockage;stock_initial"
         submit-label="Importer les articles">
         <li><strong>nom</strong> obligatoire — les noms déjà existants sont ignorés (pas de doublon)</li>
-        <li><strong>categorie</strong> et <strong>fournisseur</strong> optionnels, mais doivent exister s'ils sont renseignés</li>
+        <li><strong>categorie</strong>, <strong>fournisseur</strong> et <strong>zone_stockage</strong> optionnels, mais doivent exister s'ils sont renseignés</li>
         <li><strong>stock_initial</strong> facultatif : quantité déjà en magasin, reprise au <strong>cout_moyen_fcfa</strong> (obligatoire dans ce cas). Sans elle, le stock démarre à 0</li>
     </x-csv-import-modal>
 
@@ -234,7 +234,7 @@
                         </div>
                     </div>
                     {{-- Les fournisseurs et leurs prix se tiennent au catalogue de chaque fournisseur. --}}
-                    <div class="grid grid-cols-1 gap-4" :class="!editing && zones.length > 0 ? 'sm:grid-cols-2' : ''">
+                    <div class="grid grid-cols-1 gap-4" :class="!editing ? 'sm:grid-cols-2' : ''">
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
                             <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
@@ -243,12 +243,16 @@
                             </select>
                         </div>
                         {{-- La zone se propose à la création ; l'économat la change ensuite. --}}
-                        <template x-if="!editing && zones.length > 0">
+                        <template x-if="!editing">
                             <div>
-                                <label for="article-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Zone de rangement</label>
+                                <label for="article-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Zone de stockage</label>
                                 <select id="article-zone" name="storage_zone_id" x-model="form.storage_zone_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                                    <template x-for="z in zones" :key="z.id"><option :value="z.id" x-text="z.name" :selected="String(z.id) === String(form.storage_zone_id)"></option></template>
+                                    <option value="">— Sans zone —</option>
+                                    <template x-for="z in zones" :key="z.id"><option :value="String(z.id)" x-text="z.name" :selected="String(z.id) === String(form.storage_zone_id)"></option></template>
                                 </select>
+                                @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'economat'))
+                                    <a href="{{ route('settings.index', ['tab' => 'economat']) }}" class="mt-1 inline-block text-[11px] text-primary/50 underline hover:text-primary">Gérer les zones de stockage</a>
+                                @endif
                             </div>
                         </template>
                     </div>
@@ -453,7 +457,9 @@
                     stock_category_id: this.selectedCategory !== 'none' ? this.selectedCategory : '',
                     supplier_id: '', min_stock: 0, average_cost: 0, is_active: true,
                     // La zone filtrée, si elle est en service ; sinon la première.
-                    storage_zone_id: (this.selectedZone !== 'none' && this.zones.some(z => String(z.id) === String(this.selectedZone)) ? this.selectedZone : this.zones[0]?.id) ?? '' };
+                    storage_zone_id: (this.selectedZone !== 'none' && this.zones.some(z => String(z.id) === String(this.selectedZone))
+                        ? String(this.selectedZone)
+                        : (this.zones[0]?.id !== undefined ? String(this.zones[0].id) : '')) };
             },
             // L'unité d'un article mise hors service depuis reste proposée pour lui.
             get unitesProposees() {

@@ -16,12 +16,14 @@
     ])->values();
 
     // Après une erreur de validation, le formulaire revient tel qu'il était saisi.
+    $zoneDefaut = (string) ($zones->first()?->id ?? '');
     $lignesSaisies = collect(old('lines', []))->values()->map(fn ($l) => [
         'nouveau'   => empty($l['stock_item_id']) && !empty($l['nouvel_article']['name'] ?? null),
         'itemId'    => (int) ($l['stock_item_id'] ?? 0) ?: '',
         'name'      => $l['nouvel_article']['name'] ?? '',
         'unit'      => $l['nouvel_article']['unit'] ?? '',
         'category'  => $l['nouvel_article']['stock_category_id'] ?? '',
+        'zone'      => $l['nouvel_article']['storage_zone_id'] ?? '',
         'delivered' => $l['quantity_delivered'] ?? '',
         'rejected'  => $l['quantity_rejected'] ?? '',
         'reason'    => $l['rejection_reason'] ?? '',
@@ -34,7 +36,7 @@
 @endphp
 
 <div class="max-w-5xl mx-auto space-y-6"
-     x-data="receptionDirecte({{ Js::from($articlesJson) }}, {{ Js::from($lignesSaisies) }}, {{ $nouveauFournisseur ? 'true' : 'false' }})">
+     x-data="receptionDirecte({{ Js::from($articlesJson) }}, {{ Js::from($lignesSaisies) }}, {{ $nouveauFournisseur ? 'true' : 'false' }}, {{ Js::from($zoneDefaut) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.receipts.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors" aria-label="Retour aux bons d'entrée">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -172,11 +174,11 @@
                                         on-select="choisir(ligne)" />
                                 </template>
                                 <template x-if="ligne.nouveau">
-                                    <div class="grid grid-cols-6 gap-2">
+                                    <div class="grid grid-cols-12 gap-2">
                                         <input :id="'article-' + ligne.key" type="text" :name="`lines[${idx}][nouvel_article][name]`" x-model="ligne.name" required maxlength="160" placeholder="Nom de l'article"
-                                            class="col-span-6 sm:col-span-3 px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            class="col-span-12 sm:col-span-4 px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                         <select :name="`lines[${idx}][nouvel_article][unit]`" x-model="ligne.unit" required aria-label="Unité"
-                                            class="col-span-3 sm:col-span-1 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            class="col-span-4 sm:col-span-2 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                             <option value="">Unité…</option>
                                             @foreach($unites as $unite)
                                                 @php
@@ -187,10 +189,17 @@
                                             @endforeach
                                         </select>
                                         <select :name="`lines[${idx}][nouvel_article][stock_category_id]`" x-model="ligne.category" aria-label="Catégorie"
-                                            class="col-span-3 sm:col-span-2 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            class="col-span-4 sm:col-span-3 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
                                             <option value="">Sans catégorie</option>
                                             @foreach($categories as $categorie)
                                                 <option value="{{ $categorie->id }}">{{ $categorie->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <select :name="`lines[${idx}][nouvel_article][storage_zone_id]`" x-model="ligne.zone" aria-label="Zone de stockage"
+                                            class="col-span-4 sm:col-span-3 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            <option value="">Sans zone</option>
+                                            @foreach($zones as $zone)
+                                                <option value="{{ $zone->id }}">{{ $zone->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -290,10 +299,11 @@
 
 @push('scripts')
 <script>
-    function receptionDirecte(articles, lignesSaisies, nouveauFournisseur) {
+    function receptionDirecte(articles, lignesSaisies, nouveauFournisseur, zoneDefaut = '') {
         return {
             articles,
             nouveauFournisseur,
+            zoneDefaut,
             lignes: [],
             prochaineCle: 1,
 
@@ -311,7 +321,7 @@
                     key: this.prochaineCle++,
                     // Magasin vide : on part d'un nouvel article plutôt que d'une liste sans choix.
                     nouveau: this.articles.length === 0,
-                    itemId: '', name: '', unit: '', category: '', packaging: '',
+                    itemId: '', name: '', unit: '', category: '', zone: this.zoneDefaut, packaging: '',
                     delivered: '', rejected: '', reason: '', price: '', notes: '',
                 });
                 this.$nextTick(() => {
