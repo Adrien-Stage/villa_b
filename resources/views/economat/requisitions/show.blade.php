@@ -141,6 +141,33 @@
         @endif
     </div>
 
+    @php
+        $lignesManquantes = $requisition->lines->filter(
+            fn ($line) => $line->item && $line->item->is_active && ! $line->isServiceable()
+        );
+        $peutCreerDemandeAchat = $isKeeper
+            && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.purchase_requests.creer')
+            && ($requisition->canBeReviewed() || $requisition->canBeDelivered())
+            && $lignesManquantes->isNotEmpty();
+    @endphp
+
+    @if($peutCreerDemandeAchat)
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-start gap-2.5 text-xs text-red-900">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 shrink-0 mt-0.5" aria-hidden="true"></i>
+                <div>
+                    <p class="font-bold">Stock insuffisant sur {{ $lignesManquantes->count() }} {{ $lignesManquantes->count() > 1 ? 'articles' : 'article' }}</p>
+                    <p class="text-red-800/80 mt-0.5">Créez une demande d'achat pré-remplie pour les quantités manquantes afin de déclencher le réapprovisionnement.</p>
+                </div>
+            </div>
+            <a href="{{ route('economat.purchase_requests.create', ['requisition' => $requisition->id]) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs shrink-0">
+                <i data-lucide="file-plus" class="w-4 h-4" aria-hidden="true"></i>
+                <span>Créer une demande d'achat</span>
+            </a>
+        </div>
+    @endif
+
     {{-- Articles demandés et formulaire de livraison --}}
     <form method="POST" action="{{ $isKeeper && $requisition->canBeDelivered() ? route('economat.requisitions.deliver', $requisition) : '#' }}">
         @if($isKeeper && $requisition->canBeDelivered()) @csrf @endif

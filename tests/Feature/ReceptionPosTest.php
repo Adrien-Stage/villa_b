@@ -30,14 +30,19 @@ test('unauthorized roles are denied access to pos reception', function () {
         ->assertStatus(403);
 });
 
-test('receptionist and manager can access reception pos terminal', function () {
+test('receptionist can access reception pos terminal while manager is denied', function () {
     $this->seed([\Database\Seeders\TenantSeeder::class]);
     $receptionist = User::factory()->create(['role' => 'reception']);
+    $manager = User::factory()->create(['role' => 'manager']);
 
     $this->actingAs($receptionist);
     $response = $this->get(route('reception.pos.index'));
     $response->assertStatus(200);
     $response->assertSee('Mode POS Réception');
+
+    $this->actingAs($manager);
+    $this->get(route('reception.pos.index'), ['X-Requested-With' => 'XMLHttpRequest'])
+        ->assertStatus(403);
 });
 
 test('immediate payment requires an active cash register session', function () {

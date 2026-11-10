@@ -150,11 +150,13 @@ test("le contrôleur de gestion consulte les services d'exploitation au titre de
 
     foreach ([
         'restaurant.billing.voir', 'shop.orders.voir', 'shop.products.voir', 'economat.items.voir',
-        'housekeeping.voir', 'bookings.voir', 'reception.pos.history', 'restaurant.menus.voir',
+        'housekeeping.voir', 'bookings.voir', 'restaurant.menus.voir',
         'settings.services.export', 'settings.packages.export',
     ] as $droit) {
         expect($controleur)->toContain($droit);
     }
+
+    expect($controleur)->not->toContain('reception.pos.voir', 'reception.pos.history');
 });
 
 test("l'auditeur qualité est retiré et ses prérogatives sont portées par le contrôleur de gestion (Lot 1)", function () {

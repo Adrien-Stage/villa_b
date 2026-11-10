@@ -252,12 +252,14 @@ test("la demande modifiée par le responsable des achats avertit son demandeur d
     });
 });
 
-test("un chef de service choisit encore son département ; la demande du responsable des achats part à son responsable financier", function () {
+test("la direction choisit encore son département ; la demande du responsable des achats part à son responsable financier", function () {
     Notification::fake();
     $article = articleAchats('Savon');
 
-    $this->actingAs(membreAchats('housekeeping_leader'))->get(route('economat.purchase_requests.create'))->assertOk()
+    $this->actingAs(membreAchats('manager'))->get(route('economat.purchase_requests.create'))->assertOk()
         ->assertSee('name="department"', false);
+    $this->actingAs(membreAchats('housekeeping_leader'))->get(route('economat.purchase_requests.create'))
+        ->assertSessionHas('access_denied_popup', true);
 
     $acheteur = membreAchats('purchasing_manager');
     $financier = membreAchats('finance_manager');

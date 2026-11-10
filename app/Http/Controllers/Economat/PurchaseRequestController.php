@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Economat;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseRequest;
 use App\Models\StockItem;
+use App\Models\StockRequisition;
 use App\Models\Supplier;
 use App\Services\PermissionResolver;
 use App\Services\PurchaseRequestService;
@@ -14,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -115,7 +117,7 @@ class PurchaseRequestController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         // Les fournisseurs de chaque article viennent de la carte, à la demande.
         $items = StockItem::query()
@@ -125,12 +127,70 @@ class PurchaseRequestController extends Controller
 
         $suppliers = Supplier::active()->orderBy('name')->get();
 
+        $sourceRequisition = null;
+        $prefillLines = [];
+        $prefillPurpose = '';
+        $prefillPriority = PurchaseRequest::PRIORITY_NORMAL;
+        $prefillDepartment = 'cuisine';
+
+        // Pré-remplissage depuis une demande à l'économat en rupture / stock insuffisant :
+        // on ne reprend que les articles actifs manquants, pour la quantité à couvrir.
+        if ($request->filled('requisition')) {
+            $requisition = StockRequisition::with('lines.item')->find($request->integer('requisition'));
+
+            if ($requisition) {
+                $ruptureTotale = false;
+                $prefillLines = $requisition->lines
+                    ->filter(fn ($line) => $line->item && $line->item->is_active && ! $line->isServiceable())
+                    ->groupBy('stock_item_id')
+                    ->map(function ($group) use (&$ruptureTotale) {
+                        $item = $group->first()->item;
+                        $requested = (float) $group->sum('quantity_requested');
+                        $stockActuel = max(0.0, (float) $item->current_stock);
+                        if ($stockActuel <= 0) {
+                            $ruptureTotale = true;
+                        }
+
+                        return [
+                            'stock_item_id' => (string) $item->id,
+                            'unit'          => $item->shortUnit(),
+                            'quantity'      => max(0.001, round($requested - $stockActuel, 3)),
+                            'notes'         => '',
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                if ($prefillLines !== []) {
+                    $sourceRequisition = $requisition;
+                    $prefillPriority = $ruptureTotale ? PurchaseRequest::PRIORITY_URGENT : PurchaseRequest::PRIORITY_NORMAL;
+                    $prefillDepartment = match ($requisition->department) {
+                        'restaurant'                => 'restaurant',
+                        'hebergement', 'housekeeping' => 'housekeeping',
+                        'technique'                 => 'maintenance',
+                        default                     => 'economat',
+                    };
+                    $motifRequisition = $requisition->purpose ? " — {$requisition->purpose}" : '';
+                    $prefillPurpose = Str::limit(
+                        "Approvisionnement suite à la demande économat {$requisition->number} ({$requisition->departmentLabel()}){$motifRequisition}",
+                        950,
+                        '…'
+                    );
+                }
+            }
+        }
+
         return view('economat.purchase_requests.create', [
             'items'              => $items,
             'suppliers'          => $suppliers,
             'departments'        => PurchaseRequest::DEPARTMENTS,
             'priorities'         => PurchaseRequest::PRIORITIES,
             'choisitDepartement' => self::choisitLeDepartement(),
+            'sourceRequisition'  => $sourceRequisition,
+            'prefillLines'       => $prefillLines,
+            'prefillPurpose'     => $prefillPurpose,
+            'prefillPriority'    => $prefillPriority,
+            'prefillDepartment'  => $prefillDepartment,
         ]);
     }
 

@@ -24,8 +24,8 @@ function createStaffUser(string $role = 'econome'): User
     return $u;
 }
 
-test('un responsable de departement peut creer une demande d achat chiffree', function () {
-    $user = createStaffUser('restaurant_chief');
+test('l economat peut creer une demande d achat chiffree', function () {
+    $user = createStaffUser('econome');
 
     $item1 = StockItem::create([
         'name' => 'Riz Jasmin 25kg',
@@ -83,7 +83,7 @@ test("le responsable des achats vérifie les demandes d'achat ; le demandeur ne 
     activerModules(['economat']);
     \App\Support\RoleCatalog::sync();
 
-    $demandeur = createStaffUser('restaurant_chief');
+    $demandeur = createStaffUser('econome');
     $article = StockItem::create([
         'name' => 'Farine T55 25kg', 'unit' => 'sac', 'current_stock' => 1,
         'average_cost' => 1500000, 'is_active' => true,
@@ -113,7 +113,7 @@ test("le responsable des achats vérifie les demandes d'achat ; le demandeur ne 
 });
 
 test('la direction peut approuver ou refuser une demande d achat', function () {
-    $requester = createStaffUser('restaurant_chief');
+    $requester = createStaffUser('econome');
     $item = StockItem::create([
         'name' => 'Café Robusta 1kg',
         'unit' => 'kg',
@@ -240,7 +240,7 @@ test("sur sa propre demande, le manager ne voit aucun bouton de décision", func
 test("l'économe ne décide plus des demandes d'achat", function () {
     activerModules(['economat']);
 
-    $demandeur = createStaffUser('restaurant_chief');
+    $demandeur = createStaffUser('econome');
     $article = StockItem::create([
         'name' => 'Sel fin 1kg', 'unit' => 'paquet', 'current_stock' => 0,
         'average_cost' => 50000, 'is_active' => true,

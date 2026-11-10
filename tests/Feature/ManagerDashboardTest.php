@@ -81,8 +81,8 @@ test('le tableau de bord du manager affiche l\'ensemble des widgets exécutifs',
         ->assertSee('Ensoleillé')
         ->assertSee('SESSION : CLYDE (MANAGER)', false);
 
-    // 2. Actions rapides
-    $response->assertSee('Mode POS Réception')
+    // 2. Actions rapides (le Mode POS Réception est réservé au front-office)
+    $response->assertDontSee('Mode POS Réception')
         ->assertSee('Nouvelle Réservation')
         ->assertSee('Nouveau Client')
         ->assertSee('Planning')

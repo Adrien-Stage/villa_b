@@ -56,13 +56,13 @@ class Navigation
                 'text_color'  => 'text-indigo-600',
                 'bg_soft'     => 'bg-indigo-50',
                 'border_color'=> 'border-indigo-100',
-                // La tuile ouvre le premier écran que la personne peut voir :
-                // le housekeeping n'a pas les Chambres, il arrive à son tableau.
-                // Le responsable financier arrive à la grille tarifaire.
+                // La tuile ouvre le premier écran que la personne peut voir selon
+                // l'ordre de la barre latérale : Agenda en tête, Housekeeping
+                // pour les étages, grille tarifaire pour le responsable financier.
                 'url'         => self::premiereRoutePermise($user, $estFinancier
                     ? ['rooms.rates.index', 'bookings.index', 'rooms.index']
-                    : ['rooms.index', 'bookings.index', 'agenda.index', 'housekeeping.index', 'reception.pos.index'],
-                ) ?? route('rooms.index'),
+                    : ['agenda.index', 'bookings.index', 'rooms.index', 'housekeeping.index'],
+                ) ?? route('agenda.index'),
                 'type'        => self::TYPE_SIDEBAR,
             ];
         }
@@ -581,8 +581,9 @@ class Navigation
                 return self::groupInfo('achats');
             }
             // Les demandes à l'économat de qui ne le tient pas vivent dans
-            // l'application de son service.
-            if (str_starts_with($routeName, 'economat.requisitions.') || str_starts_with($routeName, 'economat.purchase_requests.')) {
+            // l'application de son service. Les demandes d'achat relèvent
+            // uniquement de l'Économat / Achats.
+            if (str_starts_with($routeName, 'economat.requisitions.')) {
                 return self::groupInfo(self::groupeDesDemandes($user));
             }
             return self::groupInfo('economat');
@@ -853,25 +854,10 @@ class Navigation
                     ];
                 }
             } else {
-                // Réception / Direction Hôtel
+                // Réception / Direction Hôtel (ordre calé sur la barre latérale ;
+                // POS Réception est déjà dans la barre du haut pour la réception)
                 if ($user->isAdmin() || $user->exerce(['manager', 'reception', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) {
-                    if ($user->hasModuleAccess('hebergement') && $droits->allows($user, 'rooms.voir')) {
-                        $tabs[] = [
-                            'label'  => 'Chambres',
-                            'icon'   => 'door-closed',
-                            'url'    => route('rooms.index'),
-                            'active' => request()->routeIs('rooms.*'),
-                        ];
-                    }
                     if ($user->hasModuleAccess('reservations')) {
-                        if ($droits->allows($user, 'bookings.voir')) {
-                            $tabs[] = [
-                                'label'  => 'Réservations',
-                                'icon'   => 'calendar',
-                                'url'    => route('bookings.index'),
-                                'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
-                            ];
-                        }
                         if ($droits->allows($user, 'agenda.voir')) {
                             $tabs[] = [
                                 'label'  => 'Agenda',
@@ -880,14 +866,22 @@ class Navigation
                                 'active' => request()->routeIs('agenda.*'),
                             ];
                         }
-                        if ($droits->allows($user, 'reception.pos.voir')) {
+                        if ($droits->allows($user, 'bookings.voir')) {
                             $tabs[] = [
-                                'label'  => 'POS',
-                                'icon'   => 'shopping-cart',
-                                'url'    => route('reception.pos.index'),
-                                'active' => request()->routeIs('reception.pos.*'),
+                                'label'  => 'Réservations',
+                                'icon'   => 'calendar',
+                                'url'    => route('bookings.index'),
+                                'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
                             ];
                         }
+                    }
+                    if ($user->hasModuleAccess('hebergement') && $droits->allows($user, 'rooms.voir')) {
+                        $tabs[] = [
+                            'label'  => 'Chambres',
+                            'icon'   => 'door-closed',
+                            'url'    => route('rooms.index'),
+                            'active' => request()->routeIs('rooms.*'),
+                        ];
                     }
                 }
                 if (TenantModules::has('housekeeping') && $droits->allows($user, 'housekeeping.voir')) {
@@ -1192,14 +1186,6 @@ class Navigation
                             : 'Demandes à l’économat',
                         'icon'   => 'inbox',
                         'active' => request()->routeIs('economat.requisitions.*'),
-                    ];
-                }
-                if ($droits->allows($user, 'economat.purchase_requests.voir')) {
-                    $tabs[] = [
-                        'route'  => 'economat.purchase_requests.index',
-                        'label'  => 'Demandes d’achat',
-                        'icon'   => 'file-question',
-                        'active' => request()->routeIs('economat.purchase_requests.*'),
                     ];
                 }
             }

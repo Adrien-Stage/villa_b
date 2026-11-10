@@ -48,6 +48,13 @@ class PermissionResolver
             return false;
         }
 
+        // Mode POS Réception strictement réservé au service Réception / Front-Office :
+        // même la direction, le contrôle, l'admin en intervention ou une exception
+        // individuelle ne peuvent ouvrir le POS hors réception.
+        if (str_starts_with($permission, 'reception.pos.') && ($user->isAdmin() || ! $user->exerce(['reception']))) {
+            return false;
+        }
+
         $lecture = PermissionCatalog::estLecture($permission);
 
         $surcharge = $this->surchargesPour($user)[$permission] ?? null;
