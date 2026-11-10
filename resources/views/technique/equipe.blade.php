@@ -8,7 +8,7 @@
         <h1 class="text-xl font-heading font-semibold text-primary">Équipe technique</h1>
         <p class="text-sm text-primary/60 mt-0.5">
             Les spécialités de chacun : une demande alerte d'abord les techniciens de sa spécialité, et l'affectation les signale.
-            Les comptes se créent dans Gestion › Utilisateurs, avec le rôle « Technicien de maintenance ».
+            Les comptes se créent dans Utilisateurs, avec le rôle « Technicien de maintenance ».
         </p>
     </div>
 

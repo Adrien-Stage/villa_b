@@ -79,7 +79,8 @@ test('ses tuiles mènent à ses écrans, et chaque tuile s\'ouvre', function () 
     $user = financier();
     $tuiles = collect(Navigation::getLauncherGroups($user))->mapWithKeys(fn ($g) => [$g['id'] => parse_url($g['url'], PHP_URL_PATH)])->all();
 
-    expect($tuiles)->toHaveKeys(['hotel', 'restaurant', 'economat', 'accounting', 'gestion', 'shop', 'settings', 'planning'])
+    expect($tuiles)->toHaveKeys(['hotel', 'restaurant', 'economat', 'accounting', 'clients', 'users', 'shop', 'settings', 'planning'])
+        ->and($tuiles)->not->toHaveKey('gestion')
         ->and($tuiles['hotel'])->toBe('/hebergement/tarifs')
         ->and($tuiles['restaurant'])->toBe(parse_url(route('restaurant.billing.index'), PHP_URL_PATH));
 
