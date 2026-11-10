@@ -141,3 +141,33 @@ test("le bouton de menu n'apparaît que là où il ouvre une barre latérale", f
     // Application avec barre latérale : le bouton l'ouvre sur petit écran.
     $this->get(route('housekeeping.index'))->assertOk()->assertSee('onclick="openMobileSidebar()"', false);
 });
+
+test("la tuile Gestion est remplacée par deux tuiles distinctes : Clients et Utilisateurs", function () {
+    $direction = agentNav('manager');
+    $tuilesDirection = tuiles($direction);
+
+    expect($tuilesDirection)->not->toHaveKey('gestion')
+        ->and($tuilesDirection)->toHaveKeys(['clients', 'users'])
+        ->and($tuilesDirection['clients'])->toBe('/customers')
+        ->and($tuilesDirection['users'])->toBe('/users');
+
+    $this->actingAs($direction);
+    $this->get(route('dashboard'))->assertOk()
+        ->assertSee('Clients')
+        ->assertSee('Utilisateurs')
+        ->assertDontSee('Clients &amp; utilisateurs', false);
+    $this->get(route('customers.index'))->assertOk();
+    $this->get(route('users.index'))->assertOk();
+
+    expect(Navigation::getActiveGroup('customers.index')['id'])->toBe('clients')
+        ->and(Navigation::getActiveGroup('users.index')['id'])->toBe('users');
+
+    // La réception voit la tuile Clients mais pas la tuile Utilisateurs.
+    $reception = agentNav('reception');
+    expect(tuiles($reception))->toHaveKey('clients')
+        ->and(tuiles($reception))->not->toHaveKeys(['users', 'gestion']);
+
+    // Un rôle sans droit sur les clients ni sur le personnel ne voit aucune des deux tuiles.
+    $magasinier = agentNav('storekeeper');
+    expect(tuiles($magasinier))->not->toHaveKeys(['clients', 'users', 'gestion']);
+});

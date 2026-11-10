@@ -196,25 +196,41 @@ class Navigation
             ];
         }
 
-        // 5. GESTION (Clients & Utilisateurs) — Groupe léger (Onglets)
-        $peutVoirGestion = $user->isAdmin() || $user->exerce(['manager', 'reception', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION]);
-        if ($peutVoirGestion) {
-            $urlGestion = (!auth()->check() || $user->hasModuleAccess('clients'))
-                ? route('customers.index')
-                : route('users.index');
-
+        // 5. CLIENTS — Pleine page
+        $peutVoirClients = (!auth()->check() || $user->hasModuleAccess('clients'))
+            && ($user->isAdmin() || $droits->allows($user, 'customers.voir'));
+        if ($peutVoirClients) {
             $groups[] = [
-                'id'          => 'gestion',
-                'title'       => 'Gestion',
-                'subtitle'    => 'Clients & utilisateurs',
+                'id'          => 'clients',
+                'title'       => 'Clients',
+                'subtitle'    => 'Fichier clients, séjours & fidélité',
                 'icon'        => 'users',
                 'color'       => 'orange',
                 'bg_gradient' => 'from-orange-500 to-amber-600',
                 'text_color'  => 'text-orange-600',
                 'bg_soft'     => 'bg-orange-50',
                 'border_color'=> 'border-orange-100',
-                'url'         => $urlGestion,
-                'type'        => self::TYPE_TABS,
+                'url'         => route('customers.index'),
+                'type'        => self::TYPE_STANDALONE,
+            ];
+        }
+
+        // 5 bis. UTILISATEURS — Pleine page
+        $peutVoirUtilisateurs = (!auth()->check() || $user->hasModuleAccess('utilisateurs'))
+            && ($user->isAdmin() || $droits->allows($user, 'users.voir'));
+        if ($peutVoirUtilisateurs) {
+            $groups[] = [
+                'id'          => 'users',
+                'title'       => 'Utilisateurs',
+                'subtitle'    => 'Comptes du personnel & équipes',
+                'icon'        => 'user-cog',
+                'color'       => 'sky',
+                'bg_gradient' => 'from-sky-500 to-blue-600',
+                'text_color'  => 'text-sky-600',
+                'bg_soft'     => 'bg-sky-50',
+                'border_color'=> 'border-sky-100',
+                'url'         => route('users.index'),
+                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
@@ -603,9 +619,13 @@ class Navigation
             return self::groupInfo('pilotage');
         }
 
-        // Groupes avec Onglets (Tabs)
-        if (str_starts_with($routeName, 'customers.') || str_starts_with($routeName, 'users.')) {
-            return self::groupInfo('gestion');
+        // Groupes Standalone (Clients & Utilisateurs)
+        if (str_starts_with($routeName, 'customers.')) {
+            return self::groupInfo('clients');
+        }
+
+        if (str_starts_with($routeName, 'users.')) {
+            return self::groupInfo('users');
         }
 
         if (str_starts_with($routeName, 'shop.')) {
@@ -697,11 +717,19 @@ class Navigation
                 'icon'     => 'shopping-cart',
                 'type'     => self::TYPE_SIDEBAR,
             ],
-            'gestion' => [
-                'id'       => 'gestion',
-                'title'    => 'Gestion',
+            'clients' => [
+                'id'       => 'clients',
+                'title'    => 'Clients',
                 'icon'     => 'users',
-                'type'     => self::TYPE_TABS,
+                'url'      => \Illuminate\Support\Facades\Route::has('customers.index') ? route('customers.index') : null,
+                'type'     => self::TYPE_STANDALONE,
+            ],
+            'users' => [
+                'id'       => 'users',
+                'title'    => 'Utilisateurs',
+                'icon'     => 'user-cog',
+                'url'      => \Illuminate\Support\Facades\Route::has('users.index') ? route('users.index') : null,
+                'type'     => self::TYPE_STANDALONE,
             ],
             'shop' => [
                 'id'       => 'shop',
@@ -1091,7 +1119,7 @@ class Navigation
                     'active' => request()->routeIs('pilotage.budget.*'),
                 ];
             }
-        } elseif (in_array($groupId, ['gestion', 'shop', 'admin'], true)) {
+        } elseif (in_array($groupId, ['shop', 'admin'], true)) {
             $groupTabs = self::getGroupTabs($groupId, $user);
             foreach ($groupTabs as $gTab) {
                 $tabs[] = [
@@ -1115,7 +1143,7 @@ class Navigation
     }
 
     /**
-     * Liste des onglets horizontaux pour les groupes légers (Gestion, Boutique, Administration).
+     * Liste des onglets horizontaux pour les groupes légers (Boutique, Administration).
      *
      * @return array<int, array<string, mixed>>
      */
@@ -1129,26 +1157,7 @@ class Navigation
         $tabs = [];
         $droits = app(PermissionResolver::class);
 
-        if ($groupId === 'gestion') {
-            if ((!auth()->check() || $user->hasModuleAccess('clients')) && $droits->allows($user, 'customers.voir')) {
-                $tabs[] = [
-                    'route'  => 'customers.index',
-                    'label'  => 'Clients',
-                    'icon'   => 'users',
-                    'active' => request()->routeIs('customers.*'),
-                ];
-            }
-            if ($user->isAdmin() || $user->exerce(['manager'])) {
-                if ((!auth()->check() || $user->hasModuleAccess('utilisateurs')) && $droits->allows($user, 'users.voir')) {
-                    $tabs[] = [
-                        'route'  => 'users.index',
-                        'label'  => 'Utilisateurs',
-                        'icon'   => 'user-cog',
-                        'active' => request()->routeIs('users.*'),
-                    ];
-                }
-            }
-        } elseif ($groupId === 'shop') {
+        if ($groupId === 'shop') {
             if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.products.voir')) {
                 $tabs[] = [
                     'route'  => 'shop.products.index',

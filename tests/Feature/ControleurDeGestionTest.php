@@ -37,7 +37,8 @@ test("chacune de ses tuiles s'ouvre", function () {
     $user = controleur();
     $tuiles = collect(Navigation::getLauncherGroups($user))->mapWithKeys(fn ($g) => [$g['id'] => parse_url($g['url'], PHP_URL_PATH)])->all();
 
-    expect($tuiles)->toHaveKeys(['hotel', 'restaurant', 'economat', 'accounting', 'gestion', 'shop', 'editions', 'planning', 'analytics']);
+    expect($tuiles)->toHaveKeys(['hotel', 'restaurant', 'economat', 'accounting', 'clients', 'users', 'shop', 'editions', 'planning', 'analytics'])
+        ->and($tuiles)->not->toHaveKey('gestion');
 
     $this->actingAs($user);
     foreach ($tuiles as $id => $chemin) {
