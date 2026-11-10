@@ -8,6 +8,7 @@ use App\Models\InvoiceItem;
 use App\Models\FolioItem;
 use App\Enums\BookingStatus;
 use App\Enums\RoomStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -97,9 +98,10 @@ class CheckOutService
             );
         }
 
-        if ($booking->balance_due > 0) {
+        $due = $booking->effectiveBalanceDue();
+        if ($due > 0) {
             throw new \LogicException(
-                "Solde impayé de " . number_format($booking->balance_due / 100, 0, ',', ' ') . " FCFA. " .
+                "Solde impayé de " . number_format($due / 100, 0, ',', ' ') . " FCFA. " .
                     "Réglez le solde avant le check-out."
             );
         }
@@ -110,25 +112,40 @@ class CheckOutService
      */
     private function finalizeAmounts(Booking $booking): void
     {
+        $isAdditiveTax = $booking->hasAdditiveTax();
+
         // Additionne toutes les prestations du folio (hors hébergement)
-        $extrasAmount = $booking->folioItems()
+        $extrasAmount = (int) $booking->folioItems()
             ->whereNotIn('type', [FolioItem::TYPE_ROOM, FolioItem::TYPE_PAYMENT, FolioItem::TYPE_DISCOUNT])
             ->where('is_complimentary', false)
             ->sum('total_price');
 
-        // Remises du folio
-        $discountAmount = $booking->folioItems()
-            ->where('type', FolioItem::TYPE_DISCOUNT)
-            ->sum('total_price');
+        $hasPackageFolio = $booking->folioItems()
+            ->where('type', FolioItem::TYPE_OTHER)
+            ->where('description', 'like', 'Formule —%')
+            ->exists();
+        $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
 
-        // Taxes (0% TVA)
-        $taxRate    = 0.0;
-        $subtotal   = $booking->total_room_amount + $extrasAmount - $discountAmount;
-        $taxAmount  = 0;
-        $totalAmount = $subtotal;
+        // Remises du folio (stockées en négatif depuis le wizard, ou parfois en positif)
+        $discountItems = $booking->folioItems()
+            ->where('type', FolioItem::TYPE_DISCOUNT)
+            ->get();
+        $discountAmount = $discountItems->isNotEmpty()
+            ? (int) $discountItems->sum(fn ($item) => abs((int) $item->total_price))
+            : (int) $booking->discount_amount;
+
+        $subtotal = (int) $booking->total_room_amount + $extrasAmount + $uninvoicedPackage - $discountAmount;
+
+        if ($isAdditiveTax) {
+            $taxAmount = (int) $booking->tax_amount;
+            $totalAmount = $subtotal + $taxAmount;
+        } else {
+            $totalAmount = max(0, $subtotal);
+            $taxAmount = app(TaxationService::class)->breakdown($totalAmount)->vat;
+        }
 
         // Paiements déjà reçus
-        $paidAmount = $booking->payments()
+        $paidAmount = (int) $booking->payments()
             ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', Invoice::where('kind', Invoice::KIND_SEJOUR)->select('id')))
             ->where('status', 'completed')
             ->sum('amount');
@@ -148,6 +165,8 @@ class CheckOutService
      */
     private function createInvoice(Booking $booking): Invoice
     {
+        $nightlyRate = $booking->effectiveNightlyRate();
+
         $invoice = Invoice::create([
             'booking_id'     => $booking->id,
             'customer_id'    => $booking->customer_id,
@@ -166,9 +185,9 @@ class CheckOutService
         InvoiceItem::create([
             'invoice_id'  => $invoice->id,
             'description' => "Hébergement — {$booking->total_nights} nuit(s) × " .
-                number_format($booking->price_per_night / 100, 0, ',', ' ') . " FCFA",
+                number_format($nightlyRate / 100, 0, ',', ' ') . " FCFA",
             'quantity'    => $booking->total_nights,
-            'unit_price'  => $booking->price_per_night,
+            'unit_price'  => $nightlyRate,
             'total_price' => $booking->total_room_amount,
             'tax_rate'    => 0.0,
             'tax_amount'  => 0,
@@ -217,39 +236,92 @@ class CheckOutService
         $this->finalizeAmounts($booking);
     }
 
-    public function syncDurationToNow(Booking $booking): void
+    public function syncDurationToNow(Booking $booking, ?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): void
     {
-        if ($booking->status === BookingStatus::CHECKED_IN && $booking->actual_check_in) {
-            $checkInDate = $booking->actual_check_in->copy()->startOfDay();
-            $checkOutDate = $booking->actual_check_out ?? now();
-            
-            // Différence en jours complets
-            $actualNights = $checkInDate->diffInDays($checkOutDate->copy()->startOfDay());
-            
-            // Si l'heure de départ dépasse 14h00, on compte une nuit supplémentaire
-            if ($checkOutDate->format('H:i') >= '14:00' && $actualNights > 0) {
-                $actualNights++;
-            }
-            
-            // Minimum 1 nuit s'il part le même jour
-            $actualNights = max(1, $actualNights);
-            
-            if ($booking->total_nights !== $actualNights) {
-                $booking->total_nights = $actualNights;
-                $booking->total_room_amount = $actualNights * $booking->price_per_night;
-                // On peut aussi ajuster la date prévue pour refléter la réalité
-                $booking->check_out = $checkOutDate->copy()->startOfDay();
-                $booking->save();
-                
-                // Mettre à jour la ligne folio de l'hébergement
-                $booking->folioItems()->where('type', FolioItem::TYPE_ROOM)->update([
-                    'quantity'    => $actualNights,
-                    'total_price' => $booking->total_room_amount,
-                    'description' => "Hébergement {$actualNights} nuit(s) — Chambre {$booking->room->number}",
-                ]);
-
-                $this->recalculateTotals($booking);
-            }
+        if ($booking->status !== BookingStatus::CHECKED_IN) {
+            return;
         }
+
+        $checkOutClock = $defaultCheckOutTime ?? app(RoomAvailabilityService::class)->checkOutTime();
+        $reference = ($at ?? now())->copy();
+
+        if ($booking->hasOverstayedCheckout($checkOutClock, $reference)) {
+            $overstayNights = $booking->overstayNights($checkOutClock, $reference);
+            $addedRoomAmount = $overstayNights * $booking->effectiveNightlyRate();
+            $newTotalNights = (int) $booking->total_nights + $overstayNights;
+            $newRoomAmount = (int) $booking->total_room_amount + $addedRoomAmount;
+            $newScheduledOut = $booking->scheduledCheckOutAt($checkOutClock)
+                ->copy()
+                ->addDays($overstayNights)
+                ->startOfDay();
+
+            $booking->total_nights = $newTotalNights;
+            $booking->total_room_amount = $newRoomAmount;
+            $booking->total_amount = (int) $booking->total_amount + $addedRoomAmount;
+            $booking->check_out = $newScheduledOut;
+            $booking->save();
+
+            $this->syncRoomFolioItem($booking, $newTotalNights, $newRoomAmount);
+            $this->recalculateTotals($booking);
+
+            return;
+        }
+
+        if (! $booking->actual_check_in) {
+            return;
+        }
+
+        $scheduled = $booking->scheduledCheckOutAt($checkOutClock);
+        $checkInDate = $booking->actual_check_in->copy()->timezone($scheduled->getTimezone())->startOfDay();
+        $checkOutRef = ($booking->actual_check_out ?? $reference)->copy()->timezone($scheduled->getTimezone());
+        $clockSeconds = $scheduled->format('H:i:s');
+
+        // Différence en jours complets
+        $actualNights = (int) $checkInDate->diffInDays($checkOutRef->copy()->startOfDay());
+
+        // Si l'heure de départ atteint l'heure limite de check-out, on compte une nuit supplémentaire
+        if ($checkOutRef->format('H:i:s') >= $clockSeconds && $actualNights > 0) {
+            $actualNights++;
+        }
+
+        // Minimum 1 nuit s'il part le même jour
+        $actualNights = max(1, $actualNights);
+
+        if ($booking->total_nights !== $actualNights) {
+            $newRoomAmount = $actualNights * $booking->effectiveNightlyRate();
+            $delta = $newRoomAmount - (int) $booking->total_room_amount;
+
+            $booking->total_nights = $actualNights;
+            $booking->total_room_amount = $newRoomAmount;
+            $booking->total_amount = max(0, (int) $booking->total_amount + $delta);
+            // On ajuste la date prévue pour refléter la réalité
+            $booking->check_out = $checkOutRef->copy()->startOfDay();
+            $booking->save();
+
+            $this->syncRoomFolioItem($booking, $actualNights, $newRoomAmount);
+            $this->recalculateTotals($booking);
+        }
+    }
+
+    private function syncRoomFolioItem(Booking $booking, int $nights, int $roomAmount): void
+    {
+        $roomItem = $booking->folioItems()->where('type', FolioItem::TYPE_ROOM)->first();
+        if (! $roomItem) {
+            return;
+        }
+
+        $roomNumber = $booking->room?->number;
+        $nightlyRate = (int) $roomItem->unit_price > 0
+            ? (int) $roomItem->unit_price
+            : $booking->effectiveNightlyRate();
+
+        $roomItem->update([
+            'quantity'    => $nights,
+            'unit_price'  => $nightlyRate,
+            'total_price' => $roomAmount,
+            'description' => $roomNumber
+                ? "Hébergement {$nights} nuit(s) — Chambre {$roomNumber}"
+                : "Hébergement — {$nights} nuit(s)",
+        ]);
     }
 }

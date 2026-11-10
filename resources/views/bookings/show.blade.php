@@ -270,8 +270,17 @@
     {{-- Minuteur Intelligent (Si Checked In — y compris données démo et dépassements) --}}
     @php
         $stayTimer ??= null;
+        $defaultCheckOutTime ??= app(\App\Services\RoomAvailabilityService::class)->checkOutTime();
         $effectiveCheckInAt ??= $booking->effectiveCheckInAt();
-        $scheduledCheckOutAt ??= $booking->scheduledCheckOutAt();
+        $scheduledCheckOutAt ??= $booking->scheduledCheckOutAt($defaultCheckOutTime);
+        $overstayNights ??= $booking->overstayNights($defaultCheckOutTime);
+        $effectiveNightlyRate ??= $booking->effectiveNightlyRate();
+        $overstayRoomAmount ??= $overstayNights * $effectiveNightlyRate;
+        $effectiveTotalNights ??= (int) $booking->total_nights + $overstayNights;
+        $effectiveRoomAmount ??= (int) $booking->total_room_amount + $overstayRoomAmount;
+        $effectiveTotalAmount ??= (int) $booking->total_amount + $overstayRoomAmount;
+        $effectiveBalanceDue ??= $booking->effectiveBalanceDue($defaultCheckOutTime);
+        $consumedBalance ??= $booking->getConsumedBalance($defaultCheckOutTime);
     @endphp
     @if($stayTimer)
     <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg border p-5 text-white flex flex-wrap items-center justify-between gap-4"
@@ -316,7 +325,21 @@
             <p class="text-[11px] text-blue-200 mt-1" x-show="!isOverstay" @if($stayTimer['initialOverstay']) style="display: none;" @endif>
                 Fin prévue le {{ $scheduledCheckOutAt->format('d/m/Y') }} à {{ $scheduledCheckOutAt->format('H\hi') }}
             </p>
+            <p class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-950/75 text-red-100 border border-red-300/60"
+               x-show="isOverstay && overstayNights > 0"
+               @unless($overstayNights > 0) style="display: none;" @endunless>
+                <span x-text="overstaySummary">
+                    @if($overstayNights > 0)
+                        @if($booking->is_complimentary)
+                            Séjour offert · +{{ $overstayNights }} nuit{{ $overstayNights > 1 ? 's' : '' }}
+                        @else
+                            +{{ $overstayNights }} nuit{{ $overstayNights > 1 ? 's' : '' }} · +{{ number_format($overstayRoomAmount / 100, 0, ',', ' ') }} FCFA
+                        @endif
+                    @endif
+                </span>
+            </p>
         </div>
+        <p id="booking-overstay-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     </div>
     @endif
 
@@ -346,14 +369,25 @@
                 </div>
                 <div class="flex justify-between">
                     <dt class="text-xs text-primary/50">Départ</dt>
-                    <dd class="text-xs font-medium text-primary">
-                        {{ $booking->check_out->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                    <dd class="text-xs font-medium text-primary text-right">
+                        <span>{{ $booking->check_out->locale('fr')->isoFormat('dddd D MMMM YYYY') }}</span>
+                        @if($overstayNights > 0)
+                            <span class="block text-[11px] font-semibold text-red-600">
+                                Échéance dépassée ({{ $scheduledCheckOutAt->format('H\hi') }})
+                            </span>
+                        @endif
                     </dd>
                 </div>
                 <div class="flex justify-between">
                     <dt class="text-xs text-primary/50">Durée</dt>
-                    <dd class="text-xs font-medium text-primary">
-                        {{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }}
+                    <dd class="text-xs font-medium text-primary text-right">
+                        <span data-stay-target="duration-label">
+                            {{ $effectiveTotalNights }} nuit{{ $effectiveTotalNights > 1 ? 's' : '' }}
+                        </span>
+                        <span data-stay-target="overstay-note"
+                              class="block text-[11px] text-primary/55 {{ $overstayNights > 0 ? '' : 'hidden' }}">
+                            {{ $booking->total_nights }} prévue{{ $booking->total_nights > 1 ? 's' : '' }} + {{ $overstayNights }} de dépassement
+                        </span>
                     </dd>
                 </div>
                 <div class="flex justify-between">
@@ -503,7 +537,16 @@
                 @endif
             </div>
 
-            @if($booking->folioItems->isEmpty())
+            @php
+                $hasRoomFolioItem = $booking->folioItems->contains('type', \App\Models\FolioItem::TYPE_ROOM);
+                $hasPackageFolio = $booking->folioItems
+                    ->contains(fn ($item) => $item->type === \App\Models\FolioItem::TYPE_OTHER && str_starts_with((string) $item->description, 'Formule —'));
+                $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
+                $effectiveSubtotal = $effectiveRoomAmount + (int) $booking->extras_amount + $uninvoicedPackage - (int) $booking->discount_amount;
+                $primaryRoomHandled = false;
+            @endphp
+
+            @if($booking->folioItems->isEmpty() && $overstayNights === 0)
             <div class="flex flex-col items-center justify-center py-10 text-primary/30">
                 <i data-lucide="receipt" class="w-8 h-8 mb-2 opacity-40"></i>
                 <p class="text-xs">Aucune prestation enregistrée</p>
@@ -519,6 +562,39 @@
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Actions</div>
             </div>
 
+            @if(!$hasRoomFolioItem && $overstayNights > 0)
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+                <div class="col-span-1">
+                    <i data-lucide="hotel" class="w-4 h-4 text-primary/30" aria-hidden="true"></i>
+                </div>
+                <div class="col-span-5 min-w-0">
+                    <p class="text-xs text-primary truncate"
+                       data-stay-target="folio-room-title"
+                       data-room-number="{{ $booking->room?->number ?? '' }}">
+                        Hébergement — {{ $effectiveTotalNights }} nuit(s){{ $booking->room?->number ? " — Chambre {$booking->room->number}" : '' }}
+                    </p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        @if($booking->is_complimentary)
+                        <span class="text-[10px] text-green-600 font-medium">Offert</span>
+                        @endif
+                        <span data-stay-target="folio-room-sub" class="text-[10px] font-medium text-red-600">
+                            Prévu : {{ $booking->total_nights }} nuit(s) · Dépassement : +{{ $overstayNights }} nuit(s){{ $booking->is_complimentary ? ' (Offert)' : ' (+' . number_format($overstayRoomAmount / 100, 0, ',', ' ') . ' FCFA)' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-span-1 text-xs text-primary/70" data-stay-target="folio-room-qty">
+                    {{ number_format($effectiveTotalNights, 2, '.', '') }}
+                </div>
+                <div class="col-span-2 text-xs text-primary/70">
+                    {{ $booking->is_complimentary ? '—' : number_format($effectiveNightlyRate / 100, 0, ',', ' ') . ' F' }}
+                </div>
+                <div class="col-span-2 text-xs font-medium text-primary text-right" data-stay-target="folio-room-total">
+                    {{ $booking->is_complimentary ? 'Offert' : number_format($effectiveRoomAmount / 100, 0, ',', ' ') . ' FCFA' }}
+                </div>
+                <div class="col-span-1 flex justify-end"></div>
+            </div>
+            @endif
+
             @foreach($booking->folioItems as $item)
             @php
             $typeIcons = [
@@ -533,20 +609,46 @@
             'payment' => 'credit-card',
             'other' => 'package',
             ];
+            $isPrimaryRoomRow = $item->type === \App\Models\FolioItem::TYPE_ROOM && !$primaryRoomHandled;
+            if ($isPrimaryRoomRow) {
+                $primaryRoomHandled = true;
+            }
+            $roomRowComplimentary = $item->is_complimentary || $booking->is_complimentary;
+            $roomRowUnitPrice = (int) $item->unit_price > 0 ? (int) $item->unit_price : $effectiveNightlyRate;
             @endphp
             <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
 
                 {{-- Icône type --}}
                 <div class="col-span-1">
-                    <i data-lucide="{{ $typeIcons[$item->type] ?? 'package' }}" class="w-4 h-4 text-primary/30"></i>
+                    <i data-lucide="{{ $typeIcons[$item->type] ?? 'package' }}" class="w-4 h-4 text-primary/30" aria-hidden="true"></i>
                 </div>
 
                 {{-- Description --}}
                 <div class="col-span-5 min-w-0">
+                    @if($isPrimaryRoomRow)
+                    <p class="text-xs text-primary truncate"
+                       data-stay-target="folio-room-title"
+                       data-room-number="{{ $booking->room?->number ?? '' }}">
+                        @if($overstayNights > 0)
+                            Hébergement — {{ $effectiveTotalNights }} nuit(s){{ $booking->room?->number ? " — Chambre {$booking->room->number}" : '' }}
+                        @else
+                            {{ $item->description }}
+                        @endif
+                    </p>
+                    @else
                     <p class="text-xs text-primary truncate">{{ $item->description }}</p>
-                    <div class="flex items-center gap-2 mt-0.5">
+                    @endif
+                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
                         @if($item->is_complimentary)
                         <span class="text-[10px] text-green-600 font-medium">Offert</span>
+                        @endif
+                        @if($isPrimaryRoomRow)
+                        <span data-stay-target="folio-room-sub"
+                              class="text-[10px] font-medium {{ $roomRowComplimentary ? 'text-primary/60' : 'text-red-600' }} {{ $overstayNights > 0 ? '' : 'hidden' }}">
+                            @if($overstayNights > 0)
+                                Prévu : {{ $booking->total_nights }} nuit(s) · Dépassement : +{{ $overstayNights }} nuit(s){{ $roomRowComplimentary ? ' (Offert)' : ' (+' . number_format($overstayRoomAmount / 100, 0, ',', ' ') . ' FCFA)' }}
+                            @endif
+                        </span>
                         @endif
                         @if($item->notes)
                         <span class="text-[10px] text-primary/40 italic truncate">{{ $item->notes }}</span>
@@ -555,18 +657,30 @@
                 </div>
 
                 {{-- Quantité --}}
-                <div class="col-span-1 text-xs text-primary/70">
-                    {{ $item->quantity }}
+                <div class="col-span-1 text-xs text-primary/70" @if($isPrimaryRoomRow) data-stay-target="folio-room-qty" @endif>
+                    @if($isPrimaryRoomRow && $overstayNights > 0)
+                        {{ number_format($effectiveTotalNights, 2, '.', '') }}
+                    @else
+                        {{ $item->quantity }}
+                    @endif
                 </div>
 
                 {{-- Prix unitaire --}}
                 <div class="col-span-2 text-xs text-primary/70">
-                    {{ $item->is_complimentary ? '—' : number_format($item->unit_price / 100, 0, ',', ' ') . ' F' }}
+                    @if($isPrimaryRoomRow)
+                        {{ $roomRowComplimentary ? '—' : number_format($roomRowUnitPrice / 100, 0, ',', ' ') . ' F' }}
+                    @else
+                        {{ $item->is_complimentary ? '—' : number_format($item->unit_price / 100, 0, ',', ' ') . ' F' }}
+                    @endif
                 </div>
 
                 {{-- Total --}}
-                <div class="col-span-2 text-xs font-medium text-primary text-right">
-                    {{ $item->formattedPrice() }}
+                <div class="col-span-2 text-xs font-medium text-primary text-right" @if($isPrimaryRoomRow) data-stay-target="folio-room-total" @endif>
+                    @if($isPrimaryRoomRow && $overstayNights > 0)
+                        {{ $roomRowComplimentary ? 'Offert' : number_format($effectiveRoomAmount / 100, 0, ',', ' ') . ' FCFA' }}
+                    @else
+                        {{ $item->formattedPrice() }}
+                    @endif
                 </div>
 
                 {{-- Action --}}
@@ -587,11 +701,18 @@
             @endforeach
 
             {{-- Totaux --}}
-            <div class="px-5 py-4 space-y-2 border-t border-secondary/20 bg-accent/10">
+            <div class="px-5 py-4 space-y-2 border-t border-secondary/20 bg-accent/10" data-stay-target="folio-totals">
                 <div class="flex justify-between text-xs text-primary/60">
                     <span>{{ $booking->tax_amount > 0 ? 'Sous-total HT' : 'Sous-total' }}</span>
-                    <span>{{ number_format(($booking->total_room_amount + $booking->extras_amount - $booking->discount_amount) / 100, 0, ',', ' ') }} FCFA</span>
+                    <span data-stay-target="folio-subtotal">{{ number_format($effectiveSubtotal / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @if($overstayNights > 0)
+                <div data-stay-target="folio-overstay-row"
+                     class="flex justify-between text-xs {{ $booking->is_complimentary ? 'text-primary/60' : 'text-red-700 font-medium' }}">
+                    <span data-stay-target="folio-overstay-label">Dont surplus hébergement (+{{ $overstayNights }} nuit{{ $overstayNights > 1 ? 's' : '' }})</span>
+                    <span data-stay-target="folio-overstay-amount">{{ $booking->is_complimentary ? 'Offert' : '+' . number_format($overstayRoomAmount / 100, 0, ',', ' ') . ' FCFA' }}</span>
+                </div>
+                @endif
                 @if($booking->tax_amount > 0)
                 <div class="flex justify-between text-xs text-primary/60">
                     <span>TVA (19,25%)</span>
@@ -604,9 +725,9 @@
                     <span>-{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @endif
-                <div class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
+                <div data-stay-target="folio-total-row" class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
                     <span>{{ $booking->tax_amount > 0 ? 'Total TTC' : 'Total' }}</span>
-                    <span>{{ number_format($booking->total_amount / 100, 0, ',', ' ') }} FCFA</span>
+                    <span data-stay-target="folio-total">{{ number_format($effectiveTotalAmount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @if($booking->deposit_amount > 0)
                 <div class="flex justify-between text-xs text-primary/60">
@@ -625,9 +746,9 @@
                     <span>{{ number_format($booking->paid_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @endif
-                <div class="flex justify-between text-sm font-semibold {{ $booking->balance_due > 0 ? 'text-red-600' : 'text-green-600' }} pt-1">
+                <div class="flex justify-between text-sm font-semibold {{ $effectiveBalanceDue > 0 ? 'text-red-600' : 'text-green-600' }} pt-1">
                     <span>Solde dû</span>
-                    <span>{{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
+                    <span data-stay-target="folio-balance-due">{{ number_format($effectiveBalanceDue / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
             </div>
             @endif
@@ -637,7 +758,7 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
                 <h2 class="font-heading font-semibold text-primary text-sm">Paiements</h2>
-                @if($booking->status->value === 'checked_in' && $booking->balance_due > 0 && $isCashRegisterOpen)
+                @if($booking->status->value === 'checked_in' && $effectiveBalanceDue > 0 && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-payment').classList.remove('hidden')"
                     class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -822,7 +943,7 @@
     </div>
 </div>
 
-@if($booking->status->value === 'checked_in' && $booking->balance_due > 0 && $isCashRegisterOpen)
+@if($booking->status->value === 'checked_in' && $effectiveBalanceDue > 0 && $isCashRegisterOpen)
 {{-- Modal : Paiement --}}
 <div id="modal-payment" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
@@ -837,11 +958,11 @@
         <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-            @php $consumedBalance = $booking->getConsumedBalance(); @endphp
+            @php $consumedBalance ??= $booking->getConsumedBalance($defaultCheckOutTime ?? null); @endphp
             {{-- Solde affiché --}}
             <div class="bg-accent/30 rounded-lg px-4 py-3 flex justify-between items-center">
                 <span class="text-xs text-primary/60">Solde consommé (réel)</span>
-                <span class="text-lg font-heading font-semibold text-primary">
+                <span data-stay-target="modal-consumed-balance" class="text-lg font-heading font-semibold text-primary">
                     {{ number_format($consumedBalance / 100, 0, ',', ' ') }} FCFA
                 </span>
             </div>
@@ -851,6 +972,7 @@
                     Montant (FCFA) *
                 </label>
                 <input type="number"
+                    data-stay-target="modal-payment-input"
                     name="amount"
                     value="{{ (int) ceil($consumedBalance / 100) }}"
                     min="1"

@@ -327,35 +327,160 @@ class Booking extends Model
         $this->save();
     }
 
-    public function getConsumedBalance(): int
+    public function getConsumedBalance(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
     {
-        if ($this->status !== BookingStatus::CHECKED_IN || !$this->actual_check_in) {
-            return $this->balance_due;
+        if ($this->status !== BookingStatus::CHECKED_IN) {
+            return (int) $this->balance_due;
+        }
+
+        if ($this->hasOverstayedCheckout($defaultCheckOutTime, $at)) {
+            return $this->effectiveBalanceDue($defaultCheckOutTime, $at);
+        }
+
+        if (! $this->actual_check_in) {
+            return (int) $this->balance_due;
         }
 
         $checkInDate = $this->actual_check_in->copy()->startOfDay();
-        $nowDate = $this->actual_check_out ?? now();
-        
-        $actualNights = $checkInDate->diffInDays($nowDate->copy()->startOfDay());
-        if ($nowDate->format('H:i') >= '14:00' && $actualNights > 0) {
+        $nowDate = ($this->actual_check_out ?? ($at ?? now()))->copy();
+        $checkOutClock = self::resolveCheckOutTime($defaultCheckOutTime);
+
+        $actualNights = (int) $checkInDate->diffInDays($nowDate->copy()->startOfDay());
+        if ($nowDate->format('H:i:s') >= $checkOutClock && $actualNights > 0) {
             $actualNights++;
         }
         $actualNights = max(1, $actualNights);
 
-        $consumedRoomAmount = $actualNights * $this->price_per_night;
-        
-        $extrasAmount = $this->folioItems()
-            ->whereNotIn('type', ['room', 'payment', 'discount'])
+        $consumedRoomAmount = $actualNights * $this->effectiveNightlyRate();
+
+        $extrasAmount = (int) $this->folioItems()
+            ->whereNotIn('type', [FolioItem::TYPE_ROOM, FolioItem::TYPE_PAYMENT, FolioItem::TYPE_DISCOUNT])
             ->where('is_complimentary', false)
             ->sum('total_price');
-            
-        $discountAmount = $this->folioItems()->where('type', 'discount')->sum('total_price');
-        
-        $subtotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
-        $taxAmount = 0;
-        $consumedTotal = $subtotal;
-        
-        return max(0, $consumedTotal - $this->paid_amount);
+
+        $discountAmount = (int) $this->folioItems()
+            ->where('type', FolioItem::TYPE_DISCOUNT)
+            ->get()
+            ->sum(fn ($item) => abs((int) $item->total_price));
+
+        $consumedTotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
+
+        if ($this->hasAdditiveTax()) {
+            $consumedTotal += (int) $this->tax_amount;
+        }
+
+        return max(0, $consumedTotal - (int) $this->paid_amount);
+    }
+
+    /**
+     * Tarif effectif par nuitée appliqué à ce séjour (en centimes FCFA).
+     */
+    public function effectiveNightlyRate(): int
+    {
+        if ($this->is_complimentary) {
+            return 0;
+        }
+
+        if ((int) $this->price_per_night > 0) {
+            return (int) $this->price_per_night;
+        }
+
+        $plannedNights = (int) $this->total_nights;
+        if ($plannedNights > 0 && (int) $this->total_room_amount > 0) {
+            return intdiv((int) $this->total_room_amount, $plannedNights);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Nombre de nuits supplémentaires entamées après l'heure limite de départ.
+     *
+     * Dès qu'un séjour en cours dépasse sa date/heure de check-out prévue, au
+     * moins une nuitée supplémentaire s'applique, puis une nuitée de plus à
+     * chaque passage de l'heure limite de départ configurée (12h00 par défaut).
+     */
+    public function overstayNights(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        if ($this->status !== BookingStatus::CHECKED_IN) {
+            return 0;
+        }
+
+        $scheduled = $this->scheduledCheckOutAt($defaultCheckOutTime);
+        $reference = ($at ?? now())->copy()->timezone($scheduled->getTimezone());
+
+        if ($reference->lessThanOrEqualTo($scheduled)) {
+            return 0;
+        }
+
+        $days = (int) $scheduled->copy()->startOfDay()->diffInDays($reference->copy()->startOfDay());
+
+        if ($scheduled->copy()->addDays($days)->lessThan($reference)) {
+            $days++;
+        }
+
+        return max(1, $days);
+    }
+
+    /**
+     * Montant en surplus d'hébergement dû au dépassement de check-out.
+     */
+    public function overstayRoomAmount(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        return $this->overstayNights($defaultCheckOutTime, $at) * $this->effectiveNightlyRate();
+    }
+
+    /**
+     * Nombre total de nuits effectives (prévues + nuits de dépassement).
+     */
+    public function effectiveTotalNights(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        return (int) $this->total_nights + $this->overstayNights($defaultCheckOutTime, $at);
+    }
+
+    /**
+     * Montant effectif de la chambre intégrant le surplus de dépassement.
+     */
+    public function effectiveRoomAmount(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        return (int) $this->total_room_amount + $this->overstayRoomAmount($defaultCheckOutTime, $at);
+    }
+
+    /**
+     * Indique si la TVA mémorisée a été ajoutée au total (données démo ou
+     * séjours antérieurs au basculement TTC « en dedans »).
+     */
+    public function hasAdditiveTax(): bool
+    {
+        if ((int) $this->tax_amount <= 0) {
+            return false;
+        }
+
+        $baseNet = (int) $this->total_room_amount
+            + (int) $this->package_amount
+            + (int) $this->extras_amount
+            - (int) $this->discount_amount;
+
+        return (int) $this->total_amount === $baseNet + (int) $this->tax_amount;
+    }
+
+    /**
+     * Montant total du séjour incluant l'éventuel surplus d'hébergement.
+     */
+    public function effectiveTotalAmount(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        return (int) $this->total_amount + $this->overstayRoomAmount($defaultCheckOutTime, $at);
+    }
+
+    /**
+     * Solde réellement dû incluant l'éventuel surplus d'hébergement.
+     */
+    public function effectiveBalanceDue(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
+    {
+        $overstay = $this->overstayRoomAmount($defaultCheckOutTime, $at);
+        $credit = max(0, (int) $this->paid_amount - (int) $this->total_amount);
+
+        return max(0, (int) $this->balance_due + $overstay - $credit);
     }
 
     /**
@@ -407,10 +532,7 @@ class Booking extends Model
      */
     public function scheduledCheckOutAt(?string $defaultCheckOutTime = null): Carbon
     {
-        $checkOutTime = self::normalizeClockTime(
-            $defaultCheckOutTime,
-            RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME
-        );
+        $checkOutTime = self::resolveCheckOutTime($defaultCheckOutTime);
 
         if ($this->check_out) {
             return $this->check_out->copy()->setTimeFromTimeString($checkOutTime);
@@ -451,6 +573,21 @@ class Booking extends Model
         }
 
         return $this->hasOverstayedCheckout($defaultCheckOutTime, $at);
+    }
+
+    private static function resolveCheckOutTime(?string $defaultCheckOutTime = null): string
+    {
+        if ($defaultCheckOutTime !== null && trim($defaultCheckOutTime) !== '') {
+            return self::normalizeClockTime($defaultCheckOutTime, RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME);
+        }
+
+        try {
+            $configured = app(RoomAvailabilityService::class)->checkOutTime();
+        } catch (\Throwable) {
+            $configured = RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME;
+        }
+
+        return self::normalizeClockTime($configured, RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME);
     }
 
     private static function normalizeClockTime(?string $time, string $fallback): string

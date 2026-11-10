@@ -91,7 +91,7 @@ class PartnerWalletService
             if (! $invoice && ($booking->status !== BookingStatus::CHECKED_IN || Invoice::where('booking_id', $booking->id)->where('kind', Invoice::KIND_SEJOUR)->exists())) {
                 throw new \DomainException('Utilisez la facture émise, ou un séjour en cours.');
             }
-            $due = $invoice?->balance_due ?? $booking->balance_due;
+            $due = $invoice?->balance_due ?? $booking->effectiveBalanceDue();
             if ($due < $data['amount'] * 100 || $due <= 0) {
                 throw new \DomainException('Le montant dépasse le solde restant à régler.');
             }
@@ -151,6 +151,18 @@ class PartnerWalletService
         }
         if (! $invoice || ! $invoice->isComplementaire()) {
             $this->checkout->recalculateTotals($booking);
+
+            if (! $invoice && $amount > 0) {
+                $freshBooking = $booking->fresh();
+                if ($freshBooking
+                    && $freshBooking->status === BookingStatus::CHECKED_IN
+                    && $freshBooking->hasOverstayedCheckout()
+                    && $freshBooking->getConsumedBalance() <= 0
+                ) {
+                    $freshBooking->update(['actual_check_out' => now()]);
+                    $this->checkout->syncDurationToNow($freshBooking);
+                }
+            }
         }
     }
 

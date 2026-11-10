@@ -159,13 +159,27 @@
                 <p class="text-sm text-primary">Chambre {{ $booking->room->number }}</p>
                 <p class="text-xs text-primary/45">{{ $booking->room->roomType->name }}</p>
             </x-table.cell>
+            @php
+                $rowOverstayNights = $booking->overstayNights($checkOutTime ?? null);
+                $rowEffectiveNights = (int) $booking->total_nights + $rowOverstayNights;
+                $rowEffectiveTotal = $booking->effectiveTotalAmount($checkOutTime ?? null);
+                $rowSurplusAmount = max(0, $rowEffectiveTotal - (int) $booking->total_amount);
+            @endphp
             <x-table.cell hide="2xl" nowrap>
                 <p class="text-xs text-primary">{{ $booking->check_in->locale('fr')->isoFormat('D MMM') }} → {{ $booking->check_out->locale('fr')->isoFormat('D MMM') }}</p>
-                <p class="text-xs text-primary/45">{{ $booking->total_nights }} nuit{{ $booking->total_nights > 1 ? 's' : '' }}</p>
+                <p class="text-xs text-primary/45">
+                    {{ $rowEffectiveNights }} nuit{{ $rowEffectiveNights > 1 ? 's' : '' }}
+                    @if($rowOverstayNights > 0)
+                        <span class="text-red-600 font-medium">(+{{ $rowOverstayNights }} dép.)</span>
+                    @endif
+                </p>
             </x-table.cell>
             <x-table.cell align="right" nowrap>
-                <span class="text-sm font-medium text-primary">{{ number_format($booking->total_amount / 100, 0, ',', ' ') }}</span>
+                <span class="text-sm font-medium text-primary">{{ number_format($rowEffectiveTotal / 100, 0, ',', ' ') }}</span>
                 <span class="text-[10px] text-primary/45">FCFA</span>
+                @if($rowSurplusAmount > 0)
+                    <p class="text-[10px] text-red-600">dont +{{ number_format($rowSurplusAmount / 100, 0, ',', ' ') }} F</p>
+                @endif
             </x-table.cell>
             <x-table.cell nowrap>
                 <div class="flex flex-wrap items-center gap-1.5">

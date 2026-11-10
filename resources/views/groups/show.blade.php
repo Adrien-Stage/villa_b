@@ -245,6 +245,9 @@
             'cancelled' => 'bg-red-50 text-red-600 border-red-200',
             ];
             $bsc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
+            $roomOverstayNights = $booking->overstayNights($checkOutTime ?? null);
+            $roomEffectiveTotal = $booking->effectiveTotalAmount($checkOutTime ?? null);
+            $roomEffectiveBalance = $booking->effectiveBalanceDue($checkOutTime ?? null);
             @endphp
             <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
                 <div class="col-span-2">
@@ -262,20 +265,32 @@
                 </div>
                 <div class="col-span-2">
                     <p class="text-xs font-medium text-primary">
-                        {{ number_format($booking->total_amount / 100, 0, ',', ' ') }} F
+                        {{ number_format($roomEffectiveTotal / 100, 0, ',', ' ') }} F
                     </p>
-                    @if($booking->balance_due > 0)
+                    @if($roomOverstayNights > 0)
+                    <p class="text-[11px] text-amber-700">
+                        +{{ $roomOverstayNights }} nuit{{ $roomOverstayNights > 1 ? 's' : '' }} dép.
+                    </p>
+                    @endif
+                    @if($roomEffectiveBalance > 0)
                     <p class="text-xs text-red-500">
-                        Solde : {{ number_format($booking->balance_due / 100, 0, ',', ' ') }} F
+                        Solde : {{ number_format($roomEffectiveBalance / 100, 0, ',', ' ') }} F
                     </p>
                     @else
                     <p class="text-xs text-green-600">Soldé</p>
                     @endif
                 </div>
                 <div class="col-span-2">
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full border {{ $bsc }}">
-                        {{ $booking->status->label() }}
-                    </span>
+                    <div class="flex flex-wrap items-center gap-1">
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-full border {{ $bsc }}">
+                            {{ $booking->status->label() }}
+                        </span>
+                        @if($roomOverstayNights > 0)
+                        <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border border-red-200 bg-red-50 text-red-700">
+                            Dépassement
+                        </span>
+                        @endif
+                    </div>
                 </div>
                 <div class="col-span-1 flex items-center justify-end gap-1">
                     <a href="{{ route('bookings.show', $booking) }}"
@@ -698,7 +713,7 @@
         <form method="POST" action="{{ route('groups.payment.add', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-            @php $consumedBalance = $groupBooking->getConsumedBalance(); @endphp
+            @php $consumedBalance = $groupBooking->getConsumedBalance($checkOutTime ?? null); @endphp
             {{-- Solde total --}}
             <div class="bg-accent/20 rounded-lg px-4 py-3 flex justify-between items-center">
                 <span class="text-xs text-primary/60">Solde consommé (réel)</span>
