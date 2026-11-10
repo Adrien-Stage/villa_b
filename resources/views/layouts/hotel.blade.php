@@ -365,24 +365,12 @@
                         <div>
                             <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
                             <ul class="space-y-0.5">
-                                {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module.
-                                     Le contrôleur de gestion figure dans chaque bloc : il consulte tous les services. --}}
-                                @pour('manager','reception','finance_manager','controller')
-                                    @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
-                                        <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
-                                    @endif
-                                @endpour
-                                {{-- La grille tarifaire : prix de base et tarifs par critère. --}}
-                                @droit('rooms.rates.voir')
-                                    <x-sidebar-link route="rooms.rates.index" icon="tags">Tarifs</x-sidebar-link>
-                                @enddroit
-
+                            {{-- Ordre métier Hôtel : Agenda, Réservations, Chambres, Tarifs,
+                                 Demandes à l'économat, Housekeeping, Fiches techniques.
+                                 POS Réception est dans la barre supérieure pour la réception seule. --}}
                             @pour('manager','reception','finance_manager','controller')
                                 @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
-                                    {{-- L'agenda est un écran à part entière : le calendrier
-                                         des séjours n'est plus une vue de la liste. --}}
                                     <x-sidebar-link route="agenda.index" icon="calendar-days">Agenda</x-sidebar-link>
-                                    <x-sidebar-link route="reception.pos.index" icon="shopping-cart">POS Réception</x-sidebar-link>
 
                                     <li>
                                         <a href="{{ route('bookings.index') }}"
@@ -392,7 +380,7 @@
                                             {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
                                                 ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
                                                 : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
-                                            <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                            <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true"></i>
                                             <span class="sidebar-libelle">Réservations</span>
                                         </a>
 
@@ -400,42 +388,46 @@
                                         <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
                                             <li>
                                                 <a href="{{ route('bookings.index') }}"
+                                                    @if(request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')) aria-current="page" @endif
                                                     class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                     {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="user" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <i data-lucide="user" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
                                                     Individuelles
                                                 </a>
                                             </li>
                                             <li>
                                                 <a href="{{ route('groups.index') }}"
+                                                    @if(request()->routeIs('groups.*')) aria-current="page" @endif
                                                     class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                     {{ request()->routeIs('groups.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="users" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <i data-lucide="users" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
                                                     Groupes
                                                 </a>
                                             </li>
                                             <li>
                                                 <a href="{{ route('bookings.cash_register.index') }}"
+                                                    @if(request()->routeIs('bookings.cash_register.*')) aria-current="page" @endif
                                                     class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                     {{ request()->routeIs('bookings.cash_register.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
                                                     Compta Réception
                                                 </a>
                                             </li>
                                             @droit('bookings.handovers.voir')
                                             <li>
                                                 <a href="{{ route('bookings.handovers.index') }}"
+                                                    @if(request()->routeIs('bookings.handovers.*')) aria-current="page" @endif
                                                     class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
                                                     {{ request()->routeIs('bookings.handovers.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="hand-coins" class="w-3 h-3 flex-shrink-0"></i>
+                                                    <i data-lucide="hand-coins" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
                                                     Passations
                                                 </a>
                                             </li>
@@ -445,6 +437,27 @@
                                     </li>
                                 @endif
                             @endpour
+
+                            {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module.
+                                 Le contrôleur de gestion figure dans chaque bloc : il consulte tous les services. --}}
+                            @pour('manager','reception','finance_manager','controller')
+                                @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
+                                    <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
+                                @endif
+                            @endpour
+
+                            {{-- La grille tarifaire : prix de base et tarifs par critère. --}}
+                            @droit('rooms.rates.voir')
+                                <x-sidebar-link route="rooms.rates.index" icon="tags">Tarifs</x-sidebar-link>
+                            @enddroit
+
+                            {{-- La réception et le housekeeping expriment leurs besoins vers
+                                 l'économat ; en cas d'indisponibilité, l'économat crée la demande d'achat. --}}
+                            @if($groupeDesDemandes === 'hotel')
+                                @droit('economat.requisitions.voir')
+                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
+                                @enddroit
+                            @endif
 
                             @pour('manager','housekeeping_leader','housekeeping_supervisor','housekeeping_staff','housekeeping','controller')
                                 @module('housekeeping')
@@ -458,21 +471,9 @@
                                 @endmodule
                             @endpour
 
-                            {{-- La réception et le housekeeping adressent leurs
-                                 demandes à l'économat sans le tenir : elles
-                                 partent d'ici, non de l'application Économat. --}}
-                            @if($groupeDesDemandes === 'hotel')
-                                @droit('economat.requisitions.voir')
-                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                                @droit('economat.purchase_requests.voir')
-                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
-                                @enddroit
-                            @endif
-
                             @pour('manager')
                                 <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                                @endpour
+                            @endpour
                             </ul>
                         </div>
                     @endundroit
@@ -561,9 +562,6 @@
                             @if($groupeDesDemandes === 'restaurant')
                                 @droit('economat.requisitions.voir')
                                     <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                                @droit('economat.purchase_requests.voir')
-                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
                                 @enddroit
                             @endif
                             @php
@@ -752,9 +750,6 @@
                             @if($groupeDesDemandes === 'technique')
                                 @droit('economat.requisitions.voir')
                                     <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                                @droit('economat.purchase_requests.voir')
-                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
                                 @enddroit
                             @endif
                         </ul>
@@ -1191,15 +1186,17 @@
                     </div>
                 </div>
 
-                @pour('manager', 'reception')
-                    <a href="{{ route('reception.pos.index') }}"
-                       title="Basculer vers le terminal plein écran Mode POS Réception"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-primary hover:bg-surface-dark transition-all shadow-xs mr-1">
-                        <i data-lucide="store" class="w-3.5 h-3.5 text-accent"></i>
-                        <span class="hidden md:inline">Mode POS Réception</span>
-                        <span class="md:hidden">POS</span>
-                    </a>
-                @endpour
+                @if(auth()->check() && !auth()->user()->isAdmin() && auth()->user()->exerce(['reception']))
+                    @droit('reception.pos.voir')
+                        <a href="{{ route('reception.pos.index') }}"
+                           title="Basculer vers le terminal plein écran Mode POS Réception"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-primary hover:bg-surface-dark transition-all shadow-xs mr-1">
+                            <i data-lucide="store" class="w-3.5 h-3.5 text-accent" aria-hidden="true"></i>
+                            <span class="hidden md:inline">Mode POS Réception</span>
+                            <span class="md:hidden">POS</span>
+                        </a>
+                    @enddroit
+                @endif
 
                 <span class="hidden sm:inline text-xs text-primary/50">
                     {{ ucfirst(\Carbon\Carbon::now()->locale('fr')->isoFormat('ddd. D MMM')) }}

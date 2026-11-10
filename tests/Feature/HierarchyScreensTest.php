@@ -28,10 +28,15 @@ function menuDe(string $role): array
     return array_map('trim', $l[1] ?? []);
 }
 
-test('le chef de réception retrouve les menus de la réception', function () {
-    expect(menuDe('reception_chief'))->toContain('Chambres')
-        ->and(menuDe('reception_chief'))->toContain('Agenda')
-        ->and(menuDe('reception_chief'))->toContain('POS Réception');
+test('le chef de réception retrouve les menus de la réception sans lien POS en barre latérale', function () {
+    expect(menuDe('reception_chief'))->toContain('Agenda')
+        ->and(menuDe('reception_chief'))->toContain('Chambres')
+        ->and(menuDe('reception_chief'))->not->toContain('POS Réception');
+
+    $this->actingAs(User::factory()->create(['role' => 'reception_chief']))
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Mode POS Réception');
 });
 
 test('le chef de réception règle les paramètres de son service, le réceptionniste non', function () {

@@ -74,7 +74,7 @@ test('qui tient le magasin garde la tuile Économat et y trouve les demandes', f
         expect(Navigation::getActiveGroup('economat.requisitions.index')['id'])->toBe('economat');
     }
 
-    expect(tuiles(agentNav('manager'))['hotel'])->toBe('/rooms');
+    expect(tuiles(agentNav('manager'))['hotel'])->toBe('/agenda');
 });
 
 test('les autres services font aussi leurs demandes depuis leur application', function () {
@@ -93,7 +93,13 @@ test('les autres services font aussi leurs demandes depuis leur application', fu
     $receptionniste = agentNav('reception');
     $this->actingAs($receptionniste);
     expect(tuiles($receptionniste))->not->toHaveKey('economat')
-        ->and(Navigation::getActiveGroup('economat.purchase_requests.index')['id'])->toBe('hotel');
+        ->and(Navigation::getActiveGroup('economat.requisitions.index')['id'])->toBe('hotel');
+    // Les demandes d'achat sont réservées à l'économat / achats / direction.
+    $this->get(route('economat.purchase_requests.index'))->assertSessionHas('access_denied_popup', true);
+
+    $econome = agentNav('econome');
+    $this->actingAs($econome);
+    expect(Navigation::getActiveGroup('economat.purchase_requests.index')['id'])->toBe('economat');
 
     $comptable = agentNav('accountant');
     $this->actingAs($comptable);

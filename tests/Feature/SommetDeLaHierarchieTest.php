@@ -33,11 +33,12 @@ test("l'administrateur figure au référentiel, au sommet, et ne s'attribue pas 
         ->and($admin['is_assignable'])->toBeFalse();
 });
 
-test("l'administrateur consulte l'exploitation, hors exclusivités de contrôle (Lot 1, S6)", function () {
+test("l'administrateur consulte l'exploitation, hors exclusivités de contrôle et POS Réception (Lot 1, S6)", function () {
     $aveugle = array_keys(array_filter(
         PermissionCatalog::all(),
         fn (array $roles, string $droit) => PermissionCatalog::estLecture($droit)
             && !in_array($droit, ['economat.control.voir', 'economat.control.variances.voir'], true)
+            && !str_starts_with($droit, 'reception.pos.')
             && !in_array('admin', $roles, true),
         ARRAY_FILTER_USE_BOTH
     ));

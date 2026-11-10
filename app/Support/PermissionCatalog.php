@@ -495,6 +495,8 @@ class PermissionCatalog
     private const AUDIT_QUALITE_EXCLUS = [
         'bookings.cash_register.', 'bookings.handovers.', 'shop.cash_register.', 'restaurant.cash_register.', 'rooms.cost_sheets.', 'customers.export',
         'bookings.drafts.',
+        // Terminal POS Réception : strictement réservé au service Réception / Front-Office.
+        'reception.pos.',
         // Contrôle & ratios, écarts d'inventaire : au contrôle de gestion seul.
         'economat.control.voir', 'economat.control.variances.',
     ];
@@ -590,6 +592,12 @@ class PermissionCatalog
         'restaurant.cash_register.open.creer',
         'shop.cash_register.close.creer',
         'shop.cash_register.open.creer',
+
+        // Terminal POS Réception (exclusivité Réception / Front-Office)
+        'reception.pos.history',
+        'reception.pos.receipt',
+        'reception.pos.sales.creer',
+        'reception.pos.voir',
     ];
 
     /**
@@ -631,6 +639,12 @@ class PermissionCatalog
         'accounting.cash_reviews.creer',
         'pilotage.budget.valider',
         'pilotage.forecast.valider',
+
+        // Terminal POS Réception (exclusivité Réception / Front-Office)
+        'reception.pos.history',
+        'reception.pos.receipt',
+        'reception.pos.sales.creer',
+        'reception.pos.voir',
     ];
 
     /** Indique si un droit est strictement non dérogeable */
@@ -703,7 +717,9 @@ class PermissionCatalog
             // L'administrateur n'a aucun droit d'écriture sur l'exploitation dans le gabarit.
             if (self::estDroitAdmin($droit)) {
                 $roles[] = RoleCatalog::ADMIN;
-            } elseif (self::estLecture($droit) && !in_array($droit, ['economat.control.voir', 'economat.control.variances.voir'], true)) {
+            } elseif (self::estLecture($droit)
+                && !in_array($droit, ['economat.control.voir', 'economat.control.variances.voir'], true)
+                && !str_starts_with($droit, 'reception.pos.')) {
                 $roles[] = RoleCatalog::ADMIN;
             }
 
@@ -716,8 +732,8 @@ class PermissionCatalog
             }
 
             // Le support diagnostique : il consulte, sans extraire de fichier
-            // ni écrire.
-            if (self::estLecture($droit) && !str_ends_with($droit, '.export')) {
+            // ni écrire. Le terminal POS Réception reste strictement réservé à la réception.
+            if (self::estLecture($droit) && !str_ends_with($droit, '.export') && !str_starts_with($droit, 'reception.pos.')) {
                 $roles[] = RoleCatalog::SUPPORT;
             }
 
@@ -1055,14 +1071,18 @@ class PermissionCatalog
             // direction peuvent aussi en décider ; la demande du responsable
             // des achats lui-même, un autre la valide.
             'economat.purchase_requests.approve' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
-            'economat.purchase_requests.cancel' => ['econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            // Seuls les acteurs du circuit d'approvisionnement (économat, achats, direction)
+            // saisissent ou consultent des demandes d'achat : les services expriment leurs
+            // besoins via les demandes à l'économat (réquisitions), puis l'économe émet
+            // une demande d'achat en cas d'indisponibilité de stock.
+            'economat.purchase_requests.cancel' => ['econome', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.convert' => ['manager', 'purchasing_manager'],
-            'economat.purchase_requests.creer' => ['econome', 'housekeeping_leader', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.creer' => ['econome', 'manager'],
             // Comparer les fournisseurs d'un article en saisissant une demande.
             'economat.purchase_requests.fournisseurs' => ['manager', 'purchasing_manager'],
             'economat.purchase_requests.modifier' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             'economat.purchase_requests.reject' => ['controller', 'finance_manager', 'manager', 'purchasing_manager'],
-            'economat.purchase_requests.voir' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
+            'economat.purchase_requests.voir' => ['controller', 'econome', 'manager', 'purchasing_manager'],
             // Bordereaux de livraison : qui réceptionne les joint ; l'économe
             // seul les retire, et ils partent à la corbeille.
             'economat.receipts.attachments.creer' => ['econome', 'storekeeper'],
@@ -1284,10 +1304,10 @@ class PermissionCatalog
             'customers.voir' => ['controller', 'manager', 'reception'],
 
             // ── Réception ──
-            'reception.pos.history' => ['manager', 'reception'],
-            'reception.pos.receipt' => ['manager', 'reception'],
-            'reception.pos.sales.creer' => ['manager', 'reception'],
-            'reception.pos.voir' => ['controller', 'manager', 'reception'],
+            'reception.pos.history' => ['reception'],
+            'reception.pos.receipt' => ['reception'],
+            'reception.pos.sales.creer' => ['reception'],
+            'reception.pos.voir' => ['reception'],
 
             // ── Utilisateurs ──
             // ── Administration ──

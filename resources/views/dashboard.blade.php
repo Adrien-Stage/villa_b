@@ -68,14 +68,16 @@
         Actions Rapides
     </h2>
     <div class="flex flex-wrap items-center gap-2.5">
-        {{-- Chaque raccourci pose le droit de sa route : la section s'adresse à
-             une fonction, le bouton à qui peut s'en servir. --}}
-        @if($isManager || Auth::user()->exerce(['reception']))
+        {{-- Chaque raccourci pose le droit de sa route : le Mode POS Réception
+             est strictement réservé aux agents de la réception / front-office. --}}
+        @if(!Auth::user()->isAdmin() && Auth::user()->exerce(['reception']))
             @droit('reception.pos.voir')
             <a href="{{ route('reception.pos.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#8D4925] hover:bg-[#733a1c] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
-                <i data-lucide="store" class="w-4 h-4"></i> Mode POS Réception
+                <i data-lucide="store" class="w-4 h-4" aria-hidden="true"></i> Mode POS Réception
             </a>
             @enddroit
+        @endif
+        @if($isManager || Auth::user()->exerce(['reception']))
             @droit('bookings.creer')
             <a href="{{ route('bookings.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#2A160D] hover:bg-[#1a0e08] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Nouvelle Réservation

@@ -3,12 +3,27 @@
 @section('title', 'Nouvelle demande d\'achat — Économat')
 
 @section('content')
+@php
+    $initialLines = collect(old('lines', $prefillLines ?? []))
+        ->map(function ($line) use ($items) {
+            $itemId = $line['stock_item_id'] ?? '';
+            $item = $itemId ? $items->firstWhere('id', (int) $itemId) : null;
+
+            return [
+                'stock_item_id' => $itemId !== '' ? (string) $itemId : '',
+                'unit'          => $line['unit'] ?? ($item?->shortUnit() ?? ''),
+                'quantity'      => $line['quantity_requested'] ?? $line['quantity'] ?? 1,
+                'notes'         => $line['notes'] ?? '',
+            ];
+        })
+        ->values();
+@endphp
 <div class="max-w-5xl mx-auto space-y-6" x-data="purchaseRequestForm({{ Js::from($items->map(fn ($it) => [
     'id' => $it->id, 'name' => $it->name, 'reference' => $it->reference, 'unit' => $it->shortUnit(),
-])->values()) }})">
+])->values()) }}, {{ Js::from($initialLines) }})">
     <div class="flex items-center gap-3">
         <a href="{{ route('economat.purchase_requests.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors" aria-label="Retour aux demandes d'achat">
-            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            <i data-lucide="arrow-left" class="w-5 h-5" aria-hidden="true"></i>
         </a>
         <div>
             <h1 class="text-xl font-heading font-semibold text-primary">Exprimer un besoin d'approvisionnement</h1>
@@ -17,6 +32,20 @@
     </div>
 
     @include('economat.partials.flash')
+
+    @if(!empty($sourceRequisition))
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-2.5">
+            <i data-lucide="info" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" aria-hidden="true"></i>
+            <div>
+                <p class="font-semibold">
+                    Pré-remplissage depuis la demande à l'économat
+                    <a href="{{ route('economat.requisitions.show', $sourceRequisition) }}" class="underline font-mono">{{ $sourceRequisition->number }}</a>
+                    ({{ $sourceRequisition->departmentLabel() }})
+                </p>
+                <p class="text-amber-800/80 mt-0.5">Seuls les articles en stock insuffisant et les quantités manquantes ont été repris.</p>
+            </div>
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('economat.purchase_requests.store') }}" class="space-y-6">
         @csrf
@@ -30,7 +59,7 @@
                             <label for="demande-departement" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Département demandeur *</label>
                             <select id="demande-departement" name="department" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
                                 @foreach($departments as $key => $lbl)
-                                    <option value="{{ $key }}" @selected(old('department', 'cuisine') === $key)>{{ $lbl }}</option>
+                                    <option value="{{ $key }}" @selected(old('department', $prefillDepartment ?? 'cuisine') === $key)>{{ $lbl }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -38,20 +67,20 @@
                     <div>
                         <label for="demande-urgence" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Degré d'urgence *</label>
                         <select id="demande-urgence" name="priority" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
-                            <option value="low" @selected(old('priority') === 'low')>Basse (Anticipation)</option>
-                            <option value="normal" @selected(old('priority', 'normal') === 'normal')>Normale</option>
-                            <option value="urgent" @selected(old('priority') === 'urgent')>Urgente (Rupture imminente)</option>
+                            <option value="low" @selected(old('priority', $prefillPriority ?? 'normal') === 'low')>Basse (Anticipation)</option>
+                            <option value="normal" @selected(old('priority', $prefillPriority ?? 'normal') === 'normal')>Normale</option>
+                            <option value="urgent" @selected(old('priority', $prefillPriority ?? 'normal') === 'urgent')>Urgente (Rupture imminente)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Demandeur</label>
-                        <input type="text" readonly disabled value="{{ auth()->user()->name }}" class="w-full px-3 py-2 text-sm border border-secondary/20 bg-gray-50 rounded-lg text-primary/70">
+                        <label for="demande-demandeur" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Demandeur</label>
+                        <input id="demande-demandeur" type="text" readonly disabled value="{{ auth()->user()->name }}" class="w-full px-3 py-2 text-sm border border-secondary/20 bg-gray-50 rounded-lg text-primary/70">
                     </div>
                 </div>
 
                 <div>
                     <label for="demande-motif" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Motif / Justification du besoin</label>
-                    <textarea id="demande-motif" name="purpose" rows="2" placeholder="Ex: Réapprovisionnement hebdomadaire cuisine + banquet samedi soir..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">{{ old('purpose') }}</textarea>
+                    <textarea id="demande-motif" name="purpose" rows="2" placeholder="Ex: Réapprovisionnement hebdomadaire cuisine + banquet samedi soir..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">{{ old('purpose', $prefillPurpose ?? '') }}</textarea>
                 </div>
             </div>
 
@@ -125,13 +154,23 @@
 </div>
 
 <script>
-function purchaseRequestForm(catalogue) {
-    const ligneVide = (uid) => ({ uid, stock_item_id: '', unit: '', quantity: 1, notes: '' });
+function purchaseRequestForm(catalogue, initialLines = []) {
+    const ligneVide = (uid, data = {}) => ({
+        uid,
+        stock_item_id: data.stock_item_id !== undefined && data.stock_item_id !== null ? String(data.stock_item_id) : '',
+        unit: data.unit ?? '',
+        quantity: data.quantity ?? 1,
+        notes: data.notes ?? '',
+    });
+
+    const initial = Array.isArray(initialLines) && initialLines.length > 0
+        ? initialLines.map((data, index) => ligneVide(index, data))
+        : [ligneVide(0)];
 
     return {
         catalogue,
-        prochain: 1,
-        lines: [ligneVide(0)],
+        prochain: initial.length,
+        lines: initial,
         nouvelleLigne() {
             return ligneVide(this.prochain++);
         },
