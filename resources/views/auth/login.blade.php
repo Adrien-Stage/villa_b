@@ -1,11 +1,47 @@
 @php
     $tenant = \App\Models\Tenant::current();
-    $tenantName = $tenant?->name ?? 'Établissement';
+    $tenantName = trim((string) ($tenant?->name ?? '')) ?: 'Établissement';
     // Logo importé par le manager depuis les paramètres de l'application
     // (stocké localement dans le storage de ce tenant).
     $tenantLogo = ($tenant && !empty($tenant->settings['logo'])) ? asset('storage/' . $tenant->settings['logo']) : null;
     $contactEmail = $tenant?->email;
     $contactPhone = $tenant?->phone;
+
+    $rawTheme = is_array($tenant?->settings['theme'] ?? null) ? $tenant->settings['theme'] : [];
+    $sanitizeHex = static function (?string $value, string $fallback): string {
+        $hex = strtoupper(ltrim(trim((string) $value), '#'));
+        if (strlen($hex) === 3 && ctype_xdigit($hex)) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        return preg_match('/^[0-9A-F]{6}$/', $hex) ? '#' . $hex : $fallback;
+    };
+
+    $theme = [
+        'primary'       => $sanitizeHex($rawTheme['primary'] ?? null, '#391F0E'),
+        'secondary'     => $sanitizeHex($rawTheme['secondary'] ?? null, '#CCAB87'),
+        'accent'        => $sanitizeHex($rawTheme['accent'] ?? null, '#EED4A3'),
+        'dark'          => $sanitizeHex($rawTheme['dark'] ?? null, '#0F0201'),
+        'surface_dark'  => $sanitizeHex($rawTheme['surface_dark'] ?? null, '#2C1810'),
+        'text_on_light' => $sanitizeHex($rawTheme['text_on_light'] ?? null, '#391F0E'),
+        'text_on_dark'  => $sanitizeHex($rawTheme['text_on_dark'] ?? null, '#CCAB87'),
+    ];
+
+    $relativeLuminance = static function (string $hex): float {
+        $channels = array_map(static function (int $c): float {
+            $srgb = $c / 255;
+
+            return $srgb <= 0.03928 ? $srgb / 12.92 : (($srgb + 0.055) / 1.055) ** 2.4;
+        }, sscanf($hex, '#%02x%02x%02x'));
+
+        return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+    };
+
+    $primaryLum = $relativeLuminance($theme['primary']);
+    $brandSurfaceLum = ($primaryLum + $relativeLuminance($theme['surface_dark'])) / 2;
+    $brandIsLight = $brandSurfaceLum > 0.32;
+    $ctaText = $primaryLum > 0.17913 ? '#181410' : '#FFFFFF';
+    $primaryReadableOnLight = $primaryLum <= 0.22;
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
@@ -20,24 +56,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&family=Inter:wght@300..700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-primary: {{ $tenant->settings['theme']['primary'] ?? '#391F0E' }};
-            --color-secondary: {{ $tenant->settings['theme']['secondary'] ?? '#CCAB87' }};
-            --color-accent: {{ $tenant->settings['theme']['accent'] ?? '#EED4A3' }};
-            --color-dark: {{ $tenant->settings['theme']['dark'] ?? '#0F0201' }};
-            --color-surface-dark: {{ $tenant->settings['theme']['surface_dark'] ?? '#2C1810' }};
-            --color-text-on-light: {{ $tenant->settings['theme']['text_on_light'] ?? '#391F0E' }};
-            --color-text-on-dark: {{ $tenant->settings['theme']['text_on_dark'] ?? '#CCAB87' }};
+            --color-primary: {{ $theme['primary'] }};
+            --color-secondary: {{ $theme['secondary'] }};
+            --color-accent: {{ $theme['accent'] }};
+            --color-dark: {{ $theme['dark'] }};
+            --color-surface-dark: {{ $theme['surface_dark'] }};
+            --color-text-on-light: {{ $theme['text_on_light'] }};
+            --color-text-on-dark: {{ $theme['text_on_dark'] }};
 
-            --login-ink: #30271f;
-            --login-brown: #3b281d;
-            --login-brown-hover: #553927;
-            --login-muted: #70675e;
-            --login-quiet: #786e64;
-            --login-bg: #fffdfa;
-            --login-line: #e6e1d8;
-            --login-input-border: #968978;
-            --login-sage: #3d6957;
+            --login-ink: color-mix(in oklab, var(--color-dark) 88%, #1e293b);
+            --login-primary: var(--color-primary);
+            --login-primary-hover: color-mix(in oklab, var(--color-primary) 76%, var(--color-dark));
+            --login-link: {{ $primaryReadableOnLight ? 'var(--color-primary)' : 'color-mix(in oklab, var(--color-primary) 45%, var(--color-dark))' }};
+            --login-muted: color-mix(in oklab, var(--color-dark) 54%, #6b7280);
+            --login-quiet: color-mix(in oklab, var(--color-dark) 44%, #6b7280);
+            --login-bg: color-mix(in oklab, var(--color-accent) 7%, #ffffff);
+            --login-surface-subtle: color-mix(in oklab, var(--color-accent) 12%, #ffffff);
+            --login-line: color-mix(in oklab, var(--color-secondary) 24%, #e5e7eb);
+            --login-input-border: color-mix(in oklab, var(--color-dark) 30%, #9ca3af);
+            --login-focus: var(--login-link);
             --login-red: #a03735;
+
+            --login-brand-fg: {{ $brandIsLight ? '#181410' : 'color-mix(in oklab, var(--color-accent) 28%, #ffffff)' }};
+            --login-brand-sub-fg: {{ $brandIsLight ? '#3f3730' : 'color-mix(in oklab, var(--color-text-on-dark) 75%, #ffffff)' }};
+            --login-brand-period-fg: {{ $brandIsLight ? 'var(--color-dark)' : 'var(--color-secondary)' }};
+            --login-brand-arch-fg: {{ $brandIsLight ? '#3f3730' : 'var(--color-secondary)' }};
+            --login-cta-bg: var(--color-primary);
+            --login-cta-fg: {{ $ctaText }};
         }
 
         body.login-body {
@@ -56,10 +101,16 @@
             background: var(--login-bg);
         }
 
-        /* ── Panneau gauche : identité Wetchah ───────────────────────────────── */
+        /* ── Panneau gauche : identité de l'établissement & thème ERP ───────── */
         .login-brand {
-            background: var(--login-brown);
-            color: #f7eddd;
+            background-color: var(--color-surface-dark);
+            background: radial-gradient(
+                ellipse at 25% 18%,
+                color-mix(in oklab, var(--color-primary) 88%, var(--color-surface-dark)) 0%,
+                var(--color-surface-dark) 58%,
+                var(--color-dark) 100%
+            );
+            color: var(--login-brand-fg);
             padding: 42px 48px;
             display: flex;
             flex-direction: column;
@@ -70,24 +121,26 @@
         .login-brand-wordmark {
             font-family: 'Playfair Display', Georgia, serif;
             font-weight: 600;
-            font-size: 31px;
-            line-height: 1;
-            letter-spacing: -1.1px;
-            color: #f7eddd;
+            font-size: clamp(24px, 2.4vw, 31px);
+            line-height: 1.15;
+            letter-spacing: -0.9px;
+            color: var(--login-brand-fg);
             margin: 0;
+            text-wrap: balance;
+            word-break: break-word;
         }
 
         .login-brand-period {
-            color: #985331;
+            color: var(--login-brand-period-fg);
         }
 
         .login-brand-sub {
-            margin: 6px 0 0;
-            font-size: 9px;
+            margin: 7px 0 0;
+            font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: .14em;
             font-weight: 600;
-            color: #dac3a9;
+            color: var(--login-brand-sub-fg);
         }
 
         .login-brand-copy {
@@ -103,12 +156,12 @@
             font-size: 36px;
             line-height: 1.25;
             letter-spacing: -.02em;
-            color: #f7eddd;
+            color: var(--login-brand-fg);
         }
 
         .login-brand-copy p {
             margin: 16px 0 0;
-            color: #d6bfa5;
+            color: var(--login-brand-sub-fg);
             font-size: 12.5px;
             line-height: 1.8;
             max-width: 310px;
@@ -121,15 +174,21 @@
             flex: 1;
             max-height: 340px;
             min-height: 150px;
-            color: #a38362;
+            color: var(--login-brand-arch-fg);
+            opacity: .76;
+        }
+
+        .login-architecture-door {
+            fill: var(--color-accent);
+            fill-opacity: .14;
         }
 
         .login-brand-foot {
-            border-top: 1px solid #d5b28f3b;
+            border-top: 1px solid color-mix(in oklab, var(--login-brand-sub-fg) 26%, transparent);
             padding-top: 18px;
             margin: auto 0 0;
             font-size: 9px;
-            color: #d6bfa5;
+            color: var(--login-brand-sub-fg);
             letter-spacing: .08em;
             text-transform: uppercase;
         }
@@ -153,10 +212,10 @@
             font-family: 'Playfair Display', Georgia, serif;
             font-weight: 600;
             font-size: 26px;
-            line-height: 1;
-            letter-spacing: -1px;
-            color: var(--login-brown);
-            margin: 0 0 35px;
+            line-height: 1.1;
+            letter-spacing: -0.9px;
+            color: var(--login-link);
+            margin: 0 0 28px;
         }
 
         .login-place {
@@ -164,21 +223,21 @@
             gap: 10px;
             align-items: center;
             margin-bottom: 29px;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 600;
             color: var(--login-ink);
         }
 
         .place-seal {
-            border: 1px solid #dacdbb;
-            background: #f2ecdf;
+            border: 1px solid color-mix(in oklab, var(--color-secondary) 45%, #d6d3d1);
+            background: color-mix(in oklab, var(--color-accent) 28%, #ffffff);
             width: 39px;
             height: 43px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 18px 18px 4px 4px;
-            color: #8b6c4d;
+            color: var(--login-link);
             flex-shrink: 0;
             overflow: hidden;
         }
@@ -277,7 +336,7 @@
         .login-form .field > label {
             font-size: 12px;
             font-weight: 550;
-            color: #594839;
+            color: color-mix(in oklab, var(--login-ink) 84%, #ffffff);
         }
 
         .login-form .field input {
@@ -301,7 +360,11 @@
         }
 
         .login-form .field input:hover {
-            border-color: #756859;
+            border-color: color-mix(in oklab, var(--login-ink) 55%, var(--login-input-border));
+        }
+
+        .login-form .field input:focus-visible {
+            border-color: var(--login-link);
         }
 
         .login-form .field input[aria-invalid="true"],
@@ -353,7 +416,7 @@
         }
 
         .password-toggle:hover {
-            background: #efeae1;
+            background: color-mix(in oklab, var(--color-secondary) 16%, #f5f5f4);
             color: var(--login-ink);
         }
 
@@ -368,10 +431,10 @@
             min-height: 46px;
             margin-top: 3px;
             padding: 10px 16px;
-            border: 1px solid var(--login-brown);
+            border: 1px solid var(--login-cta-bg);
             border-radius: 7px;
-            background: var(--login-brown);
-            color: #ffffff;
+            background: var(--login-cta-bg);
+            color: var(--login-cta-fg);
             font-family: inherit;
             font-size: 13.5px;
             font-weight: 550;
@@ -384,8 +447,9 @@
         }
 
         .login-submit:hover {
-            background: var(--login-brown-hover);
-            border-color: var(--login-brown-hover);
+            --login-cta-bg: var(--login-primary-hover);
+            background: var(--login-primary-hover);
+            border-color: var(--login-primary-hover);
         }
 
         .login-submit:disabled {
@@ -409,7 +473,7 @@
         .login-support button {
             border: 0;
             background: transparent;
-            color: var(--login-brown);
+            color: var(--login-link);
             font-family: inherit;
             font-size: 12px;
             font-weight: 550;
@@ -421,7 +485,7 @@
         }
 
         .login-support button:hover {
-            color: var(--login-brown-hover);
+            color: var(--login-primary-hover);
         }
 
         .login-foot {
@@ -433,10 +497,14 @@
             color: var(--login-quiet);
         }
 
+        .mobile-login-brand .login-brand-period {
+            color: color-mix(in oklab, var(--color-secondary) 82%, var(--login-link));
+        }
+
         /* Focus clavier haute visibilité sur le thème clair */
         .login-page :where(button, input, a):focus-visible,
         dialog.login-dialog :where(button, a):focus-visible {
-            outline: 2px solid var(--login-sage);
+            outline: 2px solid var(--login-focus);
             outline-offset: 2px;
         }
 
@@ -474,12 +542,12 @@
             max-width: calc(100% - 32px);
             max-height: calc(100dvh - 44px);
             margin: auto;
-            border: 1px solid #ded5c7;
+            border: 1px solid var(--login-line);
             border-radius: 14px;
             padding: 0;
             background: #ffffff;
             color: var(--login-ink);
-            box-shadow: 0 24px 90px rgba(38, 24, 11, 0.22);
+            box-shadow: 0 24px 90px color-mix(in oklab, var(--color-dark) 26%, transparent);
             overflow: auto;
         }
 
@@ -488,7 +556,7 @@
         }
 
         dialog.login-dialog::backdrop {
-            background: rgba(36, 27, 18, 0.42);
+            background: color-mix(in oklab, var(--color-dark) 48%, transparent);
             overflow: hidden;
             overscroll-behavior: contain;
         }
@@ -536,7 +604,7 @@
         }
 
         .dialog-close:hover {
-            background: #efeae1;
+            background: color-mix(in oklab, var(--color-secondary) 16%, #f5f5f4);
             color: var(--login-ink);
         }
 
@@ -565,7 +633,7 @@
             margin: 14px 0 0;
             padding: 12px 14px;
             list-style: none;
-            background: #faf8f4;
+            background: var(--login-surface-subtle);
             border: 1px solid var(--login-line);
             border-radius: 8px;
             display: grid;
@@ -586,7 +654,7 @@
         }
 
         .login-contact-list a {
-            color: var(--login-brown);
+            color: var(--login-link);
             font-weight: 550;
             text-decoration: underline;
             text-underline-offset: 3px;
@@ -597,13 +665,13 @@
             border-top: 1px solid var(--login-line);
             display: flex;
             justify-content: flex-end;
-            background: #faf8f4;
+            background: var(--login-surface-subtle);
         }
 
         .dialog-btn-primary {
-            border: 1px solid var(--login-brown);
-            background: var(--login-brown);
-            color: #ffffff;
+            border: 1px solid var(--login-cta-bg);
+            background: var(--login-cta-bg);
+            color: var(--login-cta-fg);
             border-radius: 7px;
             min-height: 39px;
             padding: 8px 16px;
@@ -614,8 +682,28 @@
         }
 
         .dialog-btn-primary:hover {
-            background: var(--login-brown-hover);
-            border-color: var(--login-brown-hover);
+            --login-cta-bg: var(--login-primary-hover);
+            background: var(--login-primary-hover);
+            border-color: var(--login-primary-hover);
+        }
+
+        @supports (color: color(from red xyz-d65 r g b)) {
+            .login-submit,
+            .dialog-btn-primary {
+                color: color(
+                    from var(--login-cta-bg) xyz-d65
+                    calc(max(0, sign(0.17913 - y)) * 0.9505)
+                    max(0, sign(0.17913 - y))
+                    calc(max(0, sign(0.17913 - y)) * 1.089)
+                );
+            }
+        }
+
+        @supports (color: contrast-color(red)) {
+            .login-submit,
+            .dialog-btn-primary {
+                color: contrast-color(var(--login-cta-bg));
+            }
         }
 
         /* ── Responsive ──────────────────────────────────────────────────────── */
@@ -658,7 +746,7 @@
                 display: block;
             }
             .login-place {
-                font-size: 12px;
+                font-size: 13px;
                 margin-bottom: 22px;
             }
             .place-seal {
@@ -708,10 +796,22 @@
 
         @media (prefers-contrast: more) {
             :root {
-                --login-muted: #4b4034;
-                --login-quiet: #4b4034;
-                --login-line: #b9a68d;
-                --login-input-border: #5e5144;
+                --login-muted: color-mix(in oklab, var(--color-dark) 78%, #111827);
+                --login-quiet: color-mix(in oklab, var(--color-dark) 78%, #111827);
+                --login-line: color-mix(in oklab, var(--color-dark) 42%, #9ca3af);
+                --login-input-border: color-mix(in oklab, var(--color-dark) 62%, #4b5563);
+            }
+        }
+
+        @media (forced-colors: active) {
+            .login-brand {
+                border-right: 1px solid CanvasText;
+            }
+            .place-seal,
+            .login-submit,
+            .dialog-btn-primary,
+            dialog.login-dialog {
+                border-color: ButtonText;
             }
         }
     </style>
@@ -720,22 +820,22 @@
 
 <main id="main" class="login-page">
 
-    {{-- ===== PANNEAU GAUCHE — Branding Wetchah ===== --}}
-    <section class="login-brand" aria-label="Wetchah, gestion hôtelière">
+    {{-- ===== PANNEAU GAUCHE — Identité de l'établissement & Wetchah ===== --}}
+    <section class="login-brand" aria-label="{{ $tenantName }} — Wetchah, gestion hôtelière">
         <div>
-            <p class="login-brand-wordmark">Wetchah<span class="login-brand-period">.</span></p>
-            <p class="login-brand-sub">Gestion hôtelière</p>
+            <p class="login-brand-wordmark">{{ $tenantName }}<span class="login-brand-period">.</span></p>
+            <p class="login-brand-sub">Wetchah · Gestion hôtelière</p>
         </div>
 
         <div class="login-brand-copy">
             <h2>Une journée d’hôtel,<br>bien organisée.</h2>
-            <p>Les services de votre établissement.<br>Un espace pour travailler ensemble.</p>
+            <p>Les services de {{ $tenantName }}.<br>Un espace pour travailler ensemble.</p>
         </div>
 
         <svg class="login-architecture" viewBox="0 0 360 310" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
             <path d="M42 288V130a138 138 0 0 1 276 0v158M69 288V132a111 111 0 0 1 222 0v156M97 288V135a83 83 0 0 1 166 0v153M126 288V137a54 54 0 0 1 108 0v151" stroke-width=".8"/>
             <path d="M15 289h330M15 300h330M180 84v205M126 184h108M97 154h29m108 0h29M69 123h29m164 0h29" stroke-width=".8"/>
-            <path d="M143 289V152a37 37 0 0 1 74 0v137" fill="#684a34" fill-opacity=".2" stroke-width=".7"/>
+            <path class="login-architecture-door" d="M143 289V152a37 37 0 0 1 74 0v137" stroke-width=".7"/>
             <circle cx="196" cy="222" r="3"/>
         </svg>
 

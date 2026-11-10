@@ -35,6 +35,25 @@ test('le manifeste porte le nom de l’établissement', function () {
         ->and(strlen($manifest['short_name']))->toBeLessThanOrEqual(12);
 });
 
+test('le manifeste et la balise theme-color reprennent la couleur principale du tenant', function () {
+    Tenant::create([
+        'name' => 'Kore-TecK',
+        'slug' => 'kore-teck',
+        'settings' => [
+            'theme' => [
+                'primary' => '#1E3A8A',
+                'accent' => '#93C5FD',
+            ],
+        ],
+    ]);
+
+    $manifest = $this->get(route('pwa.manifest'))->assertOk()->json();
+    $loginHtml = $this->get('/login')->assertOk()->getContent();
+
+    expect($manifest['theme_color'])->toBe('#1E3A8A')
+        ->and($loginHtml)->toContain('<meta name="theme-color" content="#1E3A8A">');
+});
+
 test('le manifeste déclare les tailles d’icônes requises par Android', function () {
     $this->seed(\Database\Seeders\TenantSeeder::class);
 
