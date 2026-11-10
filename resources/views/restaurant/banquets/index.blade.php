@@ -246,6 +246,9 @@
                 </div>
                 <p class="text-[11px] text-primary/45">
                     {{ $banquet->reference }} · {{ $banquet->client_name }}@if($banquet->client_phone) · {{ $banquet->client_phone }}@endif
+                    @if(!empty($banquet->menu_items))
+                        · Menu ({{ count($banquet->menu_items) }})
+                    @endif
                 </p>
             </x-table.cell>
             <x-table.cell hide="xl" class="text-primary/70">{{ $banquet->pointOfSale?->name }}@if($banquet->space) · {{ $banquet->space->name }}@endif</x-table.cell>
@@ -264,7 +267,7 @@
 </x-table>
 
 @droit('restaurant.banquets.creer')
-    <x-modal id="banquet-create" title="Nouveau devis de banquet" max-width="max-w-2xl" formAction="{{ route('restaurant.banquets.store') }}">
+    <x-modal id="banquet-create" title="Nouveau devis de banquet" max-width="max-w-3xl" formAction="{{ route('restaurant.banquets.store') }}">
         @include('restaurant.banquets._champs', ['b' => null])
         <x-slot:footer>
             <button type="button" onclick="document.getElementById('banquet-create').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>

@@ -20,6 +20,8 @@ use App\Models\ReceptionSale;
 use App\Models\RestaurantBanquet;
 use App\Models\RestaurantBanquetPayment;
 use App\Models\RestaurantCustomerOrder;
+use App\Models\RestaurantMenuCategory;
+use App\Models\RestaurantMenuItem;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -542,4 +544,174 @@ test("les registres et l'édition imprimable journal-encaissements détaillent c
         'Hébergement (Check-out / Solde départ) — Séjour BK-ORG-02',
         'Hébergement (Facture complémentaire) — Séjour BK-ORG-02'
     );
+});
+
+test("le formulaire de création de banquet permet de définir un menu structuré (carte du restaurant et plats personnalisés), l'affiche et l'imprime", function () {
+    Notification::fake();
+
+    $catPlats = RestaurantMenuCategory::create([
+        'point_of_sale_id' => $this->kotibe->id,
+        'name' => 'Plats Chauds',
+        'is_active' => true,
+    ]);
+    $ndole = RestaurantMenuItem::create([
+        'point_of_sale_id' => $this->kotibe->id,
+        'restaurant_menu_category_id' => $catPlats->id,
+        'name' => 'Ndolè Royal Crevettes',
+        'price' => 850000, // 8 500 FCFA
+        'type' => 'food',
+        'is_active' => true,
+    ]);
+
+    $catOrigine = RestaurantMenuCategory::create([
+        'point_of_sale_id' => $this->origine->id,
+        'name' => 'Entrées',
+        'is_active' => true,
+    ]);
+    $platAutreResto = RestaurantMenuItem::create([
+        'point_of_sale_id' => $this->origine->id,
+        'restaurant_menu_category_id' => $catOrigine->id,
+        'name' => 'Salade du Jardin',
+        'price' => 300000,
+        'type' => 'food',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($this->receptionniste);
+
+    $indexHtml = $this->get(route('restaurant.banquets.index'))
+        ->assertOk()
+        ->getContent();
+
+    expect($indexHtml)
+        ->toContain('id="banquet-menu-builder"')
+        ->toContain('id="banquet-menu-search-input"')
+        ->toContain('id="banquet-custom-menu-name"')
+        ->toContain('id="banquet-add-custom-menu-btn"')
+        ->toContain('Royal Crevettes');
+
+    // Sécurité multi-restaurant : un plat d'Origine est refusé pour un banquet à Kotibe
+    $this->post(route('restaurant.banquets.store'), [
+        'point_of_sale_id' => $this->kotibe->id,
+        'space_id' => $this->salleKotibe->id,
+        'title' => 'Dîner Invalide',
+        'client_name' => 'Paul Client',
+        'event_date' => today()->addDays(4)->toDateString(),
+        'covers' => 40,
+        'price_per_cover' => 15000,
+        'menu_items' => [
+            ['course' => 'entree', 'menu_item_id' => $platAutreResto->id, 'name' => $platAutreResto->name, 'unit_price' => 3000],
+        ],
+    ])->assertSessionHasErrors('menu_items');
+
+    // Un élément de menu sans nom ni plat de carte rattaché est rejeté
+    $this->post(route('restaurant.banquets.store'), [
+        'point_of_sale_id' => $this->kotibe->id,
+        'space_id' => $this->salleKotibe->id,
+        'title' => 'Dîner Nom Manquant',
+        'client_name' => 'Paul Client',
+        'event_date' => today()->addDays(4)->toDateString(),
+        'covers' => 40,
+        'price_per_cover' => 15000,
+        'menu_items' => [
+            ['course' => 'plat', 'menu_item_id' => '', 'name' => '   ', 'unit_price' => 3000],
+        ],
+    ])->assertSessionHasErrors('menu_items.0.name');
+
+    // Création d'un banquet avec menu structuré (plat carte + plat personnalisé + boisson + complément texte)
+    $this->post(route('restaurant.banquets.store'), [
+        'point_of_sale_id' => $this->kotibe->id,
+        'space_id' => $this->salleKotibe->id,
+        'title' => 'Dîner de Gala Entreprise',
+        'client_name' => 'Groupe Horizon',
+        'event_date' => today()->addDays(6)->toDateString(),
+        'covers' => 50,
+        'price_per_cover' => 15000,
+        'menu' => 'Service à l\'assiette et dressage royal.',
+        'menu_items' => [
+            [
+                'course' => 'entree',
+                'menu_item_id' => '',
+                'name' => 'Verrines d\'avocat aux crevettes',
+                'unit_price' => 3500,
+                'notes' => '1 pièce par convive',
+            ],
+            [
+                'course' => 'plat',
+                'menu_item_id' => $ndole->id,
+                'name' => $ndole->name,
+                'unit_price' => 8500,
+                'notes' => 'Sans piment dans le plat principal',
+            ],
+            [
+                'course' => 'boisson',
+                'menu_item_id' => '',
+                'name' => 'Jus naturels et eaux minérales',
+                'unit_price' => 3000,
+                'notes' => '',
+            ],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    $banquet = RestaurantBanquet::where('title', 'Dîner de Gala Entreprise')->sole();
+
+    expect($banquet->menu_items)->toHaveCount(3)
+        ->and($banquet->menuItemsUnitTotal())->toBe(1500000)
+        ->and($banquet->groupedMenuItems()->pluck('label')->all())->toBe(['Entrée', 'Plat principal', 'Boissons'])
+        ->and($banquet->menu)->toBe('Service à l\'assiette et dressage royal.');
+
+    // Affichage dans la liste, la fiche détail (avec pré-remplissage d'édition) et la fiche imprimable
+    $this->get(route('restaurant.banquets.index'))
+        ->assertOk()
+        ->assertSee('Menu (3)');
+
+    $this->get(route('restaurant.banquets.show', $banquet))
+        ->assertOk()
+        ->assertSee('Verrines d\'avocat aux crevettes')
+        ->assertSee('Ndolè Royal Crevettes')
+        ->assertSee('Jus naturels et eaux minérales')
+        ->assertSee('Service à l\'assiette et dressage royal.')
+        ->assertSee('15 000 FCFA / couvert');
+
+    $this->get(route('restaurant.banquets.print', $banquet))
+        ->assertOk()
+        ->assertSee('Verrines d\'avocat aux crevettes')
+        ->assertSee('Ndolè Royal Crevettes')
+        ->assertSee('Jus naturels et eaux minérales')
+        ->assertSee('Service à l\'assiette et dressage royal.');
+
+    // Mise à jour du menu sur un devis existant
+    $this->put(route('restaurant.banquets.update', $banquet), [
+        'point_of_sale_id' => $this->kotibe->id,
+        'space_id' => $this->salleKotibe->id,
+        'title' => 'Dîner de Gala Entreprise',
+        'client_name' => 'Groupe Horizon',
+        'event_date' => today()->addDays(6)->toDateString(),
+        'covers' => 50,
+        'price_per_cover' => 17000,
+        'menu' => 'Service VIP.',
+        'menu_items' => [
+            [
+                'course' => 'plat',
+                'menu_item_id' => $ndole->id,
+                'name' => $ndole->name,
+                'unit_price' => 8500,
+                'notes' => 'Double ration',
+            ],
+            [
+                'course' => 'dessert',
+                'menu_item_id' => '',
+                'name' => 'Salade de fruits exotiques',
+                'unit_price' => 2500,
+                'notes' => '',
+            ],
+        ],
+    ])->assertRedirect(route('restaurant.banquets.show', $banquet))
+        ->assertSessionHasNoErrors();
+
+    $banquet->refresh();
+    expect($banquet->menu_items)->toHaveCount(2)
+        ->and($banquet->menuItemsUnitTotal())->toBe(1100000)
+        ->and($banquet->groupedMenuItems()->pluck('label')->all())->toBe(['Plat principal', 'Dessert'])
+        ->and($banquet->menu)->toBe('Service VIP.');
 });

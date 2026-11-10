@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\PointOfSale;
 use App\Models\RestaurantBanquet;
 use App\Models\RestaurantBanquetPayment;
+use App\Models\RestaurantMenuItem;
 use App\Models\Space;
 use App\Models\Tenant;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -110,6 +112,8 @@ class RestaurantBanquetController extends Controller
             'disponibilites' => $disponibilites,
             'customers' => $this->clientsCrm(),
             'activeBookings' => $this->sejoursActifs(),
+            'menuCatalog' => $this->menuCatalogPour($restaurants),
+            'menuSections' => RestaurantBanquet::MENU_SECTIONS,
             'cashRegisterContext' => $user && $user->exerce(['reception'])
                 ? $this->circuit->receptionContextePour($user)
                 : null,
@@ -193,6 +197,8 @@ class RestaurantBanquetController extends Controller
             'defaultSource' => $banquet->source ?: $this->defaultSourcePour($user),
             'customers' => $this->clientsCrm(),
             'activeBookings' => $this->sejoursActifs(),
+            'menuCatalog' => $this->menuCatalogPour($restaurants),
+            'menuSections' => RestaurantBanquet::MENU_SECTIONS,
         ]);
     }
 
@@ -506,6 +512,12 @@ class RestaurantBanquetController extends Controller
             'extras_amount' => ['nullable', 'integer', 'min:0', 'max:2000000000'],
             'deposit_required' => ['nullable', 'integer', 'min:0', 'max:2000000000'],
             'menu' => ['nullable', 'string', 'max:5000'],
+            'menu_items' => ['nullable', 'array', 'max:60'],
+            'menu_items.*.course' => ['nullable', Rule::in(array_keys(RestaurantBanquet::MENU_SECTIONS))],
+            'menu_items.*.menu_item_id' => ['nullable', 'integer', Rule::exists('restaurant_menu_items', 'id')],
+            'menu_items.*.name' => ['nullable', 'string', 'max:160'],
+            'menu_items.*.unit_price' => ['nullable', 'integer', 'min:0', 'max:50000000'],
+            'menu_items.*.notes' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ], [
             'start_time.required_with' => 'Indiquez l\'heure de début lorsque l\'heure de fin est renseignée.',
@@ -582,8 +594,10 @@ class RestaurantBanquetController extends Controller
         $prix = (int) $valide['price_per_cover'] * 100;
         $supplements = (int) ($valide['extras_amount'] ?? 0) * 100;
         $total = RestaurantBanquet::totalPour((int) $valide['covers'], $prix, $supplements);
+        $resolvedMenuItems = $this->resolveMenuItems($valide['menu_items'] ?? [], $restaurant);
+        $freeMenuText = trim((string) ($valide['menu'] ?? ''));
 
-        return [
+        $attributs = [
             'point_of_sale_id' => $restaurant->id,
             'title' => trim($valide['title']),
             'customer_id' => $clientInfos['customer_id'],
@@ -600,9 +614,102 @@ class RestaurantBanquetController extends Controller
             'extras_amount' => $supplements,
             'total_amount' => $total,
             'deposit_required' => min($total, (int) ($valide['deposit_required'] ?? 0) * 100),
-            'menu' => $valide['menu'] ?? null,
+            'menu' => $freeMenuText !== '' ? $freeMenuText : null,
             'notes' => $valide['notes'] ?? null,
         ];
+
+        if ($this->hasMenuItemsColumn()) {
+            $attributs['menu_items'] = $resolvedMenuItems !== [] ? $resolvedMenuItems : null;
+        } elseif ($resolvedMenuItems !== []) {
+            $synthese = RestaurantBanquet::formatMenuText($resolvedMenuItems);
+            $attributs['menu'] = $freeMenuText !== '' ? $synthese."\n\n".$freeMenuText : $synthese;
+        }
+
+        return $attributs;
+    }
+
+    private function hasMenuItemsColumn(): bool
+    {
+        return Schema::hasColumn('restaurant_banquets', 'menu_items');
+    }
+
+    /**
+     * Valide et normalise la composition structurée du menu du banquet.
+     *
+     * @param  array<int, mixed>  $rawItems
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveMenuItems(array $rawItems, PointOfSale $restaurant): array
+    {
+        if ($rawItems === []) {
+            return [];
+        }
+
+        $catalogIds = collect($rawItems)
+            ->pluck('menu_item_id')
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $catalogById = $catalogIds !== []
+            ? RestaurantMenuItem::query()
+                ->where('point_of_sale_id', $restaurant->id)
+                ->whereIn('id', $catalogIds)
+                ->get()
+                ->keyBy('id')
+            : collect();
+
+        $resolved = [];
+        foreach ($rawItems as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $catalogId = ! empty($row['menu_item_id']) ? (int) $row['menu_item_id'] : null;
+            $catalogItem = null;
+            if ($catalogId !== null) {
+                $catalogItem = $catalogById->get($catalogId);
+                if (! $catalogItem) {
+                    throw ValidationException::withMessages([
+                        'menu_items' => "Un plat sélectionné n'appartient pas au restaurant {$restaurant->name}.",
+                    ]);
+                }
+            }
+
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name === '' && $catalogItem) {
+                $name = trim((string) $catalogItem->name);
+            }
+            if ($name === '') {
+                throw ValidationException::withMessages([
+                    "menu_items.{$index}.name" => 'Indiquez le nom de chaque plat ajouté au menu du banquet.',
+                ]);
+            }
+
+            $course = (string) ($row['course'] ?? 'plat');
+            if (! array_key_exists($course, RestaurantBanquet::MENU_SECTIONS)) {
+                $course = 'plat';
+            }
+
+            $hasExplicitPrice = array_key_exists('unit_price', $row) && $row['unit_price'] !== null && $row['unit_price'] !== '';
+            $unitPriceCentimes = $hasExplicitPrice
+                ? max(0, (int) $row['unit_price']) * 100
+                : ($catalogItem ? max(0, (int) $catalogItem->price) : 0);
+
+            $notes = trim((string) ($row['notes'] ?? ''));
+
+            $resolved[] = [
+                'course' => $course,
+                'menu_item_id' => $catalogItem?->id,
+                'name' => $name,
+                'unit_price' => $unitPriceCentimes,
+                'notes' => $notes !== '' ? $notes : null,
+            ];
+        }
+
+        return $resolved;
     }
 
     /** Le banquet se tient dans un restaurant que la personne voit. */
@@ -765,6 +872,23 @@ class RestaurantBanquetController extends Controller
                 'suggested_pos_id' => $space->point_of_sale_id ?? $fallbackPosId,
             ];
         })->values();
+    }
+
+    /** @param Collection<int, PointOfSale> $restaurants @return Collection<int, RestaurantMenuItem> */
+    private function menuCatalogPour(Collection $restaurants): Collection
+    {
+        $posIds = $restaurants->pluck('id')->all();
+        if ($posIds === []) {
+            return collect();
+        }
+
+        return RestaurantMenuItem::query()
+            ->whereIn('point_of_sale_id', $posIds)
+            ->where('is_active', true)
+            ->with('category:id,name')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'point_of_sale_id', 'restaurant_menu_category_id', 'name', 'price', 'type', 'description']);
     }
 
     /** @param list<int> $restaurants @return Collection<int, Space> */

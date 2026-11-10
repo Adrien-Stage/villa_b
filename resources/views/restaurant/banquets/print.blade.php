@@ -177,10 +177,37 @@
             </table>
         </div>
 
-        @if($banquet->menu)
+        @php $groupedMenu = $banquet->groupedMenuItems(); @endphp
+        @if($groupedMenu->isNotEmpty() || $banquet->menu)
             <div class="mb-4 rounded-lg border border-secondary/15 p-3.5 text-xs">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-primary/60 mb-1">Menu & Prestations détaillées</p>
-                <p class="whitespace-pre-line text-primary/85">{{ $banquet->menu }}</p>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-primary/60 mb-2">Menu &amp; Prestations détaillées</p>
+                @if($groupedMenu->isNotEmpty())
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 {{ $banquet->menu ? 'mb-3 pb-3 border-b border-secondary/10' : '' }}">
+                        @foreach($groupedMenu as $section)
+                            <div>
+                                <p class="font-bold text-[11px] text-primary mb-1">{{ $section['label'] }}</p>
+                                <ul class="space-y-1">
+                                    @foreach($section['items'] as $item)
+                                        <li class="flex items-start justify-between gap-2 text-primary/85">
+                                            <span>
+                                                • {{ $item['name'] }}
+                                                @if(!empty($item['notes']))
+                                                    <span class="text-primary/60">({{ $item['notes'] }})</span>
+                                                @endif
+                                            </span>
+                                            @if(((int) ($item['unit_price'] ?? 0)) > 0)
+                                                <span class="tabular-nums text-primary/65 whitespace-nowrap">{{ $fcfa($item['unit_price']) }}</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+                @if($banquet->menu)
+                    <p class="whitespace-pre-line text-primary/85">{{ $banquet->menu }}</p>
+                @endif
             </div>
         @endif
 

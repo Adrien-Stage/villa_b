@@ -6,6 +6,36 @@
     $salleChoisieId = $salleChoisie !== null && $salleChoisie !== '' ? (int) $salleChoisie : '';
     $sourcesList = $sources ?? \App\Models\RestaurantBanquet::SOURCES;
     $sourceInitiale = (string) old('source', $b?->source ?? $defaultSource ?? \App\Models\RestaurantBanquet::SOURCE_RESTAURANT);
+    $menuSectionsList = $menuSections ?? \App\Models\RestaurantBanquet::MENU_SECTIONS;
+    $menuCatalogList = ($menuCatalog ?? collect())->map(fn ($item) => [
+        'id' => (int) $item->id,
+        'point_of_sale_id' => (int) $item->point_of_sale_id,
+        'category' => (string) ($item->category?->name ?? 'Carte'),
+        'name' => (string) $item->name,
+        'type' => (string) ($item->type ?? 'food'),
+        'price_fcfa' => (int) round(((int) $item->price) / 100),
+        'description' => (string) ($item->description ?? ''),
+    ])->values();
+    $oldMenuItems = old('menu_items');
+    if (is_array($oldMenuItems)) {
+        $initialMenuItems = collect($oldMenuItems)->map(fn ($row) => [
+            'course' => (string) ($row['course'] ?? 'plat'),
+            'menu_item_id' => ! empty($row['menu_item_id']) ? (int) $row['menu_item_id'] : null,
+            'name' => (string) ($row['name'] ?? ''),
+            'unit_price' => max(0, (int) ($row['unit_price'] ?? 0)),
+            'notes' => (string) ($row['notes'] ?? ''),
+        ])->values()->all();
+    } elseif ($b && is_array($b->menu_items)) {
+        $initialMenuItems = collect($b->menu_items)->map(fn ($row) => [
+            'course' => (string) ($row['course'] ?? 'plat'),
+            'menu_item_id' => ! empty($row['menu_item_id']) ? (int) $row['menu_item_id'] : null,
+            'name' => (string) ($row['name'] ?? ''),
+            'unit_price' => $fcfa($row['unit_price'] ?? 0) ?? 0,
+            'notes' => (string) ($row['notes'] ?? ''),
+        ])->values()->all();
+    } else {
+        $initialMenuItems = [];
+    }
     $customersList = ($customers ?? collect())->map(fn ($c) => [
         'id' => $c->id,
         'name' => trim($c->first_name . ' ' . $c->last_name),
@@ -45,6 +75,167 @@
         couverts: {{ (int) old('covers', $b?->covers ?? 0) }},
         prix: {{ (int) old('price_per_cover', $fcfa($b?->price_per_cover) ?? 0) }},
         supplements: {{ (int) old('extras_amount', $fcfa($b?->extras_amount) ?? 0) }},
+        menuSections: @js($menuSectionsList),
+        menuCatalog: @js($menuCatalogList),
+        initialMenuItems: @js($initialMenuItems),
+        menuItems: [],
+        nextMenuUid: 1,
+        menuSearch: '',
+        menuSearchOpen: false,
+        menuSearchIndex: 0,
+        searchCourse: 'auto',
+        customCourse: 'plat',
+        customName: '',
+        customPrice: '',
+        priceAppliedFlash: false,
+        init() {
+            this.menuItems = (Array.isArray(this.initialMenuItems) ? this.initialMenuItems : []).map((row) => ({
+                _uid: this.nextMenuUid++,
+                course: row.course && this.menuSections[row.course] ? row.course : 'plat',
+                menu_item_id: row.menu_item_id ? Number(row.menu_item_id) : null,
+                name: String(row.name ?? ''),
+                unit_price: Math.max(0, Number(row.unit_price || 0)),
+                notes: String(row.notes ?? ''),
+            }));
+
+            this.$watch('restaurant', (newRestaurantId) => {
+                this.menuSearch = '';
+                this.menuSearchOpen = false;
+                this.menuSearchIndex = 0;
+                this.menuItems = this.menuItems.map((row) => {
+                    if (!row.menu_item_id) return row;
+                    const linked = this.menuCatalog.find((c) => Number(c.id) === Number(row.menu_item_id));
+                    if (!linked || Number(linked.point_of_sale_id) !== Number(newRestaurantId)) {
+                        return Object.assign({}, row, { menu_item_id: null });
+                    }
+                    return row;
+                });
+            });
+        },
+        normalizeMenuText(val) {
+            return String(val ?? '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        },
+        catalogForRestaurant() {
+            return this.menuCatalog.filter((item) => Number(item.point_of_sale_id) === Number(this.restaurant));
+        },
+        filteredMenuCatalog() {
+            const list = this.catalogForRestaurant();
+            const terms = this.normalizeMenuText(this.menuSearch).split(/\s+/).filter(Boolean);
+            if (terms.length === 0) {
+                return list.slice(0, 40);
+            }
+            const first = terms[0];
+            return list
+                .filter((item) => {
+                    const text = this.normalizeMenuText(`${item.name} ${item.category} ${item.description}`);
+                    return terms.every((t) => text.includes(t));
+                })
+                .sort((a, b) => {
+                    const na = this.normalizeMenuText(a.name);
+                    const nb = this.normalizeMenuText(b.name);
+                    const ra = na.startsWith(first) ? 0 : 1;
+                    const rb = nb.startsWith(first) ? 0 : 1;
+                    return ra - rb || na.localeCompare(nb);
+                })
+                .slice(0, 40);
+        },
+        isCatalogItemSelected(id) {
+            return this.menuItems.some((row) => Number(row.menu_item_id) === Number(id));
+        },
+        inferCourse(item) {
+            const text = this.normalizeMenuText(`${item.category} ${item.name}`);
+            if (text.includes('cocktail') || text.includes('aperitif') || text.includes('mise en bouche') || text.includes('amuse')) {
+                return 'aperitif';
+            }
+            if (item.type === 'drink' || text.includes('boisson') || text.includes('jus') || text.includes('vin') || text.includes('biere') || text.includes('eau') || text.includes('soda')) {
+                return 'boisson';
+            }
+            if (text.includes('entree') || text.includes('salade') || text.includes('soupe') || text.includes('potage')) {
+                return 'entree';
+            }
+            if (text.includes('dessert') || text.includes('patisserie') || text.includes('gateau') || text.includes('glace') || text.includes('fruit')) {
+                return 'dessert';
+            }
+            if (text.includes('accompagnement') || text.includes('garniture') || text.includes('frite') || text.includes('riz')) {
+                return 'accompagnement';
+            }
+            return 'plat';
+        },
+        addCatalogItem(catalogItem) {
+            if (!catalogItem) return;
+            const course = this.searchCourse === 'auto' ? this.inferCourse(catalogItem) : this.searchCourse;
+            this.menuItems.push({
+                _uid: this.nextMenuUid++,
+                course: this.menuSections[course] ? course : 'plat',
+                menu_item_id: Number(catalogItem.id),
+                name: String(catalogItem.name),
+                unit_price: Math.max(0, Number(catalogItem.price_fcfa || 0)),
+                notes: '',
+            });
+            this.menuSearch = '';
+            this.menuSearchOpen = false;
+            this.menuSearchIndex = 0;
+        },
+        addCustomItem() {
+            const trimmed = String(this.customName ?? '').trim();
+            if (!trimmed) {
+                this.$refs.customMenuNameInput?.focus();
+                return;
+            }
+            this.menuItems.push({
+                _uid: this.nextMenuUid++,
+                course: this.customCourse && this.menuSections[this.customCourse] ? this.customCourse : 'plat',
+                menu_item_id: null,
+                name: trimmed,
+                unit_price: Math.max(0, Number(this.customPrice || 0)),
+                notes: '',
+            });
+            this.customName = '';
+            this.customPrice = '';
+            this.$nextTick(() => this.$refs.customMenuNameInput?.focus());
+        },
+        removeMenuItem(uid) {
+            this.menuItems = this.menuItems.filter((row) => row._uid !== uid);
+        },
+        menuTotalFcfa() {
+            return this.menuItems.reduce((sum, row) => sum + Math.max(0, Number(row.unit_price || 0)), 0);
+        },
+        applyMenuPriceToCover() {
+            this.prix = this.menuTotalFcfa();
+            this.priceAppliedFlash = true;
+            setTimeout(() => { this.priceAppliedFlash = false; }, 1600);
+        },
+        onMenuSearchKeydown(event) {
+            const list = this.filteredMenuCatalog();
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                this.menuSearchOpen = true;
+                if (list.length > 0) {
+                    this.menuSearchIndex = (this.menuSearchIndex + 1) % list.length;
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (list.length > 0) {
+                    this.menuSearchIndex = (this.menuSearchIndex - 1 + list.length) % list.length;
+                }
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                const picked = list[this.menuSearchIndex] || list[0];
+                if (this.menuSearchOpen && picked) {
+                    this.addCatalogItem(picked);
+                }
+            } else if (event.key === 'Escape') {
+                if (this.menuSearchOpen) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.menuSearchOpen = false;
+                }
+            }
+        },
         sallesDisponibles() {
             return this.salles.filter(s => s.point_of_sale_id === null || Number(s.point_of_sale_id) === Number(this.restaurant));
         },
@@ -238,10 +429,171 @@
         Total estimé : <strong class="text-primary" x-text="((couverts || 0) * (prix || 0) + (supplements || 0)).toLocaleString('fr-FR') + ' FCFA'"></strong>
     </p>
 
-    <label class="block sm:col-span-2">
-        <span class="text-xs text-primary/60">Menu & Prestations</span>
-        <textarea name="menu" rows="4" maxlength="5000" class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">{{ old('menu', $b?->menu) }}</textarea>
-    </label>
+    <div id="banquet-menu-builder" class="sm:col-span-2 rounded-xl border border-secondary/25 bg-accent/5 p-3.5 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-primary/75">Menu du banquet</span>
+                <span class="rounded-full bg-secondary/20 px-2 py-0.5 text-[11px] font-semibold text-primary"
+                      x-text="menuItems.length > 0 ? (menuItems.length + ' élément(s)') : 'Non défini'"></span>
+            </div>
+            <div x-show="menuItems.length > 0 && menuTotalFcfa() > 0" style="display: none;" class="flex flex-wrap items-center gap-2">
+                <span class="text-[11px] text-primary/65">
+                    Total carte : <strong class="text-primary" x-text="menuTotalFcfa().toLocaleString('fr-FR') + ' FCFA/couvert'"></strong>
+                </span>
+                <button type="button"
+                        x-on:click="applyMenuPriceToCover()"
+                        class="rounded-lg border border-secondary/35 bg-white px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-accent/20 transition-colors cursor-pointer">
+                    <span x-text="priceAppliedFlash ? 'Prix appliqué !' : 'Appliquer au prix/couvert'"></span>
+                </button>
+            </div>
+        </div>
+
+        {{-- Recherche à la saisie dans la carte du restaurant choisi --}}
+        <div x-show="catalogForRestaurant().length > 0" style="display: none;" class="space-y-1.5" x-on:click.outside="menuSearchOpen = false">
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_170px]">
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i data-lucide="search" class="h-3.5 w-3.5 text-primary/40"></i>
+                    </div>
+                    <input id="banquet-menu-search-input"
+                           type="text"
+                           x-model="menuSearch"
+                           x-on:focus="menuSearchOpen = true"
+                           x-on:input="menuSearchOpen = true; menuSearchIndex = 0"
+                           x-on:keydown="onMenuSearchKeydown($event)"
+                           autocomplete="off"
+                           placeholder="Rechercher un plat ou une boisson de la carte..."
+                           class="w-full rounded-lg border border-secondary/30 bg-white py-2 pl-9 pr-3 text-xs text-primary outline-none focus:border-secondary">
+                </div>
+                <select x-model="searchCourse"
+                        aria-label="Service par défaut lors de l'ajout"
+                        class="rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs text-primary outline-none focus:border-secondary">
+                    <option value="auto">Service : Auto</option>
+                    @foreach($menuSectionsList as $sectionCode => $sectionLabel)
+                        <option value="{{ $sectionCode }}">{{ $sectionLabel }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div x-show="menuSearchOpen"
+                 style="display: none;"
+                 class="w-full rounded-lg border border-secondary/25 bg-white shadow-md overflow-hidden">
+                <ul class="max-h-44 overflow-y-auto divide-y divide-secondary/10 py-1">
+                    <template x-for="(catalogItem, index) in filteredMenuCatalog()" :key="catalogItem.id">
+                        <li>
+                            <button type="button"
+                                    x-on:mousedown.prevent="addCatalogItem(catalogItem)"
+                                    :class="index === menuSearchIndex ? 'bg-accent/25' : 'hover:bg-accent/15'"
+                                    class="w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="truncate text-xs font-semibold text-primary" x-text="catalogItem.name"></span>
+                                        <span x-show="isCatalogItemSelected(catalogItem.id)"
+                                              class="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800 flex-shrink-0">Déjà au menu</span>
+                                    </div>
+                                    <p class="truncate text-[10px] text-primary/50" x-text="catalogItem.category"></p>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span class="text-xs font-semibold text-primary tabular-nums"
+                                          x-text="Number(catalogItem.price_fcfa).toLocaleString('fr-FR') + ' FCFA'"></span>
+                                    <span class="text-primary/50 text-sm font-bold leading-none">+</span>
+                                </div>
+                            </button>
+                        </li>
+                    </template>
+                    <li x-show="filteredMenuCatalog().length === 0" class="px-3 py-2 text-xs text-primary/50">
+                        Aucun plat correspondant dans la carte de ce restaurant.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {{-- Ajout d'un plat ou menu personnalisé hors carte --}}
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-[150px_1fr_115px_auto] items-center">
+            <select x-model="customCourse"
+                    aria-label="Service du plat personnalisé"
+                    class="rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs text-primary outline-none focus:border-secondary">
+                @foreach($menuSectionsList as $sectionCode => $sectionLabel)
+                    <option value="{{ $sectionCode }}">{{ $sectionLabel }}</option>
+                @endforeach
+            </select>
+            <input id="banquet-custom-menu-name"
+                   type="text"
+                   x-model="customName"
+                   x-ref="customMenuNameInput"
+                   x-on:keydown.enter.prevent="addCustomItem()"
+                   maxlength="160"
+                   placeholder="Ou ajouter un plat / menu personnalisé..."
+                   class="rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs text-primary outline-none focus:border-secondary">
+            <input type="number"
+                   x-model="customPrice"
+                   x-on:keydown.enter.prevent="addCustomItem()"
+                   min="0"
+                   placeholder="Prix FCFA"
+                   class="rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs text-primary outline-none focus:border-secondary">
+            <button type="button"
+                    id="banquet-add-custom-menu-btn"
+                    x-on:click="addCustomItem()"
+                    class="rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20 transition-colors cursor-pointer">
+                + Ajouter
+            </button>
+        </div>
+
+        {{-- Liste des éléments configurés du menu --}}
+        <div x-show="menuItems.length > 0" style="display: none;" class="space-y-2 pt-1">
+            <template x-for="(item, idx) in menuItems" :key="item._uid">
+                <div class="rounded-lg border border-secondary/20 bg-white p-2.5 space-y-2">
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-[145px_1fr_110px_auto] items-center">
+                        <select :name="'menu_items[' + idx + '][course]'"
+                                x-model="item.course"
+                                class="rounded-md border border-secondary/25 bg-accent/10 px-2 py-1.5 text-xs font-medium text-primary outline-none focus:border-secondary">
+                            @foreach($menuSectionsList as $sectionCode => $sectionLabel)
+                                <option value="{{ $sectionCode }}">{{ $sectionLabel }}</option>
+                            @endforeach
+                        </select>
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <input type="text"
+                                   :name="'menu_items[' + idx + '][name]'"
+                                   x-model="item.name"
+                                   required
+                                   maxlength="160"
+                                   class="w-full min-w-0 rounded-md border border-secondary/25 px-2.5 py-1.5 text-xs font-medium text-primary outline-none focus:border-secondary">
+                            <span x-show="item.menu_item_id"
+                                  class="rounded bg-secondary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary/70 flex-shrink-0">Carte</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <input type="number"
+                                   :name="'menu_items[' + idx + '][unit_price]'"
+                                   x-model.number="item.unit_price"
+                                   min="0"
+                                   class="w-full rounded-md border border-secondary/25 px-2 py-1.5 text-xs text-right tabular-nums text-primary outline-none focus:border-secondary">
+                            <span class="text-[10px] text-primary/50 flex-shrink-0">F</span>
+                        </div>
+                        <button type="button"
+                                x-on:click="removeMenuItem(item._uid)"
+                                title="Retirer du menu"
+                                aria-label="Retirer du menu"
+                                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary/45 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+                    <input type="text"
+                           :name="'menu_items[' + idx + '][notes]'"
+                           x-model="item.notes"
+                           maxlength="255"
+                           placeholder="Précision / consignes cuisine (optionnel : allergie, service à l'assiette...)"
+                           class="w-full rounded-md border border-secondary/15 bg-secondary/5 px-2.5 py-1 text-[11px] text-primary/80 outline-none focus:border-secondary">
+                    <input type="hidden" :name="'menu_items[' + idx + '][menu_item_id]'" :value="item.menu_item_id || ''">
+                </div>
+            </template>
+        </div>
+
+        <label class="block">
+            <span class="text-[11px] text-primary/60">Détails complémentaires du menu &amp; prestations (optionnel)</span>
+            <textarea name="menu" rows="2" maxlength="5000" placeholder="Ex. Boissons d'accueil, dressage en U, découpe du gâteau..."
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs outline-none focus:border-secondary">{{ old('menu', $b?->menu) }}</textarea>
+        </label>
+    </div>
     <label class="block sm:col-span-2">
         <span class="text-xs text-primary/60">Notes</span>
         <textarea name="notes" rows="2" maxlength="2000" class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">{{ old('notes', $b?->notes) }}</textarea>
