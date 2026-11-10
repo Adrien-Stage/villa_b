@@ -74,7 +74,9 @@ class CashRegisterSession extends Model
             default => (int) $this->payments()
                 ->where('method', 'cash')
                 ->where('status', 'completed')
-                ->sum('amount'),
+                ->sum('amount')
+                + (int) RestaurantBanquetPayment::where('cash_register_session_id', $this->id)
+                    ->where('payment_method', 'cash')->sum('amount'),
         };
 
         return $total - (int) $this->disbursements()->sum('amount');
@@ -116,6 +118,11 @@ class CashRegisterSession extends Model
         return $this->hasMany(Payment::class, 'cash_register_session_id');
     }
 
+    public function banquetPayments()
+    {
+        return $this->hasMany(RestaurantBanquetPayment::class, 'cash_register_session_id');
+    }
+
     public function disbursements()
     {
         return $this->hasMany(CashRegisterDisbursement::class);
@@ -124,6 +131,11 @@ class CashRegisterSession extends Model
     public function receptionSales()
     {
         return $this->hasMany(ReceptionSale::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(CashRegisterActivity::class, 'cash_register_session_id');
     }
 
     /** Passation par laquelle ce tiroir a été remis en fin de quart. */

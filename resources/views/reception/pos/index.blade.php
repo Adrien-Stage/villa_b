@@ -49,13 +49,19 @@
         {{-- BOÎTE PERMANENTE DE CAISSE (Toujours visible à l'écran) --}}
         <div class="lg:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-secondary/15 shadow-xs flex flex-col justify-between relative overflow-hidden">
             @if($activeSession)
+                @php
+                    $posEstTitulaire = (bool) ($cashRegisterContext['estTitulaire'] ?? ((int) $activeSession->user_id === (int) auth()->id()));
+                    $posTitulaire = $cashRegisterContext['titulaire'] ?? $activeSession->user;
+                    $posTitulaireRole = $cashRegisterContext['titulaireRoleLabel'] ?? null;
+                    $posTiers = $cashRegisterContext['tiers'] ?? ['has_activity' => false];
+                @endphp
                 {{-- Ligne d'état verte si caisse ouverte --}}
                 <div class="absolute top-0 left-0 right-0 h-1.5 bg-green-500"></div>
 
                 <div>
-                    <div class="flex items-center justify-between mb-2.5">
+                    <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
-                            <span class="relative flex h-2.5 w-2.5">
+                            <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                             </span>
@@ -65,6 +71,37 @@
                             Session #{{ $activeSession->id }} • {{ $activeSession->opened_at ? $activeSession->opened_at->format('H:i') : '—' }}
                         </span>
                     </div>
+
+                    @if(!$posEstTitulaire && $posTitulaire)
+                        <div role="status" class="mb-2.5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-[11px] text-emerald-950">
+                            <span class="font-semibold">
+                                Caisse ouverte par {{ $posTitulaire->name }}@if($posTitulaireRole) ({{ $posTitulaireRole }})@endif
+                            </span>
+                            <span class="block text-emerald-800">
+                                Vous travaillez dans cette caisse : vos ventes et sorties y sont rattachées et signalées au titulaire.
+                            </span>
+                        </div>
+                    @elseif($posEstTitulaire && ($posTiers['has_activity'] ?? false))
+                        <div role="status" class="mb-2.5 rounded-xl border border-indigo-200 bg-indigo-50/90 px-3 py-2 text-[11px] text-indigo-950">
+                            <span class="font-semibold">Activité tiers :</span>
+                            {{ $posTiers['actors']->map(fn ($a) => $a['name'] . ' (' . $a['count'] . ' op.)')->join(', ') }}
+                            <details class="mt-1">
+                                <summary class="cursor-pointer select-none font-semibold text-indigo-800 hover:text-indigo-950">
+                                    Voir le détail ({{ $posTiers['total_count'] }})
+                                </summary>
+                                <ul class="mt-1 space-y-0.5 text-[10px] text-primary/80">
+                                    @foreach($posTiers['items'] as $item)
+                                        <li>
+                                            {{ $item['occurred_at']?->format('H:i') ?? '—' }} · <strong>{{ $item['actor_name'] }}</strong> : {{ $item['description'] }}
+                                            @if($item['is_financial'] && $item['amount'])
+                                                ({{ $item['cash_impact'] < 0 ? '−' : '+' }}{{ number_format(abs((int) $item['amount']) / 100, 0, ',', ' ') }} FCFA)
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </details>
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-2 gap-2 bg-accent/20 p-2.5 rounded-xl mb-3">
                         <div>
@@ -80,17 +117,19 @@
                     </div>
                 </div>
 
-                {{-- Actions Caisse : Sortie et Fermeture --}}
+                {{-- Actions Caisse : Sortie (tout opérateur habilité) et Fermeture (titulaire uniquement) --}}
                 <div class="flex items-center gap-2 pt-2 border-t border-secondary/10">
                     <button type="button" @click="showDisbursementModal = true" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors">
-                        <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+                        <i data-lucide="minus-circle" class="w-3.5 h-3.5" aria-hidden="true"></i>
                         <span>Sortie de caisse</span>
                     </button>
 
-                    <a href="{{ route('bookings.cash_register.close') }}" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">
-                        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                        <span>Fermer la caisse</span>
-                    </a>
+                    @if($posEstTitulaire)
+                        <a href="{{ route('bookings.cash_register.close') }}" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">
+                            <i data-lucide="lock" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            <span>Fermer la caisse</span>
+                        </a>
+                    @endif
                 </div>
 
             @else
@@ -426,6 +465,7 @@
         </div>
     </form>
 
+    @unless($activeSession)
     {{-- MODALE POPUP D'OUVERTURE DE CAISSE (Invitations au démarrage du service) --}}
     <div x-show="showOpenCaisseModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-secondary/20" @click.away="showOpenCaisseModal = false">
@@ -474,6 +514,7 @@
             </form>
         </div>
     </div>
+    @endunless
 
     {{-- MODALE 2 : Prestation libre / Divers --}}
     <div x-show="showCustomItemModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">

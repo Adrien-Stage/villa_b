@@ -7,8 +7,9 @@
     if (auth()->check() && auth()->user()->exerce(['reception'])
         && ! request()->routeIs('bookings.handovers.*')
         && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'bookings.handovers.take')) {
-        $sansCaisse = ! \App\Models\CashRegisterSession::query()
-            ->where('user_id', auth()->id())->where('module', 'reception')->whereNull('closed_at')->exists();
+        $circuit = app(\App\Services\CashRegisterCircuit::class);
+        $sansCaisse = $circuit->enCours(auth()->user(), 'reception') === null
+            && $circuit->receptionActivePour(auth()->user()) === null;
         if ($sansCaisse) {
             $passationEnAttente = app(\App\Services\PassationService::class)->enAttente()
                 ->first(fn ($p) => $p->from_user_id !== auth()->id());

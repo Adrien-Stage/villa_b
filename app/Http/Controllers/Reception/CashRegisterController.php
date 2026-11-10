@@ -3,35 +3,57 @@
 namespace App\Http\Controllers\Reception;
 
 use App\Http\Controllers\Controller;
-use App\Models\CashRegisterSession;
+use App\Models\CashRegisterActivity;
 use App\Models\CashRegisterDisbursement;
+use App\Models\CashRegisterSession;
+use App\Models\RestaurantBanquetPayment;
+use App\Services\CashRegisterCircuit;
 use App\Support\CashClosurePolicy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CashRegisterController extends Controller
 {
+    public function __construct(private readonly CashRegisterCircuit $circuit)
+    {
+    }
+
     public function index()
     {
         $sessions = CashRegisterSession::query()
             ->where('module', 'reception')
-            ->with(['user', 'handoverOut'])
+            ->with([
+                'user.roles',
+                'handoverOut',
+                'activities.user.roles',
+                'disbursements.user.roles',
+                'receptionSales.user.roles',
+                'payments.processedBy.roles',
+                'payments.booking',
+                'banquetPayments.paidBy.roles',
+                'banquetPayments.banquet',
+            ])
             ->orderBy('opened_at', 'desc')
             ->paginate(15);
-            
-        return view('bookings.cash_register.index', compact('sessions'));
+
+        $cashRegisterContext = $this->circuit->receptionContextePour(auth()->user());
+        $tiersParSession = $sessions->getCollection()
+            ->mapWithKeys(fn (CashRegisterSession $s) => [$s->id => $this->circuit->resumeInterventionsTiers($s)]);
+
+        return view('bookings.cash_register.index', compact('sessions', 'cashRegisterContext', 'tiersParSession'));
     }
 
     public function showOpenForm()
     {
-        $activeSession = CashRegisterSession::where('user_id', auth()->id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $ownEnCours = $this->circuit->enCours(auth()->user(), 'reception');
 
-        if ($activeSession) {
+        if ($ownEnCours) {
             return redirect()->route('bookings.index')->with('info', 'Vous avez déjà une caisse de réception ouverte.');
+        }
+
+        if ($shared = $this->circuit->receptionActivePour(auth()->user())) {
+            $holderName = $shared->user?->name ?? 'un collègue';
+
+            return redirect()->route('bookings.index')->with('info', "La caisse de réception est déjà ouverte par {$holderName}. Vous pouvez travailler directement dans cette caisse.");
         }
 
         if ($reprise = $this->passationAReprendre()) {
@@ -61,14 +83,16 @@ class CashRegisterController extends Controller
             'opening_amount' => 'required|numeric|min:0',
         ]);
 
-        $activeSession = CashRegisterSession::where('user_id', auth()->id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $ownEnCours = $this->circuit->enCours(auth()->user(), 'reception');
 
-        if ($activeSession) {
+        if ($ownEnCours) {
             return redirect()->route('bookings.index');
+        }
+
+        if ($shared = $this->circuit->receptionActivePour(auth()->user())) {
+            $holderName = $shared->user?->name ?? 'un collègue';
+
+            return redirect()->route('bookings.index')->with('info', "La caisse de réception est déjà ouverte par {$holderName}. Vous travaillez directement dans sa caisse.");
         }
 
         if ($reprise = $this->passationAReprendre()) {
@@ -78,7 +102,8 @@ class CashRegisterController extends Controller
         CashRegisterSession::create([
             'user_id' => auth()->id(),
             'module' => 'reception',
-            'opening_amount' => $request->opening_amount * 100, // store in cents
+            'status' => 'open',
+            'opening_amount' => (int) round($request->opening_amount * 100), // store in cents
             'opened_at' => now(),
         ]);
 
@@ -88,7 +113,6 @@ class CashRegisterController extends Controller
     public function showCloseForm()
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
-            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->where('status', 'open')
@@ -100,21 +124,26 @@ class CashRegisterController extends Controller
             ->where('method', 'cash')
             ->where('status', 'completed')
             ->sum('amount');
+        $banquetCashPaymentsTotal = (int) RestaurantBanquetPayment::where('cash_register_session_id', $session->id)
+            ->where('payment_method', 'cash')
+            ->sum('amount');
         $disbursementsTotal = $session->disbursements()->sum('amount');
+        $tiers = $this->circuit->resumeInterventionsTiers($session);
 
         return view('bookings.cash_register.close', [
             'session' => $session,
             'theoretical_amount' => $session->theoreticalBalance(),
             'cash_payments_total' => $cashPaymentsTotal,
+            'banquet_cash_payments_total' => $banquetCashPaymentsTotal,
             'disbursements_total' => $disbursementsTotal,
-            'disbursements' => $session->disbursements
+            'disbursements' => $session->disbursements()->with('user')->get(),
+            'tiers' => $tiers,
         ]);
     }
 
     public function close(Request $request)
     {
         $session = CashRegisterSession::where('user_id', auth()->id())
-            
             ->where('module', 'reception')
             ->whereNull('closed_at')
             ->where('status', 'open')
@@ -128,7 +157,7 @@ class CashRegisterController extends Controller
         // Même circuit que toutes les caisses (CashRegisterCircuit) : le
         // solde théorique est recalculé, jamais reçu de la requête, et la
         // caisse attend la contresignature de la comptabilité.
-        app(\App\Services\CashRegisterCircuit::class)->compter(
+        $this->circuit->compter(
             $session,
             (int) round($request->actual_closing_amount * 100),
             $request->closing_notes
@@ -148,24 +177,35 @@ class CashRegisterController extends Controller
 
     public function storeDisbursement(Request $request)
     {
-        $session = CashRegisterSession::where('user_id', auth()->id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->where('status', 'open')
-            ->firstOrFail();
+        $session = $this->circuit->receptionActivePour(auth()->user());
+        if ($session === null) {
+            abort(404);
+        }
 
         $request->validate([
             'amount' => 'required|numeric|min:1',
             'reason' => 'required|string|max:255',
         ]);
 
-        CashRegisterDisbursement::create([
+        $amountCentimes = (int) round($request->amount * 100);
+
+        $disbursement = CashRegisterDisbursement::create([
             'cash_register_session_id' => $session->id,
             'user_id' => auth()->id(),
-            'amount' => $request->amount * 100, // cents
+            'amount' => $amountCentimes,
             'reason' => $request->reason,
         ]);
+
+        $this->circuit->enregistrerInterventionTiers(
+            $session,
+            auth()->user(),
+            CashRegisterActivity::ACTION_DISBURSEMENT,
+            "Sortie de caisse : {$request->reason}",
+            $amountCentimes,
+            'cash',
+            $disbursement,
+            ['disbursement_id' => $disbursement->id]
+        );
 
         return back()->with('success', 'Sortie de caisse (décaissement) enregistrée.');
     }

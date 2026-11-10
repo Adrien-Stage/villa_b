@@ -12,22 +12,35 @@
         <h1 class="font-heading text-2xl font-semibold text-primary">Réservations</h1>
         <p class="text-sm text-primary/50 mt-0.5">{{ $stats['all'] }} réservation{{ $stats['all'] > 1 ? 's' : '' }} au total</p>
     </div>
-    @droit('bookings.creer')
-        @if($isCashRegisterOpen)
-            <a href="{{ route('bookings.create') }}"
-               class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Nouvelle réservation
-            </a>
-        @else
-            <a href="{{ route('bookings.cash_register.open') }}"
-               class="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
-                <i data-lucide="unlock" class="w-4 h-4"></i>
-                Ouvrir la caisse
-            </a>
-        @endif
-    @enddroit
+    <div class="flex flex-wrap items-center gap-2">
+        @module('restaurant')
+            @droit('restaurant.banquets.voir')
+                <a href="{{ route('restaurant.banquets.index') }}"
+                   class="flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+                    <i data-lucide="party-popper" class="w-4 h-4"></i>
+                    Banquets
+                </a>
+            @enddroit
+        @endmodule
+        @droit('bookings.creer')
+            @if($isCashRegisterOpen)
+                <a href="{{ route('bookings.create') }}"
+                   class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Nouvelle réservation
+                </a>
+            @else
+                <a href="{{ route('bookings.cash_register.open') }}"
+                   class="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
+                    <i data-lucide="unlock" class="w-4 h-4"></i>
+                    Ouvrir la caisse
+                </a>
+            @endif
+        @enddroit
+    </div>
 </div>
+
+@include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
 
 @php
     $tab = request('tab', 'active');
@@ -209,6 +222,7 @@ document.getElementById('search-input').addEventListener('input', function() {
 </script>
 
     @droit('bookings.cash_register.open')
+    @unless($isCashRegisterOpen)
     {{-- Modal Caisse Fermée --}}
     <div x-show="showOpenRegisterModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
@@ -269,6 +283,7 @@ document.getElementById('search-input').addEventListener('input', function() {
             </div>
         </div>
     </div>
+    @endunless
     @enddroit
 </div>
 @endsection

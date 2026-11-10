@@ -26,11 +26,34 @@ class Payment extends Model
     public const METHOD_PARTNER_WALLET = 'partner_wallet';
     public const PURPOSE_PARTNER_DEPOSIT = 'partner_deposit';
 
+    public const ORIGIN_ACOMPTE_RESERVATION = 'acompte_reservation';
+    public const ORIGIN_CHECK_IN = 'check_in';
+    public const ORIGIN_SEJOUR_NUITEES = 'sejour_nuitees';
+    public const ORIGIN_CHECK_OUT = 'check_out';
+    public const ORIGIN_FACTURE_COMPLEMENTAIRE = 'facture_complementaire';
+    public const ORIGIN_GROUPE = 'groupe';
+    public const ORIGIN_POS_RECEPTION = 'pos_reception';
+    public const ORIGIN_REMBOURSEMENT_ANNULATION = 'remboursement_annulation';
+    public const ORIGIN_DEPOT_PARTENAIRE = 'depot_partenaire';
+
+    public const ORIGINS = [
+        self::ORIGIN_ACOMPTE_RESERVATION => 'Acompte réservation',
+        self::ORIGIN_CHECK_IN => 'Check-in',
+        self::ORIGIN_SEJOUR_NUITEES => 'Séjour / Nuitées',
+        self::ORIGIN_CHECK_OUT => 'Check-out / Solde départ',
+        self::ORIGIN_FACTURE_COMPLEMENTAIRE => 'Facture complémentaire',
+        self::ORIGIN_GROUPE => 'Dossier groupe',
+        self::ORIGIN_POS_RECEPTION => 'POS Réception',
+        self::ORIGIN_REMBOURSEMENT_ANNULATION => 'Remboursement annulation',
+        self::ORIGIN_DEPOT_PARTENAIRE => 'Approvisionnement dépôt partenaire',
+    ];
+
     protected $fillable = [
         'booking_id',
         'partner_organization_id',
         'wallet_entry_id',
         'purpose',
+        'payment_origin',       // Origine explicite pour les registres (acompte, check-in, séjour, check-out, facture...)
         'invoice_id',           // Facture soldée, quand l'encaissement en vise une (facture complémentaire)
         'customer_id',          // Pour les paiements hors réservation (ex: client walk-in restaurant)
         'cash_register_session_id',
@@ -128,6 +151,63 @@ class Payment extends Model
         ];
 
         return $methods[$this->method] ?? ucfirst(str_replace('_', ' ', $this->method ?? 'inconnu'));
+    }
+
+    public function originLabel(bool $hasReceptionSale = false, ?Booking $bookingContext = null): string
+    {
+        if ($this->purpose === self::PURPOSE_PARTNER_DEPOSIT) {
+            return self::ORIGINS[self::ORIGIN_DEPOT_PARTENAIRE];
+        }
+
+        if ($this->payment_origin !== null && isset(self::ORIGINS[$this->payment_origin])) {
+            return self::ORIGINS[$this->payment_origin];
+        }
+
+        if ((int) $this->amount < 0 || str_contains(mb_strtolower((string) $this->refund_reason), 'annulation')) {
+            return self::ORIGINS[self::ORIGIN_REMBOURSEMENT_ANNULATION];
+        }
+
+        if ($hasReceptionSale || str_starts_with((string) $this->notes, 'POS Réception')) {
+            return self::ORIGINS[self::ORIGIN_POS_RECEPTION];
+        }
+
+        $notesLower = mb_strtolower((string) $this->notes);
+
+        if ($this->invoice_id !== null || str_contains($notesLower, 'facture complémentaire')) {
+            return self::ORIGINS[self::ORIGIN_FACTURE_COMPLEMENTAIRE];
+        }
+
+        if (str_contains($notesLower, 'groupe')) {
+            return self::ORIGINS[self::ORIGIN_GROUPE];
+        }
+
+        if (str_contains($notesLower, 'acompte')) {
+            return self::ORIGINS[self::ORIGIN_ACOMPTE_RESERVATION];
+        }
+
+        if (str_contains($notesLower, 'check-out') || str_contains($notesLower, 'check out') || str_contains($notesLower, 'départ')) {
+            return self::ORIGINS[self::ORIGIN_CHECK_OUT];
+        }
+
+        if (str_contains($notesLower, 'check-in') || str_contains($notesLower, 'check in') || str_contains($notesLower, 'arrivée')) {
+            return self::ORIGINS[self::ORIGIN_CHECK_IN];
+        }
+
+        $booking = $bookingContext ?? ($this->relationLoaded('booking') ? $this->booking : null);
+        if ($booking && $this->paid_at) {
+            if ($booking->actual_check_out && abs($booking->actual_check_out->timestamp - $this->paid_at->timestamp) <= 1800) {
+                return self::ORIGINS[self::ORIGIN_CHECK_OUT];
+            }
+            if ($booking->actual_check_in && abs($booking->actual_check_in->timestamp - $this->paid_at->timestamp) <= 1800) {
+                return self::ORIGINS[self::ORIGIN_CHECK_IN];
+            }
+        }
+
+        if ($this->booking_id !== null) {
+            return self::ORIGINS[self::ORIGIN_SEJOUR_NUITEES];
+        }
+
+        return 'Encaissement réception';
     }
 
     /**

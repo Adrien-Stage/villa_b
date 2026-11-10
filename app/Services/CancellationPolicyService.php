@@ -7,7 +7,6 @@ use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\BookingCancellation;
 use App\Models\CancellationPolicy;
-use App\Models\CashRegisterSession;
 use App\Models\FolioItem;
 use App\Models\Payment;
 use App\Models\User;
@@ -175,11 +174,8 @@ class CancellationPolicyService
             // Traitement du remboursement si un montant doit être restitué
             if ($calc['refund_amount'] > 0) {
                 if ($refundMethod === 'cash') {
-                    // Vérifier si une caisse de réception est ouverte pour le remboursement espèces
-                    $activeSession = CashRegisterSession::where('user_id', $user?->id)
-                        ->where('module', 'reception')
-                        ->whereNull('closed_at')
-                        ->first();
+                    // Vérifier si une caisse de réception ouverte est disponible pour le remboursement espèces
+                    $activeSession = app(CashRegisterCircuit::class)->receptionActivePour($user);
 
                     if (!$activeSession) {
                         throw new \InvalidArgumentException('Veuillez ouvrir votre caisse de réception pour effectuer un remboursement en espèces.');
@@ -195,6 +191,7 @@ class CancellationPolicyService
                     $payment = Payment::create([
                         'booking_id'               => $booking->id,
                         'customer_id'              => $booking->customer_id,
+                        'payment_origin'           => Payment::ORIGIN_REMBOURSEMENT_ANNULATION,
                         'amount'                   => -$calc['refund_amount'], // Négatif pour sortie/remboursement
                         'currency'                 => 'XAF',
                         'method'                   => 'cash',

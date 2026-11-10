@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\BookingStatus;
 use App\Enums\RoomStatus;
 use App\Models\Booking;
+use App\Models\CashRegisterActivity;
 use App\Models\Customer;
 use App\Models\FolioItem;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Services\CashRegisterCircuit;
 use App\Services\CheckinCodeNotifier;
 use App\Services\CheckOutService;
 use Illuminate\Http\Request;
@@ -23,7 +26,8 @@ class BookingController extends Controller
         private \App\Services\Notifier $notifier,
         private \App\Services\TaxationService $taxation,
         private \App\Services\CancellationPolicyService $cancellationPolicyService,
-        private \App\Services\RoomAvailabilityService $roomAvailability
+        private \App\Services\RoomAvailabilityService $roomAvailability,
+        private CashRegisterCircuit $cashRegisterCircuit
     ) {}
 
     // ===== LISTE =====
@@ -62,16 +66,11 @@ class BookingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
-        $isCashRegisterOpen = $activeSession !== null;
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $isCashRegisterOpen = $cashRegisterContext['isOpen'];
         $checkOutTime = $this->roomAvailability->checkOutTime();
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen', 'checkOutTime'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen', 'cashRegisterContext', 'checkOutTime'));
     }
 
     // ===== PARCOURS DE LA LISTE =====
@@ -323,11 +322,8 @@ class BookingController extends Controller
     public function create(Request $request)
     {
         $tenantId = Auth::user()->tenant_id ?? \App\Models\Tenant::current()?->id;
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $activeSession = $cashRegisterContext['session'];
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation.');
@@ -367,7 +363,7 @@ class BookingController extends Controller
 
         $ageBrackets = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId);
 
-        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft', 'ageBrackets'));
+        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft', 'ageBrackets', 'cashRegisterContext'));
     }
 
 
@@ -903,11 +899,7 @@ class BookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
 
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
@@ -1208,10 +1200,12 @@ class BookingController extends Controller
         );
 
         // Enregistrer le paiement (Acompte) si montant > 0
+        $payment = null;
         if ($paymentAmount > 0) {
             $payment = \App\Models\Payment::create([
                 'booking_id' => $booking->id,
                 'customer_id' => $booking->customer_id,
+                'payment_origin' => Payment::ORIGIN_ACOMPTE_RESERVATION,
                 'amount' => $paymentAmount,
                 'currency' => 'XAF',
                 'method' => $validated['payment_method'],
@@ -1378,6 +1372,20 @@ class BookingController extends Controller
         // rendait impossible de savoir qui l'avait reçu.
         $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
 
+        $this->cashRegisterCircuit->enregistrerInterventionTiers(
+            $activeSession,
+            Auth::user(),
+            CashRegisterActivity::ACTION_BOOKING_CREATE,
+            "Création réservation {$booking->booking_number} — Chambre {$room->number}" . ($payment ? " (acompte {$payment->reference})" : ''),
+            $payment ? $paymentAmount : null,
+            $payment ? $validated['payment_method'] : null,
+            $payment ?? $booking,
+            array_filter([
+                'booking_id' => $booking->id,
+                'payment_id' => $payment?->id,
+            ])
+        );
+
         $successMsg = $booking->status === BookingStatus::PENDING
             ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
             : "Réservation {$booking->booking_number} créée et acompte enregistré.";
@@ -1424,8 +1432,8 @@ class BookingController extends Controller
             'booker',
             'room.roomType',
             'guests',
-            'payments',
-            'folioItems',
+            'payments.processedBy',
+            'folioItems.recordedBy',
             'cancellation.cancelledBy',
             'cancellation.waivedBy',
             'cancellation.payment',
@@ -1441,13 +1449,10 @@ class BookingController extends Controller
         // de l'écran d'où l'on vient sont conservés dans l'URL.
         $navigation = $this->bookingNavigation($booking, $request);
 
-        // Aucune action n'est possible tant que la caisse de l'utilisateur
-        // n'est pas ouverte — la vue masque tous les contrôles d'action et
-        // invite à ouvrir la caisse.
-        $isCashRegisterOpen = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->exists();
+        // Aucune action n'est possible tant qu'aucune caisse réception utilisable
+        // n'est ouverte (propre caisse ou caisse du réceptionniste pour le chef).
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $isCashRegisterOpen = $cashRegisterContext['isOpen'];
 
         // Convention appliquée au séjour : elle marque les prestations offertes
         // dans le catalogue du folio.
@@ -1494,6 +1499,7 @@ class BookingController extends Controller
         return view('bookings.show', [
             'booking'              => $booking,
             'isCashRegisterOpen'   => $isCashRegisterOpen,
+            'cashRegisterContext'  => $cashRegisterContext,
             'cancellationCalc'     => $cancellationCalc,
             'folioCatalog'         => $this->folioCatalog($partnerOrganization),
             'partnerOrganization'  => $partnerOrganization,
@@ -1605,6 +1611,19 @@ class BookingController extends Controller
 
         $booking->update(['status' => BookingStatus::CONFIRMED]);
 
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_BOOKING_CONFIRM,
+                "Confirmation réservation web {$booking->booking_number}",
+                null,
+                null,
+                $booking,
+                ['booking_id' => $booking->id]
+            );
+        }
+
         return back()->with('success', "Réservation {$booking->booking_number} confirmée. Le solde est à encaisser.");
     }
 
@@ -1680,6 +1699,19 @@ class BookingController extends Controller
             );
         });
 
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_BOOKING_CHECKIN,
+                "Check-in {$booking->booking_number} — Chambre {$booking->room->number} ({$booking->customer->full_name})",
+                null,
+                null,
+                $booking,
+                ['booking_id' => $booking->id]
+            );
+        }
+
         $successMsg = "Check-in effectué pour {$booking->customer->full_name}.";
         return $isAjax
             ? response()->json(['success' => true, 'message' => $successMsg])
@@ -1692,6 +1724,19 @@ class BookingController extends Controller
     {
         try {
             $invoice = $this->checkOutService->process($booking);
+
+            if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+                $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                    $activeSession,
+                    Auth::user(),
+                    CashRegisterActivity::ACTION_BOOKING_CHECKOUT,
+                    "Check-out {$booking->booking_number} — Facture {$invoice->invoice_number}",
+                    null,
+                    null,
+                    $booking,
+                    ['booking_id' => $booking->id, 'invoice_id' => $invoice->id]
+                );
+            }
 
             return redirect()
                 ->route('bookings.show', $booking)
@@ -1721,6 +1766,24 @@ class BookingController extends Controller
 
         try {
             $cancellation = $this->cancellationPolicyService->processCancellation($booking, $validated, Auth::user());
+
+            if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+                $refundAmount = (int) $cancellation->refund_amount;
+                $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                    $activeSession,
+                    Auth::user(),
+                    CashRegisterActivity::ACTION_BOOKING_CANCEL,
+                    "Annulation {$booking->booking_number} ({$cancellation->cancellation_number})",
+                    $refundAmount > 0 ? $refundAmount : null,
+                    $refundAmount > 0 ? $cancellation->refund_method : null,
+                    $cancellation,
+                    array_filter([
+                        'booking_id' => $booking->id,
+                        'cancellation_id' => $cancellation->id,
+                        'payment_id' => $cancellation->payment_id,
+                    ])
+                );
+            }
 
             return redirect()
                 ->route('bookings.show', $booking)
@@ -1850,7 +1913,7 @@ class BookingController extends Controller
             ? 0
             : (int) round($validated['quantity'] * $validated['unit_price'] * 100);
 
-        FolioItem::create([
+        $folioItem = FolioItem::create([
             'booking_id'       => $booking->id,
             'customer_id'      => $booking->customer_id,
             'type'             => $validated['type'],
@@ -1909,6 +1972,19 @@ class BookingController extends Controller
             ]);
         }
 
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_FOLIO_ADD,
+                "Prestation folio {$booking->booking_number} : {$folioItem->description}",
+                $totalPrice > 0 ? $totalPrice : null,
+                null,
+                $folioItem,
+                ['booking_id' => $booking->id, 'folio_item_id' => $folioItem->id]
+            );
+        }
+
         return redirect()->route('bookings.show', $booking)->with('success', '...');
     }
 
@@ -1929,9 +2005,24 @@ class BookingController extends Controller
             return back()->withErrors(['folio' => 'Impossible de modifier le folio à ce stade.']);
         }
 
+        $removedDescription = $folioItem->description;
+        $removedId = $folioItem->id;
         $folioItem->delete();
 
         $this->checkOutService->recalculateTotals($booking);
+
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_FOLIO_REMOVE,
+                "Suppression prestation folio « {$removedDescription} » — {$booking->booking_number}",
+                null,
+                null,
+                $booking,
+                ['booking_id' => $booking->id, 'folio_item_id' => $removedId]
+            );
+        }
 
         return redirect()->route('bookings.show', $booking)->with('success', '...');
     }
@@ -1943,19 +2034,16 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'amount'  => ['required', 'integer', 'min:1'],
-            'method'  => ['required', 'string', 'in:cash,stripe,orange_money,mtn_momo,bank_transfer'],
-            'notes'   => ['nullable', 'string'],
+            'amount'          => ['required', 'integer', 'min:1'],
+            'method'          => ['required', 'string', 'in:cash,stripe,orange_money,mtn_momo,bank_transfer'],
+            'payment_context' => ['nullable', 'string', Rule::in([Payment::ORIGIN_SEJOUR_NUITEES, Payment::ORIGIN_CHECK_IN, Payment::ORIGIN_CHECK_OUT])],
+            'notes'           => ['nullable', 'string'],
         ]);
 
         $tenantId = Auth::user()->tenant_id
             ?? \App\Models\Tenant::current()?->id;
 
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
             return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
@@ -1991,10 +2079,19 @@ class BookingController extends Controller
         $seq = $maxSeq + 1;
         $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
-        \App\Models\Payment::create([
-            'booking_id'   => $booking->id,
-            'customer_id'  => $booking->customer_id,
-            'amount'       => $amountCentimes,
+        $paymentOrigin = $validated['payment_context'] ?? (
+            ($booking->actual_check_in && $booking->actual_check_in->diffInMinutes(now(), true) <= 30 && $booking->payments()->doesntExist())
+                ? Payment::ORIGIN_CHECK_IN
+                : ($booking->getConsumedBalance($checkOutTime) <= $amountCentimes && $booking->check_out->lessThanOrEqualTo(today())
+                    ? Payment::ORIGIN_CHECK_OUT
+                    : Payment::ORIGIN_SEJOUR_NUITEES)
+        );
+
+        $recordedPayment = \App\Models\Payment::create([
+            'booking_id'     => $booking->id,
+            'customer_id'    => $booking->customer_id,
+            'payment_origin' => $paymentOrigin,
+            'amount'         => $amountCentimes,
             'currency'     => 'XAF',
             'method'       => $validated['method'],
             'status'       => 'completed',
@@ -2014,6 +2111,18 @@ class BookingController extends Controller
             "Paiement de " . number_format($amountCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour la réservation #{$booking->booking_number}",
             'bookings',
             ['booking_id' => $booking->id, 'amount' => $amountCentimes, 'reference' => $reference]
+        );
+
+        $originLabel = Payment::ORIGINS[$paymentOrigin] ?? 'Encaissement séjour';
+        $this->cashRegisterCircuit->enregistrerInterventionTiers(
+            $activeSession,
+            Auth::user(),
+            CashRegisterActivity::ACTION_PAYMENT,
+            "{$originLabel} — {$booking->booking_number} ({$reference})",
+            $amountCentimes,
+            $validated['method'],
+            $recordedPayment,
+            ['booking_id' => $booking->id, 'payment_id' => $recordedPayment->id, 'payment_origin' => $paymentOrigin]
         );
 
         if ($booking->getConsumedBalance($checkOutTime) <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
@@ -2042,8 +2151,9 @@ class BookingController extends Controller
 
         $booking->load(['customer', 'room.roomType']);
         $roomTypes = RoomType::with('rooms')->get();
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
 
-        return view('bookings.edit', compact('booking', 'roomTypes'));
+        return view('bookings.edit', compact('booking', 'roomTypes', 'cashRegisterContext'));
     }
 
     public function update(Request $request, Booking $booking)
@@ -2120,6 +2230,19 @@ class BookingController extends Controller
                 'unit_price'  => $pricePerNight,
                 'total_price' => $totalRoomAmount,
             ]);
+
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_BOOKING_UPDATE,
+                "Modification réservation {$booking->booking_number} — Chambre {$room->number}",
+                null,
+                null,
+                $booking,
+                ['booking_id' => $booking->id]
+            );
+        }
 
         return redirect()
             ->route('bookings.show', $booking)

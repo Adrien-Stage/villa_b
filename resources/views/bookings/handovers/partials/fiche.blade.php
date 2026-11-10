@@ -7,6 +7,8 @@
 @php
     $fcfa = fn ($c) => $c === null ? '—' : number_format(((int) $c) / 100, 0, ',', ' ') . ' FCFA';
     $act = $rapport['activite'];
+    $tiers = $rapport['tiers'] ?? ['has_activity' => false, 'total_count' => 0, 'actors' => collect(), 'items' => collect()];
+    $titulaireId = (int) ($rapport['session']?->user_id ?? 0);
     $client = fn ($b) => $b?->customer?->full_name ?? '—';
 @endphp
 
@@ -44,7 +46,8 @@
 
         <div class="border-t border-secondary/15">
             <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Encaissements</h3>
-            @if($rapport['paiements']->isEmpty())
+            @php $banquetPaiements = $rapport['banquetPaiements'] ?? collect(); @endphp
+            @if($rapport['paiements']->isEmpty() && $banquetPaiements->isEmpty())
                 <p class="px-5 py-3 text-sm text-primary/40">Aucun encaissement pendant le quart.</p>
             @else
                 <table class="w-full text-sm">
@@ -53,16 +56,40 @@
                             <tr class="{{ $p->status !== 'completed' ? 'text-primary/40 line-through' : '' }}">
                                 <td class="px-5 py-2 tabular-nums text-primary/55 w-14">{{ $p->paid_at?->format('H:i') }}</td>
                                 <td class="py-2">
+                                    <span class="inline-flex items-center rounded bg-secondary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary/75 mr-1">{{ $p->originLabel() }}</span>
                                     @if($p->booking)
                                         <a href="{{ route('bookings.show', $p->booking) }}" class="font-medium text-primary hover:underline">{{ $p->booking->booking_number }}</a>
                                         <span class="text-xs text-primary/50">· ch. {{ $p->booking->room?->number }} · {{ $client($p->booking) }}</span>
                                     @else
                                         <span class="text-primary/70">{{ $p->customer?->full_name ?? 'Vente directe' }}</span>
                                     @endif
+                                    @if($p->processedBy && (int) $p->processed_by !== $titulaireId)
+                                        <span class="block text-[11px] font-medium text-indigo-700">Intervenant tiers : {{ $p->processedBy->name }}</span>
+                                    @endif
                                     @if($p->notes)<span class="block text-xs text-primary/45">{{ \Illuminate\Support\Str::limit($p->notes, 80) }}</span>@endif
                                 </td>
                                 <td class="py-2 text-xs text-primary/60">{{ $p->methodLabel() }}</td>
                                 <td class="px-5 py-2 text-right tabular-nums">{{ $fcfa($p->amount) }}</td>
+                            </tr>
+                        @endforeach
+                        @foreach($banquetPaiements as $bp)
+                            <tr>
+                                <td class="px-5 py-2 tabular-nums text-primary/55 w-14">{{ $bp->paid_at?->format('H:i') }}</td>
+                                <td class="py-2">
+                                    <span class="inline-flex items-center rounded bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900 mr-1">Banquet — {{ $bp->libelleKind() }}</span>
+                                    @if($bp->banquet)
+                                        <a href="{{ route('restaurant.banquets.show', $bp->banquet) }}" class="font-medium text-primary hover:underline">{{ $bp->banquet->reference }}</a>
+                                        <span class="text-xs text-primary/60">· {{ $bp->banquet->title }} · {{ $bp->banquet->client_name }}</span>
+                                    @else
+                                        <span class="text-primary/70">{{ $bp->receiptReference() }}</span>
+                                    @endif
+                                    @if($bp->paidBy && (int) $bp->paid_by !== $titulaireId)
+                                        <span class="block text-[11px] font-medium text-indigo-700">Intervenant tiers : {{ $bp->paidBy->name }}</span>
+                                    @endif
+                                    @if($bp->notes)<span class="block text-xs text-primary/45">{{ \Illuminate\Support\Str::limit($bp->notes, 80) }}</span>@endif
+                                </td>
+                                <td class="py-2 text-xs text-primary/60">{{ $bp->methodLabel() }}</td>
+                                <td class="px-5 py-2 text-right tabular-nums">{{ $fcfa($bp->amount) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -76,7 +103,12 @@
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($rapport['decaissements'] as $d)
                         <li class="px-5 py-2 flex justify-between gap-3">
-                            <span><span class="tabular-nums text-primary/55">{{ $d->created_at?->format('H:i') }}</span> {{ $d->reason }}</span>
+                            <span>
+                                <span class="tabular-nums text-primary/55">{{ $d->created_at?->format('H:i') }}</span> {{ $d->reason }}
+                                @if($d->user && (int) $d->user_id !== $titulaireId)
+                                    <span class="text-xs font-medium text-indigo-700">· par {{ $d->user->name }}</span>
+                                @endif
+                            </span>
                             <span class="tabular-nums text-red-600">{{ $fcfa($d->amount) }}</span>
                         </li>
                     @endforeach
@@ -94,6 +126,9 @@
                                 <span class="tabular-nums text-primary/55">{{ $v->created_at?->format('H:i') }}</span>
                                 {{ $v->sale_number }} · {{ $v->customer_name ?? 'Client de passage' }}
                                 <span class="text-xs text-primary/45">{{ $v->payment_type === 'room_charge' ? '· porté sur la chambre ' . $v->room_number : '' }}</span>
+                                @if($v->user && (int) $v->user_id !== $titulaireId)
+                                    <span class="text-xs font-medium text-indigo-700">· par {{ $v->user->name }}</span>
+                                @endif
                             </span>
                             <span class="tabular-nums">{{ $fcfa($v->total_amount) }}</span>
                         </li>
@@ -116,10 +151,34 @@
                 ['Départs enregistrés', $act['departs'], fn ($b) => [$b->actual_check_out?->format('H:i'), $b]],
                 ['Réservations créées', $act['reservations'], fn ($b) => [$b->created_at?->format('H:i'), $b]],
             ];
-            $rien = collect($act)->every(fn ($c) => $c->isEmpty());
+            $rien = collect($act)->every(fn ($c) => $c->isEmpty()) && !($tiers['has_activity'] ?? false);
         @endphp
         @if($rien)
             <p class="px-5 py-6 text-sm text-primary/40">Aucune opération de séjour pendant le quart.</p>
+        @endif
+        @if(($tiers['has_activity'] ?? false))
+            <div class="border-b border-secondary/10 bg-indigo-50/40">
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-indigo-800">
+                    Interventions d'un tiers dans cette caisse ({{ $tiers['total_count'] }})
+                </h3>
+                <ul class="divide-y divide-indigo-100 text-sm">
+                    @foreach($tiers['items'] as $item)
+                        <li class="px-5 py-2 flex justify-between gap-3">
+                            <span>
+                                <span class="tabular-nums text-primary/55">{{ $item['occurred_at']?->format('H:i') ?? '—' }}</span>
+                                <strong class="text-indigo-900">{{ $item['actor_name'] }}</strong>
+                                @if($item['role_label']) <span class="text-xs text-primary/50">({{ $item['role_label'] }})</span> @endif
+                                · {{ $item['description'] }}
+                            </span>
+                            @if($item['is_financial'] && $item['amount'])
+                                <span class="tabular-nums font-medium {{ $item['cash_impact'] < 0 ? 'text-red-600' : 'text-emerald-700' }}">
+                                    {{ $item['cash_impact'] < 0 ? '−' : ($item['cash_impact'] > 0 ? '+' : '') }}{{ $fcfa(abs((int) $item['amount'])) }}
+                                </span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
         @foreach($blocs as [$titre, $liste, $ligne])
             @if($liste->isNotEmpty())

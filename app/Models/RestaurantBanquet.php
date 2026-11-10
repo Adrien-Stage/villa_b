@@ -26,6 +26,24 @@ class RestaurantBanquet extends Model
 
     public const ANNULE = 'annule';
 
+    public const SOURCE_SUR_PLACE = 'sur_place';
+
+    public const SOURCE_TELEPHONE = 'telephone';
+
+    public const SOURCE_EMAIL = 'email';
+
+    public const SOURCE_RESTAURANT = 'restaurant';
+
+    public const SOURCE_SITE_WEB = 'site_web';
+
+    public const SOURCES = [
+        self::SOURCE_SUR_PLACE => 'Sur place (Réception)',
+        self::SOURCE_TELEPHONE => 'Téléphone',
+        self::SOURCE_EMAIL => 'Email',
+        self::SOURCE_RESTAURANT => 'Restaurant',
+        self::SOURCE_SITE_WEB => 'Site web',
+    ];
+
     public const STATUTS = [
         self::DEVIS => 'Devis',
         self::CONFIRME => 'Confirmé',
@@ -35,9 +53,9 @@ class RestaurantBanquet extends Model
     ];
 
     protected $fillable = [
-        'point_of_sale_id', 'reference', 'title', 'customer_id', 'client_name', 'client_phone', 'client_email',
+        'point_of_sale_id', 'reference', 'title', 'customer_id', 'booking_id', 'client_name', 'client_phone', 'client_email',
         'event_date', 'start_time', 'end_time', 'space_id', 'covers', 'price_per_cover', 'extras_amount',
-        'total_amount', 'deposit_required', 'menu', 'status', 'notes', 'created_by', 'confirmed_at', 'canceled_at',
+        'total_amount', 'deposit_required', 'menu', 'status', 'source', 'notes', 'created_by', 'confirmed_at', 'canceled_at',
     ];
 
     protected $casts = [
@@ -59,6 +77,11 @@ class RestaurantBanquet extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
     }
 
     public function space(): BelongsTo
@@ -87,9 +110,19 @@ class RestaurantBanquet extends Model
         return max(0, $this->total_amount - $this->encaisse());
     }
 
+    public function depositRemaining(): int
+    {
+        return max(0, (int) $this->deposit_required - $this->encaisse());
+    }
+
     public function libelleStatut(): string
     {
         return self::STATUTS[$this->status] ?? $this->status;
+    }
+
+    public function libelleSource(): string
+    {
+        return self::SOURCES[$this->source ?? self::SOURCE_RESTAURANT] ?? ucfirst((string) $this->source);
     }
 
     public function estModifiable(): bool

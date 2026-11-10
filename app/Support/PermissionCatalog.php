@@ -853,13 +853,14 @@ class PermissionCatalog
             'restaurant.buffets.creer' => ['restaurant_manager'],
             'restaurant.buffets.entries.creer' => ['cashier'],
             'restaurant.buffets.close' => ['restaurant_manager'],
-            // Banquets : le responsable établit et suit le devis, la caisse
-            // encaisse acompte et solde.
-            'restaurant.banquets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_manager'],
-            'restaurant.banquets.creer' => ['restaurant_manager'],
-            'restaurant.banquets.modifier' => ['restaurant_manager'],
-            'restaurant.banquets.status' => ['restaurant_manager'],
-            'restaurant.banquets.payments.creer' => ['cashier'],
+            // Banquets : le responsable du restaurant et la réception (demandes sur place
+            // ou par téléphone) consultent les disponibilités et établissent les devis ;
+            // l'acompte et le solde s'encaissent au restaurant ou à la caisse réception.
+            'restaurant.banquets.voir' => ['cashier', 'controller', 'manager', 'reception', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.banquets.creer' => ['reception', 'restaurant_manager'],
+            'restaurant.banquets.modifier' => ['reception', 'restaurant_manager'],
+            'restaurant.banquets.status' => ['reception', 'restaurant_manager'],
+            'restaurant.banquets.payments.creer' => ['cashier', 'reception'],
             'restaurant.billing.paid' => ['cashier'],
             // Caisse du restaurant : le caissier, et le responsable de
             // restaurant qui l'inclut, s'il faut encaisser à sa place.

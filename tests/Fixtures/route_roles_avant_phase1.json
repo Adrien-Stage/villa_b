@@ -2060,15 +2060,29 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
+  "reception",
+  "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
   "support"
  ],
  "restaurant.banquets.payments.store": [
+  "cashier",
+  "reception",
+  "reception_chief",
+  "restaurant_manager"
+ ],
+ "restaurant.banquets.print": [
   "admin",
   "cashier",
-  "restaurant_manager"
+  "controller",
+  "finance_manager",
+  "manager",
+  "reception",
+  "reception_chief",
+  "restaurant_chief",
+  "restaurant_manager",
+  "support"
  ],
  "restaurant.banquets.show": [
   "admin",
@@ -2076,21 +2090,25 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
+  "reception",
+  "reception_chief",
   "restaurant_chief",
   "restaurant_manager",
   "support"
  ],
  "restaurant.banquets.status": [
-  "admin",
+  "reception",
+  "reception_chief",
   "restaurant_manager"
  ],
  "restaurant.banquets.store": [
-  "admin",
+  "reception",
+  "reception_chief",
   "restaurant_manager"
  ],
  "restaurant.banquets.update": [
-  "admin",
+  "reception",
+  "reception_chief",
   "restaurant_manager"
  ],
  "restaurant.bar.index": [

@@ -28,6 +28,8 @@
     @enddroit
 </div>
 
+@include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
+
 {{-- Stats --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
     @php
@@ -151,6 +153,7 @@ document.getElementById('search-input').addEventListener('input', function() {
 });
 </script>
 
+    @unless($isCashRegisterOpen)
     {{-- Modal Caisse Fermée --}}
     <div x-show="showOpenRegisterModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
@@ -211,5 +214,6 @@ document.getElementById('search-input').addEventListener('input', function() {
             </div>
         </div>
     </div>
+    @endunless
 </div>
 @endsection

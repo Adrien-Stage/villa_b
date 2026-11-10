@@ -266,15 +266,16 @@ class AccountingService
         Payment::query()->cashFlows()
             ->where('status', 'completed')
             ->whereBetween('paid_at', [$from, $to])
-            ->with(['booking:id,booking_number', 'partnerOrganization'])
+            ->with(['booking:id,booking_number,actual_check_in,actual_check_out', 'partnerOrganization'])
             ->get()
             ->each(function ($p) use ($entries) {
                 $deposit = $p->purpose === Payment::PURPOSE_PARTNER_DEPOSIT;
                 $ref = $deposit ? 'Compte dépôt '.$p->partnerOrganization?->name : ($p->booking?->booking_number ? "Séjour {$p->booking->booking_number}" : 'Paiement');
+                $origin = $p->originLabel(bookingContext: $p->booking);
                 $amount = (int) $p->amount;
                 $entries->push([
                     'date'    => $p->paid_at,
-                    'libelle' => $amount < 0 ? "Remboursement — {$ref}" : ($deposit ? $ref : "Hébergement — {$ref}"),
+                    'libelle' => $amount < 0 ? "Remboursement — {$ref}" : ($deposit ? $ref : "Hébergement ({$origin}) — {$ref}"),
                     'source'  => $deposit ? 'depots_partenaires' : 'hebergement',
                     'recette' => $amount >= 0 ? $amount : 0,
                     'depense' => $amount < 0 ? abs($amount) : 0,

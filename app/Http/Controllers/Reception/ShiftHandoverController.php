@@ -63,6 +63,11 @@ class ShiftHandoverController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if ($this->passations->sessionOuverte(Auth::user()) === null) {
+            return redirect()->route('bookings.cash_register.index')
+                ->with('error', "Vous n'avez pas de caisse de réception ouverte à remettre.");
+        }
+
         $data = $request->validate([
             'handed_amount' => ['required', 'numeric', 'min:0', 'max:1000000000'],
             'instructions'  => ['nullable', 'string', 'max:3000'],

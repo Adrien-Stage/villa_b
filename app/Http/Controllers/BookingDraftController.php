@@ -119,10 +119,9 @@ class BookingDraftController extends Controller
             return $this->continue($token);
         }
 
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $cashRegisterCircuit = app(\App\Services\CashRegisterCircuit::class);
+        $cashRegisterContext = $cashRegisterCircuit->receptionContextePour(Auth::user());
+        $activeSession = $cashRegisterContext['session'];
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')
@@ -132,7 +131,7 @@ class BookingDraftController extends Controller
         $customers = Customer::orderBy('last_name')->orderBy('first_name')->get();
         $partnerOrganizations = \App\Models\PartnerOrganization::validOn()->orderBy('name')->get();
 
-        return view('bookings.drafts.resume', compact('draft', 'customers', 'partnerOrganizations'));
+        return view('bookings.drafts.resume', compact('draft', 'customers', 'partnerOrganizations', 'cashRegisterContext'));
     }
 
     // ── Reprise directe et injection du state à l'étape active ────────────────
@@ -150,10 +149,7 @@ class BookingDraftController extends Controller
             ->firstOrFail();
 
         // 1. Vérifier la caisse
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = app(\App\Services\CashRegisterCircuit::class)->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')

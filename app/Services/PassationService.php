@@ -11,6 +11,7 @@ use App\Models\FolioItem;
 use App\Models\MinibarCheck;
 use App\Models\Payment;
 use App\Models\ReceptionSale;
+use App\Models\RestaurantBanquetPayment;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftHandover;
 use App\Models\User;
@@ -100,29 +101,55 @@ class PassationService
         $periode = [$debut, $fin];
 
         $paiements = Payment::query()
-            ->with(['booking.customer', 'booking.room', 'customer'])
+            ->with(['booking.customer', 'booking.room', 'customer', 'processedBy'])
+            ->where('cash_register_session_id', $session->id)
+            ->orderBy('paid_at')
+            ->get();
+
+        $banquetPaiements = RestaurantBanquetPayment::query()
+            ->with(['banquet.space', 'banquet.pointOfSale', 'paidBy'])
             ->where('cash_register_session_id', $session->id)
             ->orderBy('paid_at')
             ->get();
 
         $encaisses = $paiements->where('status', 'completed');
 
+        $parModeMap = [];
+        foreach ($encaisses as $p) {
+            $cle = $p->method ?: 'other';
+            if (! isset($parModeMap[$cle])) {
+                $parModeMap[$cle] = ['libelle' => $p->methodLabel(), 'total' => 0, 'nombre' => 0];
+            }
+            $parModeMap[$cle]['total'] += (int) $p->amount;
+            $parModeMap[$cle]['nombre']++;
+        }
+        foreach ($banquetPaiements as $bp) {
+            $cle = $bp->payment_method ?: 'other';
+            if (! isset($parModeMap[$cle])) {
+                $parModeMap[$cle] = ['libelle' => $bp->methodLabel(), 'total' => 0, 'nombre' => 0];
+            }
+            $parModeMap[$cle]['total'] += (int) $bp->amount;
+            $parModeMap[$cle]['nombre']++;
+        }
+        $parMode = collect($parModeMap)->sortByDesc('total');
+
         return [
-            'session'      => $session,
-            'debut'        => $debut,
-            'fin'          => $fin,
-            'fond'         => (int) $session->opening_amount,
-            'paiements'    => $paiements,
-            'parMode'      => $encaisses->groupBy('method')
-                ->map(fn (Collection $p) => ['libelle' => $p->first()->methodLabel(), 'total' => (int) $p->sum('amount'), 'nombre' => $p->count()])
-                ->sortByDesc('total'),
-            'totalEncaisse' => (int) $encaisses->sum('amount'),
-            'especes'      => (int) $encaisses->where('method', 'cash')->sum('amount'),
+            'session'          => $session,
+            'debut'            => $debut,
+            'fin'              => $fin,
+            'fond'             => (int) $session->opening_amount,
+            'paiements'        => $paiements,
+            'banquetPaiements' => $banquetPaiements,
+            'parMode'          => $parMode,
+            'totalEncaisse'    => (int) $encaisses->sum('amount') + (int) $banquetPaiements->sum('amount'),
+            'especes'          => (int) $encaisses->where('method', 'cash')->sum('amount')
+                + (int) $banquetPaiements->where('payment_method', 'cash')->sum('amount'),
             'decaissements' => $session->disbursements()->with('user')->orderBy('created_at')->get(),
-            'ventesPos'    => ReceptionSale::query()->where('cash_register_session_id', $session->id)->orderBy('created_at')->get(),
+            'ventesPos'    => ReceptionSale::query()->with('user')->where('cash_register_session_id', $session->id)->orderBy('created_at')->get(),
             'theorique'    => $session->theoreticalBalance(),
             'compte'       => $session->actual_closing_amount,
             'ecart'        => $session->discrepancy_amount,
+            'tiers'        => $this->caisses->resumeInterventionsTiers($session),
             'activite'     => [
                 'arrivees' => Booking::query()->with(['customer', 'room'])->where('checked_in_by', $qui)
                     ->whereBetween('actual_check_in', $periode)->orderBy('actual_check_in')->get(),

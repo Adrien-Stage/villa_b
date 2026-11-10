@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Reception;
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\CashRegisterDisbursement;
-use App\Models\CashRegisterSession;
+use App\Models\CashRegisterActivity;
 use App\Models\Customer;
 use App\Models\FolioItem;
 use App\Models\Payment;
 use App\Models\ReceptionSale;
 use App\Models\ReceptionSaleItem;
 use App\Models\ServiceItem;
+use App\Services\CashRegisterCircuit;
 use App\Services\CheckOutService;
 use App\Services\TaxationService;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +27,7 @@ class ReceptionPosController extends Controller
     public function __construct(
         private readonly CheckOutService $checkOutService,
         private readonly TaxationService $taxation,
+        private readonly CashRegisterCircuit $cashRegisterCircuit,
     ) {
     }
 
@@ -35,14 +36,9 @@ class ReceptionPosController extends Controller
      */
     public function index(Request $request): View
     {
-        $userId = Auth::id();
-
-        // 1. Session de caisse réception active
-        $activeSession = CashRegisterSession::query()
-            ->where('user_id', $userId)
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        // 1. Session de caisse réception active (propre ou partagée pour le chef de réception)
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $activeSession = $cashRegisterContext['session'];
 
         $sessionStats = null;
         if ($activeSession) {
@@ -62,7 +58,7 @@ class ReceptionPosController extends Controller
                 'disbursements' => $disbursements,
                 'theoretical_cash' => $theoreticalCash,
                 'sales_count' => $activeSession->receptionSales()->count(),
-                'disbursements_list' => $activeSession->disbursements()->latest()->take(5)->get(),
+                'disbursements_list' => $activeSession->disbursements()->with('user')->latest()->take(5)->get(),
             ];
         }
 
@@ -97,6 +93,7 @@ class ReceptionPosController extends Controller
 
         return view('reception.pos.index', [
             'activeSession' => $activeSession,
+            'cashRegisterContext' => $cashRegisterContext,
             'sessionStats' => $sessionStats,
             'inHouseBookings' => $inHouseBookings,
             'serviceItems' => $serviceItems,
@@ -135,11 +132,7 @@ class ReceptionPosController extends Controller
         }
 
         // Vérification de la session de caisse pour encaissement immédiat
-        $activeSession = CashRegisterSession::query()
-            ->where('user_id', Auth::id())
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$isRoomCharge && !$activeSession) {
             return back()->withInput()->withErrors(['caisse' => 'Veuillez ouvrir votre caisse de réception avant d\'encaisser un paiement.']);
@@ -308,6 +301,7 @@ class ReceptionPosController extends Controller
                 $payment = Payment::create([
                     'booking_id' => $booking?->id,
                     'customer_id' => $customerId,
+                    'payment_origin' => Payment::ORIGIN_POS_RECEPTION,
                     'cash_register_session_id' => $activeSession->id,
                     'amount' => $totalAmountCentimes,
                     'currency' => 'XAF',
@@ -329,6 +323,25 @@ class ReceptionPosController extends Controller
 
             return $sale;
         });
+
+        if ($activeSession !== null) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                \App\Models\CashRegisterActivity::ACTION_POS_SALE,
+                $isRoomCharge
+                    ? "Vente POS Réception {$sale->sale_number} — Chambre {$roomNumber} ({$customerName})"
+                    : "Vente POS Réception {$sale->sale_number} — {$customerName}",
+                $isRoomCharge ? null : (int) $sale->total_amount,
+                $validated['payment_method'],
+                $sale,
+                [
+                    'reception_sale_id' => $sale->id,
+                    'payment_id' => $sale->payment_id,
+                    'booking_id' => $sale->booking_id,
+                ]
+            );
+        }
 
         $message = $isRoomCharge
             ? "Vente enregistrée et débitée sur la chambre {$roomNumber} avec succès."

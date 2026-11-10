@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
-use App\Models\CashRegisterSession;
+use App\Models\CashRegisterActivity;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\CashRegisterCircuit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,11 +33,8 @@ class InvoicePaymentController extends Controller
             'amount.required' => 'Indiquez le montant encaissé.',
         ]);
 
-        $session = CashRegisterSession::query()
-            ->where('user_id', Auth::id())
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $circuit = app(CashRegisterCircuit::class);
+        $session = $circuit->receptionActivePour(Auth::user());
 
         if ($session === null) {
             return back()->withErrors(['payment' => 'Ouvrez la caisse de la réception pour encaisser.']);
@@ -60,6 +58,7 @@ class InvoicePaymentController extends Controller
                     'booking_id'               => $facture->booking_id,
                     'customer_id'              => $facture->customer_id,
                     'invoice_id'               => $facture->id,
+                    'payment_origin'           => Payment::ORIGIN_FACTURE_COMPLEMENTAIRE,
                     'amount'                   => $montant,
                     'currency'                 => 'XAF',
                     'method'                   => $data['method'],
@@ -87,6 +86,21 @@ class InvoicePaymentController extends Controller
         AuditLog::record(Auth::id(), 'sensitive_action',
             'Encaissement de ' . number_format($montant / 100, 0, ',', ' ') . " FCFA sur la facture complémentaire {$invoice->invoice_number}",
             'bookings', ['invoice_id' => $invoice->id, 'reference' => $paiement->reference]);
+
+        $circuit->enregistrerInterventionTiers(
+            $session,
+            Auth::user(),
+            CashRegisterActivity::ACTION_INVOICE_PAYMENT,
+            "Encaissement facture complémentaire {$invoice->invoice_number} ({$paiement->reference})",
+            $montant,
+            $data['method'],
+            $paiement,
+            [
+                'invoice_id' => $invoice->id,
+                'booking_id' => $invoice->booking_id,
+                'payment_id' => $paiement->id,
+            ]
+        );
 
         $invoice->refresh();
 

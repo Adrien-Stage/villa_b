@@ -92,6 +92,61 @@
                     </div>
                 @endif
 
+                @php $tiersReview = $tiersParSession[$session->id] ?? null; @endphp
+                @if ($tiersReview && ($tiersReview['has_activity'] ?? false))
+                    <div class="mt-2 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2.5 text-xs text-indigo-950">
+                        <p class="font-semibold">
+                            Interventions d'un tiers dans cette caisse ({{ $tiersReview['total_count'] }} opération{{ $tiersReview['total_count'] > 1 ? 's' : '' }}) :
+                            @foreach($tiersReview['actors'] as $actor)
+                                {{ $actor['name'] }}@if($actor['role_label']) ({{ $actor['role_label'] }})@endif
+                                @if($actor['net_cash_centimes'] !== 0)
+                                    — impact espèces {{ $actor['net_cash_centimes'] > 0 ? '+' : '−' }}{{ $fcfa(abs($actor['net_cash_centimes'])) }}
+                                @endif
+                                @if($actor['non_cash_centimes'] > 0)
+                                    · {{ $fcfa($actor['non_cash_centimes']) }} hors espèces
+                                @endif
+                                @if(!$loop->last) ; @endif
+                            @endforeach
+                        </p>
+                        <details class="mt-1.5">
+                            <summary class="cursor-pointer select-none font-semibold text-indigo-800 hover:text-indigo-950">
+                                Voir le détail des opérations effectuées par un tiers
+                            </summary>
+                            <div class="mt-2 overflow-x-auto rounded border border-indigo-200 bg-white">
+                                <table class="w-full text-left text-[11px]">
+                                    <caption class="sr-only">Détail des interventions tiers pour la session #{{ $session->id }}</caption>
+                                    <thead class="bg-indigo-50/70 text-[10px] uppercase tracking-wider text-indigo-900/70 border-b border-indigo-100">
+                                        <tr>
+                                            <th scope="col" class="px-2.5 py-1.5">Heure</th>
+                                            <th scope="col" class="px-2.5 py-1.5">Collaborateur</th>
+                                            <th scope="col" class="px-2.5 py-1.5">Opération</th>
+                                            <th scope="col" class="px-2.5 py-1.5">Mode</th>
+                                            <th scope="col" class="px-2.5 py-1.5 text-right">Montant</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-indigo-100/70 text-primary">
+                                        @foreach($tiersReview['items'] as $item)
+                                            <tr>
+                                                <td class="px-2.5 py-1.5 tabular-nums whitespace-nowrap text-primary/60">{{ $item['occurred_at']?->format('H:i') ?? '—' }}</td>
+                                                <td class="px-2.5 py-1.5 whitespace-nowrap font-medium">{{ $item['actor_name'] }}</td>
+                                                <td class="px-2.5 py-1.5">{{ $item['description'] }}</td>
+                                                <td class="px-2.5 py-1.5 whitespace-nowrap text-primary/70">{{ $item['method_label'] ?? '—' }}</td>
+                                                <td class="px-2.5 py-1.5 text-right tabular-nums whitespace-nowrap font-semibold {{ $item['cash_impact'] < 0 ? 'text-red-600' : ($item['is_financial'] ? 'text-emerald-700' : 'text-primary/50') }}">
+                                                    @if($item['is_financial'] && $item['amount'])
+                                                        {{ $item['cash_impact'] < 0 ? '−' : ($item['cash_impact'] > 0 ? '+' : '') }}{{ $fcfa(abs((int) $item['amount'])) }}
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('accounting.cash_reviews.store', $session) }}"
                       class="mt-4 flex flex-col gap-3 border-t border-secondary/15 pt-4 sm:flex-row sm:items-end">
                     @csrf
