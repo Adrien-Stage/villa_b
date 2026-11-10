@@ -50,7 +50,9 @@ class PartnerWalletService
 
             return $this->record($partner, $entry, [
                 'amount' => $data['amount'] * 100, 'method' => $data['method'],
-                'purpose' => Payment::PURPOSE_PARTNER_DEPOSIT, 'external_reference' => trim($data['reference']),
+                'purpose' => Payment::PURPOSE_PARTNER_DEPOSIT,
+                'payment_origin' => Payment::ORIGIN_DEPOT_PARTENAIRE,
+                'external_reference' => trim($data['reference']),
                 'notes' => $data['notes'] ?? null,
             ], $actor, $proof);
         });
@@ -97,6 +99,7 @@ class PartnerWalletService
             }
             $payment = $this->record($partner, $entry, [
                 'booking_id' => $booking->id, 'customer_id' => $customer->id, 'invoice_id' => $invoice?->id,
+                'payment_origin' => $invoice?->isComplementaire() ? Payment::ORIGIN_FACTURE_COMPLEMENTAIRE : Payment::ORIGIN_SEJOUR_NUITEES,
                 'amount' => $data['amount'] * 100, 'method' => Payment::METHOD_PARTNER_WALLET,
                 'notes' => $data['notes'] ?? null,
             ], $actor, $proof);

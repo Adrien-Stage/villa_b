@@ -594,6 +594,16 @@ class Navigation
         }
 
         if (str_starts_with($routeName, 'restaurant.') || str_starts_with($routeName, 'portal.restaurant.')) {
+            if (
+                str_starts_with($routeName, 'restaurant.banquets.')
+                && $user
+                && $user->exerce(['reception'])
+                && !$user->isAdmin()
+                && !$user->exerce(['manager', 'controller', 'finance_manager', 'restaurant_manager', 'restaurant_chief', 'cashier'])
+            ) {
+                return self::groupInfo('hotel');
+            }
+
             return self::groupInfo('restaurant');
         }
 
@@ -871,7 +881,7 @@ class Navigation
                                 'label'  => 'Réservations',
                                 'icon'   => 'calendar',
                                 'url'    => route('bookings.index'),
-                                'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*'),
+                                'active' => request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*'),
                             ];
                         }
                     }

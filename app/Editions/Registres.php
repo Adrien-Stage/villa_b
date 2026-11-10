@@ -106,7 +106,7 @@ class Registres
     /**
      * Encaissements de la période, ligne par ligne.
      *
-     * @return Collection<int, array{date: CarbonImmutable, service: string, service_cle: string, piece: string, client: string, mode: string, mode_cle: string, par: string, montant: int}>
+     * @return Collection<int, array{date: CarbonImmutable, service: string, service_cle: string, detail: string, piece: string, client: string, mode: string, mode_cle: string, par: string, montant: int}>
      */
     public function encaissements(CarbonImmutable $du, CarbonImmutable $au, string $service = '', string $mode = ''): Collection
     {
@@ -116,20 +116,28 @@ class Registres
         // Règlements : séjours, groupes et ventes de la réception qui en portent un.
         $ventesReception = ReceptionSale::query()->whereNotNull('payment_id')->pluck('sale_number', 'payment_id');
         $reglements = Payment::query()->cashFlows()->with('partnerOrganization')->where('status', 'completed')->whereBetween('paid_at', [$debut, $fin])->get();
-        $sejours = Booking::query()->whereIn('id', $reglements->pluck('booking_id')->filter()->unique())->pluck('booking_number', 'id');
+        $sejours = Booking::query()->with('room:id,number')->whereIn('id', $reglements->pluck('booking_id')->filter()->unique())->get()->keyBy('id');
         $clients = $this->clients($reglements->pluck('customer_id'));
 
         foreach ($reglements as $r) {
             if ($r->purpose === Payment::PURPOSE_PARTNER_DEPOSIT) {
                 $lignes->push($this->ligne($r->paid_at, 'depots_partenaires', 'Dépôts partenaires', $r->reference,
-                    $r->partnerOrganization?->name ?? 'Partenaire', $r->method, $r->processed_by, (int) $r->amount));
+                    $r->partnerOrganization?->name ?? 'Partenaire', $r->method, $r->processed_by, (int) $r->amount,
+                    'Approvisionnement dépôt partenaire'));
                 continue;
             }
             $pos = isset($ventesReception[$r->id]);
+            $sejour = $r->booking_id ? $sejours->get($r->booking_id) : null;
+            $origin = $r->originLabel($pos, $sejour);
+            $detail = $pos
+                ? 'POS Réception — Vente comptoir #' . $ventesReception[$r->id]
+                : ($origin . ($sejour?->room?->number ? ' · Ch. ' . $sejour->room->number : ''));
+
             $lignes->push($this->ligne(
                 $r->paid_at, $pos ? self::SERVICE_RECEPTION : self::SERVICE_HEBERGEMENT, $pos ? 'POS Réception' : 'Hébergement',
-                $pos ? 'Vente ' . $ventesReception[$r->id] : ($sejours[$r->booking_id] ?? $r->reference ?? '#' . $r->id),
-                $clients[$r->customer_id] ?? '—', $r->method, $r->processed_by, (int) $r->amount
+                $pos ? 'Vente ' . $ventesReception[$r->id] : ($sejour?->booking_number ?? $r->reference ?? '#' . $r->id),
+                $clients[$r->customer_id] ?? '—', $r->method, $r->processed_by, (int) $r->amount,
+                $detail
             ));
         }
 
@@ -138,7 +146,8 @@ class Registres
             ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
             ->whereBetween('paid_at', [$debut, $fin])->get() as $v) {
             $lignes->push($this->ligne($v->paid_at, self::SERVICE_RECEPTION, 'POS Réception', 'Vente ' . $v->sale_number,
-                $v->customer_name ?: '—', $v->payment_method, $v->user_id, (int) $v->total_amount));
+                $v->customer_name ?: '—', $v->payment_method, $v->user_id, (int) $v->total_amount,
+                'POS Réception — Vente comptoir'));
         }
 
         if (TenantModules::has('restaurant')) {
@@ -149,7 +158,8 @@ class Registres
                 $lignes->push($this->ligne($c->paid_at, self::PREFIXE_RESTAURANT . $c->point_of_sale_id, $point?->name ?? 'Restaurant',
                     'Note ' . ($point ? $point->numero($c->id) : $c->id),
                     $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
-                    $c->payment_method, $c->paid_by, (int) $c->amount_paid));
+                    $c->payment_method, $c->paid_by, (int) $c->amount_paid,
+                    'Restaurant — Note de table' . ($c->table_number ? ' · Table ' . $c->table_number : '')));
             }
 
             foreach (RestaurantBuffetEntry::query()->with('service')
@@ -159,14 +169,21 @@ class Registres
                 $lignes->push($this->ligne($e->created_at, self::PREFIXE_RESTAURANT . $e->point_of_sale_id, $point?->name ?? 'Restaurant',
                     'Buffet du ' . ($e->service?->service_date?->format('d/m') ?? '—'),
                     $e->adults . ' adulte(s)' . ($e->children ? ', ' . $e->children . ' enfant(s)' : ''),
-                    $e->payment_method, $e->recorded_by, (int) $e->amount));
+                    $e->payment_method, $e->recorded_by, (int) $e->amount,
+                    'Restaurant — Entrée buffet'));
             }
 
-            foreach (RestaurantBanquetPayment::query()->with('banquet')->whereBetween('paid_at', [$debut, $fin])->get() as $b) {
+            foreach (RestaurantBanquetPayment::query()->with(['banquet.space', 'cashRegisterSession'])->whereBetween('paid_at', [$debut, $fin])->get() as $b) {
                 $point = $this->pointDeVente($b->banquet?->point_of_sale_id);
+                $typeBanquet = $b->kind === RestaurantBanquetPayment::SOLDE ? 'Solde' : 'Acompte';
+                $titreBanquet = $b->banquet?->title ? ' — ' . $b->banquet->title : '';
+                $salleBanquet = $b->banquet?->space?->name ? ' (' . $b->banquet->space->name . ')' : '';
+                $caisseTag = $b->cashRegisterSession?->module === 'reception' ? ' [Caisse Réception]' : '';
+
                 $lignes->push($this->ligne($b->paid_at, self::PREFIXE_RESTAURANT . $b->banquet?->point_of_sale_id, $point?->name ?? 'Restaurant',
                     'Banquet ' . ($b->banquet?->reference ?? '#' . $b->restaurant_banquet_id) . ($b->kind ? ' (' . $b->kind . ')' : ''),
-                    $b->banquet?->client_name ?: '—', $b->payment_method, $b->paid_by, (int) $b->amount));
+                    $b->banquet?->client_name ?: '—', $b->payment_method, $b->paid_by, (int) $b->amount,
+                    'Banquet — ' . $typeBanquet . $titreBanquet . $salleBanquet . $caisseTag));
             }
         }
 
@@ -175,7 +192,8 @@ class Registres
                 ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
                 ->whereBetween('paid_at', [$debut, $fin])->get() as $o) {
                 $lignes->push($this->ligne($o->paid_at, self::SERVICE_BOUTIQUE, 'Boutique', 'Vente ' . $o->order_number,
-                    $o->customer_name ?: '—', $o->payment_method, $o->created_by, (int) $o->total_amount));
+                    $o->customer_name ?: '—', $o->payment_method, $o->created_by, (int) $o->total_amount,
+                    'Boutique — Vente comptoir'));
             }
         }
 
@@ -397,12 +415,13 @@ class Registres
         return $id ? ($this->pointsDeVente[$id] ?? null) : null;
     }
 
-    private function ligne(mixed $date, string $serviceCle, string $service, string $piece, string $client, ?string $mode, ?int $par, int $montant): array
+    private function ligne(mixed $date, string $serviceCle, string $service, string $piece, string $client, ?string $mode, ?int $par, int $montant, string $detail = ''): array
     {
         return [
             'date' => CarbonImmutable::parse($date),
             'service' => $service,
             'service_cle' => $serviceCle,
+            'detail' => $detail,
             'piece' => $piece,
             'client' => $client,
             'mode' => self::mode($mode),

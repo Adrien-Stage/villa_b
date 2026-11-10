@@ -257,6 +257,15 @@
         </span>
     </button>
 
+    <button type="button" id="tab-btn-banquets" onclick="switchTab('banquets')"
+            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+        <i data-lucide="party-popper" class="w-4 h-4"></i>
+        <span>Banquets & Événements</span>
+        <span class="tab-badge px-2 py-0.5 rounded-full text-[11px] font-bold">
+            {{ $customer->banquets->count() }}
+        </span>
+    </button>
+
     <button type="button" id="tab-btn-loyalty" onclick="switchTab('loyalty')"
             class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
         <i data-lucide="gift" class="w-4 h-4"></i>
@@ -740,7 +749,90 @@
 </div>
 
 {{-- ========================================================================= --}}
-{{-- CONTENU ONGLET 3 : PROGRAMME FIDÉLITÉ                                     --}}
+{{-- CONTENU ONGLET 3 : BANQUETS & ÉVÉNEMENTS                                  --}}
+{{-- ========================================================================= --}}
+<div id="tab-content-banquets" class="tab-content {{ $currentTab === 'banquets' ? '' : 'hidden' }}">
+    <div class="bg-white rounded-xl shadow-sm border border-secondary/10 overflow-hidden">
+        <div class="px-5 py-4 border-b border-secondary/10 flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h2 class="font-heading font-semibold text-primary text-sm">Banquets & Événements rattachés</h2>
+                <p class="text-xs text-primary/50">Historique des devis, confirmations et règlements de banquets</p>
+            </div>
+            @module('restaurant')
+                @droit('restaurant.banquets.creer')
+                    <a href="{{ route('restaurant.banquets.index') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        Gérer / Créer un banquet
+                    </a>
+                @enddroit
+            @endmodule
+        </div>
+
+        @if($customer->banquets->isEmpty())
+            <div class="flex flex-col items-center justify-center py-14 text-primary/35">
+                <i data-lucide="party-popper" class="w-9 h-9 mb-2 opacity-40"></i>
+                <p class="text-sm font-medium">Aucun banquet enregistré pour ce client</p>
+            </div>
+        @else
+            @php
+                $banquetCouleurs = ['devis' => 'bg-amber-50 text-amber-800 border-amber-200', 'confirme' => 'bg-sky-50 text-sky-800 border-sky-200', 'realise' => 'bg-violet-50 text-violet-800 border-violet-200', 'solde' => 'bg-green-50 text-green-700 border-green-200', 'annule' => 'bg-gray-100 text-gray-500 border-gray-200'];
+            @endphp
+            <div class="divide-y divide-secondary/10">
+                @foreach($customer->banquets as $banquet)
+                    @php
+                        $enc = (int) ($banquet->total_encaisse ?? $banquet->encaisse());
+                        $soldeBanquet = max(0, (int) $banquet->total_amount - $enc);
+                    @endphp
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-3.5 hover:bg-accent/10 transition-colors">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a href="{{ route('restaurant.banquets.show', $banquet) }}"
+                                   class="text-sm font-semibold text-primary hover:underline">
+                                    {{ $banquet->reference }} — {{ $banquet->title }}
+                                </a>
+                                <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border {{ $banquetCouleurs[$banquet->status] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
+                                    {{ $banquet->libelleStatut() }}
+                                </span>
+                                <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-secondary/10 text-primary/70">
+                                    {{ $banquet->libelleSource() }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-primary/55 mt-0.5">
+                                {{ $banquet->event_date->format('d/m/Y') }}@if($banquet->start_time) · {{ $banquet->start_time }}@if($banquet->end_time)–{{ $banquet->end_time }}@endif @endif
+                                · {{ $banquet->pointOfSale?->name ?? 'Restaurant' }}@if($banquet->space) · {{ $banquet->space->name }}@endif
+                                · {{ $banquet->covers }} couvert(s)
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                            <div class="text-left sm:text-right">
+                                <p class="text-xs font-bold text-primary">{{ number_format($banquet->total_amount / 100, 0, ',', ' ') }} FCFA</p>
+                                <p class="text-[10px] text-emerald-700">Encaissé : {{ number_format($enc / 100, 0, ',', ' ') }} FCFA</p>
+                                @if($soldeBanquet > 0)
+                                    <p class="text-[10px] text-red-600 font-medium">Reste : {{ number_format($soldeBanquet / 100, 0, ',', ' ') }} FCFA</p>
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ route('restaurant.banquets.print', $banquet) }}" title="Imprimer devis / reçu"
+                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{{ route('restaurant.banquets.show', $banquet) }}" title="Ouvrir le banquet"
+                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</div>
+
+{{-- ========================================================================= --}}
+{{-- CONTENU ONGLET 4 : PROGRAMME FIDÉLITÉ                                     --}}
 {{-- ========================================================================= --}}
 <div id="tab-content-loyalty" class="tab-content {{ $currentTab === 'loyalty' ? '' : 'hidden' }}">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -848,7 +940,7 @@
         }
 
         // Mettre à jour l'apparence des boutons d'onglets
-        const tabs = ['bookings', 'invoices', 'loyalty'];
+        const tabs = ['bookings', 'invoices', 'banquets', 'loyalty'];
         tabs.forEach(t => {
             const btn = document.getElementById('tab-btn-' + t);
             if (!btn) return;

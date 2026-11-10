@@ -22,7 +22,7 @@ class JournalEncaissements extends Edition
 
     public function description(): string
     {
-        return "Chaque encaissement de la période : séjours, comptoir de la réception, restaurants (notes, buffets, banquets) et boutique, avec la pièce, le mode de règlement et qui l'a encaissé.";
+        return "Chaque encaissement de la période : séjours (acompte, check-in, nuitées, check-out, facture complémentaire), comptoir de la réception, restaurants (notes, buffets, banquets) et boutique, avec l'origine exacte, la pièce, le mode de règlement et qui l'a encaissé.";
     }
 
     public function droits(): array { return ['accounting.journal', 'accounting.cash', 'accounting.revenue_journal']; }
@@ -48,6 +48,7 @@ class JournalEncaissements extends Edition
             ->colonnes([
                 Colonne::dateHeure('date', 'Date'),
                 Colonne::texte('service', 'Service'),
+                Colonne::texte('detail', 'Objet / Nature'),
                 Colonne::texte('piece', 'Pièce'),
                 Colonne::texte('client', 'Client'),
                 Colonne::texte('mode', 'Mode'),

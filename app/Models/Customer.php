@@ -77,6 +77,11 @@ class Customer extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function banquets(): HasMany
+    {
+        return $this->hasMany(RestaurantBanquet::class);
+    }
+
     /** Organisation partenaire dont le client est membre, s'il y en a une. */
     public function partnerOrganization(): BelongsTo
     {

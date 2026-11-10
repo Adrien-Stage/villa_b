@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BookingStatus;
 use App\Enums\RoomStatus;
 use App\Models\Booking;
+use App\Models\CashRegisterActivity;
 use App\Models\Customer;
 use App\Models\FolioItem;
 use App\Models\GroupBooking;
@@ -12,6 +13,7 @@ use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Tenant;
+use App\Services\CashRegisterCircuit;
 use App\Services\CheckOutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +22,8 @@ use Illuminate\Support\Facades\DB;
 class GroupBookingController extends Controller
 {
     public function __construct(
-        private CheckOutService $checkOutService
+        private CheckOutService $checkOutService,
+        private CashRegisterCircuit $cashRegisterCircuit
     ) {}
 
     // ===== LISTE =====
@@ -56,27 +59,18 @@ class GroupBookingController extends Controller
 
         $groups = $query->orderBy('start_date', 'desc')->paginate(15)->withQueryString();
 
-        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
-        $isCashRegisterOpen = $activeSession !== null;
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $isCashRegisterOpen = $cashRegisterContext['isOpen'];
 
-        return view('groups.index', compact('groups', 'stats', 'isCashRegisterOpen'));
+        return view('groups.index', compact('groups', 'stats', 'isCashRegisterOpen', 'cashRegisterContext'));
     }
 
     // ===== CRÉATION =====
 
     public function create(Request $request)
     {
-        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $activeSession = $cashRegisterContext['session'];
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')
@@ -85,7 +79,7 @@ class GroupBookingController extends Controller
 
         $customers = Customer::orderBy('last_name')->orderBy('first_name')->get();
 
-        return view('groups.create', compact('customers'));
+        return view('groups.create', compact('customers', 'cashRegisterContext'));
     }
 
     public function store(Request $request)
@@ -93,11 +87,7 @@ class GroupBookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::current()?->id;
 
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
             return redirect()->route('bookings.cash_register.open')
@@ -152,10 +142,12 @@ class GroupBookingController extends Controller
             'tenant_id' => $tenantId,
         ]));
 
+        $payment = null;
         if ($depositAmount > 0 && $request->filled('payment_method')) {
             $payment = \App\Models\Payment::create([
                 'booking_id' => null, // Ce n'est pas lié à une chambre spécifique
                 'customer_id' => $group->contact_customer_id,
+                'payment_origin' => Payment::ORIGIN_GROUPE,
                 'amount' => $depositAmount,
                 'currency' => 'XAF',
                 'method' => $request->payment_method,
@@ -184,6 +176,20 @@ class GroupBookingController extends Controller
                 'notes'        => 'Dossier groupe: ' . $group->id
             ]);
         }
+
+        $this->cashRegisterCircuit->enregistrerInterventionTiers(
+            $activeSession,
+            Auth::user(),
+            CashRegisterActivity::ACTION_BOOKING_CREATE,
+            "Création dossier groupe {$groupCode} ({$group->group_name})" . ($payment ? " (acompte {$payment->reference})" : ''),
+            $payment ? $depositAmount : null,
+            $payment ? $request->payment_method : null,
+            $payment ?? $group,
+            array_filter([
+                'group_booking_id' => $group->id,
+                'payment_id' => $payment?->id,
+            ])
+        );
 
         return redirect()
             ->route('groups.show', $group)
@@ -227,7 +233,10 @@ class GroupBookingController extends Controller
             'balance_due' => $groupBooking->bookings->sum(fn (Booking $b) => $b->effectiveBalanceDue($checkOutTime)),
         ];
 
-        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals', 'checkOutTime'));
+        $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
+        $isCashRegisterOpen = $cashRegisterContext['isOpen'];
+
+        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals', 'checkOutTime', 'cashRegisterContext', 'isCashRegisterOpen'));
     }
 
     // ===== AJOUTER UNE CHAMBRE AU GROUPE =====
@@ -353,6 +362,19 @@ class GroupBookingController extends Controller
             $groupBooking->update(['status' => 'confirmed']);
         }
 
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_GROUP_ROOM_ADD,
+                "Ajout chambre {$room->number} au groupe {$groupBooking->group_code}",
+                null,
+                null,
+                $groupBooking,
+                ['group_booking_id' => $groupBooking->id]
+            );
+        }
+
         return redirect()
             ->route('groups.show', $groupBooking)
             ->with('success', "Chambre {$room->number} ajoutée au groupe.");
@@ -371,6 +393,19 @@ class GroupBookingController extends Controller
         }
 
         $booking->update(['status' => BookingStatus::CANCELLED]);
+
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_GROUP_ROOM_REMOVE,
+                "Retrait réservation {$booking->booking_number} du groupe {$groupBooking->group_code}",
+                null,
+                null,
+                $groupBooking,
+                ['group_booking_id' => $groupBooking->id, 'booking_id' => $booking->id]
+            );
+        }
 
         return redirect()
             ->route('groups.show', $groupBooking)
@@ -405,6 +440,19 @@ class GroupBookingController extends Controller
 
             $groupBooking->update(['status' => 'in_house']);
         });
+
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_GROUP_CHECKIN,
+                "Check-in groupe {$groupBooking->group_code} ({$confirmed->count()} chambre(s))",
+                null,
+                null,
+                $groupBooking,
+                ['group_booking_id' => $groupBooking->id]
+            );
+        }
 
         return redirect()
             ->route('groups.show', $groupBooking)
@@ -447,6 +495,19 @@ class GroupBookingController extends Controller
         }
 
         $groupBooking->update(['status' => 'completed']);
+
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_GROUP_CHECKOUT,
+                "Check-out groupe {$groupBooking->group_code} ({$checkedIn->count()} chambre(s))",
+                null,
+                null,
+                $groupBooking,
+                ['group_booking_id' => $groupBooking->id]
+            );
+        }
 
         return redirect()
             ->route('groups.show', $groupBooking)
@@ -575,6 +636,19 @@ class GroupBookingController extends Controller
             }
         });
 
+        if ($activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user())) {
+            $this->cashRegisterCircuit->enregistrerInterventionTiers(
+                $activeSession,
+                Auth::user(),
+                CashRegisterActivity::ACTION_GROUP_FOLIO_ADD,
+                "Prestation folio groupe {$groupBooking->group_code} : {$validated['description']} ({$bookings->count()} ch.)",
+                null,
+                null,
+                $groupBooking,
+                ['group_booking_id' => $groupBooking->id]
+            );
+        }
+
         return redirect()
             ->route('groups.show', $groupBooking)
             ->with('success', "Prestation ajoutée à {$bookings->count()} chambre(s).");
@@ -585,11 +659,7 @@ class GroupBookingController extends Controller
         $tenantId = Auth::user()->tenant_id
             ?? Tenant::current()?->id;
 
-        $activeSession = \App\Models\CashRegisterSession::where('user_id', Auth::id())
-            
-            ->where('module', 'reception')
-            ->whereNull('closed_at')
-            ->first();
+        $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
             return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
@@ -633,6 +703,8 @@ class GroupBookingController extends Controller
             return back()->withErrors(['payment' => 'Le montant dépasse le solde total dû du groupe.']);
         }
 
+        $createdPaymentIds = [];
+
         DB::transaction(function () use (
             $bookings,
             $validated,
@@ -642,7 +714,8 @@ class GroupBookingController extends Controller
             $groupBooking,
             $activeSession,
             $targetBalances,
-            $checkOutTime
+            $checkOutTime,
+            &$createdPaymentIds
         ) {
             $remaining = $totalCentimes;
 
@@ -689,9 +762,10 @@ class GroupBookingController extends Controller
                 $seq = $maxSeq + 1;
                 $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
-                Payment::create([
+                $createdPayment = Payment::create([
                     'booking_id' => $booking->id,
                     'customer_id' => $booking->customer_id,
+                    'payment_origin' => Payment::ORIGIN_GROUPE,
                     'amount' => $share,
                     'currency' => 'XAF',
                     'method' => $validated['method'],
@@ -702,6 +776,7 @@ class GroupBookingController extends Controller
                     'notes' => ($validated['notes'] ?? '')." — Paiement groupe {$groupBooking->group_code}",
                     'cash_register_session_id' => $activeSession->id,
                 ]);
+                $createdPaymentIds[] = $createdPayment->id;
 
                 // Met à jour le solde du booking
                 $newPaid = $booking->paid_amount + $share;
@@ -740,6 +815,20 @@ class GroupBookingController extends Controller
             "Paiement de " . number_format($totalCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour le groupe #{$groupBooking->group_code}",
             'bookings',
             ['group_booking_id' => $groupBooking->id, 'amount' => $totalCentimes, 'method' => $validated['method']]
+        );
+
+        $this->cashRegisterCircuit->enregistrerInterventionTiers(
+            $activeSession,
+            Auth::user(),
+            CashRegisterActivity::ACTION_GROUP_PAYMENT,
+            "Encaissement groupe {$groupBooking->group_code} ({$bookings->count()} ch.)",
+            $totalCentimes,
+            $validated['method'],
+            $groupBooking,
+            [
+                'group_booking_id' => $groupBooking->id,
+                'payment_ids' => $createdPaymentIds,
+            ]
         );
 
         return redirect()

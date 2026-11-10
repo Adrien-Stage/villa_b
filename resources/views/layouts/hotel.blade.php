@@ -375,16 +375,16 @@
                                     <li>
                                         <a href="{{ route('bookings.index') }}"
                                             title="Réservations"
-                                            @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*')) aria-current="page" @endif
+                                            @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*')) aria-current="page" @endif
                                             class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
-                                            {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*')
+                                            {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*')
                                                 ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
                                                 : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
                                             <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true"></i>
                                             <span class="sidebar-libelle">Réservations</span>
                                         </a>
 
-                                        @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*'))
+                                        @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*'))
                                         <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
                                             <li>
                                                 <a href="{{ route('bookings.index') }}"
@@ -432,6 +432,21 @@
                                                 </a>
                                             </li>
                                             @enddroit
+                                            @module('restaurant')
+                                                @droit('restaurant.banquets.voir')
+                                                <li>
+                                                    <a href="{{ route('restaurant.banquets.index') }}"
+                                                        @if(request()->routeIs('restaurant.banquets.*')) aria-current="page" @endif
+                                                        class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
+                                                        {{ request()->routeIs('restaurant.banquets.*')
+                                                            ? 'text-white'
+                                                            : 'text-text-on-dark hover:text-white' }}">
+                                                        <i data-lucide="party-popper" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                        Banquets
+                                                    </a>
+                                                </li>
+                                                @enddroit
+                                            @endmodule
                                         </ul>
                                         @endif
                                     </li>

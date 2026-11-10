@@ -147,6 +147,8 @@
     @endif
 </div>
 
+@include('bookings.cash_register.partials.status_banner', ['cashRegisterContext' => $cashRegisterContext ?? null])
+
 {{-- Caisse fermée : aucune action possible --}}
 @unless($isCashRegisterOpen)
 <div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center justify-between gap-3">
@@ -777,8 +779,16 @@
                 @foreach($booking->payments as $payment)
                 <div class="flex items-center justify-between px-5 py-3">
                     <div>
-                        <p class="text-xs font-medium text-primary capitalize">{{ $payment->methodLabel() }}</p>
-                        <p class="text-[10px] text-primary/40">{{ $payment->paid_at?->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
+                        <p class="text-xs font-medium text-primary">
+                            <span class="capitalize">{{ $payment->methodLabel() }}</span>
+                            <span class="ml-1.5 inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-primary/70">{{ $payment->originLabel() }}</span>
+                        </p>
+                        <p class="text-[10px] text-primary/40">
+                            {{ $payment->paid_at?->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}
+                            @if($payment->processedBy)
+                                · par {{ $payment->processedBy->name }}
+                            @endif
+                        </p>
                     </div>
                     <span class="text-sm font-semibold {{ $payment->amount > 0 ? 'text-green-600' : 'text-red-500' }}">
                         {{ $payment->formattedAmount() }}
@@ -991,6 +1001,25 @@
                     <option value="mtn_momo">MTN MoMo</option>
                     <option value="bank_transfer">Virement bancaire</option>
                     <option value="stripe">Carte bancaire</option>
+                </select>
+            </div>
+
+            @php
+                $defaultPaymentContext = ($booking->check_out->lessThanOrEqualTo(today()) || ($overstayNights ?? 0) > 0)
+                    ? \App\Models\Payment::ORIGIN_CHECK_OUT
+                    : (($booking->actual_check_in && $booking->actual_check_in->isToday() && $booking->payments->isEmpty())
+                        ? \App\Models\Payment::ORIGIN_CHECK_IN
+                        : \App\Models\Payment::ORIGIN_SEJOUR_NUITEES);
+            @endphp
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
+                    Objet de l'encaissement
+                </label>
+                <select name="payment_context"
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    <option value="sejour_nuitees" {{ $defaultPaymentContext === 'sejour_nuitees' ? 'selected' : '' }}>Séjour / Nuitées en cours</option>
+                    <option value="check_in" {{ $defaultPaymentContext === 'check_in' ? 'selected' : '' }}>Check-in (règlement à l'arrivée)</option>
+                    <option value="check_out" {{ $defaultPaymentContext === 'check_out' ? 'selected' : '' }}>Check-out (solde de départ)</option>
                 </select>
             </div>
 

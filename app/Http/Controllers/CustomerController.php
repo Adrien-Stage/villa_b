@@ -101,6 +101,9 @@ class CustomerController extends Controller
         $customer->load([
             'bookings' => fn($q) => $q->with(['room.roomType', 'invoice'])
                                       ->orderBy('check_in', 'desc'),
+            'banquets' => fn($q) => $q->with(['space:id,name', 'pointOfSale:id,name', 'booking:id,booking_number'])
+                                      ->withSum('payments as total_encaisse', 'amount')
+                                      ->orderByDesc('event_date'),
             'loyaltyTransactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(15),
             'partnerOrganization',
         ]);

@@ -589,6 +589,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'index'])->name('banquets.index');
         Route::post('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'store'])->name('banquets.store');
         Route::get('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'show'])->whereNumber('banquet')->name('banquets.show');
+        Route::get('/banquets/{banquet}/imprimer', [App\Http\Controllers\RestaurantBanquetController::class, 'print'])->whereNumber('banquet')->name('banquets.print');
         Route::put('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'update'])->whereNumber('banquet')->name('banquets.update');
         Route::post('/banquets/{banquet}/status', [App\Http\Controllers\RestaurantBanquetController::class, 'status'])->whereNumber('banquet')->name('banquets.status');
         Route::post('/banquets/{banquet}/payments', [App\Http\Controllers\RestaurantBanquetController::class, 'storePayment'])->whereNumber('banquet')->name('banquets.payments.store');
