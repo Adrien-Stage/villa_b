@@ -185,25 +185,36 @@ class DiscussionController extends Controller
         }
 
         $user = Auth::user();
+        $isGroup = $request->boolean('is_group');
+
         $validated = $request->validate([
             'is_group' => ['nullable', 'boolean'],
-            'title' => ['required_if:is_group,true', 'nullable', 'string', 'max:160'],
-            'participant_ids' => ['required_if:is_group,true', 'array'],
+            'title' => [Rule::requiredIf($isGroup), 'nullable', 'string', 'max:160'],
+            'participant_ids' => [Rule::requiredIf($isGroup), 'nullable', 'array'],
             'participant_ids.*' => [
                 'integer',
                 Rule::exists('users', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
             'participant_id' => [
-                'required_without:is_group',
+                Rule::requiredIf(!$isGroup),
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
+        ], [
+            'title.required' => 'Le nom du groupe est obligatoire.',
+            'participant_ids.required' => 'Sélectionne au moins un autre membre pour créer le groupe.',
+            'participant_id.required' => 'Sélectionne un collaborateur pour démarrer la discussion.',
         ]);
 
-        $isGroup = $request->boolean('is_group');
-
         if ($isGroup) {
+            $title = trim((string) ($validated['title'] ?? ''));
+            if ($title === '') {
+                return redirect()->route('discussions.index')->withInput()->withErrors([
+                    'title' => 'Le nom du groupe est obligatoire.',
+                ]);
+            }
+
             $participantIds = collect($validated['participant_ids'] ?? [])
                 ->reject(fn ($id) => (int) $id === $user->id)
                 ->unique()
@@ -211,13 +222,13 @@ class DiscussionController extends Controller
                 ->toArray();
 
             if (empty($participantIds)) {
-                return redirect()->route('discussions.index')->withErrors([
-                    'conversation' => 'Un groupe doit contenir au moins un autre membre.',
+                return redirect()->route('discussions.index')->withInput()->withErrors([
+                    'participant_ids' => 'Un groupe doit contenir au moins un autre membre.',
                 ]);
             }
 
             $conversation = DiscussionConversation::create([
-                'title' => trim($validated['title']),
+                'title' => $title,
                 'is_group' => true,
                 'created_by' => $user->id,
             ]);
@@ -230,12 +241,14 @@ class DiscussionController extends Controller
             }
             $conversation->participants()->sync($syncData);
 
-            return redirect()->route('discussions.index', ['conversation' => $conversation->id]);
+            return redirect()
+                ->route('discussions.index', ['conversation' => $conversation->id])
+                ->with('success', 'Groupe créé avec succès.');
         }
 
-        $participantId = (int) $validated['participant_id'];
+        $participantId = (int) ($validated['participant_id'] ?? 0);
         if ($participantId === $user->id) {
-            return redirect()->route('discussions.index')->withErrors([
+            return redirect()->route('discussions.index')->withInput()->withErrors([
                 'conversation' => 'Tu ne peux pas creer une discussion avec toi-meme.',
             ]);
         }
@@ -272,6 +285,148 @@ class DiscussionController extends Controller
         ]);
 
         return redirect()->route('discussions.index', ['conversation' => $conversation->id]);
+    }
+
+    public function updateGroup(Request $request, DiscussionConversation $conversation): RedirectResponse
+    {
+        $userId = Auth::id();
+        $this->ensureGroupAdmin($conversation, $userId);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+        ], [
+            'title.required' => 'Le nom du groupe est obligatoire.',
+        ]);
+
+        $title = trim((string) $validated['title']);
+        if ($title === '') {
+            return redirect()->route('discussions.index', ['conversation' => $conversation->id])->withErrors([
+                'group_title' => 'Le nom du groupe est obligatoire.',
+            ]);
+        }
+
+        $conversation->update(['title' => $title]);
+
+        return redirect()
+            ->route('discussions.index', ['conversation' => $conversation->id])
+            ->with('success', 'Nom du groupe mis à jour.');
+    }
+
+    public function addGroupMembers(Request $request, DiscussionConversation $conversation): RedirectResponse
+    {
+        $userId = Auth::id();
+        $this->ensureGroupAdmin($conversation, $userId);
+
+        $validated = $request->validate([
+            'participant_ids' => ['required', 'array', 'min:1'],
+            'participant_ids.*' => [
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('is_active', true)),
+            ],
+        ], [
+            'participant_ids.required' => 'Sélectionne au moins un collaborateur à ajouter.',
+            'participant_ids.min' => 'Sélectionne au moins un collaborateur à ajouter.',
+        ]);
+
+        $existingIds = $conversation->participants()->pluck('users.id')->map(fn ($id) => (int) $id)->all();
+        $newIds = collect($validated['participant_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->reject(fn ($id) => in_array($id, $existingIds, true))
+            ->unique()
+            ->values();
+
+        if ($newIds->isNotEmpty()) {
+            $attachData = [];
+            foreach ($newIds as $memberId) {
+                $attachData[$memberId] = [
+                    'last_read_at' => null,
+                    'is_admin' => false,
+                    'archived_at' => null,
+                    'deleted_at' => null,
+                ];
+            }
+            $conversation->participants()->attach($attachData);
+            $conversation->touch();
+        }
+
+        return redirect()
+            ->route('discussions.index', ['conversation' => $conversation->id])
+            ->with('success', 'Membres ajoutés au groupe.');
+    }
+
+    public function removeGroupMember(DiscussionConversation $conversation, User $member): RedirectResponse
+    {
+        $userId = Auth::id();
+        $this->ensureGroupAdmin($conversation, $userId);
+
+        if ((int) $member->id === (int) $userId) {
+            return redirect()->route('discussions.index', ['conversation' => $conversation->id])->withErrors([
+                'group_member' => 'Utilise « Quitter le groupe » pour te retirer de la discussion.',
+            ]);
+        }
+
+        if (!$conversation->participants()->where('users.id', $member->id)->exists()) {
+            return redirect()->route('discussions.index', ['conversation' => $conversation->id])->withErrors([
+                'group_member' => 'Ce collaborateur ne fait pas partie du groupe.',
+            ]);
+        }
+
+        $conversation->participants()->detach($member->id);
+
+        return redirect()
+            ->route('discussions.index', ['conversation' => $conversation->id])
+            ->with('success', 'Membre retiré du groupe.');
+    }
+
+    public function leaveGroup(DiscussionConversation $conversation): RedirectResponse
+    {
+        if (!$conversation->is_group) {
+            abort(404, 'Cette conversation n est pas un groupe.');
+        }
+
+        $userId = Auth::id();
+        $participant = $conversation->participants()->where('users.id', $userId)->first();
+        if (!$participant) {
+            abort(403, 'Cette conversation ne t appartient pas.');
+        }
+
+        if ($participant->pivot?->is_admin) {
+            $hasOtherAdmin = $conversation->participants()
+                ->where('users.id', '!=', $userId)
+                ->wherePivot('is_admin', true)
+                ->exists();
+
+            if (!$hasOtherAdmin) {
+                $nextParticipant = $conversation->participants()
+                    ->where('users.id', '!=', $userId)
+                    ->orderBy('discussion_conversation_user.id')
+                    ->first();
+
+                if ($nextParticipant) {
+                    $conversation->participants()->updateExistingPivot($nextParticipant->id, [
+                        'is_admin' => true,
+                    ]);
+                }
+            }
+        }
+
+        $conversation->participants()->detach($userId);
+
+        return redirect()
+            ->route('discussions.index')
+            ->with('success', 'Tu as quitté le groupe.');
+    }
+
+    private function ensureGroupAdmin(DiscussionConversation $conversation, int $userId): void
+    {
+        if (!$conversation->is_group) {
+            abort(404, 'Cette conversation n est pas un groupe.');
+        }
+
+        $participant = $conversation->participants()->where('users.id', $userId)->first();
+        if (!$participant || !$participant->pivot?->is_admin) {
+            abort(403, 'Seul un administrateur du groupe peut effectuer cette action.');
+        }
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -672,6 +827,8 @@ class DiscussionController extends Controller
         return [
             'id' => $conversation->id,
             'title' => $title,
+            'is_group' => (bool) $conversation->is_group,
+            'participants_count' => $conversation->participants->count(),
             'initials' => mb_strtoupper(mb_substr($title, 0, 2)),
             'last_body' => $last?->body ?? 'Aucun message pour le moment',
             'last_time' => $last?->created_at?->format('H:i') ?? '',
