@@ -1141,23 +1141,55 @@
                     </div>
                 </div>
 
-                @if(\App\Support\TenantModules::has('website'))
-                    {{-- Liaison avec le site vitrine : vert = le container web répond,
-                         rouge = injoignable (vérifié au chargement puis toutes les 60s) --}}
-                    <span class="hidden sm:flex items-center gap-1.5 text-xs font-medium"
-                          x-data="{ online: null, async check() { try { const r = await fetch('{{ route('site-sync.status') }}', { headers: { 'Accept': 'application/json' } }); this.online = (await r.json()).online; } catch (e) { this.online = false; } } }"
-                          x-init="check(); setInterval(() => check(), 60000)"
-                          :class="online === false ? 'text-red-600' : 'text-green-600'"
-                          :title="online === false ? 'Le site vitrine ne répond plus' : (online === null ? 'Vérification de la liaison avec le site vitrine…' : 'Site vitrine joignable')">
-                        <span class="w-2 h-2 rounded-full" :class="online === false ? 'bg-red-500' : 'bg-green-500 animate-pulse'"></span>
-                        <span x-text="online === false ? 'Site hors ligne' : 'Site en ligne'">Site en ligne</span>
-                    </span>
-                @else
-                    <span class="hidden sm:flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        En ligne
-                    </span>
-                @endif
+                {{-- Statut de connexion (et liaison éventuelle avec le site vitrine) :
+                     icône du monde verte quand tout est opérationnel, rouge si hors ligne,
+                     avec info-bulle au survol, au focus clavier ou à l'appui tactile. --}}
+                <div id="topbar-connexion-statut"
+                     x-data="topbarConnectivityStatus({{ \App\Support\TenantModules::has('website') ? 'true' : 'false' }})"
+                     @pointerenter="onPointerEnter($event)"
+                     @pointerleave="onPointerLeave($event)"
+                     @click.outside="fermer()"
+                     @keydown.escape.window="fermer()"
+                     class="relative inline-flex items-center">
+                    <button type="button"
+                            @pointerdown="onPointerDown()"
+                            @focus="onFocus()"
+                            @blur="onBlur()"
+                            @click="onClick()"
+                            data-online="true"
+                            :data-online="estEnLigne.toString()"
+                            :aria-expanded="infoOuverte.toString()"
+                            aria-controls="topbar-connexion-info"
+                            aria-label="Statut de connexion"
+                            class="relative inline-flex items-center justify-center p-1.5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 cursor-pointer text-green-600 hover:bg-green-500/10 focus-visible:ring-green-600 data-[online=false]:text-red-600 data-[online=false]:hover:bg-red-500/10 data-[online=false]:focus-visible:ring-red-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                            <path d="M2 12h20" />
+                        </svg>
+                    </button>
+
+                    <div id="topbar-connexion-info"
+                         role="tooltip"
+                         x-show="infoOuverte"
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-150 motion-reduce:transition-none"
+                         x-transition:enter-start="opacity-0 translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100 motion-reduce:transition-none"
+                         x-transition:leave-start="opacity-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 translate-y-1"
+                         class="absolute right-0 top-full pt-2 z-50 w-max max-w-[calc(100vw-2rem)]">
+                        <div class="relative flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-lg ring-1 ring-black/10 sm:whitespace-nowrap">
+                            <span class="absolute -top-1 right-3 h-2 w-2 rotate-45 bg-primary" aria-hidden="true"></span>
+                            <span data-online="true"
+                                  :data-online="estEnLigne.toString()"
+                                  class="w-1.5 h-1.5 rounded-full shrink-0 bg-green-400 data-[online=false]:bg-red-400"
+                                  aria-hidden="true"></span>
+                            <span x-text="statutMessage">{{ \App\Support\TenantModules::has('website') ? 'En ligne — vérification de la liaison avec le site vitrine…' : 'En ligne — connexion opérationnelle' }}</span>
+                        </div>
+                    </div>
+                </div>
 
                 @pour('manager', 'reception')
                     <a href="{{ route('reception.pos.index') }}"
@@ -1696,6 +1728,166 @@
                     console.error(e);
                 }
             }
+        }));
+
+        // Statut de connexion de la topbar : icône du monde (vert si tout va bien,
+        // rouge en cas de perte réseau ou d'indisponibilité du site vitrine) + info-bulle accessible.
+        Alpine.data('topbarConnectivityStatus', (hasWebsite = false) => ({
+            hasWebsite: Boolean(hasWebsite),
+            statusUrl: '{{ route('site-sync.status') }}',
+            browserOnline: typeof navigator !== 'undefined' ? navigator.onLine !== false : true,
+            websiteOnline: null,
+            ouvertParSurvol: false,
+            ouvertParFocus: false,
+            ouvertParClic: false,
+            interactionPointeur: false,
+            delaiFermeture: null,
+            delaiPointeur: null,
+            intervalle: null,
+            onOnlineHandler: null,
+            onOfflineHandler: null,
+
+            init() {
+                this.onOnlineHandler = () => {
+                    this.browserOnline = true;
+                    if (this.hasWebsite) {
+                        this.checkWebsite();
+                    }
+                };
+                this.onOfflineHandler = () => {
+                    this.browserOnline = false;
+                };
+
+                window.addEventListener('online', this.onOnlineHandler);
+                window.addEventListener('offline', this.onOfflineHandler);
+
+                if (this.hasWebsite) {
+                    this.checkWebsite();
+                    this.intervalle = setInterval(() => this.checkWebsite(), 60000);
+                }
+            },
+
+            destroy() {
+                if (this.onOnlineHandler) window.removeEventListener('online', this.onOnlineHandler);
+                if (this.onOfflineHandler) window.removeEventListener('offline', this.onOfflineHandler);
+                if (this.intervalle) clearInterval(this.intervalle);
+                if (this.delaiFermeture) clearTimeout(this.delaiFermeture);
+                if (this.delaiPointeur) clearTimeout(this.delaiPointeur);
+            },
+
+            get infoOuverte() {
+                return this.ouvertParSurvol || this.ouvertParFocus || this.ouvertParClic;
+            },
+
+            get estEnLigne() {
+                if (!this.browserOnline) {
+                    return false;
+                }
+                if (this.hasWebsite && this.websiteOnline === false) {
+                    return false;
+                }
+                return true;
+            },
+
+            get statutMessage() {
+                if (!this.browserOnline) {
+                    return 'Hors ligne — aucune connexion réseau';
+                }
+                if (this.hasWebsite) {
+                    if (this.websiteOnline === false) {
+                        return 'Site vitrine hors ligne — le serveur web ne répond plus';
+                    }
+                    if (this.websiteOnline === null) {
+                        return 'En ligne — vérification de la liaison avec le site vitrine…';
+                    }
+                    return 'En ligne — application et site vitrine opérationnels';
+                }
+                return 'En ligne — connexion opérationnelle';
+            },
+
+            async checkWebsite() {
+                if (!this.hasWebsite || !this.browserOnline) {
+                    return;
+                }
+                try {
+                    const response = await fetch(this.statusUrl, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-Background-Poll': '1',
+                        },
+                    });
+                    if (!response.ok) {
+                        this.websiteOnline = false;
+                        return;
+                    }
+                    const data = await response.json();
+                    this.websiteOnline = data && data.enabled === false ? null : Boolean(data && data.online);
+                } catch (e) {
+                    this.websiteOnline = false;
+                }
+            },
+
+            onPointerEnter(event) {
+                if (event.pointerType === 'mouse') {
+                    this.annulerFermeture();
+                    this.ouvertParSurvol = true;
+                }
+            },
+
+            onPointerLeave(event) {
+                if (event.pointerType === 'mouse') {
+                    this.planifierFermeture();
+                }
+            },
+
+            onPointerDown() {
+                this.interactionPointeur = true;
+                if (this.delaiPointeur) clearTimeout(this.delaiPointeur);
+                this.delaiPointeur = setTimeout(() => {
+                    this.interactionPointeur = false;
+                }, 250);
+            },
+
+            onFocus() {
+                if (!this.interactionPointeur) {
+                    this.ouvertParFocus = true;
+                }
+            },
+
+            onBlur() {
+                this.ouvertParFocus = false;
+                this.ouvertParClic = false;
+            },
+
+            onClick() {
+                if (this.ouvertParSurvol) {
+                    this.ouvertParClic = true;
+                } else {
+                    this.ouvertParClic = !this.ouvertParClic;
+                }
+            },
+
+            annulerFermeture() {
+                if (this.delaiFermeture) {
+                    clearTimeout(this.delaiFermeture);
+                    this.delaiFermeture = null;
+                }
+            },
+
+            planifierFermeture() {
+                this.annulerFermeture();
+                this.delaiFermeture = setTimeout(() => {
+                    this.ouvertParSurvol = false;
+                }, 120);
+            },
+
+            fermer() {
+                this.annulerFermeture();
+                this.ouvertParSurvol = false;
+                this.ouvertParFocus = false;
+                this.ouvertParClic = false;
+            },
         }));
     });
     </script>
