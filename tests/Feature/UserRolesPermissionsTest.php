@@ -41,11 +41,15 @@ test('un utilisateur est créé avec plusieurs modules et des niveaux distincts'
     seedRolesAndModules();
     $this->actingAs(User::factory()->create(['role' => 'manager']));
 
+    $pos = \App\Models\PointOfSale::query()->restaurants()->active()->first()
+        ?? \App\Models\PointOfSale::factory()->create(['kind' => \App\Models\PointOfSale::KIND_RESTAURATION, 'is_active' => true]);
+
     $this->post(route('users.store'), [
         'name' => 'Poly Valent',
         'email' => 'poly@example.com',
         'roles' => ['reception', 'restaurant_staff', 'shop_cashier'],
         'levels' => ['reception' => 'write', 'restaurant_staff' => 'read', 'shop_cashier' => 'read'],
+        'restaurant_id' => $pos->id,
         'password' => 'motdepasse1',
         'password_confirmation' => 'motdepasse1',
         'is_active' => 1,

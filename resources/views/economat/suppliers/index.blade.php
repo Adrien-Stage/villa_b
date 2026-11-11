@@ -84,12 +84,12 @@
         <form method="GET" action="{{ route('economat.suppliers.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
             <div class="sm:col-span-5">
                 <label class="block text-xs font-medium text-primary/70 mb-1">Recherche textuelle</label>
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-primary/40"></i>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Nom, code, contact, email, NIF, ville..."
-                        class="w-full pl-9 pr-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                </div>
+                <x-live-search
+                    name="search"
+                    target="#suppliers-table-container"
+                    placeholder="Nom, code, contact, email, NIF, ville..."
+                    width="w-full"
+                />
             </div>
 
             <div class="sm:col-span-3">
@@ -125,6 +125,7 @@
     </div>
 
     {{-- Tableau des Fournisseurs --}}
+    <div id="suppliers-table-container">
     <x-table :rows="$suppliers" empty="{{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun fournisseur ne correspond à vos critères de recherche.' : 'Aucun fournisseur. Ajoutez le premier pour pouvoir émettre des bons de commande.' }}" empty-icon="truck" caption="Fournisseurs">
         <x-slot:emptyActions>
             @droit('economat.suppliers.creer')
@@ -280,6 +281,7 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 
     {{-- MODALE ENRICHIE : NOUVEAU / MODIFIER FOURNISSEUR --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" style="background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">

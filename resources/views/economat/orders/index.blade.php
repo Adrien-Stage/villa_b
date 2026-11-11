@@ -145,12 +145,12 @@
                 <label for="filter-recherche" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Recherche
                 </label>
-                <div class="relative">
-                    <input type="text" name="recherche" id="filter-recherche" value="{{ request('recherche') }}"
-                        placeholder="N° de bon, note..."
-                        class="w-full text-xs px-3 py-2 pr-8 border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-primary/40 absolute right-2.5 top-2.5"></i>
-                </div>
+                <x-live-search
+                    name="recherche"
+                    target="#orders-table-container"
+                    placeholder="N° de bon, note..."
+                    width="w-full"
+                />
             </div>
 
             {{-- Boutons --}}
@@ -183,6 +183,7 @@
     </div>
 
     {{-- Tableau des Bons de Commande --}}
+    <div id="orders-table-container">
     <x-table :rows="$orders" :empty="! empty($filtres) ? 'Aucun bon de commande ne correspond aux filtres sélectionnés.' : 'Aucun bon de commande enregistré.'" empty-icon="clipboard-list" caption="Bons de commande">
         @if(! empty($filtres))
             <x-slot:emptyActions>
@@ -243,5 +244,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

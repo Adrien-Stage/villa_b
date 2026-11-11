@@ -58,11 +58,19 @@
                 </select>
             </label>
         @endif
-        <label class="text-xs text-primary/70 flex-1 min-w-[10rem]">Recherche
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="N°, titre, chambre…" class="mt-1 block w-full rounded-lg border border-secondary/30 text-sm px-2 py-1.5">
-        </label>
+        <div class="flex-1 min-w-[10rem]">
+            <label class="block text-xs text-primary/70 mb-1">Recherche</label>
+            <x-live-search
+                name="q"
+                target="#technique-table-container"
+                placeholder="N°, titre, chambre…"
+                width="w-full"
+            />
+        </div>
     </form>
 
+    <div id="technique-table-container">
     @include('technique.partials.liste', ['demandes' => $demandes, 'vide' => 'Aucune demande pour ces critères.'])
+    </div>
 </div>
 @endsection

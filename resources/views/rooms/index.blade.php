@@ -172,14 +172,7 @@
             <input type="hidden" name="tab" value="rooms">
             <input type="hidden" name="status" value="{{ $status }}">
             <input type="hidden" name="view" value="{{ $view }}">
-            <input type="text"
-                name="search"
-                id="search-input"
-                value="{{ $search }}"
-                placeholder="Rechercher une chambre..."
-                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-52 transition-all"
-                autocomplete="off">
-            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+            <x-live-search target="#rooms-table-container" placeholder="Rechercher une chambre..." class="w-52" />
         </form>
 
         <div class="flex items-center bg-white border border-secondary/30 rounded-lg overflow-hidden">
@@ -196,6 +189,7 @@
 </div>
 
 {{-- Vue Liste --}}
+<div id="rooms-table-container" class="transition-opacity duration-150">
 @if($view === 'list')
 @php
     $statusColors = [
@@ -367,6 +361,7 @@
 @endif
 @endif
 @endif
+</div>
 
 {{-- ===== ONGLET TYPES ===== --}}
 @else
@@ -848,15 +843,6 @@
         document.getElementById('edit-type-extra-bed-price').value = btn.dataset.extraBedPrice || '';
         document.getElementById('modal-edit-type').classList.remove('hidden');
     }
-
-    // Recherche à la saisie avec debounce 400ms
-    let searchTimer;
-    document.getElementById('search-input').addEventListener('input', function() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            this.closest('form').submit();
-        }, 400);
-    });
 
     // Fermer modal en cliquant sur le backdrop
     document.querySelectorAll('.modal-backdrop').forEach(modal => {

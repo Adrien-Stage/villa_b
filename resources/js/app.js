@@ -4,12 +4,16 @@ import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import articlePicker from './article-picker';
 import bookingTimer from './booking-timer';
+import liveSearch from './live-search';
 
 window.Alpine = Alpine;
 
 window.refreshLucideIcons = () => createIcons({ icons });
 
 document.addEventListener('alpine:init', () => {
+    // Widget de recherche universel en direct
+    Alpine.data('liveSearch', liveSearch);
+
     // Choix d'un article par sa saisie (x-article-picker).
     Alpine.data('articlePicker', articlePicker);
 

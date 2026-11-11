@@ -11,9 +11,13 @@
 @include('accounting.ledger.partials.nav')
 
 <form method="GET" class="flex flex-col sm:flex-row gap-2 mb-4">
-    <input type="text" name="q" value="{{ request('q') }}" placeholder="Rechercher un code ou un intitulé…"
-           class="w-full sm:max-w-sm rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
-    <select name="classe" class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+    <x-live-search
+        name="q"
+        target="#accounts-container"
+        placeholder="Rechercher un code ou un intitulé…"
+        width="w-full sm:max-w-sm"
+    />
+    <select name="classe" onchange="this.form.submit()" class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
         <option value="">Toutes les classes</option>
         @foreach(\App\Models\Account::CLASS_LABELS as $num => $libelle)
             <option value="{{ $num }}" @selected($classe === $num)>Classe {{ $num }} — {{ $libelle }}</option>
@@ -30,6 +34,7 @@
     garde la balance lisible et l'audit praticable.
 </div>
 
+<div id="accounts-container">
 @forelse($comptes as $classeNum => $lignes)
     <div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-4">
         <div class="px-5 py-3 border-b border-secondary/15 bg-accent/10">
@@ -67,4 +72,5 @@
         Aucun compte ne correspond à cette recherche.
     </div>
 @endforelse
+</div>
 @endsection

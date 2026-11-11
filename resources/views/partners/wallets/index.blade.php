@@ -7,9 +7,14 @@
     <a href="{{ route('editions.show', 'comptes-depot-partenaires') }}" class="text-sm font-medium text-primary underline">Éditer le registre</a>
 </div>
 <form method="GET" class="mb-5 flex gap-2">
-    <label class="flex-1 max-w-md"><span class="sr-only">Rechercher un partenaire</span><input name="q" value="{{ request('q') }}" placeholder="Nom du partenaire" class="w-full border border-secondary/30 rounded-lg px-3 py-2 text-sm"></label>
-    <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm">Rechercher</button>
+    <x-live-search
+        name="q"
+        target="#wallets-table-container"
+        placeholder="Nom du partenaire..."
+        width="w-full max-w-md"
+    />
 </form>
+<div id="wallets-table-container">
 <x-table :rows="$partners" empty="Aucun partenaire trouvé." caption="Comptes dépôt partenaires">
     <x-slot:head><x-table.col>Partenaire</x-table.col><x-table.col>Convention</x-table.col><x-table.col align="right">Solde disponible</x-table.col><x-table.col actions /></x-slot:head>
     @foreach($partners as $partner)
@@ -22,4 +27,5 @@
     @endforeach
 </x-table>
 {{ $partners->links() }}
+</div>
 @endsection

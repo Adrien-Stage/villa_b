@@ -606,6 +606,7 @@ class PermissionLabels
         'users.creer' => ['Personnel', 'Créer un compte'],
         'users.modifier' => ['Personnel', 'Modifier un compte'],
         'users.resetPassword' => ['Personnel', 'Réinitialiser un mot de passe'],
+        'users.resendWelcome' => ['Personnel', 'Renvoyer les identifiants d\'accès'],
         'users.toggleStatus' => ['Personnel', 'Activer ou désactiver un compte'],
 
         // ── Divers ──

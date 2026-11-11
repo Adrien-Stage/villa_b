@@ -49,7 +49,12 @@
     </div>
     <div>
         <label for="j-q" class="block text-[11px] font-semibold text-primary/60 mb-1">Recherche</label>
-        <input type="search" id="j-q" name="q" value="{{ request('q') }}" placeholder="Texte de l'action" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+        <x-live-search
+            name="q"
+            target="#audit-table-container"
+            placeholder="Texte de l'action"
+            width="w-full"
+        />
     </div>
     <div class="sm:col-span-2 lg:col-span-6 flex flex-wrap items-center gap-3">
         <label class="inline-flex items-center gap-1.5 text-xs text-primary/70">
@@ -63,6 +68,7 @@
     </div>
 </form>
 
+<div id="audit-table-container">
 <x-table :rows="$journal" empty="Aucune entrée." empty-icon="scroll-text" caption="Journal d'audit">
     <x-slot:head>
         <x-table.col>Date</x-table.col>
@@ -94,5 +100,6 @@
         </x-table.row>
     @endforeach
 </x-table>
+</div>
 
 @endsection

@@ -126,20 +126,17 @@
             <option value="inactive" @selected(request('status') === 'inactive')>Inactifs</option>
         </select>
 
-        <div class="relative">
-            <input type="text"
-                id="search-input"
-                name="search"
-                value="{{ request('search') }}"
-                placeholder="Rechercher..."
-                autocomplete="off"
-                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-64 transition-all">
-            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
-        </div>
+        <x-live-search
+            name="search"
+            target="#pantry-table-container"
+            placeholder="Rechercher..."
+            width="w-64"
+        />
     </form>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
+    <div id="pantry-table-container" class="min-w-0">
     <x-table :rows="$items" empty="Aucun article. Ajoutez des articles au garde-manger pour suivre le stock." empty-icon="package" caption="Stocks du garde-manger">
         <x-slot:toolbar>
             <p class="font-heading text-sm font-semibold text-primary">Stocks</p>
@@ -208,6 +205,7 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 
     <aside class="bg-white rounded-xl shadow-sm overflow-hidden border border-secondary/15">
         <div class="px-4 py-4 border-b border-secondary/15">
@@ -538,15 +536,6 @@
 @endif
 
 <script>
-let searchTimer;
-const searchInput = document.getElementById('search-input');
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => this.closest('form').submit(), 400);
-    });
-}
-
 window.openMovementModal = function(itemId, type) {
     const modal = document.getElementById('movement-modal');
     const form = document.getElementById('movement-form');
