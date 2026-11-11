@@ -40,11 +40,13 @@
             <p class="text-[11px] uppercase tracking-wider text-primary/50">Demandes en attente</p>
             <p class="text-2xl font-bold mt-1 {{ $stats['pending_reqs'] > 0 ? 'text-blue-600' : 'text-primary' }}">{{ $stats['pending_reqs'] }}</p>
         </a>
+        @pour('finance_manager', 'controller', 'purchasing_manager', 'manager')
         <div class="bg-white border border-secondary/20 rounded-xl p-4">
             <p class="text-[11px] uppercase tracking-wider text-primary/50">Valeur du stock</p>
             <p class="text-2xl font-bold text-primary mt-1">{{ number_format($stats['stock_value'] / 100, 0, ',', ' ') }}</p>
             <p class="text-[10px] text-primary/40 mt-0.5">FCFA · {{ $stats['open_orders'] }} bon(s) en cours</p>
         </div>
+        @endpour
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

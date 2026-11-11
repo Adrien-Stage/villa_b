@@ -613,7 +613,8 @@
                     </div>
                 </div>
 
-                {{-- Valeur du stock --}}
+                {{-- Valeur du stock — réservée aux fonctions de pilotage financier --}}
+                @pour('finance_manager', 'controller', 'purchasing_manager', 'manager')
                 <div class="bg-white rounded-2xl p-3.5 border border-secondary/15 shadow-sm flex items-start gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                         <i data-lucide="warehouse" class="w-4 h-4"></i>
@@ -628,6 +629,7 @@
                         </p>
                     </div>
                 </div>
+                @endpour
             </div>
 
             {{-- Évolution du CA (Hôtel + Restaurant) SVG Area Chart --}}
