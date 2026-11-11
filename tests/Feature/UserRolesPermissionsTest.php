@@ -232,3 +232,51 @@ test("le manager voit le bouton d'ajout d'un membre", function () {
 
     $this->get(route('users.index'))->assertOk()->assertSee('Ajouter un membre');
 });
+
+test("la recherche d'utilisateurs filtre par nom, email, département et rôle sans erreur", function () {
+    seedRolesAndModules();
+    $manager = User::factory()->create(['role' => 'manager']);
+    $this->actingAs($manager);
+
+    $dept = Department::where('code', 'REC')->first()
+        ?: Department::create(['name' => 'Réception', 'code' => 'REC', 'slug' => 'reception_front_office', 'is_active' => true]);
+
+    $userA = User::factory()->create([
+        'name' => 'Amadou Diallo',
+        'email' => 'amadou.diallo@example.com',
+        'department_id' => $dept->id,
+    ]);
+
+    $userB = User::factory()->create([
+        'name' => 'Berthe Ngo',
+        'email' => 'berthe.ngo@example.com',
+    ]);
+
+    // Recherche par nom
+    $response = $this->get(route('users.index', ['search' => 'Amadou']));
+    $response->assertOk()
+        ->assertSee('Amadou Diallo')
+        ->assertDontSee('Berthe Ngo');
+
+    // Recherche par email
+    $response = $this->get(route('users.index', ['search' => 'berthe.ngo']));
+    $response->assertOk()
+        ->assertSee('Berthe Ngo')
+        ->assertDontSee('Amadou Diallo');
+
+    // Recherche par nom de département
+    $response = $this->get(route('users.index', ['search' => 'Réception']));
+    $response->assertOk()
+        ->assertSee('Amadou Diallo')
+        ->assertDontSee('Berthe Ngo');
+
+    // Recherche par intitulé de rôle
+    $roleRec = Role::where('slug', 'reception')->first();
+    if ($roleRec) {
+        $userA->roles()->sync([$roleRec->id]);
+        $response = $this->get(route('users.index', ['search' => $roleRec->name]));
+        $response->assertOk()
+            ->assertSee('Amadou Diallo')
+            ->assertDontSee('Berthe Ngo');
+    }
+});
