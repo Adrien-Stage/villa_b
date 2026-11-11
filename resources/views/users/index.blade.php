@@ -61,7 +61,7 @@
 </div>
 
 <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-    <div class="flex items-center gap-2">
+    <div id="users-status-tabs" class="flex items-center gap-2">
         @php
             $statuses = [
                 '' => 'Tous',
@@ -72,7 +72,8 @@
 
         @foreach($statuses as $value => $label)
             <a href="{{ route('users.index', array_merge(request()->except('status', 'page'), $value ? ['status' => $value] : [])) }}"
-                class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request('status', '') === $value ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
+                data-status="{{ $value }}"
+                class="user-status-tab px-3 py-1.5 rounded-full text-xs font-medium transition-colors {{ request('status', '') === $value ? 'bg-primary text-white' : 'bg-white text-primary/60 hover:text-primary border border-secondary/30' }}">
                 {{ $label }}
             </a>
         @endforeach
@@ -80,12 +81,11 @@
     </div>
 
     {{-- Les filtres passent à la ligne plutôt que de faire défiler la page. --}}
-    <form method="GET" action="{{ route('users.index') }}" class="flex min-w-0 flex-wrap items-center gap-2">
-        <input type="hidden" name="status" value="{{ request('status') }}">
-        <input type="hidden" name="view" value="{{ $viewMode }}">
+    <form id="users-filter-form" method="GET" action="{{ route('users.index') }}" class="flex min-w-0 flex-wrap items-center gap-2">
+        <input type="hidden" name="status" id="filter-status-input" value="{{ request('status') }}">
+        <input type="hidden" name="view" id="filter-view-input" value="{{ $viewMode }}">
 
-        <select name="department_id" aria-label="Filtrer par département"
-            onchange="this.form.submit()"
+        <select name="department_id" id="filter-department-select" aria-label="Filtrer par département"
             class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
             <option value="">Tous les départements</option>
             @foreach($departments as $d)
@@ -93,10 +93,9 @@
             @endforeach
         </select>
 
-        <select name="role" aria-label="Filtrer par rôle"
-            onchange="this.form.submit()"
+        <select name="role" id="filter-role-select" aria-label="Filtrer par rôle"
             class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-            <option value="">Tous les roles</option>
+            <option value="">Tous les rôles</option>
             @foreach($roles as $role)
                 <option value="{{ $role->slug }}" @selected(request('role') === $role->slug)>{{ $role->name }}</option>
             @endforeach
@@ -107,27 +106,40 @@
                 id="search-input" aria-label="Rechercher un membre du personnel"
                 name="search"
                 value="{{ request('search') }}"
-                placeholder="Nom, email, telephone..."
+                placeholder="Nom, email, téléphone..."
                 autocomplete="off"
-                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-full sm:w-64 transition-all">
-            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+                class="pl-9 pr-8 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-full sm:w-64 transition-all">
+            <i data-lucide="search" id="search-icon" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30 pointer-events-none"></i>
+            <span id="search-spinner" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg class="animate-spin h-3.5 w-3.5 text-primary/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+            </span>
+            <button type="button" id="search-clear-btn" aria-label="Effacer la recherche"
+                class="{{ request('search') ? '' : 'hidden' }} absolute right-2.5 top-1/2 -translate-y-1/2 text-primary/30 hover:text-primary transition-colors p-0.5 rounded-full">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
         </div>
 
-        <div class="inline-flex rounded-lg border border-secondary/30 bg-white p-0.5">
+        <div id="users-view-toggle" class="inline-flex rounded-lg border border-secondary/30 bg-white p-0.5">
             <a href="{{ route('users.index', array_merge(request()->except('view', 'page'), ['view' => 'list'])) }}"
+                data-view="list"
                 title="Vue liste"
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md {{ $viewMode === 'list' ? 'bg-primary text-white' : 'text-primary/60 hover:text-primary' }}">
+                class="user-view-btn inline-flex items-center justify-center h-8 w-8 rounded-md {{ $viewMode === 'list' ? 'bg-primary text-white' : 'text-primary/60 hover:text-primary' }}">
                 <i data-lucide="list" class="w-4 h-4"></i>
             </a>
             <a href="{{ route('users.index', array_merge(request()->except('view', 'page'), ['view' => 'cards'])) }}"
+                data-view="cards"
                 title="Vue cartes"
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md {{ $viewMode === 'cards' ? 'bg-primary text-white' : 'text-primary/60 hover:text-primary' }}">
+                class="user-view-btn inline-flex items-center justify-center h-8 w-8 rounded-md {{ $viewMode === 'cards' ? 'bg-primary text-white' : 'text-primary/60 hover:text-primary' }}">
                 <i data-lucide="layout-grid" class="w-4 h-4"></i>
             </a>
         </div>
     </form>
 </div>
 
+<div id="users-table-container" class="transition-opacity duration-150">
 @if($viewMode === 'list')
 <x-table :rows="$staffUsers" inline="never" empty="Aucun membre du personnel trouvé." empty-icon="user-x" caption="Membres du personnel">
     <x-slot:head>
@@ -270,7 +282,7 @@
     @empty
         <div class="col-span-full bg-white rounded-xl shadow-sm p-12 text-center text-primary/40">
             <i data-lucide="user-x" class="w-9 h-9 mx-auto mb-2"></i>
-            Aucun membre du staff trouve
+            Aucun membre du personnel trouvé.
         </div>
     @endforelse
 </div>
@@ -278,6 +290,14 @@
     <div class="mt-4">{{ $staffUsers->onEachSide(1)->links('components.table.pagination') }}</div>
 @endif
 @endif
+
+{{-- Fenêtres de modification pour les membres affichés --}}
+<div id="users-modals-container">
+    @foreach($staffUsers as $staff)
+        @include('users.partials.modal-edition', ['staff' => $staff, 'viewMode' => $viewMode])
+    @endforeach
+</div>
+</div>
 
 {{-- Modal create --}}
 <x-modal id="create-user-modal" title="Nouveau membre du staff" max-width="max-w-2xl" formAction="{{ route('users.store') }}" closeAction="closeCreateModal()">
@@ -396,32 +416,244 @@
     </x-slot:footer>
 </x-modal>
 
-{{-- Fenêtres de modification --}}
-@foreach($staffUsers as $staff)
-    @include('users.partials.modal-edition', ['staff' => $staff, 'viewMode' => $viewMode])
-@endforeach
-
 @include('users.partials.script-formulaire')
 
 <script>
-let searchTimer;
+let searchTimer = null;
+let searchAbortController = null;
+
 const searchInput = document.getElementById('search-input');
+const searchSpinner = document.getElementById('search-spinner');
+const searchClearBtn = document.getElementById('search-clear-btn');
+const filterForm = document.getElementById('users-filter-form');
+const listContainer = document.getElementById('users-table-container');
+const deptSelect = document.getElementById('filter-department-select');
+const roleSelect = document.getElementById('filter-role-select');
+const statusInput = document.getElementById('filter-status-input');
+const viewInput = document.getElementById('filter-view-input');
+const statusTabs = document.getElementById('users-status-tabs');
+const viewToggle = document.getElementById('users-view-toggle');
+
+function construireUrlRecherche(overrides = {}) {
+    const params = new URLSearchParams();
+    if (filterForm) {
+        const formData = new FormData(filterForm);
+        for (const [key, value] of formData.entries()) {
+            if (value !== '' && value !== null && value !== undefined) {
+                params.set(key, value);
+            }
+        }
+    }
+    for (const [key, value] of Object.entries(overrides)) {
+        if (value === null || value === '' || value === undefined) {
+            params.delete(key);
+        } else {
+            params.set(key, value);
+        }
+    }
+    const base = filterForm ? filterForm.action : window.location.pathname;
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+}
+
+function updateClearBtn() {
+    if (searchClearBtn && searchInput) {
+        if (searchInput.value.trim().length > 0) {
+            searchClearBtn.classList.remove('hidden');
+        } else {
+            searchClearBtn.classList.add('hidden');
+        }
+    }
+}
+
+async function executerRecherche(url, updateHistory = true) {
+    if (searchAbortController) {
+        searchAbortController.abort();
+    }
+    searchAbortController = new AbortController();
+
+    if (searchSpinner) searchSpinner.classList.remove('hidden');
+    if (searchClearBtn) searchClearBtn.classList.add('hidden');
+    if (listContainer) listContainer.classList.add('opacity-50', 'pointer-events-none');
+
+    try {
+        const response = await fetch(url, {
+            signal: searchAbortController.signal,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            }
+        });
+
+        if (!response.ok) {
+            window.location.href = url;
+            return;
+        }
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        const newContainer = doc.getElementById('users-table-container');
+        if (newContainer && listContainer) {
+            listContainer.innerHTML = newContainer.innerHTML;
+        }
+
+        // Mettre à jour les onglets de statut
+        const newStatusTabs = doc.getElementById('users-status-tabs');
+        if (newStatusTabs && statusTabs) {
+            statusTabs.innerHTML = newStatusTabs.innerHTML;
+        }
+
+        // Mettre à jour les boutons d'affichage (liste / cartes)
+        const newViewToggle = doc.getElementById('users-view-toggle');
+        if (newViewToggle && viewToggle) {
+            viewToggle.innerHTML = newViewToggle.innerHTML;
+        }
+
+        // Mettre à jour l'URL sans rechargement de page
+        if (updateHistory) {
+            window.history.replaceState(null, '', url);
+        }
+
+        // Rafraîchir les icônes Lucide
+        if (typeof window.refreshLucideIcons === 'function') {
+            window.refreshLucideIcons();
+        } else if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
+        // Réinitialiser Alpine sur les nouveaux éléments injectés (ex: menus d'actions)
+        if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+            window.Alpine.initTree(listContainer);
+        }
+
+    } catch (e) {
+        if (e.name !== 'AbortError') {
+            console.error('Erreur lors du filtrage asynchrone des utilisateurs:', e);
+            window.location.href = url;
+        }
+    } finally {
+        if (searchSpinner) searchSpinner.classList.add('hidden');
+        updateClearBtn();
+        if (listContainer) listContainer.classList.remove('opacity-50', 'pointer-events-none');
+    }
+}
 
 if (searchInput) {
     searchInput.addEventListener('input', function() {
+        updateClearBtn();
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => this.closest('form').submit(), 400);
+        searchTimer = setTimeout(() => {
+            const url = construireUrlRecherche({ page: null });
+            executerRecherche(url);
+        }, 250);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimer);
+            const url = construireUrlRecherche({ page: null });
+            executerRecherche(url);
+        } else if (e.key === 'Escape') {
+            if (this.value) {
+                this.value = '';
+                updateClearBtn();
+                clearTimeout(searchTimer);
+                const url = construireUrlRecherche({ page: null });
+                executerRecherche(url);
+            }
+        }
     });
 }
+
+if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', function() {
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+            updateClearBtn();
+            clearTimeout(searchTimer);
+            const url = construireUrlRecherche({ page: null });
+            executerRecherche(url);
+        }
+    });
+}
+
+if (filterForm) {
+    filterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearTimeout(searchTimer);
+        const url = construireUrlRecherche({ page: null });
+        executerRecherche(url);
+    });
+}
+
+[deptSelect, roleSelect].forEach(select => {
+    if (!select) return;
+    select.addEventListener('change', function() {
+        clearTimeout(searchTimer);
+        const url = construireUrlRecherche({ page: null });
+        executerRecherche(url);
+    });
+});
+
+// Interception des clics sur les onglets de statut (Tous / Actifs / Inactifs)
+if (statusTabs) {
+    statusTabs.addEventListener('click', function(e) {
+        const link = e.target.closest('a.user-status-tab');
+        if (!link) return;
+        e.preventDefault();
+        const statusVal = link.dataset.status ?? '';
+        if (statusInput) statusInput.value = statusVal;
+        const url = construireUrlRecherche({ status: statusVal, page: null });
+        executerRecherche(url);
+    });
+}
+
+// Interception des clics sur les boutons de mode de vue (liste / cartes)
+if (viewToggle) {
+    viewToggle.addEventListener('click', function(e) {
+        const link = e.target.closest('a.user-view-btn');
+        if (!link) return;
+        e.preventDefault();
+        const viewVal = link.dataset.view ?? 'list';
+        if (viewInput) viewInput.value = viewVal;
+        const url = construireUrlRecherche({ view: viewVal });
+        executerRecherche(url);
+    });
+}
+
+// Interception des clics sur la pagination du tableau/cartes
+if (listContainer) {
+    listContainer.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href) return;
+        try {
+            const urlObj = new URL(href, window.location.origin);
+            if (urlObj.searchParams.has('page')) {
+                e.preventDefault();
+                executerRecherche(href);
+                listContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } catch (_) {}
+    });
+}
+
+window.addEventListener('popstate', function() {
+    executerRecherche(window.location.href, false);
+});
 
 window.openCreateModal = function() {
     const modal = document.getElementById('create-user-modal');
     if (modal) {
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        const deptSelect = document.getElementById('create-user-dept-select');
-        if (deptSelect && deptSelect.value) {
-            window.onUserDepartmentSelect(deptSelect.value, 'create');
+        const deptSelectModal = document.getElementById('create-user-dept-select');
+        if (deptSelectModal && deptSelectModal.value) {
+            window.onUserDepartmentSelect(deptSelectModal.value, 'create');
         }
     }
 };

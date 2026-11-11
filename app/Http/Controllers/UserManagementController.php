@@ -116,10 +116,13 @@ class UserManagementController extends Controller
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('email', 'ilike', "%{$search}%")
-                    ->orWhere('phone', 'ilike', "%{$search}%");
+            $likeOp = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+            $query->where(function ($q) use ($search, $likeOp) {
+                $q->where('name', $likeOp, "%{$search}%")
+                    ->orWhere('email', $likeOp, "%{$search}%")
+                    ->orWhere('phone', $likeOp, "%{$search}%")
+                    ->orWhereHas('department', fn ($dq) => $dq->where('name', $likeOp, "%{$search}%"))
+                    ->orWhereHas('roles', fn ($rq) => $rq->where('name', $likeOp, "%{$search}%"));
             });
         }
 
