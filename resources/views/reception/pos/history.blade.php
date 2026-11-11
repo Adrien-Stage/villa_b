@@ -31,12 +31,12 @@
         <form method="GET" action="{{ route('reception.pos.history') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             <div class="sm:col-span-2">
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-primary/50 mb-1">Recherche (N° vente, client, chambre)</label>
-                <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}"
-                           placeholder="Ex: POS-REC, 204, Dupont..."
-                           class="w-full pl-9 pr-3 py-2 text-xs border border-secondary/30 rounded-xl outline-none focus:border-primary">
-                    <i data-lucide="search" class="w-4 h-4 text-primary/40 absolute left-3 top-2.5"></i>
-                </div>
+                <x-live-search
+                    name="search"
+                    target="#pos-history-table-container"
+                    placeholder="Ex: POS-REC, 204, Dupont..."
+                    width="w-full"
+                />
             </div>
 
             <div>
@@ -61,6 +61,7 @@
         </form>
     </div>
 
+    <div id="pos-history-table-container">
     <x-table :rows="$sales" empty="Aucune vente enregistrée pour le moment." empty-icon="receipt" caption="Ventes du POS de la réception">
         <x-slot:head>
             <x-table.col hide="lg">Date / heure</x-table.col>
@@ -95,6 +96,7 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 
 </div>
 @endsection

@@ -84,6 +84,7 @@
     @include('economat.requisitions.partials.filtres')
 
     {{-- Tableau des Bons --}}
+    <div id="requisitions-table-container">
     <x-table :rows="$requisitions" :empty="$filtres ? 'Aucun bon de réquisition ne correspond aux filtres sélectionnés.' : 'Aucun bon de réquisition enregistré.'" empty-icon="inbox" caption="Bons de réquisition">
         @if($filtres)
             <x-slot:emptyActions>
@@ -124,5 +125,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

@@ -114,7 +114,12 @@
             </div>
             <div class="min-w-[10rem]">
                 <label for="recherche" class="block text-[11px] font-medium text-primary/50">Motif contient</label>
-                <input type="search" name="recherche" id="recherche" value="{{ $filtres['recherche'] }}" placeholder="Inventaire, casse…" class="{{ $champ }} w-full">
+                <x-live-search
+                    name="recherche"
+                    target="#movements-table-container"
+                    placeholder="Inventaire, casse…"
+                    width="w-full"
+                />
             </div>
             <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark">Filtrer</button>
             <a href="{{ route('economat.movements.index', ['du' => '', 'au' => '']) }}" class="text-xs text-primary/60 underline hover:text-primary pb-2">Tout l'historique</a>
@@ -171,6 +176,7 @@
         </div>
     @endif
 
+    <div id="movements-table-container">
     <x-table :rows="$mouvements" empty="Aucun mouvement pour ces critères." empty-icon="arrow-left-right" caption="Mouvements de stock">
         <x-slot:head>
             <x-table.col>Date</x-table.col>
@@ -225,5 +231,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

@@ -40,7 +40,12 @@
         <div class="flex flex-wrap items-end gap-3">
             <div class="min-w-[12rem] flex-1">
                 <label for="recherche" class="block text-[11px] font-medium text-primary/50">N°, nom, structure, téléphone</label>
-                <input type="search" name="recherche" id="recherche" value="{{ request('recherche') }}" placeholder="BSE-2026-0001, M. Talla…" class="{{ $champ }} w-full">
+                <x-live-search
+                    name="recherche"
+                    target="#issues-table-container"
+                    placeholder="BSE-2026-0001, M. Talla…"
+                    width="w-full"
+                />
             </div>
             <div>
                 <label for="date" class="block text-[11px] font-medium text-primary/50">Le (une date)</label>
@@ -103,6 +108,7 @@
         </a>
     </div>
 
+    <div id="issues-table-container">
     <x-table :rows="$sorties" :empty="$filtres ? 'Aucune sortie pour ces critères.' : 'Aucune sortie hors établissement enregistrée.'" empty-icon="log-out" caption="Sorties hors établissement">
         <x-slot:head>
             <x-table.col>N° de bon</x-table.col>
@@ -145,5 +151,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

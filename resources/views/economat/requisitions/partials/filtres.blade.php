@@ -10,9 +10,12 @@
     <div class="flex flex-wrap items-end gap-3">
         <div class="min-w-[12rem] flex-1">
             <label for="recherche" class="block text-[11px] font-medium text-primary/50">Numéro ou motif</label>
-            <input type="search" name="recherche" id="recherche" value="{{ request('recherche') }}"
-                   placeholder="DEM-000123, « produits d'entretien »…"
-                   class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-sm outline-none focus:border-primary">
+            <x-live-search
+                name="recherche"
+                target="#requisitions-table-container"
+                placeholder="DEM-000123, « produits d'entretien »…"
+                width="w-full"
+            />
         </div>
 
         <div>

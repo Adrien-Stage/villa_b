@@ -206,14 +206,16 @@
                 <option value="{{ $code }}" @selected($sourceFilter === $code)>{{ $libelle }}</option>
             @endforeach
         </select>
-        <input type="text" name="search" value="{{ $search }}" placeholder="Réf., événement, client..."
-            class="rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs text-primary outline-none focus:border-secondary">
-        <button type="submit" class="rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-accent/20 cursor-pointer">
-            Filtrer
-        </button>
+        <x-live-search
+            name="search"
+            target="#banquets-table-container"
+            placeholder="Réf., événement, client..."
+            width="w-64"
+        />
     </form>
 </div>
 
+<div id="banquets-table-container">
 <x-table :rows="$banquets" empty="Aucun banquet." empty-icon="party-popper" caption="Banquets">
     <x-slot:head>
         <x-table.col>Date</x-table.col>
@@ -265,6 +267,7 @@
         </x-table.row>
     @endforeach
 </x-table>
+</div>
 
 @droit('restaurant.banquets.creer')
     <x-modal id="banquet-create" title="Nouveau devis de banquet" max-width="max-w-3xl" formAction="{{ route('restaurant.banquets.store') }}">

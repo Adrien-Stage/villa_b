@@ -112,16 +112,12 @@
     <form method="GET" action="{{ route('restaurant.orders.index') }}" class="flex items-center gap-2">
         <input type="hidden" name="status" value="{{ request('status') }}">
 
-        <div class="relative">
-            <input type="text"
-                id="table-input"
-                name="table"
-                value="{{ request('table') }}"
-                placeholder="Table..."
-                autocomplete="off"
-                class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-40 transition-all">
-            <i data-lucide="hash" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
-        </div>
+        <x-live-search
+            name="table"
+            target="#orders-table-container"
+            placeholder="Table..."
+            width="w-40"
+        />
     </form>
 </div>
 
@@ -135,6 +131,7 @@
         'canceled' => 'bg-red-50 text-red-600 border-red-200',
     ];
 @endphp
+<div id="orders-table-container">
 <x-table :rows="$orders" empty="Aucune commande. Les commandes du portail apparaîtront ici." empty-icon="receipt" caption="Commandes">
     <x-slot:head>
         <x-table.col>Commande</x-table.col>
@@ -182,6 +179,7 @@
         </x-table.row>
     @endforeach
 </x-table>
+</div>
 
 @droit('restaurant.orders.creer')
 {{-- Create order modal --}}
@@ -419,14 +417,5 @@ document.getElementById('order-form')?.addEventListener('submit', function (e) {
     document.getElementById('items-json').value = JSON.stringify(items);
     document.getElementById('submit-order')?.setAttribute('disabled', 'disabled');
 });
-
-let tableTimer;
-const tableInput = document.getElementById('table-input');
-if (tableInput) {
-    tableInput.addEventListener('input', function() {
-        clearTimeout(tableTimer);
-        tableTimer = setTimeout(() => this.closest('form').submit(), 400);
-    });
-}
 </script>
 @endsection

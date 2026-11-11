@@ -69,17 +69,16 @@
         {{-- Recherche --}}
         <form method="GET" action="{{ route('shop.orders.index') }}" class="relative">
             <input type="hidden" name="payment_status" value="{{ request('payment_status') }}">
-            <input type="text"
-                   id="search-input"
-                   name="search"
-                   value="{{ request('search') }}"
-                   placeholder="Numéro commande, client..."
-                   autocomplete="off"
-                   class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-64 transition-all">
-            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+            <x-live-search
+                name="search"
+                target="#shop-orders-table-container"
+                placeholder="Numéro commande, client..."
+                width="w-64"
+            />
         </form>
     </div>
 
+    <div id="shop-orders-table-container">
     <x-table :rows="$orders" empty="Aucune commande trouvée." empty-icon="shopping-cart" caption="Commandes de la boutique">
         <x-slot:head>
             <x-table.col>Commande</x-table.col>
@@ -117,5 +116,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

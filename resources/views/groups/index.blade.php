@@ -78,12 +78,7 @@
     </div>
 
     <form method="GET" action="{{ route('groups.index') }}" class="relative">
-        <input type="text" id="search-input" name="search"
-               value="{{ request('search') }}"
-               placeholder="Code, nom du groupe, contact..."
-               autocomplete="off"
-               class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-64 transition-all">
-        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+        <x-live-search target="#groups-table-container" placeholder="Code, nom du groupe, contact..." class="w-64" />
     </form>
 </div>
 
@@ -98,6 +93,7 @@
     ];
     $eventLabels = ['family' => 'Famille', 'corporate' => 'Corporate', 'wedding' => 'Mariage', 'tour_group' => 'Tour groupe'];
 @endphp
+<div id="groups-table-container" class="transition-opacity duration-150">
 <x-table :rows="$groups" empty="Aucun dossier groupe trouvé." empty-icon="users" caption="Dossiers groupe">
     <x-slot:head>
         <x-table.col>Code</x-table.col>
@@ -144,14 +140,7 @@
         </x-table.row>
     @endforeach
 </x-table>
-
-<script>
-let searchTimer;
-document.getElementById('search-input').addEventListener('input', function() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => this.closest('form').submit(), 400);
-});
-</script>
+</div>
 
     @unless($isCashRegisterOpen)
     {{-- Modal Caisse Fermée --}}

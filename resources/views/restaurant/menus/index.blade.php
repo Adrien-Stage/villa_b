@@ -121,6 +121,7 @@
         </div>
     </aside>
 
+    <div id="menus-table-container" class="min-w-0 flex-1">
     <x-table :rows="$items" empty="Aucun article. Commencez par créer un article de la carte." empty-icon="book" caption="Articles de la carte">
         <x-slot:toolbar>
             <div>
@@ -129,16 +130,12 @@
             </div>
 
             <form method="GET" action="{{ route('restaurant.menus.index') }}" class="flex flex-wrap items-center gap-2">
-                <div class="relative">
-                    <input type="text"
-                        id="search-input"
-                        name="search"
-                        value="{{ request('search') }}"
-                        placeholder="Rechercher un article..."
-                        autocomplete="off"
-                        class="pl-9 pr-4 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-64 transition-all">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
-                </div>
+                <x-live-search
+                    name="search"
+                    target="#menus-table-container"
+                    placeholder="Rechercher un article..."
+                    width="w-64"
+                />
 
                 <select name="category" onchange="this.form.submit()"
                     class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
@@ -215,6 +212,7 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 
 @if($canManage)
@@ -449,16 +447,6 @@
 @endif
 
 <script>
-let searchTimer;
-const searchInput = document.getElementById('search-input');
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => this.closest('form').submit(), 400);
-    });
-}
-
 window.openCreateCategoryModal = function() {
     const modal = document.getElementById('create-category-modal');
     if (!modal) return;

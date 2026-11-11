@@ -122,16 +122,20 @@
         </div>
 
         {{-- Champ de recherche --}}
-        <form method="GET" action="{{ route('restaurant.breakfast.index') }}" class="w-full sm:w-72 relative">
+        <form method="GET" action="{{ route('restaurant.breakfast.index') }}" class="w-full sm:w-72">
             <input type="hidden" name="date" value="{{ $date }}">
             <input type="hidden" name="status" value="{{ $statusFilter }}">
-            <input type="text" name="q" value="{{ $search }}" placeholder="N° de chambre ou nom client..."
-                   class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-secondary/30 bg-white text-primary outline-none focus:border-primary">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-primary/40 absolute left-2.5 top-2.5"></i>
+            <x-live-search
+                name="q"
+                target="#breakfast-container"
+                placeholder="N° de chambre ou nom client..."
+                width="w-full"
+            />
         </form>
     </div>
 
     {{-- Liste des chambres (Breakfast List) --}}
+    <div id="breakfast-container">
     @if($entitlements->isEmpty())
         <div class="bg-white rounded-xl border border-secondary/20 p-12 text-center text-primary/40">
             <i data-lucide="coffee" class="w-10 h-10 mx-auto mb-2 text-primary/20"></i>
@@ -255,6 +259,7 @@
             @endforeach
         </div>
     @endif
+    </div>
 
     {{-- Modal interactif de pointage rapide (Inclus vs Extra) --}}
     <div x-show="showModal" style="display: none;"

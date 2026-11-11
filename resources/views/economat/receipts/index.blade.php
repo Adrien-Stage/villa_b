@@ -109,7 +109,12 @@
             <div class="flex items-end gap-2">
                 <div class="flex-1">
                     <label class="block text-[11px] font-semibold text-primary/60 uppercase mb-1">Recherche</label>
-                    <input type="text" name="recherche" value="{{ request('recherche') }}" placeholder="N° Bon, BL, fournisseur..." class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary focus:outline-none focus:border-primary bg-white">
+                    <x-live-search
+                        name="recherche"
+                        target="#receipts-table-container"
+                        placeholder="N° Bon, BL, fournisseur..."
+                        width="w-full"
+                    />
                 </div>
                 <button type="submit" class="px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm shrink-0">
                     Filtrer
@@ -124,6 +129,7 @@
     </div>
 
     {{-- Tableau des Bons d'Entrée --}}
+    <div id="receipts-table-container">
     <x-table :rows="$receipts" empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage des bons de commande, ou d'une réception directe quand la marchandise arrive sans commande." empty-icon="package-open" caption="Bons d'entrée en stock">
         <x-slot:head>
             <x-table.col>N° bon d'entrée</x-table.col>
@@ -204,5 +210,6 @@
             </x-table.row>
         @endforeach
     </x-table>
+    </div>
 </div>
 @endsection

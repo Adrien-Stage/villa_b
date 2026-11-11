@@ -88,24 +88,16 @@
             @endforeach
 
             {{-- Recherche --}}
-            <form id="search-form" method="GET" action="{{ route('shop.products.index') }}" class="relative ml-2">
+            <form method="GET" action="{{ route('shop.products.index') }}" class="relative ml-2">
                 <input type="hidden" name="category" value="{{ request('category') }}">
                 <input type="hidden" name="status" value="{{ request('status') }}">
                 <input type="hidden" name="view" value="{{ $view }}">
-                <input type="text"
-                       id="search-input"
-                       name="search"
-                       value="{{ request('search') }}"
-                       placeholder="Nom, SKU..."
-                       autocomplete="off"
-                       class="pl-9 pr-8 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-52 transition-all">
-                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
-                <span id="search-spinner" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg class="animate-spin h-3.5 w-3.5 text-primary/30" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                </span>
+                <x-live-search
+                    name="search"
+                    target="#products-table-container"
+                    placeholder="Nom, SKU..."
+                    width="w-52"
+                />
             </form>
 
             {{-- Toggle Vue --}}
@@ -124,6 +116,7 @@
         </div>
     </div>
 
+    <div id="products-table-container">
     {{-- ===== VUE LISTE ===== --}}
     @if($view === 'list')
     <x-table :rows="$products" empty="Aucun article trouvé." empty-icon="box" caption="Articles de la boutique">
@@ -286,35 +279,8 @@
     @if($view !== 'list' && $products->hasPages())
         <div class="mt-6">{{ $products->onEachSide(1)->links('components.table.pagination') }}</div>
     @endif
+    </div>
 </div>
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('search-input');
-        const searchForm = document.getElementById('search-form');
-        const searchSpinner = document.getElementById('search-spinner');
-        let debounceTimer = null;
-
-        if (searchInput && searchForm) {
-            searchInput.addEventListener('input', function () {
-                clearTimeout(debounceTimer);
-                if (searchSpinner) searchSpinner.classList.remove('hidden');
-
-                debounceTimer = setTimeout(function () {
-                    searchForm.submit();
-                }, 300);
-            });
-
-            // Focus the search input and place cursor at end if there's a value
-            if (searchInput.value) {
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-            }
-        }
-    });
-</script>
-@endpush
 
 @droit('shop.products.import')
     <x-csv-import-modal
