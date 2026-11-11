@@ -50,13 +50,9 @@ class DashboardController extends Controller
                 'icon'     => 'package-minus',
                 'href'     => route('economat.items.index'),
             ];
-            $cards[] = [
-                'label'    => 'Valeur du stock',
-                'value'    => number_format($stockValue / 100, 0, ',', ' ') . ' FCFA',
-                'subtitle' => $stockArticlesCount . ' article(s) actifs',
-                'icon'     => 'warehouse',
-                'href'     => route('economat.index'),
-            ];
+            // La valeur financière du stock n'est pas pertinente pour le
+            // magasinier : elle est réservée au manager, responsable financier,
+            // contrôleur et responsable des achats (voir dashboard & économat).
             if (Schema::hasTable('stock_requisitions')) {
                 $cards[] = [
                     'label'    => 'Demandes en attente',
@@ -465,13 +461,7 @@ class DashboardController extends Controller
                     'icon'     => 'package-minus',
                     'href'     => route('economat.items.index'),
                 ];
-                $cards[] = [
-                    'label'    => 'Valeur du stock',
-                    'value'    => number_format($stockValue / 100, 0, ',', ' ') . ' FCFA',
-                    'subtitle' => $stockArticlesCount . ' article(s) actifs',
-                    'icon'     => 'warehouse',
-                    'href'     => route('economat.index'),
-                ];
+                // Valeur du stock : pilotage financier uniquement.
                 if (Schema::hasTable('stock_requisitions')) {
                     $cards[] = [
                         'label'    => 'Demandes en attente',
