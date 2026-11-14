@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Economat;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\PointOfSale;
+use App\Models\ServiceStore;
 use App\Models\StockItem;
 use App\Models\StockRequisition;
 use App\Models\StockRequisitionLine;
@@ -12,6 +14,7 @@ use App\Notifications\StockRequisitionSubmitted;
 use App\Notifications\StockRequisitionUpdated;
 use App\Services\DocumentExporter;
 use App\Services\Notifier;
+use App\Services\RestaurantContext;
 use App\Services\StockRequisitionService;
 use App\Support\Document\Colonne;
 use App\Support\Document\Document;
@@ -183,7 +186,7 @@ class StockRequisitionController extends Controller
         }
     }
 
-    public function create(): View
+    public function create(Request $request, RestaurantContext $contexte): View
     {
         $items = StockItem::active()->with('category', 'packagings')->orderBy('name')->get();
 
@@ -196,19 +199,22 @@ class StockRequisitionController extends Controller
         ));
 
         // Dépôts que ces services alimentent : la livraison y entrera en stock.
-        $stores = \App\Models\ServiceStore::active()
+        $restaurantsAccessibles = $contexte->accessibles($request->user())->pluck('id');
+        $stores = ServiceStore::active()
             ->whereIn('department', array_keys($departments))
+            ->where(fn (Builder $query) => $query->whereNull('point_of_sale_id')->orWhereIn('point_of_sale_id', $restaurantsAccessibles))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'name', 'department', 'point_of_sale_id']);
 
         // Restaurants dont la personne peut alimenter le garde-manger : ceux
         // qui tiennent un stock.
-        $contexte = app(\App\Services\RestaurantContext::class);
-        $restaurants = $contexte->offrant(Auth::user(), \App\Models\PointOfSale::SERVICE_STOCK);
+        $restaurants = $contexte->offrant($request->user(), PointOfSale::SERVICE_STOCK);
         $restaurantParDefaut = $restaurants->firstWhere('id', $contexte->pourCreation(Auth::user())?->id) ?? $restaurants->first();
 
-        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut', 'avecVisa'));
+        $depotParDefaut = $stores->firstWhere('id', $request->integer('depot'));
+
+        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut', 'avecVisa', 'depotParDefaut'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -239,6 +245,9 @@ class StockRequisitionController extends Controller
             $depotChoisi = \App\Models\ServiceStore::find($validated['service_store_id']);
             if ($depotChoisi && $depotChoisi->point_of_sale_id) {
                 $restaurant = $depotChoisi->pointOfSale;
+                if (! app(RestaurantContext::class)->peutVoir($request->user(), $restaurant)) {
+                    return back()->withInput()->withErrors(['service_store_id' => "Ce dépôt appartient à un restaurant qui ne vous est pas accessible."]);
+                }
             }
         } elseif ($validated['department'] === 'restaurant') {
             $contexte = app(\App\Services\RestaurantContext::class);

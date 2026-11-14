@@ -254,7 +254,7 @@ class StockItemController extends Controller
 
     public function destroy(StockItem $item): RedirectResponse
     {
-        if ($item->movements()->exists()) {
+        if ($item->movements()->exists() || \App\Models\RestaurantBarBottle::where('stock_item_id', $item->id)->exists()) {
             return back()->with('error', "Cet article a un historique de mouvements : désactivez-le plutôt que de le supprimer.");
         }
 

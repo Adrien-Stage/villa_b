@@ -152,6 +152,13 @@ class RoleCatalog
                 'module' => 'restaurant', 'icon' => 'cooking-pot', 'sort_order' => 32, 'is_assignable' => true,
                 'level' => 4, 'statut' => self::ACTIF,
             ],
+            [
+                'name' => 'Barman',
+                'slug' => 'restaurant_barman',
+                'description' => 'Prépare les boissons, gère les fiches techniques et suit le dépôt Bar',
+                'module' => 'restaurant', 'icon' => 'glass-water', 'sort_order' => 34, 'is_assignable' => true,
+                'level' => 4, 'statut' => self::ACTIF,
+            ],
             // Le slug historique « cashier » désigne désormais le caissier du
             // restaurant, que ses droits décrivaient déjà : le garder évite de
             // reprendre les comptes qui le portent.

@@ -172,14 +172,13 @@ class RestaurantOrderController extends Controller
         }
         $restaurant = (int) $restaurants->first();
 
-        // On ne prend commande à table que dans un restaurant qui a une salle.
-        PointOfSale::query()->find($restaurant)?->exiger(PointOfSale::SERVICE_SALLE);
-
         $orderType = $validated['order_type'] ?? RestaurantCustomerOrder::ORDER_TYPE_STANDARD;
         $isComplimentary = !empty($validated['is_complimentary'])
             || in_array($orderType, [RestaurantCustomerOrder::ORDER_TYPE_COMPLIMENTARY, RestaurantCustomerOrder::ORDER_TYPE_STAFF_MEAL], true);
 
-        $order = DB::transaction(function () use ($validated, $lines, $menuItems, $orderType, $isComplimentary, $restaurant) {
+        [$order, $shortages] = DB::transaction(function () use ($validated, $lines, $menuItems, $orderType, $isComplimentary, $restaurant) {
+            PointOfSale::query()->active()->lockForUpdate()->findOrFail($restaurant)->exiger(PointOfSale::SERVICE_SALLE);
+
             $total = 0;
             if (!$isComplimentary) {
                 foreach ($lines as $menuItemId => $qty) {
@@ -229,17 +228,13 @@ class RestaurantOrderController extends Controller
                 ]);
             }
 
-            return $order;
+            return [$order, $this->stock->deductForOrder($order)];
         });
-
-        // La commande part directement en cuisine : les ingrédients sortent du stock
-        // et le bon de commande arrive chez les cuisiniers.
-        $shortages = $this->stock->deductForOrder($order);
         $this->notifyKitchen($order);
 
         return redirect()
             ->route('restaurant.orders.show', $order)
-            ->with('success', 'Commande créée et transmise en cuisine.')
+            ->with('success', 'Commande créée et transmise aux postes de préparation.')
             ->with('stock_warning', $this->shortageMessage($shortages));
     }
 
@@ -250,22 +245,21 @@ class RestaurantOrderController extends Controller
         ]);
 
         $status = $validated['status'];
-        $order->update(['status' => $status]);
+        $shortages = DB::transaction(function () use ($order, $status) {
+            $order = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($order->id);
+            if ($status === RestaurantCustomerOrder::STATUS_CANCELED) {
+                $this->stock->restoreForOrder($order);
+            }
 
-        // Le stock suit le parcours de la commande : il sort à l'envoi en cuisine,
-        // et revient si la commande est annulée après coup.
-        $shortages = [];
+            $order->update(['status' => $status]);
 
-        if (in_array($status, self::KITCHEN_STATUSES, true)) {
-            $shortages = $this->stock->deductForOrder($order);
-        } elseif ($status === 'canceled') {
-            $this->stock->restoreForOrder($order);
-        }
+            return in_array($status, self::KITCHEN_STATUSES, true) ? $this->stock->deductForOrder($order) : [];
+        });
 
         if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return response()->json([
                 'ok' => true,
-                'status' => $order->status,
+                'status' => $status,
                 'order_id' => $order->id,
                 'stock_warning' => $this->shortageMessage($shortages),
             ]);
@@ -335,27 +329,33 @@ class RestaurantOrderController extends Controller
      */
     public function sendToKitchen(RestaurantCustomerOrder $order): RedirectResponse
     {
-        if ($order->status === RestaurantCustomerOrder::STATUS_CANCELED) {
-            return back()->withErrors(['order' => 'Cette commande est annulée.']);
+        $shortages = DB::transaction(function () use ($order) {
+            $current = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($order->id);
+            if ($current->status === RestaurantCustomerOrder::STATUS_CANCELED || $current->wasSentToKitchen()) {
+                return null;
+            }
+
+            $current->update([
+                'status' => RestaurantCustomerOrder::STATUS_CONFIRMED,
+                'assigned_server_id' => $current->assigned_server_id ?? Auth::id(),
+                'assigned_at' => $current->assigned_at ?? now(),
+                'sent_to_kitchen_at' => now(),
+            ]);
+
+            return $this->stock->deductForOrder($current);
+        });
+
+        $order->refresh();
+        if ($shortages === null) {
+            return $order->status === RestaurantCustomerOrder::STATUS_CANCELED
+                ? back()->withErrors(['order' => 'Cette commande est annulée.'])
+                : back()->with('success', 'Commande déjà transmise en cuisine.');
         }
 
-        if ($order->wasSentToKitchen()) {
-            return back()->with('success', 'Commande déjà transmise en cuisine.');
-        }
-
-        // Un serveur qui transmet une commande encore libre se l'attribue au passage.
-        $order->update([
-            'status' => RestaurantCustomerOrder::STATUS_CONFIRMED,
-            'assigned_server_id' => $order->assigned_server_id ?? Auth::id(),
-            'assigned_at' => $order->assigned_at ?? now(),
-            'sent_to_kitchen_at' => now(),
-        ]);
-
-        $shortages = $this->stock->deductForOrder($order->fresh('items'));
         $this->notifyKitchen($order);
 
         return back()
-            ->with('success', 'Bon de commande transmis en cuisine.')
+            ->with('success', 'Bon de commande transmis aux postes de préparation.')
             ->with('stock_warning', $this->shortageMessage($shortages));
     }
 
@@ -465,6 +465,6 @@ class RestaurantOrderController extends Controller
             ))
             ->implode(' · ');
 
-        return "Stock insuffisant : {$details}. La commande est passée, mais le garde-manger est en négatif.";
+        return "Stock insuffisant : {$details}. La commande a été transmise. Vérifiez les quantités manquantes.";
     }
 }

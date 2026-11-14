@@ -43,7 +43,7 @@
         <div class="bg-white border border-secondary/20 rounded-xl p-5 mb-5 shadow-sm">
             <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Service émetteur & Motif</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                 x-data="{ service: @js(old('department', array_key_first($departments))), depots: @js($stores), depot: @js(old('service_store_id', '')), avecVisa: @js($avecVisa) }">
+                 x-data="{ service: @js(old('department', $depotParDefaut?->department ?? array_key_first($departments))), depots: @js($stores), depot: @js(old('service_store_id', $depotParDefaut?->id ?? '')), avecVisa: @js($avecVisa) }">
                 <div>
                     <label for="requisition-service" class="block text-xs font-semibold text-primary/70 mb-1.5">
                         Service émetteur <span class="text-red-500">*</span>

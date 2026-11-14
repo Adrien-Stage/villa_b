@@ -245,6 +245,10 @@ class PermissionCatalog
         'restaurant.menus.items.creer',
         'restaurant.menus.items.modifier',
         'restaurant.menus.items.supprimer',
+        'restaurant.bar.allocate_volume',
+        'restaurant.bar.configure',
+        'restaurant.bar.count_bottle',
+        'restaurant.bar.open_bottle',
         'restaurant.orders.bar_ready',
         'restaurant.orders.claim',
         'restaurant.orders.creer',
@@ -425,7 +429,7 @@ class PermissionCatalog
     private const TOUT_LE_PERSONNEL = [
         'accountant', 'cashier', 'controller', 'econome', 'finance_manager', 'housekeeping_leader',
         'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'reception_chief',
-        'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+        'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
 
@@ -437,7 +441,7 @@ class PermissionCatalog
     private const PERSONNEL_OPERATIONNEL = [
         'accountant', 'cashier', 'econome', 'finance_manager', 'housekeeping_leader',
         'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'reception_chief',
-        'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
+        'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff',
         'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician',
     ];
 
@@ -845,8 +849,16 @@ class PermissionCatalog
             'restaurant.restaurants.spaces.modifier' => ['manager'],
             'restaurant.restaurants.team.modifier' => ['manager', 'restaurant_manager'],
             // Chaque restaurant a son bar : les boissons s'y préparent.
-            'restaurant.bar.voir' => ['controller', 'manager', 'restaurant_chief', 'restaurant_cook', 'restaurant_staff'],
-            'restaurant.orders.bar_ready' => ['restaurant_staff'],
+            'restaurant.bar.voir' => ['controller', 'finance_manager', 'manager', 'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff'],
+            'restaurant.bar.bottles.voir' => ['controller', 'finance_manager', 'manager', 'restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.depot.voir' => ['controller', 'finance_manager', 'manager', 'restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.menu.voir' => ['controller', 'finance_manager', 'manager', 'restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.sales.voir' => ['controller', 'finance_manager', 'manager', 'restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.open_bottle' => ['restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.configure' => ['restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.count_bottle' => ['restaurant_chief', 'restaurant_manager'],
+            'restaurant.bar.allocate_volume' => ['restaurant_barman', 'restaurant_chief', 'restaurant_manager'],
+            'restaurant.orders.bar_ready' => ['restaurant_barman', 'restaurant_staff'],
             // Buffet au forfait : le responsable ouvre le service, la caisse
             // enregistre les entrées.
             'restaurant.buffets.voir' => ['cashier', 'controller', 'manager', 'restaurant_chief', 'restaurant_staff'],
@@ -1099,12 +1111,12 @@ class PermissionCatalog
             'economat.receipts.export' => ['controller', 'econome', 'manager', 'purchasing_manager', 'storekeeper'],
             'economat.requisitions.approve' => ['econome'],
             // Chaque membre d'un service demande ; son chef vise avant l'économat.
-            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
-            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
+            'economat.requisitions.cancel' => ['econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
+            'economat.requisitions.creer' => ['accountant', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'reception', 'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'tech_manager', 'technician'],
             'economat.requisitions.deliver' => ['econome', 'storekeeper'],
             'economat.requisitions.endorse' => ['finance_manager', 'housekeeping_leader', 'manager', 'reception_chief', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'tech_manager'],
             'economat.requisitions.reject' => ['econome'],
-            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
+            'economat.requisitions.voir' => ['accountant', 'controller', 'econome', 'housekeeping_leader', 'housekeeping_staff', 'housekeeping_supervisor', 'manager', 'purchasing_manager', 'reception', 'restaurant_barman', 'restaurant_chief', 'restaurant_cook', 'restaurant_manager', 'restaurant_staff', 'shop_cashier', 'shop_manager', 'storekeeper', 'tech_manager', 'technician'],
             // Extraire une liste n'est pas la consulter : droit distinct.
             'economat.requisitions.export' => ['controller', 'econome', 'housekeeping_leader', 'manager', 'purchasing_manager', 'reception', 'restaurant_chief', 'restaurant_manager', 'shop_manager', 'storekeeper', 'tech_manager'],
             // Le fichier des fournisseurs : les achats créent, le contrôle modifie et supprime.

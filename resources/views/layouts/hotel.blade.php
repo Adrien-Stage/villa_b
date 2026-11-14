@@ -496,7 +496,7 @@
                 @endif
 
                 @if(!$hasSidebar || $activeGroupId === 'restaurant')
-                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','cashier','finance_manager','controller')
+                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','restaurant_barman','restaurant_manager','cashier','finance_manager','controller')
                     @module('restaurant')
                     @php
                         // Un service qu'aucun des restaurants de la personne
@@ -521,10 +521,10 @@
                                 @endpour
                             @endif
 
-                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR))
-                                @pour('restaurant_chief','restaurant_staff','controller')
+                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR) && !$contexteResto->serviceAbsentIci(auth()->user(), \App\Models\PointOfSale::SERVICE_BAR))
+                                @droit('restaurant.bar.voir')
                                     <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
-                                @endpour
+                                @enddroit
                             @endif
 
                             {{-- Le buffet au forfait, là où un restaurant sert au buffet, en salle. --}}

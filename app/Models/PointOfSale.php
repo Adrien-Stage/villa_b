@@ -69,7 +69,7 @@ class PointOfSale extends Model
     public const DESCRIPTIONS_SERVICES = [
         self::SERVICE_SALLE => 'Commandes à table, salles, buffets.',
         self::SERVICE_CUISINE => 'Écran cuisine : les plats y sont préparés.',
-        self::SERVICE_BAR => 'Écran bar : les boissons y sont préparées.',
+        self::SERVICE_BAR => 'Préparation des boissons, fiches techniques et dépôt Bar du restaurant.',
         self::SERVICE_STOCK => "Garde-manger, inventaires, pertes, livraisons de l'économat.",
     ];
 

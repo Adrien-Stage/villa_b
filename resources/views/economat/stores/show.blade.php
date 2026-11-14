@@ -22,7 +22,7 @@
         @enddroit
         <div class="text-right">
             <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/45">Valeur en stock</p>
-            <p class="text-xl font-semibold text-primary">{{ number_format($stocks->sum(fn ($s) => $s->stockValue()) / 100, 0, ',', ' ') }} <span class="text-sm font-normal text-primary/50">FCFA</span></p>
+            <p class="text-xl font-semibold text-primary">{{ number_format($store->stockValue() / 100, 0, ',', ' ') }} <span class="text-sm font-normal text-primary/50">FCFA</span></p>
         </div>
         </div>
     </div>
@@ -70,7 +70,13 @@
     <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
         <div class="text-sm">
             <p class="font-semibold text-primary">Inventaire du dépôt</p>
-            <p class="text-xs text-primary/60">Le comptage révèle ce que le service a consommé depuis le précédent : c'est sa charge.</p>
+            <p class="text-xs text-primary/60">
+                @if($store->restaurant_service === \App\Models\PointOfSale::SERVICE_BAR)
+                    Comptez ici le stock fermé ou à l’unité. Le volume des bouteilles ouvertes se relève sur leur fiche dans Restaurant › Bar.
+                @else
+                    Le comptage révèle ce que le service a consommé depuis le précédent : c'est sa charge.
+                @endif
+            </p>
         </div>
         @if($encours)
             <a href="{{ route('economat.stores.counts.show', $encours) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600">
@@ -163,13 +169,17 @@
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
                         @foreach($movements as $mouvement)
+                            @php
+                                $mouvementVolume = $mouvement->details['volume_ml'] ?? null;
+                                $quantite = $mouvementVolume ?? (float) $mouvement->quantity;
+                            @endphp
                             <tr>
                                 <td class="px-5 py-3 text-primary/70 text-xs whitespace-nowrap">{{ $mouvement->occurred_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-5 py-3 text-primary">{{ $mouvement->item?->name ?? '—' }}</td>
-                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ \App\Models\StockUnit::symbolFor($mouvement->item?->unit) }}</td>
+                                <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $mouvementVolume === null ? \App\Models\StockUnit::symbolFor($mouvement->item?->unit) : 'mL' }}</td>
                                 <td class="px-5 py-3 text-primary/70 text-xs">{{ $mouvement->typeLabel() }}<span class="block text-[10px] text-primary/45">{{ $mouvement->sourceLabel() }}</span></td>
-                                <td class="px-5 py-3 text-right font-mono {{ (float) $mouvement->quantity < 0 ? 'text-red-700' : 'text-green-700' }}">
-                                    {{ (float) $mouvement->quantity > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format((float) $mouvement->quantity, 3, ',', ' '), '0'), ',') }}
+                                <td class="px-5 py-3 text-right font-mono {{ $quantite < 0 ? 'text-red-700' : 'text-green-700' }}">
+                                    {{ $quantite > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($quantite, 3, ',', ' '), '0'), ',') }}
                                 </td>
                                 <td class="px-5 py-3 text-primary/60 text-xs">{{ $mouvement->reason }}</td>
                             </tr>

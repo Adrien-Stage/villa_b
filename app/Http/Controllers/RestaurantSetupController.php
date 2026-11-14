@@ -10,10 +10,13 @@ use App\Models\RestaurantStockCount;
 use App\Models\Space;
 use App\Models\User;
 use App\Services\RestaurantContext;
+use App\Services\ServiceStoreCountService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -108,22 +111,26 @@ class RestaurantSetupController extends Controller
 
         $services = $this->servicesDansLOrdre($valide['services']);
 
-        if ($refus = $this->serviceEncoreEnCours($restaurant, $services)) {
-            return back()->withInput()->withErrors(['services' => $refus]);
-        }
+        [$restaurant, $avant] = DB::transaction(function () use ($request, $restaurant, $valide, $services) {
+            $restaurant = PointOfSale::query()->lockForUpdate()->findOrFail($restaurant->id);
 
-        $avant = $restaurant->services;
+            if ($refus = $this->serviceEncoreEnCours($restaurant, $services)) {
+                throw ValidationException::withMessages(['services' => $refus]);
+            }
 
-        $restaurant->update([
-            'code' => Str::upper($valide['code']),
-            'name' => $valide['name'],
-            'series_prefix' => $valide['series_prefix'] ?? null,
-            'service_modes' => array_values($valide['service_modes']),
-            'services' => $services,
-            'is_active' => $request->boolean('is_active'),
-        ]);
+            $avant = $restaurant->services;
+            $restaurant->update([
+                'code' => Str::upper($valide['code']),
+                'name' => $valide['name'],
+                'series_prefix' => $valide['series_prefix'] ?? null,
+                'service_modes' => array_values($valide['service_modes']),
+                'services' => $services,
+                'is_active' => $request->boolean('is_active'),
+            ]);
+            $restaurant->synchroniserDepotsService();
 
-        $restaurant->synchroniserDepotsService();
+            return [$restaurant, $avant];
+        });
 
         $this->contexte->oublier();
 
@@ -285,8 +292,7 @@ class RestaurantSetupController extends Controller
                 PointOfSale::SERVICE_CUISINE => (clone $enCours)->whereIn('status', [RestaurantCustomerOrder::STATUS_CONFIRMED, RestaurantCustomerOrder::STATUS_PREPARING])
                     ->whereHas('items', fn ($q) => $q->enCuisine())->exists()
                     ? 'Des plats attendent en cuisine : servez-les avant de retirer la cuisine.' : null,
-                PointOfSale::SERVICE_BAR => (clone $enCours)->whereHas('items', fn ($q) => $q->auBar()->whereNull('ready_at'))->exists()
-                    ? 'Des boissons attendent au bar : servez-les avant de retirer le bar.' : null,
+                PointOfSale::SERVICE_BAR => $this->raisonDeGarderLeBar($restaurant, $enCours),
                 PointOfSale::SERVICE_STOCK => RestaurantStockCount::query()->duRestaurant($restaurant)->where('status', RestaurantStockCount::STATUS_DRAFT)->exists()
                     ? 'Un inventaire du garde-manger est ouvert : clôturez-le avant de retirer le stock.' : null,
                 default => null,
@@ -295,6 +301,20 @@ class RestaurantSetupController extends Controller
             if ($refus !== null) {
                 return $refus;
             }
+        }
+
+        return null;
+    }
+
+    private function raisonDeGarderLeBar(PointOfSale $restaurant, Builder $enCours): ?string
+    {
+        if ((clone $enCours)->whereHas('items', fn ($query) => $query->auBar()->whereNull('ready_at'))->exists()) {
+            return 'Des boissons attendent au bar : servez-les avant de retirer le bar.';
+        }
+
+        $depot = $restaurant->serviceStores()->where('restaurant_service', PointOfSale::SERVICE_BAR)->lockForUpdate()->first();
+        if ($depot && ServiceStoreCountService::inProgress($depot)) {
+            return 'Clôturez l’inventaire du dépôt Bar avant de retirer ce service.';
         }
 
         return null;

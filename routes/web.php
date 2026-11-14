@@ -465,6 +465,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
         // Chaque restaurant a son bar : les boissons y sont préparées.
         Route::get('/bar', [App\Http\Controllers\RestaurantKitchenController::class, 'bar'])->name('bar.index');
+        Route::get('/bar/depot', [App\Http\Controllers\RestaurantBarController::class, 'depot'])->name('bar.depot.index');
+        Route::get('/bar/carte', [App\Http\Controllers\RestaurantBarController::class, 'menu'])->name('bar.menu.index');
+        Route::get('/bar/ventes', [App\Http\Controllers\RestaurantBarController::class, 'sales'])->name('bar.sales.index');
+        Route::get('/bar/bouteilles/{bottle}', [App\Http\Controllers\RestaurantBarController::class, 'bottle'])->whereNumber('bottle')->name('bar.bottles.show');
+        Route::post('/bar/bouteilles', [App\Http\Controllers\RestaurantBarController::class, 'open'])->name('bar.open_bottle');
+        Route::post('/bar/bouteilles/{bottle}/comptage', [App\Http\Controllers\RestaurantBarController::class, 'count'])->whereNumber('bottle')->name('bar.count_bottle');
+        Route::post('/bar/bouteilles/{bottle}/attribution', [App\Http\Controllers\RestaurantBarController::class, 'allocate'])->whereNumber('bottle')->name('bar.allocate_volume');
+        Route::put('/bar/carte/{item}', [App\Http\Controllers\RestaurantBarController::class, 'configure'])->whereNumber('item')->name('bar.configure');
     });
 
     // Gestion du restaurant : coûts, stocks et inventaires. La salle en est

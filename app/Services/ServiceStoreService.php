@@ -35,7 +35,10 @@ class ServiceStoreService
         return DB::transaction(function () use ($store, $item, $quantity, $unitCost, $sourceType, $sourceId, $reason) {
             // Même verrou que l'ouverture d'un inventaire : une livraison et
             // une ouverture du même dépôt ne peuvent pas se croiser.
-            ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
+            $store = ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
+            if ($store->restaurant_service === \App\Models\PointOfSale::SERVICE_BAR && ! $store->is_active) {
+                throw new \RuntimeException("Le dépôt {$store->name} est désactivé. Réactivez le Bar avant d'y livrer des articles.");
+            }
 
             // Dépôt en cours de comptage : une entrée maintenant serait lue
             // comme une consommation à la clôture.
