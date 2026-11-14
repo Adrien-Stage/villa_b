@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -16,12 +17,25 @@ class ServiceStore extends Model
     // Effacé par un bouton « Supprimer », il passe par la corbeille.
     use \App\Models\Concerns\VaALaCorbeille;
 
-    protected $fillable = ['name', 'department', 'is_active', 'sort_order', 'tenant_id'];
+    protected $fillable = [
+        'name',
+        'department',
+        'is_active',
+        'sort_order',
+        'tenant_id',
+        'point_of_sale_id',
+        'restaurant_service',
+    ];
 
     protected $casts = [
         'is_active'  => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function pointOfSale(): BelongsTo
+    {
+        return $this->belongsTo(PointOfSale::class, 'point_of_sale_id');
+    }
 
     public function stocks(): HasMany
     {

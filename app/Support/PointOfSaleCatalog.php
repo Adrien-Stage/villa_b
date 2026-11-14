@@ -58,12 +58,18 @@ class PointOfSaleCatalog
                 // Le nom appartient au client : « Restaurant » peut être devenu
                 // « Kotibe ». On ne le réécrit pas.
                 $existant->fill(array_diff_key($definition, ['name' => null]))->save();
+                if ($existant->kind === PointOfSale::KIND_RESTAURATION) {
+                    $existant->synchroniserDepotsService();
+                }
                 $updated++;
 
                 continue;
             }
 
-            PointOfSale::create($definition);
+            $pos = PointOfSale::create($definition);
+            if ($pos->kind === PointOfSale::KIND_RESTAURATION) {
+                $pos->synchroniserDepotsService();
+            }
             $created++;
         }
 

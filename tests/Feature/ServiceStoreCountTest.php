@@ -28,6 +28,18 @@ beforeEach(function () {
 
 afterEach(fn () => Carbon::setTestNow());
 
+function storeAgent(string $role): User
+{
+    \App\Support\RoleCatalog::sync();
+    $user = User::factory()->create(['role' => $role, 'is_active' => true]);
+    $roleModel = \App\Models\Role::where('slug', $role)->first();
+    if ($roleModel) {
+        $user->roles()->sync([$roleModel->id]);
+    }
+
+    return $user;
+}
+
 /** Mini-bar des étages approvisionné de 24 bouteilles d'eau à 250 F. */
 function minibarApprovisionne(): ServiceStore
 {
@@ -131,8 +143,8 @@ test('un seul inventaire à la fois par dépôt, et une clôture ne se rejoue pa
 
 test('l’écran du dépôt ouvre, saisit et clôture l’inventaire', function () {
     $minibar = minibarApprovisionne();
-    $controller = agentRole('controller');
-    $raf        = agentRole('manager');
+    $controller = storeAgent('controller');
+    $raf        = storeAgent('manager');
 
     $this->actingAs($controller)->post(route('economat.stores.counts.store', $minibar))->assertRedirect();
     $inventaire = ServiceStoreCount::sole();
