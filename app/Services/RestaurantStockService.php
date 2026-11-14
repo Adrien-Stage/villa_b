@@ -215,17 +215,17 @@ class RestaurantStockService
      */
     public function deductForOrder(RestaurantCustomerOrder $order): array
     {
-        if ($order->stockWasDeducted()) {
-            return [];
-        }
+        return DB::transaction(function () use ($order) {
+            $order = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($order->id);
+            if ($order->stockWasDeducted()) {
+                return [];
+            }
 
-        $order->loadMissing('items');
-
-        $requirements = $this->explodeOrder($order);
-        $shortages = [];
-
-        DB::transaction(function () use ($order, $requirements, &$shortages) {
-            $foodCost = 0.0;
+            $order->load('items');
+            $bar = app(RestaurantBarStock::class)->deductForOrder($order);
+            $requirements = $this->explodeOrder($order, $bar['lineIds']);
+            $shortages = $bar['shortages'];
+            $foodCost = $bar['cost'];
 
             foreach ($requirements as $requirement) {
                 /** @var RestaurantPantryItem $item */
@@ -259,9 +259,8 @@ class RestaurantStockService
                 'stock_deducted_at' => now(),
                 'food_cost' => (int) round($foodCost),
             ]);
+            return $shortages;
         });
-
-        return $shortages;
     }
 
     /**
@@ -270,15 +269,17 @@ class RestaurantStockService
      */
     public function restoreForOrder(RestaurantCustomerOrder $order): void
     {
-        if (!$order->stockWasDeducted()) {
-            return;
-        }
+        DB::transaction(function () use ($order) {
+            $order = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($order->id);
+            if (! $order->stockWasDeducted()) {
+                return;
+            }
 
-        $order->loadMissing('items');
+            $order->load('items');
+            $bar = app(RestaurantBarStock::class);
+            $requirements = $this->explodeOrder($order, $bar->recordedLineIds($order));
+            $retainedCost = $bar->restoreForOrder($order);
 
-        $requirements = $this->explodeOrder($order);
-
-        DB::transaction(function () use ($order, $requirements) {
             foreach ($requirements as $requirement) {
                 $this->recordMovement(
                     item: $requirement['item'],
@@ -292,7 +293,7 @@ class RestaurantStockService
 
             $order->update([
                 'stock_deducted_at' => null,
-                'food_cost' => null,
+                'food_cost' => $retainedCost ?: null,
             ]);
         });
     }
@@ -796,7 +797,7 @@ class RestaurantStockService
      *
      * @return array<int, array{item: RestaurantPantryItem, quantity: float}>
      */
-    private function explodeOrder(RestaurantCustomerOrder $order): array
+    private function explodeOrder(RestaurantCustomerOrder $order, array $barLineIds = []): array
     {
         $menuItemIds = $order->items->pluck('menu_item_id')->filter()->unique();
 
@@ -812,6 +813,10 @@ class RestaurantStockService
         $requirements = [];
 
         foreach ($order->items as $orderItem) {
+            if (in_array($orderItem->id, $barLineIds, true)) {
+                continue;
+            }
+
             $recipe = $recipes->get($orderItem->menu_item_id);
 
             // Plat sans fiche technique : rien à déduire. C'est volontaire — un plat

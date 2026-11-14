@@ -74,9 +74,25 @@ class ServiceStore extends Model
         return ['economat' => 'Économat (Magasin central)', ...StockRequisition::DEPARTMENTS];
     }
 
+    public function barBottles(): HasMany
+    {
+        return $this->hasMany(RestaurantBarBottle::class);
+    }
+
     /** Valeur du stock détenu, au coût moyen du dépôt. */
     public function stockValue(): int
     {
-        return (int) $this->stocks->sum(fn (ServiceStoreStock $s) => $s->stockValue());
+        $value = (int) $this->stocks->sum(fn (ServiceStoreStock $s) => $s->stockValue());
+
+        if ($this->restaurant_service === PointOfSale::SERVICE_BAR) {
+            $value += $this->barBottles->sum(fn (RestaurantBarBottle $bottle) => $bottle->valueAt($bottle->remaining_ml));
+            $value += $this->movements()
+                ->whereIn('source_type', [ServiceStoreMovement::SOURCE_BAR_SALE, ServiceStoreMovement::SOURCE_BAR_RETURN, ServiceStoreMovement::SOURCE_BAR_VARIANCE])
+                ->where('details->unallocated', true)
+                ->get(['details'])
+                ->sum(fn (ServiceStoreMovement $movement) => $movement->details['value_delta'] ?? 0);
+        }
+
+        return $value;
     }
 }

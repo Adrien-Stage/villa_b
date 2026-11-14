@@ -31,7 +31,7 @@ class RestaurantContext
     public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'finance_manager', 'support'];
 
     /** Rôles du personnel d'un restaurant : ceux qu'on affecte à une équipe. */
-    public const ROLES_DU_RESTAURANT = ['restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier'];
+    public const ROLES_DU_RESTAURANT = ['restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'restaurant_barman', 'cashier'];
 
     /** Clé de session du restaurant choisi ; « tous » pour la vue d'ensemble. */
     private const SESSION = 'restaurant_courant';

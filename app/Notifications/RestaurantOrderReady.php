@@ -14,7 +14,7 @@ class RestaurantOrderReady extends Notification
 {
     use Queueable;
 
-    public function __construct(public RestaurantCustomerOrder $order)
+    public function __construct(public RestaurantCustomerOrder $order, public bool $fromBar = false)
     {
     }
 
@@ -37,8 +37,10 @@ class RestaurantOrderReady extends Notification
     {
         return [
             'order_id' => $this->order->id,
-            'title' => 'Plat prêt à servir',
-            'message' => "Commande #{$this->order->id} ({$this->table()}) est prête. À apporter à la table.",
+            'title' => $this->fromBar ? 'Boissons prêtes à servir' : 'Plat prêt à servir',
+            'message' => $this->fromBar
+                ? "Les boissons de la commande #{$this->order->id} ({$this->table()}) sont prêtes au bar."
+                : "Commande #{$this->order->id} ({$this->table()}) est prête. À apporter à la table.",
             'url' => $this->url(),
         ];
     }
@@ -46,10 +48,12 @@ class RestaurantOrderReady extends Notification
     public function toWebPush(object $notifiable): array
     {
         return [
-            'title' => 'Plat prêt à servir',
-            'body' => "{$this->table()} · commande #{$this->order->id} prête",
+            'title' => $this->fromBar ? 'Boissons prêtes à servir' : 'Plat prêt à servir',
+            'body' => $this->fromBar
+                ? "{$this->table()} · boissons de la commande #{$this->order->id} prêtes"
+                : "{$this->table()} · commande #{$this->order->id} prête",
             'url' => $this->url(),
-            'tag' => 'resto-ready-' . $this->order->id,
+            'tag' => ($this->fromBar ? 'bar-ready-' : 'resto-ready-') . $this->order->id,
             'icon' => '/favicon.ico',
         ];
     }

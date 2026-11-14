@@ -71,7 +71,7 @@ class Navigation
         $peutVoirResto = TenantModules::has('restaurant') && (
             $user->isAdmin() ||
             // Le contrôleur de gestion consulte tous les services, restaurants compris.
-            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])
+            $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'restaurant_barman', 'restaurant_manager', 'cashier', PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])
         );
         if ($peutVoirResto) {
             $groups[] = [
@@ -456,7 +456,7 @@ class Navigation
         return match (true) {
             app(PermissionResolver::class)->allows($user, 'accounting.voir') => 'accounting',
             $user->exerce(['housekeeping_staff', 'housekeeping_supervisor', 'reception']) => 'hotel',
-            $user->exerce(['restaurant_staff', 'restaurant_cook', 'cashier']) => 'restaurant',
+            $user->exerce(['restaurant_staff', 'restaurant_cook', 'restaurant_barman', 'restaurant_manager', 'cashier']) => 'restaurant',
             $user->exerce(['shop_cashier']) => 'shop',
             TenantModules::has('technique') && $user->exerce(['technician']) => 'technique',
             default => 'economat',
@@ -977,7 +977,8 @@ class Navigation
                     ];
                 }
             }
-            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR) && $user->exerce(['manager', 'restaurant_chief', 'restaurant_staff'])) {
+            if ($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR)
+                && ! $contexteResto->serviceAbsentIci($user, \App\Models\PointOfSale::SERVICE_BAR)) {
                 if ($droits->allows($user, 'restaurant.bar.voir')) {
                     $tabs[] = [
                         'label'  => 'Bar',

@@ -33,7 +33,23 @@ class ServiceStoreMovement extends Model
     /** Bon de transfert du magasin central : l'économat approvisionne son propre dépôt. */
     public const SOURCE_TRANSFER = 'transfer';
 
+    public const SOURCE_BAR_OPEN = 'bar_open';
+    public const SOURCE_BAR_SALE = 'bar_sale';
+    public const SOURCE_BAR_RETURN = 'bar_return';
+    public const SOURCE_BAR_COUNT = 'bar_count';
+    public const SOURCE_BAR_VARIANCE = 'bar_variance';
+
+    public const BAR_SOURCES = [
+        self::SOURCE_BAR_OPEN, self::SOURCE_BAR_SALE, self::SOURCE_BAR_RETURN,
+        self::SOURCE_BAR_COUNT, self::SOURCE_BAR_VARIANCE,
+    ];
+
     public const SOURCES = [
+        self::SOURCE_BAR_OPEN    => 'Ouverture de bouteille',
+        self::SOURCE_BAR_SALE    => 'Consommation au bar',
+        self::SOURCE_BAR_RETURN  => 'Annulation avant préparation',
+        self::SOURCE_BAR_COUNT   => 'Écart constaté sur la bouteille',
+        self::SOURCE_BAR_VARIANCE => 'Régularisation du volume non attribué',
         self::SOURCE_REQUISITION  => "Livraison de l'économat",
         self::SOURCE_STOCK_COUNT  => 'Inventaire du dépôt',
         self::SOURCE_MINIBAR      => 'Mini-bar',

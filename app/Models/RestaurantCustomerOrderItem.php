@@ -33,6 +33,7 @@ class RestaurantCustomerOrderItem extends Model
         'unit_price' => 'integer',
         'total_price' => 'integer',
         'ready_at' => 'datetime',
+        'is_beverage' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -41,11 +42,12 @@ class RestaurantCustomerOrderItem extends Model
         // restaurant n'a pas l'un des deux : le bar d'une piscine prépare
         // aussi ses en-cas, une cuisine sans bar sert aussi les boissons.
         static::creating(function (self $ligne): void {
+            $type = $ligne->menu_item_id
+                ? RestaurantMenuItem::query()->whereKey($ligne->menu_item_id)->value('type')
+                : null;
+            $ligne->is_beverage = $type === 'drink';
             if (empty($ligne->station)) {
-                $type = $ligne->menu_item_id
-                    ? RestaurantMenuItem::query()->whereKey($ligne->menu_item_id)->value('type')
-                    : null;
-                $ligne->station = self::stationPour($type === 'drink' ? self::STATION_BAR : self::STATION_CUISINE, $ligne);
+                $ligne->station = self::stationPour($ligne->is_beverage ? self::STATION_BAR : self::STATION_CUISINE, $ligne);
             }
         });
     }

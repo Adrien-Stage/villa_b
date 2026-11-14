@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointOfSale;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantCustomerOrderItem;
+use App\Models\ServiceStoreMovement;
 use App\Models\User;
 use App\Notifications\RestaurantOrderReady;
+use App\Services\RestaurantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -48,7 +52,7 @@ class RestaurantKitchenController extends Controller
     }
 
     /** Le bar : les boissons des bons en cours, à préparer puis à signaler prêtes. */
-    public function bar(): View
+    public function bar(RestaurantContext $context): View
     {
         $orders = RestaurantCustomerOrder::query()
             ->visiblesPour(Auth::user())
@@ -57,13 +61,22 @@ class RestaurantKitchenController extends Controller
                 RestaurantCustomerOrder::STATUS_PREPARING,
                 RestaurantCustomerOrder::STATUS_READY,
             ])
+            ->whereIn('point_of_sale_id', $context->offrant(Auth::user(), PointOfSale::SERVICE_BAR)->pluck('id'))
             ->whereHas('items', fn ($q) => $q->auBar()->whereNull('ready_at'))
             ->with(['items' => fn ($q) => $q->auBar()->whereNull('ready_at'), 'assignedServer:id,name', 'pointOfSale:id,name'])
             ->orderBy('sent_to_kitchen_at')
             ->orderBy('id')
             ->get();
 
-        return view('restaurant.bar.index', ['orders' => $orders]);
+        $movements = ServiceStoreMovement::query()->with('item:id,name,unit')
+            ->whereIn('source_type', [ServiceStoreMovement::SOURCE_BAR_SALE, ServiceStoreMovement::SOURCE_BAR_RETURN, ServiceStoreMovement::SOURCE_BAR_VARIANCE])
+            ->whereIn('source_id', $orders->modelKeys())->orderBy('id')->get();
+        $reversed = $movements->where('source_type', ServiceStoreMovement::SOURCE_BAR_RETURN)->pluck('details.reverses');
+        $allocations = $movements->where('source_type', ServiceStoreMovement::SOURCE_BAR_VARIANCE)->groupBy('details.offsets');
+        $preparations = $movements->where('source_type', ServiceStoreMovement::SOURCE_BAR_SALE)->whereNotIn('id', $reversed)
+            ->groupBy('details.order_line_id');
+
+        return view('restaurant.bar.index', compact('orders', 'preparations', 'allocations'));
     }
 
     /**
@@ -72,16 +85,32 @@ class RestaurantKitchenController extends Controller
      */
     public function barReady(RestaurantCustomerOrder $order): RedirectResponse
     {
-        $order->items()->auBar()->whereNull('ready_at')->update(['ready_at' => now()]);
+        $context = app(RestaurantContext::class);
+        abort_unless(in_array($order->point_of_sale_id, $context->idsVisibles(Auth::user()), true), 404);
 
-        $sansCuisine = ! $order->items()->enCuisine()->exists();
-        if ($sansCuisine && in_array($order->status, [RestaurantCustomerOrder::STATUS_CONFIRMED, RestaurantCustomerOrder::STATUS_PREPARING], true)) {
-            $order->update(['status' => RestaurantCustomerOrder::STATUS_READY, 'ready_at' => now()]);
+        $marked = DB::transaction(function () use ($order) {
+            $order = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($order->id);
+            abort_unless($order->pointOfSale?->offre(PointOfSale::SERVICE_BAR) && $order->pointOfSale->is_active, 404);
+            if (! in_array($order->status, [RestaurantCustomerOrder::STATUS_CONFIRMED, RestaurantCustomerOrder::STATUS_PREPARING, RestaurantCustomerOrder::STATUS_READY], true)) {
+                return false;
+            }
+
+            $marked = $order->items()->auBar()->whereNull('ready_at')->update(['ready_at' => now()]);
+
+            if ($marked && ! $order->items()->enCuisine()->exists() && $order->status !== RestaurantCustomerOrder::STATUS_READY) {
+                $order->update(['status' => RestaurantCustomerOrder::STATUS_READY, 'ready_at' => now()]);
+            }
+
+            return $marked > 0;
+        });
+
+        if (! $marked) {
+            return back();
         }
 
         if ($order->assigned_server_id) {
             try {
-                User::find($order->assigned_server_id)?->notify(new RestaurantOrderReady($order->fresh()));
+                User::find($order->assigned_server_id)?->notify(new RestaurantOrderReady($order->fresh(), fromBar: true));
             } catch (\Throwable $e) {
                 Log::error("Notification bar, commande #{$order->id} : " . $e->getMessage());
             }

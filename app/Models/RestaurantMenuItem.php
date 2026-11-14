@@ -62,6 +62,11 @@ class RestaurantMenuItem extends Model
         return $this->hasOne(RestaurantRecipe::class, 'restaurant_menu_item_id');
     }
 
+    public function barDrink(): HasOne
+    {
+        return $this->hasOne(RestaurantBarDrink::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

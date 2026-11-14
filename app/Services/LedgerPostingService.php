@@ -804,6 +804,9 @@ class LedgerPostingService
                     \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE,
                     \App\Models\ServiceStoreMovement::SOURCE_RETOUR,
                     \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION,
+                    \App\Models\ServiceStoreMovement::SOURCE_BAR_SALE,
+                    \App\Models\ServiceStoreMovement::SOURCE_BAR_RETURN,
+                    \App\Models\ServiceStoreMovement::SOURCE_BAR_VARIANCE,
                 ]))
             ->whereBetween('occurred_at', [$start, $end])
             ->orderBy('id')
@@ -816,7 +819,11 @@ class LedgerPostingService
         $imputations = [];
 
         foreach ($mouvements as $mouvement) {
-            $valeur = (int) round(abs((float) $mouvement->quantity) * $mouvement->unit_cost);
+            $variationStock = (int) round((float) $mouvement->quantity * $mouvement->unit_cost);
+            if (in_array($mouvement->source_type, \App\Models\ServiceStoreMovement::BAR_SOURCES, true)) {
+                $variationStock = $mouvement->details['value_delta'];
+            }
+            $valeur = abs($variationStock);
 
             if ($valeur <= 0 || $mouvement->store === null) {
                 continue;
@@ -836,10 +843,14 @@ class LedgerPostingService
                 \App\Models\ServiceStoreMovement::SOURCE_BENEFICIAIRE => 'Sorties à des bénéficiaires',
                 \App\Models\ServiceStoreMovement::SOURCE_RETOUR       => 'Retours en stock',
                 \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION => 'Pièces des interventions',
+                \App\Models\ServiceStoreMovement::SOURCE_BAR_SALE => 'Consommations au bar',
+                \App\Models\ServiceStoreMovement::SOURCE_BAR_RETURN => 'Annulations avant préparation au bar',
+                \App\Models\ServiceStoreMovement::SOURCE_BAR_COUNT => 'Écarts sur bouteilles ouvertes',
+                \App\Models\ServiceStoreMovement::SOURCE_BAR_VARIANCE => 'Attributions de volume au bar',
                 default                                                 => null,
             };
 
-            if ((float) $mouvement->quantity < 0) {
+            if ($variationStock < 0) {
                 $libelle = ($nature ?? 'Consommation') . " — {$mouvement->store->name}";
                 $this->imputer($imputations, $variation, $libelle, $valeur, 0, $centre);
                 $this->imputer($imputations, $stock, $libelle, 0, $valeur);

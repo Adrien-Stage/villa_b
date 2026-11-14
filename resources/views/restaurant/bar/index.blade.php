@@ -24,9 +24,7 @@
     </label>
 </div>
 
-@if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
-@endif
+@include('restaurant.bar._nav')
 
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @forelse($orders as $order)
@@ -41,7 +39,38 @@
             @endif
             <ul class="mb-3 space-y-0.5">
                 @foreach($order->items as $item)
-                    <li class="text-xs text-primary/80"><span class="font-bold text-primary">{{ $item->quantity }}×</span> {{ $item->item_name }}</li>
+                    @php
+                        $portions = $preparations->get($item->id, collect());
+                        $instructions = $portions->first()?->details['instructions'] ?? null;
+                    @endphp
+                    <li class="mb-2 text-xs text-primary/80">
+                        <span class="font-bold text-primary">{{ (float) $item->quantity }}×</span> {{ $item->item_name }}
+                        @if($item->special_requests)
+                            <p class="pl-4">{{ $item->special_requests }}</p>
+                        @endif
+                        @if($instructions)
+                            <p class="whitespace-pre-line pl-4">{{ $instructions }}</p>
+                        @endif
+                        @foreach($portions as $portion)
+                            @php
+                                $detail = $portion->details;
+                                $volume = isset($detail['volume_ml']) ? abs($detail['volume_ml']) : null;
+                                $toAllocate = ($detail['unallocated'] ?? false) ? $volume - ($allocations->get($portion->id)?->sum('details.volume_ml') ?? 0) : 0;
+                            @endphp
+                            @if($toAllocate > 0)
+                                <p class="pl-4 text-amber-800">{{ $portion->item?->name }} · {{ $toAllocate }} mL à attribuer</p>
+                            @elseif(isset($detail['bottle_id']))
+                                <p class="pl-4">{{ $portion->item?->name }} · {{ $volume }} mL · bouteille nº {{ $detail['bottle_id'] }}</p>
+                            @elseif(! isset($detail['volume_ml']))
+                                <p class="pl-4">
+                                    {{ $portion->item?->name }} · {{ abs((float) $portion->quantity) }} {{ $portion->item?->unit }}
+                                    @if(isset($detail['shortage_quantity']))
+                                        <span class="text-amber-800"> · manque signalé de {{ $detail['shortage_quantity'] }} {{ $portion->item?->unit }}</span>
+                                    @endif
+                                </p>
+                            @endif
+                        @endforeach
+                    </li>
                 @endforeach
             </ul>
             <div class="flex items-center justify-between gap-2">

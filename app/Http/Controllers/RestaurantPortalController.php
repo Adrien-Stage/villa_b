@@ -135,6 +135,10 @@ class RestaurantPortalController extends Controller
         $trackingTokenExpiresAt = now()->addHours(24);
 
         $order = DB::transaction(function () use ($restaurant, $tableNumber, $customerName, $customerPhone, $notes, $lines, $menuItems, $trackingToken, $trackingTokenExpiresAt) {
+            if ($restaurant) {
+                PointOfSale::query()->active()->lockForUpdate()->findOrFail($restaurant->id)->exiger(PointOfSale::SERVICE_SALLE);
+            }
+
             $total = 0;
 
             foreach ($lines as $menuItemId => $qty) {
