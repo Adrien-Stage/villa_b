@@ -123,7 +123,7 @@
                     <template x-for="(line, idx) in lines" :key="line.key">
                         <div class="grid grid-cols-12 gap-3 items-center p-3 rounded-lg border border-secondary/15 bg-surface-light/30">
                             {{-- Sélection de l'article --}}
-                            <div class="col-span-12 md:col-span-6">
+                            <div class="col-span-12 sm:col-span-7 md:col-span-7">
                                 <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Désignation de l'article</label>
                                 <x-article-picker source="items" model="line.itemId" name-bind="`lines[${idx}][stock_item_id]`" size="sm" required
                                     on-select="line.packaging = getItemUnit(line.itemId)"
@@ -131,7 +131,7 @@
                             </div>
 
                             {{-- Quantité demandée --}}
-                            <div class="col-span-6 md:col-span-3">
+                            <div class="col-span-10 sm:col-span-4 md:col-span-4">
                                 <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Qté demandée</label>
                                 <div class="inline-flex items-center w-full">
                                     <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`"
@@ -151,14 +151,8 @@
                                 <p x-show="getFactor(line) > 1" class="mt-1 text-[10px] text-primary/50" x-text="`= ${formatStock(line.qty * getFactor(line))} ${accorde(getItemUnit(line.itemId), line.qty * getFactor(line))}`"></p>
                             </div>
 
-                            {{-- Estimation financière --}}
-                            <div class="col-span-4 md:col-span-2 text-right">
-                                <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Montant estimé</label>
-                                <span class="font-mono text-xs font-bold text-primary block py-1.5" x-text="formatMoney(getLineTotal(line))"></span>
-                            </div>
-
                             {{-- Suppression --}}
-                            <div class="col-span-2 md:col-span-1 text-right">
+                            <div class="col-span-2 sm:col-span-1 md:col-span-1 text-right">
                                 <label class="block text-[10px] text-transparent mb-1">Action</label>
                                 <button type="button" @click="removeLine(idx)"
                                     class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
@@ -171,17 +165,14 @@
                 </div>
             </div>
 
-            {{-- Total de la demande --}}
+            {{-- Pied du tableau --}}
             <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between text-xs shrink-0">
                 <button type="button" @click="addLine()"
                     class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     <span>Ajouter une ligne</span>
                 </button>
-                <div class="flex items-center gap-2">
-                    <span class="text-primary/70">Budget estimé du bon :</span>
-                    <strong class="font-mono text-sm text-primary" x-text="formatMoney(getTotal())"></strong>
-                </div>
+                <span class="text-xs text-primary/50" x-text="`${lines.length} article(s) demandé(s)`"></span>
             </div>
         </div>
 
