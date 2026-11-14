@@ -10,7 +10,6 @@
 
 <div id="wetchah-toast-root"
      x-data="toastNotificationManager()"
-     x-init="init()"
      class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] flex flex-col gap-3 w-full max-w-[calc(100vw-2rem)] sm:max-w-md pointer-events-none"
      role="region"
      aria-live="polite"
@@ -115,6 +114,9 @@ document.addEventListener('alpine:init', () => {
         counter: 0,
 
         init() {
+            if (this._initialized) return;
+            this._initialized = true;
+
             // Exposer l'API globale pour JS direct et Alpine
             window.toast = {
                 success: (msg, title = 'Opération réussie', opts = {}) => this.push({ type: 'success', title, message: msg, ...opts }),
