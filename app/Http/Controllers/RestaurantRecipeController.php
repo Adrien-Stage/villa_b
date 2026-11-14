@@ -6,6 +6,9 @@ use App\Models\RestaurantMenuItem;
 use App\Models\RestaurantPantryItem;
 use App\Models\RestaurantRecipe;
 use App\Models\RestaurantRecipeLine;
+use App\Models\RestaurantBarDrink;
+use App\Models\StockItem;
+use App\Models\Tenant;
 use App\Services\RestaurantContext;
 use App\Services\RestaurantStockService;
 use Illuminate\Http\RedirectResponse;
@@ -279,5 +282,78 @@ class RestaurantRecipeController extends Controller
         foreach ($merged as $attributes) {
             RestaurantRecipeLine::create($attributes);
         }
+    }
+
+    /**
+     * Imprime une fiche technique de plat ou préparation avec l'en-tête officiel de l'établissement.
+     */
+    public function print(RestaurantRecipe $recipe): View
+    {
+        $recipe->load(['lines.item', 'menuItem.category', 'producedItem', 'pointOfSale']);
+        $tenant = Tenant::current();
+
+        return view('restaurant.recipes.print', [
+            'type' => $recipe->type,
+            'recipe' => $recipe,
+            'tenant' => $tenant,
+        ]);
+    }
+
+    /**
+     * Imprime une fiche technique de boisson / cocktail du bar.
+     */
+    public function printBarDrink(RestaurantMenuItem $item): View
+    {
+        abort_unless($item->type === 'drink' && $item->barDrink !== null, 404);
+        $item->load(['barDrink', 'pointOfSale', 'category']);
+        $stockItems = StockItem::query()->active()->get()->keyBy('id');
+        $tenant = Tenant::current();
+
+        return view('restaurant.recipes.print_bar_drink', [
+            'item' => $item,
+            'drink' => $item->barDrink,
+            'stockItems' => $stockItems,
+            'tenant' => $tenant,
+        ]);
+    }
+
+    /**
+     * Recueil imprimable de toutes les fiches techniques (plats, préparations, boissons du bar).
+     */
+    public function printAll(Request $request): View
+    {
+        $user = Auth::user();
+        $dishes = RestaurantRecipe::query()
+            ->visiblesPour($user)
+            ->dishes()
+            ->with(['lines.item', 'menuItem.category', 'pointOfSale'])
+            ->orderBy('name')
+            ->get();
+
+        $preparations = RestaurantRecipe::query()
+            ->visiblesPour($user)
+            ->preparations()
+            ->with(['lines.item', 'producedItem', 'pointOfSale'])
+            ->orderBy('name')
+            ->get();
+
+        $barDrinks = RestaurantMenuItem::query()
+            ->visiblesPour($user)
+            ->where('type', 'drink')
+            ->has('barDrink')
+            ->with(['barDrink', 'pointOfSale', 'category'])
+            ->orderBy('name')
+            ->get();
+
+        $stockItems = StockItem::query()->active()->get()->keyBy('id');
+        $tenant = Tenant::current();
+
+        return view('restaurant.recipes.print_all', [
+            'dishes' => $dishes,
+            'preparations' => $preparations,
+            'barDrinks' => $barDrinks,
+            'stockItems' => $stockItems,
+            'tenant' => $tenant,
+        ]);
     }
 }
