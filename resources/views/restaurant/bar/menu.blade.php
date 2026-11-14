@@ -36,6 +36,14 @@
                     <span class="ml-2 text-sm font-normal text-primary/70">{{ number_format($drink->price / 100, 0, ',', ' ') }} FCFA · {{ $recipe ? \App\Models\RestaurantBarDrink::FORMATS[$recipe->format] : 'Suivi de stock à configurer' }} @unless($drink->is_active) · Hors carte @endunless</span>
                 </summary>
                 @if($recipe)
+                    <div class="mt-3 flex items-center justify-between border-b border-secondary/10 pb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Fiche technique du cocktail / boisson</span>
+                        <a href="{{ route('restaurant.bar.menu.print', $drink) }}" target="_blank"
+                           class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-secondary/25 hover:border-secondary/50 text-primary text-xs font-medium rounded-lg transition-colors shadow-sm">
+                            <i data-lucide="printer" class="w-3.5 h-3.5 text-secondary"></i>
+                            <span>Imprimer la fiche bar</span>
+                        </a>
+                    </div>
                     <ul class="mt-3 list-disc space-y-1 pl-5 text-sm">
                         @foreach($recipe->ingredients as $ingredient)
                             @php $stockItem = $items[$ingredient['stock_item_id']] ?? null; @endphp

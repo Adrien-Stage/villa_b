@@ -62,7 +62,7 @@ class PermissionCatalog
     private const VERBES = [
         'index' => 'voir',   'show'   => 'voir',   'list'  => 'voir',
         'search' => 'voir',  'data'   => 'voir',   'print' => 'voir',
-        'summary' => 'voir',
+        'summary' => 'voir', 'recueil' => 'voir',
         'create' => 'creer', 'store'  => 'creer',
         'edit'   => 'modifier', 'update' => 'modifier', 'patch' => 'modifier',
         'destroy' => 'supprimer', 'delete' => 'supprimer',

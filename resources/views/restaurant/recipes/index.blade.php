@@ -37,6 +37,12 @@
             <i data-lucide="file-text" class="w-4 h-4 text-secondary"></i>
             <span>CSV (ré-importable)</span>
         </a>
+        <a href="{{ route('restaurant.recipes.recueil') }}" target="_blank"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           title="Imprimer l'ensemble des fiches techniques (plats, préparations, boissons du bar)">
+            <i data-lucide="printer" class="w-4 h-4 text-secondary"></i>
+            <span>Imprimer le recueil</span>
+        </a>
         <a href="{{ route('restaurant.recipes.export') }}"
            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
            title="Classeur complet : carte & rentabilité, mercuriale, et une fiche par préparation et par plat">
@@ -180,6 +186,7 @@
                     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT).')';
                 @endphp
                 <x-table.actions :label="'Actions pour la fiche '.$recipe->name">
+                    <x-table.action icon="printer" :href="route('restaurant.recipes.print', $recipe)" target="_blank">Imprimer la fiche</x-table.action>
                     <x-table.action icon="pencil" :onclick="$ouvrirEditeur">Modifier</x-table.action>
                     <x-table.action :action="route('restaurant.recipes.destroy', $recipe)" method="DELETE" icon="trash-2" tone="danger"
                         :confirm="'Supprimer la fiche « '.$recipe->name.' » ? Le plat ne décrémentera plus le stock.'">Supprimer</x-table.action>
@@ -261,6 +268,7 @@
                     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT).')';
                 @endphp
                 <x-table.actions :label="'Actions pour la préparation '.$recipe->name">
+                    <x-table.action icon="printer" :href="route('restaurant.recipes.print', $recipe)" target="_blank">Imprimer la fiche</x-table.action>
                     <x-table.action icon="pencil" :onclick="$ouvrirEditeur">Modifier</x-table.action>
                     <x-table.action :action="route('restaurant.recipes.destroy', $recipe)" method="DELETE" icon="trash-2" tone="danger"
                         :confirm="'Supprimer la fiche « '.$recipe->name.' » ?'">Supprimer</x-table.action>

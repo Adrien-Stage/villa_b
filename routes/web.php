@@ -482,6 +482,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
         Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
+        Route::get('/recipes/recueil', [App\Http\Controllers\RestaurantRecipeController::class, 'printAll'])->name('recipes.recueil');
+        Route::get('/recipes/{recipe}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'print'])->whereNumber('recipe')->name('recipes.print');
+        Route::get('/bar/menu/{item}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'printBarDrink'])->whereNumber('item')->name('bar.menu.print');
         Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
         Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
         Route::get('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'index'])->name('waste.index');
