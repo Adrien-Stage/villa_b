@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -146,6 +147,93 @@ class PointOfSale extends Model
     public function spaces(): HasMany
     {
         return $this->hasMany(Space::class);
+    }
+
+    public function serviceStores(): HasMany
+    {
+        return $this->hasMany(ServiceStore::class, 'point_of_sale_id');
+    }
+
+    /**
+     * Synchronise les dépôts de service (Cuisine, Bar) liés à ce restaurant.
+     *
+     * @return array{crees: list<ServiceStore>, mis_a_jour: list<ServiceStore>}
+     */
+    public function synchroniserDepotsService(): array
+    {
+        if ($this->kind !== self::KIND_RESTAURATION) {
+            return ['crees' => [], 'mis_a_jour' => []];
+        }
+
+        if (! Schema::hasTable('service_stores') || ! Schema::hasColumn('service_stores', 'point_of_sale_id')) {
+            return ['crees' => [], 'mis_a_jour' => []];
+        }
+
+        $crees = [];
+        $misAJour = [];
+
+        $definitions = [
+            self::SERVICE_CUISINE => 'Cuisine',
+            self::SERVICE_BAR     => 'Bar',
+        ];
+
+        foreach ($definitions as $codeService => $labelService) {
+            $nomCible = "{$labelService} - {$this->name}";
+            $doitExister = $this->offre($codeService);
+
+            // Recherche par restaurant et type de service
+            $depot = ServiceStore::where('point_of_sale_id', $this->id)
+                ->where('restaurant_service', $codeService)
+                ->first();
+
+            // S'il n'est pas encore tagué par restaurant_service, rattacher un dépôt existant par nom
+            if ($depot === null) {
+                $depot = ServiceStore::where('name', $nomCible)
+                    ->where(function ($q) {
+                        $q->whereNull('point_of_sale_id')->orWhere('point_of_sale_id', $this->id);
+                    })
+                    ->first();
+            }
+
+            if ($doitExister) {
+                $actif = (bool) $this->is_active;
+
+                if ($depot === null) {
+                    $nomFinal = $nomCible;
+                    if (ServiceStore::where('name', $nomFinal)->exists()) {
+                        $nomFinal = "{$nomCible} ({$this->code})";
+                    }
+
+                    $nouveau = ServiceStore::create([
+                        'name'               => $nomFinal,
+                        'department'         => 'restaurant',
+                        'point_of_sale_id'   => $this->id,
+                        'restaurant_service' => $codeService,
+                        'is_active'          => $actif,
+                        'sort_order'         => (int) ($this->sort_order ?? 0),
+                        'tenant_id'          => $this->tenant_id ?? auth()->user()?->tenant_id ?? Tenant::current()?->id,
+                    ]);
+                    $crees[] = $nouveau;
+                } else {
+                    $depot->update([
+                        'name'               => $nomCible,
+                        'department'         => 'restaurant',
+                        'point_of_sale_id'   => $this->id,
+                        'restaurant_service' => $codeService,
+                        'is_active'          => $actif,
+                    ]);
+                    $misAJour[] = $depot;
+                }
+            } elseif ($depot !== null) {
+                // Le service n'est plus offert : le dépôt est désactivé
+                if ($depot->is_active) {
+                    $depot->update(['is_active' => false]);
+                    $misAJour[] = $depot;
+                }
+            }
+        }
+
+        return ['crees' => $crees, 'mis_a_jour' => $misAJour];
     }
 
     public function scopeActive(Builder $query): Builder

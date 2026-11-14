@@ -19,7 +19,7 @@ class ServiceStoreController extends Controller
     public function index(): View
     {
         $stores = ServiceStore::query()
-            ->with('stocks')
+            ->with(['stocks', 'pointOfSale'])
             ->withCount('stocks')
             ->orderBy('sort_order')
             ->orderBy('name')

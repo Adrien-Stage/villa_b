@@ -44,8 +44,16 @@
             @endphp
             <x-table.row :muted="! $store->is_active">
                 <x-table.cell>
-                    <a href="{{ route('economat.stores.show', $store) }}" class="font-medium text-primary hover:underline">{{ $store->name }}</a>
-                    @unless($store->is_active)<span class="ml-1 text-[10px] text-primary/50">(inactif)</span>@endunless
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <a href="{{ route('economat.stores.show', $store) }}" class="font-medium text-primary hover:underline">{{ $store->name }}</a>
+                        @unless($store->is_active)<span class="text-[10px] text-primary/50">(inactif)</span>@endunless
+                        @if($store->pointOfSale)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200/60">
+                                <i data-lucide="utensils" class="w-2.5 h-2.5"></i>
+                                {{ $store->pointOfSale->name }}
+                            </span>
+                        @endif
+                    </div>
                 </x-table.cell>
                 <x-table.cell hide="lg" class="text-xs text-primary/70">{{ $store->departmentLabel() }}</x-table.cell>
                 <x-table.cell align="right" hide="md" class="text-primary/70">{{ $store->stocks_count }}</x-table.cell>

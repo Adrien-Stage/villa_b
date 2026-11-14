@@ -21,6 +21,7 @@ use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Fiches de comptage : la liste papier que chaque service remplit le jour de
@@ -78,6 +79,15 @@ class CountSheetService
     {
         $services = [self::ECONOMAT => 'Économat — magasin central'];
 
+        $hasServiceStores = Schema::hasTable('service_stores');
+        $hasPosCol = $hasServiceStores && Schema::hasColumn('service_stores', 'point_of_sale_id');
+
+        $stores = $hasServiceStores
+            ? ($hasPosCol
+                ? ServiceStore::active()->with('pointOfSale')->orderBy('sort_order')->orderBy('name')->get()
+                : ServiceStore::active()->orderBy('sort_order')->orderBy('name')->get())
+            : collect();
+
         // Chaque restaurant qui tient un stock compte son garde-manger : une
         // fiche par cuisine dès qu'il y en a plusieurs, comme chacun a son
         // inventaire.
@@ -93,8 +103,11 @@ class CountSheetService
 
         $services[self::SHOP] = 'Boutique';
 
-        foreach (ServiceStore::active()->orderBy('sort_order')->orderBy('name')->get() as $depot) {
-            $services[self::STORE_PREFIX . $depot->id] = "{$depot->name} ({$depot->departmentLabel()})";
+        foreach ($stores as $depot) {
+            $label = $depot->pointOfSale
+                ? "{$depot->name} (Restaurant)"
+                : "{$depot->name} ({$depot->departmentLabel()})";
+            $services[self::STORE_PREFIX . $depot->id] = $label;
         }
 
         return $services;

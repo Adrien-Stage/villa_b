@@ -82,6 +82,8 @@ class RestaurantSetupController extends Controller
             'sort_order' => (int) (PointOfSale::max('sort_order') ?? 0) + 1,
         ]);
 
+        $restaurant->synchroniserDepotsService();
+
         $this->contexte->oublier();
 
         AuditLog::record(Auth::id(), 'restaurant_created', "Restaurant « {$restaurant->name} » créé", 'restaurant', [
@@ -120,6 +122,8 @@ class RestaurantSetupController extends Controller
             'services' => $services,
             'is_active' => $request->boolean('is_active'),
         ]);
+
+        $restaurant->synchroniserDepotsService();
 
         $this->contexte->oublier();
 

@@ -200,7 +200,7 @@ class StockRequisitionController extends Controller
             ->whereIn('department', array_keys($departments))
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'department']);
+            ->get(['id', 'name', 'department', 'point_of_sale_id']);
 
         // Restaurants dont la personne peut alimenter le garde-manger : ceux
         // qui tiennent un stock.
@@ -233,10 +233,14 @@ class StockRequisitionController extends Controller
             'service_store_id.exists' => "Ce dépôt n'appartient pas au service émetteur.",
         ]);
 
-        // Une livraison au restaurant désigne la cuisine qui la reçoit : un
-        // restaurant que la personne peut voir.
+        // Une livraison au restaurant désigne la cuisine ou le bar qui la reçoit.
         $restaurant = null;
-        if ($validated['department'] === 'restaurant' && empty($validated['service_store_id'])) {
+        if (! empty($validated['service_store_id'])) {
+            $depotChoisi = \App\Models\ServiceStore::find($validated['service_store_id']);
+            if ($depotChoisi && $depotChoisi->point_of_sale_id) {
+                $restaurant = $depotChoisi->pointOfSale;
+            }
+        } elseif ($validated['department'] === 'restaurant') {
             $contexte = app(\App\Services\RestaurantContext::class);
             $restaurant = isset($validated['point_of_sale_id'])
                 ? $contexte->accessibles(Auth::user())->firstWhere('id', (int) $validated['point_of_sale_id'])
