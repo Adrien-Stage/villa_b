@@ -51,13 +51,20 @@
 
         <div class="no-print flex items-center justify-between gap-3 mb-6">
             <div>
-                <a href="{{ route('shop.orders.show', $order) }}" class="inline-flex items-center gap-1.5 hover:text-primary transition-colors text-primary/60 text-sm font-medium mb-1">
+                <a
+                    href="{{ route('shop.orders.show', $order) }}"
+                    class="inline-flex items-center gap-1.5 hover:text-primary transition-colors text-primary/60
+                        text-sm font-medium mb-1">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     Retour à la commande
                 </a>
                 <h1 class="font-heading text-xl font-bold text-primary">Ticket de vente</h1>
             </div>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
+            <button
+                type="button"
+                onclick="window.print()"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl
+                    hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 Imprimer le ticket
             </button>
@@ -68,7 +75,8 @@
             <div class="p-6 border-b border-secondary/10">
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg overflow-hidden border border-secondary/20 flex-shrink-0">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center
+                            font-bold text-lg overflow-hidden border border-secondary/20 flex-shrink-0">
                             @if($tenantLogo)
                                 <img src="{{ $tenantLogo }}" alt="Logo" class="w-full h-full object-cover">
                             @else
@@ -92,7 +100,8 @@
             <div class="p-6 bg-accent/15 border-b border-secondary/10 text-xs">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-primary/50 block mb-0.5">Client</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-primary/50 block
+                            mb-0.5">Client</span>
                         <p class="font-bold text-primary text-sm">{{ $order->customer_name }}</p>
                         @if($order->booking?->room)
                             <p class="text-blue-900 font-semibold mt-0.5">Chambre {{ $order->booking->room->number }} (résident)</p>
@@ -100,7 +109,8 @@
                         @if($order->customer_phone)<p class="text-primary/60 mt-0.5">{{ $order->customer_phone }}</p>@endif
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-primary/50 block mb-0.5">Règlement</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-primary/50 block
+                            mb-0.5">Règlement</span>
                         <p class="font-bold text-primary">{{ $methode }}</p>
                         <p class="text-[11px] text-primary/60 mt-0.5">Vendeur : {{ $order->createdBy?->name ?? 'Boutique' }}</p>
                     </div>
@@ -110,7 +120,8 @@
             <div class="p-6">
                 <table class="w-full text-left text-xs">
                     <thead>
-                        <tr class="border-b border-secondary/20 text-[10px] font-bold uppercase tracking-wider text-primary/50">
+                        <tr class="border-b border-secondary/20 text-[10px] font-bold uppercase tracking-wider
+                            text-primary/50">
                             <th class="py-2">Désignation</th>
                             <th class="py-2 text-center">Qté</th>
                             <th class="py-2 text-right">Prix unitaire</th>
@@ -143,7 +154,8 @@
                         <span>TVA comprise</span>
                         <span class="font-medium">{{ number_format($order->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
                     </div>
-                    <div class="flex justify-between items-baseline pt-2 border-t border-secondary/20 text-sm font-bold text-primary">
+                    <div class="flex justify-between items-baseline pt-2 border-t border-secondary/20 text-sm font-bold
+                        text-primary">
                         <span>TOTAL TTC</span>
                         <span class="text-lg font-extrabold font-heading">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</span>
                     </div>

@@ -32,7 +32,8 @@ class PlanningQuarts extends Edition
     {
         return [
             Filtre::semaine(),
-            Filtre::choix('service', 'Service', fn (User $u) => $this->planning->departementsVisibles($u)->pluck('name', 'id')
+            Filtre::choix('service', 'Service', fn (User $u) => $this->planning->departementsVisibles($u)->pluck('name',
+                'id')
                 ->mapWithKeys(fn ($n, $id) => [(string) $id => $n])->all(), 'Tous mes services'),
         ];
     }
@@ -45,10 +46,12 @@ class PlanningQuarts extends Edition
 
         $affectations = $services->isEmpty()
             ? $this->planning->semaineDe($user, $lundi)
-            : $services->flatMap(fn (Department $d) => $this->planning->semaine($d, $lundi)->each(fn ($a) => $a->setRelation('department', $d)));
+            : $services->flatMap(fn (Department $d) => $this->planning->semaine($d, $lundi)->each(fn ($a) => $a
+                ->setRelation('department', $d)));
 
         $lignes = $affectations
-            ->sortBy(fn ($a) => [$a->jour()->toDateString(), $a->shift->sort_order, $a->department?->name, $a->user?->name])
+            ->sortBy(fn ($a) => [$a->jour()->toDateString(), $a->shift->sort_order, $a->department?->name,
+                $a->user?->name])
             ->map(fn ($a) => [
                 'jour' => ucfirst($a->jour()->locale('fr')->isoFormat('dddd D MMMM')),
                 'quart' => $a->shift->name,

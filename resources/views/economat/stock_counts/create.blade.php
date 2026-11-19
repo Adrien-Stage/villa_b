@@ -4,7 +4,9 @@
 
 @section('content')
 <div class="max-w-xl mx-auto">
-    <a href="{{ route('economat.stock_counts.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4 transition-colors">
+    <a
+        href="{{ route('economat.stock_counts.index') }}"
+        class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux inventaires
     </a>
 
@@ -26,15 +28,21 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Date du comptage <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider
+                        mb-1.5">Date du comptage <span class="text-red-500">*</span></label>
                     <input type="date" name="count_date" value="{{ old('count_date', now()->toDateString()) }}" required
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary">
                     @error('count_date')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Service / Département <span class="text-red-500">*</span></label>
-                    <select name="department" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider
+                        mb-1.5">Service / Département <span class="text-red-500">*</span></label>
+                    <select
+                        name="department"
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary">
                         @foreach($departments as $code => $label)
                             <option value="{{ $code }}" {{ old('department', 'economat') === $code ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
@@ -44,11 +52,17 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Périmètre / Catégorie</label>
-                    <select name="stock_category_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider
+                        mb-1.5">Périmètre / Catégorie</label>
+                    <select
+                        name="stock_category_id"
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary">
                         <option value="">Tous les articles de l'économat (Inventaire général)</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('stock_category_id') == $category->id ? 'selected' : '' }}>
+                            <option
+                                value="{{ $category->id }}"
+                                {{ old('stock_category_id') == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach
@@ -60,8 +74,15 @@
                 {{-- L'économat se compte aussi zone par zone : la cave, une chambre froide… --}}
                 @if($zones->count() > 1)
                     <div>
-                        <label for="inventaire-zone" class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Zone de rangement</label>
-                        <select id="inventaire-zone" name="storage_zone_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        <label
+                            for="inventaire-zone"
+                            class="block text-xs font-semibold text-primary/70 uppercase tracking-wider
+                                mb-1.5">Zone de rangement</label>
+                        <select
+                            id="inventaire-zone"
+                            name="storage_zone_id"
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                                outline-none focus:border-primary">
                             <option value="">Toutes les zones</option>
                             @foreach($zones as $zone)
                                 <option value="{{ $zone->id }}" @selected((string) old('storage_zone_id') === (string) $zone->id)>{{ $zone->name }}</option>
@@ -73,7 +94,8 @@
                 @endif
 
                 <div>
-                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider mb-1.5">Notes & Contexte (optionnel)</label>
+                    <label class="block text-xs font-semibold text-primary/70 uppercase tracking-wider
+                        mb-1.5">Notes & Contexte (optionnel)</label>
                     <textarea name="notes" rows="3" placeholder="Ex: Inventaire mensuel de clôture, contrôle inopiné suite à rotation d'équipe..."
                         class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">{{ old('notes') }}</textarea>
                     @error('notes')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
@@ -93,11 +115,17 @@
                         </p>
                         <label for="fichier-ouverture" class="sr-only">Fichier de comptage</label>
                         <input id="fichier-ouverture" type="file" name="fichier" accept=".xlsx,.xls,.csv"
-                               class="block w-full text-xs text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-emerald-800">
+                               class="block w-full text-xs text-primary file:mr-3 file:rounded-lg file:border-0
+                                   file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-semibold
+                                   file:text-emerald-800">
                         @error('fichier')<p class="text-xs text-red-500">{{ $message }}</p>@enderror
                         @droit('economat.stock_counts.close')
                             <label class="inline-flex items-center gap-2 text-xs text-primary">
-                                <input type="checkbox" name="cloturer" value="1" class="rounded border-secondary/40 text-primary">
+                                <input
+                                    type="checkbox"
+                                    name="cloturer"
+                                    value="1"
+                                    class="rounded border-secondary/40 text-primary">
                                 Clôturer aussitôt : ajuster le stock sur les quantités comptées
                             </label>
                         @enddroit
@@ -114,10 +142,15 @@
                 </div>
 
                 <div class="pt-3 flex items-center justify-end gap-3 border-t border-secondary/15">
-                    <a href="{{ route('economat.stock_counts.index') }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                    <a
+                        href="{{ route('economat.stock_counts.index') }}"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                         Annuler
                     </a>
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-medium
+                            rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="check" class="w-4 h-4"></i>
                         Ouvrir la feuille d'inventaire
                     </button>

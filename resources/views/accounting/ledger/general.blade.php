@@ -31,7 +31,10 @@
                     </option>
                 @endforeach
             </select>
-            <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shrink-0">
+            <button
+                type="submit"
+                class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                    transition-colors shrink-0">
                 Afficher
             </button>
         </div>
@@ -66,7 +69,8 @@
                 <h2 class="text-sm font-semibold text-primary font-mono">{{ $compte->code }}</h2>
                 <p class="text-xs text-primary/55">{{ $compte->label }}
                     @if($compte->is_collective)
-                        <span class="ml-1 inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-[10px] font-semibold">collectif</span>
+                        <span class="ml-1 inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-[10px]
+                            font-semibold">collectif</span>
                     @endif
                 </p>
             </div>
@@ -92,17 +96,21 @@
                             <tr class="hover:bg-accent/10">
                                 <td class="px-4 py-2 whitespace-nowrap text-primary/70">{{ $l['date']->format('d/m/Y') }}</td>
                                 <td class="px-3 py-2">
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary text-[10px] font-semibold">{{ $l['journal'] }}</span>
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary
+                                        text-[10px] font-semibold">{{ $l['journal'] }}</span>
                                 </td>
                                 <td class="px-3 py-2 text-primary">
-                                    <a href="{{ route('accounting.ledger.entry', $l['entry_id']) }}" class="hover:underline">{{ $l['label'] }}</a>
+                                    <a
+                                        href="{{ route('accounting.ledger.entry', $l['entry_id']) }}"
+                                        class="hover:underline">{{ $l['label'] }}</a>
                                 </td>
                                 <td class="px-3 py-2 text-primary/60">
                                     {{ $l['auxiliary']->full_name ?? $l['auxiliary']->name ?? '—' }}
                                 </td>
                                 <td class="px-3 py-2 text-right text-primary/75 whitespace-nowrap">{{ $l['debit'] ? $fcfa($l['debit']) : '' }}</td>
                                 <td class="px-3 py-2 text-right text-primary/75 whitespace-nowrap">{{ $l['credit'] ? $fcfa($l['credit']) : '' }}</td>
-                                <td class="px-4 py-2 text-right font-medium text-primary whitespace-nowrap">{{ $fcfa(abs($l['balance'])) }}</td>
+                                <td class="px-4 py-2 text-right font-medium text-primary
+                                    whitespace-nowrap">{{ $fcfa(abs($l['balance'])) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="7" class="px-4 py-8 text-center text-primary/50">Aucun mouvement sur la période.</td></tr>

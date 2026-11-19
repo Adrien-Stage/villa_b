@@ -24,7 +24,8 @@
     {{-- Produits --}}
     <section class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
         <div class="px-5 py-3 border-b border-secondary/15 bg-green-50/50">
-            <h2 class="text-sm font-semibold text-green-800 uppercase tracking-widest text-[11px]">Produits (recettes encaissées)</h2>
+            <h2 class="text-sm font-semibold text-green-800 uppercase tracking-widest
+                text-[11px]">Produits (recettes encaissées)</h2>
         </div>
         <div class="divide-y divide-secondary/10">
             @foreach($activiteLabels as $key => $label)
@@ -43,10 +44,13 @@
     {{-- Charges --}}
     <section class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
         <div class="px-5 py-3 border-b border-secondary/15 bg-red-50/50">
-            <h2 class="text-sm font-semibold text-red-800 uppercase tracking-widest text-[11px]">Charges (dépenses décaissées)</h2>
+            <h2 class="text-sm font-semibold text-red-800 uppercase tracking-widest
+                text-[11px]">Charges (dépenses décaissées)</h2>
         </div>
         @if(empty($ch['by_category']))
-            <p class="px-5 py-8 text-sm text-primary/40 text-center">Aucune dépense saisie sur la période.<br><a href="{{ route('accounting.expenses', ['month' => $period['month']]) }}" class="text-primary hover:underline text-xs">Saisir une dépense →</a></p>
+            <p class="px-5 py-8 text-sm text-primary/40 text-center">Aucune dépense saisie sur la période.<br><a
+                href="{{ route('accounting.expenses', ['month' => $period['month']]) }}"
+                class="text-primary hover:underline text-xs">Saisir une dépense →</a></p>
         @else
             <div class="divide-y divide-secondary/10">
                 @foreach($ch['by_category'] as $cat => $amount)
@@ -67,7 +71,8 @@
 {{-- Résultat net --}}
 <div class="mt-6 bg-white rounded-xl border-2 {{ $resultat['resultat_net'] < 0 ? 'border-red-300' : 'border-green-300' }} shadow-sm px-6 py-5 flex items-center justify-between">
     <div>
-        <p class="text-sm font-semibold text-primary uppercase tracking-widest text-[11px]">Résultat net — {{ ucfirst($period['label']) }}</p>
+        <p class="text-sm font-semibold text-primary uppercase tracking-widest
+            text-[11px]">Résultat net — {{ ucfirst($period['label']) }}</p>
         <p class="text-xs text-primary/50 mt-0.5">{{ $resultat['resultat_net'] < 0 ? 'Déficitaire sur la période' : 'Bénéficiaire sur la période' }}</p>
     </div>
     <p class="text-3xl font-heading font-black {{ $resultat['resultat_net'] < 0 ? 'text-red-600' : 'text-green-600' }}">

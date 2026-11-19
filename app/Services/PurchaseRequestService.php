@@ -64,7 +64,8 @@ class PurchaseRequestService
         }
 
         if ($etape === PurchaseRequestUpdated::APPROUVEE) {
-            $this->notifier->toRoles(self::ACHETEURS, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::A_COMMANDER), $decideur->id);
+            $this->notifier->toRoles(self::ACHETEURS, new PurchaseRequestUpdated($request,
+                PurchaseRequestUpdated::A_COMMANDER), $decideur->id);
         }
     }
 
@@ -196,7 +197,8 @@ class PurchaseRequestService
         // Le demandeur apprend ce qui a changé dans sa demande.
         $changements = $this->changements($avant, $request);
         if ($changements !== '' && $request->requestedBy && (int) $request->requestedBy->id !== (int) $user->id) {
-            $this->notifier->send($request->requestedBy, new PurchaseRequestUpdated($request, PurchaseRequestUpdated::MODIFIEE, $changements, $user->name));
+            $this->notifier->send($request->requestedBy, new PurchaseRequestUpdated($request,
+                PurchaseRequestUpdated::MODIFIEE, $changements, $user->name));
         }
 
         return $request;
@@ -220,12 +222,14 @@ class PurchaseRequestService
             if (! isset($apres[$article])) {
                 $changements[] = "{$ligne['nom']} : article retiré";
             } elseif (abs($apres[$article]['quantite'] - $ligne['quantite']) > 0.0005) {
-                $changements[] = "{$ligne['nom']} {$qte($ligne['quantite'])} → {$qte($apres[$article]['quantite'])}" . ($ligne['unite'] ? " {$ligne['unite']}" : '');
+                $changements[] = "{$ligne['nom']} {$qte($ligne['quantite'])} → {$qte($apres[$article]['quantite'])}"
+                    . ($ligne['unite'] ? " {$ligne['unite']}" : '');
             }
         }
         foreach ($apres as $article => $ligne) {
             if (! isset($avant[$article])) {
-                $changements[] = "{$ligne['nom']} : article ajouté ({$qte($ligne['quantite'])}" . ($ligne['unite'] ? " {$ligne['unite']}" : '') . ')';
+                $changements[] = "{$ligne['nom']} : article ajouté ({$qte($ligne['quantite'])}"
+                    . ($ligne['unite'] ? " {$ligne['unite']}" : '') . ')';
             }
         }
 
@@ -241,7 +245,8 @@ class PurchaseRequestService
      *
      * @param  array<int|string, int|float|string|null>  $quantites
      */
-    public function approve(PurchaseRequest $request, User $reviewer, ?string $notes = null, array $quantites = []): PurchaseRequest
+    public function approve(PurchaseRequest $request, User $reviewer, ?string $notes = null,
+        array $quantites = []): PurchaseRequest
     {
         if (!$request->canBeReviewed()) {
             throw new RuntimeException("Cette demande d'achat ne peut pas être approuvée dans son statut actuel.");
@@ -265,7 +270,8 @@ class PurchaseRequestService
             }
 
             if ($retenu <= 0) {
-                throw new RuntimeException("Toutes les quantités sont à zéro : refusez plutôt la demande, avec son motif.");
+                throw new RuntimeException(
+                    "Toutes les quantités sont à zéro : refusez plutôt la demande, avec son motif.");
             }
 
             $request->update([
@@ -340,7 +346,8 @@ class PurchaseRequestService
     private function refuserSaPropreDemande(PurchaseRequest $request, User $reviewer): void
     {
         if (self::estSaPropreDemande($request, $reviewer)) {
-            throw new RuntimeException("Vous ne pouvez pas décider de votre propre demande d'achat : un autre responsable doit l'examiner.");
+            throw new RuntimeException(
+                "Vous ne pouvez pas décider de votre propre demande d'achat : un autre responsable doit l'examiner.");
         }
     }
 
@@ -368,7 +375,8 @@ class PurchaseRequestService
      * @param  array<int|string, int|string>  $lineSuppliers
      * @return Collection<int, PurchaseOrder>
      */
-    public function convertToOrders(PurchaseRequest $request, User $user, ?int $supplierId = null, array $lineSuppliers = []): Collection
+    public function convertToOrders(PurchaseRequest $request, User $user, ?int $supplierId = null,
+        array $lineSuppliers = []): Collection
     {
         if (!$request->canBeConverted()) {
             throw new RuntimeException("Seule une demande d'achat approuvée peut être convertie en bon de commande.");
@@ -387,7 +395,8 @@ class PurchaseRequestService
 
             // Si des fournisseurs précis par ligne sont spécifiés
             if (!empty($lineSuppliers)) {
-                $linesBySupplier = $aCommander->groupBy(function (PurchaseRequestLine $l) use ($lineSuppliers, $supplierId) {
+                $linesBySupplier = $aCommander->groupBy(function (PurchaseRequestLine $l) use ($lineSuppliers,
+                    $supplierId) {
                     if (!empty($lineSuppliers[$l->id])) {
                         return (int) $lineSuppliers[$l->id];
                     }
@@ -401,7 +410,8 @@ class PurchaseRequestService
                 $linesBySupplier = collect([(int) $supplierId => $aCommander]);
             } else {
                 // Groupement automatique par fournisseur habituel de l'article
-                $linesBySupplier = $aCommander->groupBy(fn (PurchaseRequestLine $l) => (int) ($l->item?->supplier_id ?? 0));
+                $linesBySupplier = $aCommander->groupBy(fn (PurchaseRequestLine $l) => (int) ($l->item?->supplier_id
+                    ?? 0));
             }
 
             foreach ($linesBySupplier as $supId => $lines) {
@@ -430,13 +440,15 @@ class PurchaseRequestService
     /**
      * Crée un PurchaseOrder pour un fournisseur et un lot de lignes.
      */
-    private function createOrderFromLines(PurchaseRequest $request, Supplier $supplier, Collection $lines, User $user): PurchaseOrder
+    private function createOrderFromLines(PurchaseRequest $request, Supplier $supplier, Collection $lines,
+        User $user): PurchaseOrder
     {
         $order = PurchaseOrder::create([
             'supplier_id'         => $supplier->id,
             'purchase_request_id' => $request->id,
             'status'              => PurchaseOrder::STATUS_DRAFT,
-            'notes'               => "Généré automatiquement depuis la demande d'achat {$request->number} (" . $request->departmentLabel() . ")",
+            'notes'               => "Généré automatiquement depuis la demande d'achat {$request->number} (" . $request
+                ->departmentLabel() . ")",
             'created_by'          => $user->id,
             // Le responsable des achats signe le bon qu'il émet.
             'issuer_signature'    => $user->signatureName(),
@@ -449,7 +461,8 @@ class PurchaseRequestService
                 'stock_item_id'     => $reqLine->stock_item_id,
                 'quantity_ordered'  => $reqLine->quantiteRetenue(),
                 // Le prix du fournisseur qui reçoit le bon, sinon celui de la demande.
-                'unit_price'        => ($reqLine->item ? \App\Support\PrixFournisseurs::prix($reqLine->item, $supplier->id) : null) ?? $reqLine->estimated_unit_price, // en centimes
+                'unit_price'        => ($reqLine->item ? \App\Support\PrixFournisseurs::prix($reqLine->item, $supplier
+                    ->id) : null) ?? $reqLine->estimated_unit_price, // en centimes
             ]);
         }
 

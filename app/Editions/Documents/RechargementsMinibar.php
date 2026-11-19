@@ -50,7 +50,8 @@ class RechargementsMinibar extends Edition
             ->get()
             ->groupBy('source_id');
 
-        $lignes = $recharges->flatMap(fn (MinibarRestock $r) => ($mouvements[$r->id] ?? collect())->map(fn (MinibarMovement $m) => [
+        $lignes = $recharges->flatMap(fn (MinibarRestock $r) => ($mouvements[$r->id] ?? collect())
+            ->map(fn (MinibarMovement $m) => [
             'quand' => $r->restocked_at,
             'chambre' => $r->room?->number,
             'motif' => $r->reasonLabel(),

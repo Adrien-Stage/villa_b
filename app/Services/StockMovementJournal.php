@@ -34,12 +34,15 @@ class StockMovementJournal
             ->when($filtres['du'] ?? null, fn ($q, $du) => $q->where('occurred_at', '>=', $du->copy()->startOfDay()))
             ->when($filtres['au'] ?? null, fn ($q, $au) => $q->where('occurred_at', '<=', $au->copy()->endOfDay()))
             ->when($filtres['article'] ?? null, fn ($q, $id) => $q->where('stock_item_id', $id))
-            ->when($filtres['categorie'] ?? null, fn ($q, $id) => $q->whereHas('item', fn ($i) => $i->where('stock_category_id', $id)))
+            ->when($filtres['categorie'] ?? null, fn ($q, $id) => $q->whereHas('item', fn ($i) => $i
+                ->where('stock_category_id', $id)))
             ->when($filtres['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($filtres['source'] ?? null, fn ($q, $source) => $q->where('source_type', $source))
-            ->when(!empty($filtres['service']), fn ($q) => $this->appliquerFiltreService($q, (string) $filtres['service']))
+            ->when(!empty($filtres['service']), fn ($q) => $this->appliquerFiltreService($q,
+                (string) $filtres['service']))
             // Sans tenir compte de la casse : LIKE la distingue sous PostgreSQL.
-            ->when(trim((string) ($filtres['recherche'] ?? '')), fn ($q, $texte) => $q->whereRaw('LOWER(reason) LIKE ?', ['%' . mb_strtolower($texte) . '%']));
+            ->when(trim((string) ($filtres['recherche'] ?? '')), fn ($q, $texte) => $q->whereRaw('LOWER(reason) LIKE ?',
+                ['%' . mb_strtolower($texte) . '%']));
     }
 
     /**
@@ -247,7 +250,8 @@ class StockMovementJournal
     {
         $mouvements = $this->query($filtres)->get(['id', 'type', 'quantity', 'unit_cost']);
 
-        $valeur = fn (string $type) => (int) $mouvements->where('type', $type)->sum(fn (StockMovement $m) => $m->valeur());
+        $valeur = fn (string $type) => (int) $mouvements->where('type', $type)->sum(fn (StockMovement $m) => $m
+            ->valeur());
 
         return [
             'nombre'      => $mouvements->count(),
@@ -263,10 +267,12 @@ class StockMovementJournal
      */
     public function fiche(StockItem $item, ?CarbonInterface $du, ?CarbonInterface $au): array
     {
-        $periode = $this->query(['article' => $item->id, 'du' => $du, 'au' => $au])->orderBy('occurred_at')->orderBy('id')->get();
+        $periode = $this->query(['article' => $item->id, 'du' => $du, 'au' => $au])->orderBy('occurred_at')
+            ->orderBy('id')->get();
 
         $precedent = $du
-            ? StockMovement::query()->where('stock_item_id', $item->id)->where('occurred_at', '<', $du->copy()->startOfDay())
+            ? StockMovement::query()->where('stock_item_id', $item->id)->where('occurred_at', '<', $du->copy()
+                ->startOfDay())
                 ->orderByDesc('occurred_at')->orderByDesc('id')->first()
             : null;
 
@@ -278,7 +284,8 @@ class StockMovementJournal
             default                => (float) $item->current_stock,
         };
 
-        $somme = fn (string $type) => round((float) $periode->where('type', $type)->sum(fn ($m) => (float) $m->quantity), 3);
+        $somme = fn (string $type) => round((float) $periode->where('type', $type)->sum(fn ($m) => (float) $m
+            ->quantity), 3);
 
         return [
             'debut'       => $debut,
@@ -308,8 +315,10 @@ class StockMovementJournal
             StockMovement::SOURCE_STOCK_COUNT    => [StockCount::class, 'reference', 'economat.stock_counts.show'],
             StockMovement::SOURCE_EXTERNAL_ISSUE => [ExternalIssue::class, 'number', 'economat.external_issues.show'],
             StockMovement::SOURCE_CUT            => [\App\Models\StockCut::class, 'number', 'economat.cuts.show'],
-            StockMovement::SOURCE_IMPORT         => [\App\Models\StockImport::class, 'reference', 'economat.classeur.show'],
-            StockMovement::SOURCE_TRANSFER       => [\App\Models\StockTransfer::class, 'number', 'economat.transfers.show'],
+            StockMovement::SOURCE_IMPORT         => [\App\Models\StockImport::class, 'reference',
+                'economat.classeur.show'],
+            StockMovement::SOURCE_TRANSFER       => [\App\Models\StockTransfer::class, 'number',
+                'economat.transfers.show'],
         ];
 
         $documents = [];
@@ -341,7 +350,8 @@ class StockMovementJournal
             'source_type' => $m->source_type,
             'nature'      => $m->typeLabel(),
             'origine'     => $m->sourceLabel() . ($document ? ' ' . $document['numero'] : '')
-                . ($m->stockImport && $m->source_type !== StockMovement::SOURCE_IMPORT ? ' · import ' . $m->stockImport->reference : ''),
+                . ($m->stockImport && $m->source_type !== StockMovement::SOURCE_IMPORT ? ' · import ' . $m->stockImport
+                    ->reference : ''),
             'url'         => $document['url'] ?? null,
             'avant'       => $m->stockAvant(),
             'entree'      => $estAjustement ? null : ($quantite > 0 ? $quantite : null),

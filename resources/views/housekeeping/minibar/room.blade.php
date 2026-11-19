@@ -30,7 +30,8 @@
             </p>
         </div>
         <a href="{{ route('housekeeping.index') }}"
-           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30
+               bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Housekeeping
         </a>
     </div>
@@ -41,7 +42,10 @@
         <div class="bg-white rounded-xl shadow-sm p-10 text-center border border-dashed border-secondary/30">
             <p class="text-sm text-primary/50">Cette chambre n'a pas de mini-bar.</p>
             @droit('housekeeping.minibar.voir')
-                <a href="{{ route('housekeeping.minibar.index') }}" class="inline-block mt-2 text-xs text-secondary hover:text-primary underline">Régler les dotations</a>
+                <a
+                    href="{{ route('housekeeping.minibar.index') }}"
+                    class="inline-block mt-2 text-xs text-secondary hover:text-primary
+                        underline">Régler les dotations</a>
             @enddroit
         </div>
     @else
@@ -84,7 +88,9 @@
                                                    id="consomme-{{ $ligne->minibar_article_id }}"
                                                    name="consommes[{{ $ligne->minibar_article_id }}]"
                                                    value="{{ old('consommes.' . $ligne->minibar_article_id) }}"
-                                                   class="w-24 px-2.5 py-1.5 text-right text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                                   class="w-24 px-2.5 py-1.5 text-right text-sm border
+                                                       border-secondary/30 rounded-lg bg-white text-primary
+                                                       focus:outline-none focus:border-primary">
                                         </td>
                                     </tr>
                                 @endforeach
@@ -95,9 +101,13 @@
                         <label for="notes" class="block text-xs text-primary/50 mb-1.5">Remarque (optionnel)</label>
                         <input type="text" id="notes" name="notes" maxlength="500" value="{{ old('notes') }}"
                                 placeholder="Bouteille ouverte, emballage abîmé…"
-                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary focus:outline-none focus:border-primary">
                     </div>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+                    <button
+                        type="submit"
+                        class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                            transition-colors">
                         Enregistrer le relevé
                     </button>
                 </form>
@@ -134,7 +144,8 @@
                         <div>
                             <label for="defective_article" class="block text-xs font-semibold text-primary/70 mb-1.5">Article concerné *</label>
                             <select id="defective_article" name="minibar_article_id" required
-                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                        text-primary focus:outline-none focus:border-primary">
                                 <option value="">-- Choisir l'article --</option>
                                 @foreach($articlesPresents as $ligne)
                                     <option value="{{ $ligne->article->id }}" @selected(old('minibar_article_id') == $ligne->article->id)>
@@ -147,12 +158,14 @@
                             <label for="defective_quantity" class="block text-xs font-semibold text-primary/70 mb-1.5">Quantité défectueuse *</label>
                             <input type="number" id="defective_quantity" name="quantity" min="1" max="99" step="1" required
                                    value="{{ old('quantity', 1) }}"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                       text-primary focus:outline-none focus:border-primary">
                         </div>
                         <div>
                             <label for="defective_reason" class="block text-xs font-semibold text-primary/70 mb-1.5">Motif du défaut *</label>
                             <select id="defective_reason" name="reason" required
-                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                        text-primary focus:outline-none focus:border-primary">
                                 <option value="">-- Choisir le motif --</option>
                                 <option value="Produit périmé / DLC dépassée" @selected(old('reason') === 'Produit périmé / DLC dépassée')>Produit périmé / DLC dépassée</option>
                                 <option value="Bouteille cassée / Fuite" @selected(old('reason') === 'Bouteille cassée / Fuite')>Bouteille cassée / Fuite</option>
@@ -166,14 +179,18 @@
                         <label for="defective_notes" class="block text-xs text-primary/50 mb-1.5">Précisions supplémentaires (optionnel)</label>
                         <input type="text" id="defective_notes" name="notes" maxlength="500" value="{{ old('notes') }}"
                                placeholder="Ex : fissure sur le goulot, date lisible 12/08/2026..."
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                   text-primary focus:outline-none focus:border-primary">
                     </div>
                     <div class="flex items-center justify-between pt-2">
                         <span class="text-xs text-amber-800 font-medium flex items-center gap-1.5">
                             <i data-lucide="info" class="w-4 h-4 text-amber-600"></i>
                             Non facturé au client · Notification envoyée à la gouvernante
                         </span>
-                        <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 transition flex items-center gap-1.5">
+                        <button
+                            type="submit"
+                            class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 text-white
+                                hover:bg-amber-700 transition flex items-center gap-1.5">
                             <i data-lucide="package-x" class="w-4 h-4"></i>
                             Déclarer défectueux &amp; retirer
                         </button>
@@ -202,7 +219,10 @@
                     @if($peutRecharger)
                         <form method="POST" action="{{ route('housekeeping.minibar.restock', $room) }}">
                             @csrf
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 transition">
+                            <button
+                                type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold
+                                    bg-amber-600 text-white hover:bg-amber-700 transition">
                                 <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger depuis le dépôt
                             </button>
                         </form>
@@ -233,15 +253,23 @@
             {{-- Contrôle d'une chambre dont le dépôt n'a pas pu compléter le mini-bar. --}}
             @if($aControler && $manque > 0)
                 @droit('housekeeping.inspect')
-                    <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="px-5 py-4 border-t border-secondary/20 bg-amber-50/50 flex flex-col sm:flex-row sm:items-end gap-3">
+                    <form
+                        method="POST"
+                        action="{{ route('housekeeping.inspect', $room) }}"
+                        class="px-5 py-4 border-t border-secondary/20 bg-amber-50/50 flex flex-col sm:flex-row
+                            sm:items-end gap-3">
                         @csrf
                         <div class="flex-1">
                             <label for="motif_minibar" class="block text-xs text-primary/60 mb-1.5">Valider la chambre avec un mini-bar incomplet — pourquoi ?</label>
                             <input type="text" id="motif_minibar" name="motif_minibar" maxlength="255" required
                                    placeholder="Rupture au dépôt, demande à l'économat en cours…"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                       text-primary focus:outline-none focus:border-primary">
                         </div>
-                        <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition">Valider quand même</button>
+                        <button
+                            type="submit"
+                            class="px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white
+                                hover:bg-purple-700 transition">Valider quand même</button>
                     </form>
                 @enddroit
             @endif
@@ -264,11 +292,15 @@
                                 <span class="block text-xs text-primary/60 mb-1">{{ $article->name }}</span>
                                 <input type="number" min="0" max="99" step="1" name="quantites[{{ $article->id }}]"
                                        value="{{ $actuelles[$article->id] ?? 0 }}"
-                                       class="w-full px-2.5 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                                       class="w-full px-2.5 py-1.5 text-sm border border-secondary/30 rounded-lg
+                                           bg-white text-primary focus:outline-none focus:border-primary">
                             </label>
                         @endforeach
                     </div>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Enregistrer la dotation</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark
+                            transition-colors">Enregistrer la dotation</button>
                 </form>
             </div>
         @endif
@@ -317,7 +349,8 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-secondary/20 flex items-center justify-between">
                 <h2 class="font-heading font-semibold text-primary text-sm">Produits défectueux retirés</h2>
-                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Non facturés</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100
+                    text-amber-800">Non facturés</span>
             </div>
             <ul class="divide-y divide-secondary/10">
                 @forelse($defectueux as $def)

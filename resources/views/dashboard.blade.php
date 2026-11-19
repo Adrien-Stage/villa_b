@@ -4,7 +4,10 @@
 
 @section('content')
 <div class="mb-3">
-    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors">
+    <a
+        href="{{ route('dashboard') }}"
+        class="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary
+            transition-colors">
         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
         <span>Retour aux applications</span>
     </a>
@@ -18,7 +21,8 @@
     </div>
     <div class="flex items-center gap-3">
         {{-- Widget Météo --}}
-        <div class="hidden sm:flex items-center gap-3 bg-white/90 px-3.5 py-1.5 rounded-2xl border border-secondary/15 shadow-sm">
+        <div class="hidden sm:flex items-center gap-3 bg-white/90 px-3.5 py-1.5 rounded-2xl border border-secondary/15
+            shadow-sm">
             <div class="text-amber-500 flex items-center justify-center">
                 <i data-lucide="sun" class="w-6 h-6 fill-amber-400 text-amber-500"></i>
             </div>
@@ -32,7 +36,8 @@
         </div>
 
         {{-- Session pill --}}
-        <div class="flex items-center gap-2 bg-white/90 px-4 py-2 rounded-2xl border border-secondary/15 shadow-sm text-xs font-bold uppercase tracking-wider text-primary/70">
+        <div class="flex items-center gap-2 bg-white/90 px-4 py-2 rounded-2xl border border-secondary/15 shadow-sm
+            text-xs font-bold uppercase tracking-wider text-primary/70">
             <span>SESSION : {{ strtoupper(Auth::user()->name) }} ({{ strtoupper(Auth::user()->role) }})</span>
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-primary/40"></i>
         </div>
@@ -42,17 +47,20 @@
 @admin
 <div class="mb-6 flex flex-wrap gap-2">
     <a href="/admin"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+       class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+           hover:bg-surface-dark transition-colors">
         <i data-lucide="settings" class="w-4 h-4"></i>
         Administration
     </a>
     <button onclick="testPopup()"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+       class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg
+           hover:bg-red-700 transition-colors">
         <i data-lucide="alert-triangle" class="w-4 h-4"></i>
         Tester le popup d'acces refuse
     </button>
     <a href="{{ route('test-popup') }}"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors">
+       class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg
+           hover:bg-orange-700 transition-colors">
         <i data-lucide="external-link" class="w-4 h-4"></i>
         Tester URL directe
     </a>
@@ -72,51 +80,78 @@
              est strictement réservé aux agents de la réception / front-office. --}}
         @if(!Auth::user()->isAdmin() && Auth::user()->exerce(['reception']))
             @droit('reception.pos.voir')
-            <a href="{{ route('reception.pos.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#8D4925] hover:bg-[#733a1c] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
+            <a
+                href="{{ route('reception.pos.index') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-[#8D4925] hover:bg-[#733a1c] text-white rounded-xl
+                    text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="store" class="w-4 h-4" aria-hidden="true"></i> Mode POS Réception
             </a>
             @enddroit
         @endif
         @if($isManager || Auth::user()->exerce(['reception']))
             @droit('bookings.creer')
-            <a href="{{ route('bookings.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#2A160D] hover:bg-[#1a0e08] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
+            <a
+                href="{{ route('bookings.create') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-[#2A160D] hover:bg-[#1a0e08] text-white rounded-xl
+                    text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Nouvelle Réservation
             </a>
             @enddroit
             @droit('customers.creer')
-            <a href="{{ route('customers.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
+            <a
+                href="{{ route('customers.create') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary
+                    hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
                 <i data-lucide="user-plus" class="w-4 h-4 text-primary/60"></i> Nouveau Client
             </a>
             @enddroit
             @droit('agenda.voir')
-            <a href="{{ route('agenda.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
+            <a
+                href="{{ route('agenda.index') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-white border border-secondary/25 text-primary
+                    hover:bg-accent/15 rounded-xl text-xs font-semibold transition-all shadow-sm">
                 <i data-lucide="calendar" class="w-4 h-4 text-primary/60"></i> Planning
             </a>
             @enddroit
         @endif
 
         @if(($isManager || Auth::user()->exerce(['restaurant_chief', 'restaurant_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'restaurant.orders.voir'))
-            <a href="{{ route('restaurant.orders.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#EA580C] hover:bg-[#c2410c] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
+            <a
+                href="{{ route('restaurant.orders.index') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-[#EA580C] hover:bg-[#c2410c] text-white rounded-xl
+                    text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="utensils" class="w-4 h-4"></i> Gérer les commandes (Restaurant)
             </a>
         @endif
 
         @if(($isManager || Auth::user()->exerce(['housekeeping_leader', 'housekeeping_supervisor', 'housekeeping', 'housekeeping_staff'])) && app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'housekeeping.voir'))
-            <a href="{{ route('housekeeping.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all">
+            <a
+                href="{{ route('housekeeping.index') }}"
+                class="flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl
+                    text-xs font-semibold shadow-sm hover:shadow transition-all">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> Accéder au Housekeeping
             </a>
         @endif
 
         @if(!$isManager && Auth::user()->exerce(['shop_manager', 'shop_cashier']))
             @if(!($panels['shop_active_session'] ?? false))
-                <a href="{{ route('shop.cash_register.open') }}" class="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-xs font-semibold hover:bg-green-700 transition shadow-sm">
+                <a
+                    href="{{ route('shop.cash_register.open') }}"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-xs font-semibold
+                        hover:bg-green-700 transition shadow-sm">
                     <i data-lucide="lock-open" class="w-4 h-4"></i> Ouvrir ma caisse
                 </a>
             @else
-                <a href="{{ route('shop.orders.create') }}" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-[#4a2a14] transition shadow-sm">
+                <a
+                    href="{{ route('shop.orders.create') }}"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-semibold
+                        hover:bg-[#4a2a14] transition shadow-sm">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i> Nouvelle Vente Boutique
                 </a>
-                <a href="{{ route('shop.cash_register.close') }}" class="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold hover:bg-red-100 transition shadow-sm">
+                <a
+                    href="{{ route('shop.cash_register.close') }}"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 border border-red-200 rounded-xl
+                        text-xs font-semibold hover:bg-red-100 transition shadow-sm">
                     <i data-lucide="lock" class="w-4 h-4"></i> Fermer ma caisse
                 </a>
             @endif
@@ -132,10 +167,12 @@
     {{-- LIGNE DE 6 CARTES CHIFFRES CLÉS --}}
     <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-6">
         @foreach($cards as $card)
-            <div class="bg-white rounded-2xl p-4 border border-secondary/15 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-2xl p-4 border border-secondary/15 shadow-sm flex flex-col justify-between
+                hover:shadow-md transition-shadow">
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-2">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-primary/50 truncate">{{ $card['label'] }}</span>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-primary/50
+                            truncate">{{ $card['label'] }}</span>
                         <div class="w-9 h-9 rounded-xl {{ $card['icon_bg'] ?? 'bg-accent/30 text-primary/70' }} flex items-center justify-center flex-shrink-0">
                             <i data-lucide="{{ $card['icon'] ?? 'sparkles' }}" class="w-4 h-4"></i>
                         </div>
@@ -151,7 +188,9 @@
                 </div>
 
                 @if(isset($card['href']))
-                    <a href="{{ $card['href'] }}" class="text-xs font-semibold {{ $card['link_color'] ?? 'text-secondary hover:text-primary' }} flex items-center gap-1 mt-3 pt-2 border-t border-secondary/10 transition-colors">
+                    <a
+                        href="{{ $card['href'] }}"
+                        class="text-xs font-semibold {{ $card['link_color'] ?? 'text-secondary hover:text-primary' }} flex items-center gap-1 mt-3 pt-2 border-t border-secondary/10 transition-colors">
                         {{ $card['link_text'] ?? 'Voir la liste →' }}
                     </a>
                 @endif
@@ -169,7 +208,10 @@
                     <i data-lucide="pie-chart" class="w-4 h-4 text-primary/70"></i>
                     Occupation en temps réel
                 </h2>
-                <a href="{{ route('rooms.index') }}" class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                <a
+                    href="{{ route('rooms.index') }}"
+                    class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center
+                        gap-1">
                     Voir plus <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -219,7 +261,8 @@
                                     fill="transparent" />
                         @endif
                     </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center
+                        pointer-events-none">
                         <span class="text-2xl font-bold font-heading text-primary leading-none">{{ $occupancyRate }}%</span>
                         <span class="text-[11px] font-semibold text-primary/70 mt-1 leading-none">{{ $occCount }} / {{ $tot }}</span>
                         <span class="text-[9px] text-primary/45 uppercase tracking-wider mt-0.5">chambres occupées</span>
@@ -253,7 +296,8 @@
                     </span>
                     <span class="font-bold">{{ $maintCount }}</span>
                 </div>
-                <div class="pt-2 border-t border-secondary/15 flex items-center justify-between text-[11px] font-bold text-primary/60 uppercase tracking-wider">
+                <div class="pt-2 border-t border-secondary/15 flex items-center justify-between text-[11px] font-bold
+                    text-primary/60 uppercase tracking-wider">
                     <span>Capacité Max</span>
                     <span class="text-sm font-heading font-bold text-primary">{{ $tot }}</span>
                 </div>
@@ -261,13 +305,18 @@
         </div>
 
         {{-- CARTE 2 : ARRIVÉES & DÉPARTS DU JOUR (AVEC ONGLETS) --}}
-        <div class="bg-white rounded-2xl p-5 border border-secondary/15 shadow-sm flex flex-col justify-between" x-data="{ tab: 'arrivals' }">
+        <div
+            class="bg-white rounded-2xl p-5 border border-secondary/15 shadow-sm flex flex-col justify-between"
+            x-data="{ tab: 'arrivals' }">
             <div class="flex items-center justify-between pb-3 border-b border-secondary/15">
                 <h2 class="font-heading font-semibold text-primary text-sm flex items-center gap-2">
                     <i data-lucide="bell" class="w-4 h-4 text-primary/70"></i>
                     Arrivées & Départs du jour
                 </h2>
-                <a href="{{ route('bookings.index') }}" class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                <a
+                    href="{{ route('bookings.index') }}"
+                    class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center
+                        gap-1">
                     Tout voir <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -302,10 +351,12 @@
                                 : mb_substr($booking->customer->full_name ?? 'CL', 0, 2);
                             $initials = mb_strtoupper($initials);
                         @endphp
-                        <div class="rounded-2xl border border-emerald-200/80 bg-[#ECFDF5]/50 p-4 shadow-sm flex flex-col justify-between gap-3">
+                        <div class="rounded-2xl border border-emerald-200/80 bg-[#ECFDF5]/50 p-4 shadow-sm flex
+                            flex-col justify-between gap-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                                    <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 font-bold flex
+                                        items-center justify-center text-sm shadow-sm flex-shrink-0">
                                         {{ $initials }}
                                     </div>
                                     <div>
@@ -313,7 +364,8 @@
                                         <p class="text-xs text-emerald-700/80 font-medium">Chambre {{ $booking->room->number ?? '—' }} ({{ $booking->room->roomType->name ?? '—' }})</p>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wider">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100
+                                    text-emerald-700 uppercase tracking-wider">
                                     Arrivée
                                 </span>
                             </div>
@@ -332,12 +384,16 @@
                                 @if($booking->status->value === 'confirmed')
                                     <form method="POST" action="{{ route('bookings.checkIn', $booking) }}">
                                         @csrf
-                                        <button type="submit" class="px-3.5 py-2 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                        <button
+                                            type="submit"
+                                            class="px-3.5 py-2 bg-[#059669] hover:bg-[#047857] text-white rounded-xl
+                                                text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
                                             <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Faire le Check-in
                                         </button>
                                     </form>
                                 @else
-                                    <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                    <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100
+                                        text-emerald-800">
                                         Déjà installé
                                     </span>
                                 @endif
@@ -361,10 +417,12 @@
                                 : mb_substr($booking->customer->full_name ?? 'CL', 0, 2);
                             $initials = mb_strtoupper($initials);
                         @endphp
-                        <div class="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-4 shadow-sm flex flex-col justify-between gap-3">
+                        <div class="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-4 shadow-sm flex flex-col
+                            justify-between gap-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                                    <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-800 font-bold flex
+                                        items-center justify-center text-sm shadow-sm flex-shrink-0">
                                         {{ $initials }}
                                     </div>
                                     <div>
@@ -372,7 +430,8 @@
                                         <p class="text-xs text-rose-700/80 font-medium">Chambre {{ $booking->room->number ?? '—' }} ({{ $booking->room->roomType->name ?? '—' }})</p>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 uppercase tracking-wider">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700
+                                    uppercase tracking-wider">
                                     Départ
                                 </span>
                             </div>
@@ -382,19 +441,24 @@
                                     @if($booking->balance_due > 0)
                                         <span class="text-xs font-bold text-red-600 bg-red-100 px-2.5 py-1 rounded-lg">Solde: {{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
                                     @else
-                                        <span class="text-xs font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-lg">Solde réglé</span>
+                                        <span class="text-xs font-bold text-green-700 bg-green-100 px-2.5 py-1
+                                            rounded-lg">Solde réglé</span>
                                     @endif
                                 </div>
 
                                 @if($booking->status->value === 'checked_in')
                                     <form method="POST" action="{{ route('bookings.checkOut', $booking) }}">
                                         @csrf
-                                        <button type="submit" class="px-3.5 py-2 bg-[#EA580C] hover:bg-[#c2410c] text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                        <button
+                                            type="submit"
+                                            class="px-3.5 py-2 bg-[#EA580C] hover:bg-[#c2410c] text-white rounded-xl
+                                                text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
                                             <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Faire le Check-out
                                         </button>
                                     </form>
                                 @else
-                                    <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-100 text-rose-800">
+                                    <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-100
+                                        text-rose-800">
                                         Départ terminé
                                     </span>
                                 @endif
@@ -417,7 +481,10 @@
                     <i data-lucide="bar-chart-2" class="w-4 h-4 text-primary/70"></i>
                     Disponibilité des chambres
                 </h2>
-                <a href="{{ route('rooms.index') }}" class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                <a
+                    href="{{ route('rooms.index') }}"
+                    class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center
+                        gap-1">
                     Voir plus <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -454,7 +521,8 @@
                                   stroke-linecap="round" />
                         @endif
                     </svg>
-                    <div class="absolute bottom-1 inset-x-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                    <div class="absolute bottom-1 inset-x-0 flex flex-col items-center justify-center text-center
+                        pointer-events-none">
                         <span class="text-3xl font-bold font-heading text-primary leading-none">{{ $gaugeAvailable }}</span>
                         <span class="text-[10px] text-primary/50 font-medium mt-0.5">chambres disponibles</span>
                     </div>
@@ -502,7 +570,10 @@
                     <i data-lucide="utensils" class="w-4 h-4 text-orange-500"></i>
                     Dernières commandes
                 </h2>
-                <a href="{{ route('restaurant.orders.index') }}" class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                <a
+                    href="{{ route('restaurant.orders.index') }}"
+                    class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center
+                        gap-1">
                     Cuisine <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -520,10 +591,12 @@
                         $statusUpper = strtoupper($order->status);
                         $payUpper = strtoupper($order->payment_status ?? 'unpaid');
                     @endphp
-                    <div class="py-3.5 flex items-center justify-between gap-3 hover:bg-accent/5 px-2 rounded-xl transition-colors">
+                    <div class="py-3.5 flex items-center justify-between gap-3 hover:bg-accent/5 px-2 rounded-xl
+                        transition-colors">
                         <div class="flex items-center gap-3 min-w-0">
                             {{-- Vignette plat circulaire --}}
-                            <div class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 border border-secondary/20 shadow-sm bg-accent/20">
+                            <div class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 border border-secondary/20
+                                shadow-sm bg-accent/20">
                                 <img src="{{ $dishImg }}" alt="Plat" class="w-full h-full object-cover">
                             </div>
 
@@ -554,7 +627,11 @@
                             <span class="font-bold text-sm text-primary">
                                 {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
                             </span>
-                            <a href="{{ route('restaurant.orders.show', $order) }}" class="p-1.5 text-secondary hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors" title="Détail de la commande">
+                            <a
+                                href="{{ route('restaurant.orders.show', $order) }}"
+                                class="p-1.5 text-secondary hover:text-primary hover:bg-secondary/10 rounded-lg
+                                    transition-colors"
+                                title="Détail de la commande">
                                 <i data-lucide="more-vertical" class="w-4 h-4"></i>
                             </a>
                         </div>
@@ -576,7 +653,10 @@
                     <i data-lucide="layers" class="w-4 h-4 text-amber-600"></i>
                     Statistiques du jour
                 </h2>
-                <a href="{{ route('analytics.index') }}" class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                <a
+                    href="{{ route('analytics.index') }}"
+                    class="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center
+                        gap-1">
                     Voir rapports <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -585,7 +665,8 @@
             <div class="grid grid-cols-3 gap-3">
                 {{-- Articles vendus --}}
                 <div class="bg-white rounded-2xl p-3.5 border border-secondary/15 shadow-sm flex items-start gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center
+                        flex-shrink-0">
                         <i data-lucide="package" class="w-4 h-4"></i>
                     </div>
                     <div class="min-w-0">
@@ -599,7 +680,8 @@
 
                 {{-- Articles sous seuil --}}
                 <div class="bg-white rounded-2xl p-3.5 border border-secondary/15 shadow-sm flex items-start gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center
+                        flex-shrink-0">
                         <i data-lucide="package-minus" class="w-4 h-4"></i>
                     </div>
                     <div class="min-w-0">
@@ -616,7 +698,8 @@
                 {{-- Valeur du stock — réservée aux fonctions de pilotage financier --}}
                 @pour('finance_manager', 'controller', 'purchasing_manager', 'manager')
                 <div class="bg-white rounded-2xl p-3.5 border border-secondary/15 shadow-sm flex items-start gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center
+                        flex-shrink-0">
                         <i data-lucide="warehouse" class="w-4 h-4"></i>
                     </div>
                     <div class="min-w-0">
@@ -688,7 +771,8 @@
                     <h3 class="font-heading font-semibold text-primary text-xs flex items-center gap-1.5">
                         Évolution du CA (Hôtel + Restaurant)
                     </h3>
-                    <div class="flex items-center gap-1 text-[11px] font-semibold text-primary/70 bg-accent/20 px-2.5 py-1 rounded-lg">
+                    <div class="flex items-center gap-1 text-[11px] font-semibold text-primary/70 bg-accent/20 px-2.5
+                        py-1 rounded-lg">
                         <span>Aujourd'hui</span>
                         <i data-lucide="chevron-down" class="w-3 h-3 text-primary/50"></i>
                     </div>
@@ -750,10 +834,12 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         @foreach($cards as $card)
             <a href="{{ $card['href'] ?? '#' }}"
-               class="group bg-white rounded-xl shadow-sm border border-secondary/15 p-4 hover:bg-accent/10 transition-colors">
+               class="group bg-white rounded-xl shadow-sm border border-secondary/15 p-4 hover:bg-accent/10
+                   transition-colors">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-xs font-semibold uppercase tracking-widest text-primary/45">{{ $card['label'] }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-widest
+                            text-primary/45">{{ $card['label'] }}</p>
                         <p class="font-heading text-2xl font-semibold text-primary mt-1 truncate">{{ $card['value'] }}</p>
                         @if(isset($card['subtitle_raw']))
                             <p class="text-xs text-primary/45 mt-1 truncate">{!! $card['subtitle_raw'] !!}</p>
@@ -761,7 +847,8 @@
                             <p class="text-xs text-primary/45 mt-1 truncate">{{ $card['subtitle'] ?? '' }}</p>
                         @endif
                     </div>
-                    <div class="h-10 w-10 rounded-xl bg-accent/30 border border-secondary/15 flex items-center justify-center text-primary/70 group-hover:bg-accent/40 flex-shrink-0">
+                    <div class="h-10 w-10 rounded-xl bg-accent/30 border border-secondary/15 flex items-center
+                        justify-center text-primary/70 group-hover:bg-accent/40 flex-shrink-0">
                         <i data-lucide="{{ $card['icon'] ?? 'sparkles' }}" class="w-5 h-5"></i>
                     </div>
                 </div>
@@ -787,7 +874,8 @@
                             Arrivées & Départs du jour
                         </h2>
                         <a href="{{ route('bookings.index') }}"
-                            class="text-xs text-secondary hover:text-primary transition-colors flex items-center gap-1 font-semibold">
+                            class="text-xs text-secondary hover:text-primary transition-colors flex items-center gap-1
+                                font-semibold">
                             Gérer tout
                             <i data-lucide="arrow-right" class="w-3 h-3"></i>
                         </a>
@@ -802,55 +890,70 @@
                     @else
                         <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             @foreach($arrivalsToday as $booking)
-                                <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm flex flex-col relative overflow-hidden group">
+                                <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm flex
+                                    flex-col relative overflow-hidden group">
                                     <div class="flex justify-between items-start mb-3">
                                         <div>
                                             <h3 class="font-heading font-bold text-emerald-900 text-base truncate">{{ $booking->customer->full_name }}</h3>
                                             <p class="text-xs text-emerald-700/80 font-medium">Chambre {{ $booking->room->number }} ({{ $booking->room->roomType->name }})</p>
                                         </div>
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-800 uppercase tracking-widest">Arrivée</span>
+                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-200
+                                            text-emerald-800 uppercase tracking-widest">Arrivée</span>
                                     </div>
                                     <div class="mt-auto flex items-center justify-between pt-2">
                                         <span class="text-xs text-emerald-700/60 font-semibold">{{ $booking->adults_count }} pers.</span>
                                         @if($booking->status->value === 'confirmed')
                                             <form method="POST" action="{{ route('bookings.checkIn', $booking) }}">
                                                 @csrf
-                                                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition shadow-sm flex items-center gap-1">
+                                                <button
+                                                    type="submit"
+                                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs
+                                                        font-semibold hover:bg-emerald-700 transition shadow-sm flex
+                                                        items-center gap-1">
                                                     <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Faire le Check-in
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-700">Déjà installé</span>
+                                            <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100
+                                                text-emerald-700">Déjà installé</span>
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
 
                             @foreach($departuresToday as $booking)
-                                <div class="rounded-xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm flex flex-col relative overflow-hidden group">
+                                <div class="rounded-xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm flex
+                                    flex-col relative overflow-hidden group">
                                     <div class="flex justify-between items-start mb-3">
                                         <div>
                                             <h3 class="font-heading font-bold text-orange-900 text-base truncate">{{ $booking->customer->full_name }}</h3>
                                             <p class="text-xs text-orange-700/80 font-medium">Chambre {{ $booking->room->number }} ({{ $booking->room->roomType->name }})</p>
                                         </div>
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-200 text-orange-800 uppercase tracking-widest">Départ</span>
+                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-200
+                                            text-orange-800 uppercase tracking-widest">Départ</span>
                                     </div>
                                     <div class="mt-auto flex items-center justify-between pt-2">
                                         @if($booking->balance_due > 0)
                                             <span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">Solde: {{ number_format($booking->balance_due / 100, 0, ',', ' ') }} FCFA</span>
                                         @else
-                                            <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">Solde réglé</span>
+                                            <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1
+                                                rounded">Solde réglé</span>
                                         @endif
 
                                         @if($booking->status->value === 'checked_in')
                                             <form method="POST" action="{{ route('bookings.checkOut', $booking) }}">
                                                 @csrf
-                                                <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 transition shadow-sm flex items-center gap-1">
+                                                <button
+                                                    type="submit"
+                                                    class="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs
+                                                        font-semibold hover:bg-orange-600 transition shadow-sm flex
+                                                        items-center gap-1">
                                                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Faire le Check-out
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-100 text-orange-700">Départ terminé</span>
+                                            <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-100
+                                                text-orange-700">Départ terminé</span>
                                         @endif
                                     </div>
                                 </div>
@@ -875,9 +978,11 @@
                     </div>
                     <div class="divide-y divide-secondary/10">
                         @foreach($panels['restaurant_latest_orders'] as $order)
-                            <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-accent/5 transition-colors">
+                            <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-accent/5
+                                transition-colors">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold font-heading">
+                                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-700 flex items-center
+                                        justify-center font-bold font-heading">
                                         {{ $order->table_number }}
                                     </div>
                                     <div>
@@ -896,7 +1001,10 @@
                                     <p class="text-sm font-bold text-primary">
                                         {{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA
                                     </p>
-                                    <a href="{{ route('restaurant.orders.show', $order) }}" class="p-2 text-secondary hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors">
+                                    <a
+                                        href="{{ route('restaurant.orders.show', $order) }}"
+                                        class="p-2 text-secondary hover:text-primary hover:bg-secondary/10 rounded-lg
+                                            transition-colors">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
                                 </div>
@@ -922,7 +1030,8 @@
                     </div>
                     <div class="divide-y divide-red-100/50 bg-white">
                         @forelse($panels['rooms_attention'] as $room)
-                            <div class="px-5 py-3 flex items-center justify-between hover:bg-red-50/30 transition-colors">
+                            <div class="px-5 py-3 flex items-center justify-between hover:bg-red-50/30
+                                transition-colors">
                                 <div>
                                     <p class="text-sm font-bold text-gray-900">Chambre {{ $room->number }}</p>
                                     <p class="text-[10px] text-gray-500 mt-0.5">{{ $room->roomType?->name ?? '—' }}</p>
@@ -960,13 +1069,16 @@
                                 </div>
                                 <div class="w-full h-2 bg-accent/30 rounded-full overflow-hidden">
                                     @if($s['rooms_total'] > 0)
-                                        <div class="h-full {{ $row['color'] }} rounded-full" style="width: {{ ($row['count'] / $s['rooms_total']) * 100 }}%"></div>
+                                        <div
+                                            class="h-full {{ $row['color'] }} rounded-full"
+                                            style="width: {{ ($row['count'] / $s['rooms_total']) * 100 }}%"></div>
                                     @endif
                                 </div>
                             </div>
                         @endforeach
                         <div class="pt-4 border-t border-secondary/15 flex justify-between items-center">
-                            <span class="text-xs font-semibold text-primary/50 uppercase tracking-widest">Capacité Max</span>
+                            <span class="text-xs font-semibold text-primary/50 uppercase
+                                tracking-widest">Capacité Max</span>
                             <span class="text-base font-bold text-primary">{{ $s['rooms_total'] }}</span>
                         </div>
                     </div>
@@ -1008,10 +1120,13 @@
                     </div>
                     <div class="divide-y divide-orange-100/50">
                         @foreach($panels['economat_alerts'] as $article)
-                            <a href="{{ route('economat.items.index') }}" class="flex items-center justify-between p-3 hover:bg-orange-50/40 transition-colors">
+                            <a
+                                href="{{ route('economat.items.index') }}"
+                                class="flex items-center justify-between p-3 hover:bg-orange-50/40 transition-colors">
                                 <p class="font-medium text-gray-900 text-xs">{{ $article->name }}</p>
                                 @if($article->isOutOfStock())
-                                    <span class="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 uppercase">Rupture</span>
+                                    <span class="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded
+                                        border border-red-200 uppercase">Rupture</span>
                                 @else
                                     <span class="text-[9px] font-bold bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded border border-orange-200 uppercase">Reste {{ rtrim(rtrim(number_format((float) $article->current_stock, 2, ',', ' '), '0'), ',') }} {{ $article->unit }}</span>
                                 @endif
@@ -1034,9 +1149,12 @@
                             <div class="flex items-center justify-between p-3">
                                 <p class="font-medium text-gray-900 text-xs">{{ $product->name }}</p>
                                 @if($product->stock_quantity <= 0)
-                                    <span class="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 uppercase">Rupture</span>
+                                    <span class="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded
+                                        border border-red-200 uppercase">Rupture</span>
                                 @else
-                                    <span class="text-[9px] font-bold bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded border border-orange-200 uppercase">Reste {{ $product->stock_quantity }}</span>
+                                    <span class="text-[9px] font-bold bg-orange-100 text-orange-800 px-1.5 py-0.5
+                                        rounded border border-orange-200
+                                        uppercase">Reste {{ $product->stock_quantity }}</span>
                                 @endif
                             </div>
                         @endforeach

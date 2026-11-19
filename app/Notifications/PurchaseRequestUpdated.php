@@ -52,7 +52,8 @@ class PurchaseRequestUpdated extends Notification
         return match ($this->etape) {
             self::SOUMISE     => "Demande d'achat à vérifier",
             self::MODIFIEE    => "Votre demande d'achat a été modifiée",
-            self::APPROUVEE   => $this->request->aEteAjustee() ? "Demande d'achat approuvée, quantités ajustées" : "Demande d'achat approuvée",
+            self::APPROUVEE   => $this->request
+                ->aEteAjustee() ? "Demande d'achat approuvée, quantités ajustées" : "Demande d'achat approuvée",
             self::A_COMMANDER => "Demande d'achat à commander",
             self::REFUSEE     => "Demande d'achat refusée",
             default           => "Demande d'achat mise à jour",
@@ -87,15 +88,20 @@ class PurchaseRequestUpdated extends Notification
         $par = $this->request->reviewedBy?->name;
 
         return match ($this->etape) {
-            self::SOUMISE => "{$numero} ({$this->request->departmentLabel()}, priorité " . mb_strtolower($this->request->priorityLabel()) . ") : "
-                . "{$this->montant()} estimés, demandée par " . ($this->request->requestedBy?->name ?? 'un service') . '.',
+            self::SOUMISE => "{$numero} ({$this->request->departmentLabel()}, priorité " . mb_strtolower($this->request
+                ->priorityLabel()) . ") : "
+                . "{$this->montant()} estimés, demandée par " . ($this->request->requestedBy?->name ?? 'un service')
+                    . '.',
             self::APPROUVEE => $this->request->aEteAjustee()
-                ? "{$numero} approuvée" . ($par ? " par {$par}" : '') . " avec des quantités ajustées : {$this->ajustements()}."
+                ? "{$numero} approuvée" . ($par ? " par {$par}" : '')
+                    . " avec des quantités ajustées : {$this->ajustements()}."
                 : "{$numero} approuvée" . ($par ? " par {$par}" : '') . ' telle que demandée. Elle passe aux achats.',
             self::A_COMMANDER => "{$numero} approuvée" . ($par ? " par {$par}" : '') . " — {$this->montant()} estimés. "
                 . 'Générez le(s) bon(s) de commande.',
-            self::REFUSEE => "{$numero} refusée" . ($par ? " par {$par}" : '') . " : {$this->request->rejection_reason}",
-            self::MODIFIEE => "{$numero} modifiée" . ($this->par ? " par {$this->par}" : '') . " : {$this->changements}.",
+            self::REFUSEE => "{$numero} refusée" . ($par ? " par {$par}" : '')
+                . " : {$this->request->rejection_reason}",
+            self::MODIFIEE => "{$numero} modifiée" . ($this->par ? " par {$this->par}" : '')
+                . " : {$this->changements}.",
             default => "{$numero} mise à jour.",
         };
     }

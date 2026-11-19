@@ -27,7 +27,8 @@
 @endif
 
 @if(session('success'))
-    <p role="status" class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</p>
+    <p role="status" class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</p>
 @endif
 @if($errors->any())
     <ul role="alert" class="mb-4 list-disc rounded-lg border border-red-200 bg-red-50 px-8 py-3 text-sm text-red-800">

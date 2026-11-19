@@ -49,7 +49,8 @@ class SessionsCaisse extends Edition
             ->get()
             ->map(fn (CashRegisterSession $s) => [
                 'caisse' => (self::MODULES[$s->module] ?? ucfirst((string) $s->module))
-                    . ($s->module === 'restaurant' && $s->point_of_sale_id ? ' — ' . ($points[$s->point_of_sale_id] ?? '') : ''),
+                    . ($s->module === 'restaurant' && $s->point_of_sale_id ? ' — ' . ($points[$s->point_of_sale_id]
+                        ?? '') : ''),
                 'caissier' => $s->user?->name ?? '—',
                 'ouverture' => $s->opened_at,
                 'cloture' => $s->closed_at,

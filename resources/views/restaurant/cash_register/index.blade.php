@@ -12,11 +12,15 @@
     </div>
     @droit('restaurant.cash_register.open.creer')
         @if(! $enCours)
-            <a href="{{ route('restaurant.cash_register.open') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg">
+            <a
+                href="{{ route('restaurant.cash_register.open') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg">
                 <i data-lucide="lock-open" class="w-3.5 h-3.5"></i> Ouvrir ma caisse
             </a>
         @elseif($enCours->status === 'open')
-            <a href="{{ route('restaurant.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg">
+            <a
+                href="{{ route('restaurant.cash_register.close') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg">
                 <i data-lucide="lock" class="w-3.5 h-3.5"></i> Compter ma caisse
             </a>
         @endif
@@ -27,7 +31,11 @@
     @if(session($cle))<div class="mb-4 rounded-lg border px-4 py-3 text-sm {{ $classes }}">{{ session($cle) }}</div>@endif
 @endforeach
 
-<x-table :rows="$sessions" empty="Aucune session de caisse." empty-icon="calculator" caption="Sessions de caisse du restaurant">
+<x-table
+    :rows="$sessions"
+    empty="Aucune session de caisse."
+    empty-icon="calculator"
+    caption="Sessions de caisse du restaurant">
     <x-slot:head>
         <x-table.col>Caisse</x-table.col>
         <x-table.col>Titulaire</x-table.col>
@@ -50,11 +58,14 @@
             <x-table.cell align="right" nowrap class="{{ (int) $s->discrepancy_amount < 0 ? 'text-red-700' : '' }}">{{ $fcfa($s->discrepancy_amount) }}</x-table.cell>
             <x-table.cell nowrap>
                 @if($s->closed_at)
-                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">Close{{ $s->witness ? ' — ' . $s->witness->name : '' }}</span>
+                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold
+                        text-green-700">Close{{ $s->witness ? ' — ' . $s->witness->name : '' }}</span>
                 @elseif($s->isPendingReview())
-                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">Attend la comptabilité</span>
+                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold
+                        text-amber-800">Attend la comptabilité</span>
                 @elseif($s->status === 'paused')
-                    <span class="rounded-full bg-accent/40 px-2 py-0.5 text-xs font-semibold text-primary/70">En pause</span>
+                    <span class="rounded-full bg-accent/40 px-2 py-0.5 text-xs font-semibold
+                        text-primary/70">En pause</span>
                 @else
                     <span class="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-800">Ouverte</span>
                 @endif

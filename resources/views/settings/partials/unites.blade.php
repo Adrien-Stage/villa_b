@@ -68,17 +68,21 @@
                                 </template>
                                 <template x-if="modeEdition">
                                     <input type="text" form="form-unite-{{ $unite->id }}" name="name" value="{{ $unite->name }}" required maxlength="50"
-                                           class="w-36 rounded-md border border-secondary/30 px-2 py-1 text-xs text-primary outline-none focus:border-primary">
+                                           class="w-36 rounded-md border border-secondary/30 px-2 py-1 text-xs
+                                               text-primary outline-none focus:border-primary">
                                 </template>
                             </td>
 
                             <td class="px-3 py-3 text-center font-mono">
                                 <template x-if="!modeEdition">
-                                    <span class="inline-block rounded bg-secondary/15 px-2 py-0.5 font-bold text-primary">{{ $unite->short_name ?: $unite->name }}</span>
+                                    <span class="inline-block rounded bg-secondary/15 px-2 py-0.5 font-bold
+                                        text-primary">{{ $unite->short_name ?: $unite->name }}</span>
                                 </template>
                                 <template x-if="modeEdition">
                                     <input type="text" form="form-unite-{{ $unite->id }}" name="short_name" value="{{ $unite->short_name }}" required maxlength="20"
-                                           class="w-20 rounded-md border border-secondary/30 px-2 py-1 text-xs text-center font-mono font-bold text-primary outline-none focus:border-primary">
+                                           class="w-20 rounded-md border border-secondary/30 px-2 py-1 text-xs
+                                               text-center font-mono font-bold text-primary outline-none
+                                               focus:border-primary">
                                 </template>
                             </td>
 
@@ -90,9 +94,12 @@
                                     <div class="flex items-center gap-1.5 flex-wrap">
                                         <span>=</span>
                                         <input type="number" step="any" min="0.0001" form="form-unite-{{ $unite->id }}" name="factor" value="{{ (float) $unite->factor }}"
-                                               class="w-20 rounded-md border border-secondary/30 px-2 py-1 text-xs font-mono text-right text-primary outline-none focus:border-primary">
+                                               class="w-20 rounded-md border border-secondary/30 px-2 py-1 text-xs
+                                                   font-mono text-right text-primary outline-none
+                                                   focus:border-primary">
                                         <select form="form-unite-{{ $unite->id }}" name="reference_unit_id"
-                                                class="rounded-md border border-secondary/30 px-2 py-1 text-xs text-primary outline-none focus:border-primary">
+                                                class="rounded-md border border-secondary/30 px-2 py-1 text-xs
+                                                    text-primary outline-none focus:border-primary">
                                             <option value="">— Unité de base (1) —</option>
                                             @foreach($unites as $uRef)
                                                 @if($uRef->id !== $unite->id)
@@ -117,7 +124,11 @@
                                 </template>
                                 <template x-if="modeEdition">
                                     <label class="inline-flex items-center gap-1.5 text-xs text-primary cursor-pointer">
-                                        <input type="hidden" form="form-unite-{{ $unite->id }}" name="is_active" value="0">
+                                        <input
+                                            type="hidden"
+                                            form="form-unite-{{ $unite->id }}"
+                                            name="is_active"
+                                            value="0">
                                         <input type="checkbox" form="form-unite-{{ $unite->id }}" name="is_active" value="1" @checked($unite->is_active) class="rounded border-secondary/30">
                                         <span>Actif</span>
                                     </label>
@@ -126,7 +137,11 @@
 
                             <td class="px-4 py-3 text-right">
                                 @droit('economat.units.modifier')
-                                    <form id="form-unite-{{ $unite->id }}" method="POST" action="{{ route('economat.units.update', $unite) }}" class="hidden">
+                                    <form
+                                        id="form-unite-{{ $unite->id }}"
+                                        method="POST"
+                                        action="{{ route('economat.units.update', $unite) }}"
+                                        class="hidden">
                                         @csrf @method('PUT')
                                     </form>
                                 @enddroit
@@ -139,7 +154,9 @@
                                 {{-- Les options de la ligne : le menu ⋮, comme tous les tableaux. --}}
                                 @if($peutModifier || $peutSupprimer)
                                     <template x-if="!modeEdition">
-                                        <x-menu-actions :label="'Actions pour l\'unité '.$unite->name" class="inline-block">
+                                        <x-menu-actions
+                                            :label="'Actions pour l\'unité '.$unite->name"
+                                            class="inline-block">
                                             @if($peutModifier)
                                                 <x-table.action icon="pencil" x-on:click="modeEdition = true">Modifier</x-table.action>
                                             @endif
@@ -154,10 +171,18 @@
                                 @if($peutModifier)
                                     <template x-if="modeEdition">
                                         <div class="flex items-center justify-end gap-1.5">
-                                            <button type="submit" form="form-unite-{{ $unite->id }}" class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-surface-dark">
+                                            <button
+                                                type="submit"
+                                                form="form-unite-{{ $unite->id }}"
+                                                class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white
+                                                    hover:bg-surface-dark">
                                                 Enregistrer
                                             </button>
-                                            <button type="button" @click="modeEdition = false" class="rounded border border-secondary/30 px-2 py-1 text-xs text-primary/70 hover:bg-gray-100">
+                                            <button
+                                                type="button"
+                                                @click="modeEdition = false"
+                                                class="rounded border border-secondary/30 px-2 py-1 text-xs
+                                                    text-primary/70 hover:bg-gray-100">
                                                 Annuler
                                             </button>
                                         </div>
@@ -177,7 +202,9 @@
 
     {{-- Formulaire d'ajout d'une unité --}}
     @droit('economat.units.creer')
-        <form data-reglages method="POST" action="{{ route('economat.units.store') }}" class="mt-6 rounded-xl border border-secondary/20 bg-white p-5 shadow-xs">
+        <form data-reglages method="POST"
+            action="{{ route('economat.units.store') }}"
+            class="mt-6 rounded-xl border border-secondary/20 bg-white p-5 shadow-xs">
             @csrf
             <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="scale" class="w-4 h-4 text-primary"></i> Ajouter une unité de mesure
@@ -188,19 +215,22 @@
                 <div>
                     <label class="block text-xs font-medium text-primary/70 mb-1" for="ajout-unite-nom">Nom complet <span class="text-red-500">*</span></label>
                     <input id="ajout-unite-nom" type="text" name="name" x-model="nouveauNom" required maxlength="50" placeholder="Ex: Kilogramme"
-                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary outline-none focus:border-primary">
+                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary
+                               outline-none focus:border-primary">
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-primary/70 mb-1" for="ajout-unite-court">Nom court / Symbole <span class="text-red-500">*</span></label>
                     <input id="ajout-unite-court" type="text" name="short_name" x-model="nouveauCourt" required maxlength="20" placeholder="Ex: kg, pcs, l"
-                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs font-mono font-bold text-primary outline-none focus:border-primary">
+                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs font-mono font-bold
+                               text-primary outline-none focus:border-primary">
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-primary/70 mb-1" for="ajout-unite-ref">Unité de référence</label>
                     <select id="ajout-unite-ref" name="reference_unit_id" x-model="nouveauRefId"
-                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary outline-none focus:border-primary">
+                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary
+                                outline-none focus:border-primary">
                         <option value="">— Unité de base (valeur = 1) —</option>
                         @foreach($unites as $uRef)
                             <option value="{{ $uRef->id }}">{{ $uRef->name }} ({{ $uRef->short_name }})</option>
@@ -211,7 +241,8 @@
                 <div x-show="nouveauRefId" x-cloak>
                     <label class="block text-xs font-medium text-primary/70 mb-1" for="ajout-unite-facteur">Facteur d'équivalence</label>
                     <input id="ajout-unite-facteur" type="number" step="any" min="0.0001" name="factor" x-model="nouveauFacteur" placeholder="Ex: 1000"
-                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs font-mono text-primary outline-none focus:border-primary">
+                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs font-mono text-primary
+                               outline-none focus:border-primary">
                 </div>
             </div>
 
@@ -220,7 +251,10 @@
                     <span class="text-primary/45">Aperçu équivalence :</span>
                     <strong class="font-mono text-primary" x-text="libelleApercu"></strong>
                 </div>
-                <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark shadow-sm">
+                <button
+                    type="submit"
+                    class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark
+                        shadow-sm">
                     Ajouter l'unité
                 </button>
             </div>

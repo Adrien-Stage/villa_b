@@ -20,21 +20,24 @@
     <div class="flex items-center gap-2">
         @droit('rooms.export')
         <a href="{{ route('rooms.export') }}"
-            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter toutes les chambres en CSV">
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium
+                rounded-lg hover:bg-accent/30 transition-colors" title="Exporter toutes les chambres en CSV">
             <i data-lucide="download" class="w-4 h-4"></i>
             Exporter CSV
         </a>
         @enddroit
         @droit('rooms.import')
         <button onclick="document.getElementById('modal-import-rooms').classList.remove('hidden')"
-            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des chambres depuis un fichier CSV">
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium
+                rounded-lg hover:bg-accent/30 transition-colors" title="Importer des chambres depuis un fichier CSV">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Importer CSV
         </button>
         @enddroit
         @droit('rooms.creer')
         <button onclick="document.getElementById('modal-create-room').classList.remove('hidden')"
-            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                hover:bg-surface-dark transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Nouvelle chambre
         </button>
@@ -46,21 +49,24 @@
     <div class="flex items-center gap-2">
         @droit('rooms.types.export')
         <a href="{{ route('rooms.types.export') }}"
-            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter tous les types en CSV">
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium
+                rounded-lg hover:bg-accent/30 transition-colors" title="Exporter tous les types en CSV">
             <i data-lucide="download" class="w-4 h-4"></i>
             Exporter CSV
         </a>
         @enddroit
         @droit('rooms.types.import')
         <button onclick="document.getElementById('modal-import-types').classList.remove('hidden')"
-            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des types depuis un fichier CSV">
+            class="flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium
+                rounded-lg hover:bg-accent/30 transition-colors" title="Importer des types depuis un fichier CSV">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Importer CSV
         </button>
         @enddroit
         @droit('rooms.types.creer')
         <button onclick="document.getElementById('modal-create-type').classList.remove('hidden')"
-            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                hover:bg-surface-dark transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Nouveau type
         </button>
@@ -72,7 +78,8 @@
 
 {{-- Messages flash --}}
 @if(session('success'))
-<div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+<div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center
+    gap-2">
     <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
     <span>{{ session('success') }}</span>
 </div>
@@ -214,7 +221,9 @@
         @php $colorClass = $statusColors[$room->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/30'; @endphp
         <x-table.row>
             <x-table.cell nowrap>
-                <a href="{{ route('rooms.show', $room) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                <a
+                    href="{{ route('rooms.show', $room) }}"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
                     <i data-lucide="door-open" class="h-4 w-4 shrink-0 text-primary/30" aria-hidden="true"></i>{{ $room->number }}
                 </a>
             </x-table.cell>
@@ -227,13 +236,17 @@
             </x-table.cell>
             <x-table.cell hide="2xl" nowrap>
                 @if($room->activeHousekeepingAssignment)
-                    <span class="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700">{{ $room->activeHousekeepingAssignment->team->name }}</span>
+                    <span class="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium
+                        text-yellow-700">{{ $room->activeHousekeepingAssignment->team->name }}</span>
                 @elseif($room->status->value === 'dirty')
-                    <span class="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">à affecter</span>
+                    <span class="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium
+                        text-red-700">à affecter</span>
                 @elseif(in_array($room->status->value, ['clean', 'inspected', 'available']))
-                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">prêt</span>
+                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium
+                        text-emerald-700">prêt</span>
                 @else
-                    <span class="rounded-full border border-secondary/20 bg-secondary/10 px-2.5 py-1 text-xs font-medium text-primary/60">suivi manuel</span>
+                    <span class="rounded-full border border-secondary/20 bg-secondary/10 px-2.5 py-1 text-xs
+                        font-medium text-primary/60">suivi manuel</span>
                 @endif
             </x-table.cell>
             <x-table.actions :label="'Actions pour la chambre '.$room->number">
@@ -290,18 +303,34 @@
             @mouseenter="pauseAuto()"
             @mouseleave="resumeAuto()">
             @foreach($roomImages as $idx => $img)
-            <img src="{{ asset('storage/' . $img->path) }}" alt="Chambre {{ $room->number }}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300" :class="current === {{ $idx }} ? 'opacity-100' : 'opacity-0 pointer-events-none'" @click="$dispatch('open-lightbox', { images: {{ $roomImages->pluck('path')->map(fn($p) => asset('storage/'.$p))->toJson() }}, index: current })">
+            <img
+                src="{{ asset('storage/' . $img->path) }}"
+                alt="Chambre {{ $room->number }}"
+                class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                :class="current === {{ $idx }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                @click="$dispatch('open-lightbox', { images: {{ $roomImages->pluck('path')->map(fn($p) => asset('storage/'.$p))->toJson() }}, index: current })">
             @endforeach
             @if($roomImages->count() > 1)
-            <button @click.stop="current = (current - 1 + total) % total" class="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center opacity-0 group-hover/slide:opacity-100 transition-opacity">
+            <button
+                @click.stop="current = (current - 1 + total) % total"
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60
+                    backdrop-blur-sm text-white rounded-full flex items-center justify-center opacity-0
+                    group-hover/slide:opacity-100 transition-opacity">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
-            <button @click.stop="current = (current + 1) % total" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center opacity-0 group-hover/slide:opacity-100 transition-opacity">
+            <button
+                @click.stop="current = (current + 1) % total"
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60
+                    backdrop-blur-sm text-white rounded-full flex items-center justify-center opacity-0
+                    group-hover/slide:opacity-100 transition-opacity">
                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                 <template x-for="i in total" :key="i">
-                    <button @click.stop="current = i - 1" class="w-1.5 h-1.5 rounded-full transition-all" :class="current === i - 1 ? 'bg-white w-3' : 'bg-white/50'"></button>
+                    <button
+                        @click.stop="current = i - 1"
+                        class="w-1.5 h-1.5 rounded-full transition-all"
+                        :class="current === i - 1 ? 'bg-white w-3' : 'bg-white/50'"></button>
                 </template>
             </div>
             @endif
@@ -311,7 +340,12 @@
             <div class="absolute top-2 right-2">
                 <span class="text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm bg-white/80 {{ $c['badge'] }}">{{ $room->status->label() }}</span>
             </div>
-            <button @click.stop="$dispatch('open-lightbox', { images: {{ $roomImages->pluck('path')->map(fn($p) => asset('storage/'.$p))->toJson() }}, index: current })" class="absolute bottom-2 right-2 w-7 h-7 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center opacity-0 group-hover/slide:opacity-100 transition-opacity" title="Agrandir">
+            <button
+                @click.stop="$dispatch('open-lightbox', { images: {{ $roomImages->pluck('path')->map(fn($p) => asset('storage/'.$p))->toJson() }}, index: current })"
+                class="absolute bottom-2 right-2 w-7 h-7 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white
+                    rounded-full flex items-center justify-center opacity-0 group-hover/slide:opacity-100
+                    transition-opacity"
+                title="Agrandir">
                 <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
             </button>
         </div>
@@ -335,20 +369,45 @@
             </div>
             <div class="space-y-1 mb-3">
                 @if($room->floor)
-                <div class="flex items-center gap-1.5 text-xs text-primary/50"><i data-lucide="building-2" class="w-3 h-3"></i> Étage {{ $room->floor }}</div>
+                <div class="flex items-center gap-1.5 text-xs text-primary/50"><i
+                    data-lucide="building-2"
+                    class="w-3 h-3"></i> Étage {{ $room->floor }}</div>
                 @endif
                 @if($room->view_type)
-                <div class="flex items-center gap-1.5 text-xs text-primary/50 capitalize"><i data-lucide="eye" class="w-3 h-3"></i> Vue {{ $room->view_type }}</div>
+                <div class="flex items-center gap-1.5 text-xs text-primary/50 capitalize"><i
+                    data-lucide="eye"
+                    class="w-3 h-3"></i> Vue {{ $room->view_type }}</div>
                 @endif
                 <div class="flex items-center gap-1.5 text-xs text-primary/50"><i data-lucide="users" class="w-3 h-3"></i> {{ $room->roomType->base_capacity }} pers.</div>
             </div>
             <div class="flex items-center justify-end gap-1 pt-3 border-t border-secondary/10">
-                <a href="{{ route('rooms.show', $room) }}" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="settings" class="w-3.5 h-3.5"></i></a>
+                <a
+                    href="{{ route('rooms.show', $room) }}"
+                    class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i
+                    data-lucide="settings"
+                    class="w-3.5 h-3.5"></i></a>
                 @droit('rooms.modifier')
-                <button data-id="{{ $room->id }}" data-number="{{ $room->number }}" data-type="{{ $room->room_type_id }}" data-floor="{{ $room->floor }}" data-view="{{ $room->view_type }}" onclick="openEditRoom(this)" class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                <button
+                    data-id="{{ $room->id }}"
+                    data-number="{{ $room->number }}"
+                    data-type="{{ $room->room_type_id }}"
+                    data-floor="{{ $room->floor }}"
+                    data-view="{{ $room->view_type }}"
+                    onclick="openEditRoom(this)"
+                    class="p-3 sm:p-1.5 text-primary/30 hover:text-primary transition-colors rounded"><i
+                    data-lucide="pencil"
+                    class="w-3.5 h-3.5"></i></button>
                 @enddroit
                 @droit('rooms.supprimer')
-                <form method="POST" action="{{ route('rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')" class="expect-popup">@csrf @method('DELETE')<button type="submit" class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></form>
+                <form
+                    method="POST"
+                    action="{{ route('rooms.destroy', $room) }}"
+                    onsubmit="return confirm('Supprimer la chambre {{ $room->number }} ?')"
+                    class="expect-popup">@csrf @method('DELETE')<button
+                    type="submit"
+                    class="p-3 sm:p-1.5 text-primary/30 hover:text-red-500 transition-colors rounded"><i
+                    data-lucide="trash-2"
+                    class="w-3.5 h-3.5"></i></button></form>
                 @enddroit
             </div>
         </div>
@@ -380,21 +439,27 @@
     </div>
 
     @foreach($roomTypes as $type)
-    <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
+    <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10
+        hover:bg-accent/10 transition-colors items-center">
         <div class="col-span-3">
             <div class="font-medium text-sm text-primary">{{ $type->name }}</div>
             <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                 @if($type->includes_breakfast)
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold
+                        bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <i data-lucide="coffee" class="w-3 h-3"></i> PDJ inclus
                     </span>
                 @else
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-500">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100
+                        text-gray-500">
                         Chambre seule
                     </span>
                 @endif
                 @if($type->allows_extra_bed)
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200" title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
+                    <span
+                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold
+                            bg-blue-50 text-blue-700 border border-blue-200"
+                        title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
                         <i data-lucide="bed" class="w-3 h-3"></i> Lit d'appoint
                     </span>
                 @endif
@@ -483,7 +548,9 @@
 @php
     $hasRoomCreateErrors = $errors->has('number') || $errors->has('room_type_id') || $errors->has('floor') || $errors->has('view_type');
 @endphp
-<div id="modal-create-room" class="{{ $hasRoomCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+<div
+    id="modal-create-room"
+    class="{{ $hasRoomCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouvelle chambre</h3>
@@ -492,12 +559,19 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('rooms.store') }}" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+        <form
+            method="POST"
+            action="{{ route('rooms.store') }}"
+            enctype="multipart/form-data"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
                 <label class="modal-label">Type de chambre *</label>
-                <select name="room_type_id" required class="modal-input @error('room_type_id') border-red-500 @enderror">
+                <select
+                    name="room_type_id"
+                    required
+                    class="modal-input @error('room_type_id') border-red-500 @enderror">
                     <option value="">Sélectionner...</option>
                     @foreach($roomTypes as $type)
                     <option value="{{ $type->id }}" {{ old('room_type_id') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
@@ -510,7 +584,13 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Numéro *</label>
-                    <input type="text" name="number" value="{{ old('number') }}" placeholder="101" required class="modal-input @error('number') border-red-500 @enderror">
+                    <input
+                        type="text"
+                        name="number"
+                        value="{{ old('number') }}"
+                        placeholder="101"
+                        required
+                        class="modal-input @error('number') border-red-500 @enderror">
                     @error('number')
                         <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
                     @enderror
@@ -537,26 +617,45 @@
             </div>
             <div x-data="multiImagePreview()">
                 <label class="modal-label">Photos (max 4)</label>
-                <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/40'" class="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all">
+                <div
+                    @click="$refs.fileInput.click()"
+                    @dragover.prevent="isDragging=true"
+                    @dragleave.prevent="isDragging=false"
+                    @drop.prevent="handleDrop($event)"
+                    :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/40'"
+                    class="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all">
                     <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
                     <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 3 Mo/image</p>
                 </div>
-                <input type="file" name="images[]" x-ref="fileInput" @change="handleFiles($event)" accept="image/*" multiple class="hidden">
+                <input
+                    type="file"
+                    name="images[]"
+                    x-ref="fileInput"
+                    @change="handleFiles($event)"
+                    accept="image/*"
+                    multiple
+                    class="hidden">
                 <div x-show="previews.length > 0" class="grid grid-cols-4 gap-2 mt-3">
                     <template x-for="(p, i) in previews" :key="i">
                         <div class="relative rounded-lg overflow-hidden aspect-square bg-gray-100">
                             <img :src="p" class="w-full h-full object-cover">
-                            <button type="button" @click="removeImage(i)" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600">×</button>
+                            <button
+                                type="button"
+                                @click="removeImage(i)"
+                                class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex
+                                    items-center justify-center text-xs hover:bg-red-600">×</button>
                         </div>
                     </template>
                 </div>
             </div>
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-create-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Créer la chambre
                 </button>
             </div>
@@ -577,7 +676,12 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form id="form-edit-room" method="POST" action="" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+        <form
+            id="form-edit-room"
+            method="POST"
+            action=""
+            enctype="multipart/form-data"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @method('PUT')
@@ -612,26 +716,45 @@
             </div>
             <div x-data="multiImagePreview()">
                 <label class="modal-label">Ajouter des photos (max 4 au total)</label>
-                <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/40'" class="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all">
+                <div
+                    @click="$refs.fileInput.click()"
+                    @dragover.prevent="isDragging=true"
+                    @dragleave.prevent="isDragging=false"
+                    @drop.prevent="handleDrop($event)"
+                    :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/40'"
+                    class="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all">
                     <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
                     <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 3 Mo/image</p>
                 </div>
-                <input type="file" name="images[]" x-ref="fileInput" @change="handleFiles($event)" accept="image/*" multiple class="hidden">
+                <input
+                    type="file"
+                    name="images[]"
+                    x-ref="fileInput"
+                    @change="handleFiles($event)"
+                    accept="image/*"
+                    multiple
+                    class="hidden">
                 <div x-show="previews.length > 0" class="grid grid-cols-4 gap-2 mt-3">
                     <template x-for="(p, i) in previews" :key="i">
                         <div class="relative rounded-lg overflow-hidden aspect-square bg-gray-100">
                             <img :src="p" class="w-full h-full object-cover">
-                            <button type="button" @click="removeImage(i)" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600">×</button>
+                            <button
+                                type="button"
+                                @click="removeImage(i)"
+                                class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex
+                                    items-center justify-center text-xs hover:bg-red-600">×</button>
                         </div>
                     </template>
                 </div>
             </div>
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-edit-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Enregistrer
                 </button>
             </div>
@@ -646,7 +769,9 @@
 @php
     $hasTypeCreateErrors = $errors->has('code') || $errors->has('name') || $errors->has('base_price') || $errors->has('base_capacity') || $errors->has('max_capacity');
 @endphp
-<div id="modal-create-type" class="{{ $hasTypeCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+<div
+    id="modal-create-type"
+    class="{{ $hasTypeCreateErrors ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Nouveau type de chambre</h3>
@@ -655,20 +780,37 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('rooms.types.store') }}" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+        <form
+            method="POST"
+            action="{{ route('rooms.types.store') }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Nom *</label>
-                    <input type="text" id="create-type-name" name="name" value="{{ old('name') }}" placeholder="Standard" required class="modal-input @error('name') border-red-500 @enderror">
+                    <input
+                        type="text"
+                        id="create-type-name"
+                        name="name"
+                        value="{{ old('name') }}"
+                        placeholder="Standard"
+                        required
+                        class="modal-input @error('name') border-red-500 @enderror">
                     @error('name')
                         <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="modal-label">Code *</label>
-                    <input type="text" id="create-type-code" name="code" value="{{ old('code') }}" placeholder="STD" required class="modal-input uppercase @error('code') border-red-500 @enderror">
+                    <input
+                        type="text"
+                        id="create-type-code"
+                        name="code"
+                        value="{{ old('code') }}"
+                        placeholder="STD"
+                        required
+                        class="modal-input uppercase @error('code') border-red-500 @enderror">
                     @error('code')
                         <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
                     @enderror
@@ -681,50 +823,94 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Capacité base *</label>
-                    <input type="number" name="base_capacity" value="{{ old('base_capacity', 2) }}" min="1" required class="modal-input">
+                    <input
+                        type="number"
+                        name="base_capacity"
+                        value="{{ old('base_capacity', 2) }}"
+                        min="1"
+                        required
+                        class="modal-input">
                 </div>
                 <div>
                     <label class="modal-label">Capacité max *</label>
-                    <input type="number" name="max_capacity" value="{{ old('max_capacity', 3) }}" min="1" required class="modal-input">
+                    <input
+                        type="number"
+                        name="max_capacity"
+                        value="{{ old('max_capacity', 3) }}"
+                        min="1"
+                        required
+                        class="modal-input">
                 </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Prix / nuit (FCFA) *</label>
-                    <input type="number" name="base_price" value="{{ old('base_price') }}" placeholder="45000" min="0" required class="modal-input @error('base_price') border-red-500 @enderror">
+                    <input
+                        type="number"
+                        name="base_price"
+                        value="{{ old('base_price') }}"
+                        placeholder="45000"
+                        min="0"
+                        required
+                        class="modal-input @error('base_price') border-red-500 @enderror">
                     @error('base_price')
                         <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="modal-label">Surface (m²)</label>
-                    <input type="number" name="size_sqm" value="{{ old('size_sqm') }}" placeholder="25" min="0" class="modal-input">
+                    <input
+                        type="number"
+                        name="size_sqm"
+                        value="{{ old('size_sqm') }}"
+                        placeholder="25"
+                        min="0"
+                        class="modal-input">
                 </div>
             </div>
             <div class="space-y-3 pt-2 border-t border-secondary/15">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="create-type-breakfast" name="includes_breakfast" value="1" checked class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <input
+                        type="checkbox"
+                        id="create-type-breakfast"
+                        name="includes_breakfast"
+                        value="1"
+                        checked
+                        class="rounded border-secondary/30 text-primary focus:ring-primary/20">
                     <label for="create-type-breakfast" class="text-xs font-medium text-primary cursor-pointer">
                         ☕ Petit-déjeuner inclus par défaut dans la chambre
                     </label>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="create-type-extrabed" name="allows_extra_bed" value="1" checked class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <input
+                        type="checkbox"
+                        id="create-type-extrabed"
+                        name="allows_extra_bed"
+                        value="1"
+                        checked
+                        class="rounded border-secondary/30 text-primary focus:ring-primary/20">
                     <label for="create-type-extrabed" class="text-xs font-medium text-primary cursor-pointer">
                         🛏️ Autoriser l'ajout d'un lit supplémentaire / d'appoint
                     </label>
                 </div>
                 <div>
                     <label class="modal-label">Tarif spécifique lit d'appoint (FCFA/nuit - optionnel)</label>
-                    <input type="number" name="extra_bed_price" placeholder="Laisser vide pour tarif général (10 000 FCFA)" min="0" class="modal-input">
+                    <input
+                        type="number"
+                        name="extra_bed_price"
+                        placeholder="Laisser vide pour tarif général (10 000 FCFA)"
+                        min="0"
+                        class="modal-input">
                 </div>
             </div>
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-create-type').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Créer le type
                 </button>
             </div>
@@ -745,7 +931,11 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form id="form-edit-type" method="POST" action="" class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
+        <form
+            id="form-edit-type"
+            method="POST"
+            action=""
+            class="flex flex-col flex-1 min-h-0 overflow-hidden expect-popup">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @method('PUT')
@@ -766,11 +956,23 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="modal-label">Capacité base *</label>
-                    <input type="number" id="edit-type-base-cap" name="base_capacity" min="1" required class="modal-input">
+                    <input
+                        type="number"
+                        id="edit-type-base-cap"
+                        name="base_capacity"
+                        min="1"
+                        required
+                        class="modal-input">
                 </div>
                 <div>
                     <label class="modal-label">Capacité max *</label>
-                    <input type="number" id="edit-type-max-cap" name="max_capacity" min="1" required class="modal-input">
+                    <input
+                        type="number"
+                        id="edit-type-max-cap"
+                        name="max_capacity"
+                        min="1"
+                        required
+                        class="modal-input">
                 </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -785,28 +987,46 @@
             </div>
             <div class="space-y-3 pt-2 border-t border-secondary/15">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="edit-type-breakfast" name="includes_breakfast" value="1" class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <input
+                        type="checkbox"
+                        id="edit-type-breakfast"
+                        name="includes_breakfast"
+                        value="1"
+                        class="rounded border-secondary/30 text-primary focus:ring-primary/20">
                     <label for="edit-type-breakfast" class="text-xs font-medium text-primary cursor-pointer">
                         ☕ Petit-déjeuner inclus par défaut dans la chambre
                     </label>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="edit-type-extrabed" name="allows_extra_bed" value="1" class="rounded border-secondary/30 text-primary focus:ring-primary/20">
+                    <input
+                        type="checkbox"
+                        id="edit-type-extrabed"
+                        name="allows_extra_bed"
+                        value="1"
+                        class="rounded border-secondary/30 text-primary focus:ring-primary/20">
                     <label for="edit-type-extrabed" class="text-xs font-medium text-primary cursor-pointer">
                         🛏️ Autoriser l'ajout d'un lit supplémentaire / d'appoint
                     </label>
                 </div>
                 <div>
                     <label class="modal-label">Tarif spécifique lit d'appoint (FCFA/nuit - optionnel)</label>
-                    <input type="number" id="edit-type-extra-bed-price" name="extra_bed_price" placeholder="Laisser vide pour tarif général (10 000 FCFA)" min="0" class="modal-input">
+                    <input
+                        type="number"
+                        id="edit-type-extra-bed-price"
+                        name="extra_bed_price"
+                        placeholder="Laisser vide pour tarif général (10 000 FCFA)"
+                        min="0"
+                        class="modal-input">
                 </div>
             </div>
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-edit-type').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Enregistrer
                 </button>
             </div>
@@ -868,25 +1088,38 @@
      style="display:none;">
     <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" @click="open = false"></div>
     <div class="relative z-10 max-w-5xl max-h-[90vh] w-full mx-4">
-        <img :src="images[current]" class="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" alt="Photo chambre">
+        <img
+            :src="images[current]"
+            class="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            alt="Photo chambre">
 
         {{-- Compteur --}}
-        <div class="absolute top-4 left-4 text-white/80 text-sm font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">
+        <div class="absolute top-4 left-4 text-white/80 text-sm font-medium bg-black/40 backdrop-blur-sm px-3 py-1
+            rounded-full">
             <span x-text="(current + 1) + ' / ' + images.length"></span>
         </div>
 
         {{-- Fermer --}}
-        <button @click="open = false" class="absolute top-4 right-4 w-10 h-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors">
+        <button
+            @click="open = false"
+            class="absolute top-4 right-4 w-10 h-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white
+                rounded-full flex items-center justify-center transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
 
         {{-- Navigation --}}
         <template x-if="images.length > 1">
             <div>
-                <button @click="prev()" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors">
+                <button
+                    @click="prev()"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60
+                        backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors">
                     <i data-lucide="chevron-left" class="w-6 h-6"></i>
                 </button>
-                <button @click="next()" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors">
+                <button
+                    @click="next()"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60
+                        backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors">
                     <i data-lucide="chevron-right" class="w-6 h-6"></i>
                 </button>
             </div>
@@ -895,7 +1128,10 @@
         {{-- Vignettes --}}
         <div x-show="images.length > 1" class="flex justify-center gap-2 mt-4">
             <template x-for="(img, i) in images" :key="i">
-                <button @click="current = i" class="w-16 h-12 rounded-lg overflow-hidden border-2 transition-all" :class="i === current ? 'border-white shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'">
+                <button
+                    @click="current = i"
+                    class="w-16 h-12 rounded-lg overflow-hidden border-2 transition-all"
+                    :class="i === current ? 'border-white shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'">
                     <img :src="img" class="w-full h-full object-cover">
                 </button>
             </template>
@@ -918,7 +1154,8 @@
               onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Import en cours…';">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70 leading-relaxed">
+                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70
+                    leading-relaxed">
                     <p class="font-semibold text-primary mb-1">Structure attendue (délimiteur « ; ») :</p>
                     <p class="font-mono text-[11px] break-all">numero;code_type;etage;vue;statut;notes;actif</p>
                     <ul class="mt-2 space-y-1 list-disc list-inside">
@@ -927,7 +1164,9 @@
                         <li>Les numéros déjà existants sont ignorés (pas de doublon)</li>
                         <li>Les <strong>photos ne sont pas importées</strong> : ajoutez-les ensuite sur chaque chambre via « Modifier »</li>
                     </ul>
-                    <a href="{{ route('rooms.export', ['template' => 1]) }}" class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
+                    <a
+                        href="{{ route('rooms.export', ['template' => 1]) }}"
+                        class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
                         <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
                         Télécharger le modèle CSV
                     </a>
@@ -940,7 +1179,10 @@
             <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-secondary/20 shrink-0">
                 <button type="button" onclick="document.getElementById('modal-import-rooms').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
-                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors disabled:opacity-60">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors disabled:opacity-60">
                     Importer les chambres
                 </button>
             </div>
@@ -965,7 +1207,8 @@
               onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Import en cours…';">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70 leading-relaxed">
+                <div class="px-4 py-3 bg-accent/20 border border-secondary/20 rounded-lg text-xs text-primary/70
+                    leading-relaxed">
                     <p class="font-semibold text-primary mb-1">Structure attendue (délimiteur « ; ») :</p>
                     <p class="font-mono text-[11px] break-all">code;nom;description;capacite_base;capacite_max;prix_base_fcfa;superficie_m2;configuration_lits;equipements;actif</p>
                     <ul class="mt-2 space-y-1 list-disc list-inside">
@@ -974,7 +1217,9 @@
                         <li>Les codes déjà existants sont ignorés (pas de doublon)</li>
                         <li>Les <strong>photos ne sont pas importées</strong> : ajoutez-les ensuite sur chaque type via « Modifier »</li>
                     </ul>
-                    <a href="{{ route('rooms.types.export', ['template' => 1]) }}" class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
+                    <a
+                        href="{{ route('rooms.types.export', ['template' => 1]) }}"
+                        class="inline-flex items-center gap-1.5 mt-3 text-primary font-semibold hover:underline">
                         <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
                         Télécharger le modèle CSV
                     </a>
@@ -987,7 +1232,10 @@
             <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-secondary/20 shrink-0">
                 <button type="button" onclick="document.getElementById('modal-import-types').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
-                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors disabled:opacity-60">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors disabled:opacity-60">
                     Importer les types
                 </button>
             </div>

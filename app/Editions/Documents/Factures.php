@@ -12,7 +12,8 @@ use App\Support\Document\Document;
 /** Les factures émises sur la période ; chacune s'imprime aussi seule depuis « Retrouver une pièce ». */
 class Factures extends Edition
 {
-    private const STATUTS = ['draft' => 'Brouillon', 'sent' => 'Envoyée', 'paid' => 'Payée', 'overdue' => 'En retard', 'cancelled' => 'Annulée'];
+    private const STATUTS = ['draft' => 'Brouillon', 'sent' => 'Envoyée', 'paid' => 'Payée', 'overdue' => 'En retard',
+        'cancelled' => 'Annulée'];
 
     public function cle(): string { return 'factures'; }
 
@@ -72,6 +73,7 @@ class Factures extends Edition
                 Colonne::texte('statut', 'Statut'),
             ])
             ->lignes($lignes)
-            ->totaux(collect(['ht', 'tva', 'ttc', 'paye', 'reste'])->mapWithKeys(fn ($c) => [$c => (int) $lignes->sum($c)])->all());
+            ->totaux(collect(['ht', 'tva', 'ttc', 'paye', 'reste'])->mapWithKeys(fn ($c) => [$c => (int) $lignes
+                ->sum($c)])->all());
     }
 }

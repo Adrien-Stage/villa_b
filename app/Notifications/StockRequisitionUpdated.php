@@ -33,7 +33,8 @@ class StockRequisitionUpdated extends Notification
         return match ($this->requisition->status) {
             StockRequisition::STATUS_PENDING   => 'Demande visée',
             StockRequisition::STATUS_APPROVED  => 'Demande validée',
-            StockRequisition::STATUS_REJECTED  => $this->requisition->refuseeAuVisa() ? 'Demande refusée au visa' : 'Demande refusée',
+            StockRequisition::STATUS_REJECTED  => $this->requisition
+                ->refuseeAuVisa() ? 'Demande refusée au visa' : 'Demande refusée',
             StockRequisition::STATUS_DELIVERED => 'Matériel livré',
             default                            => 'Demande mise à jour',
         };

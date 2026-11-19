@@ -114,7 +114,8 @@
                         <i data-lucide="hotel" class="w-3.5 h-3.5 text-emerald-600"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] text-emerald-700/60 uppercase font-semibold tracking-wider">Chambre sélectionnée</p>
+                        <p class="text-[10px] text-emerald-700/60 uppercase font-semibold
+                            tracking-wider">Chambre sélectionnée</p>
                         <p class="font-semibold text-emerald-800 text-sm">
                             Chambre {{ $draft->room->number }}
                             @if($draft->room->roomType) · {{ $draft->room->roomType->name }}@endif
@@ -181,7 +182,8 @@
 
         {{-- Bouton de reprise directe à l'étape courante enregistrée --}}
         <a href="{{ route('bookings.drafts.continue', $draft->token) }}"
-           class="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
+           class="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white text-sm font-semibold
+               rounded-xl hover:bg-surface-dark transition-colors shadow-sm">
             <i data-lucide="play" class="w-4 h-4"></i>
             Reprendre à l'étape {{ $draft->current_step }}
             <span class="text-xs font-normal text-white/70">— {{ $draft->stepLabel() }}</span>
@@ -193,7 +195,8 @@
             @csrf
             @method('DELETE')
             <button type="submit"
-                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-xl hover:bg-red-50 transition-colors">
+                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-white border
+                        border-red-200 text-red-600 text-sm font-medium rounded-xl hover:bg-red-50 transition-colors">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                 Supprimer ce brouillon
             </button>

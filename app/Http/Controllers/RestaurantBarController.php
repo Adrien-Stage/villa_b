@@ -29,7 +29,8 @@ class RestaurantBarController extends Controller
         $restaurant = app(RestaurantContext::class)->courant($request->user());
         $store = $restaurant ? $this->bar->storeFor($restaurant) : null;
         $stocks = $store?->stocks()->with('item')->get()->sortBy('item.name') ?? collect();
-        $volumes = $store?->barBottles()->where('remaining_ml', '>', 0)->selectRaw('stock_item_id, SUM(remaining_ml) AS volume')
+        $volumes = $store?->barBottles()->where('remaining_ml', '>', 0)
+            ->selectRaw('stock_item_id, SUM(remaining_ml) AS volume')
             ->groupBy('stock_item_id')->pluck('volume', 'stock_item_id');
 
         return view('restaurant.bar.depot', [
@@ -38,7 +39,8 @@ class RestaurantBarController extends Controller
             'stocks' => $stocks,
             'volumes' => $volumes,
             'bottles' => $store?->barBottles()->with('item')
-                ->orderByRaw('CASE WHEN remaining_ml > 0 THEN 0 ELSE 1 END')->orderBy('id')->paginate(20)->withQueryString(),
+                ->orderByRaw('CASE WHEN remaining_ml > 0 THEN 0 ELSE 1 END')->orderBy('id')->paginate(20)
+                    ->withQueryString(),
             'shortages' => $store ? $this->bar->unallocated($store) : collect(),
         ]);
     }
@@ -70,7 +72,8 @@ class RestaurantBarController extends Controller
             'store' => $store,
             'drinks' => $drinks,
             'focused' => $focused,
-            'items' => $store ? StockItem::active()->orderBy('name')->get(['id', 'name', 'unit'])->keyBy('id') : collect(),
+            'items' => $store ? StockItem::active()->orderBy('name')->get(['id', 'name', 'unit'])
+                ->keyBy('id') : collect(),
         ]);
     }
 
@@ -83,7 +86,8 @@ class RestaurantBarController extends Controller
         $to = $filters['to'] ?? now()->toDateString();
         $from = $filters['from'] ?? Carbon::parse($to)->startOfMonth()->toDateString();
         if ($from > $to) {
-            throw ValidationException::withMessages(['from' => 'La date de début doit précéder ou être égale à la date de fin.']);
+            throw ValidationException::withMessages(
+                ['from' => 'La date de début doit précéder ou être égale à la date de fin.']);
         }
         $restaurant = app(RestaurantContext::class)->courant($request->user());
         $store = $restaurant ? $this->bar->storeFor($restaurant) : null;
@@ -113,7 +117,8 @@ class RestaurantBarController extends Controller
         $item = StockItem::active()->findOrFail($data['stock_item_id']);
         $bottle = $this->bar->openBottle($store, $item, $data['capacity_ml'], $data['opening_key']);
 
-        return redirect()->route('restaurant.bar.bottles.show', $bottle)->with('success', 'Bouteille ouverte. Étiquetez-la avec son numéro.');
+        return redirect()->route('restaurant.bar.bottles.show', $bottle)->with('success',
+            'Bouteille ouverte. Étiquetez-la avec son numéro.');
     }
 
     public function count(Request $request, int $bottle): RedirectResponse
@@ -146,7 +151,25 @@ class RestaurantBarController extends Controller
     public function configure(Request $request, int $item): RedirectResponse
     {
         $store = $this->activeStore($request);
-        $menuItem = RestaurantMenuItem::duRestaurant($store->point_of_sale_id)->where('type', 'drink')->findOrFail($item);
+        $menuItem = RestaurantMenuItem::duRestaurant($store->point_of_sale_id)->where('type', 'drink')
+            ->findOrFail($item);
+        [$data, $ingredients] = $this->validerRecette($request);
+        $this->verifierIngredients($ingredients, $data['format']);
+
+        DB::transaction(function () use ($menuItem, $store, $data, $ingredients) {
+            abort_unless(ServiceStore::active()->lockForUpdate()->find($store->id), 404);
+            $menuItem->barDrink()->updateOrCreate([], [
+                'format' => $data['format'],
+                'ingredients' => $ingredients,
+                'instructions' => $data['instructions'] ?? null,
+            ]);
+        });
+
+        return back()->with('success', 'Fiche de boisson enregistrée.');
+    }
+
+    private function validerRecette(Request $request): array
+    {
         $recipe = in_array($request->input('format'), ['cocktail', 'mocktail'], true);
         if ($recipe && is_array($request->input('ingredients'))) {
             $request->merge(['ingredients' => collect($request->input('ingredients'))->reject(
@@ -169,27 +192,27 @@ class RestaurantBarController extends Controller
             'quantity' => $data['format'] === 'glass' ? RestaurantBarDrink::GLASS_ML : 1,
         ]];
 
+        return [$data, $ingredients];
+    }
+
+    private function verifierIngredients(array $ingredients, string $format): void
+    {
         $items = StockItem::active()->whereKey(array_column($ingredients, 'stock_item_id'))->get()->keyBy('id');
         foreach ($ingredients as $ingredient) {
             $stockItem = $items->get($ingredient['stock_item_id']);
-            if (! $stockItem || (($ingredient['measure'] === 'ml' || $data['format'] === 'bottle') && ! RestaurantBarStock::canOpen($stockItem))) {
-                throw ValidationException::withMessages(['ingredients' => 'Choisissez un article actif. Les doses et bouteilles entières exigent un article stocké à la bouteille ou à la pièce.']);
+            $exigeBouteille = $ingredient['measure'] === 'ml' || $format === 'bottle';
+            if (! $stockItem || ($exigeBouteille && ! RestaurantBarStock::canOpen($stockItem))) {
+                throw ValidationException::withMessages([
+                    'ingredients' => 'Choisissez un article actif. Les doses et bouteilles entières '
+                        .'exigent un article stocké à la bouteille ou à la pièce.',
+                ]);
             }
-            if ($ingredient['measure'] === 'ml' && floor((float) $ingredient['quantity']) !== (float) $ingredient['quantity']) {
-                throw ValidationException::withMessages(['ingredients' => 'Les volumes des fiches techniques se saisissent en millilitres entiers.']);
+            if ($ingredient['measure'] === 'ml'
+                && floor((float) $ingredient['quantity']) !== (float) $ingredient['quantity']) {
+                throw ValidationException::withMessages(
+                    ['ingredients' => 'Les volumes des fiches techniques se saisissent en millilitres entiers.']);
             }
         }
-
-        DB::transaction(function () use ($menuItem, $store, $data, $ingredients) {
-            abort_unless(ServiceStore::active()->lockForUpdate()->find($store->id), 404);
-            $menuItem->barDrink()->updateOrCreate([], [
-                'format' => $data['format'],
-                'ingredients' => $ingredients,
-                'instructions' => $data['instructions'] ?? null,
-            ]);
-        });
-
-        return back()->with('success', 'Fiche de boisson enregistrée.');
     }
 
     private function activeStore(Request $request): ServiceStore

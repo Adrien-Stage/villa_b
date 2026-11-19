@@ -31,7 +31,8 @@ class RestaurantContext
     public const VUE_GLOBALE = ['admin', 'manager', 'controller', 'finance_manager', 'support'];
 
     /** Rôles du personnel d'un restaurant : ceux qu'on affecte à une équipe. */
-    public const ROLES_DU_RESTAURANT = ['restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'restaurant_barman', 'cashier'];
+    public const ROLES_DU_RESTAURANT = ['restaurant_manager', 'restaurant_chief', 'restaurant_staff', 'restaurant_cook',
+        'restaurant_barman', 'cashier'];
 
     /** Clé de session du restaurant choisi ; « tous » pour la vue d'ensemble. */
     private const SESSION = 'restaurant_courant';
@@ -178,7 +179,8 @@ class RestaurantContext
     }
 
     /** Borne une requête à tous les restaurants que la personne peut voir. */
-    public function restreindreAuxAccessibles(Builder $requete, ?User $user, string $colonne = 'point_of_sale_id'): Builder
+    public function restreindreAuxAccessibles(Builder $requete, ?User $user,
+        string $colonne = 'point_of_sale_id'): Builder
     {
         return $requete->whereIn($colonne, $this->accessibles($user)->pluck('id')->all());
     }

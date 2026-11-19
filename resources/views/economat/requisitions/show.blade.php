@@ -31,14 +31,17 @@
 
 <div class="max-w-4xl mx-auto">
     <div class="flex items-center justify-between gap-4 mb-4">
-        <a href="{{ route('economat.requisitions.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+        <a
+            href="{{ route('economat.requisitions.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Retour à la liste des bons</span>
         </a>
 
         <div class="flex items-center gap-2">
             <a href="{{ route('economat.requisitions.print', $requisition) }}" target="_blank"
-                class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg text-primary text-xs font-semibold hover:bg-surface-light shadow-sm transition-colors">
+                class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg
+                    text-primary text-xs font-semibold hover:bg-surface-light shadow-sm transition-colors">
                 <i data-lucide="printer" class="w-4 h-4 text-primary/70"></i>
                 <span>Imprimer le bon</span>
             </a>
@@ -67,7 +70,8 @@
                     Émis par <strong>{{ $requisition->requestedBy?->name ?? '—' }}</strong> le {{ $requisition->created_at->format('d/m/Y à H:i') }}
                 </p>
                 @if($requisition->purpose)
-                    <div class="mt-3 p-2.5 bg-surface-light rounded-lg border border-secondary/15 text-xs text-primary/80">
+                    <div class="mt-3 p-2.5 bg-surface-light rounded-lg border border-secondary/15 text-xs
+                        text-primary/80">
                         <span class="font-semibold text-primary/60 uppercase text-[10px] block">Motif / Justification :</span>
                         {{ $requisition->purpose }}
                     </div>
@@ -75,8 +79,10 @@
             </div>
 
             {{-- Signature manuscrite de l'émetteur --}}
-            <div class="sm:self-start bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 min-w-[210px] text-center shadow-xs">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Signature du Demandeur</span>
+            <div class="sm:self-start bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 min-w-[210px]
+                text-center shadow-xs">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500
+                    block">Signature du Demandeur</span>
                 <div class="font-signature text-3xl text-blue-900 py-1 select-none transform -rotate-3 inline-block">
                     {{ $requisition->requesterSignature() }}
                 </div>
@@ -152,7 +158,8 @@
     @endphp
 
     @if($peutCreerDemandeAchat)
-        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center
+            justify-between gap-3 shadow-xs">
             <div class="flex items-start gap-2.5 text-xs text-red-900">
                 <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 shrink-0 mt-0.5" aria-hidden="true"></i>
                 <div>
@@ -161,7 +168,8 @@
                 </div>
             </div>
             <a href="{{ route('economat.purchase_requests.create', ['requisition' => $requisition->id]) }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs shrink-0">
+               class="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs
+                   font-semibold rounded-lg transition-colors shadow-xs shrink-0">
                 <i data-lucide="file-plus" class="w-4 h-4" aria-hidden="true"></i>
                 <span>Créer une demande d'achat</span>
             </a>
@@ -169,7 +177,9 @@
     @endif
 
     {{-- Articles demandés et formulaire de livraison --}}
-    <form method="POST" action="{{ $isKeeper && $requisition->canBeDelivered() ? route('economat.requisitions.deliver', $requisition) : '#' }}">
+    <form
+        method="POST"
+        action="{{ $isKeeper && $requisition->canBeDelivered() ? route('economat.requisitions.deliver', $requisition) : '#' }}">
         @if($isKeeper && $requisition->canBeDelivered()) @csrf @endif
 
         <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-4 shadow-sm">
@@ -181,7 +191,8 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full text-xs">
                     <thead>
-                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase
+                            tracking-wider font-semibold">
                             <th class="px-4 py-3">Article & Référence</th>
                             <th class="px-4 py-3">Catégorie</th>
                             <th class="px-4 py-3 text-center">Unité</th>
@@ -252,7 +263,9 @@
                                             name="issued[{{ $line->id }}]"
                                             value="{{ $line->quantiteServieProposee() }}"
                                             aria-label="Quantité servie{{ $line->packaging_name ? ' en ' . $line->packaging_name : '' }}"
-                                            class="w-24 px-2 py-1 text-xs border border-secondary/30 rounded-lg bg-white text-primary font-mono text-right font-bold focus:border-primary focus:ring-primary">
+                                            class="w-24 px-2 py-1 text-xs border border-secondary/30 rounded-lg
+                                                bg-white text-primary font-mono text-right font-bold
+                                                focus:border-primary focus:ring-primary">
                                         @if($line->packaging_name)
                                             <span class="text-[10px] text-primary/60">{{ $line->packaging_name }}</span>
                                         @endif
@@ -288,12 +301,16 @@
             </div>
 
             @if($isKeeper && $requisition->canBeDelivered())
-                <div class="px-5 py-3 border-t border-secondary/20 bg-amber-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="px-5 py-3 border-t border-secondary/20 bg-amber-50/70 flex flex-col sm:flex-row
+                    sm:items-center justify-between gap-3">
                     <p class="text-xs text-amber-900">
                         <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 text-amber-700"></i>
                         La livraison physique déstocke automatiquement les quantités servies et les transfère au service.
                     </p>
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-white text-xs font-semibold
+                            rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="truck" class="w-4 h-4"></i>
                         <span>Confirmer la livraison et déstocker</span>
                     </button>
@@ -311,26 +328,35 @@
             </p>
             <div class="flex gap-3 mb-3">
                 <button type="button" @click="decision = 'viser'"
-                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center
+                        justify-center gap-1.5"
                     :class="decision === 'viser' ? 'bg-green-600 text-white border-green-600' : 'border-secondary/30 text-primary hover:bg-green-50'">
                     <i data-lucide="stamp" class="w-4 h-4"></i>
                     <span>Viser la demande</span>
                 </button>
                 <button type="button" @click="decision = 'refuser'"
-                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center
+                        justify-center gap-1.5"
                     :class="decision === 'refuser' ? 'bg-red-600 text-white border-red-600' : 'border-secondary/30 text-primary hover:bg-red-50'">
                     <i data-lucide="x" class="w-4 h-4"></i>
                     <span>Refuser</span>
                 </button>
             </div>
-            <form x-show="decision" x-cloak method="POST" action="{{ route('economat.requisitions.endorse', $requisition) }}">
+            <form
+                x-show="decision"
+                x-cloak
+                method="POST"
+                action="{{ route('economat.requisitions.endorse', $requisition) }}">
                 @csrf
                 <input type="hidden" name="decision" :value="decision">
                 <label for="notes-visa" class="sr-only">Remarque ou motif</label>
                 <textarea id="notes-visa" name="notes" rows="2" maxlength="500" :required="decision === 'refuser'"
                     :placeholder="decision === 'refuser' ? 'Motif du refus (le demandeur le lira)…' : 'Remarque pour l\'économat (facultatif)…'"
                     class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary mb-3">{{ old('notes') }}</textarea>
-                <button type="submit" class="w-full py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <button
+                    type="submit"
+                    class="w-full py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     <span x-text="decision === 'viser' ? 'Confirmer le visa : envoyer à l\'économat' : 'Confirmer le refus'"></span>
                 </button>
             </form>
@@ -343,23 +369,32 @@
             <h2 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Arbitrage du Bon de Réquisition</h2>
             <div class="flex gap-3 mb-3">
                 <button type="button" @click="mode = 'approve'"
-                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center
+                        justify-center gap-1.5"
                     :class="mode === 'approve' ? 'bg-green-600 text-white border-green-600' : 'border-secondary/30 text-primary hover:bg-green-50'">
                     <i data-lucide="check" class="w-4 h-4"></i>
                     <span>Valider la demande</span>
                 </button>
                 <button type="button" @click="mode = 'reject'"
-                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    class="flex-1 py-2 px-4 rounded-lg border text-xs font-semibold transition-colors flex items-center
+                        justify-center gap-1.5"
                     :class="mode === 'reject' ? 'bg-red-600 text-white border-red-600' : 'border-secondary/30 text-primary hover:bg-red-50'">
                     <i data-lucide="x" class="w-4 h-4"></i>
                     <span>Refuser la demande</span>
                 </button>
             </div>
-            <form x-show="mode" x-cloak method="POST" :action="mode === 'approve' ? '{{ route('economat.requisitions.approve', $requisition) }}' : '{{ route('economat.requisitions.reject', $requisition) }}'">
+            <form
+                x-show="mode"
+                x-cloak
+                method="POST"
+                :action="mode === 'approve' ? '{{ route('economat.requisitions.approve', $requisition) }}' : '{{ route('economat.requisitions.reject', $requisition) }}'">
                 @csrf
                 <textarea name="review_notes" rows="2" placeholder="Motif ou remarque (facultatif)..."
                     class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary mb-3"></textarea>
-                <button type="submit" class="w-full py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <button
+                    type="submit"
+                    class="w-full py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     <span x-text="mode === 'approve' ? 'Confirmer la validation du bon' : 'Confirmer le refus du bon'"></span>
                 </button>
             </form>
@@ -368,7 +403,11 @@
 
     {{-- Annulation par le demandeur (ou l'économat) ; le chef, lui, refuse au visa --}}
     @if($requisition->canBeCancelled() && ($isKeeper || $requisition->requested_by === auth()->id()))
-        <form method="POST" action="{{ route('economat.requisitions.cancel', $requisition) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce bon de réquisition ?');" class="mt-3 text-right">
+        <form
+            method="POST"
+            action="{{ route('economat.requisitions.cancel', $requisition) }}"
+            onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce bon de réquisition ?');"
+            class="mt-3 text-right">
             @csrf
             <button type="submit" class="text-xs text-red-500 hover:text-red-700 hover:underline">
                 Annuler ce bon de réquisition

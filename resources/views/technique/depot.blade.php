@@ -69,7 +69,9 @@
                         <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ \App\Models\StockUnit::symbolFor($sortie->item?->unit) }}</x-table.cell>
                         <x-table.cell class="text-xs">
                             @if(isset($demandes[$sortie->source_id]))
-                                <a href="{{ route('technique.demandes.show', $sortie->source_id) }}" class="text-primary hover:underline">{{ $demandes[$sortie->source_id] }}</a>
+                                <a
+                                    href="{{ route('technique.demandes.show', $sortie->source_id) }}"
+                                    class="text-primary hover:underline">{{ $demandes[$sortie->source_id] }}</a>
                             @endif
                         </x-table.cell>
                     </x-table.row>

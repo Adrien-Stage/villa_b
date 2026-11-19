@@ -11,16 +11,25 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="{{ route('restaurant.consumption.index') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+        <a
+            href="{{ route('restaurant.consumption.index') }}"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i> Analyse Consommation
         </a>
         @can('creer', \App\Models\RestaurantWasteLog::class)
-        <a href="{{ route('restaurant.waste.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+        <a
+            href="{{ route('restaurant.waste.create') }}"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:opacity-95 transition-opacity">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Déclarer une perte
         </a>
         @else
             @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'restaurant.waste.creer'))
-            <a href="{{ route('restaurant.waste.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+            <a
+                href="{{ route('restaurant.waste.create') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                    hover:opacity-95 transition-opacity">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Déclarer une perte
             </a>
             @endif
@@ -86,18 +95,31 @@
 
 {{-- Filtres --}}
 <div class="bg-white rounded-xl shadow-sm border border-secondary/15 p-4 mb-6">
-    <form method="GET" action="{{ route('restaurant.waste.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+    <form
+        method="GET"
+        action="{{ route('restaurant.waste.index') }}"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Du</label>
-            <input type="date" name="start_date" value="{{ $startDate }}" class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <input
+                type="date"
+                name="start_date"
+                value="{{ $startDate }}"
+                class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
         </div>
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Au</label>
-            <input type="date" name="end_date" value="{{ $endDate }}" class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <input
+                type="date"
+                name="end_date"
+                value="{{ $endDate }}"
+                class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
         </div>
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Motif</label>
-            <select name="reason" class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <select
+                name="reason"
+                class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
                 <option value="">Tous les motifs</option>
                 @foreach($reasonLabels as $val => $lbl)
                     <option value="{{ $val }}" @selected(request('reason') === $val)>{{ $lbl }}</option>
@@ -106,7 +128,9 @@
         </div>
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Atelier / Rayon</label>
-            <select name="department" class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <select
+                name="department"
+                class="w-full text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
                 <option value="">Tous les ateliers</option>
                 @foreach($departmentLabels as $val => $lbl)
                     <option value="{{ $val }}" @selected(request('department') === $val)>{{ $lbl }}</option>
@@ -120,10 +144,17 @@
                 :items="$activeItems->map(fn ($item) => ['id' => $item->id, 'name' => $item->name, 'unit' => $item->unit])->values()->all()" />
         </div>
         <div class="flex items-end gap-2">
-            <button type="submit" class="w-full py-2 px-3 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity">
+            <button
+                type="submit"
+                class="w-full py-2 px-3 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90
+                    transition-opacity">
                 Filtrer
             </button>
-            <a href="{{ route('restaurant.waste.index') }}" class="py-2 px-3 border border-secondary/25 bg-secondary/10 text-primary text-xs rounded-lg hover:bg-secondary/20" title="Réinitialiser">
+            <a
+                href="{{ route('restaurant.waste.index') }}"
+                class="py-2 px-3 border border-secondary/25 bg-secondary/10 text-primary text-xs rounded-lg
+                    hover:bg-secondary/20"
+                title="Réinitialiser">
                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
             </a>
         </div>
@@ -131,7 +162,11 @@
 </div>
 
 {{-- Tableau des déclarations --}}
-<x-table :rows="$logs" empty="Aucune perte ou déchet enregistré sur la période sélectionnée." empty-icon="inbox" caption="Pertes et déchets">
+<x-table
+    :rows="$logs"
+    empty="Aucune perte ou déchet enregistré sur la période sélectionnée."
+    empty-icon="inbox"
+    caption="Pertes et déchets">
     <x-slot:head>
         <x-table.col>Date &amp; réf.</x-table.col>
         <x-table.col>Article</x-table.col>
@@ -147,7 +182,9 @@
     @foreach($logs as $log)
         <x-table.row :href="route('restaurant.waste.show', $log)">
             <x-table.cell nowrap>
-                <a href="{{ route('restaurant.waste.show', $log) }}" class="font-mono text-sm font-semibold text-primary hover:underline">{{ $log->reference }}</a>
+                <a
+                    href="{{ route('restaurant.waste.show', $log) }}"
+                    class="font-mono text-sm font-semibold text-primary hover:underline">{{ $log->reference }}</a>
                 <div class="text-[11px] text-primary/50">{{ $log->occurred_at?->format('d/m/Y H:i') }}</div>
             </x-table.cell>
             <x-table.cell>
@@ -161,7 +198,8 @@
             <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($log->unitCostFcfa(), 2, ',', ' ') }} FCFA</x-table.cell>
             <x-table.cell align="right" nowrap class="font-semibold text-red-600">{{ $log->formattedTotalCost() }}</x-table.cell>
             <x-table.cell hide="lg">
-                <span class="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-800">{{ $log->reasonLabel() }}</span>
+                <span class="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium
+                    text-red-800">{{ $log->reasonLabel() }}</span>
                 <div class="mt-0.5 text-[10px] text-primary/50">{{ $log->departmentLabel() }}</div>
             </x-table.cell>
             <x-table.cell hide="xl" class="text-primary/70">

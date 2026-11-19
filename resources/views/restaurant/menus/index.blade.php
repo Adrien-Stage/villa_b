@@ -10,16 +10,26 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="{{ route('restaurant.menus.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter les menus en CSV">
+        <a
+            href="{{ route('restaurant.menus.export') }}"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20 transition-colors"
+            title="Exporter les menus en CSV">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
         </a>
         @if($peutCreer)
-            <button type="button" onclick="document.getElementById('modal-import-menus').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des plats depuis un CSV">
+            <button
+                type="button"
+                onclick="document.getElementById('modal-import-menus').classList.remove('hidden')"
+                class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary
+                    text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors"
+                title="Importer des plats depuis un CSV">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
             </button>
             <button type="button"
                 onclick="openCreateItemModal()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                    hover:opacity-95 transition-opacity">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 Ajouter un article
             </button>
@@ -76,7 +86,8 @@
             @if($peutCreer)
                 <button type="button"
                     onclick="openCreateCategoryModal()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/30 text-primary text-xs font-semibold hover:bg-accent/40">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/30 text-primary text-xs
+                        font-semibold hover:bg-accent/40">
                     <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                     Ajouter
                 </button>
@@ -98,7 +109,8 @@
                         <div class="flex items-center gap-1 flex-shrink-0">
                             <button type="button"
                                 onclick="openEditCategoryModal({{ $category->id }})"
-                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg border
+                                    border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
                             <form method="POST" action="{{ route('restaurant.menus.categories.destroy', $category) }}"
@@ -106,7 +118,8 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
+                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg border
+                                        border-secondary/20 text-red-600 hover:bg-red-50">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </form>
@@ -122,7 +135,11 @@
     </aside>
 
     <div id="menus-table-container" class="min-w-0 flex-1">
-    <x-table :rows="$items" empty="Aucun article. Commencez par créer un article de la carte." empty-icon="book" caption="Articles de la carte">
+    <x-table
+        :rows="$items"
+        empty="Aucun article. Commencez par créer un article de la carte."
+        empty-icon="book"
+        caption="Articles de la carte">
         <x-slot:toolbar>
             <div>
                 <p class="font-heading text-sm font-semibold text-primary">Articles</p>
@@ -138,7 +155,8 @@
                 />
 
                 <select name="category" onchange="this.form.submit()"
-                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                        focus:border-secondary">
                     <option value="">Toutes les categories</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>{{ $category->name }}</option>
@@ -146,7 +164,8 @@
                 </select>
 
                 <select name="type" onchange="this.form.submit()"
-                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                        focus:border-secondary">
                     <option value="">Tous les types</option>
                     @foreach($itemTypes as $type)
                         <option value="{{ $type }}" @selected(request('type') === $type)>{{ strtoupper($type) }}</option>
@@ -154,7 +173,8 @@
                 </select>
 
                 <select name="meal" onchange="this.form.submit()"
-                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                        focus:border-secondary">
                     <option value="">Tous les services</option>
                     @foreach($mealServices as $meal => $mealLabel)
                         <option value="{{ $meal }}" @selected(request('meal') === $meal)>{{ $mealLabel }}</option>
@@ -162,7 +182,8 @@
                 </select>
 
                 <select name="status" onchange="this.form.submit()"
-                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                        focus:border-secondary">
                     <option value="">Tous</option>
                     <option value="active" @selected(request('status') === 'active')>Actifs</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Inactifs</option>
@@ -192,7 +213,8 @@
                 </x-table.cell>
                 <x-table.cell hide="xl" class="text-primary/70">{{ $item->category?->name ?? '—' }}</x-table.cell>
                 <x-table.cell hide="lg">
-                    <span class="inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ strtoupper($item->type) }}</span>
+                    <span class="inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 text-[11px]
+                        font-semibold text-primary">{{ strtoupper($item->type) }}</span>
                 </x-table.cell>
                 <x-table.cell hide="2xl" nowrap class="text-xs text-primary/60">{{ $item->mealServicesLabel() }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($item->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
@@ -205,7 +227,12 @@
                             <x-table.action icon="pencil" onclick="openEditItemModal({{ $item->id }})">Modifier</x-table.action>
                         @endif
                         @if($peutSupprimerArticle)
-                            <x-table.action :action="route('restaurant.menus.items.destroy', $item)" method="DELETE" icon="trash-2" tone="danger" confirm="Supprimer cet article ?">Supprimer</x-table.action>
+                            <x-table.action
+                                :action="route('restaurant.menus.items.destroy', $item)"
+                                method="DELETE"
+                                icon="trash-2"
+                                tone="danger"
+                                confirm="Supprimer cet article ?">Supprimer</x-table.action>
                         @endif
                     </x-table.actions>
                 @endif
@@ -217,17 +244,33 @@
 
 @if($canManage)
     {{-- Create category modal --}}
-    <x-modal id="create-category-modal" title="Nouvelle categorie" formAction="{{ route('restaurant.menus.categories.store') }}" closeAction="closeCreateCategoryModal()">
+    <x-modal
+        id="create-category-modal"
+        title="Nouvelle categorie"
+        formAction="{{ route('restaurant.menus.categories.store') }}"
+        closeAction="closeCreateCategoryModal()">
         <input type="hidden" name="form_type" value="create_category">
 
         <div>
             <label class="text-xs text-primary/60">Nom</label>
-            <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            <input
+                type="text"
+                name="name"
+                value="{{ old('name') }}"
+                required
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                    outline-none">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Ordre</label>
-                <input type="number" name="sort_order" min="0" value="{{ old('sort_order', 0) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="number"
+                    name="sort_order"
+                    min="0"
+                    value="{{ old('sort_order', 0) }}"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <label class="inline-flex items-center gap-2 text-xs text-primary/70 mt-6">
                 <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
@@ -236,25 +279,46 @@
         </div>
 
         <x-slot:footer>
-            <button type="button" onclick="closeCreateCategoryModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+            <button
+                type="button"
+                onclick="closeCreateCategoryModal()"
+                class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                    hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                text-white">Creer</button>
         </x-slot:footer>
     </x-modal>
 
     {{-- Edit category modals --}}
     @foreach($categories as $category)
-        <x-modal id="edit-category-modal-{{ $category->id }}" title="Modifier {{ $category->name }}" formAction="{{ route('restaurant.menus.categories.update', $category) }}" closeAction="closeEditCategoryModal({{ $category->id }})">
+        <x-modal
+            id="edit-category-modal-{{ $category->id }}"
+            title="Modifier {{ $category->name }}"
+            formAction="{{ route('restaurant.menus.categories.update', $category) }}"
+            closeAction="closeEditCategoryModal({{ $category->id }})">
             @method('PUT')
             <input type="hidden" name="form_type" value="edit_category_{{ $category->id }}">
 
             <div>
                 <label class="text-xs text-primary/60">Nom</label>
-                <input type="text" name="name" value="{{ old('name', $category->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="text"
+                    name="name"
+                    value="{{ old('name', $category->name) }}"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Ordre</label>
-                    <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $category->sort_order) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="number"
+                        name="sort_order"
+                        min="0"
+                        value="{{ old('sort_order', $category->sort_order) }}"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <label class="inline-flex items-center gap-2 text-xs text-primary/70 mt-6">
                     <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $category->is_active))>
@@ -263,24 +327,44 @@
             </div>
 
             <x-slot:footer>
-                <button type="button" onclick="closeEditCategoryModal({{ $category->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+                <button
+                    type="button"
+                    onclick="closeEditCategoryModal({{ $category->id }})"
+                    class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                        hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                    text-white">Enregistrer</button>
             </x-slot:footer>
         </x-modal>
     @endforeach
 
     {{-- Create item modal --}}
-    <x-modal id="create-item-modal" title="Nouvel article" max-width="max-w-2xl" formAction="{{ route('restaurant.menus.items.store') }}" enctype="multipart/form-data" closeAction="closeCreateItemModal()">
+    <x-modal
+        id="create-item-modal"
+        title="Nouvel article"
+        max-width="max-w-2xl"
+        formAction="{{ route('restaurant.menus.items.store') }}"
+        enctype="multipart/form-data"
+        closeAction="closeCreateItemModal()">
         <input type="hidden" name="form_type" value="create_item">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nom</label>
-                <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="text"
+                    name="name"
+                    value="{{ old('name') }}"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <div>
                 <label class="text-xs text-primary/60">Categorie</label>
-                <select name="restaurant_menu_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                <select
+                    name="restaurant_menu_category_id"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                        focus:border-secondary outline-none">
                     <option value="">Aucune</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" @selected((string) old('restaurant_menu_category_id') === (string) $category->id)>{{ $category->name }}</option>
@@ -292,11 +376,22 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Prix (FCFA)</label>
-                <input type="number" name="price" min="0" value="{{ old('price', 0) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="number"
+                    name="price"
+                    min="0"
+                    value="{{ old('price', 0) }}"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <div>
                 <label class="text-xs text-primary/60">Type</label>
-                <select name="type" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                <select
+                    name="type"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                        focus:border-secondary outline-none">
                     @foreach($itemTypes as $type)
                         <option value="{{ $type }}" @selected(old('type', 'food') === $type)>{{ strtoupper($type) }}</option>
                     @endforeach
@@ -304,7 +399,13 @@
             </div>
             <div>
                 <label class="text-xs text-primary/60">Ordre</label>
-                <input type="number" name="sort_order" min="0" value="{{ old('sort_order', 0) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="number"
+                    name="sort_order"
+                    min="0"
+                    value="{{ old('sort_order', 0) }}"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
         </div>
 
@@ -329,15 +430,35 @@
 
         <div x-data="singleImagePreview()">
             <label class="text-xs text-primary/60">Image (optionnel)</label>
-            <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'" class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all bg-white" x-show="!preview">
+            <div
+                @click="$refs.fileInput.click()"
+                @dragover.prevent="isDragging=true"
+                @dragleave.prevent="isDragging=false"
+                @drop.prevent="handleDrop($event)"
+                :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'"
+                class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all bg-white"
+                x-show="!preview">
                 <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
                 <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 2 Mo</p>
             </div>
-            <input type="file" name="image" x-ref="fileInput" @change="handleFile($event)" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden">
+            <input
+                type="file"
+                name="image"
+                x-ref="fileInput"
+                @change="handleFile($event)"
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                class="hidden">
             
-            <div x-show="preview" style="display: none;" class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm group">
+            <div
+                x-show="preview"
+                style="display: none;"
+                class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm group">
                 <img :src="preview" class="w-full h-full object-cover">
-                <button type="button" @click="removeImage()" class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100">
+                <button
+                    type="button"
+                    @click="removeImage()"
+                    class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex
+                        items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
@@ -349,8 +470,13 @@
         </label>
 
         <x-slot:footer>
-            <button type="button" onclick="closeCreateItemModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+            <button
+                type="button"
+                onclick="closeCreateItemModal()"
+                class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                    hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                text-white">Creer</button>
         </x-slot:footer>
     </x-modal>
 @endif
@@ -358,18 +484,33 @@
 {{-- Edit item modals : aussi pour qui modifie sans créer (responsable financier). --}}
 @if($peutModifierArticle)
     @foreach($items as $item)
-        <x-modal id="edit-item-modal-{{ $item->id }}" title="Modifier {{ $item->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.menus.items.update', $item) }}" enctype="multipart/form-data" closeAction="closeEditItemModal({{ $item->id }})">
+        <x-modal
+            id="edit-item-modal-{{ $item->id }}"
+            title="Modifier {{ $item->name }}"
+            max-width="max-w-2xl"
+            formAction="{{ route('restaurant.menus.items.update', $item) }}"
+            enctype="multipart/form-data"
+            closeAction="closeEditItemModal({{ $item->id }})">
             @method('PUT')
             <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Nom</label>
-                    <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ old('name', $item->name) }}"
+                        required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Categorie</label>
-                    <select name="restaurant_menu_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    <select
+                        name="restaurant_menu_category_id"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                            focus:border-secondary outline-none">
                         <option value="">Aucune</option>
                         @foreach($categories->where('point_of_sale_id', $item->point_of_sale_id) as $category)
                             <option value="{{ $category->id }}" @selected((string) old('restaurant_menu_category_id', $item->restaurant_menu_category_id) === (string) $category->id)>{{ $category->name }}</option>
@@ -381,11 +522,22 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Prix (FCFA)</label>
-                    <input type="number" name="price" min="0" value="{{ old('price', (int) ($item->price / 100)) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="number"
+                        name="price"
+                        min="0"
+                        value="{{ old('price', (int) ($item->price / 100)) }}"
+                        required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Type</label>
-                    <select name="type" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    <select
+                        name="type"
+                        required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                            focus:border-secondary outline-none">
                         @foreach(array_unique([...$itemTypes, $item->type]) as $type)
                             <option value="{{ $type }}" @selected(old('type', $item->type) === $type)>{{ strtoupper($type) }}</option>
                         @endforeach
@@ -393,7 +545,13 @@
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Ordre</label>
-                    <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $item->sort_order) }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="number"
+                        name="sort_order"
+                        min="0"
+                        value="{{ old('sort_order', $item->sort_order) }}"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
             </div>
 
@@ -416,18 +574,43 @@
                 <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">{{ old('description', $item->description) }}</textarea>
             </div>
 
-            <div x-data="singleImagePreview('{{ $item->image_path ? Storage::url($item->image_path) : '' }}')" :id="$id('image-preview')">
+            <div
+                x-data="singleImagePreview('{{ $item->image_path ? Storage::url($item->image_path) : '' }}')"
+                :id="$id('image-preview')">
                 <label class="text-xs text-primary/60">Image (optionnel)</label>
-                <div @click="$refs.fileInput.click()" @dragover.prevent="isDragging=true" @dragleave.prevent="isDragging=false" @drop.prevent="handleDrop($event)" :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'" class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all bg-white" x-show="!preview">
+                <div
+                    @click="$refs.fileInput.click()"
+                    @dragover.prevent="isDragging=true"
+                    @dragleave.prevent="isDragging=false"
+                    @drop.prevent="handleDrop($event)"
+                    :class="isDragging ? 'border-primary bg-primary/5' : 'border-secondary/30 hover:border-primary/40'"
+                    class="mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all
+                        bg-white"
+                    x-show="!preview">
                     <i data-lucide="image-plus" class="w-6 h-6 mx-auto text-primary/30 mb-1"></i>
                     <p class="text-xs text-primary/50">Cliquez ou glissez · JPG, PNG, WebP · Max 2 Mo</p>
                 </div>
-                <input type="file" name="image" x-ref="fileInput" @change="handleFile($event)" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden">
+                <input
+                    type="file"
+                    name="image"
+                    x-ref="fileInput"
+                    @change="handleFile($event)"
+                    accept="image/jpeg,image/png,image/jpg,image/webp"
+                    class="hidden">
                 <input type="hidden" name="remove_image" :id="'remove-image-flag-' + $id('image-preview')" value="0">
                 
-                <div x-show="preview" style="display: none;" class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm group">
+                <div
+                    x-show="preview"
+                    style="display: none;"
+                    class="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-secondary/20 shadow-sm
+                        group">
                     <img :src="preview" class="w-full h-full object-cover">
-                    <button type="button" @click="removeImage()" class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100">
+                    <button
+                        type="button"
+                        @click="removeImage()"
+                        class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full
+                            flex items-center justify-center transition-colors shadow-sm opacity-0
+                            group-hover:opacity-100">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
@@ -439,8 +622,13 @@
             </label>
 
             <x-slot:footer>
-                <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+                <button
+                    type="button"
+                    onclick="closeEditItemModal({{ $item->id }})"
+                    class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                        hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                    text-white">Enregistrer</button>
             </x-slot:footer>
         </x-modal>
     @endforeach

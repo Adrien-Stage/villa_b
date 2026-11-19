@@ -19,13 +19,15 @@
             @undroit('shop.cash_register.open.creer', 'shop.cash_register.close.creer', 'shop.orders.creer')
             @if(!$hasActiveSession)
                 <a href="{{ route('shop.cash_register.open') }}"
-                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium
+                       transition-colors">
                     <i data-lucide="lock-open" class="w-4 h-4 inline mr-2"></i> Ouvrir la caisse
                 </a>
             @else
                 {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
                 <a href="{{ route('shop.cash_register.close') }}"
-                   class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors" title="Fermer la caisse">
+                   class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium
+                       transition-colors" title="Fermer la caisse">
                     <i data-lucide="lock" class="w-4 h-4 inline"></i>
                 </a>
                 <a href="{{ route('shop.orders.create') }}"
@@ -79,7 +81,11 @@
     </div>
 
     <div id="shop-orders-table-container">
-    <x-table :rows="$orders" empty="Aucune commande trouvée." empty-icon="shopping-cart" caption="Commandes de la boutique">
+    <x-table
+        :rows="$orders"
+        empty="Aucune commande trouvée."
+        empty-icon="shopping-cart"
+        caption="Commandes de la boutique">
         <x-slot:head>
             <x-table.col>Commande</x-table.col>
             <x-table.col>Client</x-table.col>
@@ -102,11 +108,14 @@
                 <x-table.cell align="right" nowrap class="font-medium">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</x-table.cell>
                 <x-table.cell nowrap>
                     @if($order->payment_status === 'paid')
-                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">Payée</span>
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium
+                            text-green-700">Payée</span>
                     @elseif($order->payment_status === 'unpaid')
-                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">En attente</span>
+                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium
+                            text-yellow-700">En attente</span>
                     @else
-                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">Remboursée</span>
+                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium
+                            text-red-700">Remboursée</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">{{ $order->created_at->locale('fr')->format('d M Y H:i') }}</x-table.cell>

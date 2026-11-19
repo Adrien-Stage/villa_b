@@ -15,14 +15,16 @@
 @include('accounting.ledger.partials.nav')
 
 @unless($confirme)
-    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900 leading-relaxed">
+    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900
+        leading-relaxed">
         <strong>Taux non confirmés pour le Cameroun.</strong> Cet état reflète fidèlement ce qui a été
         retenu, mais les taux appliqués proviennent d'un document de référence béninois et attendent
         la validation du cabinet. À vérifier avant tout dépôt de déclaration.
     </div>
 @endunless
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Ce que vous devez reverser.</strong> Chaque somme retenue sur un fournisseur est une dette
     envers l'État, portée au crédit du compte <span class="font-mono">442100</span>. Cet état en donne
     la ventilation par nature — chaque taux se déclare séparément — et le détail par bénéficiaire,
@@ -41,7 +43,10 @@
                class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
     </div>
     <div class="flex items-end">
-        <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+        <button
+            type="submit"
+            class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                transition-colors">
             Afficher
         </button>
     </div>
@@ -80,7 +85,8 @@
                         <td class="px-3 py-2 text-right text-primary/60">{{ rtrim(rtrim(number_format($ligne['rate'] / 100, 2, ',', ''), '0'), ',') }} %</td>
                         <td class="px-3 py-2 text-right text-primary/60">{{ $ligne['count'] }}</td>
                         <td class="px-3 py-2 text-right text-primary/75 whitespace-nowrap">{{ $fcfa($ligne['base']) }}</td>
-                        <td class="px-4 py-2 text-right font-semibold text-primary whitespace-nowrap">{{ $fcfa($ligne['amount']) }}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-primary
+                            whitespace-nowrap">{{ $fcfa($ligne['amount']) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -124,7 +130,8 @@
                         <td class="px-3 py-2 text-primary/60">{{ $facture->withholdingLabel() }}</td>
                         <td class="px-3 py-2 text-right text-primary/75 whitespace-nowrap">{{ $fcfa($facture->amount_ht) }}</td>
                         <td class="px-3 py-2 text-right text-primary/60">{{ rtrim(rtrim(number_format($facture->withholdingRate(), 2, ',', ''), '0'), ',') }} %</td>
-                        <td class="px-4 py-2 text-right font-semibold text-primary whitespace-nowrap">{{ $fcfa($facture->withholding_amount) }}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-primary
+                            whitespace-nowrap">{{ $fcfa($facture->withholding_amount) }}</td>
                     </tr>
                 @empty
                     <tr>

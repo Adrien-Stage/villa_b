@@ -280,7 +280,9 @@
 
             <div class="summary-card">
                 <div class="card-label">Ratio Food Cost</div>
-                <div class="card-value" style="color: {{ $report['food_cost_percent'] > 35 ? '#b91c1c' : ($report['food_cost_percent'] > 30 ? '#d97706' : '#15803d') }};">
+                <div
+                    class="card-value"
+                    style="color: {{ $report['food_cost_percent'] > 35 ? '#b91c1c' : ($report['food_cost_percent'] > 30 ? '#d97706' : '#15803d') }};">
                     {{ number_format($report['food_cost_percent'], 1) }} %
                 </div>
                 <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
@@ -352,7 +354,9 @@
                 <tr style="background: #f8fafc; font-weight: bold;">
                     <td>Coût matière réel total consommé</td>
                     <td class="text-right font-mono">{{ number_format($report['real_kitchen_cost'] / 100, 0, ',', ' ') }}</td>
-                    <td class="text-right font-mono" style="color: {{ $report['food_cost_percent'] > 35 ? '#b91c1c' : ($report['food_cost_percent'] > 30 ? '#d97706' : '#15803d') }};">
+                    <td
+                        class="text-right font-mono"
+                        style="color: {{ $report['food_cost_percent'] > 35 ? '#b91c1c' : ($report['food_cost_percent'] > 30 ? '#d97706' : '#15803d') }};">
                         {{ number_format($report['food_cost_percent'], 1) }} %
                     </td>
                     <td>

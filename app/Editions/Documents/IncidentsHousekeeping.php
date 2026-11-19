@@ -51,7 +51,8 @@ class IncidentsHousekeeping extends Edition
                 'probleme' => $l->details ?? '',
                 'qui' => $l->user?->name ?? '—',
                 'equipe' => $l->team?->name ?? '',
-                'etat' => in_array($l->housekeeping_assignment_id, $bloques, true) ? 'Bloque encore la chambre' : 'Levé',
+                'etat' => in_array($l->housekeeping_assignment_id, $bloques,
+                    true) ? 'Bloque encore la chambre' : 'Levé',
             ]);
 
         return $this->base($valeurs, $user)

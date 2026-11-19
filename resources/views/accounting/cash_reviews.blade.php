@@ -87,14 +87,17 @@
                             {{ $fcfa($passation->received_amount) }} recomptés{{ (int) $passation->discrepancy_amount !== 0 ? ' — écart à la remise : ' . $fcfa($passation->discrepancy_amount) : ', sans écart' }}.
                         @endif
                         @droit('bookings.handovers.voir')
-                            <a href="{{ route('bookings.handovers.show', $passation) }}" class="underline font-semibold">Voir la passation</a>
+                            <a
+                                href="{{ route('bookings.handovers.show', $passation) }}"
+                                class="underline font-semibold">Voir la passation</a>
                         @enddroit
                     </div>
                 @endif
 
                 @php $tiersReview = $tiersParSession[$session->id] ?? null; @endphp
                 @if ($tiersReview && ($tiersReview['has_activity'] ?? false))
-                    <div class="mt-2 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2.5 text-xs text-indigo-950">
+                    <div class="mt-2 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2.5 text-xs
+                        text-indigo-950">
                         <p class="font-semibold">
                             Interventions d'un tiers dans cette caisse ({{ $tiersReview['total_count'] }} opération{{ $tiersReview['total_count'] > 1 ? 's' : '' }}) :
                             @foreach($tiersReview['actors'] as $actor)
@@ -109,13 +112,15 @@
                             @endforeach
                         </p>
                         <details class="mt-1.5">
-                            <summary class="cursor-pointer select-none font-semibold text-indigo-800 hover:text-indigo-950">
+                            <summary class="cursor-pointer select-none font-semibold text-indigo-800
+                                hover:text-indigo-950">
                                 Voir le détail des opérations effectuées par un tiers
                             </summary>
                             <div class="mt-2 overflow-x-auto rounded border border-indigo-200 bg-white">
                                 <table class="w-full text-left text-[11px]">
                                     <caption class="sr-only">Détail des interventions tiers pour la session #{{ $session->id }}</caption>
-                                    <thead class="bg-indigo-50/70 text-[10px] uppercase tracking-wider text-indigo-900/70 border-b border-indigo-100">
+                                    <thead class="bg-indigo-50/70 text-[10px] uppercase tracking-wider
+                                        text-indigo-900/70 border-b border-indigo-100">
                                         <tr>
                                             <th scope="col" class="px-2.5 py-1.5">Heure</th>
                                             <th scope="col" class="px-2.5 py-1.5">Collaborateur</th>
@@ -156,10 +161,12 @@
                         </label>
                         <input type="text" id="notes-{{ $session->id }}" name="witness_notes" maxlength="1000"
                                placeholder="Recomptage effectué en présence de l'agent…"
-                               class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary focus:border-primary focus:outline-none">
+                               class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary
+                                   focus:border-primary focus:outline-none">
                     </div>
                     <button type="submit"
-                            class="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-primary/90">
+                            class="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white
+                                transition-colors hover:bg-primary/90">
                         Contresigner le comptage
                     </button>
                 </form>

@@ -37,7 +37,8 @@ class ServiceStoreService
             // une ouverture du même dépôt ne peuvent pas se croiser.
             $store = ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
             if ($store->restaurant_service === \App\Models\PointOfSale::SERVICE_BAR && ! $store->is_active) {
-                throw new \RuntimeException("Le dépôt {$store->name} est désactivé. Réactivez le Bar avant d'y livrer des articles.");
+                throw new \RuntimeException(
+                    "Le dépôt {$store->name} est désactivé. Réactivez le Bar avant d'y livrer des articles.");
             }
 
             // Dépôt en cours de comptage : une entrée maintenant serait lue
@@ -123,7 +124,8 @@ class ServiceStoreService
             $courant = (float) ($stock?->current_stock ?? 0);
             if ($stock === null || $courant + 0.0001 < $quantity) {
                 throw new \RuntimeException(
-                    "Le dépôt {$store->name} n'a plus que " . rtrim(rtrim(number_format($courant, 3, ',', ' '), '0'), ',')
+                    "Le dépôt {$store->name} n'a plus que " . rtrim(rtrim(number_format($courant, 3, ',', ' '),
+                        '0'), ',')
                     . " {$item->unit} de {$item->name}."
                 );
             }

@@ -58,7 +58,8 @@
 
 {{-- Messages d'alerte --}}
 @if(session('success'))
-<div class="no-print mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+<div class="no-print mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex
+    items-center gap-2">
     <i data-lucide="check-circle" class="w-4 h-4"></i>
     {{ session('success') }}
 </div>
@@ -116,19 +117,22 @@
 
         {{-- Identité --}}
         <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-heading font-semibold text-xl shadow-inner">
+            <div class="w-14 h-14 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white
+                font-heading font-semibold text-xl shadow-inner">
                 {{ mb_strtoupper(mb_substr($customer->first_name, 0, 1) . mb_substr($customer->last_name, 0, 1)) }}
             </div>
             <div>
                 <div class="flex flex-wrap items-center gap-2 mb-1">
                     <h1 class="font-heading text-2xl font-semibold text-primary">{{ $customer->full_name }}</h1>
                     @if($customer->is_vip)
-                        <span class="flex items-center gap-1 px-2.5 py-0.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full text-xs font-medium">
+                        <span class="flex items-center gap-1 px-2.5 py-0.5 bg-yellow-50 text-yellow-700 border
+                            border-yellow-200 rounded-full text-xs font-medium">
                             <i data-lucide="star" class="w-3 h-3 text-yellow-600 fill-yellow-500"></i> VIP
                         </span>
                     @endif
                     @if($customer->is_blacklisted)
-                        <span class="flex items-center gap-1 px-2.5 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-full text-xs font-medium">
+                        <span class="flex items-center gap-1 px-2.5 py-0.5 bg-red-50 text-red-700 border border-red-200
+                            rounded-full text-xs font-medium">
                             <i data-lucide="ban" class="w-3 h-3"></i> Blacklisté
                         </span>
                     @endif
@@ -159,7 +163,8 @@
                         </span>
                     @endif
                     @if($customer->partnerOrganization)
-                        <span class="flex items-center gap-1.5 px-2 py-0.5 bg-secondary/10 rounded-md text-xs font-medium text-primary">
+                        <span class="flex items-center gap-1.5 px-2 py-0.5 bg-secondary/10 rounded-md text-xs
+                            font-medium text-primary">
                             <i data-lucide="handshake" class="w-3 h-3 text-primary"></i>
                             {{ $customer->partnerOrganization->name }}
                             @if(!$customer->partnerOrganization->has_convention)
@@ -198,14 +203,16 @@
             <div class="flex items-center gap-2">
                 {{-- Bouton raccourci vers les factures --}}
                 <button type="button" onclick="switchTab('invoices')"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm cursor-pointer">
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                            rounded-lg hover:bg-surface-dark transition-colors shadow-sm cursor-pointer">
                     <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                     Factures & Pièces
                 </button>
 
                 @droit('customers.modifier')
                 <a href="{{ route('customers.edit', $customer) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-secondary/30 text-primary
+                       text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
                     <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                     Modifier le profil
                 </a>
@@ -238,9 +245,11 @@
 </div>
 
 {{-- Système d'onglets ergonomique --}}
-<div class="no-print bg-white rounded-xl shadow-sm mb-5 p-1.5 border border-secondary/20 flex flex-wrap items-center gap-1.5">
+<div class="no-print bg-white rounded-xl shadow-sm mb-5 p-1.5 border border-secondary/20 flex flex-wrap items-center
+    gap-1.5">
     <button type="button" id="tab-btn-bookings" onclick="switchTab('bookings')"
-            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all
+                cursor-pointer">
         <i data-lucide="bed-double" class="w-4 h-4"></i>
         <span>Séjours & Réservations</span>
         <span class="tab-badge px-2 py-0.5 rounded-full text-[11px] font-bold">
@@ -249,7 +258,8 @@
     </button>
 
     <button type="button" id="tab-btn-invoices" onclick="switchTab('invoices')"
-            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all
+                cursor-pointer">
         <i data-lucide="receipt" class="w-4 h-4"></i>
         <span>Toutes les Factures & Consommations</span>
         <span class="tab-badge px-2 py-0.5 rounded-full text-[11px] font-bold">
@@ -258,7 +268,8 @@
     </button>
 
     <button type="button" id="tab-btn-banquets" onclick="switchTab('banquets')"
-            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all
+                cursor-pointer">
         <i data-lucide="party-popper" class="w-4 h-4"></i>
         <span>Banquets & Événements</span>
         <span class="tab-badge px-2 py-0.5 rounded-full text-[11px] font-bold">
@@ -267,7 +278,8 @@
     </button>
 
     <button type="button" id="tab-btn-loyalty" onclick="switchTab('loyalty')"
-            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all
+                cursor-pointer">
         <i data-lucide="gift" class="w-4 h-4"></i>
         <span>Programme Fidélité</span>
         <span class="tab-badge px-2 py-0.5 rounded-full text-[11px] font-bold">
@@ -310,11 +322,13 @@
                             ];
                             $sc = $statusColors[$booking->status->value] ?? 'bg-secondary/10 text-primary/60 border-secondary/20';
                         @endphp
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-3.5 hover:bg-accent/10 transition-colors">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5
+                            py-3.5 hover:bg-accent/10 transition-colors">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('bookings.show', $booking) }}"
-                                       class="text-sm font-semibold text-primary hover:text-accent-dark transition-colors">
+                                       class="text-sm font-semibold text-primary hover:text-accent-dark
+                                           transition-colors">
                                         {{ $booking->booking_number }}
                                     </a>
                                     <span class="px-2 py-0.5 text-xs font-medium rounded-full border {{ $sc }}">
@@ -345,7 +359,8 @@
                                     @endif
                                 </div>
                                 <a href="{{ route('bookings.show', $booking) }}"
-                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors"
+                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg
+                                       transition-colors"
                                    title="Voir la réservation">
                                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                                 </a>
@@ -390,7 +405,8 @@
                     Consultez l'ensemble des factures d'hébergement, restaurant, boutique et POS réception.
                 </p>
                 <button type="button" onclick="switchTab('invoices')"
-                        class="w-full py-2 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                        class="w-full py-2 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
                     <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                     Voir les factures du client
                 </button>
@@ -504,7 +520,8 @@
                     <label for="start_date" class="block text-[11px] font-medium text-primary/70 mb-1">Date début</label>
                     <input type="date" name="start_date" id="start_date"
                            value="{{ $billingData['filters']['start_date'] }}"
-                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none
+                               focus:ring-1 focus:ring-primary bg-white">
                 </div>
 
                 {{-- Date fin --}}
@@ -512,27 +529,35 @@
                     <label for="end_date" class="block text-[11px] font-medium text-primary/70 mb-1">Date fin</label>
                     <input type="date" name="end_date" id="end_date"
                            value="{{ $billingData['filters']['end_date'] }}"
-                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none
+                               focus:ring-1 focus:ring-primary bg-white">
                 </div>
 
                 {{-- Domaine / Service --}}
                 <div>
                     <label for="service" class="block text-[11px] font-medium text-primary/70 mb-1">Service consommé</label>
                     <select name="service" id="service"
-                            class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                            class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none
+                                focus:ring-1 focus:ring-primary bg-white">
                         <option value="all" {{ $billingData['filters']['service'] === 'all' ? 'selected' : '' }}>
                             Tous les services
                         </option>
-                        <option value="accommodation" {{ $billingData['filters']['service'] === 'accommodation' ? 'selected' : '' }}>
+                        <option
+                            value="accommodation"
+                            {{ $billingData['filters']['service'] === 'accommodation' ? 'selected' : '' }}>
                             🏨 Hébergement ({{ $billingData['totals']['counts_by_service']['accommodation'] ?? 0 }})
                         </option>
-                        <option value="restaurant" {{ $billingData['filters']['service'] === 'restaurant' ? 'selected' : '' }}>
+                        <option
+                            value="restaurant"
+                            {{ $billingData['filters']['service'] === 'restaurant' ? 'selected' : '' }}>
                             🍽️ Restaurant & Bar ({{ $billingData['totals']['counts_by_service']['restaurant'] ?? 0 }})
                         </option>
                         <option value="shop" {{ $billingData['filters']['service'] === 'shop' ? 'selected' : '' }}>
                             🛍️ Boutique ({{ $billingData['totals']['counts_by_service']['shop'] ?? 0 }})
                         </option>
-                        <option value="reception" {{ $billingData['filters']['service'] === 'reception' ? 'selected' : '' }}>
+                        <option
+                            value="reception"
+                            {{ $billingData['filters']['service'] === 'reception' ? 'selected' : '' }}>
                             🏷️ POS Réception ({{ $billingData['totals']['counts_by_service']['reception'] ?? 0 }})
                         </option>
                         <option value="group" {{ $billingData['filters']['service'] === 'group' ? 'selected' : '' }}>
@@ -545,7 +570,8 @@
                 <div>
                     <label for="status" class="block text-[11px] font-medium text-primary/70 mb-1">Statut règlement</label>
                     <select name="status" id="status"
-                            class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                            class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none
+                                focus:ring-1 focus:ring-primary bg-white">
                         <option value="all" {{ $billingData['filters']['status'] === 'all' ? 'selected' : '' }}>Tous les statuts</option>
                         <option value="paid" {{ $billingData['filters']['status'] === 'paid' ? 'selected' : '' }}>Payé / Réglé</option>
                         <option value="unpaid" {{ $billingData['filters']['status'] === 'unpaid' ? 'selected' : '' }}>Reste à payer / Impayé</option>
@@ -559,23 +585,28 @@
                     <input type="text" name="search" id="search"
                            value="{{ $billingData['filters']['search'] }}"
                            placeholder="Ex: F-2026, CMD..."
-                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                           class="w-full text-xs px-2.5 py-2 border border-secondary/20 rounded-lg focus:outline-none
+                               focus:ring-1 focus:ring-primary bg-white">
                 </div>
 
                 {{-- Boutons d'action --}}
                 <div class="flex items-center gap-1.5">
                     <button type="submit"
-                            class="flex-1 px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-1 cursor-pointer">
+                            class="flex-1 px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                                hover:bg-surface-dark transition-colors flex items-center justify-center gap-1
+                                cursor-pointer">
                         <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                         Filtrer
                     </button>
                     <a href="{{ route('customers.show', ['customer' => $customer, 'tab' => 'invoices']) }}"
-                       class="px-2.5 py-2 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs rounded-lg transition-colors"
+                       class="px-2.5 py-2 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs rounded-lg
+                           transition-colors"
                        title="Réinitialiser tous les filtres">
                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                     </a>
                     <button type="button" onclick="window.print()"
-                            class="px-2.5 py-2 bg-white border border-secondary/30 text-primary hover:bg-accent/20 text-xs rounded-lg transition-colors cursor-pointer"
+                            class="px-2.5 py-2 bg-white border border-secondary/30 text-primary hover:bg-accent/20
+                                text-xs rounded-lg transition-colors cursor-pointer"
                             title="Imprimer le relevé filtré">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                     </button>
@@ -610,7 +641,8 @@
                     Aucun document n'a été émis pour les filtres sélectionnés (service, dates ou statut).
                 </p>
                 <a href="{{ route('customers.show', ['customer' => $customer, 'tab' => 'invoices']) }}"
-                   class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                   class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs
+                       font-medium rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                     Réinitialiser les filtres
                 </a>
@@ -618,7 +650,8 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
-                    <thead class="bg-secondary/5 text-primary/70 border-b border-secondary/10 uppercase tracking-wider text-[10px]">
+                    <thead class="bg-secondary/5 text-primary/70 border-b border-secondary/10 uppercase tracking-wider
+                        text-[10px]">
                         <tr>
                             <th class="px-4 py-3 font-semibold">Date & Heure</th>
                             <th class="px-4 py-3 font-semibold">Service</th>
@@ -761,7 +794,8 @@
             @module('restaurant')
                 @droit('restaurant.banquets.creer')
                     <a href="{{ route('restaurant.banquets.index') }}"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                           rounded-lg hover:bg-surface-dark transition-colors">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         Gérer / Créer un banquet
                     </a>
@@ -784,7 +818,8 @@
                         $enc = (int) ($banquet->total_encaisse ?? $banquet->encaisse());
                         $soldeBanquet = max(0, (int) $banquet->total_amount - $enc);
                     @endphp
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-3.5 hover:bg-accent/10 transition-colors">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-3.5
+                        hover:bg-accent/10 transition-colors">
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 <a href="{{ route('restaurant.banquets.show', $banquet) }}"
@@ -794,7 +829,8 @@
                                 <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border {{ $banquetCouleurs[$banquet->status] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
                                     {{ $banquet->libelleStatut() }}
                                 </span>
-                                <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-secondary/10 text-primary/70">
+                                <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-secondary/10
+                                    text-primary/70">
                                     {{ $banquet->libelleSource() }}
                                 </span>
                             </div>
@@ -805,7 +841,8 @@
                             </p>
                         </div>
 
-                        <div class="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                        <div class="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-between
+                            sm:justify-end">
                             <div class="text-left sm:text-right">
                                 <p class="text-xs font-bold text-primary">{{ number_format($banquet->total_amount / 100, 0, ',', ' ') }} FCFA</p>
                                 <p class="text-[10px] text-emerald-700">Encaissé : {{ number_format($enc / 100, 0, ',', ' ') }} FCFA</p>
@@ -815,11 +852,13 @@
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <a href="{{ route('restaurant.banquets.print', $banquet) }}" title="Imprimer devis / reçu"
-                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors">
+                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg
+                                       transition-colors">
                                     <i data-lucide="printer" class="w-4 h-4"></i>
                                 </a>
                                 <a href="{{ route('restaurant.banquets.show', $banquet) }}" title="Ouvrir le banquet"
-                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg transition-colors">
+                                   class="p-1.5 text-primary/60 hover:text-primary hover:bg-secondary/10 rounded-lg
+                                       transition-colors">
                                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                                 </a>
                             </div>
@@ -871,7 +910,8 @@
                         Plus que {{ number_format(max(0, $nl['threshold'] - $customer->total_spent) / 100, 0, ',', ' ') }} FCFA pour atteindre le palier {{ $nl['next'] }}.
                     </p>
                 @else
-                    <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-700 font-medium">
+                    <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-700
+                        font-medium">
                         Félicitations ! Vous avez atteint le palier maximal Platinum.
                     </div>
                 @endif

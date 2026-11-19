@@ -119,7 +119,8 @@ class StockCategoryController extends Controller
     public function destroy(StockCategory $category): RedirectResponse
     {
         if ($category->items()->exists()) {
-            return back()->with('error', "La catégorie « {$category->name} » contient des articles : déplacez-les d'abord.");
+            return back()->with('error',
+                "La catégorie « {$category->name} » contient des articles : déplacez-les d'abord.");
         }
 
         $category->delete();
@@ -130,7 +131,8 @@ class StockCategoryController extends Controller
     private function validated(Request $request, ?StockCategory $category = null): array
     {
         // Si sort_order n'est pas fourni (ex: appel programmatique ou test), attribuer le prochain ordre libre
-        if (!$request->has('sort_order') || $request->input('sort_order') === null || $request->input('sort_order') === '') {
+        if (!$request->has('sort_order') || $request->input('sort_order') === null || $request
+            ->input('sort_order') === '') {
             $maxOrder = StockCategory::max('sort_order');
             $request->merge(['sort_order' => $maxOrder !== null ? ((int) $maxOrder + 1) : 0]);
         }
@@ -145,7 +147,8 @@ class StockCategoryController extends Controller
             : "Cet ordre d'affichage est déjà attribué à une autre catégorie.";
 
         return $request->validate([
-            'name'          => ['required', 'string', 'max:120', Rule::unique('stock_categories', 'name')->ignore($category?->id)],
+            'name'          => ['required', 'string', 'max:120', Rule::unique('stock_categories', 'name')
+                ->ignore($category?->id)],
             'stock_account' => ['nullable', Rule::in(array_keys(StockCategory::STOCK_ACCOUNTS))],
             'sort_order'    => [
                 'required',

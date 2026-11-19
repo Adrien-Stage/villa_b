@@ -89,7 +89,8 @@
                 <div class="mb-3">
                     <label class="block text-xs text-primary/50 mb-1.5">Nouveau statut</label>
                     <select name="status"
-                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
+                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                                focus:outline-none focus:border-secondary">
                         @php
                             $user = auth()->user();
                             $isHousekeepingOnly = $user->exerce(['housekeeping', 'housekeeping_chief', 'housekeeping_staff', 'housekeeping_supervisor', 'housekeeping_leader']) && !$user->exerce(['manager', 'reception']);
@@ -116,10 +117,12 @@
                     <label class="block text-xs text-primary/50 mb-1.5">Raison (optionnel)</label>
                     <input type="text" name="reason"
                            placeholder="Ex: Check-out client Martin"
-                           class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary placeholder:text-primary/30">
+                           class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                               focus:outline-none focus:border-secondary placeholder:text-primary/30">
                 </div>
                 <button type="submit"
-                        class="w-full py-2 rounded-lg text-xs font-semibold bg-primary text-secondary hover:bg-surface-dark transition-colors">
+                        class="w-full py-2 rounded-lg text-xs font-semibold bg-primary text-secondary
+                            hover:bg-surface-dark transition-colors">
                     Mettre à jour
                 </button>
             </form>

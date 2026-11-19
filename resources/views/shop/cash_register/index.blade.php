@@ -17,7 +17,11 @@
         </div>
     @endif
 
-    <x-table :rows="$sessions" empty="Aucune session de caisse n'a été trouvée." empty-icon="calculator" caption="Sessions de caisse de la boutique">
+    <x-table
+        :rows="$sessions"
+        empty="Aucune session de caisse n'a été trouvée."
+        empty-icon="calculator"
+        caption="Sessions de caisse de la boutique">
         <x-slot:head>
             <x-table.col>Session &amp; caissier</x-table.col>
             <x-table.col>État</x-table.col>
@@ -31,7 +35,10 @@
             <x-table.row>
                 <x-table.cell>
                     <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($session->user->name, 0, 2)) }}</div>
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold
+                                text-primary"
+                            aria-hidden="true">{{ mb_strtoupper(mb_substr($session->user->name, 0, 2)) }}</div>
                         <div>
                             <p class="text-sm font-medium text-primary">{{ $session->user->name }}</p>
                             <p class="text-xs text-primary/50">Ouverte : {{ $session->opened_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
@@ -43,9 +50,11 @@
                 </x-table.cell>
                 <x-table.cell nowrap>
                     @if($session->closed_at)
-                        <span class="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">Clôturée</span>
+                        <span class="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-medium
+                            text-gray-700">Clôturée</span>
                     @else
-                        <span class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">En cours</span>
+                        <span class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium
+                            text-green-700">En cours</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="text-primary/70">{{ number_format($session->opening_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
@@ -55,14 +64,25 @@
                     <x-table.cell align="right" hide="lg" nowrap class="font-bold">{{ number_format($session->actual_closing_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
                     <x-table.cell align="right" nowrap>
                         @if($gap === 0)
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-green-600"><i data-lucide="check" class="h-3.5 w-3.5" aria-hidden="true"></i> Juste</span>
+                            <span class="inline-flex items-center gap-1 text-sm font-medium text-green-600"><i
+                                data-lucide="check"
+                                class="h-3.5 w-3.5"
+                                aria-hidden="true"></i> Juste</span>
                         @elseif($gap > 0)
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-yellow-600" title="{{ $session->closing_notes }}">+{{ number_format($gap / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
+                            <span
+                                class="inline-flex items-center gap-1 text-sm font-medium text-yellow-600"
+                                title="{{ $session->closing_notes }}">+{{ number_format($gap / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
                         @else
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-red-600" title="{{ $session->closing_notes }}">−{{ number_format(abs($gap) / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
+                            <span
+                                class="inline-flex items-center gap-1 text-sm font-medium text-red-600"
+                                title="{{ $session->closing_notes }}">−{{ number_format(abs($gap) / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
                         @endif
                         @if($session->closing_notes)
-                            <i data-lucide="info" class="ml-1 inline h-3 w-3 text-primary/40" title="{{ $session->closing_notes }}" aria-label="{{ $session->closing_notes }}"></i>
+                            <i
+                                data-lucide="info"
+                                class="ml-1 inline h-3 w-3 text-primary/40"
+                                title="{{ $session->closing_notes }}"
+                                aria-label="{{ $session->closing_notes }}"></i>
                         @endif
                     </x-table.cell>
                 @else

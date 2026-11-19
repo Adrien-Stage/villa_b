@@ -37,7 +37,8 @@ class SupplierTariffService
         $valeurs = ['purchase_price' => max(0, $prix), 'unit' => $item->unit, 'updated_at' => now()];
 
         // La date ne bouge qu'avec le prix : enregistrer le même prix ne le rajeunit pas.
-        if ($existant === null || (int) $existant->purchase_price !== $valeurs['purchase_price'] || $existant->priced_at === null) {
+        if ($existant === null || (int) $existant->purchase_price !== $valeurs['purchase_price'] || $existant
+            ->priced_at === null) {
             $valeurs['priced_at'] = $valeurs['purchase_price'] > 0 ? ($le ?? now()) : null;
         }
 

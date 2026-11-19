@@ -121,7 +121,8 @@ class Corbeille
         $racine = $photo['racine'];
 
         if (DB::table($racine['table'])->where($racine['cle'], $racine['ligne'][$racine['cle']] ?? null)->exists()) {
-            throw new RuntimeException('Cet élément existe de nouveau dans l\'établissement : il n\'y a rien à restaurer.');
+            throw new RuntimeException(
+                'Cet élément existe de nouveau dans l\'établissement : il n\'y a rien à restaurer.');
         }
 
         try {
@@ -157,7 +158,8 @@ class Corbeille
 
         AuditLog::record(null, 'corbeille_restauration',
             "{$entree->type} « {$entree->label} » restauré depuis la corbeille par {$par}",
-            $entree->module, ['trash_entry_id' => $entree->id, 'table' => $entree->table_name, 'id' => $entree->record_id]);
+            $entree->module, ['trash_entry_id' => $entree->id, 'table' => $entree->table_name, 'id' => $entree
+                ->record_id]);
 
         return $entree->fresh();
     }
@@ -173,7 +175,8 @@ class Corbeille
 
         AuditLog::record(null, 'corbeille_purge',
             "{$entree->type} « {$entree->label} » purgé de la corbeille par {$par}",
-            $entree->module, ['trash_entry_id' => $entree->id, 'table' => $entree->table_name, 'id' => $entree->record_id]);
+            $entree->module, ['trash_entry_id' => $entree->id, 'table' => $entree->table_name, 'id' => $entree
+                ->record_id]);
 
         $entree->delete();
     }
@@ -203,7 +206,8 @@ class Corbeille
                 continue;
             }
 
-            $enfants = DB::table($ref['table'])->whereIn($ref['colonne'], $valeurs)->get()->map(fn ($l) => (array) $l)->all();
+            $enfants = DB::table($ref['table'])->whereIn($ref['colonne'], $valeurs)->get()->map(fn ($l) => (array) $l)
+                ->all();
             if ($enfants === []) {
                 continue;
             }

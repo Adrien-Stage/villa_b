@@ -65,9 +65,12 @@ class GoodsReceiptController extends Controller
         $recus = (clone $statsQuery)->where('status', '!=', GoodsReceipt::STATUS_PENDING);
         $stats = [
             'total_receipts' => (clone $recus)->count(),
-            'conforme'       => (clone $recus)->whereDoesntHave('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
-            'avec_litige'    => (clone $recus)->whereHas('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))->count(),
-            'total_amount'   => (int) (clone $statsQuery)->where('status', GoodsReceipt::STATUS_RECEIVED)->sum('total_amount'),
+            'conforme'       => (clone $recus)->whereDoesntHave('lines', fn ($l) => $l->where('quantity_rejected', '>',
+                0))->count(),
+            'avec_litige'    => (clone $recus)->whereHas('lines', fn ($l) => $l->where('quantity_rejected', '>', 0))
+                ->count(),
+            'total_amount'   => (int) (clone $statsQuery)->where('status', GoodsReceipt::STATUS_RECEIVED)
+                ->sum('total_amount'),
             'en_attente'     => GoodsReceipt::query()->enAttente()->count(),
         ];
 
@@ -112,7 +115,8 @@ class GoodsReceiptController extends Controller
             ->lignes($lignes);
 
         if ($lignes->count() >= self::MAX_EXPORT) {
-            $document->note('Export limité aux ' . self::MAX_EXPORT . ' réceptions les plus récentes. Affinez les filtres pour le reste.');
+            $document->note('Export limité aux ' . self::MAX_EXPORT
+                . ' réceptions les plus récentes. Affinez les filtres pour le reste.');
         }
 
         return $exporteur->rendre($document, $format);
@@ -148,7 +152,8 @@ class GoodsReceiptController extends Controller
 
         $validated = $request->validate([
             'delivery_note_number'       => ['nullable', 'string', 'max:80'],
-            'received_at'                => array_filter(['required', 'date', 'before_or_equal:now', $depuis ? 'after_or_equal:' . $depuis->toDateTimeString() : null]),
+            'received_at'                => array_filter(['required', 'date', 'before_or_equal:now',
+                $depuis ? 'after_or_equal:' . $depuis->toDateTimeString() : null]),
             'notes'                      => ['nullable', 'string', 'max:1000'],
             'lines'                      => ['required', 'array'],
             'lines.*.quantity_delivered' => ['nullable', 'numeric', 'min:0'],
@@ -176,7 +181,8 @@ class GoodsReceiptController extends Controller
 
         $notifier->toRoles(self::ACHETEURS, new PurchaseOrderUpdated($order->fresh('supplier')), Auth::id());
 
-        $suite = $receipt->delivery_type === GoodsReceipt::DELIVERY_PARTIAL && ($reste = $this->receiptService->attenteDe($order))
+        $suite = $receipt->delivery_type === GoodsReceipt::DELIVERY_PARTIAL && ($reste = $this->receiptService
+            ->attenteDe($order))
             ? " Livraison partielle : le reste est attendu sous le bon {$reste->number}."
             : ' Livraison complète : le bon de commande est soldé.';
 
@@ -195,7 +201,8 @@ class GoodsReceiptController extends Controller
 
         return view('economat.receipts.direct', [
             'suppliers'     => Supplier::active()->orderBy('name')->get(['id', 'name', 'phone']),
-            'items'         => StockItem::active()->with('packagings')->orderBy('name')->get(['id', 'name', 'unit', 'average_cost', 'last_purchase_price']),
+            'items'         => StockItem::active()->with('packagings')->orderBy('name')->get(['id', 'name', 'unit',
+                'average_cost', 'last_purchase_price']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
             'zones'         => StorageZone::query()->active()->dansLOrdre()->get(['id', 'name']),
             'unites'        => StockUnit::selectOptions(),
@@ -209,7 +216,8 @@ class GoodsReceiptController extends Controller
     public function storeDirect(Request $request, PermissionResolver $resolver, Notifier $notifier): RedirectResponse
     {
         $validated = $request->validate([
-            'supplier_id'               => ['nullable', 'integer', 'exists:suppliers,id', 'required_without:nouveau_fournisseur.name'],
+            'supplier_id'               => ['nullable', 'integer', 'exists:suppliers,id',
+                'required_without:nouveau_fournisseur.name'],
             'nouveau_fournisseur.name'  => ['nullable', 'string', 'max:160', 'required_without:supplier_id'],
             'nouveau_fournisseur.phone' => ['nullable', 'string', 'max:30'],
             'motif'                     => ['required', Rule::in(array_keys(PurchaseOrder::MOTIFS_REGULARISATION))],
@@ -217,11 +225,15 @@ class GoodsReceiptController extends Controller
             'received_at'               => ['required', 'date', 'before_or_equal:now'],
             'notes'                     => ['nullable', 'string', 'max:1000'],
             'lines'                     => ['required', 'array', 'min:1', 'max:100'],
-            'lines.*.stock_item_id'     => ['nullable', 'integer', 'exists:stock_items,id', 'required_without:lines.*.nouvel_article.name'],
-            'lines.*.nouvel_article.name'              => ['nullable', 'string', 'max:160', 'required_without:lines.*.stock_item_id'],
-            'lines.*.nouvel_article.unit'              => ['nullable', 'required_with:lines.*.nouvel_article.name', Rule::in(StockUnit::choix())],
+            'lines.*.stock_item_id'     => ['nullable', 'integer', 'exists:stock_items,id',
+                'required_without:lines.*.nouvel_article.name'],
+            'lines.*.nouvel_article.name'              => ['nullable', 'string', 'max:160',
+                'required_without:lines.*.stock_item_id'],
+            'lines.*.nouvel_article.unit'              => ['nullable', 'required_with:lines.*.nouvel_article.name',
+                Rule::in(StockUnit::choix())],
             'lines.*.nouvel_article.stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
-            'lines.*.nouvel_article.storage_zone_id'   => ['nullable', 'integer', Rule::exists('storage_zones', 'id')->where('is_active', true)],
+            'lines.*.nouvel_article.storage_zone_id'   => ['nullable', 'integer', Rule::exists('storage_zones', 'id')
+                ->where('is_active', true)],
             'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
@@ -252,7 +264,8 @@ class GoodsReceiptController extends Controller
         if (empty($validated['supplier_id']) && !$resolver->allows($user, 'economat.suppliers.creer')) {
             return back()->withInput()->withErrors(['nouveau_fournisseur.name' => "Vous ne pouvez pas créer de fournisseur : choisissez-en un dans la liste."]);
         }
-        if (collect($validated['lines'])->contains(fn ($l) => empty($l['stock_item_id'])) && !$resolver->allows($user, 'economat.items.creer')) {
+        if (collect($validated['lines'])->contains(fn ($l) => empty($l['stock_item_id'])) && !$resolver->allows($user,
+            'economat.items.creer')) {
             return back()->withInput()->withErrors(['lines' => "Vous ne pouvez pas créer d'article : choisissez chaque article dans la liste."]);
         }
 
@@ -284,7 +297,9 @@ class GoodsReceiptController extends Controller
 
     public function show(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments', 'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'lines.item.zone', 'attachments.uploadedBy']);
+        $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments',
+            'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category',
+            'lines.item.packagings', 'lines.item.zone', 'attachments.uploadedBy']);
 
         return view('economat.receipts.show', [
             'receipt' => $receipt,
@@ -297,7 +312,8 @@ class GoodsReceiptController extends Controller
      */
     public function print(GoodsReceipt $receipt): View
     {
-        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings', 'lines.item.zone']);
+        $receipt->load(['purchaseOrder', 'supplier', 'receivedBy', 'lines.item.category', 'lines.item.packagings',
+            'lines.item.zone']);
 
         return view('economat.receipts.print', [
             'receipt' => $receipt,
@@ -380,7 +396,8 @@ class GoodsReceiptController extends Controller
         }
 
         if ($litige = $request->query('litige')) {
-            $filtres['Conformité'] = $litige === 'avec' ? 'Avec litiges / avaries' : ($litige === 'sans' ? '100% Conforme' : 'Toutes');
+            $filtres['Conformité'] = $litige === 'avec' ? 'Avec litiges / avaries' : (
+                $litige === 'sans' ? '100% Conforme' : 'Toutes');
         }
 
         $debut = $this->date($request->query('du') ?: $request->query('date_from'));

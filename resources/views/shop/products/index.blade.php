@@ -16,11 +16,20 @@
             <p class="text-secondary mt-1">Gestion des articles culturels</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('shop.products.export') }}" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+            <a
+                href="{{ route('shop.products.export') }}"
+                class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm
+                    font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                title="Exporter les articles en CSV">
                 <i data-lucide="download" class="w-4 h-4"></i> Exporter
             </a>
             @droit('shop.products.import')
-                <button type="button" onclick="document.getElementById('modal-import-products').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                <button
+                    type="button"
+                    onclick="document.getElementById('modal-import-products').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3 py-3 border border-secondary/30 text-primary text-sm
+                        font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                    title="Importer des articles depuis un CSV">
                     <i data-lucide="upload" class="w-4 h-4"></i> Importer
                 </button>
             @enddroit
@@ -134,15 +143,23 @@
                 <x-table.cell>
                     <div class="flex items-center gap-3">
                         @if($product->image_path)
-                            <img src="{{ asset('storage/' . $product->image_path) }}" alt="" class="h-10 w-10 shrink-0 rounded-full border-2 border-secondary/20 object-cover">
+                            <img
+                                src="{{ asset('storage/' . $product->image_path) }}"
+                                alt=""
+                                class="h-10 w-10 shrink-0 rounded-full border-2 border-secondary/20 object-cover">
                         @else
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary/10 bg-primary/10" aria-hidden="true">
+                            <div
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2
+                                    border-secondary/10 bg-primary/10"
+                                aria-hidden="true">
                                 <i data-lucide="package" class="h-5 w-5 text-primary/40"></i>
                             </div>
                         @endif
                         <div class="min-w-0">
                             @if($peutModifier)
-                                <a href="{{ route('shop.products.edit', $product) }}" class="block truncate font-medium text-primary hover:underline">{{ $product->name }}</a>
+                                <a
+                                    href="{{ route('shop.products.edit', $product) }}"
+                                    class="block truncate font-medium text-primary hover:underline">{{ $product->name }}</a>
                             @else
                                 <span class="block truncate font-medium text-primary">{{ $product->name }}</span>
                             @endif
@@ -154,18 +171,23 @@
                 <x-table.cell align="right" nowrap class="font-medium">{{ number_format($product->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
                 <x-table.cell nowrap>
                     @if($product->stock_quantity <= 0)
-                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">Rupture</span>
+                        <span class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium
+                            text-red-700">Rupture</span>
                     @elseif($product->stock_quantity <= $product->reorder_level)
-                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">{{ $product->stock_quantity }} unité(s)</span>
+                        <span class="rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium
+                            text-yellow-700">{{ $product->stock_quantity }} unité(s)</span>
                     @else
-                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">{{ $product->stock_quantity }} unité(s)</span>
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium
+                            text-green-700">{{ $product->stock_quantity }} unité(s)</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell hide="lg" nowrap>
                     @if($product->is_active)
-                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">Actif</span>
+                        <span class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium
+                            text-green-700">Actif</span>
                     @else
-                        <span class="rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700">Inactif</span>
+                        <span class="rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium
+                            text-gray-700">Inactif</span>
                     @endif
                 </x-table.cell>
                 @if($peutModifier || $peutSupprimer)
@@ -199,7 +221,8 @@
                             @if($product->image_path)
                                 <img src="{{ asset('storage/' . $product->image_path) }}"
                                      alt="{{ $product->name }}"
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform
+                                         duration-300">
                             @else
                                 <div class="w-full h-full flex flex-col items-center justify-center text-primary/20">
                                     <i data-lucide="package" class="w-12 h-12 mb-2"></i>
@@ -210,15 +233,18 @@
                             {{-- Badge statut --}}
                             <div class="absolute top-2 left-2">
                                 @if(!$product->is_active)
-                                    <span class="inline-flex items-center px-2 py-0.5 bg-gray-800/70 text-white text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
+                                    <span class="inline-flex items-center px-2 py-0.5 bg-gray-800/70 text-white
+                                        text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
                                         Inactif
                                     </span>
                                 @elseif($product->stock_quantity <= 0)
-                                    <span class="inline-flex items-center px-2 py-0.5 bg-red-500/90 text-white text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
+                                    <span class="inline-flex items-center px-2 py-0.5 bg-red-500/90 text-white
+                                        text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
                                         Rupture
                                     </span>
                                 @elseif($product->stock_quantity <= $product->reorder_level)
-                                    <span class="inline-flex items-center px-2 py-0.5 bg-yellow-500/90 text-white text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
+                                    <span class="inline-flex items-center px-2 py-0.5 bg-yellow-500/90 text-white
+                                        text-[10px] font-bold rounded-md uppercase tracking-wider backdrop-blur-sm">
                                         Stock bas
                                     </span>
                                 @endif
@@ -226,11 +252,14 @@
 
                             {{-- Actions overlay --}}
                             @if($peutModifier || $peutSupprimer)
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-end p-3">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end
+                                justify-end p-3">
                                 <div class="flex gap-1.5">
                                     @if($peutModifier)
                                     <a href="{{ route('shop.products.edit', $product) }}"
-                                       class="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-primary hover:bg-white transition-colors shadow-sm"
+                                       class="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center
+                                           justify-center text-primary hover:bg-white transition-colors shadow-sm"
                                        title="Modifier">
                                         <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                                     </a>
@@ -241,7 +270,9 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                                class="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors shadow-sm"
+                                                class="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex
+                                                    items-center justify-center text-red-500 hover:bg-red-50
+                                                    transition-colors shadow-sm"
                                                 title="Supprimer">
                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>

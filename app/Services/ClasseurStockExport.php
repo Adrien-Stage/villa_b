@@ -76,7 +76,8 @@ class ClasseurStockExport
                 'stock_min'   => (float) $a->min_stock ?: null,
                 'actif'       => $a->is_active,
             ])->all(),
-            'mouvements'   => $mouvements->map(fn (array $m) => [...$m, 'reference' => $references[$m['article']] ?? null])
+            'mouvements'   => $mouvements->map(fn (array $m) => [...$m, 'reference' => $references[$m['article']]
+                ?? null])
                 ->filter(fn (array $m) => $m['reference'] !== null)
                 ->values()
                 ->all(),
@@ -92,7 +93,8 @@ class ClasseurStockExport
     /** Référence de l'article dans le classeur ; sans référence, une tirée de son numéro. */
     public function referenceDe(StockItem $article): string
     {
-        return trim((string) $article->reference) !== '' ? trim($article->reference) : sprintf('ART-%05d', $article->id);
+        return trim((string) $article->reference) !== '' ? trim($article->reference) : sprintf('ART-%05d',
+            $article->id);
     }
 
     /** @return Collection<int, array<string, mixed>> */
@@ -104,18 +106,22 @@ class ClasseurStockExport
             ->get();
 
         $receptions = GoodsReceipt::query()->with('supplier:id,name')
-            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_GOODS_RECEIPT)->pluck('source_id')->filter()->unique())
+            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_GOODS_RECEIPT)->pluck('source_id')
+                ->filter()->unique())
             ->get()->keyBy('id');
         $demandes = StockRequisition::query()->with('serviceStore:id,name')
-            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_REQUISITION)->pluck('source_id')->filter()->unique())
+            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_REQUISITION)->pluck('source_id')
+                ->filter()->unique())
             ->get()->keyBy('id');
         $sorties = ExternalIssue::query()
-            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_EXTERNAL_ISSUE)->pluck('source_id')->filter()->unique())
+            ->whereKey($mouvements->where('source_type', StockMovement::SOURCE_EXTERNAL_ISSUE)->pluck('source_id')
+                ->filter()->unique())
             ->get()->keyBy('id');
 
         return $mouvements->map(function (StockMovement $m) use ($receptions, $demandes, $sorties) {
             $details = $m->details ?? [];
-            $reception = $m->source_type === StockMovement::SOURCE_GOODS_RECEIPT ? $receptions->get($m->source_id) : null;
+            $reception = $m->source_type === StockMovement::SOURCE_GOODS_RECEIPT ? $receptions
+                ->get($m->source_id) : null;
             $demande = $m->source_type === StockMovement::SOURCE_REQUISITION ? $demandes->get($m->source_id) : null;
             $sortie = $m->source_type === StockMovement::SOURCE_EXTERNAL_ISSUE ? $sorties->get($m->source_id) : null;
 
@@ -152,7 +158,8 @@ class ClasseurStockExport
     {
         $mouvements = $depot->movements()->orderBy('occurred_at')->orderBy('id')->get();
         $demandes = StockRequisition::query()
-            ->whereKey($mouvements->where('source_type', ServiceStoreMovement::SOURCE_REQUISITION)->pluck('source_id')->filter()->unique())
+            ->whereKey($mouvements->where('source_type', ServiceStoreMovement::SOURCE_REQUISITION)->pluck('source_id')
+                ->filter()->unique())
             ->pluck('number', 'id');
 
         return $mouvements->map(function (ServiceStoreMovement $m) use ($demandes) {
@@ -175,7 +182,8 @@ class ClasseurStockExport
                 'cout'        => (int) round($m->unit_cost / 100),
                 'fournisseur' => $details['fournisseur'] ?? null,
                 'document'    => $details['document']
-                    ?? ($m->source_type === ServiceStoreMovement::SOURCE_REQUISITION ? $demandes[$m->source_id] ?? null : null),
+                    ?? ($m->source_type === ServiceStoreMovement::SOURCE_REQUISITION ? $demandes[$m->source_id]
+                        ?? null : null),
                 'destination' => $details['beneficiaire'] ?? null,
                 'pointe'      => $this->pointe($details),
                 'motif'       => $m->reason,
@@ -252,7 +260,8 @@ class ClasseurStockExport
     private function enTete(Worksheet $ws, string $titre, string $consigne, array $colonnes, ?Tenant $tenant): void
     {
         $derniere = Coordinate::stringFromColumnIndex(count($colonnes));
-        $this->bandeau($ws, "A1:{$derniere}1", $this->titreSigne($tenant, $titre), $this->c['titre'], $this->c['titre_encre'], 14, Alignment::HORIZONTAL_LEFT, 30);
+        $this->bandeau($ws, "A1:{$derniere}1", $this->titreSigne($tenant, $titre), $this->c['titre'],
+            $this->c['titre_encre'], 14, Alignment::HORIZONTAL_LEFT, 30);
         $this->ligneMarque($ws, 'A2', $tenant);
         $ws->setCellValue('A3', $consigne);
         $this->style($ws, 'A3', ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris']]);
@@ -301,7 +310,8 @@ class ClasseurStockExport
     /** Colonne grisée : numéro de l'app, à ne pas modifier. */
     private function colonneTechnique(Worksheet $ws, string $colonne, int $fin): void
     {
-        $this->style($ws, "{$colonne}" . C::PREMIERE_LIGNE . ":{$colonne}{$fin}", ['couleur' => $this->c['gris'], 'fond' => 'F1F5F9', 'taille' => 9]);
+        $this->style($ws, "{$colonne}" . C::PREMIERE_LIGNE . ":{$colonne}{$fin}", ['couleur' => $this->c['gris'],
+            'fond' => 'F1F5F9', 'taille' => 9]);
     }
 
     private function listes(Worksheet $ws, array $unites): void
@@ -310,7 +320,8 @@ class ClasseurStockExport
         $ws->setCellValue('B' . C::LIGNE_ENTETE, 'Types de mouvement');
         $ws->setCellValue('C' . C::LIGNE_ENTETE, 'Oui / Non');
         foreach (array_values($unites) as $i => $unite) {
-            $ws->setCellValueExplicit('A' . (C::PREMIERE_LIGNE + $i), $unite, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $ws->setCellValueExplicit('A' . (C::PREMIERE_LIGNE + $i), $unite,
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         }
         foreach (C::TYPES as $i => $type) {
             $ws->setCellValue('B' . (C::PREMIERE_LIGNE + $i), $type);
@@ -326,7 +337,8 @@ class ClasseurStockExport
         foreach ($lignes as $i => $ligne) {
             $n = C::PREMIERE_LIGNE + $i;
             foreach (array_keys(C::FOURNISSEURS) as $j => $cle) {
-                $ws->setCellValueExplicit(Coordinate::stringFromColumnIndex($j + 1) . $n, (string) ($ligne[$cle] ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                $ws->setCellValueExplicit(Coordinate::stringFromColumnIndex($j + 1) . $n, (string) ($ligne[$cle] ?? ''),
+                    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             }
         }
     }
@@ -335,7 +347,8 @@ class ClasseurStockExport
     {
         $this->enTete($ws, 'Catégories', 'Une catégorie ajoutée ici sera créée à l\'import (compte de stock : fournitures, à ajuster dans l\'application).', C::CATEGORIES, $tenant);
         foreach (array_values($noms) as $i => $nom) {
-            $ws->setCellValueExplicit('A' . (C::PREMIERE_LIGNE + $i), $nom, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $ws->setCellValueExplicit('A' . (C::PREMIERE_LIGNE + $i), $nom,
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         }
     }
 
@@ -352,8 +365,10 @@ class ClasseurStockExport
         foreach ($lignes as $i => $a) {
             $n = C::PREMIERE_LIGNE + $i;
             $ws->setCellValue($col('id') . $n, $a['id'] ?? null);
-            $ws->setCellValueExplicit($col('reference') . $n, (string) $a['reference'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $ws->setCellValueExplicit($col('designation') . $n, (string) $a['designation'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $ws->setCellValueExplicit($col('reference') . $n, (string) $a['reference'],
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $ws->setCellValueExplicit($col('designation') . $n, (string) $a['designation'],
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $ws->setCellValue($col('categorie') . $n, $a['categorie'] ?? null);
             $ws->setCellValue($col('unite') . $n, $a['unite'] ?? null);
             $ws->setCellValue($col('fournisseur') . $n, $a['fournisseur'] ?? null);
@@ -377,35 +392,46 @@ class ClasseurStockExport
             $ws->setCellValue($col('retours') . $n, "=IF({$vide},\"\"," . $somme($n, C::TYPE_RETOUR) . ')');
             $ws->setCellValue($col('ajustements') . $n, "=IF({$vide},\"\"," . $somme($n, C::TYPE_AJUSTEMENT) . ')');
             $ws->setCellValue($col('stock') . $n, sprintf('=IF(%s,"",%s%d+%s%d-%s%d+%s%d+%s%d)', $vide,
-                $col('stock_initial'), $n, $col('entrees'), $n, $col('sorties'), $n, $col('retours'), $n, $col('ajustements'), $n));
+                $col('stock_initial'), $n, $col('entrees'), $n, $col('sorties'), $n, $col('retours'), $n,
+                    $col('ajustements'), $n));
             // Coût moyen des arrivées (stock initial et entrées), pondéré par les quantités.
             $ws->setCellValue($col('cout') . $n, sprintf(
                 '=IF(%s,"",IFERROR((SUMIFS(%s,%s,$%s%d,%s,"%s")+SUMIFS(%s,%s,$%s%d,%s,"%s"))/(%s%d+%s%d),0))',
-                $vide, $valeurMvt, $refMvt, $ref, $n, $type, C::TYPE_INITIAL, $valeurMvt, $refMvt, $ref, $n, $type, C::TYPE_ENTREE,
+                $vide, $valeurMvt, $refMvt, $ref, $n, $type, C::TYPE_INITIAL, $valeurMvt, $refMvt, $ref, $n, $type,
+                    C::TYPE_ENTREE,
                 $col('stock_initial'), $n, $col('entrees'), $n
             ));
-            $ws->setCellValue($col('valeur') . $n, sprintf('=IF(%s,"",%s%d*%s%d)', $vide, $col('stock'), $n, $col('cout'), $n));
+            $ws->setCellValue($col('valeur') . $n, sprintf('=IF(%s,"",%s%d*%s%d)', $vide, $col('stock'), $n,
+                $col('cout'), $n));
             $ws->setCellValue($col('alerte') . $n, sprintf('=IF(%s,"",IF(AND(N(%s%d)>0,%s%d<=%s%d),"À commander",""))',
                 $vide, $col('stock_min'), $n, $col('stock'), $n, $col('stock_min'), $n));
         }
 
         $premiere = C::PREMIERE_LIGNE;
         $this->colonneTechnique($ws, $col('id'), $fin);
-        $this->style($ws, $col('stock_initial') . $premiere . ':' . $col('alerte') . $fin, ['fond' => $this->c['total']]);
-        $this->style($ws, $col('stock') . $premiere . ':' . $col('stock') . $fin, ['gras' => true, 'fond' => $this->c['cle']]);
-        $this->style($ws, $col('stock_min') . $premiere . ':' . $col('stock_min') . $fin, ['format' => self::FMT_QUANTITE]);
-        $this->style($ws, $col('stock_initial') . $premiere . ':' . $col('stock') . $fin, ['format' => self::FMT_QUANTITE]);
+        $this->style($ws, $col('stock_initial') . $premiere . ':' . $col('alerte') . $fin,
+            ['fond' => $this->c['total']]);
+        $this->style($ws, $col('stock') . $premiere . ':' . $col('stock') . $fin, ['gras' => true, 'fond' => $this
+            ->c['cle']]);
+        $this->style($ws, $col('stock_min') . $premiere . ':' . $col('stock_min') . $fin,
+            ['format' => self::FMT_QUANTITE]);
+        $this->style($ws, $col('stock_initial') . $premiere . ':' . $col('stock') . $fin,
+            ['format' => self::FMT_QUANTITE]);
         $this->style($ws, $col('cout') . $premiere . ':' . $col('valeur') . $fin, ['format' => '#,##0']);
 
         $ws->setDataValidation($col('categorie') . "{$premiere}:" . $col('categorie') . $fin,
-            $this->liste($this->plage(C::ONGLET_CATEGORIES, 'A', $plages['listes']), false, 'Catégorie', 'Catégorie absente de l\'onglet Catégories : elle sera créée à l\'import.'));
+            $this->liste($this->plage(C::ONGLET_CATEGORIES, 'A', $plages['listes']), false, 'Catégorie',
+                'Catégorie absente de l\'onglet Catégories : elle sera créée à l\'import.'));
         $ws->setDataValidation($col('unite') . "{$premiere}:" . $col('unite') . $fin,
-            $this->liste($this->plage(C::ONGLET_LISTES, 'A', $plages['listes']), true, 'Unité', 'Choisissez une unité de la liste (réglée dans Paramètres › Économat).'));
+            $this->liste($this->plage(C::ONGLET_LISTES, 'A', $plages['listes']), true, 'Unité',
+                'Choisissez une unité de la liste (réglée dans Paramètres › Économat).'));
         $ws->setDataValidation($col('fournisseur') . "{$premiere}:" . $col('fournisseur') . $fin,
-            $this->liste($this->plage(C::ONGLET_FOURNISSEURS, 'A', $plages['listes']), false, 'Fournisseur', 'Fournisseur absent de l\'onglet Fournisseurs : il sera créé à l\'import.'));
+            $this->liste($this->plage(C::ONGLET_FOURNISSEURS, 'A', $plages['listes']), false, 'Fournisseur',
+                'Fournisseur absent de l\'onglet Fournisseurs : il sera créé à l\'import.'));
         $ws->setDataValidation($col('actif') . "{$premiere}:" . $col('actif') . $fin,
             $this->liste('"' . C::OUI . ',' . C::NON . '"', true, 'Actif', 'Oui ou Non.'));
-        $ws->setDataValidation($col('stock_min') . "{$premiere}:" . $col('stock_min') . $fin, $this->nombre(DataValidation::TYPE_DECIMAL, true));
+        $ws->setDataValidation($col('stock_min') . "{$premiere}:" . $col('stock_min') . $fin,
+            $this->nombre(DataValidation::TYPE_DECIMAL, true));
 
         // En alerte : la ligne se voit.
         $alerte = new Conditional();
@@ -427,7 +453,8 @@ class ClasseurStockExport
         $fin = $plages['mouvements'];
         $finArt = $plages['articles'];
         $col = fn (string $cle) => $this->col($colonnes, $cle);
-        $art = fn (string $cle) => $this->plage(C::ONGLET_ARTICLES, $this->col(C::ARTICLES + C::ARTICLES_CALCULS, $cle), $finArt);
+        $art = fn (string $cle) => $this->plage(C::ONGLET_ARTICLES, $this->col(C::ARTICLES + C::ARTICLES_CALCULS, $cle),
+            $finArt);
 
         foreach ($lignes as $i => $m) {
             $n = C::PREMIERE_LIGNE + $i;
@@ -435,13 +462,15 @@ class ClasseurStockExport
             if ($m['date'] ?? null) {
                 $ws->setCellValue($col('date') . $n, DateExcel::PHPToExcel($m['date']->copy()->startOfDay()));
             }
-            $ws->setCellValueExplicit($col('reference') . $n, (string) $m['reference'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $ws->setCellValueExplicit($col('reference') . $n, (string) $m['reference'],
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $ws->setCellValue($col('type') . $n, $m['type']);
             $ws->setCellValue($col('quantite') . $n, $m['quantite']);
             $ws->setCellValue($col('cout') . $n, ($m['cout'] ?? null) ?: null);
             $ws->setCellValue($col('fournisseur') . $n, $m['fournisseur'] ?? null);
             if (($m['document'] ?? null) !== null) {
-                $ws->setCellValueExplicit($col('document') . $n, (string) $m['document'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                $ws->setCellValueExplicit($col('document') . $n, (string) $m['document'],
+                    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             }
             $ws->setCellValue($col('destination') . $n, $m['destination'] ?? null);
             $ws->setCellValue($col('pointe') . $n, $m['pointe'] ?? null);
@@ -452,16 +481,19 @@ class ClasseurStockExport
         $premiere = C::PREMIERE_LIGNE;
         for ($n = $premiere; $n <= $fin; $n++) {
             $vide = "\${$ref}{$n}=\"\"";
-            $ws->setCellValue($col('designation') . $n, sprintf('=IF(%s,"",IFERROR(INDEX(%s,MATCH($%s%d,%s,0)),"Référence inconnue"))',
+            $ws->setCellValue($col('designation') . $n,
+                sprintf('=IF(%s,"",IFERROR(INDEX(%s,MATCH($%s%d,%s,0)),"Référence inconnue"))',
                 $vide, $art('designation'), $ref, $n, $art('reference')));
             $ws->setCellValue($col('unite') . $n, sprintf('=IF(%s,"",IFERROR(INDEX(%s,MATCH($%s%d,%s,0)),""))',
                 $vide, $art('unite'), $ref, $n, $art('reference')));
             $q = $col('quantite') . $n;
             $t = $col('type') . $n;
-            $ws->setCellValue($col('signe') . $n, sprintf('=IF(OR(%s,%s=""),"",IF(%s="%s",-ABS(%s),IF(%s="%s",%s,ABS(%s))))',
+            $ws->setCellValue($col('signe') . $n,
+                sprintf('=IF(OR(%s,%s=""),"",IF(%s="%s",-ABS(%s),IF(%s="%s",%s,ABS(%s))))',
                 $vide, $q, $t, C::TYPE_SORTIE, $q, $t, C::TYPE_AJUSTEMENT, $q, $q));
             $s = $col('signe');
-            $ws->setCellValue($col('stock_apres') . $n, sprintf('=IF(OR(%s,%s%d=""),"",SUMIFS($%s$%d:%s%d,$%s$%d:%s%d,$%s%d))',
+            $ws->setCellValue($col('stock_apres') . $n,
+                sprintf('=IF(OR(%s,%s%d=""),"",SUMIFS($%s$%d:%s%d,$%s$%d:%s%d,$%s%d))',
                 $vide, $s, $n, $s, $premiere, $s, $n, $ref, $premiere, $ref, $n, $ref, $n));
             $ws->setCellValue($col('valeur') . $n, sprintf('=IF(OR(%s,%s="",%s%d=""),"",ABS(%s)*%s%d)',
                 $vide, $q, $col('cout'), $n, $q, $col('cout'), $n));
@@ -473,7 +505,8 @@ class ClasseurStockExport
         }
         $this->style($ws, $col('stock_apres') . "{$premiere}:" . $col('stock_apres') . $fin, ['gras' => true]);
         $this->style($ws, $col('date') . "{$premiere}:" . $col('date') . $fin, ['format' => 'dd/mm/yyyy']);
-        $this->style($ws, $col('quantite') . "{$premiere}:" . $col('stock_apres') . $fin, ['format' => self::FMT_QUANTITE]);
+        $this->style($ws, $col('quantite') . "{$premiere}:" . $col('stock_apres') . $fin,
+            ['format' => self::FMT_QUANTITE]);
         $this->style($ws, $col('cout') . "{$premiere}:" . $col('valeur') . $fin, ['format' => '#,##0']);
 
         $date = new DataValidation();
@@ -488,13 +521,18 @@ class ClasseurStockExport
         $ws->setDataValidation($col('date') . "{$premiere}:" . $col('date') . $fin, $date);
 
         $ws->setDataValidation("{$ref}{$premiere}:{$ref}{$fin}",
-            $this->liste($art('reference'), true, 'Référence', 'Référence absente de l\'onglet Articles : ajoutez d\'abord l\'article.'));
+            $this->liste($art('reference'), true, 'Référence',
+                'Référence absente de l\'onglet Articles : ajoutez d\'abord l\'article.'));
         $ws->setDataValidation($col('type') . "{$premiere}:" . $col('type') . $fin,
-            $this->liste($this->plage(C::ONGLET_LISTES, 'B', $premiere + count(C::TYPES) - 1), true, 'Type', 'Stock initial, Entrée, Sortie, Retour ou Ajustement.'));
-        $ws->setDataValidation($col('quantite') . "{$premiere}:" . $col('quantite') . $fin, $this->nombre(DataValidation::TYPE_DECIMAL, false));
-        $ws->setDataValidation($col('cout') . "{$premiere}:" . $col('cout') . $fin, $this->nombre(DataValidation::TYPE_DECIMAL, true));
+            $this->liste($this->plage(C::ONGLET_LISTES, 'B', $premiere + count(C::TYPES) - 1), true, 'Type',
+                'Stock initial, Entrée, Sortie, Retour ou Ajustement.'));
+        $ws->setDataValidation($col('quantite') . "{$premiere}:" . $col('quantite') . $fin,
+            $this->nombre(DataValidation::TYPE_DECIMAL, false));
+        $ws->setDataValidation($col('cout') . "{$premiere}:" . $col('cout') . $fin,
+            $this->nombre(DataValidation::TYPE_DECIMAL, true));
         $ws->setDataValidation($col('fournisseur') . "{$premiere}:" . $col('fournisseur') . $fin,
-            $this->liste($this->plage(C::ONGLET_FOURNISSEURS, 'A', $plages['listes']), false, 'Fournisseur', 'Fournisseur absent de l\'onglet Fournisseurs : il sera créé à l\'import.'));
+            $this->liste($this->plage(C::ONGLET_FOURNISSEURS, 'A', $plages['listes']), false, 'Fournisseur',
+                'Fournisseur absent de l\'onglet Fournisseurs : il sera créé à l\'import.'));
         $ws->setDataValidation($col('pointe') . "{$premiere}:" . $col('pointe') . $fin,
             $this->liste('"' . C::OUI . ',' . C::NON . '"', true, 'Pointé', 'Oui ou Non.'));
 
@@ -512,7 +550,8 @@ class ClasseurStockExport
 
     private function synthese(Worksheet $ws, array $plages, ?Tenant $tenant): void
     {
-        $colonnes = ['categorie' => ['Catégorie', 30], 'articles' => ['Articles', 12], 'valeur' => ['Valeur du stock (FCFA)', 22], 'alertes' => ['À commander', 14]];
+        $colonnes = ['categorie' => ['Catégorie', 30], 'articles' => ['Articles', 12],
+            'valeur' => ['Valeur du stock (FCFA)', 22], 'alertes' => ['À commander', 14]];
         $this->enTete($ws, 'Synthèse', 'Valeur du stock par catégorie et articles à commander. Tout se recalcule à partir des onglets Articles et Mouvements.', $colonnes, $tenant);
 
         $artCols = C::ARTICLES + C::ARTICLES_CALCULS;
@@ -530,9 +569,11 @@ class ClasseurStockExport
             $n = $premiere + $i;
             $source = "INDEX({$categories},ROWS(\$A\${$premiere}:A{$n}))";
             $ws->setCellValue("A{$n}", "=IF({$source}=\"\",\"\",{$source})");
-            $ws->setCellValue("B{$n}", "=IF(A{$n}=\"\",\"\",COUNTIFS({$art('categorie')},A{$n},{$art('reference')},\"<>\"))");
+            $ws->setCellValue("B{$n}",
+                "=IF(A{$n}=\"\",\"\",COUNTIFS({$art('categorie')},A{$n},{$art('reference')},\"<>\"))");
             $ws->setCellValue("C{$n}", "=IF(A{$n}=\"\",\"\",SUMIFS({$art('valeur')},{$art('categorie')},A{$n}))");
-            $ws->setCellValue("D{$n}", "=IF(A{$n}=\"\",\"\",COUNTIFS({$art('categorie')},A{$n},{$art('alerte')},\"À commander\"))");
+            $ws->setCellValue("D{$n}",
+                "=IF(A{$n}=\"\",\"\",COUNTIFS({$art('categorie')},A{$n},{$art('alerte')},\"À commander\"))");
         }
 
         $total = $premiere + $nbLignes;
@@ -545,7 +586,8 @@ class ClasseurStockExport
         $this->bordures($ws, "A{$total}:D{$total}");
 
         // Mouvements par type.
-        $mvt = fn (string $cle) => $this->plage(C::ONGLET_MOUVEMENTS, $this->col(C::MOUVEMENTS, $cle), $plages['mouvements']);
+        $mvt = fn (string $cle) => $this->plage(C::ONGLET_MOUVEMENTS, $this->col(C::MOUVEMENTS, $cle),
+            $plages['mouvements']);
         $ligne = $total + 2;
         $this->enteteTableau($ws, $ligne, ['Mouvements', 'Lignes', 'Quantité', 'Valeur (FCFA)']);
         foreach (C::TYPES as $type) {
@@ -563,7 +605,8 @@ class ClasseurStockExport
     {
         $ws->getColumnDimension('A')->setWidth(24);
         $ws->getColumnDimension('B')->setWidth(110);
-        $this->bandeau($ws, 'A1:B1', $this->titreSigne($tenant, 'Classeur de stock'), $this->c['titre'], $this->c['titre_encre'], 16, Alignment::HORIZONTAL_LEFT, 34);
+        $this->bandeau($ws, 'A1:B1', $this->titreSigne($tenant, 'Classeur de stock'), $this->c['titre'],
+            $this->c['titre_encre'], 16, Alignment::HORIZONTAL_LEFT, 34);
         $this->logo($ws, $tenant);
         $this->ligneMarque($ws, 'A2', $tenant);
         $ws->mergeCells('A2:B2');

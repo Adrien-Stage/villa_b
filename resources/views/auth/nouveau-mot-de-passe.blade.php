@@ -10,7 +10,9 @@
     <title>Nouveau mot de passe — {{ $tenantName }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --color-primary: {{ $tenant->settings['theme']['primary'] ?? '#391F0E' }};
@@ -36,10 +38,12 @@
                     <div class="relative mt-1">
                         <input id="password" type="password" name="password" required minlength="8" autocomplete="new-password" autofocus
                                aria-describedby="password-aide @error('password') password-erreur @enderror"
-                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 pr-10 text-sm outline-none focus:border-secondary">
+                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 pr-10 text-sm outline-none
+                                   focus:border-secondary">
                         <button type="button"
                                 onclick="togglePasswordVisibility('password', this)"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary transition focus:outline-none cursor-pointer"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary
+                                    transition focus:outline-none cursor-pointer"
                                 title="Afficher ou masquer le mot de passe"
                                 aria-label="Afficher ou masquer le mot de passe">
                             <svg class="h-4 w-4 icon-eye" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -58,10 +62,12 @@
                     <label for="password_confirmation" class="text-xs font-semibold text-primary">Confirmez-le</label>
                     <div class="relative mt-1">
                         <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
-                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 pr-10 text-sm outline-none focus:border-secondary">
+                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 pr-10 text-sm outline-none
+                                   focus:border-secondary">
                         <button type="button"
                                 onclick="togglePasswordVisibility('password_confirmation', this)"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary transition focus:outline-none cursor-pointer"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary
+                                    transition focus:outline-none cursor-pointer"
                                 title="Afficher ou masquer le mot de passe"
                                 aria-label="Afficher ou masquer le mot de passe">
                             <svg class="h-4 w-4 icon-eye" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -74,14 +80,20 @@
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <button
+                    type="submit"
+                    class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95
+                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     Enregistrer et continuer
                 </button>
             </form>
 
             <form method="POST" action="{{ route('logout') }}" class="mt-3 text-center">
                 @csrf
-                <button type="submit" class="text-xs text-primary/50 underline-offset-2 hover:text-primary hover:underline">Se déconnecter</button>
+                <button
+                    type="submit"
+                    class="text-xs text-primary/50 underline-offset-2 hover:text-primary
+                        hover:underline">Se déconnecter</button>
             </form>
         </div>
     </main>

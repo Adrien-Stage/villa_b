@@ -11,7 +11,10 @@
         </div>
         @if($estResponsable)
             @droit('technique.demandes.creer')
-                <a href="{{ route('technique.demandes.create') }}" class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
+                <a
+                    href="{{ route('technique.demandes.create') }}"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary
+                        text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4 text-secondary" aria-hidden="true"></i> Nouvelle demande
                 </a>
             @enddroit
@@ -80,7 +83,9 @@
     <section aria-labelledby="titre-terminees">
         <div class="flex items-center justify-between mb-2">
             <h2 id="titre-terminees" class="font-heading font-semibold text-primary">Terminées ces 7 derniers jours</h2>
-            <a href="{{ route('technique.demandes.index', ['statut' => 'done']) }}" class="text-xs font-medium text-primary/70 hover:text-primary underline">Toutes les terminées</a>
+            <a
+                href="{{ route('technique.demandes.index', ['statut' => 'done']) }}"
+                class="text-xs font-medium text-primary/70 hover:text-primary underline">Toutes les terminées</a>
         </div>
         @include('technique.partials.liste', ['demandes' => $terminees, 'vide' => 'Aucune intervention terminée cette semaine.'])
     </section>

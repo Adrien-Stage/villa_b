@@ -19,7 +19,8 @@
         @droit('bookings.handovers.creer')
             @if(app(\App\Services\PassationService::class)->sessionOuverte(auth()->user()))
                 <a href="{{ route('bookings.handovers.create') }}"
-                   class="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+                   class="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs
+                       font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
                     <i data-lucide="hand-coins" class="w-4 h-4"></i> Terminer mon service
                 </a>
             @endif
@@ -30,7 +31,10 @@
 
     @if($enAttente->isNotEmpty())
         <section class="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden" aria-labelledby="en-attente">
-            <h2 id="en-attente" class="px-5 py-3 font-heading font-semibold text-amber-900 text-sm border-b border-amber-200">En attente de reprise</h2>
+            <h2
+                id="en-attente"
+                class="px-5 py-3 font-heading font-semibold text-amber-900 text-sm border-b
+                    border-amber-200">En attente de reprise</h2>
             <ul class="divide-y divide-amber-200">
                 @foreach($enAttente as $p)
                     <li class="px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -38,7 +42,10 @@
                             <strong>{{ $p->fromUser?->name }}</strong> a remis le tiroir à {{ $p->handed_at->format('H:i') }} ({{ $fcfa($p->handed_amount) }})
                             @if($p->plannedUser) · prévu : {{ $p->plannedUser->name }} @endif
                         </span>
-                        <a href="{{ route('bookings.handovers.take', $p) }}" class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700">Prendre le service</a>
+                        <a
+                            href="{{ route('bookings.handovers.take', $p) }}"
+                            class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold
+                                hover:bg-amber-700">Prendre le service</a>
                     </li>
                 @endforeach
             </ul>
@@ -64,7 +71,9 @@
                     <tbody class="divide-y divide-secondary/10">
                         @foreach($passations as $p)
                             <tr>
-                                <td class="px-5 py-2"><a href="{{ route('bookings.handovers.show', $p) }}" class="font-medium text-primary hover:underline">{{ $p->handed_at->format('d/m H:i') }}</a></td>
+                                <td class="px-5 py-2"><a
+                                    href="{{ route('bookings.handovers.show', $p) }}"
+                                    class="font-medium text-primary hover:underline">{{ $p->handed_at->format('d/m H:i') }}</a></td>
                                 <td class="px-3 py-2">{{ $p->fromUser?->name }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ $fcfa($p->handed_amount) }}</td>
                                 <td class="px-3 py-2">

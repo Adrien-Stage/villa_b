@@ -9,7 +9,9 @@
     $bouton = 'inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors';
 @endphp
 <div class="max-w-6xl mx-auto">
-    <a href="{{ route('technique.demandes.index') }}" class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
+    <a
+        href="{{ route('technique.demandes.index') }}"
+        class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
         <i data-lucide="arrow-left" class="w-3.5 h-3.5" aria-hidden="true"></i> Demandes d'intervention
     </a>
     <div class="mt-1 mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -21,7 +23,8 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('technique.demandes.print', $demande) }}" target="_blank"
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary/30 bg-white text-primary text-xs font-semibold hover:bg-accent/20 transition-colors shadow-sm">
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary/30 bg-white
+                   text-primary text-xs font-semibold hover:bg-accent/20 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4 text-secondary"></i> Imprimer la fiche
             </a>
             <span class="inline-flex flex-wrap gap-1.5">@include('technique.partials.badges')</span>
@@ -66,7 +69,8 @@
                 @if($demande->description)
                     <div class="mt-4 pt-4 border-t border-secondary/15">
                         <p class="text-xs font-semibold text-primary/70 mb-1">Description détaillée du problème constaté :</p>
-                        <p class="text-sm text-primary/80 whitespace-pre-line bg-secondary/5 rounded-lg p-3 border border-secondary/10">{{ $demande->description }}</p>
+                        <p class="text-sm text-primary/80 whitespace-pre-line bg-secondary/5 rounded-lg p-3 border
+                            border-secondary/10">{{ $demande->description }}</p>
                     </div>
                 @endif
                 @if($demande->cancel_reason)
@@ -77,7 +81,9 @@
             </section>
 
             {{-- 2. Fiche d'intervention technique (Affichage ou Formulaire structuré) --}}
-            <section class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs" x-data="{ modeEdition: @js(!$demande->aFicheSoumise()) }">
+            <section
+                class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs"
+                x-data="{ modeEdition: @js(!$demande->aFicheSoumise()) }">
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-secondary/15">
                     <div>
                         <h2 class="font-heading font-semibold text-primary text-base flex items-center gap-2">
@@ -88,7 +94,8 @@
                     <div class="flex items-center gap-2">
                         @if($demande->aFicheSoumise() && $peut['soumettre'])
                             <button type="button" @click="modeEdition = !modeEdition"
-                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
+                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline
+                                        inline-flex items-center gap-1">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                 <span x-text="modeEdition ? 'Afficher la fiche' : 'Modifier la fiche'"></span>
                             </button>
@@ -140,7 +147,8 @@
                         </div>
 
                         {{-- Section 3 : Résultat de l'intervention --}}
-                        <div class="rounded-lg border border-secondary/15 p-3.5 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+                        <div class="rounded-lg border border-secondary/15 p-3.5 bg-slate-50/50 flex flex-wrap
+                            items-center justify-between gap-3">
                             <div>
                                 <span class="block text-xs font-bold uppercase tracking-wider text-primary/70 mb-1">
                                     3. Résultat de l'intervention
@@ -178,10 +186,16 @@
                 {{-- Formulaire structuré de soumission de la fiche d'intervention --}}
                 @if($peut['soumettre'])
                     <div x-show="modeEdition" x-cloak>
-                        <form id="form-fiche-intervention" method="POST" action="{{ route('technique.demandes.submit', $demande) }}" class="space-y-4" x-data="{ filtrePiece: '' }">
+                        <form
+                            id="form-fiche-intervention"
+                            method="POST"
+                            action="{{ route('technique.demandes.submit', $demande) }}"
+                            class="space-y-4"
+                            x-data="{ filtrePiece: '' }">
                             @csrf
 
-                            <div class="bg-indigo-50/80 rounded-lg p-3.5 border border-indigo-200 text-xs text-indigo-950 mb-3 shadow-xs">
+                            <div class="bg-indigo-50/80 rounded-lg p-3.5 border border-indigo-200 text-xs
+                                text-indigo-950 mb-3 shadow-xs">
                                 <div class="flex items-center gap-1.5 font-bold text-indigo-950 mb-1">
                                     <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-700"></i> Fiche d'intervention obligatoire pour la clôture
                                 </div>
@@ -222,7 +236,8 @@
                                         $choisiResultat = old('resultat', $demande->resultat ?: \App\Models\MaintenanceRequest::RESULTAT_RESOLU);
                                     @endphp
                                     @foreach(\App\Models\MaintenanceRequest::RESULTATS as $cle => $libelle)
-                                        <label class="flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors text-xs hover:bg-slate-50"
+                                        <label class="flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer
+                                            transition-colors text-xs hover:bg-slate-50"
                                                :class="{ 'border-primary ring-1 ring-primary bg-primary/5': '{{ $cle }}' === '{{ $choisiResultat }}' }">
                                             <input type="radio" name="resultat" value="{{ $cle }}" class="mt-0.5 text-primary focus:ring-primary"
                                                    @checked($choisiResultat === $cle)>
@@ -257,7 +272,8 @@
                             {{-- Rubrique 5 : Pièces sorties du dépôt à cette occasion --}}
                             @if($depots->isNotEmpty())
                                 <div class="pt-2 border-t border-secondary/15">
-                                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+                                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider
+                                        mb-1">
                                         5. Pièces ou matériels sortis du dépôt technique (optionnel)
                                     </label>
                                     @foreach($depots as $depot)
@@ -267,17 +283,24 @@
                                         @if($disponibles->isNotEmpty())
                                             <input type="hidden" name="depot" value="{{ $depot->id }}">
                                             <p class="text-[11px] text-primary/60 mb-1">Dépôt : <span class="font-medium text-primary">{{ $depot->name }}</span></p>
-                                            <input type="search" x-model="filtrePiece" placeholder="Rechercher une pièce ou référence…" class="{{ $champ }} text-xs mb-2">
-                                            <div class="max-h-48 overflow-y-auto divide-y divide-secondary/10 border border-secondary/15 rounded-lg mb-2 bg-slate-50/30">
+                                            <input
+                                                type="search"
+                                                x-model="filtrePiece"
+                                                placeholder="Rechercher une pièce ou référence…"
+                                                class="{{ $champ }} text-xs mb-2">
+                                            <div class="max-h-48 overflow-y-auto divide-y divide-secondary/10 border
+                                                border-secondary/15 rounded-lg mb-2 bg-slate-50/30">
                                                 @foreach($disponibles as $stock)
-                                                    <label class="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent/5 cursor-pointer"
+                                                    <label class="flex items-center gap-2 px-3 py-2 text-xs
+                                                        hover:bg-accent/5 cursor-pointer"
                                                            x-show="!filtrePiece || @js(mb_strtolower($stock->item->name . ' ' . $stock->item->reference)).includes(filtrePiece.toLowerCase())">
                                                         <span class="flex-1 text-primary">
                                                             {{ $stock->item->name }}
                                                             <span class="text-primary/50">({{ $qte($stock->current_stock) }} {{ $stock->item->unit }})</span>
                                                         </span>
                                                         <input type="number" name="pieces[{{ $stock->stock_item_id }}]" min="0" step="any" max="{{ (float) $stock->current_stock }}"
-                                                               class="w-24 rounded border border-secondary/30 px-2 py-1 text-right text-xs" placeholder="0">
+                                                               class="w-24 rounded border border-secondary/30 px-2 py-1
+                                                                   text-right text-xs" placeholder="0">
                                                     </label>
                                                 @endforeach
                                             </div>
@@ -293,7 +316,9 @@
                                         Annuler
                                     </button>
                                 @endif
-                                <button type="submit" class="{{ $bouton }} bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+                                <button
+                                    type="submit"
+                                    class="{{ $bouton }} bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
                                     <i data-lucide="send" class="w-4 h-4"></i> Soumettre la fiche d'intervention pour clôture
                                 </button>
                             </div>
@@ -304,9 +329,13 @@
 
             {{-- 3. Tableau des pièces employées et matériels délivrés --}}
             @if($demande->parts->isNotEmpty())
-                <section class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs" aria-labelledby="titre-pieces">
+                <section
+                    class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs"
+                    aria-labelledby="titre-pieces">
                     <div class="flex items-center justify-between mb-3">
-                        <h2 id="titre-pieces" class="font-heading font-semibold text-primary text-base flex items-center gap-2">
+                        <h2
+                            id="titre-pieces"
+                            class="font-heading font-semibold text-primary text-base flex items-center gap-2">
                             <i data-lucide="wrench" class="w-4 h-4 text-secondary"></i> Pièces et matériels délivrés du dépôt
                         </h2>
                         <span class="text-xs font-semibold text-primary/70">
@@ -354,18 +383,26 @@
             @endif
 
             {{-- 4. Historique complet des événements --}}
-            <section class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs" aria-labelledby="titre-historique">
-                <h2 id="titre-historique" class="font-heading font-semibold text-primary text-base mb-3 flex items-center gap-2">
+            <section
+                class="bg-white rounded-xl border border-secondary/20 p-5 shadow-xs"
+                aria-labelledby="titre-historique">
+                <h2
+                    id="titre-historique"
+                    class="font-heading font-semibold text-primary text-base mb-3 flex items-center gap-2">
                     <i data-lucide="history" class="w-4 h-4 text-secondary"></i> Historique de l'intervention
                 </h2>
                 <ol class="relative border-l border-secondary/30 ml-2 space-y-4">
                     @foreach($demande->events as $etape)
                         <li class="ml-4">
-                            <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-secondary/60 border-2 border-white" aria-hidden="true"></span>
+                            <span
+                                class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-secondary/60 border-2
+                                    border-white"
+                                aria-hidden="true"></span>
                             <p class="text-sm font-medium text-primary">{{ $etape->libelle() }} <span class="font-normal text-primary/60">— {{ $etape->user?->name ?? 'Système' }}</span></p>
                             <p class="text-[11px] text-primary/50">{{ $etape->created_at?->format('d/m/Y à H:i') }}</p>
                             @if($etape->notes)
-                                <p class="mt-1 text-xs text-primary/75 whitespace-pre-line bg-secondary/5 p-2 rounded border border-secondary/10">{{ $etape->notes }}</p>
+                                <p class="mt-1 text-xs text-primary/75 whitespace-pre-line bg-secondary/5 p-2 rounded
+                                    border border-secondary/10">{{ $etape->notes }}</p>
                             @endif
                         </li>
                     @endforeach
@@ -389,20 +426,39 @@
                     <p class="text-xs text-purple-800 leading-relaxed">
                         La fiche d'intervention a été soumise par l'équipe. Vérifiez le rapport d'exécution ci-contre et les pièces employées, puis apposez votre visa pour clôturer l'intervention.
                     </p>
-                    <form method="POST" action="{{ route('technique.demandes.approve', $demande) }}" class="space-y-2.5">
+                    <form
+                        method="POST"
+                        action="{{ route('technique.demandes.approve', $demande) }}"
+                        class="space-y-2.5">
                         @csrf
-                        <input type="text" name="note" placeholder="Observations ou visa (optionnel)…" class="{{ $champ }}">
-                        <button type="submit" class="{{ $bouton }} w-full bg-purple-700 text-white hover:bg-purple-800 shadow-sm">
+                        <input
+                            type="text"
+                            name="note"
+                            placeholder="Observations ou visa (optionnel)…"
+                            class="{{ $champ }}">
+                        <button
+                            type="submit"
+                            class="{{ $bouton }} w-full bg-purple-700 text-white hover:bg-purple-800 shadow-sm">
                             <i data-lucide="check-check" class="w-4 h-4"></i> Viser et clôturer l'intervention
                         </button>
                     </form>
 
                     @if($peut['reprise'])
-                        <form method="POST" action="{{ route('technique.demandes.rework', $demande) }}" class="pt-3 border-t border-purple-200 space-y-2">
+                        <form
+                            method="POST"
+                            action="{{ route('technique.demandes.rework', $demande) }}"
+                            class="pt-3 border-t border-purple-200 space-y-2">
                             @csrf
                             <p class="text-xs text-amber-900 font-semibold">Travail incomplet ou non satisfaisant ?</p>
-                            <input type="text" name="motif" required placeholder="Motif du renvoi au technicien…" class="{{ $champ }} text-xs">
-                            <button type="submit" class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 text-xs py-1.5">
+                            <input
+                                type="text"
+                                name="motif"
+                                required
+                                placeholder="Motif du renvoi au technicien…"
+                                class="{{ $champ }} text-xs">
+                            <button
+                                type="submit"
+                                class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 text-xs py-1.5">
                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Renvoyer pour reprise
                             </button>
                         </form>
@@ -445,7 +501,9 @@
 
             {{-- Dépôt technique : Délivrer du matériel / pièces pour cette intervention --}}
             @if($peut['pieces'])
-                <div class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3 shadow-xs" x-data="{ ouvert: true, filtre: '' }">
+                <div
+                    class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3 shadow-xs"
+                    x-data="{ ouvert: true, filtre: '' }">
                     <div class="flex items-center justify-between cursor-pointer" @click="ouvert = !ouvert">
                         <div class="flex items-center gap-2">
                             <i data-lucide="package-minus" class="w-5 h-5 text-indigo-600"></i>
@@ -454,7 +512,10 @@
                                 <p class="text-[11px] text-primary/60">Prélèvement sur le dépôt technique</p>
                             </div>
                         </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-primary/50 transition-transform" :class="{ 'rotate-180': ouvert }"></i>
+                        <i
+                            data-lucide="chevron-down"
+                            class="w-4 h-4 text-primary/50 transition-transform"
+                            :class="{ 'rotate-180': ouvert }"></i>
                     </div>
 
                     <div x-show="ouvert" class="space-y-3 pt-2 border-t border-secondary/15">
@@ -465,39 +526,61 @@
                                 @php
                                     $disponibles = $stocks->get($depot->id, collect())->sortBy(fn ($s) => $s->item->name);
                                 @endphp
-                                <form method="POST" action="{{ route('technique.demandes.parts', $demande) }}" class="space-y-2.5">
+                                <form
+                                    method="POST"
+                                    action="{{ route('technique.demandes.parts', $demande) }}"
+                                    class="space-y-2.5">
                                     @csrf
                                     <input type="hidden" name="depot" value="{{ $depot->id }}">
                                     <div class="flex items-center justify-between text-xs text-primary/70">
                                         <span>Dépôt : <strong>{{ $depot->name }}</strong></span>
-                                        <a href="{{ route('technique.depot.index') }}" target="_blank" class="text-indigo-600 hover:underline text-[11px]">Voir stock</a>
+                                        <a
+                                            href="{{ route('technique.depot.index') }}"
+                                            target="_blank"
+                                            class="text-indigo-600 hover:underline text-[11px]">Voir stock</a>
                                     </div>
 
                                     @if($disponibles->isEmpty())
-                                        <div class="p-2.5 rounded-lg bg-secondary/5 border border-secondary/15 text-xs text-primary/60">
+                                        <div class="p-2.5 rounded-lg bg-secondary/5 border border-secondary/15 text-xs
+                                            text-primary/60">
                                             Aucune pièce actuellement en stock dans ce dépôt.
-                                            <a href="{{ route('technique.depot.index') }}" class="block text-indigo-600 hover:underline mt-1 font-medium">Gérer le dépôt technique →</a>
+                                            <a
+                                                href="{{ route('technique.depot.index') }}"
+                                                class="block text-indigo-600 hover:underline mt-1 font-medium">Gérer le dépôt technique →</a>
                                         </div>
                                     @else
-                                        <input type="search" x-model="filtre" placeholder="Filtrer les pièces disponibles…" class="{{ $champ }} text-xs">
-                                        <div class="max-h-48 overflow-y-auto divide-y divide-secondary/10 border border-secondary/15 rounded-lg bg-slate-50/20">
+                                        <input
+                                            type="search"
+                                            x-model="filtre"
+                                            placeholder="Filtrer les pièces disponibles…"
+                                            class="{{ $champ }} text-xs">
+                                        <div class="max-h-48 overflow-y-auto divide-y divide-secondary/10 border
+                                            border-secondary/15 rounded-lg bg-slate-50/20">
                                             @foreach($disponibles as $stock)
-                                                <label class="flex items-center gap-2 px-2.5 py-1.5 text-xs hover:bg-accent/5 cursor-pointer"
+                                                <label class="flex items-center gap-2 px-2.5 py-1.5 text-xs
+                                                    hover:bg-accent/5 cursor-pointer"
                                                        x-show="!filtre || @js(mb_strtolower($stock->item->name . ' ' . $stock->item->reference)).includes(filtre.toLowerCase())">
                                                     <span class="flex-1 text-primary">
                                                         {{ $stock->item->name }}
                                                         <span class="block text-[10px] text-primary/50">Dispo : {{ $qte($stock->current_stock) }} {{ $stock->item->unit }}</span>
                                                     </span>
                                                     <input type="number" name="pieces[{{ $stock->stock_item_id }}]" min="0" step="any" max="{{ (float) $stock->current_stock }}"
-                                                           class="w-20 rounded border border-secondary/30 px-2 py-1 text-right text-xs" placeholder="0"
+                                                           class="w-20 rounded border border-secondary/30 px-2 py-1
+                                                               text-right text-xs" placeholder="0"
                                                            aria-label="Quantité de {{ $stock->item->name }}">
                                                 </label>
                                             @endforeach
                                         </div>
                                         <div>
-                                            <input type="text" name="motif" placeholder="Motif ou affectation de la pièce (optionnel)…" class="{{ $champ }} text-xs">
+                                            <input
+                                                type="text"
+                                                name="motif"
+                                                placeholder="Motif ou affectation de la pièce (optionnel)…"
+                                                class="{{ $champ }} text-xs">
                                         </div>
-                                        <button type="submit" class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm text-xs py-2">
+                                        <button
+                                            type="submit"
+                                            class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm text-xs py-2">
                                             <i data-lucide="package-check" class="w-4 h-4"></i> Délivrer le matériel pour cette intervention
                                         </button>
                                     @endif
@@ -510,10 +593,15 @@
 
             {{-- Prise en charge directe par un technicien --}}
             @if($peut['prendre'])
-                <form method="POST" action="{{ route('technique.demandes.take', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs">
+                <form
+                    method="POST"
+                    action="{{ route('technique.demandes.take', $demande) }}"
+                    class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs">
                     @csrf
                     <p class="text-xs text-primary/70 mb-3">Cette intervention n'est affectée à aucun technicien pour le moment.</p>
-                    <button type="submit" class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm">
+                    <button
+                        type="submit"
+                        class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm">
                         <i data-lucide="hand" class="w-4 h-4" aria-hidden="true"></i> Je prends cette intervention
                     </button>
                 </form>
@@ -521,7 +609,10 @@
 
             {{-- Affectation / Réaffectation par le responsable --}}
             @if($peut['affecter'])
-                <form method="POST" action="{{ route('technique.demandes.assign', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3 shadow-xs">
+                <form
+                    method="POST"
+                    action="{{ route('technique.demandes.assign', $demande) }}"
+                    class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3 shadow-xs">
                     @csrf
                     <h2 class="font-heading font-semibold text-primary text-sm flex items-center gap-1.5">
                         <i data-lucide="user-plus" class="w-4 h-4 text-secondary"></i>
@@ -557,7 +648,9 @@
                         </label>
                     </div>
                     <p class="text-[11px] text-primary/50">★ : technicien ayant cette spécialité déclarée.</p>
-                    <button type="submit" class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm">
+                    <button
+                        type="submit"
+                        class="{{ $bouton }} w-full bg-primary text-white hover:bg-surface-dark shadow-sm">
                         <i data-lucide="user-check" class="w-4 h-4" aria-hidden="true"></i> Affecter
                     </button>
                 </form>
@@ -565,10 +658,15 @@
 
             {{-- Démarrage de l'intervention --}}
             @if($peut['commencer'])
-                <form method="POST" action="{{ route('technique.demandes.start', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs">
+                <form
+                    method="POST"
+                    action="{{ route('technique.demandes.start', $demande) }}"
+                    class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs">
                     @csrf
                     <p class="text-xs text-primary/70 mb-3">L'intervention est affectée. Cliquez ci-dessous pour signaler le démarrage des travaux.</p>
-                    <button type="submit" class="{{ $bouton }} w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+                    <button
+                        type="submit"
+                        class="{{ $bouton }} w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
                         <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i> Commencer l'intervention
                     </button>
                 </form>
@@ -576,14 +674,19 @@
 
             {{-- Réouverture éventuelle par le demandeur ou responsable --}}
             @if($peut['rouvrir'])
-                <form method="POST" action="{{ route('technique.demandes.reopen', $demande) }}" class="bg-white rounded-xl border border-amber-200 p-4 space-y-3 shadow-xs">
+                <form
+                    method="POST"
+                    action="{{ route('technique.demandes.reopen', $demande) }}"
+                    class="bg-white rounded-xl border border-amber-200 p-4 space-y-3 shadow-xs">
                     @csrf
                     <h2 class="font-heading font-semibold text-primary text-sm flex items-center gap-1.5">
                         <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-600"></i> Le problème persiste ?
                     </h2>
                     <p class="text-xs text-primary/60">Vous pouvez rouvrir cette demande jusqu'au {{ $demande->completed_at->addDays(\App\Models\MaintenanceRequest::DELAI_REOUVERTURE)->format('d/m/Y') }}.</p>
                     <textarea name="motif" rows="3" required maxlength="1000" placeholder="Décrivez ce qui ne fonctionne toujours pas…" class="{{ $champ }}"></textarea>
-                    <button type="submit" class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 shadow-sm">
+                    <button
+                        type="submit"
+                        class="{{ $bouton }} w-full bg-amber-600 text-white hover:bg-amber-700 shadow-sm">
                         <i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i> Rouvrir la demande
                     </button>
                 </form>
@@ -591,18 +694,34 @@
 
             {{-- Annulation de la demande si non commencée --}}
             @if($peut['annuler'])
-                <form method="POST" action="{{ route('technique.demandes.cancel', $demande) }}" class="bg-white rounded-xl border border-secondary/20 p-4 space-y-2 shadow-xs"
+                <form method="POST" action="{{ route('technique.demandes.cancel', $demande) }}" class="bg-white
+                    rounded-xl border border-secondary/20 p-4 space-y-2 shadow-xs"
                       x-data="{ ouvert: false }">
                     @csrf
-                    <button type="button" x-show="!ouvert" @click="ouvert = true" class="text-xs font-medium text-red-700 hover:underline flex items-center gap-1">
+                    <button
+                        type="button"
+                        x-show="!ouvert"
+                        @click="ouvert = true"
+                        class="text-xs font-medium text-red-700 hover:underline flex items-center gap-1">
                         <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Annuler la demande…
                     </button>
                     <div x-show="ouvert" x-cloak class="space-y-2 pt-2 border-t border-secondary/15">
                         <label class="block text-xs text-primary/70">Motif de l'annulation :</label>
-                        <input type="text" name="motif" maxlength="500" required placeholder="Pourquoi annuler cette demande ?" class="{{ $champ }}">
+                        <input
+                            type="text"
+                            name="motif"
+                            maxlength="500"
+                            required
+                            placeholder="Pourquoi annuler cette demande ?"
+                            class="{{ $champ }}">
                         <div class="flex items-center gap-2">
-                            <button type="button" @click="ouvert = false" class="text-xs text-primary/60 hover:underline px-2 py-1">Fermer</button>
-                            <button type="submit" class="{{ $bouton }} flex-1 border border-red-200 text-red-700 hover:bg-red-50 text-xs py-1.5">
+                            <button
+                                type="button"
+                                @click="ouvert = false"
+                                class="text-xs text-primary/60 hover:underline px-2 py-1">Fermer</button>
+                            <button
+                                type="submit"
+                                class="{{ $bouton }} flex-1 border border-red-200 text-red-700 hover:bg-red-50 text-xs py-1.5">
                                 Confirmer l'annulation
                             </button>
                         </div>

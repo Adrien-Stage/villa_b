@@ -56,7 +56,8 @@ class PurchaseRequestController extends Controller
         }
 
         // Sur sa propre demande, un demandeur qui n'est pas du service achat / direction ne voit pas les prix.
-        if ($request && (int) $request->requested_by === (int) $user->id && ! $user->exerce(['purchasing_manager', 'manager'])) {
+        if ($request && (int) $request->requested_by === (int) $user->id && ! $user->exerce(['purchasing_manager',
+            'manager'])) {
             return false;
         }
 
@@ -101,7 +102,8 @@ class PurchaseRequestController extends Controller
         $stats = [
             'pending'   => PurchaseRequest::where('status', PurchaseRequest::STATUS_PENDING)->count(),
             'approved'  => PurchaseRequest::where('status', PurchaseRequest::STATUS_APPROVED)->count(),
-            'converted' => PurchaseRequest::where('status', PurchaseRequest::STATUS_CONVERTED)->whereNull('archived_at')->count(),
+            'converted' => PurchaseRequest::where('status', PurchaseRequest::STATUS_CONVERTED)->whereNull('archived_at')
+                ->count(),
             'archived'  => PurchaseRequest::query()->archivees()->count(),
         ];
 
@@ -311,12 +313,14 @@ class PurchaseRequestController extends Controller
         return redirect()
             ->route('economat.purchase_requests.show', $purchaseRequest)
             ->with('success', "Demande d'achat {$purchaseRequest->number} mise à jour."
-                . ((int) $purchaseRequest->requested_by !== (int) Auth::id() ? ' Le demandeur est averti des changements.' : ''));
+                . ((int) $purchaseRequest
+                    ->requested_by !== (int) Auth::id() ? ' Le demandeur est averti des changements.' : ''));
     }
 
     public function show(PurchaseRequest $purchaseRequest): View
     {
-        $purchaseRequest->load(['supplier', 'requestedBy', 'reviewedBy', 'lines.item.suppliers', 'purchaseOrders.supplier']);
+        $purchaseRequest->load(['supplier', 'requestedBy', 'reviewedBy', 'lines.item.suppliers',
+            'purchaseOrders.supplier']);
 
         $suppliers = Supplier::query()->active()->orderBy('name')->get();
         $peutConvertir = app(PermissionResolver::class)->allows(Auth::user(), 'economat.purchase_requests.convert');
@@ -350,7 +354,8 @@ class PurchaseRequestController extends Controller
     /** Impression de la demande, pour le classement ou la signature. */
     public function print(PurchaseRequest $purchaseRequest): View
     {
-        $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item', 'purchaseOrders.supplier', 'purchaseOrders.createdBy']);
+        $purchaseRequest->load(['requestedBy', 'reviewedBy', 'lines.item', 'purchaseOrders.supplier',
+            'purchaseOrders.createdBy']);
 
         return view('economat.purchase_requests.print', [
             'request'      => $purchaseRequest,
@@ -371,7 +376,8 @@ class PurchaseRequestController extends Controller
         ]);
 
         try {
-            $approuvee = $this->requestService->approve($purchaseRequest, Auth::user(), $validated['notes'] ?? null, $validated['quantities'] ?? []);
+            $approuvee = $this->requestService->approve($purchaseRequest, Auth::user(), $validated['notes'] ?? null,
+                $validated['quantities'] ?? []);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -413,7 +419,8 @@ class PurchaseRequestController extends Controller
             ->filter(fn ($l) => $l->quantiteRetenue() > 0 && empty($validated['line_suppliers'][$l->id]))
             ->map(fn ($l) => $l->item?->name ?? 'Un article');
         if ($sansFournisseur->isNotEmpty()) {
-            return back()->with('error', 'Choisissez le fournisseur de chaque article : ' . $sansFournisseur->implode(', ') . '.');
+            return back()->with('error', 'Choisissez le fournisseur de chaque article : ' . $sansFournisseur
+                ->implode(', ') . '.');
         }
 
         try {

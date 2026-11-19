@@ -34,23 +34,27 @@
                 </div>
                 <span class="text-xs font-medium text-primary/50">Client</span>
             @else
-                <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">1</div>
+                <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs
+                    font-semibold">1</div>
                 <span class="text-xs font-medium text-primary">Client</span>
             @endif
         </div>
         <div class="flex-1 h-px {{ $customer ? 'bg-primary/20' : 'bg-secondary/20' }}"></div>
         <div class="flex items-center gap-2">
             @if($customer)
-                <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">2</div>
+                <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs
+                    font-semibold">2</div>
                 <span class="text-xs font-medium text-primary">Chambre & dates</span>
             @else
-                <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center text-xs font-semibold">2</div>
+                <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center
+                    text-xs font-semibold">2</div>
                 <span class="text-xs text-primary/40">Chambre & dates</span>
             @endif
         </div>
         <div class="flex-1 h-px bg-secondary/20"></div>
         <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center text-xs font-semibold">3</div>
+            <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center text-xs
+                font-semibold">3</div>
             <span class="text-xs text-primary/40">Confirmation</span>
         </div>
     </div>
@@ -59,7 +63,8 @@
     @if(!$customer && ($activeDraftsCount ?? 0) > 0)
         <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-4 mb-6 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center
+                    flex-shrink-0">
                     <i data-lucide="file-clock" class="w-4 h-4"></i>
                 </div>
                 <div>
@@ -74,13 +79,15 @@
             <div class="flex items-center gap-2 flex-shrink-0">
                 @if($latestDraft)
                     <a href="{{ route('bookings.drafts.continue', $latestDraft->token) }}"
-                       class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1">
+                       class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg
+                           transition-colors flex items-center gap-1">
                         <i data-lucide="play" class="w-3 h-3"></i>
                         Reprendre
                     </a>
                 @endif
                 <a href="{{ route('bookings.drafts.index') }}"
-                   class="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 text-xs font-medium rounded-lg hover:bg-amber-100 transition-colors">
+                   class="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 text-xs font-medium rounded-lg
+                       hover:bg-amber-100 transition-colors">
                     Voir tout
                 </a>
             </div>
@@ -123,7 +130,10 @@
         @endphp
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h2 class="font-heading font-semibold text-primary mb-5">Dates et personnes</h2>
-            <form method="POST" action="{{ route('bookings.store') }}" x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}', {{ $initialChildrenCount }}, @js($initialChildrenAges), @js($ageBrackets), {{ $defaultExtraBedPrice }}, {{ $initialHasExtraBed ? 'true' : 'false' }}, {{ $initialExtraBedCount }}, {{ $initialPrepaidChildren ? 'true' : 'false' }})">
+            <form
+                method="POST"
+                action="{{ route('bookings.store') }}"
+                x-data="bookingCalendar('{{ old('check_in', request('check_in')) }}', '{{ old('check_out', request('check_out')) }}', {{ $initialChildrenCount }}, @js($initialChildrenAges), @js($ageBrackets), {{ $defaultExtraBedPrice }}, {{ $initialHasExtraBed ? 'true' : 'false' }}, {{ $initialExtraBedCount }}, {{ $initialPrepaidChildren ? 'true' : 'false' }})">
                 @csrf
                 <input type="hidden" name="step" value="2">
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
@@ -139,7 +149,10 @@
                 <input type="hidden" name="extra_bed_count" :value="hasExtraBed ? extraBedCount : 0">
                 <input type="hidden" name="extra_bed_amount" :value="extraBedStayTotal">
                 <input type="hidden" name="prepaid_breakfast_children" :value="prepaidBreakfastChildren ? 1 : 0">
-                <input type="hidden" name="prepaid_breakfast_amount" :value="prepaidBreakfastChildren ? childrenBreakfastStayTotal : 0">
+                <input
+                    type="hidden"
+                    name="prepaid_breakfast_amount"
+                    :value="prepaidBreakfastChildren ? childrenBreakfastStayTotal : 0">
 
                 {{-- Visual range indicators --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -147,8 +160,11 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Arrivée *
                         </label>
-                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50 text-primary flex items-center justify-between h-[38px] cursor-default">
-                            <span x-text="formatDisplayDate(checkInDate)" :class="!checkInDate ? 'text-primary/30' : ''"></span>
+                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50
+                            text-primary flex items-center justify-between h-[38px] cursor-default">
+                            <span
+                                x-text="formatDisplayDate(checkInDate)"
+                                :class="!checkInDate ? 'text-primary/30' : ''"></span>
                             <i data-lucide="calendar" class="w-4 h-4 text-primary/30"></i>
                         </div>
                         @error('check_in')
@@ -159,8 +175,11 @@
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
                             Départ *
                         </label>
-                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50 text-primary flex items-center justify-between h-[38px] cursor-default">
-                            <span x-text="formatDisplayDate(checkOutDate)" :class="!checkOutDate ? 'text-primary/30' : ''"></span>
+                        <div class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-gray-50
+                            text-primary flex items-center justify-between h-[38px] cursor-default">
+                            <span
+                                x-text="formatDisplayDate(checkOutDate)"
+                                :class="!checkOutDate ? 'text-primary/30' : ''"></span>
                             <i data-lucide="calendar" class="w-4 h-4 text-primary/30"></i>
                         </div>
                         @error('check_out')
@@ -173,11 +192,19 @@
                 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-4 select-none">
                     {{-- Calendar Header --}}
                     <div class="flex items-center justify-between mb-4 px-2">
-                        <button type="button" @click="prevMonth()" class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none">
+                        <button
+                            type="button"
+                            @click="prevMonth()"
+                            class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors
+                                focus:outline-none">
                             <i data-lucide="chevron-left" class="w-4 h-4"></i>
                         </button>
                         <h3 class="font-heading font-bold text-slate-800 text-sm" x-text="monthLabel"></h3>
-                        <button type="button" @click="nextMonth()" class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none">
+                        <button
+                            type="button"
+                            @click="nextMonth()"
+                            class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors
+                                focus:outline-none">
                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -204,7 +231,8 @@
                                         @click="selectDay(day)"
                                         @mouseenter="if(checkInDate && !checkOutDate) hoverDate = day.date"
                                         :disabled="day.isDisabled"
-                                        class="w-8 h-8 flex flex-col items-center justify-center text-xs font-semibold rounded-full transition-all relative focus:outline-none"
+                                        class="w-8 h-8 flex flex-col items-center justify-center text-xs font-semibold
+                                            rounded-full transition-all relative focus:outline-none"
                                         :class="{
                                             'bg-primary text-white font-bold shadow-sm z-10': isStart(day.date) || isEnd(day.date),
                                             'text-primary font-semibold': isInRange(day.date) && !isStart(day.date) && !isEnd(day.date),
@@ -213,7 +241,9 @@
                                             'text-slate-300 cursor-not-allowed opacity-40': day.isDisabled
                                         }">
                                     <span x-text="day.dayNum"></span>
-                                    <span x-show="isStart(day.date) || isEnd(day.date)" class="w-1 h-1 bg-white rounded-full absolute bottom-1"></span>
+                                    <span
+                                        x-show="isStart(day.date) || isEnd(day.date)"
+                                        class="w-1 h-1 bg-white rounded-full absolute bottom-1"></span>
                                 </button>
                             </div>
                         </template>
@@ -235,7 +265,8 @@
                         <input type="time" name="check_in_time"
                                value="{{ old('check_in_time', request('check_in_time', $defaultCheckInTime)) }}"
                                required
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                   text-primary outline-none focus:border-secondary">
                         @error('check_in_time')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
@@ -245,12 +276,19 @@
                             Origine de la réservation
                         </label>
                         <select name="source"
-                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                            <option value="direct" {{ old('source', request('source', 'direct')) === 'direct' ? 'selected' : '' }}>Direct</option>
+                                class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
+                            <option
+                                value="direct"
+                                {{ old('source', request('source', 'direct')) === 'direct' ? 'selected' : '' }}>Direct</option>
                             <option value="phone" {{ old('source', request('source')) === 'phone' ? 'selected' : '' }}>Téléphone</option>
                             <option value="email" {{ old('source', request('source')) === 'email' ? 'selected' : '' }}>Email</option>
-                            <option value="walk_in" {{ old('source', request('source')) === 'walk_in' ? 'selected' : '' }}>Walk-in</option>
-                            <option value="ota_bookingcom" {{ old('source', request('source')) === 'ota_bookingcom' ? 'selected' : '' }}>Booking.com</option>
+                            <option
+                                value="walk_in"
+                                {{ old('source', request('source')) === 'walk_in' ? 'selected' : '' }}>Walk-in</option>
+                            <option
+                                value="ota_bookingcom"
+                                {{ old('source', request('source')) === 'ota_bookingcom' ? 'selected' : '' }}>Booking.com</option>
                         </select>
                         @error('source')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
@@ -265,7 +303,8 @@
                         </label>
                         <input type="number" name="adults" value="{{ old('adults', request('adults', 1)) }}"
                                min="1" required
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                   outline-none focus:border-secondary">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">
@@ -274,13 +313,16 @@
                         <div class="flex items-center gap-2">
                             <input type="number" name="children" x-model.number="childrenCount" @input="syncChildrenSlots()"
                                    min="0" max="10"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                             <div class="flex items-center gap-1 shrink-0">
                                 <button type="button" @click="incrementChildren()"
-                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary font-bold text-sm flex items-center justify-center transition"
+                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary
+                                            font-bold text-sm flex items-center justify-center transition"
                                         title="Ajouter un enfant">+</button>
                                 <button type="button" @click="decrementChildren()"
-                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary font-bold text-sm flex items-center justify-center transition"
+                                        class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-primary
+                                            font-bold text-sm flex items-center justify-center transition"
                                         title="Retirer un enfant" :disabled="childrenCount <= 0">−</button>
                             </div>
                         </div>
@@ -288,7 +330,10 @@
                 </div>
 
                 {{-- Sélecteurs dynamiques pour l'intervalle d'âge des enfants --}}
-                <div x-show="childrenCount > 0" style="display: none;" class="mb-5 p-4 bg-slate-50 border border-secondary/20 rounded-xl space-y-3">
+                <div
+                    x-show="childrenCount > 0"
+                    style="display: none;"
+                    class="mb-5 p-4 bg-slate-50 border border-secondary/20 rounded-xl space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="text-xs font-bold uppercase tracking-wider text-primary">
@@ -304,16 +349,19 @@
 
                     <div class="space-y-2.5">
                         <template x-for="(ageId, index) in childrenAges" :key="index">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white border border-secondary/20 rounded-lg shadow-xs">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white
+                                border border-secondary/20 rounded-lg shadow-xs">
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <span class="w-6 h-6 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center"
+                                    <span class="w-6 h-6 rounded-full bg-primary text-white text-[11px] font-bold flex
+                                        items-center justify-center"
                                           x-text="index + 1"></span>
                                     <span class="text-xs font-semibold text-primary" x-text="'Enfant ' + (index + 1)"></span>
                                 </div>
 
                                 <div class="flex-1 w-full sm:max-w-md">
                                     <select :name="'children_ages[]'" x-model="childrenAges[index]" required
-                                            class="w-full px-3 py-1.5 text-xs font-medium border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                            class="w-full px-3 py-1.5 text-xs font-medium border border-secondary/30
+                                                rounded-lg bg-white text-primary outline-none focus:border-primary">
                                         <option value="">Sélectionner la tranche d'âge...</option>
                                         <template x-for="bracket in ageBrackets" :key="bracket.id">
                                             <option :value="bracket.id"
@@ -327,7 +375,8 @@
                         </template>
                     </div>
 
-                    <div class="pt-2 border-t border-secondary/15 flex items-center justify-between text-xs text-primary/80">
+                    <div class="pt-2 border-t border-secondary/15 flex items-center justify-between text-xs
+                        text-primary/80">
                         <span class="font-medium flex items-center gap-1.5">
                             <i data-lucide="utensils" class="w-3.5 h-3.5 text-secondary"></i>
                             Petit-déjeuner enfants estimé :
@@ -348,12 +397,21 @@
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer shrink-0">
                                 <input type="checkbox" x-model="prepaidBreakfastChildren" class="sr-only peer">
-                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
+                                    after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4
+                                    after:transition-all peer-checked:bg-emerald-600"></div>
                             </label>
                         </div>
-                        <div x-show="prepaidBreakfastChildren" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
+                        <div
+                            x-show="prepaidBreakfastChildren"
+                            class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center
+                                justify-between text-xs text-emerald-800">
                             <span class="font-medium">Montant ajouté à la réservation :</span>
-                            <span class="font-bold tabular-nums" x-text="new Intl.NumberFormat('fr-FR').format(childrenBreakfastStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></span>
+                            <span
+                                class="font-bold tabular-nums"
+                                x-text="new Intl.NumberFormat('fr-FR').format(childrenBreakfastStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></span>
                         </div>
                     </div>
                 </div>
@@ -362,7 +420,8 @@
                 <div class="mb-5 p-4 bg-slate-50 border border-secondary/20 rounded-xl space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5">
-                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center
+                                shrink-0">
                                 <i data-lucide="bed" class="w-4 h-4"></i>
                             </span>
                             <div>
@@ -372,35 +431,56 @@
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" x-model="hasExtraBed" class="sr-only peer">
-                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                peer-checked:after:translate-x-full peer-checked:after:border-white after:content-['']
+                                after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300
+                                after:border after:rounded-full after:h-4 after:w-4 after:transition-all
+                                peer-checked:bg-primary"></div>
                         </label>
                     </div>
 
-                    <div x-show="hasExtraBed" style="display:none;" class="pt-3 border-t border-secondary/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div
+                        x-show="hasExtraBed"
+                        style="display:none;"
+                        class="pt-3 border-t border-secondary/15 flex flex-col sm:flex-row sm:items-center
+                            justify-between gap-3">
                         <div class="flex items-center gap-2">
                             <label class="text-xs font-medium text-primary">Nombre de lits d'appoint :</label>
-                            <input type="number" x-model.number="extraBedCount" min="1" max="3" class="w-16 px-2 py-1 text-xs border border-secondary/30 rounded-lg text-center font-bold">
+                            <input
+                                type="number"
+                                x-model.number="extraBedCount"
+                                min="1"
+                                max="3"
+                                class="w-16 px-2 py-1 text-xs border border-secondary/30 rounded-lg text-center
+                                    font-bold">
                         </div>
                         <div class="text-right">
-                            <span class="text-xs font-semibold text-primary" x-text="new Intl.NumberFormat('fr-FR').format(extraBedPricePerNight) + ' FCFA / nuit'"></span>
-                            <p class="text-[10px] text-primary/60" x-text="'Total séjour : ' + new Intl.NumberFormat('fr-FR').format(extraBedStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></p>
+                            <span
+                                class="text-xs font-semibold text-primary"
+                                x-text="new Intl.NumberFormat('fr-FR').format(extraBedPricePerNight) + ' FCFA / nuit'"></span>
+                            <p
+                                class="text-[10px] text-primary/60"
+                                x-text="'Total séjour : ' + new Intl.NumberFormat('fr-FR').format(extraBedStayTotal) + ' FCFA (' + totalNights + ' nuit' + (totalNights > 1 ? 's' : '') + ')'"></p>
                         </div>
                     </div>
                 </div>
 
-                <p class="text-[11px] text-primary/70 mb-5 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex items-start gap-1.5 leading-normal">
+                <p class="text-[11px] text-primary/70 mb-5 bg-slate-50 border border-secondary/20 rounded-lg p-2.5 flex
+                    items-start gap-1.5 leading-normal">
                     <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 text-primary/50 flex-shrink-0"></i>
                     <span><strong>Politique de capacité :</strong> Si le nombre d'occupants dépasse la capacité de base d'une chambre (ex: 2 pers.), une surcharge de +{{ $surchargePercentage }}% est appliquée au prix de la chambre.</span>
                 </p>
 
                 <div class="flex gap-3">
                     <a href="{{ route('bookings.create') }}"
-                       class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                       class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium
+                           rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i>
                         Précédent
                     </a>
                     <button type="submit"
-                            class="flex-1 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
+                            class="flex-1 py-2.5 bg-primary text-white text-sm font-medium rounded-lg
+                                hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
                         Voir les chambres disponibles
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
@@ -412,7 +492,9 @@
     @else
 
         {{-- Formulaire Étape 1 : Clients et Mandataire --}}
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-4" x-data="{ isBooker: '{{ old('is_booker', '') }}', showCustomer: {{ old('is_booker') ? 'true' : 'false' }} }">
+        <div
+            class="bg-white rounded-xl shadow-sm p-6 mb-4"
+            x-data="{ isBooker: '{{ old('is_booker', '') }}', showCustomer: {{ old('is_booker') ? 'true' : 'false' }} }">
             <h2 class="font-heading font-semibold text-primary mb-4">Informations de Réservation</h2>
 
             @if($errors->any())
@@ -427,57 +509,108 @@
 
                 <div class="mb-6">
                     <label class="block text-sm font-semibold text-primary mb-2">Qui effectue cette réservation ?</label>
-                    <select name="is_booker" x-model="isBooker" @change="showCustomer = (isBooker === 'self')" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary mb-4">
+                    <select
+                        name="is_booker"
+                        x-model="isBooker"
+                        @change="showCustomer = (isBooker === 'self')"
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary mb-4">
                         <option value="">Sélectionner...</option>
                         <option value="self">Le client final lui-même</option>
                         <option value="other">Une tierce personne (Mandataire / Organisateur)</option>
                     </select>
                 </div>
 
-                <div x-show="isBooker === 'other'" style="display: none;" class="mb-6 p-4 bg-gray-50 border border-secondary/20 rounded-xl">
+                <div
+                    x-show="isBooker === 'other'"
+                    style="display: none;"
+                    class="mb-6 p-4 bg-gray-50 border border-secondary/20 rounded-xl">
                     <h3 class="text-sm font-semibold text-primary mb-3">Le mandataire (Celui qui réserve)</h3>
-                    <x-customer-search :customers="$customers" name="booker_id" :value="old('booker_id')" :allow-creation="true" creation-label="Créer un mandataire">
+                    <x-customer-search
+                        :customers="$customers"
+                        name="booker_id"
+                        :value="old('booker_id')"
+                        :allow-creation="true"
+                        creation-label="Créer un mandataire">
                         {{-- Mode création Booker (Slot) --}}
                         <input type="hidden" name="new_booker" value="1" x-bind:disabled="!isCreatingNew">
-                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
+                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border
+                            border-blue-100 mb-4">
                             <div class="flex items-center"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i><span class="font-medium">Nouveau mandataire</span></div>
-                            <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
+                            <button
+                                type="button"
+                                @click="cancelCreatingNew()"
+                                class="text-sm font-medium hover:underline">Annuler</button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
-                                <input type="text" name="booker_first_name" value="{{ old('booker_first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="booker_first_name"
+                                    value="{{ old('booker_first_name') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('booker_first_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nom *</label>
-                                <input type="text" name="booker_last_name" value="{{ old('booker_last_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="booker_last_name"
+                                    value="{{ old('booker_last_name') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('booker_last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Téléphone *</label>
-                                <input type="text" name="booker_phone" value="{{ old('booker_phone') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="booker_phone"
+                                    value="{{ old('booker_phone') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('booker_phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email</label>
-                                <input type="email" name="booker_email" value="{{ old('booker_email') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="email"
+                                    name="booker_email"
+                                    value="{{ old('booker_email') }}"
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('booker_email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             {{-- Facultatif ici : le marché émetteur se mesure sur le client
                                  qui séjourne, pas sur celui qui règle la réservation. --}}
-                            <x-country-select name="booker_country" label="Pays de résidence" x-bind:disabled="!isCreatingNew" />
+                            <x-country-select
+                                name="booker_country"
+                                label="Pays de résidence"
+                                x-bind:disabled="!isCreatingNew" />
                         </div>
                         {{-- La pièce d'identité n'est plus demandée à la réservation :
                              elle est collectée au check-in (arrivée du client). --}}
                     </x-customer-search>
                     
                     <div class="mt-4 text-right" x-show="!showCustomer">
-                        <button type="button" @click="showCustomer = true" class="px-4 py-2 bg-secondary text-white text-sm font-medium rounded-lg hover:bg-secondary/90 transition-colors">
+                        <button
+                            type="button"
+                            @click="showCustomer = true"
+                            class="px-4 py-2 bg-secondary text-white text-sm font-medium rounded-lg
+                                hover:bg-secondary/90 transition-colors">
                             Suivant : Client séjournant <i data-lucide="arrow-right" class="w-4 h-4 inline"></i>
                         </button>
                     </div>
@@ -485,37 +618,72 @@
 
                 <div x-show="showCustomer" style="display: none;" class="mb-6 pt-4 border-t border-secondary/20">
                     <h3 class="text-sm font-semibold text-primary mb-3">Le client qui va séjourner</h3>
-                    <x-customer-search :customers="$customers" name="customer_id" :value="old('customer_id')" :allow-creation="true">
+                    <x-customer-search
+                        :customers="$customers"
+                        name="customer_id"
+                        :value="old('customer_id')"
+                        :allow-creation="true">
                         {{-- Mode création (Slot) --}}
                         <input type="hidden" name="new_customer" value="1" x-bind:disabled="!isCreatingNew">
-                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
+                        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border
+                            border-blue-100 mb-4">
                             <div class="flex items-center">
                                 <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
                                 <span class="font-medium">Nouveau client final</span>
                             </div>
-                            <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline">Annuler</button>
+                            <button
+                                type="button"
+                                @click="cancelCreatingNew()"
+                                class="text-sm font-medium hover:underline">Annuler</button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Prénom *</label>
-                                <input type="text" name="first_name" value="{{ old('first_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="first_name"
+                                    value="{{ old('first_name') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('first_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nom *</label>
-                                <input type="text" name="last_name" value="{{ old('last_name') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="last_name"
+                                    value="{{ old('last_name') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('last_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Email *</label>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value="{{ old('email') }}"
+                                    required
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Téléphone</label>
-                                <input type="text" name="phone" value="{{ old('phone') }}" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="phone"
+                                    value="{{ old('phone') }}"
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('phone')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
@@ -524,14 +692,25 @@
                             <x-country-select name="country" :required="true" x-bind:disabled="!isCreatingNew" />
                             <div>
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Nationalité</label>
-                                <input type="text" name="nationality" value="{{ old('nationality') }}" placeholder="Facultatif" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary" x-bind:disabled="!isCreatingNew">
+                                <input
+                                    type="text"
+                                    name="nationality"
+                                    value="{{ old('nationality') }}"
+                                    placeholder="Facultatif"
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary"
+                                    x-bind:disabled="!isCreatingNew">
                                 @error('nationality')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                         @if($partnerOrganizations->isNotEmpty())
                             <div class="mb-4">
                                 <label class="block text-xs font-semibold text-primary/50 mb-1.5">Organisation partenaire</label>
-                                <select name="partner_organization_id" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary bg-white" x-bind:disabled="!isCreatingNew">
+                                <select
+                                    name="partner_organization_id"
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary bg-white"
+                                    x-bind:disabled="!isCreatingNew">
                                     <option value="">Aucune — client particulier</option>
                                     @foreach($partnerOrganizations as $organization)
                                         <option value="{{ $organization->id }}" @selected(old('partner_organization_id') == $organization->id)>{{ $organization->name }}</option>
@@ -546,11 +725,20 @@
                 </div>
 
                 <div class="flex gap-3 mt-4" x-show="showCustomer" style="display: none;">
-                    <button type="button" x-show="isBooker === 'other'" @click="showCustomer = false" class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    <button
+                        type="button"
+                        x-show="isBooker === 'other'"
+                        @click="showCustomer = false"
+                        class="flex-1 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium
+                            rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i>
                         Précédent
                     </button>
-                    <button type="submit" :class="isBooker === 'other' ? 'flex-1' : 'w-full'" class="py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
+                    <button
+                        type="submit"
+                        :class="isBooker === 'other' ? 'flex-1' : 'w-full'"
+                        class="py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors flex items-center justify-center gap-2">
                         Continuer la réservation
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>

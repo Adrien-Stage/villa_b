@@ -32,32 +32,38 @@
     </div>
     <div class="flex items-center gap-2 shrink-0">
         <a href="{{ route('restaurant.recipes.export', ['format' => 'csv']) }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs
+               font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
            title="Exporter les fiches à plat, au seul format que l'import sait relire">
             <i data-lucide="file-text" class="w-4 h-4 text-secondary"></i>
             <span>CSV (ré-importable)</span>
         </a>
         <a href="{{ route('restaurant.recipes.recueil') }}" target="_blank"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs
+               font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
            title="Imprimer l'ensemble des fiches techniques (plats, préparations, boissons du bar)">
             <i data-lucide="printer" class="w-4 h-4 text-secondary"></i>
             <span>Imprimer le recueil</span>
         </a>
         <a href="{{ route('restaurant.recipes.export') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+           class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs
+               font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
            title="Classeur complet : carte & rentabilité, mercuriale, et une fiche par préparation et par plat">
             <i data-lucide="file-spreadsheet" class="w-4 h-4 text-secondary"></i>
             <span>Exporter (Excel)</span>
         </a>
         @if($canManage)
             <button type="button" onclick="document.getElementById('modal-import-recipes').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                        text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                        shadow-sm"
                     title="Importer des fiches techniques depuis un fichier Excel ou CSV">
                 <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
                 <span>Importer</span>
             </button>
             <button type="button" onclick="openRecipeEditor()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                    hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Nouvelle fiche
             </button>
@@ -102,7 +108,12 @@
 @endif
 
 {{-- Les fiches de plats --}}
-<x-table :rows="$dishes" empty="Aucune fiche technique pour l'instant." empty-icon="book-open" caption="Fiches techniques des plats" class="mb-8">
+<x-table
+    :rows="$dishes"
+    empty="Aucune fiche technique pour l'instant."
+    empty-icon="book-open"
+    caption="Fiches techniques des plats"
+    class="mb-8">
     <x-slot:toolbar>
         <h2 class="flex items-center gap-2 text-sm font-semibold text-primary">
             <i data-lucide="chef-hat" class="h-4 w-4 text-primary/50" aria-hidden="true"></i>
@@ -157,7 +168,11 @@
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $foodCost > 45 ? 'border border-red-200 bg-red-50 text-red-700' : ($foodCost > 35 ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-green-200 bg-green-50 text-green-700') }}">{{ number_format($foodCost, 1, ',', ' ') }} %</span>
                 @endif
             </x-table.cell>
-            <x-table.cell align="right" hide="lg" nowrap class="{{ $margin !== null && $margin < 0 ? 'font-semibold text-red-600' : '' }}">{{ $margin === null ? '—' : number_format($margin / 100, 0, ',', ' ') . ' FCFA' }}</x-table.cell>
+            <x-table.cell
+                align="right"
+                hide="lg"
+                nowrap
+                class="{{ $margin !== null && $margin < 0 ? 'font-semibold text-red-600' : '' }}">{{ $margin === null ? '—' : number_format($margin / 100, 0, ',', ' ') . ' FCFA' }}</x-table.cell>
             <x-table.cell align="right" hide="xl" nowrap>
                 @if($portions === null)
                     <span class="text-xs text-primary/30">—</span>
@@ -197,7 +212,11 @@
 </x-table>
 
 {{-- Les préparations de base --}}
-<x-table :rows="$preparations" empty="Aucune préparation de base." empty-icon="cooking-pot" caption="Préparations de base">
+<x-table
+    :rows="$preparations"
+    empty="Aucune préparation de base."
+    empty-icon="cooking-pot"
+    caption="Préparations de base">
     <x-slot:toolbar>
         <div>
             <h2 class="flex items-center gap-2 text-sm font-semibold text-primary">
@@ -234,16 +253,27 @@
             <x-table.cell hide="xl" nowrap class="text-xs text-primary/60 font-mono">{{ rtrim(rtrim(number_format((float) $recipe->yield_quantity, 3, ',', ' '), '0'), ',') }} {{ $produced?->shortUnit() }}</x-table.cell>
             <x-table.cell align="right" hide="2xl" nowrap class="text-primary/70">{{ number_format($recipe->totalCost() / 100, 0, ',', ' ') }} FCFA</x-table.cell>
             <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($recipe->unitCost() / 100, 2, ',', ' ') }} FCFA / {{ $produced?->shortUnit() }}</x-table.cell>
-            <x-table.cell align="right" hide="lg" nowrap class="font-mono {{ $produced && $produced->isLowStock() ? 'font-semibold text-red-600' : 'text-primary/70' }}">{{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') : '—' }}</x-table.cell>
+            <x-table.cell
+                align="right"
+                hide="lg"
+                nowrap
+                class="font-mono {{ $produced && $produced->isLowStock() ? 'font-semibold text-red-600' : 'text-primary/70' }}">{{ $produced ? rtrim(rtrim(number_format((float) $produced->current_stock, 3, ',', ' '), '0'), ',') : '—' }}</x-table.cell>
             <x-table.cell align="center" hide="lg" nowrap class="font-mono text-xs font-bold text-primary/70">{{ $produced?->shortUnit() ?? '—' }}</x-table.cell>
             @if($canManage)
                 <x-table.cell nowrap>
-                    <form method="POST" action="{{ route('restaurant.recipes.produce', $recipe) }}" class="flex items-center gap-1">
+                    <form
+                        method="POST"
+                        action="{{ route('restaurant.recipes.produce', $recipe) }}"
+                        class="flex items-center gap-1">
                         @csrf
                         <label class="sr-only" for="batches-{{ $recipe->id }}">Nombre de batchs à produire</label>
                         <input id="batches-{{ $recipe->id }}" type="number" name="batches" value="1" min="0.1" step="0.1"
-                            class="w-16 rounded-lg border border-secondary/30 px-2 py-1 text-xs text-primary outline-none focus:border-secondary">
-                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-surface-dark">
+                            class="w-16 rounded-lg border border-secondary/30 px-2 py-1 text-xs text-primary
+                                outline-none focus:border-secondary">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs
+                                font-medium text-white transition-colors hover:bg-surface-dark">
                             <i data-lucide="cooking-pot" class="h-3.5 w-3.5" aria-hidden="true"></i> Produire
                         </button>
                     </form>
@@ -294,7 +324,10 @@
                         Les quantités sont exprimées dans l'unité de stock de chaque ingrédient.
                     </p>
                 </div>
-                <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                <button
+                    type="button"
+                    @click="open = false"
+                    class="text-primary/30 hover:text-primary transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -319,7 +352,8 @@
                             <label class="block text-xs font-medium text-primary/70 mb-1">Nom de la fiche *</label>
                             <input type="text" name="name" x-model="form.name" required maxlength="140"
                                 placeholder="Ex : Ndolé aux crevettes"
-                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                class="w-full rounded-lg border-secondary/20 bg-white text-sm p-2.5 text-primary
+                                    placeholder-primary/30">
                         </div>
                     </div>
 
@@ -367,16 +401,20 @@
                     {{-- Les ingrédients --}}
                     <div>
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50">Ingrédients</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest
+                                text-primary/50">Ingrédients</label>
                             <button type="button" @click="addLine()"
-                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-secondary/20 text-xs font-medium text-primary hover:bg-accent/20">
+                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border
+                                    border-secondary/20 text-xs font-medium text-primary hover:bg-accent/20">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                 Ajouter un ingrédient
                             </button>
                         </div>
 
                         <div class="border border-secondary/20 rounded-xl overflow-hidden">
-                            <div class="hidden md:grid md:grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b border-secondary/20 text-[11px] font-semibold uppercase tracking-widest text-primary/40">
+                            <div class="hidden md:grid md:grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b
+                                border-secondary/20 text-[11px] font-semibold uppercase tracking-widest
+                                text-primary/40">
                                 <div class="col-span-4">Ingrédient</div>
                                 <div class="col-span-2 text-right">Quantité</div>
                                 <div class="col-span-2 text-right" title="Perte au parage ou à la cuisson">Perte %</div>
@@ -386,7 +424,8 @@
                             </div>
 
                             <template x-for="(line, index) in form.lines" :key="index">
-                                <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-2 px-3 py-2 items-center border-b border-secondary/10 last:border-0">
+                                <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-2 px-3 py-2
+                                    items-center border-b border-secondary/10 last:border-0">
                                     <div class="col-span-4">
                                         <x-article-picker source="catalog" model="line.restaurant_pantry_item_id" name-bind="`lines[${index}][restaurant_pantry_item_id]`" size="sm" required
                                             aria-label="Ingrédient" placeholder="Tapez un ingrédient…"
@@ -396,25 +435,32 @@
                                         <div class="relative">
                                             <input type="number" :name="`lines[${index}][quantity]`" x-model="line.quantity"
                                                 min="0.001" step="0.001" required
-                                                class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2 pr-8 text-primary text-right">
-                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary/40"
+                                                class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2 pr-8
+                                                    text-primary text-right">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]
+                                                text-primary/40"
                                                 x-text="unitOf(line)"></span>
                                         </div>
                                     </div>
                                     <div class="col-span-2">
                                         <input type="number" :name="`lines[${index}][waste_percent]`" x-model="line.waste_percent"
                                             min="0" max="99" step="0.1"
-                                            class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2 text-primary text-right">
+                                            class="w-full rounded-lg border-secondary/20 bg-white text-xs p-2
+                                                text-primary text-right">
                                     </div>
                                     <div class="col-span-2 text-right text-xs text-primary/60" x-text="grossOf(line)"></div>
-                                    <div class="col-span-1 text-right text-xs font-semibold text-primary" x-text="costOf(line)"></div>
+                                    <div
+                                        class="col-span-1 text-right text-xs font-semibold text-primary"
+                                        x-text="costOf(line)"></div>
                                     <div class="col-span-1 flex justify-end">
                                         {{-- SVG inline (et non un icône Lucide) : les lignes sont créées
                                              dynamiquement par Alpine, or Lucide ne convertit que les icônes
                                              présentes au chargement — un <i data-lucide> resterait invisible. --}}
                                         <button type="button" @click="removeLine(index)"
                                             title="Retirer cet ingrédient" aria-label="Retirer cet ingrédient"
-                                            class="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors">
+                                            class="h-7 w-7 inline-flex items-center justify-center rounded-lg border
+                                                border-secondary/20 text-red-600 hover:bg-red-50 hover:border-red-200
+                                                transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M18 6 6 18M6 6l12 12"/>
@@ -433,7 +479,8 @@
                     {{-- Le chiffrage, en direct --}}
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40">Coût total</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest
+                                text-primary/40">Coût total</p>
                             <p class="text-sm font-bold text-primary mt-1" x-text="format(totalCost) + ' FCFA'"></p>
                         </div>
                         <div class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3">
@@ -443,14 +490,19 @@
                             </p>
                             <p class="text-sm font-bold text-primary mt-1" x-text="format(unitCost) + ' FCFA'"></p>
                         </div>
-                        <div class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3" x-show="form.type === 'dish'">
+                        <div
+                            class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3"
+                            x-show="form.type === 'dish'">
                             <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40">Food cost</p>
                             <p class="text-sm font-bold mt-1"
                                 :class="foodCost === null ? 'text-primary/30' : (foodCost > 45 ? 'text-red-600' : (foodCost > 35 ? 'text-amber-600' : 'text-green-600'))"
                                 x-text="foodCost === null ? '—' : foodCost.toFixed(1).replace('.', ',') + ' %'"></p>
                         </div>
-                        <div class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3" x-show="form.type === 'dish'">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40">Marge / portion</p>
+                        <div
+                            class="rounded-xl border border-secondary/20 bg-gray-50 px-4 py-3"
+                            x-show="form.type === 'dish'">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest
+                                text-primary/40">Marge / portion</p>
                             <p class="text-sm font-bold mt-1"
                                 :class="margin === null ? 'text-primary/30' : (margin < 0 ? 'text-red-600' : 'text-primary')"
                                 x-text="margin === null ? '—' : format(margin) + ' FCFA'"></p>
@@ -468,16 +520,21 @@
                         {{-- Valeur déterministe 1/0 : une case liée en x-model peut soumettre
                              une valeur vide (→ null → inactif). La case reste le contrôle visuel. --}}
                         <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                        <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
+                        <input
+                            type="checkbox"
+                            x-model="form.is_active"
+                            class="rounded border-secondary/30 text-primary">
                         Fiche active (la vente du plat déduit le stock)
                     </label>
                 </div>
 
-                <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                    rounded-b-2xl">
                     <button type="button" @click="open = false"
                         class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                     <button type="submit"
-                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors">
                         <span x-text="editing ? 'Enregistrer la fiche' : 'Créer la fiche'"></span>
                     </button>
                 </div>

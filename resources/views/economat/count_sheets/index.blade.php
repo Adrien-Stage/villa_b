@@ -18,7 +18,10 @@
             <input type="hidden" name="service" value="{{ \App\Services\CountSheetService::ALL }}">
             <input type="hidden" name="articles" :value="articles">
             <input type="hidden" name="depuis" :value="articles === 'mouvementes' ? depuis : ''">
-            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <button
+                type="submit"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="printer" class="w-4 h-4"></i> Toutes les fiches
             </button>
         </form>
@@ -37,11 +40,17 @@
     {{-- Les articles à compter : valable pour toutes les fiches ci-dessous. --}}
     <fieldset class="mb-4 bg-white border border-secondary/20 rounded-xl p-4">
         <legend class="sr-only">Articles à compter</legend>
-        <p class="text-xs font-semibold uppercase tracking-wider text-primary/70 mb-2" aria-hidden="true">Articles à compter</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-primary/70
+            mb-2" aria-hidden="true">Articles à compter</p>
         <div class="space-y-2">
             @foreach($selections as $cle => $libelle)
                 <label class="flex items-start gap-2 text-sm text-primary">
-                    <input type="radio" name="choix-articles" value="{{ $cle }}" x-model="articles" class="mt-0.5 border-secondary/40 text-primary">
+                    <input
+                        type="radio"
+                        name="choix-articles"
+                        value="{{ $cle }}"
+                        x-model="articles"
+                        class="mt-0.5 border-secondary/40 text-primary">
                     <span>{{ $libelle }}</span>
                 </label>
             @endforeach
@@ -78,7 +87,11 @@
                             {{-- L'économat se compte zone par zone : une équipe à la cave, une autre en chambre froide… --}}
                             @if($cle === \App\Services\CountSheetService::ECONOMAT && $zones->isNotEmpty())
                                 <label for="zone-{{ $cle }}" class="sr-only">Zone de stockage — {{ $libelle }}</label>
-                                <select id="zone-{{ $cle }}" name="zone" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                <select
+                                    id="zone-{{ $cle }}"
+                                    name="zone"
+                                    class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white
+                                        text-primary">
                                     <option value="">Toutes les zones de stockage</option>
                                     @if($zones->count() > 1)
                                         <option value="{{ \App\Services\CountSheetService::ZONE_CHAQUE }}">Une fiche par zone</option>
@@ -90,7 +103,11 @@
                             @endif
                             @if($categories->isNotEmpty())
                                 <label for="categorie-{{ $cle }}" class="sr-only">Catégorie — {{ $libelle }}</label>
-                                <select id="categorie-{{ $cle }}" name="categorie" class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                <select
+                                    id="categorie-{{ $cle }}"
+                                    name="categorie"
+                                    class="mt-1.5 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white
+                                        text-primary">
                                     <option value="">Toutes les catégories</option>
                                     @foreach($categories as $categorie)
                                         <option value="{{ $categorie->id }}">{{ $categorie->name }}</option>
@@ -101,11 +118,13 @@
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" name="theorique" value="0"
-                                class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
+                                class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30
+                                    text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
                             <i data-lucide="eye-off" class="w-3.5 h-3.5"></i> À l'aveugle
                         </button>
                         <button type="submit" name="theorique" value="1"
-                                class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
+                                class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30
+                                    text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
                             <i data-lucide="eye" class="w-3.5 h-3.5"></i> Avec théorique
                         </button>
                     </div>

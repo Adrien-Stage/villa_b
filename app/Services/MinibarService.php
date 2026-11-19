@@ -111,7 +111,8 @@ class MinibarService
                         ['quantity' => $quantite]
                     );
                 } else {
-                    MinibarStandard::query()->where('room_type_id', $type->id)->where('minibar_article_id', $articleId)->delete();
+                    MinibarStandard::query()->where('room_type_id', $type->id)->where('minibar_article_id', $articleId)
+                        ->delete();
                 }
             }
 
@@ -258,7 +259,8 @@ class MinibarService
                     );
                 }
                 if (!is_numeric($saisie) || (int) $saisie != $saisie || (int) $saisie < 0) {
-                    throw new \InvalidArgumentException("« {$ligne->article->name} » : la consommation est un nombre entier.");
+                    throw new \InvalidArgumentException(
+                        "« {$ligne->article->name} » : la consommation est un nombre entier.");
                 }
                 if ((int) $saisie > $ligne->quantity) {
                     throw new \InvalidArgumentException(
@@ -280,7 +282,8 @@ class MinibarService
                 $occasion = MinibarCheck::OCCASION_APRES_DEPART;
             } else {
                 $dernierSejour = self::dernierSejourRecent($room);
-                if ($dernierSejour !== null && $dernierSejour->actual_check_out && $dernierSejour->actual_check_out->diffInHours(now()) <= 48) {
+                if ($dernierSejour !== null && $dernierSejour->actual_check_out && $dernierSejour->actual_check_out
+                    ->diffInHours(now()) <= 48) {
                     $booking = $dernierSejour;
                     $occasion = MinibarCheck::OCCASION_APRES_DEPART;
                 } else {
@@ -312,7 +315,8 @@ class MinibarService
                 'total_amount'               => $total,
                 'user_id'                    => Auth::id(),
                 'checked_at'                 => now(),
-                'notes'                      => $notes !== null && trim($notes) !== '' ? mb_substr(trim($notes), 0, 500) : null,
+                'notes'                      => $notes !== null && trim($notes) !== '' ? mb_substr(trim($notes), 0,
+                    500) : null,
             ]);
 
             foreach ($lignes as $ligne) {
@@ -484,7 +488,8 @@ class MinibarService
                 'minibar_check_requested_by' => Auth::id(),
             ]);
             HousekeepingLog::noter($booking->room, HousekeepingLog::MINIBAR_REQUESTED,
-                'Départ du client — demandé par la réception', $booking->room->latestHousekeepingAssignment, $booking->id);
+                'Départ du client — demandé par la réception', $booking->room->latestHousekeepingAssignment,
+                    $booking->id);
         });
 
         // L'équipe de la chambre, les gouvernantes et le responsable.
@@ -530,12 +535,14 @@ class MinibarService
     {
         $depot = self::depot();
         if ($depot === null) {
-            throw new \RuntimeException("Le dépôt du mini-bar n'est pas choisi : le responsable des étages le règle dans Mini-bars.");
+            throw new \RuntimeException(
+                "Le dépôt du mini-bar n'est pas choisi : le responsable des étages le règle dans Mini-bars.");
         }
 
         return DB::transaction(function () use ($room, $depot) {
             $room = Room::query()->lockForUpdate()->findOrFail($room->id);
-            $lignes = RoomMinibarLine::query()->with('article.item')->where('room_id', $room->id)->lockForUpdate()->get();
+            $lignes = RoomMinibarLine::query()->with('article.item')->where('room_id', $room->id)->lockForUpdate()
+                ->get();
             $room->setRelation('minibarLines', $lignes);
 
             $sejour = self::sejourEnCours($room);
@@ -617,7 +624,8 @@ class MinibarService
             }
 
             if ($mis === []) {
-                throw new \RuntimeException("Le dépôt {$depot->name} n'a aucun des articles qui manquent : " . implode(', ', $manquants) . '.');
+                throw new \RuntimeException("Le dépôt {$depot->name} n'a aucun des articles qui manquent : "
+                    . implode(', ', $manquants) . '.');
             }
 
             $recharge->update(['total_cost' => $total]);
@@ -651,7 +659,8 @@ class MinibarService
         $userId = $par?->id ?? Auth::id();
         $user = $par ?? Auth::user();
 
-        $mouvement = DB::transaction(function () use ($room, $minibarArticleId, $quantite, $motif, $remarques, $userId) {
+        $mouvement = DB::transaction(function () use ($room, $minibarArticleId, $quantite, $motif, $remarques,
+            $userId) {
             $room = Room::query()->lockForUpdate()->findOrFail($room->id);
 
             $ligne = RoomMinibarLine::query()
@@ -662,7 +671,8 @@ class MinibarService
                 ->first();
 
             if ($ligne === null) {
-                throw new \InvalidArgumentException("Cet article ne fait pas partie du mini-bar de la chambre {$room->number}.");
+                throw new \InvalidArgumentException(
+                    "Cet article ne fait pas partie du mini-bar de la chambre {$room->number}.");
             }
 
             if ($ligne->quantity < $quantite) {

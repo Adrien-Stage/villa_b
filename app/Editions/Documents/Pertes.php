@@ -32,7 +32,8 @@ class Pertes extends Edition
     {
         return [
             Filtre::periode('mois'),
-            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)->pluck('name', 'id')
+            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)
+                ->pluck('name', 'id')
                 ->mapWithKeys(fn ($nom, $id) => [(string) $id => $nom])->all(), 'Tous les restaurants'),
         ];
     }
@@ -44,7 +45,8 @@ class Pertes extends Edition
         $lignes = RestaurantWasteLog::query()
             ->with('item:id,name,unit')
             ->visiblesPour($user)
-            ->when($valeurs['restaurant'] !== '', fn ($q) => $q->where('point_of_sale_id', (int) $valeurs['restaurant']))
+            ->when($valeurs['restaurant'] !== '', fn ($q) => $q->where('point_of_sale_id',
+                (int) $valeurs['restaurant']))
             ->whereBetween('occurred_at', [$du->startOfDay(), $au->endOfDay()])
             ->orderBy('occurred_at')
             ->get()

@@ -17,14 +17,18 @@
 <div class="mb-6 flex items-start justify-between gap-4">
     <div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('restaurant.stock_counts.index') }}" class="text-primary/40 hover:text-primary transition-colors">
+            <a
+                href="{{ route('restaurant.stock_counts.index') }}"
+                class="text-primary/40 hover:text-primary transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
             </a>
             <h1 class="text-2xl font-semibold text-primary font-heading">Inventaire {{ $count->reference }}</h1>
             @if($count->isClosed())
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">Clôturé</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100
+                    text-gray-700 border border-gray-200">Clôturé</span>
             @else
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">En cours</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50
+                    text-amber-700 border border-amber-200">En cours</span>
             @endif
         </div>
         <p class="text-sm text-primary/60 mt-1">
@@ -43,7 +47,8 @@
                 onsubmit="return confirm('Soumettre cet inventaire au RAF pour validation ? Les comptages seront verrouillés.');">
                 @csrf
                 <button type="submit"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium
+                        rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     Soumettre au RAF
                 </button>
@@ -57,7 +62,8 @@
                     @csrf
                     <input type="hidden" name="reason" value="">
                     <button type="submit"
-                        class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
+                        class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-300 text-red-700 text-sm
+                            font-medium rounded-lg hover:bg-red-50 transition-colors">
                         <i data-lucide="x-circle" class="w-4 h-4"></i>
                         Rejeter
                     </button>
@@ -68,7 +74,8 @@
                 onsubmit="return confirm('Valider l\'inventaire ? Le stock sera aligné sur les quantités comptées et les écarts seront régularisés.');">
                 @csrf
                 <button type="submit"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium
+                        rounded-lg hover:bg-green-700 transition-colors shadow-sm">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
                     Valider l'inventaire
                 </button>
@@ -81,7 +88,8 @@
                 @csrf
                 <input type="hidden" name="reason" value="">
                 <button type="submit"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
+                    class="inline-flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-300 text-red-700
+                        text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
                     <i data-lucide="undo-2" class="w-4 h-4"></i>
                     Annuler validation (48h)
                 </button>
@@ -167,13 +175,20 @@
             <table class="min-w-full divide-y divide-secondary/10">
                 <thead class="bg-accent/20">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Ingrédient</th>
-                        <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-widest text-primary/50">Unité</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Stock théorique</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Compté</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Écart</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Valeur</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Note</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Ingrédient</th>
+                        <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Unité</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Stock théorique</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Compté</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Écart</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Valeur</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Note</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
@@ -201,7 +216,9 @@
                                     <input type="number" name="lines[{{ $line->id }}][counted_quantity]"
                                         value="{{ $line->counted_quantity !== null ? rtrim(rtrim(number_format((float) $line->counted_quantity, 3, '.', ''), '0'), '.') : '' }}"
                                         min="0" step="0.001" placeholder="—"
-                                        class="w-28 px-2 py-1.5 text-sm text-right border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/25">
+                                        class="w-28 px-2 py-1.5 text-sm text-right border border-secondary/30
+                                            rounded-lg text-primary outline-none focus:border-secondary
+                                            placeholder-primary/25">
                                 @else
                                     <span class="text-sm font-medium text-primary">
                                         {{ $line->isCounted() ? rtrim(rtrim(number_format((float) $line->counted_quantity, 3, ',', ' '), '0'), ',') : '—' }}
@@ -234,7 +251,9 @@
                                 @if($count->isDraft() && $canManage)
                                     <input type="text" name="lines[{{ $line->id }}][notes]" value="{{ $line->notes }}"
                                         maxlength="255" placeholder="Casse, péremption..."
-                                        class="w-full min-w-[10rem] px-2 py-1.5 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/25">
+                                        class="w-full min-w-[10rem] px-2 py-1.5 text-xs border border-secondary/30
+                                            rounded-lg text-primary outline-none focus:border-secondary
+                                            placeholder-primary/25">
                                 @else
                                     <span class="text-xs text-primary/50">{{ $line->notes ?: '—' }}</span>
                                 @endif
@@ -256,7 +275,8 @@
                 @endif
 
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Enregistrer le comptage
                 </button>
             </div>

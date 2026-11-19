@@ -68,7 +68,8 @@ Route::middleware('orchestration.token')->group(function () {
     // Les comptes administrateurs ne se créent que d'ici : personne, dans
     // l'établissement, n'accorde un niveau égal au sien.
     Route::get('/comptes', [StaffAccountController::class, 'index'])->name('api.comptes.index');
-    Route::post('/comptes/administrateurs', [StaffAccountController::class, 'storeAdmin'])->name('api.comptes.administrateurs.store');
+    Route::post('/comptes/administrateurs', [StaffAccountController::class, 'storeAdmin'])
+        ->name('api.comptes.administrateurs.store');
     Route::patch('/comptes/administrateurs/{user}', [StaffAccountController::class, 'updateAdmin'])
         ->whereNumber('user')->name('api.comptes.administrateurs.update');
 

@@ -48,7 +48,8 @@ class TarifSejour
         $avance = max(0, (int) CarbonImmutable::parse($reserveLe ?? now())->startOfDay()->diffInDays($arrivee, false));
 
         $base = $this->auFranc($type->avecSurchargeDeCapacite((int) $type->base_price, $adultes, $enfants));
-        $regles = $type->relationLoaded('rates') ? $type->rates->where('is_active', true) : $type->rates()->actives()->get();
+        $regles = $type->relationLoaded('rates') ? $type->rates->where('is_active', true) : $type->rates()->actives()
+            ->get();
 
         $detail = [];
         $total = 0;
@@ -57,12 +58,14 @@ class TarifSejour
             $jour = $arrivee->addDays($i);
             $regle = $this->regleDuJour($regles, $jour, $nuits, $avance);
             $prix = $regle
-                ? $this->auFranc($type->avecSurchargeDeCapacite($regle->calculatePrice((int) $type->base_price), $adultes, $enfants))
+                ? $this->auFranc($type->avecSurchargeDeCapacite($regle->calculatePrice((int) $type->base_price),
+                    $adultes, $enfants))
                 : $base;
 
             $ajuste = $ajuste || $regle !== null;
             $total += $prix;
-            $detail[] = ['date' => $jour->toDateString(), 'prix' => $prix, 'tarif' => $regle?->name, 'type' => $regle?->rate_type];
+            $detail[] = ['date' => $jour->toDateString(), 'prix' => $prix, 'tarif' => $regle?->name, 'type' => $regle
+                ?->rate_type];
         }
 
         return [
@@ -107,7 +110,8 @@ class TarifSejour
         }
 
         return implode(', ', array_map(
-            fn (string $tarif, int $n) => $n . ' nuit' . ($n > 1 ? 's' : '') . ' ' . ($tarif === 'au prix de base' ? $tarif : '« ' . $tarif . ' »'),
+            fn (string $tarif, int $n) => $n . ' nuit' . ($n > 1 ? 's' : '') . ' '
+                . ($tarif === 'au prix de base' ? $tarif : '« ' . $tarif . ' »'),
             array_keys($groupes),
             $groupes,
         ));

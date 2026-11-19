@@ -205,7 +205,8 @@ class PwaController extends Controller
      * Compose l'icône : le logo de l'établissement centré sur le fond de marque,
      * ou ses initiales si aucun logo n'est configuré.
      */
-    private function buildIcon(int $size, ?string $logoPath, string $name, array $brandBg = self::BRAND_BG, array $brandFg = self::BRAND_FG): string
+    private function buildIcon(int $size, ?string $logoPath, string $name, array $brandBg = self::BRAND_BG,
+        array $brandFg = self::BRAND_FG): string
     {
         $canvas = imagecreatetruecolor($size, $size);
         imagealphablending($canvas, true);
@@ -303,7 +304,8 @@ class PwaController extends Controller
     }
 
     /** Repli sans logo : les initiales de l'établissement, centrées. */
-    private function drawInitials(\GdImage $canvas, int $size, string $name, array $brandBg = self::BRAND_BG, array $brandFg = self::BRAND_FG): void
+    private function drawInitials(\GdImage $canvas, int $size, string $name, array $brandBg = self::BRAND_BG,
+        array $brandFg = self::BRAND_FG): void
     {
         $initials = collect(preg_split('/\s+/', trim($name)))
             ->filter()

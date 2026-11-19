@@ -33,7 +33,9 @@
                             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent @error('shop_category_id') border-red-500 @enderror">
                         <option value="">Sélectionner une catégorie</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('shop_category_id') == $category->id ? 'selected' : '' }}>
+                            <option
+                                value="{{ $category->id }}"
+                                {{ old('shop_category_id') == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach
@@ -86,14 +88,16 @@
                          @dragleave.prevent="isDragging = false"
                          @drop.prevent="handleDrop($event)"
                          :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-gray-50/50 hover:border-primary/50 hover:bg-primary/5'"
-                         class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200">
+                         class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
+                             duration-200">
                         <div class="flex flex-col items-center gap-3">
                             <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
                                 <i data-lucide="image-plus" class="w-7 h-7 text-primary/60"></i>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-primary">
-                                    <span class="text-primary/80 underline decoration-primary/30 underline-offset-2">Cliquez pour choisir</span>
+                                    <span class="text-primary/80 underline decoration-primary/30
+                                        underline-offset-2">Cliquez pour choisir</span>
                                     ou glissez-déposez
                                 </p>
                                 <p class="text-xs text-secondary mt-1">JPG, PNG ou WebP • Max 2 Mo</p>
@@ -105,7 +109,8 @@
                     <div x-show="preview" x-transition class="relative" style="display: none;">
                         <div class="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
                             <img :src="preview" alt="Aperçu" class="w-full h-56 object-contain bg-white p-2">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0
+                                hover:opacity-100 transition-opacity"></div>
                         </div>
                         <div class="flex items-center justify-between mt-3">
                             <div class="flex items-center gap-2 text-sm text-secondary">
@@ -114,7 +119,9 @@
                                 <span class="text-xs text-secondary/60" x-text="fileSize"></span>
                             </div>
                             <button type="button" @click="removeImage()"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100">
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
+                                        text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border
+                                        border-red-100">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 Supprimer
                             </button>
@@ -170,10 +177,16 @@
 
             <!-- Boutons -->
             <div class="flex gap-4 pt-6">
-                <button type="submit" class="flex-1 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                <button
+                    type="submit"
+                    class="flex-1 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium
+                        transition-colors">
                     <i data-lucide="save" class="w-4 h-4 inline mr-2"></i> Créer l'article
                 </button>
-                <a href="{{ route('shop.products.index') }}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-secondary px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                <a
+                    href="{{ route('shop.products.index') }}"
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-secondary px-6 py-3 rounded-lg font-medium
+                        transition-colors text-center">
                     Annuler
                 </a>
             </div>

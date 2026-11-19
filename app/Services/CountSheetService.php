@@ -119,7 +119,8 @@ class CountSheetService
      * @param  int|string|null  $zone  économat : une zone de rangement, ZONE_AUCUNE, ou ZONE_CHAQUE pour une fiche par zone
      * @return list<array<string, mixed>>
      */
-    public function sheets(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null, int|string|null $zone = null): array
+    public function sheets(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS,
+        ?CarbonInterface $depuis = null, int|string|null $zone = null): array
     {
         if ($key === self::ECONOMAT && $zone === self::ZONE_CHAQUE) {
             return array_values(array_filter(array_map(
@@ -141,7 +142,8 @@ class CountSheetService
     }
 
     /** @return array<string, mixed>|null */
-    public function sheet(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS, ?CarbonInterface $depuis = null, ?int $zoneId = null): ?array
+    public function sheet(string $key, ?int $categoryId = null, string $selection = self::ARTICLES_TOUS,
+        ?CarbonInterface $depuis = null, ?int $zoneId = null): ?array
     {
         $this->selection = array_key_exists($selection, self::SELECTIONS) ? $selection : self::ARTICLES_TOUS;
         $this->depuis = $depuis;
@@ -150,7 +152,8 @@ class CountSheetService
             $key === self::ECONOMAT                 => $this->economat($categoryId, $zoneId),
             str_starts_with($key, self::PANTRY)     => $this->pantry($key, $categoryId),
             $key === self::SHOP                     => $this->shop($categoryId),
-            str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX)), $categoryId),
+            str_starts_with($key, self::STORE_PREFIX) => $this->store((int) substr($key, strlen(self::STORE_PREFIX)),
+                $categoryId),
             default                                 => null,
         };
     }
@@ -169,7 +172,8 @@ class CountSheetService
             $lignes = $inventaire->lines()->with('item.category', 'item.packagings')->get()
                 ->filter(fn ($l) => $l->item && (!$categorie || $l->item->stock_category_id === $categorie->id)
                     && $dansLaZone($l->item->storage_zone_id))
-                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name)
+                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit,
+                    (float) $l->theoretical_quantity, $l->item->category?->name)
                     + ['conditionnements' => $l->item->packagings->sortByDesc('factor')->pluck('name')->all()]);
         } else {
             $lignes = StockItem::active()->with('category', 'packagings')
@@ -177,23 +181,28 @@ class CountSheetService
                 ->when($zone, fn ($q) => $q->where('storage_zone_id', $zone->id))
                 ->when($sansZone, fn ($q) => $q->whereNull('storage_zone_id'))
                 ->get()
-                ->map(fn (StockItem $i) => $this->ligne($i->id, $i->reference, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name)
+                ->map(fn (StockItem $i) => $this->ligne($i->id, $i->reference, $i->name, $i->unit, (float) $i
+                    ->current_stock, $i->category?->name)
                     // Un article conditionné se compte par niveau : cartons fermés, paquets, vrac.
                     + ['conditionnements' => $i->packagings->sortByDesc('factor')->pluck('name')->all()]);
         }
 
         $dernierInventaire = StockCount::query()->where('status', StockCount::STATUS_CLOSED)
-            ->where(fn ($q) => $q->whereNull('stock_category_id')->when($categorie, fn ($c) => $c->orWhere('stock_category_id', $categorie->id)))
-            ->where(fn ($q) => $q->whereNull('storage_zone_id')->when($zone, fn ($z) => $z->orWhere('storage_zone_id', $zone->id)))
+            ->where(fn ($q) => $q->whereNull('stock_category_id')->when($categorie, fn ($c) => $c
+                ->orWhere('stock_category_id', $categorie->id)))
+            ->where(fn ($q) => $q->whereNull('storage_zone_id')->when($zone, fn ($z) => $z->orWhere('storage_zone_id',
+                $zone->id)))
             ->max('closed_at');
 
-        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire, fn (CarbonInterface $debut) => StockMovement::query()
+        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire,
+            fn (CarbonInterface $debut) => StockMovement::query()
             ->where('occurred_at', '>=', $debut)->distinct()->pluck('stock_item_id'));
 
         return $this->fiche(
             self::ECONOMAT,
             'Économat — magasin central',
-            collect([$zone?->name ?? ($sansZone ? 'Sans zone de rangement' : null), $categorie?->name])->filter()->implode(' · ') ?: null,
+            collect([$zone?->name ?? ($sansZone ? 'Sans zone de rangement' : null), $categorie?->name])->filter()
+                ->implode(' · ') ?: null,
             $inventaire?->reference,
             $lignes,
             $inventaire?->created_at,
@@ -243,19 +252,23 @@ class CountSheetService
 
         if ($inventaire !== null) {
             $lignes = $inventaire->lines()->with('item.category')->get()
-                ->filter(fn ($l) => $l->item && (!$categorie || $l->item->restaurant_pantry_category_id === $categorie->id))
-                ->map(fn ($l) => $this->ligne($l->item->id, null, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name));
+                ->filter(fn ($l) => $l->item && (!$categorie || $l->item->restaurant_pantry_category_id === $categorie
+                    ->id))
+                ->map(fn ($l) => $this->ligne($l->item->id, null, $l->item->name, $l->item->unit, (float) $l
+                    ->theoretical_quantity, $l->item->category?->name));
         } else {
             $lignes = RestaurantPantryItem::active()->duRestaurant($restaurant)->with('category')
                 ->when($categorie, fn ($q) => $q->where('restaurant_pantry_category_id', $categorie->id))
                 ->get()
-                ->map(fn (RestaurantPantryItem $i) => $this->ligne($i->id, null, $i->name, $i->unit, (float) $i->current_stock, $i->category?->name));
+                ->map(fn (RestaurantPantryItem $i) => $this->ligne($i->id, null, $i->name, $i->unit, (float) $i
+                    ->current_stock, $i->category?->name));
         }
 
         $dernierInventaire = RestaurantStockCount::query()->duRestaurant($restaurant)
             ->where('status', RestaurantStockCount::STATUS_CLOSED)->max('closed_at');
 
-        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire, fn (CarbonInterface $debut) => RestaurantPantryMovement::query()
+        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire,
+            fn (CarbonInterface $debut) => RestaurantPantryMovement::query()
             ->where('occurred_at', '>=', $debut)->distinct()->pluck('restaurant_pantry_item_id'));
 
         return $this->fiche(
@@ -276,12 +289,14 @@ class CountSheetService
         $lignes = ShopProduct::query()->where('is_active', true)->with('category')
             ->when($categorie, fn ($q) => $q->where('shop_category_id', $categorie->id))
             ->get()
-            ->map(fn (ShopProduct $p) => $this->ligne($p->id, $p->sku, $p->name, 'pièce', (float) $p->stock_quantity, $p->category?->name));
+            ->map(fn (ShopProduct $p) => $this->ligne($p->id, $p->sku, $p->name, 'pièce', (float) $p->stock_quantity,
+                $p->category?->name));
 
         // La boutique n'a pas d'inventaire ni de journal : un produit a bougé
         // s'il a été vendu sur la période.
         [$lignes, $libelle] = $this->selectionner($lignes, null, fn (CarbonInterface $debut) => ShopOrderItem::query()
-            ->whereHas('order', fn ($q) => $q->where('created_at', '>=', $debut))->distinct()->pluck('shop_product_id'));
+            ->whereHas('order', fn ($q) => $q->where('created_at', '>=', $debut))->distinct()
+                ->pluck('shop_product_id'));
 
         return $this->fiche(self::SHOP, 'Boutique', $categorie?->name, null, $lignes, null, $libelle);
     }
@@ -300,16 +315,20 @@ class CountSheetService
         $lignes = $inventaire !== null
             ? $inventaire->lines()->with('item.category')->get()
                 ->filter(fn ($l) => $l->item && (! $categorie || $l->item->stock_category_id === $categorie->id))
-                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit, (float) $l->theoretical_quantity, $l->item->category?->name))
+                ->map(fn ($l) => $this->ligne($l->item->id, $l->item->reference, $l->item->name, $l->item->unit,
+                    (float) $l->theoretical_quantity, $l->item->category?->name))
             : $depot->stocks()->with('item.category')->get()
                 ->filter(fn ($s) => $s->item && (! $categorie || $s->item->stock_category_id === $categorie->id))
-                ->map(fn ($s) => $this->ligne($s->item->id, $s->item->reference, $s->item->name, $s->item->unit, (float) $s->current_stock, $s->item->category?->name));
+                ->map(fn ($s) => $this->ligne($s->item->id, $s->item->reference, $s->item->name, $s->item->unit,
+                    (float) $s->current_stock, $s->item->category?->name));
 
         $dernierInventaire = ServiceStoreCount::query()->where('service_store_id', $depot->id)
             ->where('status', ServiceStoreCount::STATUS_CLOSED)->max('closed_at');
 
-        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire, fn (CarbonInterface $debut) => ServiceStoreMovement::query()
-            ->where('service_store_id', $depot->id)->where('occurred_at', '>=', $debut)->distinct()->pluck('stock_item_id'));
+        [$lignes, $libelle] = $this->selectionner($lignes, $dernierInventaire,
+            fn (CarbonInterface $debut) => ServiceStoreMovement::query()
+            ->where('service_store_id', $depot->id)->where('occurred_at', '>=', $debut)->distinct()
+                ->pluck('stock_item_id'));
 
         return $this->fiche(
             self::STORE_PREFIX . $depot->id,
@@ -362,7 +381,8 @@ class CountSheetService
     }
 
     /** @return array<string, mixed> */
-    private function ligne(int $id, ?string $reference, string $name, ?string $unit, float $theoretical, ?string $category): array
+    private function ligne(int $id, ?string $reference, string $name, ?string $unit, float $theoretical,
+        ?string $category): array
     {
         return [
             'id'          => $id,
@@ -375,7 +395,8 @@ class CountSheetService
     }
 
     /** @return array<string, mixed> */
-    private function fiche(string $key, string $title, ?string $subtitle, ?string $reference, $lignes, ?DateTimeInterface $frozenAt = null, ?string $selection = null): array
+    private function fiche(string $key, string $title, ?string $subtitle, ?string $reference, $lignes,
+        ?DateTimeInterface $frozenAt = null, ?string $selection = null): array
     {
         return [
             'key'       => $key,

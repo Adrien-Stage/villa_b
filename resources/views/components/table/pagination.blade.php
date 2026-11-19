@@ -16,11 +16,18 @@
         <ul class="flex flex-wrap items-center gap-1">
             <li>
                 @if ($paginator->onFirstPage())
-                    <span class="{{ $case }} cursor-not-allowed text-primary/25" aria-disabled="true" aria-label="Page précédente">
+                    <span
+                        class="{{ $case }} cursor-not-allowed text-primary/25"
+                        aria-disabled="true"
+                        aria-label="Page précédente">
                         <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
                     </span>
                 @else
-                    <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary" aria-label="Page précédente">
+                    <a
+                        href="{{ $paginator->previousPageUrl() }}"
+                        rel="prev"
+                        class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary"
+                        aria-label="Page précédente">
                         <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
                     </a>
                 @endif
@@ -38,7 +45,10 @@
                                 @if ($page == $paginator->currentPage())
                                     <span class="{{ $case }} bg-primary text-white" aria-current="page">{{ $page }}</span>
                                 @else
-                                    <a href="{{ $url }}" class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary" aria-label="Page {{ $page }}">{{ $page }}</a>
+                                    <a
+                                        href="{{ $url }}"
+                                        class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary"
+                                        aria-label="Page {{ $page }}">{{ $page }}</a>
                                 @endif
                             </li>
                         @endforeach
@@ -48,11 +58,18 @@
 
             <li>
                 @if ($paginator->hasMorePages())
-                    <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary" aria-label="Page suivante">
+                    <a
+                        href="{{ $paginator->nextPageUrl() }}"
+                        rel="next"
+                        class="{{ $case }} text-primary/70 hover:bg-accent/30 hover:text-primary"
+                        aria-label="Page suivante">
                         <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
                     </a>
                 @else
-                    <span class="{{ $case }} cursor-not-allowed text-primary/25" aria-disabled="true" aria-label="Page suivante">
+                    <span
+                        class="{{ $case }} cursor-not-allowed text-primary/25"
+                        aria-disabled="true"
+                        aria-label="Page suivante">
                         <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
                     </span>
                 @endif

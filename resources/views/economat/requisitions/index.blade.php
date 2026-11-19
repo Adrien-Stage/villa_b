@@ -33,7 +33,8 @@
 
             @droit('economat.requisitions.creer')
                 <a href="{{ route('economat.requisitions.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     <span>Nouveau bon</span>
                 </a>
@@ -53,7 +54,9 @@
             </div>
 
             @if($viseur && !$isKeeper)
-                <a href="{{ route('economat.requisitions.index', ['statut' => 'awaiting_endorsement']) }}" class="bg-white rounded-xl border p-4 shadow-sm transition-colors {{ $stats['a_viser'] > 0 ? 'border-amber-300 hover:bg-amber-50' : 'border-secondary/20' }}">
+                <a
+                    href="{{ route('economat.requisitions.index', ['statut' => 'awaiting_endorsement']) }}"
+                    class="bg-white rounded-xl border p-4 shadow-sm transition-colors {{ $stats['a_viser'] > 0 ? 'border-amber-300 hover:bg-amber-50' : 'border-secondary/20' }}">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">À viser</p>
                     <p class="text-2xl font-bold font-mono text-amber-800 mt-1">{{ $stats['a_viser'] }}</p>
                     <p class="text-xs text-amber-700/70 mt-1">Demandes de votre service à viser</p>
@@ -85,7 +88,11 @@
 
     {{-- Tableau des Bons --}}
     <div id="requisitions-table-container">
-    <x-table :rows="$requisitions" :empty="$filtres ? 'Aucun bon de réquisition ne correspond aux filtres sélectionnés.' : 'Aucun bon de réquisition enregistré.'" empty-icon="inbox" caption="Bons de réquisition">
+    <x-table
+        :rows="$requisitions"
+        :empty="$filtres ? 'Aucun bon de réquisition ne correspond aux filtres sélectionnés.' : 'Aucun bon de réquisition enregistré.'"
+        empty-icon="inbox"
+        caption="Bons de réquisition">
         @if($filtres)
             <x-slot:emptyActions>
                 <a href="{{ route('economat.requisitions.index') }}" class="text-primary underline">Réinitialiser les filtres</a>
@@ -105,7 +112,9 @@
         @foreach($requisitions as $req)
             <x-table.row :href="route('economat.requisitions.show', $req)">
                 <x-table.cell nowrap>
-                    <a href="{{ route('economat.requisitions.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
+                    <a
+                        href="{{ route('economat.requisitions.show', $req) }}"
+                        class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
                 </x-table.cell>
                 <x-table.cell class="font-medium">{{ $req->departmentLabel() }}</x-table.cell>
                 <x-table.cell hide="xl" class="text-primary/70">{{ $req->requestedBy?->name ?? '—' }}</x-table.cell>

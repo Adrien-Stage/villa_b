@@ -1,6 +1,7 @@
 <?php
 
 use App\Editions\Catalogue;
+use App\Editions\Documents\FichesTechniquesRestaurant;
 use App\Editions\Edition;
 use App\Editions\Registres;
 use App\Models\Booking;
@@ -11,6 +12,8 @@ use App\Models\Payment;
 use App\Models\PointOfSale;
 use App\Models\PurchaseOrder;
 use App\Models\RestaurantCustomerOrder;
+use App\Models\RestaurantMenuItem;
+use App\Models\RestaurantRecipe;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -187,4 +190,39 @@ test('on retrouve une pièce par son numéro, si on peut l’ouvrir', function (
         ->get(route('editions.index', ['q' => $fragment]))
         ->assertOk()
         ->assertDontSee($bon->number);
+});
+
+test('le registre des fiches techniques réunit la cuisine et le bar dans leur ordre de lecture', function () {
+    $chef = membreAvec('restaurant_chief');
+
+    RestaurantRecipe::create([
+        'name' => 'Recette du jour',
+        'type' => RestaurantRecipe::TYPE_DISH,
+        'point_of_sale_id' => $this->restaurant->id,
+        'yield_quantity' => 2,
+    ]);
+
+    $stock = StockItem::create(['name' => 'Jus de mangue', 'unit' => 'bouteille', 'is_active' => true]);
+    $boisson = RestaurantMenuItem::create([
+        'name' => 'Cocktail mangue',
+        'type' => 'drink',
+        'price' => 350000,
+        'point_of_sale_id' => $this->restaurant->id,
+    ]);
+    $boisson->barDrink()->create([
+        'format' => 'mocktail',
+        'ingredients' => [['stock_item_id' => $stock->id, 'quantity' => 50, 'measure' => 'ml']],
+    ]);
+
+    $edition = new FichesTechniquesRestaurant();
+    $filtres = ['restaurant' => (string) $this->restaurant->id, 'type' => ''];
+    $lignes = $edition->document($filtres, $chef)->lesLignes();
+
+    expect($lignes->pluck('nom')->all())->toBe(['Recette du jour', 'Cocktail mangue'])
+        ->and($lignes->first()['rendement'])->toBe('2 portion(s)')
+        ->and($lignes->last()['composition'])->toBe('Jus de mangue (50 mL)')
+        ->and($edition->document(['type' => 'drinks'] + $filtres, $chef)->lesLignes()->pluck('nom')->all())
+        ->toBe(['Cocktail mangue'])
+        ->and($edition->document(['type' => 'preps'] + $filtres, $chef)->lesLignes()->isEmpty())
+        ->toBeTrue();
 });

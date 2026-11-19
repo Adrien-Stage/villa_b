@@ -152,7 +152,8 @@ class PartnerOrganizationController extends Controller
         abort_unless($attachment->partner_organization_id === $partnerOrganization->id, 404);
         abort_unless(Storage::disk('local')->exists($attachment->path), 404);
 
-        return Storage::disk('local')->download($attachment->path, $attachment->original_name, ['X-Content-Type-Options' => 'nosniff']);
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name,
+            ['X-Content-Type-Options' => 'nosniff']);
     }
 
     private function saveWithAttachments(Request $request, array $validated, ?PartnerOrganization $partner = null): void
@@ -166,7 +167,8 @@ class PartnerOrganizationController extends Controller
                     $partner = PartnerOrganization::create($this->attributes($request, $validated));
                 }
                 if (! $partner->has_convention && $request->hasFile('conventions')) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['conventions' => 'Activez la convention pour joindre sa version signée.']);
+                    throw \Illuminate\Validation\ValidationException::withMessages(
+                        ['conventions' => 'Activez la convention pour joindre sa version signée.']);
                 }
                 foreach ($request->file('conventions', []) as $file) {
                     $path = $file->store('partner-conventions', 'local');
@@ -174,8 +176,10 @@ class PartnerOrganizationController extends Controller
                         throw new \RuntimeException('La convention n’a pas pu être enregistrée.');
                     }
                     $paths[] = $path;
-                    $partner->conventionAttachments()->create(['path' => $path, 'original_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(), 'size' => $file->getSize(), 'uploaded_by' => $request->user()->id]);
+                    $partner->conventionAttachments()->create(['path' => $path, 'original_name' => $file
+                        ->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(), 'size' => $file->getSize(), 'uploaded_by' => $request
+                            ->user()->id]);
                 }
             });
         } catch (\Throwable $e) {

@@ -44,7 +44,12 @@
                          :class="checked ? 'border-primary bg-accent/20 ring-1 ring-primary/20 shadow-sm' : 'border-secondary/20 hover:bg-accent/5'"
                          class="cursor-pointer rounded-xl border p-3 transition-all select-none">
 
-                        <input type="checkbox" name="roles[]" value="{{ $role->slug }}" :checked="checked" class="sr-only">
+                        <input
+                            type="checkbox"
+                            name="roles[]"
+                            value="{{ $role->slug }}"
+                            :checked="checked"
+                            class="sr-only">
                         <template x-if="checked">
                             <input type="hidden" name="levels[{{ $role->slug }}]" :value="level">
                         </template>
@@ -58,7 +63,8 @@
                                 <p class="text-sm font-medium text-primary truncate">{{ $role->name }}</p>
                                 <p class="text-[11px] text-primary/40 line-clamp-1">{{ $role->description }}</p>
                             </div>
-                            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors"
+                            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0
+                                transition-colors"
                                  :class="checked ? 'bg-primary border-primary text-white' : 'border-secondary/40 text-transparent'">
                                 <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" x-show="checked">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -70,12 +76,14 @@
                         <div x-show="checked" x-cloak class="mt-3 flex gap-2" @click.stop>
                             <button type="button" @click="level = 'read'"
                                 :class="level === 'read' ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-secondary/30 hover:border-secondary'"
-                                class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium rounded-lg border transition-colors">
+                                class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px]
+                                    font-medium rounded-lg border transition-colors">
                                 <i data-lucide="eye" class="w-3 h-3"></i> Lecture
                             </button>
                             <button type="button" @click="level = 'write'"
                                 :class="level === 'write' ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-secondary/30 hover:border-secondary'"
-                                class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium rounded-lg border transition-colors">
+                                class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px]
+                                    font-medium rounded-lg border transition-colors">
                                 <i data-lucide="pencil" class="w-3 h-3"></i> Lecture / écriture
                             </button>
                         </div>

@@ -27,14 +27,24 @@
 @endphp
 <div class="max-w-4xl mx-auto space-y-5">
     <div class="flex items-center justify-between">
-        <a href="{{ route('economat.orders.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+        <a
+            href="{{ route('economat.orders.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la liste des bons de commande
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+            <a
+                href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}"
+                target="_blank"
+                class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary
+                    text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer (avec prix)
             </a>
-            <a href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+            <a
+                href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}"
+                target="_blank"
+                class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary
+                    text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-3.5 h-3.5 text-primary/70"></i> Imprimer (sans prix)
             </a>
         </div>
@@ -47,7 +57,8 @@
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-2xl font-heading font-bold text-primary font-mono tracking-tight">{{ $order->number }}</h1>
+                    <h1 class="text-2xl font-heading font-bold text-primary font-mono
+                        tracking-tight">{{ $order->number }}</h1>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-700 border-gray-200' }}">
                         {{ $order->statusLabel() }}
                     </span>
@@ -72,7 +83,8 @@
         {{-- Alerte d'envoi ou confirmation --}}
         @if($order->send_error)
             {{-- L'échec reste dit même après la livraison : le bon n'a jamais été reçu par email. --}}
-            <div class="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+            <div class="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start
+                gap-2">
                 <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
                 <div>
                     <strong>Échec de distribution par email :</strong> {{ $order->send_error }}.
@@ -80,17 +92,20 @@
                 </div>
             </div>
         @elseif($order->isRegularisation())
-            <div class="mt-4 text-xs text-sky-900 bg-sky-50 border border-sky-200 rounded-lg p-3 flex items-start gap-2">
+            <div class="mt-4 text-xs text-sky-900 bg-sky-50 border border-sky-200 rounded-lg p-3 flex items-start
+                gap-2">
                 <i data-lucide="file-check" class="w-4 h-4 text-sky-700 flex-shrink-0 mt-0.5"></i>
                 <span><strong>Bon de régularisation.</strong> Établi le {{ $order->created_at->format('d/m/Y à H:i') }} pour une marchandise reçue sans commande préalable. Il porte ce qui a été gardé et reçoit la facture du fournisseur.</span>
             </div>
         @elseif($order->sent_at && $order->sent_to_email)
-            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex
+                items-center gap-2">
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
                 <span>Transmis avec succès au fournisseur par email le {{ $order->sent_at->format('d/m/Y à H:i') }} à <strong>{{ $order->sent_to_email }}</strong>.</span>
             </div>
         @elseif($order->sent_at)
-            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+            <div class="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex
+                items-center gap-2">
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
                 <span>Transmis au fournisseur le {{ $order->sent_at->format('d/m/Y à H:i') }} — {{ mb_strtolower($order->transmissionLabel() ?? 'sans email') }}.</span>
             </div>
@@ -99,12 +114,19 @@
         {{-- Actions opérationnelles --}}
         <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-secondary/15">
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('economat.orders.print', $order) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                <a
+                    href="{{ route('economat.orders.print', $order) }}"
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-sm
+                        font-medium rounded-lg hover:bg-gray-50 transition-colors">
                     <i data-lucide="printer" class="w-4 h-4"></i> Imprimer
                 </a>
 
                 @if($order->canBeReceived() && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.receipts.creer'))
-                    <a href="{{ route('economat.receipts.create', $order) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    <a
+                        href="{{ route('economat.receipts.create', $order) }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold
+                            rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                         <i data-lucide="package-check" class="w-4 h-4"></i> Réceptionner la livraison (BL)
                     </a>
                 @endif
@@ -115,15 +137,25 @@
                     {{-- Sans email, le bon part imprimé, au téléphone ou par WhatsApp :
                          l'économe dit comment, et la livraison pourra être réceptionnée. --}}
                     @droit('economat.orders.transmit')
-                        <form method="POST" action="{{ route('economat.orders.transmit', $order) }}" class="flex items-center gap-2">
+                        <form
+                            method="POST"
+                            action="{{ route('economat.orders.transmit', $order) }}"
+                            class="flex items-center gap-2">
                             @csrf
                             <label for="moyen-transmission" class="sr-only">Moyen de transmission</label>
-                            <select id="moyen-transmission" name="moyen" required class="px-2.5 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                            <select
+                                id="moyen-transmission"
+                                name="moyen"
+                                required
+                                class="px-2.5 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                                    focus:outline-none focus:border-primary">
                                 @foreach(\App\Models\PurchaseOrder::TRANSMISSIONS_MANUELLES as $code => $libelle)
                                     <option value="{{ $code }}">{{ $libelle }}</option>
                                 @endforeach
                             </select>
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 {{ $order->supplier?->canReceiveOrdersByEmail() ? 'border border-secondary/30 text-primary hover:bg-accent/10' : 'bg-primary text-white hover:bg-surface-dark shadow-sm' }} text-sm font-medium rounded-lg transition-colors">
+                            <button
+                                type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 {{ $order->supplier?->canReceiveOrdersByEmail() ? 'border border-secondary/30 text-primary hover:bg-accent/10' : 'bg-primary text-white hover:bg-surface-dark shadow-sm' }} text-sm font-medium rounded-lg transition-colors">
                                 <i data-lucide="hand" class="w-4 h-4"></i> Marquer comme transmis
                             </button>
                         </form>
@@ -132,7 +164,10 @@
                         @droit('economat.orders.send')
                             <form method="POST" action="{{ route('economat.orders.send', $order) }}">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                                <button
+                                    type="submit"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm
+                                        font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                                     <i data-lucide="send" class="w-4 h-4"></i> Envoyer au fournisseur
                                 </button>
                             </form>
@@ -145,7 +180,10 @@
                     @droit('economat.orders.send')
                         <form method="POST" action="{{ route('economat.orders.send', $order) }}">
                             @csrf
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/10">
+                            <button
+                                type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary
+                                    text-sm font-medium rounded-lg hover:bg-accent/10">
                                 <i data-lucide="rotate-cw" class="w-4 h-4"></i> Renvoyer l'email
                             </button>
                         </form>
@@ -153,9 +191,15 @@
                 @endif
 
                 @if($order->canBeCancelled() && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'economat.orders.cancel'))
-                    <form method="POST" action="{{ route('economat.orders.cancel', $order) }}" onsubmit="return confirm('Êtes-vous certain de vouloir annuler ce bon de commande ?');">
+                    <form
+                        method="POST"
+                        action="{{ route('economat.orders.cancel', $order) }}"
+                        onsubmit="return confirm('Êtes-vous certain de vouloir annuler ce bon de commande ?');">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-red-200 text-red-600
+                                text-sm font-medium rounded-lg hover:bg-red-50 transition-colors">
                             <i data-lucide="x-circle" class="w-4 h-4"></i> Annuler
                         </button>
                     </form>
@@ -173,7 +217,8 @@
                     <i data-lucide="truck" class="w-4 h-4 text-primary/70"></i>
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Fournisseur Attitré</h2>
                 </div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50
+                    border border-emerald-200/80 px-2 py-0.5 rounded-full">
                     <i data-lucide="lock" class="w-3 h-3"></i> Bon mono-fournisseur
                 </span>
             </div>
@@ -206,13 +251,15 @@
                     <i data-lucide="pen-tool" class="w-4 h-4 text-emerald-700"></i>
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Signature Émetteur</h2>
                 </div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50
+                    border border-indigo-200/80 px-2 py-0.5 rounded-full">
                     <i data-lucide="shield-check" class="w-3 h-3"></i> Certifiée
                 </span>
             </div>
 
             <div class="bg-gray-50/70 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto">
-                <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider mb-1">Signature manuscrite certifiée</div>
+                <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider
+                    mb-1">Signature manuscrite certifiée</div>
                 <div class="font-signature text-4xl text-primary font-normal leading-tight py-1 select-none">
                     {{ $order->issuerSignature() ?? ($order->createdBy?->name ?? 'Économe') }}
                 </div>
@@ -239,12 +286,18 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50/70">
                     <tr>
-                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                        <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Commandé</th>
-                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Déjà reçu</th>
-                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">P.U.</th>
-                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Total</th>
+                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Article</th>
+                        <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Unité</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Commandé</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Déjà reçu</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">P.U.</th>
+                        <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
@@ -261,7 +314,8 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
+                            <td class="px-3 py-3 text-center font-mono font-bold text-xs
+                                text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
                             <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}</td>
                             <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ rtrim(rtrim(number_format($line->quantity_received, 3, ',', ' '), '0'), ',') }}</td>
                             <td class="px-5 py-3 text-right text-primary/70 font-mono">{{ number_format($line->unit_price / 100, 0, ',', ' ') }} F</td>
@@ -272,7 +326,8 @@
                 <tfoot>
                     <tr class="bg-gray-50">
                         <td colspan="5" class="px-5 py-3 text-right font-semibold text-primary">Total Général</td>
-                        <td class="px-5 py-3 text-right font-bold text-primary font-mono text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
+                        <td class="px-5 py-3 text-right font-bold text-primary font-mono
+                            text-base">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</td>
                     </tr>
                 </tfoot>
             </table>
@@ -280,7 +335,8 @@
     </div>
 
     @if($order->notes)
-        <p class="text-sm text-primary/60 mt-4 bg-white border border-secondary/20 rounded-xl p-4 shadow-sm"><strong>Note :</strong> {{ $order->notes }}</p>
+        <p class="text-sm text-primary/60 mt-4 bg-white border border-secondary/20 rounded-xl p-4
+            shadow-sm"><strong>Note :</strong> {{ $order->notes }}</p>
     @endif
 
     {{-- Demande d'achat d'origine --}}
@@ -291,7 +347,10 @@
                 <div class="text-sm font-bold font-mono text-primary mt-0.5">{{ $order->purchaseRequest->number }}</div>
                 <div class="text-xs text-primary/60">Service demandeur : {{ $order->purchaseRequest->departmentLabel() }}</div>
             </div>
-            <a href="{{ route('economat.purchase_requests.show', $order->purchaseRequest) }}" class="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-medium rounded-lg transition-colors">
+            <a
+                href="{{ route('economat.purchase_requests.show', $order->purchaseRequest) }}"
+                class="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-medium rounded-lg
+                    transition-colors">
                 Voir la demande d'achat →
             </a>
         </div>
@@ -314,7 +373,9 @@
                 @foreach($order->receipts as $rc)
                     <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                         <div>
-                            <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-sm text-primary hover:underline">
+                            <a
+                                href="{{ route('economat.receipts.show', $rc) }}"
+                                class="font-mono font-bold text-sm text-primary hover:underline">
                                 {{ $rc->number }}
                             </a>
                             <span class="text-xs text-primary/50 ml-2">{{ $rc->received_at ? 'du ' . $rc->received_at->format('d/m/Y H:i') : '— ' . $rc->statusLabel() }}</span>
@@ -327,10 +388,18 @@
                             <span class="font-mono font-bold text-sm text-emerald-700">
                                 {{ number_format($rc->total_amount / 100, 0, ',', ' ') }} FCFA
                             </span>
-                            <a href="{{ route('economat.receipts.print', $rc) }}" target="_blank" class="p-1.5 border border-secondary/30 rounded-lg text-primary hover:bg-gray-100 transition-colors" title="Imprimer le bordereau">
+                            <a
+                                href="{{ route('economat.receipts.print', $rc) }}"
+                                target="_blank"
+                                class="p-1.5 border border-secondary/30 rounded-lg text-primary hover:bg-gray-100
+                                    transition-colors"
+                                title="Imprimer le bordereau">
                                 <i data-lucide="printer" class="w-4 h-4"></i>
                             </a>
-                            <a href="{{ route('economat.receipts.show', $rc) }}" class="px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 rounded-lg text-xs font-medium text-primary">
+                            <a
+                                href="{{ route('economat.receipts.show', $rc) }}"
+                                class="px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 rounded-lg text-xs font-medium
+                                    text-primary">
                                 Détails
                             </a>
                         </div>
@@ -357,15 +426,18 @@
             @endphp
             <div>
                 @if($invStatus === 'fully_invoiced')
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-50
+                        text-green-700 border border-green-200">
                         Facturation soldée
                     </span>
                 @elseif($invStatus === 'partially_invoiced')
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50
+                        text-amber-700 border border-amber-200">
                         Partiellement facturé ({{ number_format($invoicedAmt / 100, 0, ',', ' ') }} / {{ number_format($order->total_amount / 100, 0, ',', ' ') }} F)
                     </span>
                 @else
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100
+                        text-gray-600 border border-gray-200">
                         Non facturé
                     </span>
                 @endif
@@ -399,7 +471,10 @@
         @droit('accounting.ledger.suppliers.creer')
             <div class="px-5 py-3 bg-gray-50 border-t border-secondary/15 flex justify-between items-center">
                 <span class="text-xs text-primary/60">Une facture reçue du fournisseur pour cette commande ?</span>
-                <a href="{{ route('accounting.ledger.suppliers.create', ['bon' => $order->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <a
+                    href="{{ route('accounting.ledger.suppliers.create', ['bon' => $order->id]) }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Saisir la facture fournisseur
                 </a>
             </div>

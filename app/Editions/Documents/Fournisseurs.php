@@ -44,7 +44,8 @@ class Fournisseurs extends Edition
         // régularisation d'une réception directe n'est pas une commande.
         $commandes = fn ($q) => $q->whereBetween('sent_at', $periode)
             ->whereNotIn('status', [PurchaseOrder::STATUS_DRAFT, PurchaseOrder::STATUS_CANCELLED])
-            ->where(fn ($r) => $r->whereNull('transmission')->orWhere('transmission', '!=', PurchaseOrder::TRANSMISSION_REGULARISATION));
+            ->where(fn ($r) => $r->whereNull('transmission')->orWhere('transmission', '!=',
+                PurchaseOrder::TRANSMISSION_REGULARISATION));
 
         $lignes = Supplier::query()
             ->when($valeurs['etat'] === 'actifs', fn ($q) => $q->where('is_active', true))

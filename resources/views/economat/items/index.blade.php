@@ -13,17 +13,30 @@
         <div class="flex items-center gap-2">
             {{-- Le catalogue est tenu par le service achats ; l'économat voit les stocks et transforme. --}}
             @droit('economat.items.export')
-                <a href="{{ route('economat.items.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les articles en CSV">
+                <a
+                    href="{{ route('economat.items.export') }}"
+                    class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm
+                        font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                    title="Exporter les articles en CSV">
                     <i data-lucide="download" class="w-4 h-4"></i> Exporter
                 </a>
             @enddroit
             @droit('economat.items.import')
-                <button type="button" onclick="document.getElementById('modal-import-stock').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des articles depuis un CSV">
+                <button
+                    type="button"
+                    onclick="document.getElementById('modal-import-stock').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm
+                        font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                    title="Importer des articles depuis un CSV">
                     <i data-lucide="upload" class="w-4 h-4"></i> Importer
                 </button>
             @enddroit
             @droit('economat.items.creer')
-                <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                <button
+                    type="button"
+                    @click="openCreate()"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium
+                        rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i> Nouvel article
                 </button>
             @enddroit
@@ -47,16 +60,27 @@
 
     {{-- Barre de filtres et recherche multicritères --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm mb-5">
-        <form method="GET" action="{{ route('economat.items.index') }}" role="search" @submit.prevent="chercher(true)" class="flex flex-wrap items-center gap-3">
+        <form
+            method="GET"
+            action="{{ route('economat.items.index') }}"
+            role="search"
+            @submit.prevent="chercher(true)"
+            class="flex flex-wrap items-center gap-3">
             {{-- Recherche textuelle --}}
             <div class="relative flex-1 min-w-[220px]">
-                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" aria-hidden="true"></i>
+                <i
+                    data-lucide="search"
+                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40"
+                    aria-hidden="true"></i>
                 <input id="recherche-articles" type="search" name="q" value="{{ $recherche }}" autocomplete="off"
                        x-model="recherche" @input="chercher()" @keydown.escape="recherche = ''; chercher(true)"
                        placeholder="Rechercher par nom, référence ou catégorie…"
-                       class="w-full rounded-lg border border-secondary/20 bg-white py-2 pl-9 pr-9 text-sm text-primary placeholder:text-primary/40 focus:border-primary focus:outline-none">
+                       class="w-full rounded-lg border border-secondary/20 bg-white py-2 pl-9 pr-9 text-sm text-primary
+                           placeholder:text-primary/40 focus:border-primary focus:outline-none">
                 <span x-show="enRecherche" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                    <i data-lucide="loader-circle" class="h-4 w-4 animate-spin text-primary/40 motion-reduce:animate-none"></i>
+                    <i
+                        data-lucide="loader-circle"
+                        class="h-4 w-4 animate-spin text-primary/40 motion-reduce:animate-none"></i>
                 </span>
             </div>
 
@@ -95,16 +119,21 @@
                     Tous
                 </button>
                 <button type="button" @click="selectedFilter = (selectedFilter === 'alert' ? '' : 'alert'); chercher(true)"
-                        class="px-3 py-2 text-xs font-semibold rounded-lg border transition-colors inline-flex items-center gap-1.5"
+                        class="px-3 py-2 text-xs font-semibold rounded-lg border transition-colors inline-flex
+                            items-center gap-1.5"
                         :class="selectedFilter === 'alert' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'border-secondary/20 bg-white text-amber-700 hover:bg-amber-50/50'">
-                    <span class="w-2 h-2 rounded-full" :class="selectedFilter === 'alert' ? 'bg-white' : 'bg-amber-500'"></span>
+                    <span
+                        class="w-2 h-2 rounded-full"
+                        :class="selectedFilter === 'alert' ? 'bg-white' : 'bg-amber-500'"></span>
                     Sous le seuil
                 </button>
             </div>
 
             {{-- Bouton réinitialiser si des filtres sont actifs --}}
             @if($category || request('category') || $zone || request('zone') || $filter || $recherche !== '')
-                <a href="{{ route('economat.items.index') }}" class="px-3 py-2 text-xs text-primary/60 hover:text-primary underline whitespace-nowrap">
+                <a
+                    href="{{ route('economat.items.index') }}"
+                    class="px-3 py-2 text-xs text-primary/60 hover:text-primary underline whitespace-nowrap">
                     Effacer les filtres
                 </a>
             @endif
@@ -122,7 +151,11 @@
             </span>
         </div>
 
-        <x-table :rows="$items" :empty="$recherche !== '' ? 'Aucun article ne correspond à « ' . $recherche . ' ».' : ($filter === 'alert' ? 'Aucun article sous le seuil.' : ($category || $zone || request('category') || request('zone') ? 'Aucun article ne correspond aux critères sélectionnés.' : 'Aucun article. Créez-en un pour démarrer le magasin.'))" empty-icon="boxes" caption="Articles du magasin central">
+        <x-table
+            :rows="$items"
+            :empty="$recherche !== '' ? 'Aucun article ne correspond à « ' . $recherche . ' ».' : ($filter === 'alert' ? 'Aucun article sous le seuil.' : ($category || $zone || request('category') || request('zone') ? 'Aucun article ne correspond aux critères sélectionnés.' : 'Aucun article. Créez-en un pour démarrer le magasin.'))"
+            empty-icon="boxes"
+            caption="Articles du magasin central">
         <x-slot:head>
             <x-table.col>Article</x-table.col>
             <x-table.col hide="xl">Catégorie</x-table.col>
@@ -157,14 +190,18 @@
             @endphp
             <x-table.row :muted="! $item->is_active">
                 <x-table.cell>
-                    <a href="{{ route('economat.items.show', $item) }}" class="font-medium text-primary hover:underline">{{ $item->name }}</a>
+                    <a
+                        href="{{ route('economat.items.show', $item) }}"
+                        class="font-medium text-primary hover:underline">{{ $item->name }}</a>
                     @if($item->reference)<span class="block font-mono text-[10px] text-primary/45">{{ $item->reference }}</span>@endif
                 </x-table.cell>
                 <x-table.cell hide="xl" class="text-xs text-primary/60">{{ $item->category?->name ?? '—' }}</x-table.cell>
                 <x-table.cell hide="sm" class="text-xs text-primary/60">{{ $item->zone?->name ?? '—' }}</x-table.cell>
                 <x-table.cell align="right" nowrap>
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}" aria-hidden="true"></span>
+                        <span
+                            class="h-2 w-2 rounded-full {{ $level === 'out' ? 'bg-red-500' : ($level === 'low' ? 'bg-amber-500' : 'bg-green-500') }}"
+                            aria-hidden="true"></span>
                         <span class="font-medium text-primary font-mono">{{ rtrim(rtrim(number_format($item->current_stock, 3, ',', ' '), '0'), ',') }}</span>
                     </span>
                     @if($item->packagings->isNotEmpty())
@@ -178,7 +215,10 @@
                     <x-table.action :href="route('economat.items.show', $item)" icon="eye">Fiche</x-table.action>
                     @if($item->movements_count === 0)
                         @droit('economat.items.opening')
-                            <x-table.action icon="package-plus" x-on:click="openOpening({{ Js::from($openingPayload) }})" title="Reprendre le stock déjà en magasin">Reprise du stock</x-table.action>
+                            <x-table.action
+                                icon="package-plus"
+                                x-on:click="openOpening({{ Js::from($openingPayload) }})"
+                                title="Reprendre le stock déjà en magasin">Reprise du stock</x-table.action>
                         @enddroit
                     @endif
                     @droit('economat.items.transformation.voir')
@@ -200,12 +240,20 @@
     </div>
 
     {{-- Modal création / édition --}}
-    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
+    <div
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
         <div class="absolute inset-0" @click="open = false"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
-                <h3 class="font-heading font-semibold text-primary" x-text="editing ? 'Modifier l\'article' : 'Nouvel article'"></h3>
-                <button type="button" @click="open = false" class="text-primary/30 hover:text-primary"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3
+                    class="font-heading font-semibold text-primary"
+                    x-text="editing ? 'Modifier l\'article' : 'Nouvel article'"></h3>
+                <button type="button" @click="open = false" class="text-primary/30 hover:text-primary"><i
+                    data-lucide="x"
+                    class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0">
                 @csrf
@@ -213,31 +261,62 @@
                 <div class="px-6 py-5 space-y-4 overflow-y-auto">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input
+                            type="text"
+                            name="name"
+                            x-model="form.name"
+                            @input="applyAutoCode()"
+                            required
+                            maxlength="160"
+                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-secondary">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="article-unite" class="block text-xs font-medium text-primary/70 mb-1.5">Unité <span class="text-red-500">*</span></label>
-                            <select id="article-unite" name="unit" x-model="form.unit" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <select
+                                id="article-unite"
+                                name="unit"
+                                x-model="form.unit"
+                                required
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                                 <option value="">Choisir…</option>
                                 <template x-for="u in unitesProposees" :key="u.value || u">
-                                    <option :value="u.value || u" x-text="u.label || u" :selected="(u.value || u) === form.unit"></option>
+                                    <option
+                                        :value="u.value || u"
+                                        x-text="u.label || u"
+                                        :selected="(u.value || u) === form.unit"></option>
                                 </template>
                             </select>
                             @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'economat'))
-                                <a href="{{ route('settings.index', ['tab' => 'economat']) }}" class="mt-1 inline-block text-[11px] text-primary/50 underline hover:text-primary">Gérer les unités</a>
+                                <a
+                                    href="{{ route('settings.index', ['tab' => 'economat']) }}"
+                                    class="mt-1 inline-block text-[11px] text-primary/50 underline
+                                        hover:text-primary">Gérer les unités</a>
                             @endif
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Référence</label>
-                            <input type="text" name="reference" x-model="form.reference" @input="autoCode = false" maxlength="60" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary font-mono">
+                            <input
+                                type="text"
+                                name="reference"
+                                x-model="form.reference"
+                                @input="autoCode = false"
+                                maxlength="60"
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary font-mono">
                         </div>
                     </div>
                     {{-- Les fournisseurs et leurs prix se tiennent au catalogue de chaque fournisseur. --}}
                     <div class="grid grid-cols-1 gap-4" :class="!editing ? 'sm:grid-cols-2' : ''">
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Catégorie</label>
-                            <select name="stock_category_id" x-model="form.stock_category_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <select
+                                name="stock_category_id"
+                                x-model="form.stock_category_id"
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                                 <option value="">—</option>
                                 <template x-for="c in categories" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
                             </select>
@@ -246,12 +325,23 @@
                         <template x-if="!editing">
                             <div>
                                 <label for="article-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Zone de stockage</label>
-                                <select id="article-zone" name="storage_zone_id" x-model="form.storage_zone_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                <select
+                                    id="article-zone"
+                                    name="storage_zone_id"
+                                    x-model="form.storage_zone_id"
+                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                        text-primary outline-none focus:border-secondary">
                                     <option value="">— Sans zone —</option>
-                                    <template x-for="z in zones" :key="z.id"><option :value="String(z.id)" x-text="z.name" :selected="String(z.id) === String(form.storage_zone_id)"></option></template>
+                                    <template x-for="z in zones" :key="z.id"><option
+                                        :value="String(z.id)"
+                                        x-text="z.name"
+                                        :selected="String(z.id) === String(form.storage_zone_id)"></option></template>
                                 </select>
                                 @if(\App\Support\SettingsTabs::peutRegler(auth()->user(), 'economat'))
-                                    <a href="{{ route('settings.index', ['tab' => 'economat']) }}" class="mt-1 inline-block text-[11px] text-primary/50 underline hover:text-primary">Gérer les zones de stockage</a>
+                                    <a
+                                        href="{{ route('settings.index', ['tab' => 'economat']) }}"
+                                        class="mt-1 inline-block text-[11px] text-primary/50 underline
+                                            hover:text-primary">Gérer les zones de stockage</a>
                                 @endif
                             </div>
                         </template>
@@ -259,27 +349,50 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Seuil d'alerte</label>
-                            <input type="number" step="0.001" min="0" name="min_stock" x-model="form.min_stock" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <input
+                                type="number"
+                                step="0.001"
+                                min="0"
+                                name="min_stock"
+                                x-model="form.min_stock"
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                         </div>
                         <div x-show="!editing">
                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Coût moyen initial (FCFA)</label>
-                            <input type="number" min="0" name="average_cost" x-model="form.average_cost" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <input
+                                type="number"
+                                min="0"
+                                name="average_cost"
+                                x-model="form.average_cost"
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Description</label>
                         <textarea name="description" x-model="form.description" rows="2" maxlength="500" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary"></textarea>
                     </div>
-                    <label class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer">
+                    <label class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg
+                        cursor-pointer">
                         <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                        <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                        <input
+                            type="checkbox"
+                            x-model="form.is_active"
+                            class="w-4 h-4 rounded border-secondary/40 text-primary">
                         <span class="text-xs text-primary/80">Article actif</span>
                     </label>
                     <p class="text-[11px] text-primary/40" x-show="!editing">Le stock démarre à 0. Marchandise déjà en magasin : utilisez « Reprise » ; sinon, une réception de bon l'alimente. Les fournisseurs et leurs prix s'ajoutent au catalogue de chaque fournisseur.</p>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
+                    <button
+                        type="button"
+                        @click="open = false"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
                 </div>
             </form>
         </div>
@@ -289,10 +402,20 @@
     <div x-show="openingOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
          @keydown.escape.window="openingOpen = false">
         <div class="absolute inset-0" @click="openingOpen = false"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10" role="dialog" aria-modal="true" aria-labelledby="titre-reprise">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titre-reprise">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
                 <h3 id="titre-reprise" class="font-heading font-semibold text-primary">Reprise du stock initial</h3>
-                <button type="button" @click="openingOpen = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button
+                    type="button"
+                    @click="openingOpen = false"
+                    class="text-primary/30 hover:text-primary"
+                    aria-label="Fermer"><i
+                    data-lucide="x"
+                    class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="openingAction">
                 @csrf
@@ -301,12 +424,29 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="reprise-quantite" class="block text-xs font-medium text-primary/70 mb-1.5">Quantité en magasin <span class="text-red-500">*</span></label>
-                            <input id="reprise-quantite" type="number" step="0.001" min="0.001" name="quantity" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <input
+                                id="reprise-quantite"
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                name="quantity"
+                                required
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                             <p class="text-[11px] text-primary/40 mt-1" x-text="opening.unit"></p>
                         </div>
                         <div>
                             <label for="reprise-cout" class="block text-xs font-medium text-primary/70 mb-1.5">Coût unitaire (FCFA) <span class="text-red-500">*</span></label>
-                            <input id="reprise-cout" type="number" step="1" min="1" name="unit_cost" x-model="opening.unit_cost" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            <input
+                                id="reprise-cout"
+                                type="number"
+                                step="1"
+                                min="1"
+                                name="unit_cost"
+                                x-model="opening.unit_cost"
+                                required
+                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                    text-primary outline-none focus:border-secondary">
                         </div>
                     </div>
                     <p class="text-[11px] text-primary/50">
@@ -315,8 +455,14 @@
                     </p>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="openingOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Reprendre</button>
+                    <button
+                        type="button"
+                        @click="openingOpen = false"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark">Reprendre</button>
                 </div>
             </form>
         </div>
@@ -326,10 +472,20 @@
     <div x-show="zoneOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
          @keydown.escape.window="zoneOpen = false">
         <div class="absolute inset-0" @click="zoneOpen = false"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10" role="dialog" aria-modal="true" aria-labelledby="titre-zone">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titre-zone">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
                 <h3 id="titre-zone" class="font-heading font-semibold text-primary">Changer de zone de rangement</h3>
-                <button type="button" @click="zoneOpen = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button
+                    type="button"
+                    @click="zoneOpen = false"
+                    class="text-primary/30 hover:text-primary"
+                    aria-label="Fermer"><i
+                    data-lucide="x"
+                    class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="zoneAction">
                 @csrf @method('PUT')
@@ -337,38 +493,65 @@
                     <p class="text-sm text-primary/70">Article : <strong x-text="zoneItem.name"></strong></p>
                     <div>
                         <label for="changer-zone" class="block text-xs font-medium text-primary/70 mb-1.5">Se range désormais dans</label>
-                        <select id="changer-zone" name="storage_zone_id" x-model="zoneItem.storage_zone_id" class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <select
+                            id="changer-zone"
+                            name="storage_zone_id"
+                            x-model="zoneItem.storage_zone_id"
+                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-secondary">
                             <option value="">— Sans zone —</option>
-                            <template x-for="z in zones" :key="z.id"><option :value="z.id" x-text="z.name" :selected="String(z.id) === String(zoneItem.storage_zone_id)"></option></template>
+                            <template x-for="z in zones" :key="z.id"><option
+                                :value="z.id"
+                                x-text="z.name"
+                                :selected="String(z.id) === String(zoneItem.storage_zone_id)"></option></template>
                         </select>
                         <p class="text-[11px] text-primary/40 mt-1">Le stock ne bouge pas : seule la zone où l'on trouve l'article change.</p>
                     </div>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="zoneOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Déplacer</button>
+                    <button
+                        type="button"
+                        @click="zoneOpen = false"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark">Déplacer</button>
                 </div>
             </form>
         </div>
     </div>
 
     {{-- Modal ajustement de stock --}}
-    <div x-show="adjustOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
+    <div
+        x-show="adjustOpen"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);">
         <div class="absolute inset-0" @click="adjustOpen = false"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
                 <h3 class="font-heading font-semibold text-primary">Ajuster le stock</h3>
-                <button type="button" @click="adjustOpen = false" class="text-primary/30 hover:text-primary"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" @click="adjustOpen = false" class="text-primary/30 hover:text-primary"><i
+                    data-lucide="x"
+                    class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="adjustAction">
                 @csrf
                 <div class="px-6 py-5 space-y-4">
                     <p class="text-sm text-primary/70">Article : <strong x-text="adjust.name"></strong></p>
-                    <p class="text-xs text-primary/50">Stock actuel : <span class="font-semibold text-primary" x-text="adjust.current"></span> <span x-text="adjust.unit"></span></p>
+                    <p class="text-xs text-primary/50">Stock actuel : <span
+                        class="font-semibold text-primary"
+                        x-text="adjust.current"></span> <span x-text="adjust.unit"></span></p>
 
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Type de stock à modifier / Cause <span class="text-red-500">*</span></label>
-                        <select name="adjustment_type" x-model="adjust.adjustment_type" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <select
+                            name="adjustment_type"
+                            x-model="adjust.adjustment_type"
+                            required
+                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-secondary">
                             <option value="initial_stock">Stock initial (Inventaire de départ)</option>
                             <option value="delivery">Entrée de stock (Livraison fournisseur)</option>
                             <option value="inventory">Ajustement d'inventaire physique (Écart constaté)</option>
@@ -377,18 +560,38 @@
 
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Nouveau stock total <span class="text-red-500">*</span></label>
-                        <input type="number" step="0.001" min="0" name="counted_quantity" x-model="adjust.counted" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            name="counted_quantity"
+                            x-model="adjust.counted"
+                            required
+                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-secondary">
                         <p class="text-[11px] text-primary/40 mt-1">Le stock de cet article passera directement à cette quantité dans les mouvements.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Motif / Justification (facultatif)</label>
-                        <input type="text" name="reason" maxlength="255" placeholder="Ex: Rectification inventaire initial, BL oublié..." class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <input
+                            type="text"
+                            name="reason"
+                            maxlength="255"
+                            placeholder="Ex: Rectification inventaire initial, BL oublié..."
+                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-secondary">
                     </div>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="adjustOpen = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">Valider l'ajustement</button>
+                    <button
+                        type="button"
+                        @click="adjustOpen = false"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark">Valider l'ajustement</button>
                 </div>
             </form>
         </div>

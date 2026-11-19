@@ -111,7 +111,8 @@ class LoyaltyService
     public function redeemPoints(Customer $customer, int $points, Booking $booking): int
     {
         if ($customer->loyalty_points < $points) {
-            throw new \LogicException("Points insuffisants : {$customer->loyalty_points} disponibles, {$points} demandés.");
+            throw new \LogicException(
+                "Points insuffisants : {$customer->loyalty_points} disponibles, {$points} demandés.");
         }
 
         // Calcul de la remise en centimes

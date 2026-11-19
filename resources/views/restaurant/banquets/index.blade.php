@@ -24,7 +24,8 @@
     </div>
     @droit('restaurant.banquets.creer')
         <button type="button" onclick="openBanquetCreateModal()"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 cursor-pointer">
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:opacity-95 cursor-pointer">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nouveau devis
         </button>
     @enddroit
@@ -35,7 +36,8 @@
 @endif
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -59,7 +61,10 @@
         @endif
     </div>
 
-    <form method="GET" action="{{ route('restaurant.banquets.index') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 items-end">
+    <form
+        method="GET"
+        action="{{ route('restaurant.banquets.index') }}"
+        class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 items-end">
         <input type="hidden" name="vue" value="{{ $vue }}">
         @if($sourceFilter)<input type="hidden" name="source" value="{{ $sourceFilter }}">@endif
         @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
@@ -67,26 +72,33 @@
         <label class="block">
             <span class="text-[11px] font-medium text-primary/70">Date souhaitée</span>
             <input type="date" name="check_date" value="{{ $checkParams['check_date'] ?? '' }}" required
-                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none focus:border-secondary">
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none
+                    focus:border-secondary">
         </label>
         <label class="block">
             <span class="text-[11px] font-medium text-primary/70">Début (optionnel)</span>
             <input type="time" name="check_start_time" value="{{ $checkParams['check_start_time'] ?? '' }}"
-                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none focus:border-secondary">
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none
+                    focus:border-secondary">
         </label>
         <label class="block">
             <span class="text-[11px] font-medium text-primary/70">Fin (optionnel)</span>
             <input type="time" name="check_end_time" value="{{ $checkParams['check_end_time'] ?? '' }}"
-                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none focus:border-secondary">
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none
+                    focus:border-secondary">
         </label>
         <label class="block">
             <span class="text-[11px] font-medium text-primary/70">Couverts attendus</span>
             <input type="number" name="check_covers" min="1" placeholder="Ex. 80" value="{{ $checkParams['check_covers'] ?? '' }}"
-                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none focus:border-secondary">
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none
+                    focus:border-secondary">
         </label>
         <label class="block">
             <span class="text-[11px] font-medium text-primary/70">Restaurant</span>
-            <select name="check_pos_id" class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none focus:border-secondary">
+            <select
+                name="check_pos_id"
+                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-2 text-xs outline-none
+                    focus:border-secondary">
                 <option value="">Tous les restaurants</option>
                 @foreach($restaurants as $r)
                     <option value="{{ $r->id }}" @selected((int) ($checkParams['check_pos_id'] ?? 0) === $r->id)>{{ $r->name }}</option>
@@ -95,7 +107,8 @@
         </label>
         <div>
             <button type="submit"
-                class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:opacity-95 cursor-pointer">
+                class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs
+                    font-semibold text-white hover:opacity-95 cursor-pointer">
                 <i data-lucide="calendar-search" class="w-3.5 h-3.5"></i>
                 Vérifier les salles
             </button>
@@ -145,7 +158,9 @@
                                     <ul class="mt-2 space-y-1 text-[11px] text-red-800">
                                         @foreach($dispo['conflicts'] as $conflit)
                                             <li>
-                                                <a href="{{ route('restaurant.banquets.show', $conflit) }}" class="underline font-medium">
+                                                <a
+                                                    href="{{ route('restaurant.banquets.show', $conflit) }}"
+                                                    class="underline font-medium">
                                                     {{ $conflit->reference }} — {{ $conflit->title }}
                                                 </a>
                                                 ({{ $conflit->start_time && $conflit->end_time ? $conflit->start_time . '–' . $conflit->end_time : 'Journée' }} · {{ $conflit->libelleStatut() }})
@@ -174,7 +189,9 @@
                                     <button type="button"
                                         data-prefill="{{ json_encode($prefill, JSON_THROW_ON_ERROR) }}"
                                         onclick="openBanquetCreateModal(JSON.parse(this.dataset.prefill))"
-                                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95 cursor-pointer">
+                                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg
+                                            bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95
+                                            cursor-pointer">
                                         <i data-lucide="file-plus" class="w-3.5 h-3.5"></i>
                                         Créer un devis sur cette salle
                                     </button>
@@ -200,7 +217,8 @@
     <form method="GET" action="{{ route('restaurant.banquets.index') }}" class="flex flex-wrap items-center gap-2">
         <input type="hidden" name="vue" value="{{ $vue }}">
         <select name="source" onchange="this.form.submit()"
-            class="rounded-lg border border-secondary/30 bg-white px-2.5 py-1.5 text-xs text-primary outline-none focus:border-secondary">
+            class="rounded-lg border border-secondary/30 bg-white px-2.5 py-1.5 text-xs text-primary outline-none
+                focus:border-secondary">
             <option value="">Toutes sources</option>
             @foreach($sources as $code => $libelle)
                 <option value="{{ $code }}" @selected($sourceFilter === $code)>{{ $libelle }}</option>
@@ -236,7 +254,9 @@
             </x-table.cell>
             <x-table.cell>
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <a href="{{ route('restaurant.banquets.show', $banquet) }}" class="font-semibold text-primary hover:underline">{{ $banquet->title }}</a>
+                    <a
+                        href="{{ route('restaurant.banquets.show', $banquet) }}"
+                        class="font-semibold text-primary hover:underline">{{ $banquet->title }}</a>
                     <span class="rounded-full border px-2 py-0.5 text-[10px] font-medium {{ $couleursSource[$banquet->source] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
                         {{ $banquet->libelleSource() }}
                     </span>
@@ -270,11 +290,20 @@
 </div>
 
 @droit('restaurant.banquets.creer')
-    <x-modal id="banquet-create" title="Nouveau devis de banquet" max-width="max-w-3xl" formAction="{{ route('restaurant.banquets.store') }}">
+    <x-modal
+        id="banquet-create"
+        title="Nouveau devis de banquet"
+        max-width="max-w-3xl"
+        formAction="{{ route('restaurant.banquets.store') }}">
         @include('restaurant.banquets._champs', ['b' => null])
         <x-slot:footer>
-            <button type="button" onclick="document.getElementById('banquet-create').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer le devis</button>
+            <button
+                type="button"
+                onclick="document.getElementById('banquet-create').classList.add('hidden')"
+                class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                    hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                text-white">Enregistrer le devis</button>
         </x-slot:footer>
     </x-modal>
     <script>

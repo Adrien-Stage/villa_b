@@ -96,9 +96,11 @@ class StockTransferController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        AuditLog::record(Auth::id(), 'transfert_depot', "Annulation du transfert {$transfert->number} : {$transfert->cancellation_reason}",
+        AuditLog::record(Auth::id(), 'transfert_depot',
+            "Annulation du transfert {$transfert->number} : {$transfert->cancellation_reason}",
             'economat', ['stock_transfer_id' => $transfert->id]);
 
-        return back()->with('success', "Bon {$transfert->number} annulé : la marchandise est revenue au magasin central.");
+        return back()->with('success',
+            "Bon {$transfert->number} annulé : la marchandise est revenue au magasin central.");
     }
 }

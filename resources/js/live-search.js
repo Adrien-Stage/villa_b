@@ -65,14 +65,7 @@ export default function liveSearch(config = {}) {
 
         buildUrl(overrides = {}) {
             const params = new URLSearchParams();
-            if (this.formEl) {
-                const fd = new FormData(this.formEl);
-                for (const [k, v] of fd.entries()) {
-                    if (v !== '' && v !== null && v !== undefined) {
-                        params.set(k, v);
-                    }
-                }
-            }
+            this.appendFormValues(params);
             if (this.query && this.query.trim()) {
                 params.set(this.name, this.query.trim());
             } else {
@@ -88,6 +81,17 @@ export default function liveSearch(config = {}) {
             const base = this.formEl?.action || window.location.pathname;
             const qs = params.toString();
             return qs ? `${base}?${qs}` : base;
+        },
+
+        appendFormValues(params) {
+            if (this.formEl) {
+                const fd = new FormData(this.formEl);
+                for (const [k, v] of fd.entries()) {
+                    if (v !== '') {
+                        params.set(k, v);
+                    }
+                }
+            }
         },
 
         search(immediate = false) {
@@ -132,45 +136,11 @@ export default function liveSearch(config = {}) {
                     return;
                 }
 
-                const html = await res.text();
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const newTarget = doc.querySelector(this.target);
-
-                if (newTarget && this.targetEl) {
-                    this.targetEl.innerHTML = newTarget.innerHTML;
-                }
-
-                // Synchroniser les sélecteurs additionnels demandés
-                const selectorsToSync = [
-                    ...this.syncSelectors,
-                    '#status-filters',
-                    '#status-tabs',
-                    '#users-status-tabs',
-                    '#users-view-toggle',
-                    '#pagination-container',
-                ];
-
-                selectorsToSync.forEach((sel) => {
-                    const el = document.querySelector(sel);
-                    const newEl = doc.querySelector(sel);
-                    if (el && newEl) {
-                        el.innerHTML = newEl.innerHTML;
-                    }
-                });
-
+                this.renderResults(await res.text());
                 if (updateHistory) {
                     window.history.replaceState(null, '', url);
                 }
-
-                if (typeof window.refreshLucideIcons === 'function') {
-                    window.refreshLucideIcons();
-                } else if (window.lucide?.createIcons) {
-                    window.lucide.createIcons();
-                }
-
-                if (window.Alpine && this.targetEl) {
-                    window.Alpine.initTree(this.targetEl);
-                }
+                this.refreshResults();
             } catch (e) {
                 if (e.name !== 'AbortError') {
                     console.error('Erreur liveSearch:', e);
@@ -182,6 +152,45 @@ export default function liveSearch(config = {}) {
                     this.targetEl.classList.remove('opacity-50', 'pointer-events-none');
                 }
             }
-        }
+        },
+
+        renderResults(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newTarget = doc.querySelector(this.target);
+
+            if (newTarget && this.targetEl) {
+                this.targetEl.innerHTML = newTarget.innerHTML;
+            }
+
+            // Synchroniser les sélecteurs additionnels demandés
+            const selectorsToSync = [
+                ...this.syncSelectors,
+                '#status-filters',
+                '#status-tabs',
+                '#users-status-tabs',
+                '#users-view-toggle',
+                '#pagination-container',
+            ];
+
+            selectorsToSync.forEach((sel) => {
+                const el = document.querySelector(sel);
+                const newEl = doc.querySelector(sel);
+                if (el && newEl) {
+                    el.innerHTML = newEl.innerHTML;
+                }
+            });
+        },
+
+        refreshResults() {
+            if (typeof window.refreshLucideIcons === 'function') {
+                window.refreshLucideIcons();
+            } else if (window.lucide?.createIcons) {
+                window.lucide.createIcons();
+            }
+
+            if (window.Alpine && this.targetEl) {
+                window.Alpine.initTree(this.targetEl);
+            }
+        },
     };
 }

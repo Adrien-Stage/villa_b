@@ -23,14 +23,18 @@
 
         <div class="flex flex-wrap items-center gap-2">
             @droit('bookings.handovers.voir')
-                <a href="{{ route('bookings.handovers.index') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                <a
+                    href="{{ route('bookings.handovers.index') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 bg-white text-primary
+                        text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
                     <i data-lucide="history" class="w-4 h-4" aria-hidden="true"></i>
                     Passations
                 </a>
             @enddroit
             @if ($ownEnCours?->isPendingReview())
                 {{-- Comptée (ou remise en passation) : elle attend le contrôle de la comptabilité. --}}
-                <span class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded-lg">
+                <span class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200
+                    text-amber-800 text-sm font-medium rounded-lg">
                     <i data-lucide="hourglass" class="w-4 h-4" aria-hidden="true"></i>
                     Comptage en attente de contrôle
                 </span>
@@ -38,13 +42,19 @@
                 {{-- En fin de quart, le tiroir passe au collègue suivant ; en fin de
                      journée, la caisse se ferme et part au contrôle. --}}
                 @droit('bookings.handovers.creer')
-                    <a href="{{ route('bookings.handovers.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <a
+                        href="{{ route('bookings.handovers.create') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium
+                            rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="hand-coins" class="w-4 h-4" aria-hidden="true"></i>
                         Terminer mon service (passation)
                     </a>
                 @enddroit
                 {{-- Celui qui a ouvert sa caisse la ferme lui-même --}}
-                <a href="{{ route('bookings.cash_register.close') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                <a
+                    href="{{ route('bookings.cash_register.close') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium
+                        rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                     <i data-lucide="lock" class="w-4 h-4" aria-hidden="true"></i>
                     Fermer la caisse
                 </a>
@@ -53,23 +63,33 @@
                 <form method="POST" action="{{ route('cash_register.resume') }}">
                     @csrf
                     <input type="hidden" name="session_id" value="{{ $ownEnCours->id }}">
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium
+                            rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
                         <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>
                         Reprendre ma caisse en pause
                     </button>
                 </form>
             @elseif ($caissePartagee)
-                <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium rounded-lg">
+                <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200
+                    text-emerald-800 text-sm font-medium rounded-lg">
                     <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i>
                     Caisse active : {{ $ctx['titulaire']?->name ?? 'Réception' }}
                 </span>
             @elseif ($passationsEnAttente->isNotEmpty())
-                <a href="{{ route('bookings.handovers.take', $passationsEnAttente->first()) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors shadow-sm">
+                <a
+                    href="{{ route('bookings.handovers.take', $passationsEnAttente->first()) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium
+                        rounded-lg hover:bg-amber-700 transition-colors shadow-sm">
                     <i data-lucide="hand-coins" class="w-4 h-4" aria-hidden="true"></i>
                     Prendre le service
                 </a>
             @else
-                <a href="{{ route('bookings.cash_register.open') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                <a
+                    href="{{ route('bookings.cash_register.open') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="lock-open" class="w-4 h-4" aria-hidden="true"></i>
                     Ouvrir la caisse
                 </a>
@@ -95,7 +115,11 @@
         </div>
     @endif
 
-    <x-table :rows="$sessions" empty="Aucune session de caisse n'a été trouvée." empty-icon="calculator" caption="Sessions de caisse de la réception">
+    <x-table
+        :rows="$sessions"
+        empty="Aucune session de caisse n'a été trouvée."
+        empty-icon="calculator"
+        caption="Sessions de caisse de la réception">
         <x-slot:head>
             <x-table.col>Session &amp; réceptionniste</x-table.col>
             <x-table.col>État</x-table.col>
@@ -109,7 +133,10 @@
             <x-table.row>
                 <x-table.cell>
                     <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($session->user->name, 0, 2)) }}</div>
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-xs font-bold
+                                text-primary"
+                            aria-hidden="true">{{ mb_strtoupper(mb_substr($session->user->name, 0, 2)) }}</div>
                         <div>
                             <p class="text-sm font-medium text-primary">{{ $session->user->name }}</p>
                             <p class="text-xs text-primary/50">Ouverte : {{ $session->opened_at->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</p>
@@ -119,16 +146,19 @@
                             @php $tiersSession = $tiersParSession[$session->id] ?? null; @endphp
                             @if($tiersSession && ($tiersSession['has_activity'] ?? false))
                                 <div class="mt-1.5">
-                                    <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
+                                    <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200
+                                        bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
                                         <i data-lucide="users" class="w-3 h-3" aria-hidden="true"></i>
                                         Intervention tiers :
                                         {{ $tiersSession['actors']->map(fn ($a) => $a['name'] . ' (' . $a['count'] . ')')->join(', ') }}
                                     </span>
                                     <details class="mt-1">
-                                        <summary class="cursor-pointer select-none text-[11px] font-medium text-indigo-700 hover:text-indigo-900">
+                                        <summary class="cursor-pointer select-none text-[11px] font-medium
+                                            text-indigo-700 hover:text-indigo-900">
                                             Détail ({{ $tiersSession['total_count'] }} op.)
                                         </summary>
-                                        <ul class="mt-1 space-y-1 rounded-lg border border-indigo-100 bg-indigo-50/40 p-2 text-[11px] text-primary/80">
+                                        <ul class="mt-1 space-y-1 rounded-lg border border-indigo-100 bg-indigo-50/40
+                                            p-2 text-[11px] text-primary/80">
                                             @foreach($tiersSession['items'] as $item)
                                                 <li class="flex flex-wrap justify-between gap-2">
                                                     <span>
@@ -152,15 +182,18 @@
                 </x-table.cell>
                 <x-table.cell nowrap>
                     @if($session->closed_at)
-                        <span class="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">Clôturée</span>
+                        <span class="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-medium
+                            text-gray-700">Clôturée</span>
                     @elseif($session->isPendingReview())
                         {{-- Comptée par son titulaire (en fin de journée ou en passation) :
                              elle attend la contresignature de la comptabilité. --}}
-                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium
+                            text-amber-800">
                             {{ $session->handoverOut ? 'Remise en passation' : 'Comptée' }}, à contrôler
                         </span>
                     @else
-                        <span class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">En cours</span>
+                        <span class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium
+                            text-green-700">En cours</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="text-primary/70">{{ number_format($session->opening_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
@@ -170,14 +203,25 @@
                     <x-table.cell align="right" hide="lg" nowrap class="font-bold">{{ number_format($session->actual_closing_amount / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></x-table.cell>
                     <x-table.cell align="right" nowrap>
                         @if($gap === 0)
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-green-600"><i data-lucide="check" class="h-3.5 w-3.5" aria-hidden="true"></i> Juste</span>
+                            <span class="inline-flex items-center gap-1 text-sm font-medium text-green-600"><i
+                                data-lucide="check"
+                                class="h-3.5 w-3.5"
+                                aria-hidden="true"></i> Juste</span>
                         @elseif($gap > 0)
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-yellow-600" title="{{ $session->closing_notes }}">+{{ number_format($gap / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
+                            <span
+                                class="inline-flex items-center gap-1 text-sm font-medium text-yellow-600"
+                                title="{{ $session->closing_notes }}">+{{ number_format($gap / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
                         @else
-                            <span class="inline-flex items-center gap-1 text-sm font-medium text-red-600" title="{{ $session->closing_notes }}">−{{ number_format(abs($gap) / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
+                            <span
+                                class="inline-flex items-center gap-1 text-sm font-medium text-red-600"
+                                title="{{ $session->closing_notes }}">−{{ number_format(abs($gap) / 100, 0, ',', ' ') }} <span class="text-xs">FCFA</span></span>
                         @endif
                         @if($session->closing_notes)
-                            <i data-lucide="info" class="ml-1 inline h-3 w-3 text-primary/40" title="{{ $session->closing_notes }}" aria-label="{{ $session->closing_notes }}"></i>
+                            <i
+                                data-lucide="info"
+                                class="ml-1 inline h-3 w-3 text-primary/40"
+                                title="{{ $session->closing_notes }}"
+                                aria-label="{{ $session->closing_notes }}"></i>
                         @endif
                     </x-table.cell>
                 @else

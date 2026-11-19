@@ -6,7 +6,9 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
         <div class="flex items-center gap-2 mb-1">
-            <a href="{{ route('economat.control.index') }}" class="text-xs text-primary/60 hover:text-primary flex items-center gap-1">
+            <a
+                href="{{ route('economat.control.index') }}"
+                class="text-xs text-primary/60 hover:text-primary flex items-center gap-1">
                 <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                 <span>Retour au Contrôle des stocks</span>
             </a>
@@ -33,7 +35,10 @@
             Aucun article du magasin central n'est actuellement sous son seuil de sécurité. Aucune commande de réapprovisionnement n'est requise pour le moment.
         </p>
         <div class="mt-6">
-            <a href="{{ route('economat.control.index') }}" class="px-4 py-2 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <a
+                href="{{ route('economat.control.index') }}"
+                class="px-4 py-2 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark
+                    transition-colors">
                 Retour au tableau de bord
             </a>
         </div>
@@ -47,7 +52,8 @@
     {{-- Métriques d'alerte --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-secondary/20 p-4 shadow-sm">
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/50">Références à réapprovisionner</p>
+            <p class="text-[11px] font-semibold uppercase tracking-wider
+                text-primary/50">Références à réapprovisionner</p>
             <p class="text-2xl font-bold font-mono text-amber-700 mt-1">{{ count($suggestions) }}</p>
             <p class="text-xs text-primary/50 mt-1">Articles sous le seuil minimum de sécurité</p>
         </div>
@@ -72,14 +78,17 @@
         @csrf
 
         <div class="bg-white border border-secondary/20 rounded-xl shadow-sm overflow-hidden mb-6">
-            <div class="p-4 bg-surface-light/50 border-b border-secondary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="p-4 bg-surface-light/50 border-b border-secondary/20 flex flex-col sm:flex-row sm:items-center
+                justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-primary">
                         <input type="checkbox" id="selectAllCheckbox" checked
                             class="rounded border-secondary/30 text-primary focus:ring-primary h-4 w-4">
                         <span>Tout sélectionner / désélectionner</span>
                     </label>
-                    <span id="selectedCountBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary">
+                    <span
+                        id="selectedCountBadge"
+                        class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary">
                         {{ count($suggestions) }} sélectionné(s)
                     </span>
                 </div>
@@ -87,7 +96,8 @@
                 <div class="flex items-center gap-3">
                     <label for="priority" class="text-xs font-semibold uppercase tracking-wider text-primary/60">Priorité :</label>
                     <select id="priority" name="priority"
-                        class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-3 focus:border-primary focus:ring-primary">
+                        class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-3 focus:border-primary
+                            focus:ring-primary">
                         <option value="normal" selected>Normale</option>
                         <option value="urgent">Urgente</option>
                         <option value="low">Faible</option>
@@ -98,7 +108,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-xs">
                     <thead>
-                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                        <tr class="bg-surface-light border-b border-secondary/20 text-left text-primary/60 uppercase
+                            tracking-wider font-semibold">
                             <th class="py-3 px-3 w-10 text-center">#</th>
                             <th class="py-3 px-3">Article & Référence</th>
                             <th class="py-3 px-3">Catégorie</th>
@@ -120,7 +131,8 @@
                             <tr class="hover:bg-surface-light/40 transition-colors suggestion-row">
                                 <td class="py-3 px-3 text-center">
                                     <input type="checkbox" name="items[{{ $idx }}][item_id]" value="{{ $item->id }}"
-                                        checked class="item-checkbox rounded border-secondary/30 text-primary focus:ring-primary h-4 w-4"
+                                        checked class="item-checkbox rounded border-secondary/30 text-primary
+                                            focus:ring-primary h-4 w-4"
                                         data-unit-price="{{ $s['estimated_unit_price'] }}"
                                         data-row-index="{{ $idx }}">
                                 </td>
@@ -145,7 +157,9 @@
                                         <input type="number" step="0.01" min="0.01"
                                             name="items[{{ $idx }}][quantity]"
                                             value="{{ $s['suggested_quantity'] }}"
-                                            class="item-qty-input w-20 text-center font-mono font-bold rounded-lg border-secondary/30 text-xs py-1 px-1.5 focus:border-primary focus:ring-primary"
+                                            class="item-qty-input w-20 text-center font-mono font-bold rounded-lg
+                                                border-secondary/30 text-xs py-1 px-1.5 focus:border-primary
+                                                focus:ring-primary"
                                             data-row-index="{{ $idx }}">
                                         <span class="text-[10px] text-primary/50">{{ $s['unit'] }}</span>
                                     </div>
@@ -153,13 +167,16 @@
                                 <td class="py-3 px-3 text-right font-mono text-primary/70">
                                     {{ number_format($s['estimated_unit_price'] / 100, 0, ',', ' ') }} FCFA
                                 </td>
-                                <td class="py-3 px-3 text-right font-mono font-bold text-primary row-total-cell" id="row-total-{{ $idx }}">
+                                <td
+                                    class="py-3 px-3 text-right font-mono font-bold text-primary row-total-cell"
+                                    id="row-total-{{ $idx }}">
                                     {{ number_format($s['estimated_total_cost'] / 100, 0, ',', ' ') }} FCFA
                                 </td>
                                 <td class="py-3 px-3">
                                     <input type="text" name="items[{{ $idx }}][notes]"
                                         placeholder="Notes facultatives..."
-                                        class="w-full text-xs rounded-lg border-secondary/30 py-1 px-2 text-primary focus:border-primary focus:ring-primary">
+                                        class="w-full text-xs rounded-lg border-secondary/30 py-1 px-2 text-primary
+                                            focus:border-primary focus:ring-primary">
                                 </td>
                             </tr>
                         @endforeach
@@ -167,7 +184,8 @@
                 </table>
             </div>
 
-            <div class="p-4 bg-surface-light border-t border-secondary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="p-4 bg-surface-light border-t border-secondary/20 flex flex-col sm:flex-row sm:items-center
+                justify-between gap-4">
                 <div class="text-xs text-primary/70">
                     <span>Total de la sélection : </span>
                     <strong class="font-mono text-sm text-primary" id="selectedTotalCost">
@@ -177,7 +195,9 @@
 
                 @droit('economat.control.suggestions.creer')
                     <button type="submit" id="submitBtn"
-                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-surface-dark text-white text-xs font-semibold rounded-lg shadow-sm transition-colors">
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary
+                            hover:bg-surface-dark text-white text-xs font-semibold rounded-lg shadow-sm
+                            transition-colors">
                         <i data-lucide="file-check" class="w-4 h-4"></i>
                         <span>Créer la Demande d'Achat interne</span>
                     </button>

@@ -16,7 +16,8 @@
         @module('restaurant')
             @droit('restaurant.banquets.voir')
                 <a href="{{ route('restaurant.banquets.index') }}"
-                   class="flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+                   class="flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-sm
+                       font-medium rounded-lg hover:bg-accent/20 transition-colors">
                     <i data-lucide="party-popper" class="w-4 h-4"></i>
                     Banquets
                 </a>
@@ -25,13 +26,15 @@
         @droit('bookings.creer')
             @if($isCashRegisterOpen)
                 <a href="{{ route('bookings.create') }}"
-                   class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                   class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                       hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Nouvelle réservation
                 </a>
             @else
                 <a href="{{ route('bookings.cash_register.open') }}"
-                   class="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
+                   class="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg
+                       hover:bg-amber-700 transition-colors">
                     <i data-lucide="unlock" class="w-4 h-4"></i>
                     Ouvrir la caisse
                 </a>
@@ -58,14 +61,16 @@
     </a>
     @droit('bookings.drafts.voir')
     <a href="{{ route('bookings.drafts.index') }}"
-       class="px-4 py-3 text-sm font-medium transition-colors text-primary/60 hover:text-primary flex items-center gap-1.5">
+       class="px-4 py-3 text-sm font-medium transition-colors text-primary/60 hover:text-primary flex items-center
+           gap-1.5">
         <i data-lucide="file-clock" class="w-3.5 h-3.5"></i>
         Brouillons
         @php
             $draftCount = \App\Models\BookingDraft::active()->where('created_by', auth()->id())->count();
         @endphp
         @if($draftCount > 0)
-            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white
+                text-[10px] font-bold">
                 {{ $draftCount > 9 ? '9+' : $draftCount }}
             </span>
         @endif
@@ -114,7 +119,10 @@
         <form method="GET" action="{{ route('bookings.index') }}" class="relative flex-1">
             <input type="hidden" name="tab" value="{{ $tab }}">
             <input type="hidden" name="status" value="{{ $status }}">
-            <x-live-search target="#bookings-table-container" placeholder="N° réservation, client..." class="w-full max-w-[360px]" />
+            <x-live-search
+                target="#bookings-table-container"
+                placeholder="N° réservation, client..."
+                class="w-full max-w-[360px]" />
         </form>
     </div>
 </div>
@@ -156,7 +164,9 @@
             </x-table.cell>
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-2">
-                    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
+                    <div
+                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary"
+                        aria-hidden="true">
                         <span class="text-[10px] font-semibold text-white">{{ mb_strtoupper(mb_substr($booking->customer->first_name, 0, 1) . mb_substr($booking->customer->last_name, 0, 1)) }}</span>
                     </div>
                     <span class="max-w-56 truncate text-sm text-primary">{{ $booking->customer->full_name }}</span>
@@ -192,7 +202,8 @@
                 <div class="flex flex-wrap items-center gap-1.5">
                     <span class="rounded-full border px-2 py-0.5 text-xs font-medium {{ $sc }}">{{ $booking->status->label() }}</span>
                     @if($booking->hasOverstayedCheckout($checkOutTime ?? null))
-                        <span class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+                        <span class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2
+                            py-0.5 text-[11px] font-semibold text-red-700"
                               title="Date de check-out prévue dépassée">
                             <i data-lucide="alert-triangle" class="w-3 h-3" aria-hidden="true"></i>
                             Dépassement
@@ -222,11 +233,14 @@
          x-transition:leave-end="opacity-0">
         
         {{-- Overlay backdrop --}}
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="showOpenRegisterModal = false"></div>
+        <div
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            @click="showOpenRegisterModal = false"></div>
 
         {{-- Modal card wrapper --}}
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all
+                sm:my-8 sm:w-full sm:max-w-lg"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                  x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -237,7 +251,8 @@
                 {{-- Header/Icon section --}}
                 <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 sm:mx-0 sm:h-10 sm:w-10 border border-amber-100">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full
+                            bg-amber-50 sm:mx-0 sm:h-10 sm:w-10 border border-amber-100">
                             <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                             </svg>
@@ -258,12 +273,15 @@
                 {{-- Action buttons --}}
                 <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2 border-t border-slate-100">
                     <a href="{{ route('bookings.cash_register.open') }}" 
-                       class="inline-flex w-full justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-amber-700 transition-all sm:ml-3 sm:w-auto">
+                       class="inline-flex w-full justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium
+                           text-white shadow-sm hover:bg-amber-700 transition-all sm:ml-3 sm:w-auto">
                         Ouvrir la caisse
                     </a>
                     <button type="button" 
                             @click="showOpenRegisterModal = false"
-                            class="mt-3 inline-flex w-full justify-center rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all sm:mt-0 sm:w-auto">
+                            class="mt-3 inline-flex w-full justify-center rounded-lg bg-white border border-slate-200
+                                px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50
+                                hover:text-slate-900 transition-all sm:mt-0 sm:w-auto">
                         Consulter uniquement
                     </button>
                 </div>

@@ -31,12 +31,16 @@
             </p>
         </div>
         <a href="{{ route('housekeeping.index') }}"
-           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30
+               bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="sparkles" class="w-4 h-4"></i> Housekeeping
         </a>
     </div>
 
-    <form method="GET" action="{{ route('housekeeping.journal.index') }}" class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
+    <form
+        method="GET"
+        action="{{ route('housekeeping.journal.index') }}"
+        class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
         <div class="flex flex-wrap items-end gap-3">
             <div>
                 <label for="du" class="block text-[11px] font-medium text-primary/50">Du</label>
@@ -73,7 +77,10 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Afficher</button>
+            <button
+                type="submit"
+                class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark
+                    transition-colors">Afficher</button>
         </div>
     </form>
 
@@ -155,7 +162,8 @@
                                         {{ $a->isRecouche() ? 'Recouche' : 'Départ' }}
                                     </span>
                                     @if($a->status === 'blocked')
-                                        <span class="ml-1 px-1.5 py-0.5 rounded border text-[10px] bg-red-50 text-red-700 border-red-200">Problème</span>
+                                        <span class="ml-1 px-1.5 py-0.5 rounded border text-[10px] bg-red-50
+                                            text-red-700 border-red-200">Problème</span>
                                     @elseif($a->status === 'cancelled')
                                         <span class="ml-1 px-1.5 py-0.5 rounded border text-[10px] {{ $neutre }}">Annulée</span>
                                     @endif

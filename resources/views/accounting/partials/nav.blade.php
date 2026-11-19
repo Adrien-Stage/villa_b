@@ -33,7 +33,8 @@
     @module('ledger')
         <span class="hidden sm:block w-px bg-secondary/20 mx-1 self-stretch"></span>
         <a href="{{ route('accounting.ledger.index') }}"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/20 transition-colors">
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-secondary/30
+                text-primary/70 hover:text-primary hover:bg-accent/20 transition-colors">
             <i data-lucide="book-marked" class="w-3.5 h-3.5"></i>
             Comptabilité générale
         </a>

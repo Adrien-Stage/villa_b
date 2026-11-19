@@ -54,7 +54,8 @@ class DemandesAchat extends Edition
         $etat = $valeurs['etat'];
 
         $lignes = PurchaseRequest::query()
-            ->with(['requestedBy:id,name', 'reviewedBy:id,name', 'lines', 'purchaseOrders:id,number,purchase_request_id'])
+            ->with(['requestedBy:id,name', 'reviewedBy:id,name', 'lines',
+                'purchaseOrders:id,number,purchase_request_id'])
             ->whereBetween('created_at', [$du->startOfDay(), $au->endOfDay()])
             ->when($etat === 'en_cours', fn ($q) => $q->enCours())
             ->when($etat === 'archivees', fn ($q) => $q->archivees())
@@ -68,7 +69,8 @@ class DemandesAchat extends Edition
                 'service' => $d->departmentLabel(),
                 'par' => $d->requestedBy?->name ?? '—',
                 'statut' => $d->statusLabel(),
-                'decision' => $d->reviewed_at ? ($d->reviewedBy?->name ?? '—') . ', le ' . $d->reviewed_at->format('d/m/Y') : '—',
+                'decision' => $d->reviewed_at ? ($d->reviewedBy?->name ?? '—') . ', le ' . $d->reviewed_at
+                    ->format('d/m/Y') : '—',
                 'ajustee' => $d->aEteAjustee() ? 'Oui' : '',
                 'bons' => $d->purchaseOrders->pluck('number')->implode(', ') ?: '—',
                 'montant' => (int) $d->total_estimated_amount,

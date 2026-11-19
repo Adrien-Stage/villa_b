@@ -225,7 +225,8 @@ class PermissionResolver
             if (($propres[$ligne->permission]['effect'] ?? null) === PermissionGrant::EFFET_DENY) {
                 continue;
             }
-            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope, 'origin' => $ligne->origin];
+            $propres[$ligne->permission] = ['effect' => $ligne->effect, 'scope' => $ligne->scope, 'origin' => $ligne
+                ->origin];
         }
 
         foreach ($propres as $permission => $effet) {

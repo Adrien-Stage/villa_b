@@ -5,10 +5,17 @@
     <title>Réservation Offerte - Validation Requise</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f7f5f2; font-family: 'Inter', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f5f2; padding: 40px 20px;">
+    <table
+        width="100%"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+        style="background-color: #f7f5f2; padding: 40px 20px;">
         <tr>
             <td align="center">
-                <table width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2dcd5; border-radius: 16px; overflow: hidden; border-collapse: collapse;">
+                <table
+                    width="100%"
+                    style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2dcd5; border-radius: 16px; overflow: hidden; border-collapse: collapse;">
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #391F0E; padding: 30px 40px; text-align: center;">
@@ -36,7 +43,9 @@
                             </p>
 
                             <!-- Booking Details Card -->
-                            <table width="100%" style="background-color: #fcfbfa; border: 1px solid #eed4a3; border-radius: 8px; margin-bottom: 30px; border-collapse: separate; padding: 15px 20px;">
+                            <table
+                                width="100%"
+                                style="background-color: #fcfbfa; border: 1px solid #eed4a3; border-radius: 8px; margin-bottom: 30px; border-collapse: separate; padding: 15px 20px;">
                                 <tr>
                                     <td style="font-size: 13px; color: #7a7a7a; padding: 8px 0; border-bottom: 1px solid #f0ebe4;">N° de Réservation :</td>
                                     <td style="font-size: 13px; font-weight: bold; color: #391F0E; text-align: right; padding: 8px 0; border-bottom: 1px solid #f0ebe4;">{{ $bookingNumber }}</td>
@@ -71,7 +80,9 @@
 
                             <!-- CTA Button -->
                             <div style="text-align: center; margin-bottom: 30px;">
-                                <a href="{{ $actionUrl }}" style="display: inline-block; background-color: #391F0E; color: #CCAB87; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(57, 31, 14, 0.2);">
+                                <a
+                                    href="{{ $actionUrl }}"
+                                    style="display: inline-block; background-color: #391F0E; color: #CCAB87; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(57, 31, 14, 0.2);">
                                     Voir la Réservation
                                 </a>
                             </div>

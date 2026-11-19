@@ -10,10 +10,16 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="{{ route('restaurant.waste.index') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+        <a
+            href="{{ route('restaurant.waste.index') }}"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Fiches de pertes
         </a>
-        <a href="{{ route('restaurant.pantry.index') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+        <a
+            href="{{ route('restaurant.pantry.index') }}"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="warehouse" class="w-3.5 h-3.5"></i> Garde-manger
         </a>
     </div>
@@ -24,13 +30,24 @@
     <form method="GET" action="{{ route('restaurant.consumption.index') }}" class="flex flex-wrap items-end gap-3">
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Du</label>
-            <input type="date" name="start_date" value="{{ $startDate }}" class="text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <input
+                type="date"
+                name="start_date"
+                value="{{ $startDate }}"
+                class="text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
         </div>
         <div>
             <label class="block text-xs font-medium text-primary/60 mb-1">Au</label>
-            <input type="date" name="end_date" value="{{ $endDate }}" class="text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+            <input
+                type="date"
+                name="end_date"
+                value="{{ $endDate }}"
+                class="text-xs rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
         </div>
-        <button type="submit" class="py-2 px-4 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity">
+        <button
+            type="submit"
+            class="py-2 px-4 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90
+                transition-opacity">
             Actualiser
         </button>
     </form>

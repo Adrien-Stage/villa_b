@@ -26,8 +26,10 @@ class CustomerCsvController extends Controller
     {
         if ($request->boolean('template')) {
             return $this->streamCsv('modele_clients.csv', self::HEADERS, [
-                ['Jean', 'Dupont', 'jean.dupont@example.com', '+237690000000', 'CM', 'Camerounaise', '', '', '1985-03-12', 'Bonapriso', 'Douala', 'non', 'non', ''],
-                ['Marie', 'Laurent', 'marie.l@example.fr', '+33600000000', 'FR', 'Française', '', '', '', '', 'Paris', 'oui', 'non', 'Cliente fidèle'],
+                ['Jean', 'Dupont', 'jean.dupont@example.com', '+237690000000', 'CM', 'Camerounaise', '', '',
+                    '1985-03-12', 'Bonapriso', 'Douala', 'non', 'non', ''],
+                ['Marie', 'Laurent', 'marie.l@example.fr', '+33600000000', 'FR', 'Française', '', '', '', '', 'Paris',
+                    'oui', 'non', 'Cliente fidèle'],
             ]);
         }
 

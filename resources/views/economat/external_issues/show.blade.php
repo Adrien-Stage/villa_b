@@ -11,11 +11,14 @@
 
 <div class="max-w-4xl mx-auto space-y-5">
     <div class="flex items-center justify-between gap-4">
-        <a href="{{ route('economat.external_issues.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary">
+        <a
+            href="{{ route('economat.external_issues.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux sorties
         </a>
         <a href="{{ route('economat.external_issues.print', $sortie) }}" target="_blank"
-           class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg text-primary text-xs font-semibold hover:bg-gray-50 shadow-sm">
+           class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg
+               text-primary text-xs font-semibold hover:bg-gray-50 shadow-sm">
             <i data-lucide="printer" class="w-4 h-4"></i> Imprimer le bon de sortie
         </a>
     </div>
@@ -40,7 +43,8 @@
                     </p>
                 @endif
                 @if($sortie->notes)
-                    <p class="mt-3 rounded-lg border border-secondary/15 bg-surface-light px-3 py-2 text-xs text-primary/80">{{ $sortie->notes }}</p>
+                    <p class="mt-3 rounded-lg border border-secondary/15 bg-surface-light px-3 py-2 text-xs
+                        text-primary/80">{{ $sortie->notes }}</p>
                 @endif
             </div>
             <div class="text-right sm:border-l sm:border-secondary/15 sm:pl-6">
@@ -102,7 +106,8 @@
                     @foreach($sortie->lines as $ligne)
                         <tr>
                             <td class="px-4 py-2.5 font-medium text-primary">{{ $ligne->item?->name ?? '—' }}</td>
-                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
+                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs
+                                text-primary/70">{{ $ligne->item?->shortUnit() ?? $ligne->item?->unit }}</td>
                             <td class="px-4 py-2.5 text-right font-mono">
                                 {{ $qte($ligne->quantity) }}
                                 @if($ligne->packaging_name)<span class="block text-[10px] font-sans text-primary/55">{{ $ligne->enConditionnement((float) $ligne->quantity) }}</span>@endif
@@ -121,12 +126,18 @@
         @droit('economat.external_issues.cancel')
             <details class="bg-white border border-red-200 rounded-xl p-4">
                 <summary class="cursor-pointer text-xs font-semibold text-red-700">Annuler cette sortie (le matériel revient en stock)</summary>
-                <form method="POST" action="{{ route('economat.external_issues.cancel', $sortie) }}" class="mt-3 space-y-2">
+                <form
+                    method="POST"
+                    action="{{ route('economat.external_issues.cancel', $sortie) }}"
+                    class="mt-3 space-y-2">
                     @csrf
                     <label for="motif-annulation" class="block text-xs text-primary/70">Motif de l'annulation</label>
                     <textarea id="motif-annulation" name="cancellation_reason" rows="2" required maxlength="500"
                               class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary">{{ old('cancellation_reason') }}</textarea>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">Confirmer l'annulation</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg
+                            hover:bg-red-700">Confirmer l'annulation</button>
                 </form>
             </details>
         @enddroit

@@ -29,7 +29,8 @@
 
         <input type="text" name="derogation_motif" value="{{ old('derogation_motif') }}"
                placeholder="Motif — ex. : établissement de six personnes, contrôle mensuel du directeur"
-               class="mt-2 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500">
+               class="mt-2 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs outline-none
+                   focus:border-amber-500">
 
         @error('derogation_motif')
             <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>

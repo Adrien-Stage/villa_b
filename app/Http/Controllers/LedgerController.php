@@ -47,7 +47,8 @@ class LedgerController extends Controller
 
         $dernieres = JournalEntry::with('journal')->latest('entry_date')->latest('id')->limit(8)->get();
 
-        return view('accounting.ledger.index', compact('exercice', 'periode', 'balance', 'totaux', 'enRetard', 'dernieres'));
+        return view('accounting.ledger.index', compact('exercice', 'periode', 'balance', 'totaux', 'enRetard',
+            'dernieres'));
     }
 
     /** Plan de comptes. */
@@ -241,7 +242,8 @@ class LedgerController extends Controller
         // Stock repris à l'économat sur l'exercice : il n'entre au grand livre
         // que par ces à-nouveaux. Les lignes de classe 3 sont proposées d'office.
         $repriseStock = $exercice
-            ? app(\App\Services\LedgerPostingService::class)->openingStockByAccount($exercice->starts_on, $exercice->ends_on)
+            ? app(\App\Services\LedgerPostingService::class)->openingStockByAccount($exercice->starts_on, $exercice
+                ->ends_on)
             : [];
 
         return view('accounting.ledger.opening', compact('exercice', 'exercices', 'comptes', 'repriseStock'));
@@ -261,7 +263,8 @@ class LedgerController extends Controller
 
         // Montants saisis en francs, stockés en centimes.
         $lignes = collect($validated['lines'])
-            ->filter(fn ($l) => !empty($l['account']) && ((float) ($l['debit'] ?? 0) > 0 || (float) ($l['credit'] ?? 0) > 0))
+            ->filter(fn ($l) => !empty($l['account']) && ((float) ($l['debit'] ?? 0) > 0 || (float) ($l['credit']
+                ?? 0) > 0))
             ->map(fn ($l) => [
                 'account' => $l['account'],
                 'debit'   => (int) round((float) ($l['debit'] ?? 0) * 100),

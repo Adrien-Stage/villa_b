@@ -116,10 +116,15 @@ class CancellationPolicyService
 
                 if ($isLateCancellation) {
                     $theoreticalPenalty = match ($penaltyType) {
-                        CancellationPolicy::PENALTY_FIRST_NIGHT  => (int) ($booking->price_per_night ?: ($booking->total_nights > 0 ? (int) round($booking->total_room_amount / $booking->total_nights) : $booking->total_amount)),
-                        CancellationPolicy::PENALTY_PERCENTAGE   => (int) round($booking->total_amount * min(100, (int) $penaltyVal) / 100),
-                        CancellationPolicy::PENALTY_FIXED_AMOUNT => min((int) $booking->total_amount, (int) $penaltyVal),
-                        default                                  => (int) ($booking->price_per_night ?: $booking->total_amount),
+                        CancellationPolicy::PENALTY_FIRST_NIGHT  => (int) ($booking->price_per_night ?: ($booking
+                            ->total_nights > 0 ? (int) round($booking->total_room_amount / $booking
+                            ->total_nights) : $booking->total_amount)),
+                        CancellationPolicy::PENALTY_PERCENTAGE   => (int) round($booking->total_amount * min(100,
+                            (int) $penaltyVal) / 100),
+                        CancellationPolicy::PENALTY_FIXED_AMOUNT => min((int) $booking->total_amount,
+                            (int) $penaltyVal),
+                        default                                  => (int) ($booking->price_per_night ?: $booking
+                            ->total_amount),
                     };
                 }
             }
@@ -178,7 +183,8 @@ class CancellationPolicyService
                     $activeSession = app(CashRegisterCircuit::class)->receptionActivePour($user);
 
                     if (!$activeSession) {
-                        throw new \InvalidArgumentException('Veuillez ouvrir votre caisse de réception pour effectuer un remboursement en espèces.');
+                        throw new \InvalidArgumentException(
+                            'Veuillez ouvrir votre caisse de réception pour effectuer un remboursement en espèces.');
                     }
 
                     // Génération référence de paiement négatif

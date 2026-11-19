@@ -71,10 +71,12 @@ class AnalyticController extends Controller
         }
 
         if ($ecriture === null) {
-            return back()->with('error', 'Rien à refléter : soit la période est déjà reflétée, soit elle ne porte aucune charge.');
+            return back()->with('error',
+                'Rien à refléter : soit la période est déjà reflétée, soit elle ne porte aucune charge.');
         }
 
-        return back()->with('success', 'Reflet analytique enregistré — la classe 9 se solde à zéro, le bilan est inchangé.');
+        return back()->with('success',
+            'Reflet analytique enregistré — la classe 9 se solde à zéro, le bilan est inchangé.');
     }
 
     /**

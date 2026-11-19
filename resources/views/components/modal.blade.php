@@ -49,7 +49,8 @@
                 </div>
                 
                 @if(isset($footer))
-                    <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                    <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                        rounded-b-2xl">
                         {{ $footer }}
                     </div>
                 @endif
@@ -61,7 +62,8 @@
                 </div>
                 
                 @if(isset($footer))
-                    <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                    <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                        rounded-b-2xl">
                         {{ $footer }}
                     </div>
                 @endif

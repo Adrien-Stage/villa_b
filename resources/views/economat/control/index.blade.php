@@ -17,7 +17,8 @@
     <div class="flex flex-wrap items-center gap-2 shrink-0">
         @droit('economat.control.suggestions.voir')
             <a href="{{ route('economat.control.suggestions.index') }}"
-                class="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white text-xs font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="shopping-cart" class="w-4 h-4"></i>
                 <span>Propositions d'achat</span>
                 @if($report['alerts']['total'] > 0)
@@ -30,7 +31,8 @@
 
         @droit('economat.control.variances.voir')
             <a href="{{ route('economat.control.variances.index', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary
+                    text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
                 <i data-lucide="git-compare" class="w-4 h-4 text-primary/60"></i>
                 <span>Audit des écarts</span>
             </a>
@@ -38,7 +40,8 @@
 
         @droit('economat.control.voir')
             <a href="{{ route('economat.control.print', ['start_date' => $startDate, 'end_date' => $endDate]) }}" target="_blank"
-                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary
+                    text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4 text-primary/60"></i>
                 <span>Imprimer le rapport</span>
             </a>
@@ -50,7 +53,10 @@
 
 {{-- Barre de filtrage par période --}}
 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 shadow-sm">
-    <form method="GET" action="{{ route('economat.control.index') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <form
+        method="GET"
+        action="{{ route('economat.control.index') }}"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
             <i data-lucide="calendar" class="w-4 h-4 text-primary/50"></i>
             <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Période d'analyse :</span>
@@ -59,19 +65,24 @@
             <div class="flex items-center gap-2">
                 <label for="start_date" class="text-xs text-primary/60">Du</label>
                 <input type="date" id="start_date" name="start_date" value="{{ $startDate }}"
-                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary focus:ring-primary">
+                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary
+                        focus:ring-primary">
             </div>
             <div class="flex items-center gap-2">
                 <label for="end_date" class="text-xs text-primary/60">Au</label>
                 <input type="date" id="end_date" name="end_date" value="{{ $endDate }}"
-                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary focus:ring-primary">
+                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary
+                        focus:ring-primary">
             </div>
             <button type="submit"
-                class="px-3.5 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                class="px-3.5 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark
+                    transition-colors">
                 Actualiser
             </button>
             @if(request()->has('start_date') || request()->has('end_date'))
-                <a href="{{ route('economat.control.index') }}" class="text-xs text-primary/50 hover:text-primary underline">
+                <a
+                    href="{{ route('economat.control.index') }}"
+                    class="text-xs text-primary/50 hover:text-primary underline">
                     Réinitialiser
                 </a>
             @endif
@@ -197,13 +208,15 @@
                 <span class="font-mono text-red-700">+{{ number_format($report['variances']['restaurant']['loss_value'] / 100, 0, ',', ' ') }} FCFA</span>
             </div>
 
-            <div class="flex items-center justify-between py-2.5 bg-surface-light px-3 rounded-lg text-sm font-semibold border border-secondary/20">
+            <div class="flex items-center justify-between py-2.5 bg-surface-light px-3 rounded-lg text-sm font-semibold
+                border border-secondary/20">
                 <span class="text-primary font-bold">Coût matière réel total consommé</span>
                 <span class="font-mono text-primary text-base">{{ number_format($report['real_kitchen_cost'] / 100, 0, ',', ' ') }} FCFA</span>
             </div>
         </div>
 
-        <div class="mt-4 p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start gap-2">
+        <div class="mt-4 p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start
+            gap-2">
             <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
             <div>
                 <strong>Formule de calcul :</strong> Ratio Food Cost = (Coût théorique + Pertes & avaries + Pertes d'inventaire) / Chiffre d'Affaires × 100.
@@ -247,7 +260,8 @@
 
         <div class="mt-4 pt-4 border-t border-secondary/15">
             <a href="{{ route('economat.control.variances.index', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-medium rounded-lg transition-colors">
+                class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-secondary/10
+                    hover:bg-secondary/20 text-primary text-xs font-medium rounded-lg transition-colors">
                 <span>Détail complet des écarts par article</span>
                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </a>
@@ -347,11 +361,13 @@
                                     </td>
                                     <td class="py-2 text-right">
                                         @if($item->current_stock <= 0)
-                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold
+                                                bg-red-100 text-red-800">
                                                 Rupture
                                             </span>
                                         @else
-                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold
+                                                bg-amber-100 text-amber-800">
                                                 Stock bas
                                             </span>
                                         @endif
@@ -367,7 +383,8 @@
         @droit('economat.control.suggestions.voir')
             <div class="mt-4 pt-4 border-t border-secondary/15">
                 <a href="{{ route('economat.control.suggestions.index') }}"
-                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-surface-dark text-white text-xs font-medium rounded-lg transition-colors shadow-sm">
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary
+                        hover:bg-surface-dark text-white text-xs font-medium rounded-lg transition-colors shadow-sm">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i>
                     <span>Générer les commandes de réapprovisionnement</span>
                 </a>

@@ -27,7 +27,8 @@
             <div class="flex flex-wrap justify-end gap-2">
                 @droit('users.modifier')
                     <button type="button" onclick="openEditModal('{{ $membre->id }}')"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:opacity-95">
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold
+                            text-white hover:opacity-95">
                         <i data-lucide="pencil" class="h-3.5 w-3.5" aria-hidden="true"></i> Modifier
                     </button>
                 @enddroit
@@ -36,7 +37,10 @@
                           onsubmit="return confirm(@js('Réinitialiser le mot de passe de '.$membre->name.' ? Un mot de passe provisoire vous sera donné ; ses sessions ouvertes seront fermées.'))">
                         @csrf
                         <input type="hidden" name="retour" value="fiche">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3
+                                py-2 text-xs font-semibold text-primary hover:bg-accent/20">
                             <i data-lucide="key-round" class="h-3.5 w-3.5" aria-hidden="true"></i> Réinitialiser le mot de passe
                         </button>
                     </form>
@@ -46,8 +50,13 @@
                           @if($membre->is_active) onsubmit="return confirm(@js('Désactiver le compte de '.$membre->name.' ? La personne ne pourra plus se connecter.'))" @endif>
                         @csrf
                         <input type="hidden" name="retour" value="fiche">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold {{ $membre->is_active ? 'border-red-200 bg-white text-red-700 hover:bg-red-50' : 'border-green-200 bg-white text-green-700 hover:bg-green-50' }}">
-                            <i data-lucide="{{ $membre->is_active ? 'user-x' : 'user-check' }}" class="h-3.5 w-3.5" aria-hidden="true"></i>
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold {{ $membre->is_active ? 'border-red-200 bg-white text-red-700 hover:bg-red-50' : 'border-green-200 bg-white text-green-700 hover:bg-green-50' }}">
+                            <i
+                                data-lucide="{{ $membre->is_active ? 'user-x' : 'user-check' }}"
+                                class="h-3.5 w-3.5"
+                                aria-hidden="true"></i>
                             {{ $membre->is_active ? 'Désactiver le compte' : 'Réactiver le compte' }}
                         </button>
                     </form>
@@ -158,22 +167,37 @@
                                                         $action = \App\Support\PermissionLabels::action($droit);
                                                     @endphp
                                                     @if($etat === 'accorde' && $peutExcepter)
-                                                        <label title="{{ $droit }}" class="inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors focus-within:ring-2 focus-within:ring-secondary/40"
+                                                        <label title="{{ $droit }}" class="inline-flex cursor-pointer
+                                                            items-center gap-1 rounded-md border px-2 py-0.5
+                                                            text-[11px] transition-colors focus-within:ring-2
+                                                            focus-within:ring-secondary/40"
                                                                :class="choix.includes(@js($droit)) ? 'border-red-300 bg-red-50 text-red-700 line-through' : @js($teinte)">
-                                                            <input type="checkbox" name="permissions[]" value="{{ $droit }}" x-model="choix" class="h-3 w-3 rounded border-secondary/40">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="permissions[]"
+                                                                value="{{ $droit }}"
+                                                                x-model="choix"
+                                                                class="h-3 w-3 rounded border-secondary/40">
                                                             {{ $action }}
                                                         </label>
                                                     @elseif($etat === 'accorde')
-                                                        <span title="{{ $droit }}" class="rounded-md border px-2 py-0.5 text-[11px] {{ $teinte }}">{{ $action }}</span>
+                                                        <span
+                                                            title="{{ $droit }}"
+                                                            class="rounded-md border px-2 py-0.5 text-[11px] {{ $teinte }}">{{ $action }}</span>
                                                     @else
                                                         @php $exception = $acces[$droit]['exception']; @endphp
                                                         <span title="{{ $droit }} — {{ $exception->reason }}{{ $exception->expires_at ? ' — jusqu\'au ' . $exception->expires_at->format('d/m/Y') : '' }}"
-                                                              class="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] text-red-700">
+                                                              class="inline-flex items-center gap-1.5 rounded-md border
+                                                                  border-red-200 bg-red-50 px-2 py-0.5 text-[11px]
+                                                                  text-red-700">
                                                             <s>{{ $action }}</s>
                                                             @if($etat === 'retire_console')
                                                                 <span class="text-red-700/70">(console)</span>
                                                             @elseif($peutLever)
-                                                                <button type="submit" form="retablir-{{ $exception->id }}" class="font-semibold underline-offset-2 hover:underline">Rétablir</button>
+                                                                <button
+                                                                    type="submit"
+                                                                    form="retablir-{{ $exception->id }}"
+                                                                    class="font-semibold underline-offset-2 hover:underline">Rétablir</button>
                                                             @endif
                                                         </span>
                                                     @endif
@@ -190,7 +214,10 @@
                 </div>
 
                 @if($peutExcepter)
-                    <div x-show="choix.length > 0" x-cloak class="sticky bottom-3 mt-3 rounded-xl border border-red-200 bg-red-50 p-3 shadow-lg">
+                    <div
+                        x-show="choix.length > 0"
+                        x-cloak
+                        class="sticky bottom-3 mt-3 rounded-xl border border-red-200 bg-red-50 p-3 shadow-lg">
                         <p class="text-xs font-semibold text-red-800">
                             <span x-text="choix.length"></span> accès à retirer à {{ $membre->name }}
                         </p>
@@ -200,7 +227,10 @@
                                    class="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs">
                             <input type="date" name="expires_at" aria-label="Retiré jusqu'au (facultatif)" title="Retiré jusqu'au (facultatif)"
                                    class="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs">
-                            <button type="submit" class="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-800">Retirer</button>
+                            <button
+                                type="submit"
+                                class="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-semibold text-white
+                                    hover:bg-red-800">Retirer</button>
                         </div>
                         <p class="mt-1 text-[11px] text-red-700/80">Sans date, le retrait vaut jusqu'à ce qu'on le lève.</p>
                     </div>
@@ -211,7 +241,11 @@
             @if($peutLever)
                 @foreach($acces as $droit => $a)
                     @if($a['etat'] === 'retire')
-                        <form id="retablir-{{ $a['exception']->id }}" method="POST" action="{{ route('droits.exceptions.destroy', $a['exception']) }}" class="hidden">
+                        <form
+                            id="retablir-{{ $a['exception']->id }}"
+                            method="POST"
+                            action="{{ route('droits.exceptions.destroy', $a['exception']) }}"
+                            class="hidden">
                             @csrf @method('DELETE')
                             <input type="hidden" name="retour" value="fiche">
                         </form>
@@ -276,7 +310,11 @@
                             @if($e->origin !== 'etablissement') — posée par la console @endif
                         </p>
                         @if($e->origin === 'etablissement' && $peutLever)
-                            <form method="POST" action="{{ route('droits.exceptions.destroy', $e) }}" class="mt-1" onsubmit="return confirm('Lever cette exception ?');">
+                            <form
+                                method="POST"
+                                action="{{ route('droits.exceptions.destroy', $e) }}"
+                                class="mt-1"
+                                onsubmit="return confirm('Lever cette exception ?');">
                                 @csrf @method('DELETE')
                                 <input type="hidden" name="retour" value="fiche">
                                 <button type="submit" class="text-[11px] font-semibold text-red-700 hover:underline">Lever</button>
@@ -290,14 +328,21 @@
             </details>
 
             @if($peutExcepter)
-                <form method="POST" action="{{ route('droits.exceptions.store') }}" class="mt-4 space-y-2 border-t border-secondary/15 pt-4">
+                <form
+                    method="POST"
+                    action="{{ route('droits.exceptions.store') }}"
+                    class="mt-4 space-y-2 border-t border-secondary/15 pt-4">
                     @csrf
                     <input type="hidden" name="user_id" value="{{ $membre->id }}">
                     <input type="hidden" name="effect" value="allow">
                     <input type="hidden" name="retour" value="fiche">
                     <label for="f-droit" class="block text-xs font-semibold text-primary/70">Accorder un accès en plus</label>
                     <p class="text-[11px] text-primary/50">Un accès que ses rôles ne lui donnent pas. Pour en retirer, cochez-les dans « Ses accès ».</p>
-                    <select id="f-droit" name="permission" required class="w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-1.5 text-xs">
+                    <select
+                        id="f-droit"
+                        name="permission"
+                        required
+                        class="w-full rounded-lg border border-secondary/30 bg-white px-2.5 py-1.5 text-xs">
                         <option value="">— Choisir l'accès —</option>
                         @foreach($aAccorder as $module => $ecrans)
                             <optgroup label="{{ $module }}">
@@ -309,13 +354,28 @@
                             </optgroup>
                         @endforeach
                     </select>
-                    <input name="reason" required maxlength="255" value="{{ old('effect') === 'allow' ? old('reason') : '' }}" placeholder="Motif" aria-label="Motif" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
-                    <input type="date" name="expires_at" aria-label="Accordé jusqu'au (facultatif)" title="Accordé jusqu'au (facultatif)" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+                    <input
+                        name="reason"
+                        required
+                        maxlength="255"
+                        value="{{ old('effect') === 'allow' ? old('reason') : '' }}"
+                        placeholder="Motif"
+                        aria-label="Motif"
+                        class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+                    <input
+                        type="date"
+                        name="expires_at"
+                        aria-label="Accordé jusqu'au (facultatif)"
+                        title="Accordé jusqu'au (facultatif)"
+                        class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
                     <label class="flex items-start gap-1.5 text-[11px] text-primary/70">
                         <input type="checkbox" name="derogation" value="1" class="mt-0.5 rounded border-secondary/40">
                         <span>Dérogation à la séparation des tâches — à cocher seulement si l'accès fait cumuler des fonctions incompatibles (encaisser et contrôler, par exemple) et que c'est voulu.</span>
                     </label>
-                    <button type="submit" class="w-full rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white">Accorder</button>
+                    <button
+                        type="submit"
+                        class="w-full rounded-lg bg-primary px-3 py-2 text-xs font-semibold
+                            text-white">Accorder</button>
                 </form>
             @endif
         </section>

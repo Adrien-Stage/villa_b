@@ -26,13 +26,15 @@
     <div class="flex items-center gap-2">
         @if($order->payment_status === 'paid')
             <a href="{{ route('restaurant.billing.receipt', $order) }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">
+               class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                   hover:bg-surface-dark">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                 Recu
             </a>
         @endif
         <a href="{{ route('restaurant.billing.index') }}"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20">
+            class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20">
             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
             Retour
         </a>
@@ -121,8 +123,14 @@
                 @endunless
                 <form method="POST" action="{{ route('restaurant.billing.paid', $order) }}" class="space-y-2">
                     @csrf
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45">Methode de paiement</label>
-                    <select id="payment-method" name="payment_method" required class="w-full px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <label class="block text-xs font-semibold uppercase tracking-widest
+                        text-primary/45">Methode de paiement</label>
+                    <select
+                        id="payment-method"
+                        name="payment_method"
+                        required
+                        class="w-full px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary
+                            outline-none focus:border-secondary">
                         <option value="">Choisir...</option>
                         @foreach($paymentMethods as $method)
                             <option value="{{ $method }}">{{ strtoupper(str_replace('_',' ', $method)) }}</option>
@@ -130,8 +138,12 @@
                     </select>
 
                     <div id="booking-select-wrapper" class="hidden">
-                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mt-2">Resident (sur chambre)</label>
-                        <select name="booking_id" class="w-full px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                            mt-2">Resident (sur chambre)</label>
+                        <select
+                            name="booking_id"
+                            class="w-full px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary
+                                outline-none focus:border-secondary">
                             <option value="">Selectionner un sejour en cours...</option>
                             @foreach($checkedInBookings as $booking)
                                 <option value="{{ $booking->id }}">
@@ -142,12 +154,21 @@
                         <p class="text-[11px] text-primary/45 mt-1">La commande sera ajoutée au folio et apparaîtra sur la facture finale.</p>
                     </div>
 
-                    <button type="submit" class="w-full px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Marquer payee</button>
+                    <button
+                        type="submit"
+                        class="w-full px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                            text-white">Marquer payee</button>
                 </form>
             @else
-                <form method="POST" action="{{ route('restaurant.billing.unpaid', $order) }}" onsubmit="return confirm('Annuler le paiement ?');">
+                <form
+                    method="POST"
+                    action="{{ route('restaurant.billing.unpaid', $order) }}"
+                    onsubmit="return confirm('Annuler le paiement ?');">
                     @csrf
-                    <button type="submit" class="w-full px-4 py-2 text-xs font-semibold rounded-lg border border-secondary/25 bg-white text-primary hover:bg-accent/20">
+                    <button
+                        type="submit"
+                        class="w-full px-4 py-2 text-xs font-semibold rounded-lg border border-secondary/25 bg-white
+                            text-primary hover:bg-accent/20">
                         Annuler paiement
                     </button>
                 </form>

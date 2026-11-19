@@ -71,7 +71,8 @@ class StockCutService
             $portions = [];
             foreach ($lignes as $ligne) {
                 $article = $this->portion($ligne, $restaurant, $item);
-                $portions[] = [$article, round((float) $ligne['quantity'], 3), $this->conversion($item->unit, $article->unit, $article->name)];
+                $portions[] = [$article, round((float) $ligne['quantity'], 3), $this->conversion($item->unit,
+                    $article->unit, $article->name)];
             }
 
             $decoupe = StockCut::create([
@@ -125,7 +126,8 @@ class StockCutService
                     quantity: $quantiteCuisine,
                     reason: RestaurantPantryMovement::REASON_TRANSFER_IN,
                     unitCost: $coutUnitaire,
-                    notes: "Découpe {$decoupe->number} — " . Conditionnement::libelle($poids, $item->unit) . " de {$item->name}",
+                    notes: "Découpe {$decoupe->number} — " . Conditionnement::libelle($poids, $item->unit)
+                        . " de {$item->name}",
                 );
             }
 
@@ -139,7 +141,8 @@ class StockCutService
         if (!empty($ligne['pantry_item_id'])) {
             $article = RestaurantPantryItem::query()->duRestaurant($restaurant)->find((int) $ligne['pantry_item_id']);
             if ($article === null) {
-                throw new \InvalidArgumentException("Une portion n'appartient pas au garde-manger de « {$restaurant->name} ».");
+                throw new \InvalidArgumentException(
+                    "Une portion n'appartient pas au garde-manger de « {$restaurant->name} ».");
             }
 
             return $article;

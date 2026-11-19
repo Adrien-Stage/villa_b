@@ -135,7 +135,8 @@ class StockRequisitionService
         $requisition = StockRequisition::query()->lockForUpdate()->findOrFail($requisition->id);
 
         if ($requisition->canBeEndorsed()) {
-            throw new \RuntimeException("Cette demande attend encore le visa du chef de service : elle n'est pas arrivée à l'économat.");
+            throw new \RuntimeException(
+                "Cette demande attend encore le visa du chef de service : elle n'est pas arrivée à l'économat.");
         }
 
         if (!$requisition->canBeReviewed()) {
@@ -280,7 +281,8 @@ class StockRequisitionService
 
         // 2. Recherche par nom identique
         $trimmedName = trim($stockItem->name);
-        $item = RestaurantPantryItem::duRestaurant($restaurant)->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($trimmedName)])->first();
+        $item = RestaurantPantryItem::duRestaurant($restaurant)->whereRaw('LOWER(TRIM(name)) = ?',
+            [mb_strtolower($trimmedName)])->first();
         if ($item) {
             if (!$item->stock_item_id) {
                 $item->update(['stock_item_id' => $stockItem->id]);

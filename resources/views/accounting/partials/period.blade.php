@@ -8,7 +8,8 @@
 <div class="flex items-center gap-2">
     @if($prev)
         <a href="{{ url()->current() }}?month={{ $prev }}"
-            class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20"
+            class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/20
+                text-primary/60 hover:text-primary hover:bg-accent/20"
             aria-label="Mois précédent">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
         </a>
@@ -16,12 +17,14 @@
 
     <form method="GET" action="{{ url()->current() }}" class="relative">
         <input type="month" name="month" value="{{ $month }}" onchange="this.form.submit()"
-            class="h-9 pl-3 pr-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="h-9 pl-3 pr-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none
+                focus:border-secondary">
     </form>
 
     @if($next)
         <a href="{{ url()->current() }}?month={{ $next }}"
-            class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20"
+            class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/20
+                text-primary/60 hover:text-primary hover:bg-accent/20"
             aria-label="Mois suivant">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </a>

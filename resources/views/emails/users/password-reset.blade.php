@@ -6,7 +6,13 @@
     <title>Réinitialisation de votre mot de passe — {{ $appName }}</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fdfbf7; color: #391F0E; margin: 0; padding: 30px 15px;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; border: 1px solid #eed4a3; overflow: hidden; box-shadow: 0 4px 12px rgba(57, 31, 14, 0.05);">
+    <table
+        align="center"
+        border="0"
+        cellpadding="0"
+        cellspacing="0"
+        width="100%"
+        style="max-width: 600px; background-color: #ffffff; border-radius: 12px; border: 1px solid #eed4a3; overflow: hidden; box-shadow: 0 4px 12px rgba(57, 31, 14, 0.05);">
         <!-- Header -->
         <tr>
             <td style="background-color: #391F0E; padding: 25px 30px; text-align: center;">
@@ -59,7 +65,10 @@
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 10px 0 25px 0;">
                     <tr>
                         <td align="center">
-                            <a href="{{ $loginUrl }}" target="_blank" style="background-color: #391F0E; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
+                            <a
+                                href="{{ $loginUrl }}"
+                                target="_blank"
+                                style="background-color: #391F0E; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
                                 Se connecter maintenant
                             </a>
                         </td>

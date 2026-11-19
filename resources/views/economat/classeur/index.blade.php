@@ -19,9 +19,13 @@
 
     <div class="grid gap-4 md:grid-cols-2 mb-8">
         {{-- Exporter --}}
-        <form method="GET" action="{{ route('economat.classeur.export') }}" class="bg-white rounded-xl border border-secondary/20 p-5 flex flex-col gap-4">
+        <form
+            method="GET"
+            action="{{ route('economat.classeur.export') }}"
+            class="bg-white rounded-xl border border-secondary/20 p-5 flex flex-col gap-4">
             <div class="flex items-start gap-3">
-                <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center
+                    shrink-0">
                     <i data-lucide="file-down" class="w-5 h-5" aria-hidden="true"></i>
                 </span>
                 <div>
@@ -39,14 +43,21 @@
                     @endforeach
                 </select>
             </label>
-            <button type="submit" class="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <button
+                type="submit"
+                class="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm
+                    font-medium rounded-lg hover:bg-surface-dark transition-colors">
                 <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Télécharger le classeur
             </button>
         </form>
 
         {{-- Importer --}}
         @droit('economat.classeur.import')
-            <form method="POST" action="{{ route('economat.classeur.import') }}" enctype="multipart/form-data" class="bg-white rounded-xl border border-secondary/20 p-5 flex flex-col gap-4">
+            <form
+                method="POST"
+                action="{{ route('economat.classeur.import') }}"
+                enctype="multipart/form-data"
+                class="bg-white rounded-xl border border-secondary/20 p-5 flex flex-col gap-4">
                 @csrf
                 <div class="flex items-start gap-3">
                     <span class="w-9 h-9 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
@@ -70,10 +81,15 @@
                 <label class="block">
                     <span class="text-xs font-medium text-primary/70">Fichier (.xlsx, .xls, .ods)</span>
                     <input type="file" name="fichier" required accept=".xlsx,.xls,.ods"
-                           class="mt-1 block w-full text-sm text-primary/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/40 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent/60">
+                           class="mt-1 block w-full text-sm text-primary/70 file:mr-3 file:rounded-lg file:border-0
+                               file:bg-accent/40 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary
+                               hover:file:bg-accent/60">
                     @error('fichier')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
                 </label>
-                <button type="submit" class="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                <button
+                    type="submit"
+                    class="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white
+                        text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="scan-search" class="w-4 h-4" aria-hidden="true"></i> Analyser le fichier
                 </button>
             </form>
@@ -89,7 +105,11 @@
         </p>
     </div>
 
-    <x-table :rows="$imports" empty="Aucun import pour l'instant." empty-icon="file-spreadsheet" caption="Imports de classeurs">
+    <x-table
+        :rows="$imports"
+        empty="Aucun import pour l'instant."
+        empty-icon="file-spreadsheet"
+        caption="Imports de classeurs">
         <x-slot:head>
             <x-table.col>Import</x-table.col>
             <x-table.col hide="md">Magasin</x-table.col>
@@ -102,7 +122,9 @@
         @foreach($imports as $import)
             <x-table.row>
                 <x-table.cell>
-                    <a href="{{ route('economat.classeur.show', $import) }}" class="font-medium text-primary hover:underline">{{ $import->reference }}</a>
+                    <a
+                        href="{{ route('economat.classeur.show', $import) }}"
+                        class="font-medium text-primary hover:underline">{{ $import->reference }}</a>
                     <p class="text-[11px] text-primary/50">{{ $import->created_at->format('d/m/Y H:i') }} · {{ $import->creator?->name ?? '—' }}</p>
                 </x-table.cell>
                 <x-table.cell hide="md" class="text-xs text-primary/70">{{ $import->magasinLabel() }}</x-table.cell>

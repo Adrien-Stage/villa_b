@@ -73,7 +73,8 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
              x-transition:leave="ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl border border-secondary/20">
+             class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8
+                 sm:w-full sm:max-w-xl border border-secondary/20">
 
             {{-- Formulaire de soumission --}}
             <form :action="actionUrl" method="POST">
@@ -89,14 +90,19 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                         </div>
                         <div>
                             <h3 class="font-heading font-bold text-primary text-base" id="modal-title">
-                                Signaler un problème — Chambre <span class="text-secondary font-black" x-text="roomNumber"></span>
+                                Signaler un problème — Chambre <span
+                                    class="text-secondary font-black"
+                                    x-text="roomNumber"></span>
                             </h3>
                             <p class="text-xs text-primary/60">
                                 Qualifiez la nature de l'incident pour orienter l'intervention.
                             </p>
                         </div>
                     </div>
-                    <button type="button" @click="closeModal()" class="text-primary/40 hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-gray-100">
+                    <button
+                        type="button"
+                        @click="closeModal()"
+                        class="text-primary/40 hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-gray-100">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -109,53 +115,73 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {{-- Option A : Problème Technique --}}
-                            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all text-left"
+                            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all
+                                text-left"
                                    :class="issueType === 'technique'
                                        ? 'border-red-500 bg-red-50/50 shadow-xs ring-1 ring-red-500'
                                        : 'border-secondary/20 hover:border-red-300 bg-white hover:bg-red-50/20'">
-                                <input type="radio" name="issue_type" value="technique" x-model="issueType" class="sr-only">
+                                <input
+                                    type="radio"
+                                    name="issue_type"
+                                    value="technique"
+                                    x-model="issueType"
+                                    class="sr-only">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-7 h-7 rounded-lg bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                                        <div class="w-7 h-7 rounded-lg bg-red-100 text-red-700 flex items-center
+                                            justify-center shrink-0">
                                             <i data-lucide="wrench" class="w-4 h-4"></i>
                                         </div>
                                         <span class="font-semibold text-xs text-red-950">Problème technique</span>
                                     </div>
                                     <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
                                           :class="issueType === 'technique' ? 'border-red-600 bg-red-600' : 'border-gray-300'">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white" x-show="issueType === 'technique'"></span>
+                                        <span
+                                            class="w-1.5 h-1.5 rounded-full bg-white"
+                                            x-show="issueType === 'technique'"></span>
                                     </span>
                                 </div>
                                 <p class="text-[11px] text-primary/70 leading-relaxed mb-2">
                                     Panne, fuite, électricité, clim, serrure, télévision, casse…
                                 </p>
-                                <span class="mt-auto inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100/80 px-2 py-0.5 rounded">
+                                <span class="mt-auto inline-flex items-center gap-1 text-[10px] font-bold text-red-700
+                                    bg-red-100/80 px-2 py-0.5 rounded">
                                     <i data-lucide="lock" class="w-3 h-3"></i> Passe en maintenance auto
                                 </span>
                             </label>
 
                             {{-- Option B : Besoin Interne Housekeeping --}}
-                            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all text-left"
+                            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all
+                                text-left"
                                    :class="issueType === 'interne'
                                        ? 'border-amber-500 bg-amber-50/50 shadow-xs ring-1 ring-amber-500'
                                        : 'border-secondary/20 hover:border-amber-300 bg-white hover:bg-amber-50/20'">
-                                <input type="radio" name="issue_type" value="interne" x-model="issueType" class="sr-only">
+                                <input
+                                    type="radio"
+                                    name="issue_type"
+                                    value="interne"
+                                    x-model="issueType"
+                                    class="sr-only">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                                        <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center
+                                            justify-center shrink-0">
                                             <i data-lucide="package-search" class="w-4 h-4"></i>
                                         </div>
                                         <span class="font-semibold text-xs text-amber-950">Besoin interne étages</span>
                                     </div>
                                     <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
                                           :class="issueType === 'interne' ? 'border-amber-600 bg-amber-600' : 'border-gray-300'">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white" x-show="issueType === 'interne'"></span>
+                                        <span
+                                            class="w-1.5 h-1.5 rounded-full bg-white"
+                                            x-show="issueType === 'interne'"></span>
                                     </span>
                                 </div>
                                 <p class="text-[11px] text-primary/70 leading-relaxed mb-2">
                                     Savon ou produits finis, linge manquant, réassort chariot…
                                 </p>
-                                <span class="mt-auto inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded">
+                                <span class="mt-auto inline-flex items-center gap-1 text-[10px] font-bold
+                                    text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded">
                                     <i data-lucide="check" class="w-3 h-3"></i> Reste en cycle ménage
                                 </span>
                             </label>
@@ -163,7 +189,9 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                     </div>
 
                     {{-- Explication contextuelle claire --}}
-                    <div x-show="issueType === 'technique'" class="p-3 rounded-xl bg-red-50 border border-red-200 text-left">
+                    <div
+                        x-show="issueType === 'technique'"
+                        class="p-3 rounded-xl bg-red-50 border border-red-200 text-left">
                         <div class="flex items-start gap-2.5">
                             <i data-lucide="alert-circle" class="w-4 h-4 text-red-600 shrink-0 mt-0.5"></i>
                             <div class="text-xs text-red-900 leading-relaxed">
@@ -173,7 +201,9 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                         </div>
                     </div>
 
-                    <div x-show="issueType === 'interne'" class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-left">
+                    <div
+                        x-show="issueType === 'interne'"
+                        class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-left">
                         <div class="flex items-start gap-2.5">
                             <i data-lucide="info" class="w-4 h-4 text-amber-800 shrink-0 mt-0.5"></i>
                             <div class="text-xs text-amber-900 leading-relaxed">
@@ -187,7 +217,11 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                     <div x-show="issueType === 'technique'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                         <div>
                             <label class="block text-xs font-semibold text-primary mb-1">Spécialité technique</label>
-                            <select name="specialty" x-model="specialty" class="w-full text-xs rounded-lg border border-secondary/30 px-3 py-2 bg-white focus:border-primary outline-none">
+                            <select
+                                name="specialty"
+                                x-model="specialty"
+                                class="w-full text-xs rounded-lg border border-secondary/30 px-3 py-2 bg-white
+                                    focus:border-primary outline-none">
                                 <option value="plomberie">Plomberie / Sanitaires</option>
                                 <option value="electricite">Électricité / Éclairage</option>
                                 <option value="climatisation">Climatisation / Chauffage</option>
@@ -200,7 +234,11 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-primary mb-1">Priorité</label>
-                            <select name="priority" x-model="priority" class="w-full text-xs rounded-lg border border-secondary/30 px-3 py-2 bg-white focus:border-primary outline-none">
+                            <select
+                                name="priority"
+                                x-model="priority"
+                                class="w-full text-xs rounded-lg border border-secondary/30 px-3 py-2 bg-white
+                                    focus:border-primary outline-none">
                                 <option value="normal">Normale</option>
                                 <option value="high" selected>Haute</option>
                                 <option value="urgent">Urgente</option>
@@ -231,7 +269,8 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                 </div>
 
                 {{-- Pied de modale avec boutons --}}
-                <div class="px-6 py-4 border-t border-secondary/20 flex flex-wrap items-center justify-between gap-3 bg-gray-50 rounded-b-2xl">
+                <div class="px-6 py-4 border-t border-secondary/20 flex flex-wrap items-center justify-between gap-3
+                    bg-gray-50 rounded-b-2xl">
                     <button type="button"
                             @click="closeModal()"
                             class="px-4 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
@@ -242,7 +281,8 @@ window.openHousekeepingIssueModal = function(roomId, roomNumber, actionUrl, defa
                             :class="(!notes || !notes.trim())
                                 ? 'opacity-50 cursor-not-allowed bg-primary/60 text-white'
                                 : (issueType === 'technique' ? 'bg-red-600 hover:bg-red-700 text-white shadow-xs' : 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs')"
-                            class="px-4 py-2 text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1.5">
+                            class="px-4 py-2 text-xs font-semibold rounded-lg transition-all inline-flex items-center
+                                gap-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i>
                         <span x-text="issueType === 'technique' ? 'Confirmer (Passer en Maintenance)' : 'Signaler le besoin interne'"></span>
                     </button>

@@ -33,7 +33,8 @@ class BudgetDeGestion
      */
     public function grille(int $annee, ?array $budgetSaisi = null): array
     {
-        $lignes = BudgetLine::query()->where('year', $annee)->get()->keyBy(fn (BudgetLine $l) => $l->center . '|' . $l->nature);
+        $lignes = BudgetLine::query()->where('year', $annee)->get()->keyBy(fn (BudgetLine $l) => $l->center . '|' . $l
+            ->nature);
         $realise = $this->realise->parMois($annee);
         $moisEcoules = $this->moisEcoules($annee);
 
@@ -44,7 +45,8 @@ class BudgetDeGestion
         foreach (BudgetLine::centres() as $centre => $libelle) {
             $parNature = [];
             foreach (BudgetLine::NATURES as $nature => $libelleNature) {
-                $budget = $budgetSaisi[$centre][$nature] ?? ($lignes->get($centre . '|' . $nature)?->montants() ?? array_fill(1, 12, 0));
+                $budget = $budgetSaisi[$centre][$nature] ?? ($lignes->get($centre . '|' . $nature)?->montants()
+                    ?? array_fill(1, 12, 0));
                 $reel = $realise[$centre][$nature];
                 $signe = $nature === BudgetLine::NATURE_REVENUE ? 1 : -1;
 
@@ -72,7 +74,8 @@ class BudgetDeGestion
             $centres[] = ['centre' => $centre, 'libelle' => $libelle, 'lignes' => $parNature];
         }
 
-        $estValide = $lignes->isNotEmpty() && $lignes->every(fn (BudgetLine $l) => $l->status === BudgetLine::STATUS_VALIDATED);
+        $estValide = $lignes->isNotEmpty() && $lignes->every(fn (BudgetLine $l) => $l
+            ->status === BudgetLine::STATUS_VALIDATED);
 
         return [
             'annee' => $annee,
@@ -103,7 +106,8 @@ class BudgetDeGestion
         return [
             'montant' => $montant,
             'pct' => $budget > 0 ? round($montant * 100 / $budget, 1) : null,
-            'favorable' => $montant === 0 ? null : ($nature === BudgetLine::NATURE_REVENUE ? $montant > 0 : $montant < 0),
+            'favorable' => $montant === 0 ? null : (
+                $nature === BudgetLine::NATURE_REVENUE ? $montant > 0 : $montant < 0),
         ];
     }
 
@@ -114,7 +118,8 @@ class BudgetDeGestion
     {
         $dejaValide = BudgetLine::where('year', $annee)->where('status', BudgetLine::STATUS_VALIDATED)->exists();
         if ($dejaValide && !$forcer) {
-            throw new \RuntimeException("Le budget {$annee} est validé par le RAF et ne peut plus être modifié sans réouverture.");
+            throw new \RuntimeException(
+                "Le budget {$annee} est validé par le RAF et ne peut plus être modifié sans réouverture.");
         }
 
         DB::transaction(function () use ($annee, $saisie, $par) {
@@ -132,11 +137,15 @@ class BudgetDeGestion
             }
         });
 
-        $produits = (int) BudgetLine::where('year', $annee)->where('nature', BudgetLine::NATURE_REVENUE)->get()->sum(fn ($l) => array_sum($l->montants()));
-        $charges = (int) BudgetLine::where('year', $annee)->where('nature', BudgetLine::NATURE_COST)->get()->sum(fn ($l) => array_sum($l->montants()));
+        $produits = (int) BudgetLine::where('year', $annee)->where('nature', BudgetLine::NATURE_REVENUE)->get()
+            ->sum(fn ($l) => array_sum($l->montants()));
+        $charges = (int) BudgetLine::where('year', $annee)->where('nature', BudgetLine::NATURE_COST)->get()
+            ->sum(fn ($l) => array_sum($l->montants()));
 
-        AuditLog::record($par->id, 'budget', "Budget {$annee} enregistré : produits " . number_format($produits / 100, 0, ',', ' ')
-            . ' FCFA, charges ' . number_format($charges / 100, 0, ',', ' ') . ' FCFA', 'pilotage', ['annee' => $annee]);
+        AuditLog::record($par->id, 'budget', "Budget {$annee} enregistré : produits " . number_format($produits / 100,
+            0, ',', ' ')
+            . ' FCFA, charges ' . number_format($charges / 100, 0, ',', ' ') . ' FCFA', 'pilotage',
+                ['annee' => $annee]);
     }
 
     /**
@@ -157,7 +166,8 @@ class BudgetDeGestion
             ]);
         });
 
-        AuditLog::record($raf->id, 'budget', "Budget {$annee} validé formellement par le RAF", 'pilotage', ['annee' => $annee]);
+        AuditLog::record($raf->id, 'budget', "Budget {$annee} validé formellement par le RAF", 'pilotage',
+            ['annee' => $annee]);
     }
 
     /**
@@ -190,7 +200,8 @@ class BudgetDeGestion
         $fin = $jusquAu?->endOfDay() ?? $debut->endOfMonth();
         $part = ((int) $debut->diffInDays($fin->startOfDay()) + 1) / $debut->daysInMonth;
 
-        $lignes = BudgetLine::query()->where('year', $annee)->get()->keyBy(fn (BudgetLine $l) => $l->center . '|' . $l->nature);
+        $lignes = BudgetLine::query()->where('year', $annee)->get()->keyBy(fn (BudgetLine $l) => $l->center . '|' . $l
+            ->nature);
         $realise = $this->realise->periode($debut, $fin);
 
         $resultat = [];
@@ -198,7 +209,8 @@ class BudgetDeGestion
             foreach (array_keys(BudgetLine::NATURES) as $nature) {
                 $budget = (int) round(($lignes->get($centre . '|' . $nature)?->mois($mois) ?? 0) * $part);
                 $reel = $realise[$centre][$nature];
-                $resultat[$centre][$nature] = ['budget' => $budget, 'realise' => $reel, 'ecart' => $this->ecart($nature, $budget, $reel)];
+                $resultat[$centre][$nature] = ['budget' => $budget, 'realise' => $reel, 'ecart' => $this->ecart($nature,
+                    $budget, $reel)];
             }
         }
 

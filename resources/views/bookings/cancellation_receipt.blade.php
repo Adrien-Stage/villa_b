@@ -53,14 +53,16 @@
     {{-- Actions supérieures (masquées impérativement à l'impression) --}}
     <div class="no-print print:hidden flex items-center justify-between gap-4 mb-5">
         <a href="{{ route('bookings.show', $booking) }}"
-           class="inline-flex items-center gap-2 text-sm font-medium text-primary/70 hover:text-primary transition-colors">
+           class="inline-flex items-center gap-2 text-sm font-medium text-primary/70 hover:text-primary
+               transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Retour à la réservation</span>
         </a>
 
         <div class="flex items-center gap-3">
             <button onclick="window.print()"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 <span>Imprimer l'attestation</span>
             </button>
@@ -68,14 +70,20 @@
     </div>
 
     {{-- Fiche imprimable (parfaitement calibrée pour 1 seule page A4) --}}
-    <div id="cancellation-receipt-print" class="bg-white rounded-2xl border border-secondary/20 shadow-sm p-6 sm:p-8 print:border-none print:shadow-none print:p-0 text-primary">
+    <div
+        id="cancellation-receipt-print"
+        class="bg-white rounded-2xl border border-secondary/20 shadow-sm p-6 sm:p-8 print:border-none print:shadow-none
+            print:p-0 text-primary">
         
         {{-- En-tête établissement & titre --}}
         <div class="flex items-start justify-between border-b border-secondary/20 pb-4 mb-4">
             <div class="flex items-center gap-3">
                 @if(!empty($tenant?->settings['logo']))
                     <div class="w-11 h-11 rounded-xl overflow-hidden border border-secondary/20 flex-shrink-0">
-                        <img src="{{ asset('storage/' . $tenant->settings['logo']) }}" alt="{{ $tenant->name }}" class="w-full h-full object-cover">
+                        <img
+                            src="{{ asset('storage/' . $tenant->settings['logo']) }}"
+                            alt="{{ $tenant->name }}"
+                            class="w-full h-full object-cover">
                     </div>
                 @endif
                 <div>
@@ -92,7 +100,8 @@
             </div>
 
             <div class="text-right">
-                <span class="inline-block px-2.5 py-0.5 bg-red-100 text-red-800 text-[11px] font-bold uppercase tracking-wider rounded-md mb-1">
+                <span class="inline-block px-2.5 py-0.5 bg-red-100 text-red-800 text-[11px] font-bold uppercase
+                    tracking-wider rounded-md mb-1">
                     Réservation Annulée
                 </span>
                 <p class="font-mono text-sm font-bold text-primary">
@@ -115,7 +124,8 @@
         </div>
 
         {{-- Deux colonnes compactes : Réservation d'origine & Client --}}
-        <div class="grid grid-cols-2 print:grid-cols-2 gap-4 bg-gray-50/80 rounded-xl p-3.5 border border-secondary/15 mb-3.5 text-xs">
+        <div class="grid grid-cols-2 print:grid-cols-2 gap-4 bg-gray-50/80 rounded-xl p-3.5 border border-secondary/15
+            mb-3.5 text-xs">
             <div>
                 <h3 class="font-semibold text-primary uppercase tracking-wider text-[10px] text-primary/50 mb-1.5">
                     Réservation d'Origine
@@ -217,7 +227,8 @@
                         <td class="px-4 py-2 text-red-900 font-medium">
                             Frais d'annulation / Pénalité retenue
                             @if($cancellation?->penalty_waived)
-                                <span class="ml-2 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                <span class="ml-2 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5
+                                    rounded-full">
                                     Exonéré (Geste commercial)
                                 </span>
                             @endif

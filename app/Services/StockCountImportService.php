@@ -17,7 +17,8 @@ use Illuminate\Support\Collection;
  */
 class StockCountImportService
 {
-    public const COLONNES = ['id', 'référence', 'article', 'catégorie', 'unité', 'stock théorique', 'stock compté', 'motif', 'note'];
+    public const COLONNES = ['id', 'référence', 'article', 'catégorie', 'unité', 'stock théorique', 'stock compté',
+        'motif', 'note'];
 
     /** Colonnes sans lesquelles un fichier ne se lit pas. */
     public const COLONNES_REQUISES = ['article', 'stock compté'];
@@ -33,7 +34,8 @@ class StockCountImportService
         $articles = $inventaire
             ? $inventaire->lines()->with('item.category')->get()
                 ->filter(fn (StockCountLine $l) => $l->item !== null)
-                ->map(fn (StockCountLine $l) => [$l->item, (float) $l->theoretical_quantity, $l->counted_quantity, $l->reason, $l->notes])
+                ->map(fn (StockCountLine $l) => [$l->item, (float) $l->theoretical_quantity, $l->counted_quantity,
+                    $l->reason, $l->notes])
             : StockItem::query()->active()->with('category')
                 ->when($categorieId, fn ($q) => $q->where('stock_category_id', $categorieId))
                 ->when($zoneId, fn ($q) => $q->where('storage_zone_id', $zoneId))

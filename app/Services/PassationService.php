@@ -145,7 +145,8 @@ class PassationService
             'especes'          => (int) $encaisses->where('method', 'cash')->sum('amount')
                 + (int) $banquetPaiements->where('payment_method', 'cash')->sum('amount'),
             'decaissements' => $session->disbursements()->with('user')->orderBy('created_at')->get(),
-            'ventesPos'    => ReceptionSale::query()->with('user')->where('cash_register_session_id', $session->id)->orderBy('created_at')->get(),
+            'ventesPos'    => ReceptionSale::query()->with('user')->where('cash_register_session_id', $session->id)
+                ->orderBy('created_at')->get(),
             'theorique'    => $session->theoreticalBalance(),
             'compte'       => $session->actual_closing_amount,
             'ecart'        => $session->discrepancy_amount,
@@ -260,7 +261,8 @@ class PassationService
      *
      * @throws \DomainException
      */
-    public function reprendre(ShiftHandover $passation, User $entrant, int $compteCentimes, ?string $notes = null): CashRegisterSession
+    public function reprendre(ShiftHandover $passation, User $entrant, int $compteCentimes,
+        ?string $notes = null): CashRegisterSession
     {
         if ($compteCentimes < 0) {
             throw new \DomainException('Le montant compté ne peut pas être négatif.');
@@ -270,7 +272,8 @@ class PassationService
             $passation = ShiftHandover::query()->lockForUpdate()->findOrFail($passation->id);
 
             if (!$passation->isPending()) {
-                throw new \DomainException('Cette passation a déjà été reprise par ' . ($passation->toUser?->name ?? 'un autre réceptionniste') . '.');
+                throw new \DomainException('Cette passation a déjà été reprise par ' . ($passation->toUser
+                    ?->name ?? 'un autre réceptionniste') . '.');
             }
             if ($passation->from_user_id === $entrant->id) {
                 throw new \DomainException('Vous ne pouvez pas reprendre votre propre passation : un autre réceptionniste ou le chef de réception la reprend.');
@@ -314,7 +317,8 @@ class PassationService
         AuditLog::record($entrant->id, 'passation_reprise',
             'Prise de service : tiroir repris à ' . ($passation->fromUser?->name ?? '—') . ', '
                 . number_format($compteCentimes / 100, 0, ',', ' ') . ' FCFA comptés'
-                . ($passation->discrepancy_amount !== 0 ? ' (écart ' . number_format($passation->discrepancy_amount / 100, 0, ',', ' ') . ' FCFA)' : '')
+                . ($passation->discrepancy_amount !== 0 ? ' (écart ' . number_format($passation
+                    ->discrepancy_amount / 100, 0, ',', ' ') . ' FCFA)' : '')
                 . ($passation->reprisHorsPlanning() ? ' — à la place de ' . $passation->plannedUser?->name : ''),
             'bookings', ['shift_handover_id' => $passation->id]);
 

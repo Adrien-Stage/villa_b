@@ -17,13 +17,19 @@
         placeholder="Rechercher un code ou un intitulé…"
         width="w-full sm:max-w-sm"
     />
-    <select name="classe" onchange="this.form.submit()" class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+    <select
+        name="classe"
+        onchange="this.form.submit()"
+        class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
         <option value="">Toutes les classes</option>
         @foreach(\App\Models\Account::CLASS_LABELS as $num => $libelle)
             <option value="{{ $num }}" @selected($classe === $num)>Classe {{ $num }} — {{ $libelle }}</option>
         @endforeach
     </select>
-    <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shrink-0">
+    <button
+        type="submit"
+        class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+            transition-colors shrink-0">
         Filtrer
     </button>
 </form>
@@ -55,10 +61,12 @@
                             </td>
                             <td class="px-5 py-2 text-right whitespace-nowrap">
                                 @if($compte->is_collective)
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-secondary/15 text-primary text-[10px] font-semibold">collectif</span>
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-secondary/15 text-primary
+                                        text-[10px] font-semibold">collectif</span>
                                 @endif
                                 @unless($compte->is_postable)
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary/60 text-[10px] font-semibold">regroupement</span>
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary/60
+                                        text-[10px] font-semibold">regroupement</span>
                                 @endunless
                             </td>
                         </tr>

@@ -52,7 +52,8 @@ class PermissionMatrix
         $ecarts = PermissionGrant::query()
             ->enVigueur()
             ->orderBy('subject_type')->orderBy('subject_id')->orderBy('permission')
-            ->get(['id', 'subject_type', 'subject_id', 'permission', 'effect', 'scope', 'origin', 'reason', 'expires_at']);
+            ->get(['id', 'subject_type', 'subject_id', 'permission', 'effect', 'scope', 'origin', 'reason',
+                'expires_at']);
 
         $echues = PermissionGrant::query()
             ->where('subject_type', PermissionGrant::SUJET_USER)
@@ -71,7 +72,8 @@ class PermissionMatrix
             // matrice comme celle de l'hôtel.
             'classement' => PermissionLabels::classement(array_keys(PermissionCatalog::all())),
             'modules' => PermissionCatalog::modules(),
-            'ecritures' => array_values(array_intersect(PermissionCatalog::ecritures(), array_keys(PermissionCatalog::all()))),
+            'ecritures' => array_values(array_intersect(PermissionCatalog::ecritures(),
+                array_keys(PermissionCatalog::all()))),
             'roles' => array_map(
                 static fn (array $r): array => [
                     'slug' => $r['slug'],
@@ -250,7 +252,8 @@ class PermissionMatrix
             ->with('roles')
             ->orderBy('name')
             ->get()
-            ->reject(static fn (User $u): bool => in_array($u->rolesDetenus(), [['customer_guest'], [RoleCatalog::SUPPORT]], true))
+            ->reject(static fn (User $u): bool => in_array($u->rolesDetenus(), [['customer_guest'],
+                [RoleCatalog::SUPPORT]], true))
             ->values();
 
         $resolveur = app(PermissionResolver::class);

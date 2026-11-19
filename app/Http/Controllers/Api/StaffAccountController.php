@@ -111,7 +111,8 @@ class StaffAccountController extends Controller
             $changements[] = 'mot de passe';
 
             // Envoi immédiat du mot de passe temporaire par courriel
-            app(\App\Services\MailNotificationService::class)->sendPasswordResetNotification($user, $valide['password']);
+            app(\App\Services\MailNotificationService::class)->sendPasswordResetNotification($user,
+                $valide['password']);
         }
         if (array_key_exists('actif', $valide)) {
             $user->is_active = (bool) $valide['actif'];

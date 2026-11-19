@@ -165,7 +165,8 @@ class RoomAvailabilityService
     }
 
     /** Séjours actifs de la chambre qui recoupent la période demandée. */
-    private function overlappingBookings(Room $room, CarbonInterface $checkIn, CarbonInterface $checkOut, ?int $ignoreBookingId = null)
+    private function overlappingBookings(Room $room, CarbonInterface $checkIn, CarbonInterface $checkOut,
+        ?int $ignoreBookingId = null)
     {
         return Booking::query()
             ->where('room_id', $room->id)
@@ -182,7 +183,8 @@ class RoomAvailabilityService
      * Motif de refus d'une réservation sur la période demandée, ou null si
      * elle peut passer. Le message est destiné au client comme au réceptionniste.
      */
-    public function conflictReason(Room $room, CarbonInterface|string $checkIn, CarbonInterface|string $checkOut, ?int $ignoreBookingId = null): ?string
+    public function conflictReason(Room $room, CarbonInterface|string $checkIn, CarbonInterface|string $checkOut,
+        ?int $ignoreBookingId = null): ?string
     {
         $checkIn  = Carbon::parse($checkIn)->startOfDay();
         $checkOut = Carbon::parse($checkOut)->startOfDay();
@@ -191,6 +193,20 @@ class RoomAvailabilityService
             return 'La date de départ doit être postérieure à la date d\'arrivée.';
         }
 
+        if (($refus = $this->indisponibiliteCommerciale($room)) !== null) {
+            return $refus;
+        }
+
+        if ($this->overlappingBookings($room, $checkIn, $checkOut, $ignoreBookingId)->isNotEmpty()) {
+            return 'Cette chambre est déjà occupée sur cette période.';
+        }
+
+        return $this->delaiApresDepart($room, $checkIn, $ignoreBookingId)
+            ?? $this->remiseEnEtatEnCours($room, $checkIn);
+    }
+
+    private function indisponibiliteCommerciale(Room $room): ?string
+    {
         if (!$room->is_active) {
             return 'Cette chambre n\'est pas commercialisée.';
         }
@@ -201,10 +217,11 @@ class RoomAvailabilityService
                 : 'Cette chambre est hors service.';
         }
 
-        if ($this->overlappingBookings($room, $checkIn, $checkOut, $ignoreBookingId)->isNotEmpty()) {
-            return 'Cette chambre est déjà occupée sur cette période.';
-        }
+        return null;
+    }
 
+    private function delaiApresDepart(Room $room, CarbonInterface $checkIn, ?int $ignoreBookingId): ?string
+    {
         // Séjour qui s'achève le jour de l'arrivée demandée : reste à savoir
         // si le ménage a le temps de passer dans la journée.
         $sameDayDeparture = Booking::query()
@@ -223,6 +240,11 @@ class RoomAvailabilityService
                 . 'après le ménage. Choisissez le lendemain ou une autre chambre.';
         }
 
+        return null;
+    }
+
+    private function remiseEnEtatEnCours(Room $room, CarbonInterface $checkIn): ?string
+    {
         // Arrivée du jour sur une chambre encore en remise en état : ce qui
         // compte est l'heure d'arrivée du client, pas l'instant présent. Une
         // chambre prête à 14 h accepte une arrivée à 14 h.
@@ -240,7 +262,8 @@ class RoomAvailabilityService
     }
 
     /** Raccourci booléen sur conflictReason(). */
-    public function isFreeBetween(Room $room, CarbonInterface|string $checkIn, CarbonInterface|string $checkOut, ?int $ignoreBookingId = null): bool
+    public function isFreeBetween(Room $room, CarbonInterface|string $checkIn, CarbonInterface|string $checkOut,
+        ?int $ignoreBookingId = null): bool
     {
         return $this->conflictReason($room, $checkIn, $checkOut, $ignoreBookingId) === null;
     }

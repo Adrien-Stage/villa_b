@@ -90,7 +90,8 @@ class RealiseDeGestion
         if ($source === self::SOURCE_GRAND_LIVRE) {
             $analyse = $this->analytique->resultByCenter($debut, $fin);
             foreach ($analyse['rows'] as $ligne) {
-                $resultat[$ligne['center']] = [BudgetLine::NATURE_REVENUE => (int) $ligne['revenue'], BudgetLine::NATURE_COST => (int) $ligne['cost']];
+                $resultat[$ligne['center']] = [BudgetLine::NATURE_REVENUE => (int) $ligne['revenue'],
+                    BudgetLine::NATURE_COST => (int) $ligne['cost']];
             }
             $resultat[BudgetLine::CENTER_STRUCTURE] = [
                 BudgetLine::NATURE_REVENUE => (int) $analyse['unassigned']['revenue'],
@@ -104,7 +105,8 @@ class RealiseDeGestion
         $resultat['hebergement'][BudgetLine::NATURE_REVENUE] = (int) $recettes['hebergement'];
         $resultat['restaurant'][BudgetLine::NATURE_REVENUE] = (int) $recettes['restaurant'];
         $resultat['boutique'][BudgetLine::NATURE_REVENUE] = (int) $recettes['boutique'];
-        $resultat[BudgetLine::CENTER_STRUCTURE][BudgetLine::NATURE_COST] = (int) $this->caisse->depenses($debut, $fin)['total'];
+        $resultat[BudgetLine::CENTER_STRUCTURE][BudgetLine::NATURE_COST] = (int) $this->caisse->depenses($debut,
+            $fin)['total'];
 
         return $resultat;
     }

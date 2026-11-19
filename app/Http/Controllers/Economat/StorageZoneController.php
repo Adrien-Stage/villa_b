@@ -44,7 +44,8 @@ class StorageZoneController extends Controller
         $ancien = $zone->name;
         $zone->update(['name' => trim($valide['name']), 'is_active' => $request->boolean('is_active', true)]);
 
-        $this->journal("Zone de rangement « {$ancien} » renommée « {$zone->name} »" . ($zone->is_active ? '' : ' (hors service)'), $zone);
+        $this->journal("Zone de rangement « {$ancien} » renommée « {$zone->name} »"
+            . ($zone->is_active ? '' : ' (hors service)'), $zone);
 
         return $this->retour()->with('success', "Zone « {$zone->name} » mise à jour.");
     }

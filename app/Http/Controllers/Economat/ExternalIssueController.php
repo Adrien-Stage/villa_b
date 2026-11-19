@@ -52,7 +52,8 @@ class ExternalIssueController extends Controller
                 'bons'     => (clone $validees)->count(),
                 'valeur'   => (int) (clone $validees)->sum('total_value'),
                 'a_rendre' => (clone $validees)->whereNotNull('expected_return_at')->count(),
-                'en_retard' => (clone $validees)->whereNotNull('expected_return_at')->whereDate('expected_return_at', '<', today())->count(),
+                'en_retard' => (clone $validees)->whereNotNull('expected_return_at')->whereDate('expected_return_at',
+                    '<', today())->count(),
             ],
         ]);
     }
@@ -71,7 +72,8 @@ class ExternalIssueController extends Controller
     {
         $data = $request->validate([
             'reason'                   => ['required', Rule::in(array_keys(ExternalIssue::REASONS))],
-            'reason_other'             => ['nullable', 'required_if:reason,' . ExternalIssue::REASON_AUTRE, 'string', 'max:160'],
+            'reason_other'             => ['nullable', 'required_if:reason,' . ExternalIssue::REASON_AUTRE, 'string',
+                'max:160'],
             'issued_at'                => ['nullable', 'date', 'before_or_equal:now'],
             'beneficiary_name'         => ['required', 'string', 'max:160'],
             'beneficiary_organisation' => ['nullable', 'string', 'max:160'],
@@ -99,8 +101,10 @@ class ExternalIssueController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        AuditLog::record(Auth::id(), 'sortie_externe', "Sortie hors établissement {$sortie->number} — {$sortie->reasonLabel()} — "
-            . "{$sortie->beneficiaire}, " . number_format($sortie->total_value / 100, 0, ',', ' ') . ' FCFA', 'economat',
+        AuditLog::record(Auth::id(), 'sortie_externe',
+            "Sortie hors établissement {$sortie->number} — {$sortie->reasonLabel()} — "
+            . "{$sortie->beneficiaire}, " . number_format($sortie->total_value / 100, 0, ',', ' ') . ' FCFA',
+                'economat',
             ['external_issue_id' => $sortie->id]);
 
         return redirect()->route('economat.external_issues.show', $sortie)
@@ -137,7 +141,8 @@ class ExternalIssueController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        AuditLog::record(Auth::id(), 'sortie_externe', "Annulation de la sortie {$sortie->number} : {$sortie->cancellation_reason}",
+        AuditLog::record(Auth::id(), 'sortie_externe',
+            "Annulation de la sortie {$sortie->number} : {$sortie->cancellation_reason}",
             'economat', ['external_issue_id' => $sortie->id]);
 
         return back()->with('success', "Bon {$sortie->number} annulé : le matériel est revenu en stock.");
@@ -182,7 +187,8 @@ class ExternalIssueController extends Controller
             }));
 
         if ($sorties->count() >= self::MAX_EXPORT) {
-            $document->note('Export limité aux ' . self::MAX_EXPORT . ' premiers bons. Affinez la période pour le reste.');
+            $document->note('Export limité aux ' . self::MAX_EXPORT
+                . ' premiers bons. Affinez la période pour le reste.');
         }
 
         return $exporteur->rendre($document, $format);
@@ -196,15 +202,20 @@ class ExternalIssueController extends Controller
         return ExternalIssue::query()
             ->when($du, fn ($q) => $q->where('issued_at', '>=', $du->copy()->startOfDay()))
             ->when($au, fn ($q) => $q->where('issued_at', '<=', $au->copy()->endOfDay()))
-            ->when(array_key_exists((string) $request->query('motif'), ExternalIssue::REASONS), fn ($q) => $q->where('reason', $request->query('motif')))
-            ->when(array_key_exists((string) $request->query('statut'), ExternalIssue::STATUSES), fn ($q) => $q->where('status', $request->query('statut')))
-            ->when($request->query('retour') === 'en_retard', fn ($q) => $q->validees()->whereNotNull('expected_return_at')->whereDate('expected_return_at', '<', today()))
-            ->when((int) $request->query('article'), fn ($q, $id) => $q->whereHas('lines', fn ($l) => $l->where('stock_item_id', $id)))
+            ->when(array_key_exists((string) $request->query('motif'), ExternalIssue::REASONS), fn ($q) => $q
+                ->where('reason', $request->query('motif')))
+            ->when(array_key_exists((string) $request->query('statut'), ExternalIssue::STATUSES), fn ($q) => $q
+                ->where('status', $request->query('statut')))
+            ->when($request->query('retour') === 'en_retard', fn ($q) => $q->validees()
+                ->whereNotNull('expected_return_at')->whereDate('expected_return_at', '<', today()))
+            ->when((int) $request->query('article'), fn ($q, $id) => $q->whereHas('lines', fn ($l) => $l
+                ->where('stock_item_id', $id)))
             ->when(trim((string) $request->query('recherche')), function ($q, $texte) {
                 // Sans tenir compte de la casse : LIKE la distingue sous PostgreSQL.
                 $motif = '%' . mb_strtolower($texte) . '%';
                 $q->where(function ($r) use ($motif) {
-                    foreach (['number', 'beneficiary_name', 'beneficiary_organisation', 'beneficiary_phone', 'beneficiary_id_document'] as $colonne) {
+                    foreach (['number', 'beneficiary_name', 'beneficiary_organisation', 'beneficiary_phone',
+                        'beneficiary_id_document'] as $colonne) {
                         $r->orWhereRaw("LOWER({$colonne}) LIKE ?", [$motif]);
                     }
                 });

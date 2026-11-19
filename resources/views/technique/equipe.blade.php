@@ -24,7 +24,10 @@
     <div class="grid gap-4 md:grid-cols-2">
         @foreach($techniciens as $technicien)
             @php($siennes = $technicien->technicianSpecialties->pluck('specialty')->all())
-            <form method="POST" action="{{ route('technique.equipe.update', $technicien) }}" class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3">
+            <form
+                method="POST"
+                action="{{ route('technique.equipe.update', $technicien) }}"
+                class="bg-white rounded-xl border border-secondary/20 p-4 space-y-3">
                 @csrf
                 @method('PUT')
                 <div class="flex items-start justify-between gap-3">
@@ -33,7 +36,8 @@
                         <p class="text-xs text-primary/55">{{ $charge[$technicien->id] ?? 0 }} intervention(s) en cours</p>
                     </div>
                     @if($technicien->exerce(['tech_manager']))
-                        <span class="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">Responsable</span>
+                        <span class="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2
+                            py-0.5 text-[11px] font-semibold text-orange-700">Responsable</span>
                     @endif
                 </div>
                 <fieldset>
@@ -50,7 +54,10 @@
                     </div>
                 </fieldset>
                 @if($peutModifier)
-                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-1.5 border border-secondary/30 bg-white text-primary text-xs font-medium rounded-lg hover:bg-gray-50">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 border border-secondary/30 bg-white
+                            text-primary text-xs font-medium rounded-lg hover:bg-gray-50">
                         <i data-lucide="save" class="w-3.5 h-3.5" aria-hidden="true"></i> Enregistrer
                     </button>
                 @endif

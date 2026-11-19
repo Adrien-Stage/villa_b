@@ -12,7 +12,8 @@ final class Conditionnement
     public const EPSILON = 0.0005;
 
     /** Les unités abrégées ne prennent pas la marque du pluriel. */
-    private const INVARIABLES = ['kg', 'g', 'mg', 'l', 'cl', 'ml', 'dl', 'm', 'cm', 'mm', 'm2', 'm3', 'u', 'pcs', 'ctn', 'btl', 'pqt'];
+    private const INVARIABLES = ['kg', 'g', 'mg', 'l', 'cl', 'ml', 'dl', 'm', 'cm', 'mm', 'm2', 'm3', 'u', 'pcs', 'ctn',
+        'btl', 'pqt'];
 
     public static function quantite(float $valeur): string
     {

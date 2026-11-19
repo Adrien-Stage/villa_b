@@ -26,13 +26,15 @@ class VentesRestaurantArticles extends Edition
 
     public function module(): ?string { return 'restaurant'; }
 
-    public function droits(): array { return ['restaurant.billing.voir', 'restaurant.consumption.voir', 'accounting.voir']; }
+    public function droits(): array { return ['restaurant.billing.voir', 'restaurant.consumption.voir',
+        'accounting.voir']; }
 
     public function filtres(): array
     {
         return [
             Filtre::periode('mois'),
-            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)->pluck('name', 'id')
+            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)
+                ->pluck('name', 'id')
                 ->mapWithKeys(fn ($nom, $id) => [(string) $id => $nom])->all(), 'Tous les restaurants'),
         ];
     }
@@ -45,7 +47,8 @@ class VentesRestaurantArticles extends Edition
             : app(RestaurantContext::class)->accessibles($user)->pluck('id')->all();
 
         $lignes = RestaurantCustomerOrderItem::query()
-            ->join('restaurant_customer_orders as c', 'c.id', '=', 'restaurant_customer_order_items.restaurant_customer_order_id')
+            ->join('restaurant_customer_orders as c', 'c.id', '=',
+                'restaurant_customer_order_items.restaurant_customer_order_id')
             ->where('c.status', '!=', 'canceled')
             ->whereBetween('c.placed_at', [$du->startOfDay(), $au->endOfDay()])
             ->when($restaurants !== [], fn ($q) => $q->whereIn('c.point_of_sale_id', $restaurants))
@@ -53,7 +56,8 @@ class VentesRestaurantArticles extends Edition
             ->groupBy('restaurant_customer_order_items.item_name')
             ->orderByDesc('montant')
             ->get()
-            ->map(fn ($l) => ['article' => $l->article, 'quantite' => (float) $l->quantite, 'montant' => (int) $l->montant]);
+            ->map(fn ($l) => ['article' => $l->article, 'quantite' => (float) $l->quantite, 'montant' => (int) $l
+                ->montant]);
 
         $total = max(1, (int) $lignes->sum('montant'));
         $lignes = $lignes->map(fn ($l) => $l + ['part' => round($l['montant'] * 100 / $total, 1) . ' %']);

@@ -21,14 +21,18 @@
             </p>
         </div>
         <a href="{{ route('bookings.cash_register.index') }}"
-           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+           class="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30
+               bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shrink-0">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Compta Réception
         </a>
     </div>
 
     @include('bookings.handovers.partials.flash')
 
-    <form method="POST" action="{{ route('bookings.handovers.store') }}" class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <form
+        method="POST"
+        action="{{ route('bookings.handovers.store') }}"
+        class="bg-white rounded-xl shadow-sm p-5 space-y-4">
         @csrf
         <div class="rounded-lg bg-accent/15 border border-secondary/20 px-4 py-3 text-sm text-primary/80">
             @if($prevu)
@@ -53,7 +57,10 @@
                           placeholder="Ex. Le client de la 104 attend un taxi à 22 h. La 203 a demandé un fer à repasser. M. Abena repasse régler son solde demain matin.">{{ old('instructions') }}</textarea>
             </div>
         </div>
-        <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+        <button
+            type="submit"
+            class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                transition-colors">
             Remettre le tiroir et terminer mon service
         </button>
     </form>

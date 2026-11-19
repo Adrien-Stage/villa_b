@@ -98,7 +98,8 @@ class TableauDeBordGestion
                 'encaissements_avant' => $recettesAvant['total'],
                 'encaissements_n1' => $recettesN1['total'],
                 'par_moyen' => $recettes['by_method'],
-                'par_activite' => ['hebergement' => $recettes['hebergement'], 'restaurant' => $recettes['restaurant'], 'boutique' => $recettes['boutique']],
+                'par_activite' => ['hebergement' => $recettes['hebergement'], 'restaurant' => $recettes['restaurant'],
+                    'boutique' => $recettes['boutique']],
                 'boutique_avant' => $recettesAvant['boutique'],
                 'boutique_n1' => $recettesN1['boutique'],
                 'depenses' => $depenses,
@@ -136,7 +137,8 @@ class TableauDeBordGestion
         $revenu = 0;
         $canaux = [];
         foreach ($sejours as $sejour) {
-            $nuits = max(0, (int) $sejour->check_in->copy()->startOfDay()->max($debut)->diffInDays($sejour->check_out->copy()->startOfDay()->min($finExclue)));
+            $nuits = max(0, (int) $sejour->check_in->copy()->startOfDay()->max($debut)->diffInDays($sejour->check_out
+                ->copy()->startOfDay()->min($finExclue)));
             $vendues += $nuits;
             if ($sejour->is_complimentary) {
                 continue;
@@ -235,7 +237,8 @@ class TableauDeBordGestion
      *
      * @return array<string, mixed>
      */
-    public function rapprochement(CarbonImmutable $debut, CarbonImmutable $fin, array $hebergement, ?array $restaurant, array $recettes): array
+    public function rapprochement(CarbonImmutable $debut, CarbonImmutable $fin, array $hebergement, ?array $restaurant,
+        array $recettes): array
     {
         $caHebergement = (int) ($hebergement['revenu'] ?? 0);
         $caRestaurant = (int) ($restaurant['chiffre_affaires'] ?? 0);

@@ -33,7 +33,9 @@
     @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --color-primary: {{ $currentTenant->settings['theme']['primary'] ?? '#391F0E' }};
@@ -260,9 +262,14 @@
 
 <body class="h-full min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
 
-    <div id="mobile-sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden print:hidden" onclick="closeMobileSidebar()"></div>
+    <div
+        id="mobile-sidebar-backdrop"
+        class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden print:hidden"
+        onclick="closeMobileSidebar()"></div>
 
-    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary {{ $hasSidebar ? 'lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full' : 'lg:hidden' }} print:hidden">
+    <aside
+        id="mobile-sidebar"
+        class="fixed inset-y-0 left-0 z-40 hidden w-72 max-w-[85vw] bg-primary {{ $hasSidebar ? 'lg:static lg:flex lg:w-48 lg:max-w-none lg:flex-shrink-0 lg:flex-col lg:h-full' : 'lg:hidden' }} print:hidden">
         <div class="flex h-full w-full flex-col">
             <div class="sidebar-entete px-4 py-5 border-b border-surface-dark flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -281,7 +288,11 @@
                         <p class="text-text-on-dark text-xs font-medium">PMS v1.0</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeMobileSidebar()" class="lg:hidden text-text-on-dark hover:text-white p-1 rounded-md" aria-label="Fermer le menu">
+                <button
+                    type="button"
+                    onclick="closeMobileSidebar()"
+                    class="lg:hidden text-text-on-dark hover:text-white p-1 rounded-md"
+                    aria-label="Fermer le menu">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -290,7 +301,9 @@
                 <div class="px-3 py-2 border-b border-surface-dark">
                     <a href="{{ route('dashboard') }}"
                        title="Toutes les applications"
-                       class="sidebar-lien flex items-center gap-2 px-2.5 py-2 rounded-xl bg-surface-dark/90 hover:bg-surface-dark text-text-on-dark hover:text-white transition-all text-xs font-semibold">
+                       class="sidebar-lien flex items-center gap-2 px-2.5 py-2 rounded-xl bg-surface-dark/90
+                           hover:bg-surface-dark text-text-on-dark hover:text-white transition-all text-xs
+                           font-semibold">
                         <i data-lucide="layout-grid" class="w-4 h-4 text-accent flex-shrink-0"></i>
                         <span class="sidebar-libelle truncate">Applications</span>
                     </a>
@@ -335,7 +348,8 @@
 
                 @if(!$hasSidebar)
                 <div>
-                    <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Général</p>
+                    <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                        tracking-widest mb-2 px-2">Général</p>
                     <ul class="space-y-0.5">
                         <x-sidebar-link route="dashboard" icon="grid">Tableau de bord</x-sidebar-link>
                         {{-- Les quarts de chacun, et ceux de son service pour un chef. --}}
@@ -350,7 +364,8 @@
                 @undroit('analytics.voir')
                     @module('analytics')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Analytique</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Analytique</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="analytics.index" icon="bar-chart-2">Tour de contrôle</x-sidebar-link>
                         </ul>
@@ -363,7 +378,8 @@
                 @unless($estComptable)
                     @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
                         <div>
-                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Hôtel</p>
+                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                                tracking-widest mb-2 px-2">Hôtel</p>
                             <ul class="space-y-0.5">
                             {{-- Ordre métier Hôtel : Agenda, Réservations, Chambres, Tarifs,
                                  Demandes à l'économat, Housekeeping, Fiches techniques.
@@ -380,12 +396,16 @@
                                             {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*')
                                                 ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
                                                 : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
-                                            <i data-lucide="calendar" class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true"></i>
+                                            <i
+                                                data-lucide="calendar"
+                                                class="w-3.5 h-3.5 flex-shrink-0"
+                                                aria-hidden="true"></i>
                                             <span class="sidebar-libelle">Réservations</span>
                                         </a>
 
                                         @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*'))
-                                        <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l border-text-on-dark/20 pl-3">
+                                        <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l
+                                            border-text-on-dark/20 pl-3">
                                             <li>
                                                 <a href="{{ route('bookings.index') }}"
                                                     @if(request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')) aria-current="page" @endif
@@ -393,7 +413,10 @@
                                                     {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="user" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                    <i
+                                                        data-lucide="user"
+                                                        class="w-3 h-3 flex-shrink-0"
+                                                        aria-hidden="true"></i>
                                                     Individuelles
                                                 </a>
                                             </li>
@@ -404,7 +427,10 @@
                                                     {{ request()->routeIs('groups.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="users" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                    <i
+                                                        data-lucide="users"
+                                                        class="w-3 h-3 flex-shrink-0"
+                                                        aria-hidden="true"></i>
                                                     Groupes
                                                 </a>
                                             </li>
@@ -415,7 +441,10 @@
                                                     {{ request()->routeIs('bookings.cash_register.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="calculator" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                    <i
+                                                        data-lucide="calculator"
+                                                        class="w-3 h-3 flex-shrink-0"
+                                                        aria-hidden="true"></i>
                                                     Compta Réception
                                                 </a>
                                             </li>
@@ -427,7 +456,10 @@
                                                     {{ request()->routeIs('bookings.handovers.*')
                                                         ? 'text-white'
                                                         : 'text-text-on-dark hover:text-white' }}">
-                                                    <i data-lucide="hand-coins" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                    <i
+                                                        data-lucide="hand-coins"
+                                                        class="w-3 h-3 flex-shrink-0"
+                                                        aria-hidden="true"></i>
                                                     Passations
                                                 </a>
                                             </li>
@@ -441,7 +473,10 @@
                                                         {{ request()->routeIs('restaurant.banquets.*')
                                                             ? 'text-white'
                                                             : 'text-text-on-dark hover:text-white' }}">
-                                                        <i data-lucide="party-popper" class="w-3 h-3 flex-shrink-0" aria-hidden="true"></i>
+                                                        <i
+                                                            data-lucide="party-popper"
+                                                            class="w-3 h-3 flex-shrink-0"
+                                                            aria-hidden="true"></i>
                                                         Banquets
                                                     </a>
                                                 </li>
@@ -506,7 +541,8 @@
                             || $contexteResto->restaurants()->isEmpty();
                     @endphp
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Restaurant</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Restaurant</p>
                         <ul class="space-y-0.5">
                             @pour('manager','restaurant_chief','restaurant_staff','controller')
                                 <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
@@ -589,7 +625,9 @@
                                        target="_blank"
                                        rel="noopener"
                                        title="Portail (QR)"
-                                       class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-text-on-dark hover:bg-surface-dark hover:text-white">
+                                       class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs
+                                           font-medium transition-all text-text-on-dark hover:bg-surface-dark
+                                           hover:text-white">
                                         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 6v-4h2v4h-2zm4 0v-2h2v2h-2zm-4-6v-2h2v2h-2zm4 2v-2h2v2h-2z"/>
                                         </svg>
@@ -606,7 +644,8 @@
                 @if(!$hasSidebar)
                 @pour('manager','reception','cashier','finance_manager','controller')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Gestion</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Gestion</p>
                         <ul class="space-y-0.5">
                             @if(!auth()->check() || auth()->user()->hasModuleAccess('clients'))
                                 <x-sidebar-link route="customers.index" icon="users">Clients</x-sidebar-link>
@@ -623,7 +662,8 @@
                 @pour('shop_manager','shop_cashier','manager','finance_manager','controller')
                     @module('shop')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Boutique</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Boutique</p>
                         <ul class="space-y-0.5">
                             @pour('shop_manager','manager','finance_manager','controller')
                                 <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
@@ -642,7 +682,8 @@
                 @if($afficheEconomat)
                 @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Économat</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
                             <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
@@ -709,7 +750,8 @@
                 @if(!$hasSidebar || $activeGroupId === 'achats')
                 @if($afficheAchats)
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Achats</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Achats</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="achats.index" icon="shopping-cart">Tableau des achats</x-sidebar-link>
                             @droit('economat.purchase_requests.voir')
@@ -740,7 +782,8 @@
                 @module('technique')
                 @undroit('technique.voir', 'technique.demandes.voir')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Technique</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Technique</p>
                         <ul class="space-y-0.5">
                             @droit('technique.voir')
                                 <x-sidebar-link route="technique.index" icon="wrench">Tableau technique</x-sidebar-link>
@@ -777,7 +820,8 @@
                 @if(!$hasSidebar || $activeGroupId === 'pilotage')
                 @droit('pilotage.voir')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Pilotage</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Pilotage</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="pilotage.index" icon="gauge">Indicateurs de gestion</x-sidebar-link>
                             @droit('pilotage.budget.voir')
@@ -791,7 +835,8 @@
                 @if(!$hasSidebar || $activeGroupId === 'accounting')
                 @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Comptabilité</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Comptabilité</p>
                         <ul class="space-y-0.5">
                             @if(!auth()->check() || auth()->user()->hasModuleAccess('comptabilite'))
                                 <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
@@ -829,7 +874,8 @@
                 @endphp
                 @if($administrationVisible)
                     <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase tracking-widest mb-2 px-2">Administration</p>
+                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                            tracking-widest mb-2 px-2">Administration</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="droits.index" icon="shield-check">Rôles &amp; droits</x-sidebar-link>
                             <x-sidebar-link route="interventions.index" icon="siren">Interventions</x-sidebar-link>
@@ -877,7 +923,8 @@
                 <div class="sidebar-pied flex items-center justify-between gap-2">
                     <a href="{{ route('profile.edit') }}"
                        title="{{ Auth::user()->name }}"
-                       class="sidebar-lien flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1 hover:bg-surface-dark transition-colors">
+                       class="sidebar-lien flex items-center gap-2 flex-1 min-w-0 rounded-lg px-1 py-1
+                           hover:bg-surface-dark transition-colors">
                         <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                             <span class="text-text-on-light font-semibold text-xs">
                                 {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 2)) }}
@@ -891,7 +938,10 @@
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center flex-shrink-0 text-text-on-dark/40 hover:text-text-on-dark transition-colors">
+                        <button
+                            type="submit"
+                            class="inline-flex h-8 w-8 items-center justify-center flex-shrink-0 text-text-on-dark/40
+                                hover:text-text-on-dark transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -904,12 +954,14 @@
     </aside>
 
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
-        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between gap-2 flex-shrink-0 print:hidden">
+        <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between
+            gap-2 flex-shrink-0 print:hidden">
             <div class="hidden md:flex min-w-0 items-center gap-2 sm:gap-3">
                 {{-- Menu de l'application, sur tablette seulement (sur mobile, accessible via la tab bar flottante ; sur grand écran la barre latérale est déjà là) --}}
                 @if($hasSidebar)
                     <button type="button" onclick="openMobileSidebar()" aria-controls="mobile-sidebar" aria-label="Ouvrir le menu"
-                            class="hidden md:inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary">
+                            class="hidden md:inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg
+                                border border-secondary/20 bg-white text-primary">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -937,14 +989,18 @@
                 {{-- Bouton universel Applications (Grille 3x3) sur grand écran --}}
                 <a href="{{ route('dashboard') }}"
                    title="Toutes les applications"
-                   class="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary hover:bg-accent/30 transition-all shadow-xs"
+                   class="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg border
+                       border-secondary/20 bg-white text-primary hover:bg-accent/30 transition-all shadow-xs"
                    aria-label="Applications">
                     <i data-lucide="layout-grid" class="w-5 h-5"></i>
                 </a>
 
                 @if($activeGroup)
                     <div class="hidden md:flex min-w-0 items-center gap-2 text-xs">
-                        <a href="{{ $activeGroup['url'] ?? '#' }}" class="font-bold text-primary/70 hover:text-primary transition hidden sm:inline">{{ $activeGroup['title'] }}</a>
+                        <a
+                            href="{{ $activeGroup['url'] ?? '#' }}"
+                            class="font-bold text-primary/70 hover:text-primary transition hidden
+                                sm:inline">{{ $activeGroup['title'] }}</a>
                         <span class="text-primary/30 hidden sm:inline">/</span>
                         <p class="min-w-0 text-primary font-medium text-sm">@yield('title', 'Tableau de bord')</p>
                     </div>
@@ -961,7 +1017,9 @@
                 @droit('technique.demandes.creer')
                     @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
                         <a href="{{ route('technique.demandes.create') }}"
-                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 bg-white/70 hover:bg-white text-primary/70 hover:text-primary transition-colors text-xs font-medium shadow-2xs"
+                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30
+                               bg-white/70 hover:bg-white text-primary/70 hover:text-primary transition-colors text-xs
+                               font-medium shadow-2xs"
                            title="Demander une intervention technique">
                             <i data-lucide="wrench" class="w-4 h-4" aria-hidden="true"></i>
                             <span class="hidden sm:inline">Intervention</span>
@@ -975,20 +1033,25 @@
                      qui les traite depuis l'ERP et répond dans le même ticket. --}}
                 <div x-data="supportTicketCenter()" class="relative">
                     <button type="button" @click="ouvrir()"
-                            class="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 bg-white/70 hover:bg-white text-primary/70 hover:text-primary transition-colors text-xs font-medium shadow-2xs"
+                            class="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border
+                                border-secondary/30 bg-white/70 hover:bg-white text-primary/70 hover:text-primary
+                                transition-colors text-xs font-medium shadow-2xs"
                             title="Signaler un problème ou proposer une amélioration">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                         <span class="hidden sm:inline">Suggestion</span>
                         <span x-show="ouverts > 0" style="display: none;"
-                              class="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 flex items-center justify-center bg-secondary text-text-on-light rounded-full text-[9px] font-bold border border-white"
+                              class="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 flex items-center justify-center
+                                  bg-secondary text-text-on-light rounded-full text-[9px] font-bold border
+                                  border-white"
                               x-text="ouverts"></span>
                     </button>
 
                     {{-- Fenêtre de saisie --}}
                     <div x-show="modal" style="display: none;"
-                         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8"
+                         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4
+                             sm:p-8"
                          @click.self="modal = false" @keydown.escape.window="modal = false">
                         <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
 
@@ -997,7 +1060,10 @@
                                     <h3 class="text-sm font-heading font-semibold text-white">Remonter au support</h3>
                                     <p class="text-[10px] text-text-on-dark/70">Un problème rencontré, une idée d'amélioration.</p>
                                 </div>
-                                <button type="button" @click="modal = false" class="text-text-on-dark/60 hover:text-white transition-colors">
+                                <button
+                                    type="button"
+                                    @click="modal = false"
+                                    class="text-text-on-dark/60 hover:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>
@@ -1011,22 +1077,36 @@
                                 <button type="button" @click="vue = 'miens'; charger()"
                                         class="px-4 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px"
                                         :class="vue === 'miens' ? 'text-primary border-primary' : 'text-primary/40 border-transparent hover:text-primary/70'">
-                                    Mes tickets <span x-show="tickets.length > 0" style="display: none;" x-text="'(' + tickets.length + ')'"></span>
+                                    Mes tickets <span
+                                        x-show="tickets.length > 0"
+                                        style="display: none;"
+                                        x-text="'(' + tickets.length + ')'"></span>
                                 </button>
                             </div>
 
                             {{-- Formulaire --}}
                             <div x-show="vue === 'nouveau'" style="display: none;" class="p-5">
-                                <div x-show="envoye" style="display: none;" class="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+                                <div
+                                    x-show="envoye"
+                                    style="display: none;"
+                                    class="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
                                     <svg class="w-8 h-8 mx-auto text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <p class="mt-2 text-sm font-semibold text-green-800">Ticket transmis au support</p>
                                     <p class="mt-1 text-xs text-green-700">Vous pourrez suivre son traitement dans « Mes tickets ».</p>
-                                    <button type="button" @click="reinitialiser()" class="mt-4 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity">
+                                    <button
+                                        type="button"
+                                        @click="reinitialiser()"
+                                        class="mt-4 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                                            hover:opacity-90 transition-opacity">
                                         Écrire un autre ticket
                                     </button>
                                 </div>
 
-                                <form x-show="!envoye" style="display: none;" @submit.prevent="envoyer()" class="space-y-4">
+                                <form
+                                    x-show="!envoye"
+                                    style="display: none;"
+                                    @submit.prevent="envoyer()"
+                                    class="space-y-4">
                                     <div class="grid grid-cols-2 gap-2">
                                         <button type="button" @click="type = 'probleme'"
                                                 class="rounded-xl border px-3 py-2.5 text-left transition-colors"
@@ -1043,14 +1123,17 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-semibold uppercase tracking-wider text-primary/50 mb-1">Objet</label>
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wider
+                                            text-primary/50 mb-1">Objet</label>
                                         <input type="text" x-model="subject" required minlength="5" maxlength="160"
                                                placeholder="Ex : impossible d'encaisser une commande"
-                                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary outline-none focus:border-primary">
+                                               class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm
+                                                   text-primary outline-none focus:border-primary">
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-semibold uppercase tracking-wider text-primary/50 mb-1">Description</label>
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wider
+                                            text-primary/50 mb-1">Description</label>
                                         <textarea x-model="message" rows="4" required minlength="10" maxlength="2000"
                                                   placeholder="Ce que vous faisiez, ce qui s'est passé, et ce que vous attendiez."
                                                   class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm text-primary outline-none focus:border-primary"></textarea>
@@ -1059,14 +1142,24 @@
                                         </p>
                                     </div>
 
-                                    <p x-show="erreur" style="display: none;" class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700" x-text="erreur"></p>
+                                    <p
+                                        x-show="erreur"
+                                        style="display: none;"
+                                        class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs
+                                            text-red-700"
+                                        x-text="erreur"></p>
 
                                     <div class="flex items-center justify-end gap-2">
-                                        <button type="button" @click="modal = false" class="rounded-lg border border-secondary/30 px-4 py-2 text-xs font-semibold text-primary/70 hover:bg-accent/20 transition-colors">
+                                        <button
+                                            type="button"
+                                            @click="modal = false"
+                                            class="rounded-lg border border-secondary/30 px-4 py-2 text-xs
+                                                font-semibold text-primary/70 hover:bg-accent/20 transition-colors">
                                             Annuler
                                         </button>
                                         <button type="submit" :disabled="envoiEnCours"
-                                                class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50">
+                                                class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                                                    hover:opacity-90 transition-opacity disabled:opacity-50">
                                             <span x-show="!envoiEnCours">Envoyer au support</span>
                                             <span x-show="envoiEnCours" style="display: none;">Envoi…</span>
                                         </button>
@@ -1076,7 +1169,10 @@
 
                             {{-- Suivi de mes tickets --}}
                             <div x-show="vue === 'miens'" style="display: none;" class="max-h-96 overflow-y-auto p-5">
-                                <p x-show="chargement" style="display: none;" class="py-6 text-center text-xs text-primary/40">Chargement…</p>
+                                <p
+                                    x-show="chargement"
+                                    style="display: none;"
+                                    class="py-6 text-center text-xs text-primary/40">Chargement…</p>
 
                                 <template x-if="!chargement && tickets.length === 0">
                                     <p class="py-6 text-center text-xs text-primary/40">Vous n'avez encore envoyé aucun ticket.</p>
@@ -1087,13 +1183,15 @@
                                         <li class="rounded-xl border border-secondary/20 p-3">
                                             <div class="flex items-start justify-between gap-2">
                                                 <span class="text-xs font-semibold text-primary" x-text="t.subject"></span>
-                                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold
+                                                    uppercase tracking-wider"
                                                       :class="t.status === 'resolu' ? 'bg-green-100 text-green-700' : (t.status === 'en_cours' ? 'bg-amber-100 text-amber-700' : (t.status === 'rejete' ? 'bg-slate-100 text-slate-500' : 'bg-sky-100 text-sky-700'))"
                                                       x-text="t.label"></span>
                                             </div>
                                             <p class="mt-1 text-[10px] text-primary/40" x-text="t.at + ' · ' + t.ago"></p>
                                             <template x-if="t.reply">
-                                                <p class="mt-2 rounded-lg bg-accent/30 px-2.5 py-2 text-[11px] text-primary/80">
+                                                <p class="mt-2 rounded-lg bg-accent/30 px-2.5 py-2 text-[11px]
+                                                    text-primary/80">
                                                     <span class="font-semibold">Réponse du support :</span> <span x-text="t.reply"></span>
                                                 </p>
                                             </template>
@@ -1111,7 +1209,9 @@
                 {{-- Bouton d'activation des notifications push (visible tant que la
                      permission n'est pas accordée). Requiert un geste utilisateur. --}}
                 <button type="button" id="enable-push-btn" onclick="window.enablePushNotifications && window.enablePushNotifications()"
-                        class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs font-medium"
+                        class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30
+                            text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors text-xs
+                            font-medium"
                         title="Activer les notifications système (même hors de l'application)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -1121,16 +1221,38 @@
 
                 {{-- In-app Notifications Dropdown --}}
                 <div x-data="notificationCenter()" class="relative">
-                    <button @click="open = !open" class="relative p-1.5 rounded-full hover:bg-secondary/15 text-primary/70 hover:text-primary transition-colors focus:outline-none flex items-center justify-center">
+                    <button
+                        @click="open = !open"
+                        class="relative p-1.5 rounded-full hover:bg-secondary/15 text-primary/70 hover:text-primary
+                            transition-colors focus:outline-none flex items-center justify-center">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
-                        <span x-show="totalUnread > 0" class="absolute top-0 right-0 min-w-4 h-4 px-1 flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold border border-white" style="display: none;" x-text="totalUnread"></span>
+                        <span
+                            x-show="totalUnread > 0"
+                            class="absolute top-0 right-0 min-w-4 h-4 px-1 flex items-center justify-center bg-red-500
+                                text-white rounded-full text-[9px] font-bold border border-white"
+                            style="display: none;"
+                            x-text="totalUnread"></span>
                     </button>
-                    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-80 bg-white border border-secondary/20 rounded-xl shadow-xl z-50 py-2 pointer-events-auto" style="display: none;" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95">
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        class="absolute right-0 mt-2 w-80 bg-white border border-secondary/20 rounded-xl shadow-xl z-50
+                            py-2 pointer-events-auto"
+                        style="display: none;"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95">
                         <div class="px-4 py-2 border-b border-secondary/10 flex justify-between items-center">
                             <span class="text-xs font-semibold text-primary">Notifications</span>
-                            <button x-show="totalUnread > 0" @click="markAllAsRead()" class="text-[10px] text-secondary hover:underline font-medium">Tout marquer comme lu</button>
+                            <button
+                                x-show="totalUnread > 0"
+                                @click="markAllAsRead()"
+                                class="text-[10px] text-secondary hover:underline font-medium">Tout marquer comme lu</button>
                         </div>
                         <div class="max-h-64 overflow-y-auto">
                             <template x-if="notifications.length === 0">
@@ -1139,10 +1261,17 @@
                                 </div>
                             </template>
                             <template x-for="item in notifications" :key="item.id">
-                                <div @click="readNotification(item)" class="px-4 py-3 hover:bg-slate-50 border-b border-secondary/5 flex flex-col gap-1 cursor-pointer transition-colors">
+                                <div
+                                    @click="readNotification(item)"
+                                    class="px-4 py-3 hover:bg-slate-50 border-b border-secondary/5 flex flex-col gap-1
+                                        cursor-pointer transition-colors">
                                     <div class="flex justify-between items-start gap-2">
-                                        <span class="text-xs font-bold text-primary" x-text="item.data.title || 'Notification'"></span>
-                                        <span class="text-[9px] text-primary/40 whitespace-nowrap" x-text="item.created_at"></span>
+                                        <span
+                                            class="text-xs font-bold text-primary"
+                                            x-text="item.data.title || 'Notification'"></span>
+                                        <span
+                                            class="text-[9px] text-primary/40 whitespace-nowrap"
+                                            x-text="item.created_at"></span>
                                     </div>
                                     <p class="text-xs text-primary/70 line-clamp-2" x-text="item.data.message"></p>
                                 </div>
@@ -1171,7 +1300,11 @@
                             :aria-expanded="infoOuverte.toString()"
                             aria-controls="topbar-connexion-info"
                             aria-label="Statut de connexion"
-                            class="relative inline-flex items-center justify-center p-1.5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 cursor-pointer text-green-600 hover:bg-green-500/10 focus-visible:ring-green-600 data-[online=false]:text-red-600 data-[online=false]:hover:bg-red-500/10 data-[online=false]:focus-visible:ring-red-600">
+                            class="relative inline-flex items-center justify-center p-1.5 rounded-full
+                                transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1
+                                cursor-pointer text-green-600 hover:bg-green-500/10 focus-visible:ring-green-600
+                                data-[online=false]:text-red-600 data-[online=false]:hover:bg-red-500/10
+                                data-[online=false]:focus-visible:ring-red-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
                             <circle cx="12" cy="12" r="10" />
                             <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
@@ -1190,7 +1323,8 @@
                          x-transition:leave-start="opacity-100 translate-y-0"
                          x-transition:leave-end="opacity-0 translate-y-1"
                          class="absolute right-0 top-full pt-2 z-50 w-max max-w-[calc(100vw-2rem)]">
-                        <div class="relative flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-lg ring-1 ring-black/10 sm:whitespace-nowrap">
+                        <div class="relative flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs
+                            font-medium text-white shadow-lg ring-1 ring-black/10 sm:whitespace-nowrap">
                             <span class="absolute -top-1 right-3 h-2 w-2 rotate-45 bg-primary" aria-hidden="true"></span>
                             <span data-online="true"
                                   :data-online="estEnLigne.toString()"
@@ -1205,7 +1339,8 @@
                     @droit('reception.pos.voir')
                         <a href="{{ route('reception.pos.index') }}"
                            title="Basculer vers le terminal plein écran Mode POS Réception"
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-primary hover:bg-surface-dark transition-all shadow-xs mr-1">
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white
+                               bg-primary hover:bg-surface-dark transition-all shadow-xs mr-1">
                             <i data-lucide="store" class="w-3.5 h-3.5 text-accent" aria-hidden="true"></i>
                             <span class="hidden md:inline">Mode POS Réception</span>
                             <span class="md:hidden">POS</span>
@@ -1227,14 +1362,18 @@
 
         @if(session('assistance_mode'))
             {{-- Bannière permanente : session ouverte par le support technique (PMS) --}}
-            <div class="bg-amber-500 text-white px-4 lg:px-8 py-2 flex items-center justify-between gap-3 flex-shrink-0">
+            <div class="bg-amber-500 text-white px-4 lg:px-8 py-2 flex items-center justify-between gap-3
+                flex-shrink-0">
                 <div class="flex items-center gap-2 text-xs font-semibold">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>
                     <span>Mode assistance — session ouverte par le support technique ({{ session('assistance_mode')['admin'] ?? 'Support' }}). Vos actions sont enregistrées.</span>
                 </div>
                 <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                     @csrf
-                    <button type="submit" class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold transition">Quitter</button>
+                    <button
+                        type="submit"
+                        class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold
+                            transition">Quitter</button>
                 </form>
             </div>
         @endif
@@ -1247,7 +1386,10 @@
                 : null;
         @endphp
         @if($interventionAffichee)
-            <div class="bg-red-700 text-white px-4 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0" role="status">
+            <div
+                class="bg-red-700 text-white px-4 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3
+                    flex-shrink-0"
+                role="status">
                 <div class="flex items-center gap-2 text-xs font-semibold">
                     <i data-lucide="siren" class="w-4 h-4 shrink-0"></i>
                     <span>
@@ -1257,9 +1399,15 @@
                     </span>
                 </div>
                 @if($interventionAffichee->user_id === auth()->id())
-                    <form method="POST" action="{{ route('interventions.terminer', $interventionAffichee) }}" class="shrink-0">
+                    <form
+                        method="POST"
+                        action="{{ route('interventions.terminer', $interventionAffichee) }}"
+                        class="shrink-0">
                         @csrf
-                        <button type="submit" class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold transition">Terminer</button>
+                        <button
+                            type="submit"
+                            class="rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold
+                                transition">Terminer</button>
                     </form>
                 @endif
             </div>
@@ -1287,7 +1435,8 @@
          aria-modal="true"
          style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
         <div class="absolute inset-0" onclick="document.getElementById('caisse-logout-modal').classList.add('hidden')"></div>
-        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all z-10">
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all
+            z-10">
             {{-- Header --}}
             <div class="flex items-center gap-3 bg-yellow-50 px-6 py-4 border-b border-yellow-100">
                 <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -1313,22 +1462,26 @@
             </div>
 
             {{-- Actions --}}
-            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t border-secondary/10">
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t
+                border-secondary/10">
                 <button type="button"
                         onclick="document.getElementById('caisse-logout-modal').classList.add('hidden')"
-                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-primary/70 hover:text-primary transition-colors text-center">
+                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-primary/70 hover:text-primary
+                            transition-colors text-center">
                     Annuler
                 </button>
                 <form method="POST" action="{{ route('logout') }}" class="w-full sm:w-auto">
                     @csrf
                     <input type="hidden" name="force" value="1">
                     <button type="submit"
-                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
+                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs
+                                font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
                         Déconnexion (Pause)
                     </button>
                 </form>
                 <a href="{{ route(\App\Services\CashRegisterCircuit::routeDeComptage((string) session('caisse_module'))) }}"
-                   class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-center">
+                   class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                       hover:bg-surface-dark transition-colors shadow-sm text-center">
                     Clôturer la caisse
                 </a>
             </div>
@@ -1344,7 +1497,8 @@
          aria-modal="true"
          style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
         {{-- Pas de clic extérieur pour fermer --}}
-        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all z-10">
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all
+            z-10">
             {{-- Header --}}
             <div class="flex items-center gap-3 bg-purple-50 px-6 py-4 border-b border-purple-100">
                 <div class="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
@@ -1370,13 +1524,15 @@
             </div>
 
             {{-- Actions --}}
-            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t border-secondary/10">
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-accent/20 border-t
+                border-secondary/10">
                 <form method="POST" action="{{ route('cash_register.resume') }}" class="w-full sm:w-auto">
                     @csrf
                     <input type="hidden" name="session_id" value="{{ session('paused_caisse_session')['id'] }}">
                     <input type="hidden" name="redirect_to_close" value="1">
                     <button type="submit"
-                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
+                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs
+                                font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-center">
                         Fermer la caisse
                     </button>
                 </form>
@@ -1384,7 +1540,8 @@
                     @csrf
                     <input type="hidden" name="session_id" value="{{ session('paused_caisse_session')['id'] }}">
                     <button type="submit"
-                            class="w-full px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-center">
+                            class="w-full px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                                hover:bg-surface-dark transition-colors shadow-sm text-center">
                         Continuer la session
                     </button>
                 </form>
@@ -1400,7 +1557,8 @@
     @include('layouts.partials.mobile-tab-bar', ['tabs' => $mobileTabs, 'hasSidebar' => $hasSidebar])
 
     <!-- Notification Container -->
-    <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="system-toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2
+        pointer-events-none"></div>
 
     <script>
     // Resume audio context on user interaction to bypass autoplay policy restrictions

@@ -8,7 +8,10 @@
     $courant = $contexte->courant(auth()->user());
 @endphp
 @if($accessibles->count() > 1)
-    <form method="POST" action="{{ route('restaurant.courant') }}" class="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm">
+    <form
+        method="POST"
+        action="{{ route('restaurant.courant') }}"
+        class="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm">
         @csrf
         <i data-lucide="utensils-crossed" class="w-4 h-4 text-primary/60"></i>
         <label for="restaurant-courant" class="text-xs font-semibold text-primary/70">Restaurant</label>

@@ -51,6 +51,7 @@ class EconomatController extends Controller
             ->take(12)
             ->get();
 
-        return view('economat.dashboard', compact('stats', 'alerts', 'alertsByZone', 'pendingRequisitions', 'recentMovements'));
+        return view('economat.dashboard', compact('stats', 'alerts', 'alertsByZone', 'pendingRequisitions',
+            'recentMovements'));
     }
 }

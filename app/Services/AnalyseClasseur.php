@@ -118,7 +118,8 @@ class AnalyseClasseur
         if ($article !== null) {
             $actuel = [
                 // Référence tirée du N° à l'export : l'article n'en a pas, il n'en prend pas.
-                'reference'   => trim((string) $article->reference) !== '' ? $article->reference : sprintf('ART-%05d', $article->id),
+                'reference'   => trim((string) $article->reference) !== '' ? $article->reference : sprintf('ART-%05d',
+                    $article->id),
                 'name'        => $article->name,
                 'unit'        => $article->unit,
                 'categorie'   => $article->category?->name,
@@ -133,9 +134,11 @@ class AnalyseClasseur
                 if ($valeur === null) {
                     continue;
                 }
-                $egal = is_float($valeur) ? abs($valeur - (float) $actuel[$champ]) < 0.0005 : $valeur === $actuel[$champ];
+                $egal = is_float($valeur) ? abs(
+                    $valeur - (float) $actuel[$champ]) < 0.0005 : $valeur === $actuel[$champ];
                 if (!$egal) {
-                    $changements[$champ] = [self::LIBELLES[$champ], $this->lisible($actuel[$champ]), $this->lisible($valeur)];
+                    $changements[$champ] = [self::LIBELLES[$champ], $this->lisible($actuel[$champ]),
+                        $this->lisible($valeur)];
                 }
             }
         }
@@ -163,7 +166,8 @@ class AnalyseClasseur
         $article = StockItem::query()->whereRaw('LOWER(TRIM(reference)) = ?', [$cle])->first();
 
         if ($article === null && preg_match('/^art-(\d+)$/', $cle, $m)) {
-            $article = StockItem::query()->whereKey((int) $m[1])->where(fn ($q) => $q->whereNull('reference')->orWhere('reference', ''))->first();
+            $article = StockItem::query()->whereKey((int) $m[1])->where(fn ($q) => $q->whereNull('reference')
+                ->orWhere('reference', ''))->first();
         }
 
         if ($article === null) {
@@ -209,7 +213,8 @@ class AnalyseClasseur
         }
 
         return [
-            'magasin'              => $this->depot ? 'Dépôt « ' . $this->depot->name . ' »' : 'Magasin central (économat)',
+            'magasin'              => $this->depot ? 'Dépôt « ' . $this->depot
+                ->name . ' »' : 'Magasin central (économat)',
             'depot_id'             => $this->depot?->id,
             'erreurs'              => $this->erreurs,
             'avertissements'       => $this->avertissements,

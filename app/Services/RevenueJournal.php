@@ -83,7 +83,8 @@ class RevenueJournal
             $total += $montant;
         }
 
-        usort($lignes, static fn (array $a, array $b): int => [$a['point_de_vente'], $a['mode']] <=> [$b['point_de_vente'], $b['mode']]);
+        usort($lignes, static fn (array $a, array $b): int => [$a['point_de_vente'],
+            $a['mode']] <=> [$b['point_de_vente'], $b['mode']]);
 
         return [
             'lignes'             => $lignes,
@@ -100,7 +101,8 @@ class RevenueJournal
     {
         return [
             ['payments', 'amount', 'method', 'paid_at',
-                static fn ($q) => $q->where('status', 'completed')->where(fn ($f) => $f->where('method', '!=', 'partner_wallet')->orWhereNull('method'))],
+                static fn ($q) => $q->where('status', 'completed')->where(fn ($f) => $f->where('method', '!=',
+                    'partner_wallet')->orWhereNull('method'))],
 
             // Réglées sans pièce de règlement : les compter deux fois
             // gonflerait le journal du même argent.
