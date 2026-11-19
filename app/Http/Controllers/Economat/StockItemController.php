@@ -13,8 +13,10 @@ use App\Models\Supplier;
 use App\Services\StockAccountService;
 use App\Services\StockService;
 use App\Services\SupplierTariffService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -37,29 +39,13 @@ class StockItemController extends Controller
         // Une zone de rangement : ce qui se trouve en cave, en chambre froide…
         $zones = StorageZone::query()->dansLOrdre()->get();
         $zoneParam = $request->query('zone') ?? $request->query('storage_zone_id');
-        $zone = null;
-        if ($zoneParam === 'none') {
-            $query->whereNull('storage_zone_id');
-        } elseif ($zoneParam) {
-            $zone = $zones->firstWhere('id', (int) $zoneParam);
-            if ($zone) {
-                $query->where('storage_zone_id', $zone->id);
-            }
-        }
+        $zone = $this->filtrerRelation($query, $zones, 'storage_zone_id', $zoneParam);
 
         $categories = StockCategory::orderBy('sort_order')->orderBy('name')->get();
 
         // Filtre par catégorie d'article.
         $categoryParam = $request->query('category') ?? $request->query('stock_category_id');
-        $category = null;
-        if ($categoryParam === 'none') {
-            $query->whereNull('stock_category_id');
-        } elseif ($categoryParam) {
-            $category = $categories->firstWhere('id', (int) $categoryParam);
-            if ($category) {
-                $query->where('stock_category_id', $category->id);
-            }
-        }
+        $category = $this->filtrerRelation($query, $categories, 'stock_category_id', $categoryParam);
 
         // Recherche à la saisie : le nom, la référence ou la catégorie.
         $recherche = trim((string) $request->query('q', ''));
@@ -85,6 +71,22 @@ class StockItemController extends Controller
             'zones'      => $zones,
             'zone'       => $zone,
         ]);
+    }
+
+    private function filtrerRelation(Builder $query, Collection $options, string $colonne, mixed $valeur): ?object
+    {
+        if ($valeur === 'none') {
+            $query->whereNull($colonne);
+
+            return null;
+        }
+
+        $choix = $valeur ? $options->firstWhere('id', (int) $valeur) : null;
+        if ($choix) {
+            $query->where($colonne, $choix->id);
+        }
+
+        return $choix;
     }
 
     public function show(StockItem $item): View
@@ -228,7 +230,8 @@ class StockItemController extends Controller
             sourceType: $sourceType
         );
 
-        return back()->with('success', "Stock de « {$item->name} » ajusté à {$validated['counted_quantity']} {$item->unit}.");
+        return back()->with('success',
+            "Stock de « {$item->name} » ajusté à {$validated['counted_quantity']} {$item->unit}.");
     }
 
     /**
@@ -244,18 +247,22 @@ class StockItemController extends Controller
         ]);
 
         try {
-            $stock->recordOpening($item, (float) $validated['quantity'], (int) round((float) $validated['unit_cost'] * 100));
+            $stock->recordOpening($item, (float) $validated['quantity'],
+                (int) round((float) $validated['unit_cost'] * 100));
         } catch (\RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Stock initial de « {$item->name} » repris. Sa valeur entrera au grand livre par les à-nouveaux.");
+        return back()->with('success',
+            "Stock initial de « {$item->name} » repris. Sa valeur entrera au grand livre par les à-nouveaux.");
     }
 
     public function destroy(StockItem $item): RedirectResponse
     {
-        if ($item->movements()->exists() || \App\Models\RestaurantBarBottle::where('stock_item_id', $item->id)->exists()) {
-            return back()->with('error', "Cet article a un historique de mouvements : désactivez-le plutôt que de le supprimer.");
+        if ($item->movements()->exists() || \App\Models\RestaurantBarBottle::where('stock_item_id', $item->id)
+            ->exists()) {
+            return back()->with('error',
+                "Cet article a un historique de mouvements : désactivez-le plutôt que de le supprimer.");
         }
 
         $item->delete();

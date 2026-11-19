@@ -31,7 +31,8 @@ class RestaurantBarStock
     public static function canOpen(StockItem $item): bool
     {
         return in_array(mb_strtolower(trim($item->unit)), [
-            'bouteille', 'bouteilles', 'btl', 'bt', 'pièce', 'pièces', 'piece', 'pieces', 'pcs', 'pc', 'u', 'unité', 'unite',
+            'bouteille', 'bouteilles', 'btl', 'bt', 'pièce', 'pièces', 'piece', 'pieces', 'pcs', 'pc', 'u', 'unité',
+                'unite',
         ], true);
     }
 
@@ -52,7 +53,8 @@ class RestaurantBarStock
 
             $stock = $store->stocks()->where('stock_item_id', $item->id)->first();
             if (! $stock || $stock->current_stock < 1 || ! self::canOpen($item)) {
-                throw ValidationException::withMessages(['stock_item_id' => 'Sélectionnez une bouteille fermée disponible dans ce dépôt.']);
+                throw ValidationException::withMessages(
+                    ['stock_item_id' => 'Sélectionnez une bouteille fermée disponible dans ce dépôt.']);
             }
 
             $bottle = $store->barBottles()->create([
@@ -64,7 +66,8 @@ class RestaurantBarStock
                 'opening_key' => $key,
             ]);
 
-            $this->moveStock($store, $item, $stock, -1, Movement::SOURCE_BAR_OPEN, $bottle->id, 'Ouverture de la bouteille', [
+            $this->moveStock($store, $item, $stock, -1, Movement::SOURCE_BAR_OPEN, $bottle->id,
+                'Ouverture de la bouteille', [
                 'bottle_id' => $bottle->id,
                 'remaining_ml' => $capacity,
             ]);
@@ -103,7 +106,8 @@ class RestaurantBarStock
         ]);
         $this->lockStore($store);
 
-        $alreadyConsumed = $this->activeSales($order)->groupBy(fn (Movement $movement) => $movement->details['order_line_id']);
+        $alreadyConsumed = $this->activeSales($order)->groupBy(fn (Movement $movement) => $movement
+            ->details['order_line_id']);
 
         foreach ($configured as $line) {
             $drink = $line->menuItem->barDrink;
@@ -114,40 +118,67 @@ class RestaurantBarStock
                 continue;
             }
 
-            foreach ($drink->ingredients as $ingredient) {
-                $item = StockItem::find($ingredient['stock_item_id']) ?? throw ValidationException::withMessages([
-                    'stock' => 'Un article de la fiche « '.$line->item_name.' » a été supprimé. Mettez à jour sa fiche Bar.',
-                ]);
-                $quantity = (float) $line->quantity * (float) $ingredient['quantity'];
-                $details = [
-                    'order_line_id' => $line->id,
-                    'menu_item_id' => $line->menu_item_id,
-                    'sale_label' => $line->item_name,
-                    'recipe_id' => in_array($drink->format, ['cocktail', 'mocktail'], true) ? $drink->id : null,
-                    'format' => $drink->format,
-                    'instructions' => $drink->instructions,
-                ];
-
-                if ($ingredient['measure'] === 'ml') {
-                    $result['cost'] += $this->pour($store, $item, (int) round($quantity), $order->id, $details, $result['shortages']);
-                    continue;
-                }
-
-                $stock = $this->stock($store, $item);
-                if ((float) $stock->current_stock < $quantity) {
-                    $result['shortages'][] = $this->shortage($item, $quantity, (float) $stock->current_stock, $item->unit);
-                    $details['shortage_quantity'] = round($quantity - max(0, (float) $stock->current_stock), 3);
-                }
-
-                $movement = $this->moveStock($store, $item, $stock, -$quantity, Movement::SOURCE_BAR_SALE, $order->id, $line->item_name, $details);
-                $result['cost'] -= $movement->details['value_delta'];
-            }
+            $result['cost'] += $this->deductDrink($store, $line, $drink, $order->id, $result['shortages']);
         }
 
         return $result;
     }
 
-    private function pour(ServiceStore $store, StockItem $item, int $volume, int $orderId, array $details, array &$shortages): int
+    private function deductDrink(
+        ServiceStore $store,
+        RestaurantCustomerOrderItem $line,
+        RestaurantBarDrink $drink,
+        int $orderId,
+        array &$shortages,
+    ): int {
+        $cost = 0;
+        $snapshot = [
+            'order_line_id' => $line->id,
+            'menu_item_id' => $line->menu_item_id,
+            'sale_label' => $line->item_name,
+            'recipe_id' => in_array($drink->format, ['cocktail', 'mocktail'], true) ? $drink->id : null,
+            'format' => $drink->format,
+            'instructions' => $drink->instructions,
+        ];
+
+        foreach ($drink->ingredients as $ingredient) {
+            $item = StockItem::find($ingredient['stock_item_id']) ?? throw ValidationException::withMessages([
+                'stock' => 'Un article de la fiche « '.$line->item_name
+                    .' » a été supprimé. Mettez à jour sa fiche Bar.',
+            ]);
+            $quantity = (float) $line->quantity * (float) $ingredient['quantity'];
+            $details = $snapshot;
+
+            if ($ingredient['measure'] === 'ml') {
+                $cost += $this->pour($store, $item, (int) round($quantity), $orderId, $details, $shortages);
+                continue;
+            }
+
+            $stock = $this->stock($store, $item);
+            if ((float) $stock->current_stock < $quantity) {
+                $shortages[] = $this->shortage($item, $quantity, (float) $stock->current_stock,
+                    $item->unit);
+                $details['shortage_quantity'] = round($quantity - max(0, (float) $stock->current_stock), 3);
+            }
+
+            $movement = $this->moveStock(
+                $store,
+                $item,
+                $stock,
+                -$quantity,
+                Movement::SOURCE_BAR_SALE,
+                $orderId,
+                $line->item_name,
+                $details,
+            );
+            $cost -= $movement->details['value_delta'];
+        }
+
+        return $cost;
+    }
+
+    private function pour(ServiceStore $store, StockItem $item, int $volume, int $orderId, array $details,
+        array &$shortages): int
     {
         $remaining = $volume;
         $cost = 0;
@@ -160,7 +191,8 @@ class RestaurantBarStock
             }
 
             $taken = min($remaining, $bottle->remaining_ml);
-            $movement = $this->moveBottle($store, $item, $bottle, -$taken, Movement::SOURCE_BAR_SALE, $orderId, $details['sale_label'], $details);
+            $movement = $this->moveBottle($store, $item, $bottle, -$taken, Movement::SOURCE_BAR_SALE, $orderId,
+                $details['sale_label'], $details);
             $cost -= $movement->details['value_delta'];
             $remaining -= $taken;
         }
@@ -168,9 +200,11 @@ class RestaurantBarStock
         if ($remaining > 0) {
             $this->stock($store, $item);
             $shortages[] = $this->shortage($item, $volume, $volume - $remaining, 'mL');
-            $lastBottle = $bottles->last() ?? $store->barBottles()->where('stock_item_id', $item->id)->latest('id')->first();
+            $lastBottle = $bottles->last() ?? $store->barBottles()->where('stock_item_id', $item->id)->latest('id')
+                ->first();
             $shortageCost = $lastBottle ? $lastBottle->valueAt($remaining) : 0;
-            $this->logVolume($store, $item, -$remaining, Movement::SOURCE_BAR_SALE, $orderId, $details['sale_label'], $details + [
+            $this->logVolume($store, $item, -$remaining, Movement::SOURCE_BAR_SALE, $orderId, $details['sale_label'],
+                $details + [
                 'unallocated' => true, 'value_delta' => -$shortageCost,
             ]);
             $cost += $shortageCost;
@@ -188,7 +222,8 @@ class RestaurantBarStock
     public function restoreForOrder(RestaurantCustomerOrder $order): int
     {
         $sales = $this->activeSales($order);
-        $prepared = $order->items->filter(fn (RestaurantCustomerOrderItem $line) => $line->ready_at !== null)->pluck('id');
+        $prepared = $order->items->filter(fn (RestaurantCustomerOrderItem $line) => $line->ready_at !== null)
+            ->pluck('id');
         $retainedCost = 0;
 
         foreach ($sales->groupBy('service_store_id')->sortKeys() as $storeId => $movements) {
@@ -198,44 +233,55 @@ class RestaurantBarStock
 
             foreach ($movements as $movement) {
                 $details = $movement->details;
-                if ($order->served_at || $order->status === RestaurantCustomerOrder::STATUS_SERVED || $prepared->contains($details['order_line_id'])) {
+                if ($order->served_at || $order->status === RestaurantCustomerOrder::STATUS_SERVED || $prepared
+                    ->contains($details['order_line_id'])) {
                     $retainedCost += ($details['unallocated'] ?? false)
                         ? $this->outstanding($movement, $offsets)[1]
                         : -$details['value_delta'];
                     continue;
                 }
 
-                $item = StockItem::findOrFail($movement->stock_item_id);
-                $details = $details + ['reverses' => $movement->id];
-                $reason = 'Annulation avant préparation — '.$details['sale_label'];
-
-                if (isset($details['bottle_id'])) {
-                    $bottle = $store->barBottles()->findOrFail($details['bottle_id']);
-                    $countedAfter = $store->movements()->where('source_type', Movement::SOURCE_BAR_COUNT)
-                        ->where('source_id', $bottle->id)->where('id', '>', $movement->id)->exists();
-
-                    if ($countedAfter) {
-                        $retainedCost -= $details['value_delta'];
-                        $this->logVolume($store, $item, 0, Movement::SOURCE_BAR_RETURN, $order->id,
-                            'Annulation après comptage physique — '.$details['sale_label'], [
-                                ...$details, 'remaining_ml' => $bottle->remaining_ml, 'value_delta' => 0,
-                            ]);
-                        continue;
-                    }
-
-                    $this->moveBottle($store, $item, $bottle, -$details['volume_ml'], Movement::SOURCE_BAR_RETURN, $order->id, $reason, $details);
-                } elseif ($details['unallocated'] ?? false) {
-                    [$outstanding, $value] = $this->outstanding($movement, $offsets);
-                    $this->logVolume($store, $item, $outstanding, Movement::SOURCE_BAR_RETURN, $order->id, $reason, [
-                        ...$details, 'value_delta' => $value,
-                    ]);
-                } else {
-                    $this->moveStock($store, $item, $this->stock($store, $item), -(float) $movement->quantity, Movement::SOURCE_BAR_RETURN, $order->id, $reason, $details, $movement->unit_cost);
-                }
+                $retainedCost += $this->restoreSale($store, $movement, $order->id, $offsets);
             }
         }
 
         return $retainedCost;
+    }
+
+    private function restoreSale(ServiceStore $store, Movement $movement, int $orderId, Collection $offsets): int
+    {
+        $details = $movement->details;
+
+        $item = StockItem::findOrFail($movement->stock_item_id);
+        $details = $details + ['reverses' => $movement->id];
+        $reason = 'Annulation avant préparation — '.$details['sale_label'];
+
+        if (isset($details['bottle_id'])) {
+            $bottle = $store->barBottles()->findOrFail($details['bottle_id']);
+            $countedAfter = $store->movements()->where('source_type', Movement::SOURCE_BAR_COUNT)
+                ->where('source_id', $bottle->id)->where('id', '>', $movement->id)->exists();
+
+            if ($countedAfter) {
+                $this->logVolume($store, $item, 0, Movement::SOURCE_BAR_RETURN, $orderId,
+                    'Annulation après comptage physique — '.$details['sale_label'], [
+                        ...$details, 'remaining_ml' => $bottle->remaining_ml, 'value_delta' => 0,
+                    ]);
+                return -$details['value_delta'];
+            }
+
+            $this->moveBottle($store, $item, $bottle, -$details['volume_ml'], Movement::SOURCE_BAR_RETURN,
+                $orderId, $reason, $details);
+        } elseif ($details['unallocated'] ?? false) {
+            [$outstanding, $value] = $this->outstanding($movement, $offsets);
+            $this->logVolume($store, $item, $outstanding, Movement::SOURCE_BAR_RETURN, $orderId, $reason, [
+                ...$details, 'value_delta' => $value,
+            ]);
+        } else {
+            $this->moveStock($store, $item, $this->stock($store, $item), -(float) $movement->quantity,
+                Movement::SOURCE_BAR_RETURN, $orderId, $reason, $details, $movement->unit_cost);
+        }
+
+        return 0;
     }
 
     public function countBottle(ServiceStore $store, RestaurantBarBottle $bottle, int $volume, string $reason): void
@@ -262,11 +308,13 @@ class RestaurantBarStock
             })->filter(fn (array $row) => $row['volume'] > 0)->values();
     }
 
-    public function allocate(ServiceStore $store, RestaurantBarBottle $bottle, int $movementId, int $volume, string $key): void
+    public function allocate(ServiceStore $store, RestaurantBarBottle $bottle, int $movementId, int $volume,
+        string $key): void
     {
         DB::transaction(function () use ($store, $bottle, $movementId, $volume, $key) {
             $sale = $store->movements()->where('source_type', Movement::SOURCE_BAR_SALE)
-                ->where('details->unallocated', true)->where('stock_item_id', $bottle->stock_item_id)->findOrFail($movementId);
+                ->where('details->unallocated', true)->where('stock_item_id', $bottle->stock_item_id)
+                    ->findOrFail($movementId);
             $order = RestaurantCustomerOrder::query()->lockForUpdate()->findOrFail($sale->source_id);
             $this->lockStore($store, allowDuringCount: true);
             $bottle = $store->barBottles()->findOrFail($bottle->id);
@@ -279,20 +327,24 @@ class RestaurantBarStock
                 return;
             }
 
-            [$outstanding, $outstandingValue] = $this->outstanding($sale, $this->offsets($store, $bottle->stock_item_id));
+            [$outstanding, $outstandingValue] = $this->outstanding($sale, $this->offsets($store,
+                $bottle->stock_item_id));
 
             if ($volume < 1 || $volume > $outstanding || $volume > $bottle->remaining_ml) {
-                throw ValidationException::withMessages(['volume_ml' => 'Le volume dépasse le reste à attribuer ou le volume restant dans la bouteille.']);
+                throw ValidationException::withMessages(
+                    ['volume_ml' => 'Le volume dépasse le reste à attribuer ou le volume restant dans la bouteille.']);
             }
 
             $item = $bottle->item;
             $details = collect($sale->details)->except(['unallocated', 'value_delta', 'volume_ml'])->all();
             $reason = 'Attribution — '.$details['sale_label'];
-            $movement = $this->moveBottle($store, $item, $bottle, -$volume, Movement::SOURCE_BAR_SALE, $sale->source_id, $reason, $details + [
+            $movement = $this->moveBottle($store, $item, $bottle, -$volume, Movement::SOURCE_BAR_SALE, $sale->source_id,
+                $reason, $details + [
                 'allocates' => $sale->id, 'allocation_key' => $key,
             ]);
             $offsetValue = (int) round($outstandingValue * $volume / $outstanding);
-            $this->logVolume($store, $item, $volume, Movement::SOURCE_BAR_VARIANCE, $sale->source_id, $reason, $details + [
+            $this->logVolume($store, $item, $volume, Movement::SOURCE_BAR_VARIANCE, $sale->source_id, $reason,
+                $details + [
                 'unallocated' => true,
                 'offsets' => $sale->id,
                 'value_delta' => $offsetValue,
@@ -307,7 +359,8 @@ class RestaurantBarStock
         return $store->movements()->whereIn('source_type', [Movement::SOURCE_BAR_RETURN, Movement::SOURCE_BAR_VARIANCE])
             ->where('details->unallocated', true)
             ->when($itemId, fn ($query) => $query->where('stock_item_id', $itemId))
-            ->get()->groupBy(fn (Movement $movement) => $movement->details['offsets'] ?? $movement->details['reverses']);
+            ->get()->groupBy(fn (Movement $movement) => $movement->details['offsets'] ?? $movement
+                ->details['reverses']);
     }
 
     /** Volume et valeur de la sortie qui restent à rattacher à une bouteille. */
@@ -339,7 +392,8 @@ class RestaurantBarStock
         }
 
         if (! $allowDuringCount && ServiceStoreCountService::inProgress($locked)) {
-            throw ValidationException::withMessages(['stock' => 'Un inventaire est en cours au dépôt Bar. Clôturez-le avant de modifier le stock.']);
+            throw ValidationException::withMessages(
+                ['stock' => 'Un inventaire est en cours au dépôt Bar. Clôturez-le avant de modifier le stock.']);
         }
     }
 
@@ -351,7 +405,8 @@ class RestaurantBarStock
         ]);
     }
 
-    private function moveStock(ServiceStore $store, StockItem $item, ServiceStoreStock $stock, float $delta, string $source, int $id, string $reason, array $details, ?int $unitCost = null): Movement
+    private function moveStock(ServiceStore $store, StockItem $item, ServiceStoreStock $stock, float $delta,
+        string $source, int $id, string $reason, array $details, ?int $unitCost = null): Movement
     {
         $current = (float) $stock->current_stock;
         $after = round($current + $delta, 3);
@@ -379,11 +434,13 @@ class RestaurantBarStock
         ]);
     }
 
-    private function moveBottle(ServiceStore $store, StockItem $item, RestaurantBarBottle $bottle, int $delta, string $source, int $id, string $reason, array $details = []): Movement
+    private function moveBottle(ServiceStore $store, StockItem $item, RestaurantBarBottle $bottle, int $delta,
+        string $source, int $id, string $reason, array $details = []): Movement
     {
         $after = $bottle->remaining_ml + $delta;
         if ($after < 0 || $after > $bottle->capacity_ml) {
-            throw ValidationException::withMessages(['stock' => 'Le volume résultant dépasse la contenance de la bouteille. Vérifiez son comptage.']);
+            throw ValidationException::withMessages(
+                ['stock' => 'Le volume résultant dépasse la contenance de la bouteille. Vérifiez son comptage.']);
         }
 
         $valueDelta = $bottle->valueAt($after) - $bottle->valueAt($bottle->remaining_ml);
@@ -394,7 +451,8 @@ class RestaurantBarStock
         ]);
     }
 
-    private function logVolume(ServiceStore $store, StockItem $item, int $delta, string $source, int $id, string $reason, array $details): Movement
+    private function logVolume(ServiceStore $store, StockItem $item, int $delta, string $source, int $id,
+        string $reason, array $details): Movement
     {
         return $store->movements()->create([
             'stock_item_id' => $item->id,
@@ -416,6 +474,7 @@ class RestaurantBarStock
 
     private function shortage(StockItem $item, float $needed, float $available, string $unit): array
     {
-        return ['item' => $item->name.' (Bar)', 'needed' => $needed, 'available' => max(0, $available), 'unit' => $unit];
+        return ['item' => $item->name.' (Bar)', 'needed' => $needed, 'available' => max(0, $available),
+            'unit' => $unit];
     }
 }

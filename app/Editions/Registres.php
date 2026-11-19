@@ -77,7 +77,8 @@ class Registres
      */
     public function services(User $user): array
     {
-        $services = ['depots_partenaires' => 'Dépôts partenaires', self::SERVICE_HEBERGEMENT => 'Hébergement', self::SERVICE_RECEPTION => 'POS Réception'];
+        $services = ['depots_partenaires' => 'Dépôts partenaires', self::SERVICE_HEBERGEMENT => 'Hébergement',
+            self::SERVICE_RECEPTION => 'POS Réception'];
 
         if (TenantModules::has('restaurant')) {
             foreach (app(RestaurantContext::class)->accessibles($user) as $restaurant) {
@@ -108,93 +109,19 @@ class Registres
      *
      * @return Collection<int, array{date: CarbonImmutable, service: string, service_cle: string, detail: string, piece: string, client: string, mode: string, mode_cle: string, par: string, montant: int}>
      */
-    public function encaissements(CarbonImmutable $du, CarbonImmutable $au, string $service = '', string $mode = ''): Collection
+    public function encaissements(CarbonImmutable $du, CarbonImmutable $au, string $service = '',
+        string $mode = ''): Collection
     {
         [$debut, $fin] = [$du->startOfDay(), $au->endOfDay()];
         $lignes = collect();
 
-        // Règlements : séjours, groupes et ventes de la réception qui en portent un.
-        $ventesReception = ReceptionSale::query()->whereNotNull('payment_id')->pluck('sale_number', 'payment_id');
-        $reglements = Payment::query()->cashFlows()->with('partnerOrganization')->where('status', 'completed')->whereBetween('paid_at', [$debut, $fin])->get();
-        $sejours = Booking::query()->with('room:id,number')->whereIn('id', $reglements->pluck('booking_id')->filter()->unique())->get()->keyBy('id');
-        $clients = $this->clients($reglements->pluck('customer_id'));
-
-        foreach ($reglements as $r) {
-            if ($r->purpose === Payment::PURPOSE_PARTNER_DEPOSIT) {
-                $lignes->push($this->ligne($r->paid_at, 'depots_partenaires', 'Dépôts partenaires', $r->reference,
-                    $r->partnerOrganization?->name ?? 'Partenaire', $r->method, $r->processed_by, (int) $r->amount,
-                    'Approvisionnement dépôt partenaire'));
-                continue;
-            }
-            $pos = isset($ventesReception[$r->id]);
-            $sejour = $r->booking_id ? $sejours->get($r->booking_id) : null;
-            $origin = $r->originLabel($pos, $sejour);
-            $detail = $pos
-                ? 'POS Réception — Vente comptoir #' . $ventesReception[$r->id]
-                : ($origin . ($sejour?->room?->number ? ' · Ch. ' . $sejour->room->number : ''));
-
-            $lignes->push($this->ligne(
-                $r->paid_at, $pos ? self::SERVICE_RECEPTION : self::SERVICE_HEBERGEMENT, $pos ? 'POS Réception' : 'Hébergement',
-                $pos ? 'Vente ' . $ventesReception[$r->id] : ($sejour?->booking_number ?? $r->reference ?? '#' . $r->id),
-                $clients[$r->customer_id] ?? '—', $r->method, $r->processed_by, (int) $r->amount,
-                $detail
-            ));
-        }
-
-        // Ventes de la réception réglées sans pièce de règlement.
-        foreach (ReceptionSale::query()->whereNull('payment_id')->where('payment_status', 'paid')
-            ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
-            ->whereBetween('paid_at', [$debut, $fin])->get() as $v) {
-            $lignes->push($this->ligne($v->paid_at, self::SERVICE_RECEPTION, 'POS Réception', 'Vente ' . $v->sale_number,
-                $v->customer_name ?: '—', $v->payment_method, $v->user_id, (int) $v->total_amount,
-                'POS Réception — Vente comptoir'));
-        }
-
+        $this->ajouterReglements($lignes, $debut, $fin);
+        $this->ajouterEncaissementsReception($lignes, $debut, $fin);
         if (TenantModules::has('restaurant')) {
-            foreach (RestaurantCustomerOrder::query()->where('payment_status', 'paid')
-                ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
-                ->whereBetween('paid_at', [$debut, $fin])->get() as $c) {
-                $point = $this->pointDeVente($c->point_of_sale_id);
-                $lignes->push($this->ligne($c->paid_at, self::PREFIXE_RESTAURANT . $c->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Note ' . ($point ? $point->numero($c->id) : $c->id),
-                    $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
-                    $c->payment_method, $c->paid_by, (int) $c->amount_paid,
-                    'Restaurant — Note de table' . ($c->table_number ? ' · Table ' . $c->table_number : '')));
-            }
-
-            foreach (RestaurantBuffetEntry::query()->with('service')
-                ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
-                ->whereBetween('created_at', [$debut, $fin])->get() as $e) {
-                $point = $this->pointDeVente($e->point_of_sale_id);
-                $lignes->push($this->ligne($e->created_at, self::PREFIXE_RESTAURANT . $e->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Buffet du ' . ($e->service?->service_date?->format('d/m') ?? '—'),
-                    $e->adults . ' adulte(s)' . ($e->children ? ', ' . $e->children . ' enfant(s)' : ''),
-                    $e->payment_method, $e->recorded_by, (int) $e->amount,
-                    'Restaurant — Entrée buffet'));
-            }
-
-            foreach (RestaurantBanquetPayment::query()->with(['banquet.space', 'cashRegisterSession'])->whereBetween('paid_at', [$debut, $fin])->get() as $b) {
-                $point = $this->pointDeVente($b->banquet?->point_of_sale_id);
-                $typeBanquet = $b->kind === RestaurantBanquetPayment::SOLDE ? 'Solde' : 'Acompte';
-                $titreBanquet = $b->banquet?->title ? ' — ' . $b->banquet->title : '';
-                $salleBanquet = $b->banquet?->space?->name ? ' (' . $b->banquet->space->name . ')' : '';
-                $caisseTag = $b->cashRegisterSession?->module === 'reception' ? ' [Caisse Réception]' : '';
-
-                $lignes->push($this->ligne($b->paid_at, self::PREFIXE_RESTAURANT . $b->banquet?->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Banquet ' . ($b->banquet?->reference ?? '#' . $b->restaurant_banquet_id) . ($b->kind ? ' (' . $b->kind . ')' : ''),
-                    $b->banquet?->client_name ?: '—', $b->payment_method, $b->paid_by, (int) $b->amount,
-                    'Banquet — ' . $typeBanquet . $titreBanquet . $salleBanquet . $caisseTag));
-            }
+            $this->ajouterEncaissementsRestaurant($lignes, $debut, $fin);
         }
-
         if (TenantModules::has('shop')) {
-            foreach (ShopOrder::query()->where('payment_status', 'paid')
-                ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
-                ->whereBetween('paid_at', [$debut, $fin])->get() as $o) {
-                $lignes->push($this->ligne($o->paid_at, self::SERVICE_BOUTIQUE, 'Boutique', 'Vente ' . $o->order_number,
-                    $o->customer_name ?: '—', $o->payment_method, $o->created_by, (int) $o->total_amount,
-                    'Boutique — Vente comptoir'));
-            }
+            $this->ajouterEncaissementsBoutique($lignes, $debut, $fin);
         }
 
         return $lignes
@@ -202,6 +129,142 @@ class Registres
             ->filter(fn (array $l) => $mode === '' || $l['mode_cle'] === $mode)
             ->sortBy(fn (array $l) => $l['date']->timestamp)
             ->values();
+    }
+
+    private function ajouterReglements(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
+        // Règlements : séjours, groupes et ventes de la réception qui en portent un.
+        $ventesReception = ReceptionSale::query()->whereNotNull('payment_id')->pluck('sale_number', 'payment_id');
+        $reglements = Payment::query()->cashFlows()->with('partnerOrganization')->where('status', 'completed')
+            ->whereBetween('paid_at', [$debut, $fin])->get();
+        $sejours = Booking::query()->with('room:id,number')->whereIn('id', $reglements->pluck('booking_id')->filter()
+            ->unique())->get()->keyBy('id');
+        $clients = $this->clients($reglements->pluck('customer_id'));
+
+        foreach ($reglements as $r) {
+            $lignes->push($this->ligneReglement($r, $ventesReception, $sejours, $clients));
+        }
+    }
+
+    private function ligneReglement(Payment $r, Collection $ventesReception, Collection $sejours, array $clients): array
+    {
+        if ($r->purpose === Payment::PURPOSE_PARTNER_DEPOSIT) {
+            return $this->ligne($r->paid_at, 'depots_partenaires', 'Dépôts partenaires', $r->reference,
+                $r->partnerOrganization?->name ?? 'Partenaire', $r->method, $r->processed_by, (int) $r->amount,
+                'Approvisionnement dépôt partenaire');
+        }
+
+        $client = $clients[$r->customer_id] ?? '—';
+        if (isset($ventesReception[$r->id])) {
+            $numero = $ventesReception[$r->id];
+
+            return $this->ligne(
+                $r->paid_at,
+                self::SERVICE_RECEPTION,
+                'POS Réception',
+                'Vente ' . $numero,
+                $client,
+                $r->method,
+                $r->processed_by,
+                (int) $r->amount,
+                'POS Réception — Vente comptoir #' . $numero,
+            );
+        }
+
+        $sejour = $r->booking_id ? $sejours->get($r->booking_id) : null;
+        $chambre = $sejour?->room?->number;
+        $detail = $r->originLabel(false, $sejour) . ($chambre ? ' · Ch. ' . $chambre : '');
+
+        return $this->ligne(
+            $r->paid_at,
+            self::SERVICE_HEBERGEMENT,
+            'Hébergement',
+            $sejour?->booking_number ?? $r->reference ?? '#' . $r->id,
+            $client,
+            $r->method,
+            $r->processed_by,
+            (int) $r->amount,
+            $detail,
+        );
+    }
+
+    private function ajouterEncaissementsReception(Collection $lignes, CarbonImmutable $debut,
+        CarbonImmutable $fin): void
+    {
+        // Ventes de la réception réglées sans pièce de règlement.
+        foreach (ReceptionSale::query()->whereNull('payment_id')->where('payment_status', 'paid')
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
+            ->whereBetween('paid_at', [$debut, $fin])->get() as $v) {
+            $lignes->push($this->ligne($v->paid_at, self::SERVICE_RECEPTION, 'POS Réception', 'Vente ' . $v
+                ->sale_number,
+                $v->customer_name ?: '—', $v->payment_method, $v->user_id, (int) $v->total_amount,
+                'POS Réception — Vente comptoir'));
+        }
+    }
+
+    private function ajouterEncaissementsRestaurant(Collection $lignes, CarbonImmutable $debut,
+        CarbonImmutable $fin): void
+    {
+        foreach (RestaurantCustomerOrder::query()->where('payment_status', 'paid')
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
+            ->whereBetween('paid_at', [$debut, $fin])->get() as $c) {
+            $point = $this->pointDeVente($c->point_of_sale_id);
+            $lignes->push($this->ligne($c->paid_at, self::PREFIXE_RESTAURANT . $c->point_of_sale_id,
+                $point?->name ?? 'Restaurant',
+                'Note ' . ($point ? $point->numero($c->id) : $c->id),
+                $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
+                $c->payment_method, $c->paid_by, (int) $c->amount_paid,
+                'Restaurant — Note de table' . ($c->table_number ? ' · Table ' . $c->table_number : '')));
+        }
+
+        $this->ajouterEncaissementsBuffet($lignes, $debut, $fin);
+        $this->ajouterEncaissementsBanquet($lignes, $debut, $fin);
+    }
+
+    private function ajouterEncaissementsBuffet(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
+        foreach (RestaurantBuffetEntry::query()->with('service')
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
+            ->whereBetween('created_at', [$debut, $fin])->get() as $e) {
+            $point = $this->pointDeVente($e->point_of_sale_id);
+            $lignes->push($this->ligne($e->created_at, self::PREFIXE_RESTAURANT . $e->point_of_sale_id,
+                $point?->name ?? 'Restaurant',
+                'Buffet du ' . ($e->service?->service_date?->format('d/m') ?? '—'),
+                $e->adults . ' adulte(s)' . ($e->children ? ', ' . $e->children . ' enfant(s)' : ''),
+                $e->payment_method, $e->recorded_by, (int) $e->amount,
+                'Restaurant — Entrée buffet'));
+        }
+    }
+
+    private function ajouterEncaissementsBanquet(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
+        foreach (RestaurantBanquetPayment::query()->with(['banquet.space', 'cashRegisterSession'])
+            ->whereBetween('paid_at', [$debut, $fin])->get() as $b) {
+            $point = $this->pointDeVente($b->banquet?->point_of_sale_id);
+            $typeBanquet = $b->kind === RestaurantBanquetPayment::SOLDE ? 'Solde' : 'Acompte';
+            $titreBanquet = $b->banquet?->title ? ' — ' . $b->banquet->title : '';
+            $salleBanquet = $b->banquet?->space?->name ? ' (' . $b->banquet->space->name . ')' : '';
+            $caisseTag = $b->cashRegisterSession?->module === 'reception' ? ' [Caisse Réception]' : '';
+
+            $lignes->push($this->ligne($b->paid_at, self::PREFIXE_RESTAURANT . $b->banquet?->point_of_sale_id,
+                $point?->name ?? 'Restaurant',
+                'Banquet ' . ($b->banquet?->reference ?? '#' . $b->restaurant_banquet_id) . ($b->kind ? ' (' . $b
+                    ->kind . ')' : ''),
+                $b->banquet?->client_name ?: '—', $b->payment_method, $b->paid_by, (int) $b->amount,
+                'Banquet — ' . $typeBanquet . $titreBanquet . $salleBanquet . $caisseTag));
+        }
+    }
+
+    private function ajouterEncaissementsBoutique(Collection $lignes, CarbonImmutable $debut,
+        CarbonImmutable $fin): void
+    {
+        foreach (ShopOrder::query()->where('payment_status', 'paid')
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'room_charge')->orWhereNull('payment_method'))
+            ->whereBetween('paid_at', [$debut, $fin])->get() as $o) {
+            $lignes->push($this->ligne($o->paid_at, self::SERVICE_BOUTIQUE, 'Boutique', 'Vente ' . $o->order_number,
+                $o->customer_name ?: '—', $o->payment_method, $o->created_by, (int) $o->total_amount,
+                'Boutique — Vente comptoir'));
+        }
     }
 
     /**
@@ -214,6 +277,24 @@ class Registres
         [$debut, $fin] = [$du->startOfDay(), $au->endOfDay()];
         $lignes = collect();
 
+        $this->ajouterNuiteesVendues($lignes, $du, $au);
+        $this->ajouterPrestationsVendues($lignes, $debut, $fin);
+        $this->ajouterVentesReception($lignes, $debut, $fin);
+        if (TenantModules::has('restaurant')) {
+            $this->ajouterVentesRestaurant($lignes, $du, $au);
+        }
+        if (TenantModules::has('shop')) {
+            $this->ajouterVentesBoutique($lignes, $debut, $fin);
+        }
+
+        return $lignes
+            ->filter(fn (array $l) => $service === '' || $l['service_cle'] === $service)
+            ->sortBy(fn (array $l) => $l['date']->timestamp)
+            ->values();
+    }
+
+    private function ajouterNuiteesVendues(Collection $lignes, CarbonImmutable $du, CarbonImmutable $au): void
+    {
         // Nuitées des séjours effectués, nuit par nuit, hors gratuités.
         $sejours = Booking::query()
             ->whereIn('status', self::SEJOURS_EFFECTUES)
@@ -235,9 +316,13 @@ class Registres
 
             $lignes->push($this->vente($premiere, self::SERVICE_HEBERGEMENT, 'Hébergement', $s->booking_number,
                 $clients[$s->customer_id] ?? '—',
-                $nuits . ' nuitée(s) — Ch. ' . ($chambres[$s->room_id] ?? '?'), 'Séjour', $nuits * (int) $s->price_per_night));
+                $nuits . ' nuitée(s) — Ch. ' . ($chambres[$s->room_id] ?? '?'), 'Séjour', $nuits * (int) $s
+                    ->price_per_night));
         }
+    }
 
+    private function ajouterPrestationsVendues(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
         // Prestations portées au folio par la réception : tout sauf les nuitées,
         // les règlements et ce qu'un autre service a déjà vendu.
         $nees = $this->lignesDeFolioNeesAilleurs();
@@ -247,62 +332,84 @@ class Registres
             ->whereBetween('occurred_at', [$debut, $fin])
             ->when($nees !== [], fn ($q) => $q->whereNotIn('id', $nees))
             ->get();
-        $sejoursPrestations = Booking::query()->whereIn('id', $prestations->pluck('booking_id')->unique())->pluck('booking_number', 'id');
+        $sejoursPrestations = Booking::query()->whereIn('id', $prestations->pluck('booking_id')->unique())
+            ->pluck('booking_number', 'id');
         $clientsPrestations = $this->clients($prestations->pluck('customer_id'));
 
         foreach ($prestations as $f) {
-            $lignes->push($this->vente(CarbonImmutable::parse($f->occurred_at), self::SERVICE_HEBERGEMENT, 'Hébergement',
+            $lignes->push($this->vente(CarbonImmutable::parse($f->occurred_at), self::SERVICE_HEBERGEMENT,
+                'Hébergement',
                 $sejoursPrestations[$f->booking_id] ?? '—', $clientsPrestations[$f->customer_id] ?? '—',
                 (string) $f->description, 'Séjour', (int) $f->total_price));
         }
+    }
 
+    private function ajouterVentesReception(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
         foreach (ReceptionSale::query()->whereIn('payment_status', ['paid', 'charged_to_room'])
             ->whereBetween('created_at', [$debut, $fin])->get() as $v) {
-            $lignes->push($this->vente(CarbonImmutable::parse($v->created_at), self::SERVICE_RECEPTION, 'POS Réception', 'Vente ' . $v->sale_number,
+            $lignes->push($this->vente(CarbonImmutable::parse($v->created_at), self::SERVICE_RECEPTION, 'POS Réception',
+                'Vente ' . $v->sale_number,
                 $v->customer_name ?: ($v->room_number ? 'Ch. ' . $v->room_number : '—'), 'Vente au comptoir',
-                $v->payment_status === 'charged_to_room' ? 'Sur la chambre' : self::mode($v->payment_method), (int) $v->total_amount));
+                $v->payment_status === 'charged_to_room' ? 'Sur la chambre' : self::mode($v->payment_method),
+                    (int) $v->total_amount));
+        }
+    }
+
+    private function ajouterVentesRestaurant(Collection $lignes, CarbonImmutable $du, CarbonImmutable $au): void
+    {
+        [$debut, $fin] = [$du->startOfDay(), $au->endOfDay()];
+
+        foreach (RestaurantCustomerOrder::query()->where('status', '!=', 'canceled')->where('is_complimentary', false)
+            ->whereBetween('placed_at', [$debut, $fin])->withCount('items')->get() as $c) {
+            $point = $this->pointDeVente($c->point_of_sale_id);
+            $lignes->push($this->vente(CarbonImmutable::parse($c->placed_at), self::PREFIXE_RESTAURANT . $c
+                ->point_of_sale_id, $point?->name ?? 'Restaurant',
+                'Note ' . ($point ? $point->numero($c->id) : $c->id),
+                $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
+                $c->items_count . ' article(s)', $this->reglementCommande($c->payment_status, $c->payment_method),
+                    (int) $c->total_amount));
         }
 
-        if (TenantModules::has('restaurant')) {
-            foreach (RestaurantCustomerOrder::query()->where('status', '!=', 'canceled')->where('is_complimentary', false)
-                ->whereBetween('placed_at', [$debut, $fin])->withCount('items')->get() as $c) {
-                $point = $this->pointDeVente($c->point_of_sale_id);
-                $lignes->push($this->vente(CarbonImmutable::parse($c->placed_at), self::PREFIXE_RESTAURANT . $c->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Note ' . ($point ? $point->numero($c->id) : $c->id),
-                    $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
-                    $c->items_count . ' article(s)', $this->reglementCommande($c->payment_status, $c->payment_method), (int) $c->total_amount));
-            }
+        $this->ajouterVentesBuffet($lignes, $debut, $fin);
+        $this->ajouterVentesBanquet($lignes, $du, $au);
+    }
 
-            foreach (RestaurantBuffetEntry::query()->with('service')->whereBetween('created_at', [$debut, $fin])->get() as $e) {
-                $point = $this->pointDeVente($e->point_of_sale_id);
-                $lignes->push($this->vente(CarbonImmutable::parse($e->created_at), self::PREFIXE_RESTAURANT . $e->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Buffet du ' . ($e->service?->service_date?->format('d/m') ?? '—'), '—',
-                    $e->adults . ' adulte(s)' . ($e->children ? ', ' . $e->children . ' enfant(s)' : ''),
-                    self::mode($e->payment_method), (int) $e->amount));
-            }
-
-            foreach (\App\Models\RestaurantBanquet::query()->whereIn('status', ['realise', 'solde'])
-                ->whereDate('event_date', '>=', $du->toDateString())->whereDate('event_date', '<=', $au->toDateString())->get() as $b) {
-                $point = $this->pointDeVente($b->point_of_sale_id);
-                $lignes->push($this->vente(CarbonImmutable::parse($b->event_date), self::PREFIXE_RESTAURANT . $b->point_of_sale_id, $point?->name ?? 'Restaurant',
-                    'Banquet ' . $b->reference, $b->client_name ?: '—', $b->title . ' — ' . $b->covers . ' couvert(s)',
-                    $b->status === 'solde' ? 'Soldé' : 'À solder', (int) $b->total_amount));
-            }
+    private function ajouterVentesBuffet(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
+        foreach (RestaurantBuffetEntry::query()->with('service')->whereBetween('created_at', [$debut, $fin])
+            ->get() as $e) {
+            $point = $this->pointDeVente($e->point_of_sale_id);
+            $lignes->push($this->vente(CarbonImmutable::parse($e->created_at), self::PREFIXE_RESTAURANT . $e
+                ->point_of_sale_id, $point?->name ?? 'Restaurant',
+                'Buffet du ' . ($e->service?->service_date?->format('d/m') ?? '—'), '—',
+                $e->adults . ' adulte(s)' . ($e->children ? ', ' . $e->children . ' enfant(s)' : ''),
+                self::mode($e->payment_method), (int) $e->amount));
         }
+    }
 
-        if (TenantModules::has('shop')) {
-            foreach (ShopOrder::query()->where('payment_status', '!=', 'cancelled')
-                ->whereBetween('created_at', [$debut, $fin])->get() as $o) {
-                $lignes->push($this->vente(CarbonImmutable::parse($o->created_at), self::SERVICE_BOUTIQUE, 'Boutique', 'Vente ' . $o->order_number,
-                    $o->customer_name ?: '—', $o->total_items . ' article(s)',
-                    $this->reglementCommande($o->payment_status, $o->payment_method), (int) $o->total_amount));
-            }
+    private function ajouterVentesBanquet(Collection $lignes, CarbonImmutable $du, CarbonImmutable $au): void
+    {
+        foreach (\App\Models\RestaurantBanquet::query()->whereIn('status', ['realise', 'solde'])
+            ->whereDate('event_date', '>=', $du->toDateString())->whereDate('event_date', '<=', $au->toDateString())
+                ->get() as $b) {
+            $point = $this->pointDeVente($b->point_of_sale_id);
+            $lignes->push($this->vente(CarbonImmutable::parse($b->event_date), self::PREFIXE_RESTAURANT . $b
+                ->point_of_sale_id, $point?->name ?? 'Restaurant',
+                'Banquet ' . $b->reference, $b->client_name ?: '—', $b->title . ' — ' . $b->covers . ' couvert(s)',
+                $b->status === 'solde' ? 'Soldé' : 'À solder', (int) $b->total_amount));
         }
+    }
 
-        return $lignes
-            ->filter(fn (array $l) => $service === '' || $l['service_cle'] === $service)
-            ->sortBy(fn (array $l) => $l['date']->timestamp)
-            ->values();
+    private function ajouterVentesBoutique(Collection $lignes, CarbonImmutable $debut, CarbonImmutable $fin): void
+    {
+        foreach (ShopOrder::query()->where('payment_status', '!=', 'cancelled')
+            ->whereBetween('created_at', [$debut, $fin])->get() as $o) {
+            $lignes->push($this->vente(CarbonImmutable::parse($o->created_at), self::SERVICE_BOUTIQUE, 'Boutique',
+                'Vente ' . $o->order_number,
+                $o->customer_name ?: '—', $o->total_items . ' article(s)',
+                $this->reglementCommande($o->payment_status, $o->payment_method), (int) $o->total_amount));
+        }
     }
 
     /**
@@ -315,7 +422,8 @@ class Registres
     {
         $jours = (int) $du->diffInDays($au) + 1;
         $capacite = Room::query()->where('is_active', true)->count() * $jours;
-        $indicateurs = ['capacite' => $capacite, 'nuitees' => 0, 'nuitees_payantes' => 0, 'revenu_chambres' => 0, 'gratuites' => 0, 'valeur_gratuites' => 0];
+        $indicateurs = ['capacite' => $capacite, 'nuitees' => 0, 'nuitees_payantes' => 0, 'revenu_chambres' => 0,
+            'gratuites' => 0, 'valeur_gratuites' => 0];
 
         $sejours = Booking::query()
             ->whereIn('status', self::SEJOURS_EFFECTUES)
@@ -335,7 +443,8 @@ class Registres
 
             if ($s->is_complimentary || (int) $s->price_per_night === 0) {
                 $indicateurs['gratuites'] += $nuits;
-                $indicateurs['valeur_gratuites'] += (int) round(((int) $s->complimentary_value) * $nuits / max(1, (int) $s->total_nights));
+                $indicateurs['valeur_gratuites'] += (int) round(((int) $s->complimentary_value) * $nuits / max(1,
+                    (int) $s->total_nights));
             } else {
                 $indicateurs['nuitees_payantes'] += $nuits;
                 $indicateurs['revenu_chambres'] += $nuits * (int) $s->price_per_night;
@@ -385,7 +494,8 @@ class Registres
     {
         $ids = collect();
 
-        foreach (['restaurant_customer_orders', 'shop_orders', 'reception_sale_items', 'restaurant_buffet_entries'] as $table) {
+        foreach (['restaurant_customer_orders', 'shop_orders', 'reception_sale_items',
+            'restaurant_buffet_entries'] as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'folio_item_id')) {
                 $ids = $ids->merge(DB::table($table)->whereNotNull('folio_item_id')->pluck('folio_item_id'));
             }
@@ -415,7 +525,8 @@ class Registres
         return $id ? ($this->pointsDeVente[$id] ?? null) : null;
     }
 
-    private function ligne(mixed $date, string $serviceCle, string $service, string $piece, string $client, ?string $mode, ?int $par, int $montant, string $detail = ''): array
+    private function ligne(mixed $date, string $serviceCle, string $service, string $piece, string $client,
+        ?string $mode, ?int $par, int $montant, string $detail = ''): array
     {
         return [
             'date' => CarbonImmutable::parse($date),
@@ -431,8 +542,10 @@ class Registres
         ];
     }
 
-    private function vente(CarbonImmutable $date, string $serviceCle, string $service, string $piece, string $client, string $designation, string $reglement, int $montant): array
+    private function vente(CarbonImmutable $date, string $serviceCle, string $service, string $piece, string $client,
+        string $designation, string $reglement, int $montant): array
     {
-        return compact('date', 'service', 'piece', 'client', 'designation', 'reglement', 'montant') + ['service_cle' => $serviceCle];
+        return compact('date', 'service', 'piece', 'client', 'designation', 'reglement',
+            'montant') + ['service_cle' => $serviceCle];
     }
 }

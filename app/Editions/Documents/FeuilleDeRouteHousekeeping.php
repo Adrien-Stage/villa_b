@@ -46,7 +46,8 @@ class FeuilleDeRouteHousekeeping extends Edition
     {
         $requete = HousekeepingTeam::query()->where('is_active', true)->orderBy('name');
 
-        if (! $user->isAdmin() && ! $user->exerce(['manager', 'housekeeping_leader', 'housekeeping_supervisor', 'controller'])) {
+        if (! $user->isAdmin() && ! $user->exerce(['manager', 'housekeeping_leader', 'housekeeping_supervisor',
+            'controller'])) {
             $requete->whereHas('members', fn ($q) => $q->where('users.id', $user->id));
         }
 
@@ -66,21 +67,7 @@ class FeuilleDeRouteHousekeeping extends Edition
             ->whereIn('status', ['pending', 'in_progress', 'blocked'])
             ->get()
             ->sortBy(fn (HousekeepingAssignment $a) => [$a->team?->name, $a->room?->floor, $a->room?->number])
-            ->map(fn (HousekeepingAssignment $a) => [
-                'equipe' => $a->team?->name ?? '—',
-                'chambre' => $a->room?->number,
-                'type' => $a->room?->roomType?->name ?? '—',
-                'nature' => $a->isRecouche() ? 'Recouche (client en séjour)' : 'Ménage de départ',
-                'statut' => match ($a->status) {
-                    'in_progress' => 'En cours' . ($a->startedBy ? ' — ' . $a->startedBy->name : ''),
-                    'blocked' => 'Problème signalé',
-                    default => 'À faire',
-                },
-                'minibar' => $a->room && MinibarService::releveDuAuMenage($a->room)
-                    ? 'Relevé à faire (client parti)'
-                    : ($a->isRecouche() && $a->room?->aUnMiniBar() ? 'Relevé à la recouche' : ''),
-                'consignes' => $a->notes ?? '',
-            ])
+            ->map($this->ligne(...))
             ->values();
 
         return $this->base($valeurs, $user, 'Situation au ' . now()->format('d/m/Y à H:i'))
@@ -95,5 +82,29 @@ class FeuilleDeRouteHousekeeping extends Edition
             ])
             ->lignes($lignes)
             ->note($lignes->count() . ' chambre' . ($lignes->count() > 1 ? 's' : '') . ' à traiter.');
+    }
+
+    private function ligne(HousekeepingAssignment $a): array
+    {
+        return [
+            'equipe' => $a->team?->name ?? '—',
+            'chambre' => $a->room?->number,
+            'type' => $a->room?->roomType?->name ?? '—',
+            'nature' => $a->isRecouche() ? 'Recouche (client en séjour)' : 'Ménage de départ',
+            'statut' => match ($a->status) {
+                'in_progress' => 'En cours' . ($a->startedBy ? ' — ' . $a->startedBy->name : ''),
+                'blocked' => 'Problème signalé',
+                default => 'À faire',
+            },
+            'minibar' => $this->consigneMinibar($a),
+            'consignes' => $a->notes ?? '',
+        ];
+    }
+
+    private function consigneMinibar(HousekeepingAssignment $affectation): string
+    {
+        return $affectation->room && MinibarService::releveDuAuMenage($affectation->room)
+            ? 'Relevé à faire (client parti)'
+            : ($affectation->isRecouche() && $affectation->room?->aUnMiniBar() ? 'Relevé à la recouche' : '');
     }
 }

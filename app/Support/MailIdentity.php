@@ -42,15 +42,9 @@ class MailIdentity
         // et l'adresse de l'établissement est automatiquement placée en Reply-To.
         // En environnement de test, on conserve l'adresse réglée pour respecter
         // les assertions unitaires sans dépendance SMTP.
-        if ($reglageFrom && ! app()->environment('testing')) {
-            if ($configFrom && self::domainOf($reglageFrom) !== self::domainOf($configFrom)) {
-                $adresse = $configFrom;
-            } else {
-                $adresse = $reglageFrom;
-            }
-        } else {
-            $adresse = $reglageFrom ?? $configFrom ?? 'hello@example.com';
-        }
+        $adresse = self::doitUtiliserRelais($reglageFrom, $configFrom)
+            ? $configFrom
+            : ($reglageFrom ?? $configFrom ?? 'hello@example.com');
 
         $nom = self::propre($reglages['mail_from_name'] ?? null)
             ?? $tenant?->name
@@ -77,10 +71,10 @@ class MailIdentity
         // Si aucune adresse de réponse explicite n'est renseignée, mais qu'une
         // adresse d'expédition personnalisée a été basculée en reply-to pour cause
         // d'incompatibilité de domaine SMTP en production.
-        if ($adresse === null && ! app()->environment('testing')) {
+        if ($adresse === null) {
             $reglageFrom = self::propre($reglages['mail_from_address'] ?? null);
             $configFrom = self::propre(config('mail.from.address'));
-            if ($reglageFrom && $configFrom && self::domainOf($reglageFrom) !== self::domainOf($configFrom)) {
+            if (self::doitUtiliserRelais($reglageFrom, $configFrom)) {
                 $adresse = $reglageFrom;
             }
         }
@@ -92,6 +86,13 @@ class MailIdentity
         }
 
         return [new Address($adresse, $tenant?->name ?: null)];
+    }
+
+    private static function doitUtiliserRelais(?string $reglageFrom, ?string $configFrom): bool
+    {
+        return $reglageFrom && $configFrom
+            && ! app()->environment('testing')
+            && self::domainOf($reglageFrom) !== self::domainOf($configFrom);
     }
 
     /** Extrait le nom de domaine en minuscules d'une adresse email. */
