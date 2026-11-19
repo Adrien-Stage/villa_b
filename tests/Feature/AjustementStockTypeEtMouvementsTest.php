@@ -16,16 +16,16 @@ beforeEach(function () {
     activerModules(['economat']);
 });
 
-function creerEconomeAjustement(): User
+function creerControleurAjustement(): User
 {
     $user = User::factory()->create(['is_active' => true]);
-    $user->roles()->sync(Role::where('slug', 'econome')->pluck('id'));
+    $user->roles()->sync(Role::where('slug', 'controller')->pluck('id'));
 
     return $user->fresh();
 }
 
 test('l\'ajustement de stock permet de choisir le type et affiche le stock passé à 100 sans afficher +40 en entrée', function () {
-    $user = creerEconomeAjustement();
+    $user = creerControleurAjustement();
 
     $item = StockItem::create([
         'name'          => 'Serviettes éponge',
@@ -80,7 +80,7 @@ test('l\'ajustement de stock permet de choisir le type et affiche le stock pass�
 });
 
 test('l\'ajustement avec régularisation de livraison étiquette correctement le mouvement', function () {
-    $user = creerEconomeAjustement();
+    $user = creerControleurAjustement();
 
     $item = StockItem::create([
         'name'          => 'Huile de tournesol 5L',

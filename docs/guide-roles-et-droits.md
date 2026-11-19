@@ -811,7 +811,7 @@ personne, et vous pouvez la lever.
 | Restaurants | `app/Services/RestaurantContext.php`, trait `AppartientAUnRestaurant` |
 | Interventions | `app/Models/Intervention.php` |
 | Écrans | `@droit(...)`, `@pour(...)`, `<x-sidebar-link>` (qui pose son droit) |
-| Conformité | `PermissionCatalogConformityTest` (catalogue = routes), `tests/Fixtures/route_roles_avant_phase1.json` (référence des rôles par route) |
+| Conformité | `PermissionCatalogConformityTest` (catalogue = routes), `tests/Fixtures/route_roles.json` (référence des rôles par route) |
 | Annexe de ce guide | `php artisan droits:annexe`, à relancer après tout changement du catalogue |
 
 La console lit le catalogue par l'API de l'hôtel (`GET /api/permissions/matrice`) et

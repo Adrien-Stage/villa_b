@@ -65,12 +65,12 @@ test("le service achats définit les conditionnements : 1 carton = 20 paquets = 
     expect($niveaux->pluck('name')->all())->toBe(['paquet', 'carton'])
         ->and((float) $niveaux[1]->factor)->toBe(200.0)
         ->and($niveaux[1]->closed_count)->toBe(5)
-        ->and(etatDesGants($this))->toBe('5 cartons')
+        ->and(etatDesGants($this))->toBe('5 ctn')
         ->and((float) $this->gants->fresh()->current_stock)->toBe(1000.0);
 
     $trace = StockMovement::where('source_type', StockMovement::SOURCE_PACKAGING)->sole();
     expect((float) $trace->quantity)->toBe(0.0)
-        ->and($trace->reason)->toContain('1 carton = 200 pièces');
+        ->and($trace->reason)->toContain('1 carton = 200 pcs');
 });
 
 test('une définition incohérente est refusée', function () {
@@ -94,17 +94,17 @@ test("une sortie prend le vrac puis les petites unités, et ouvre un carton quan
 
     // 1 paquet demandé : aucun paquet fermé, un carton s'ouvre.
     $m = $stock->recordOut($this->gants->fresh(), 10, StockMovement::SOURCE_MANUAL, null, 'Essai', 'paquet');
-    expect(etatDesGants($this))->toBe('4 cartons · 19 paquets')
+    expect(etatDesGants($this))->toBe('4 ctn · 19 paquets')
         ->and($m->packaging['ouverts'])->toBe(['carton' => 1])
-        ->and($m->ouvertures())->toBe('ouverture : 1 carton');
+        ->and($m->ouvertures())->toBe('ouverture : 1 ctn');
 
     // 15 pièces : un paquet entier, puis un paquet ouvert dont il reste 5 pièces.
     $stock->recordOut($this->gants->fresh(), 15);
-    expect(etatDesGants($this))->toBe('4 cartons · 17 paquets · 5 pièces');
+    expect(etatDesGants($this))->toBe('4 ctn · 17 paquets · 5 pcs');
 
     // 1 carton demandé : un carton fermé sort tel quel.
     $stock->recordOut($this->gants->fresh(), 200, StockMovement::SOURCE_MANUAL, null, null, 'carton');
-    expect(etatDesGants($this))->toBe('3 cartons · 17 paquets · 5 pièces')
+    expect(etatDesGants($this))->toBe('3 ctn · 17 paquets · 5 pcs')
         ->and((float) $this->gants->fresh()->current_stock)->toBe(775.0);
 });
 
@@ -114,13 +114,13 @@ test('une entrée en cartons reste fermée ; son annulation retire des cartons',
     $stock = app(StockService::class);
 
     $stock->recordIn($this->gants->fresh(), 400, 5000, StockMovement::SOURCE_MANUAL, null, 'Livraison', 'carton');
-    expect(etatDesGants($this))->toBe('2 cartons · 1 000 pièces');
+    expect(etatDesGants($this))->toBe('2 ctn · 1 000 pcs');
 
     $stock->recordIn($this->gants->fresh(), 35, 5000);  // en vrac
-    expect(etatDesGants($this))->toBe('2 cartons · 1 035 pièces');
+    expect(etatDesGants($this))->toBe('2 ctn · 1 035 pcs');
 
     $stock->reverseIn($this->gants->fresh(), 400, 5000, StockMovement::SOURCE_MANUAL, null, 'Annulation', 'carton');
-    expect(etatDesGants($this))->toBe('1 035 pièces');
+    expect(etatDesGants($this))->toBe('1 035 pcs');
 });
 
 test("un ajustement à la baisse ne laisse jamais plus d'unités fermées que de stock", function () {
@@ -132,7 +132,7 @@ test("un ajustement à la baisse ne laisse jamais plus d'unités fermées que de
 
     expect((float) $etat->current_stock)->toBe(450.0)
         ->and($etat->packagings->sum(fn ($n) => $n->closed_count * (float) $n->factor))->toBeLessThanOrEqual(450.0)
-        ->and(etatDesGants($this))->toBe('2 cartons · 5 paquets');
+        ->and(etatDesGants($this))->toBe('2 ctn · 5 paquets');
 });
 
 test("l'ouverture à la main range des paquets sans changer le stock", function () {
@@ -142,7 +142,7 @@ test("l'ouverture à la main range des paquets sans changer le stock", function 
 
     $this->post(route('economat.items.transformation.open', $this->gants), ['niveau' => 'carton', 'nombre' => 2])
         ->assertSessionHas('success');
-    expect(etatDesGants($this))->toBe('3 cartons · 40 paquets')
+    expect(etatDesGants($this))->toBe('3 ctn · 40 paquets')
         ->and((float) $this->gants->fresh()->current_stock)->toBe(1000.0);
 
     $this->post(route('economat.items.transformation.open', $this->gants), ['niveau' => 'carton', 'nombre' => 9])
@@ -170,21 +170,21 @@ test('une demande interne en paquets se livre en paquets, et le carton s’ouvre
     $ligne = $demande->lines()->sole();
     expect((float) $ligne->quantity_requested)->toBe(30.0)
         ->and($ligne->packaging_name)->toBe('paquet')
-        ->and($ligne->quantiteDemandee())->toBe('3 paquets (30 pièces)');
+        ->and($ligne->quantiteDemandee())->toBe('3 paquets (30 pcs)');
 
     $this->actingAs($econome);
-    $this->get(route('economat.requisitions.show', $demande))->assertOk()->assertSee('3 paquets (30 pièces)');
+    $this->get(route('economat.requisitions.show', $demande))->assertOk()->assertSee('3 paquets (30 pcs)');
     $this->post(route('economat.requisitions.approve', $demande), [])->assertSessionHas('success');
     // Le magasin ne sert que 2 paquets sur 3.
     $this->post(route('economat.requisitions.deliver', $demande), ['issued' => [$ligne->id => 2]])->assertSessionHas('success');
 
     expect((float) $ligne->fresh()->quantity_issued)->toBe(20.0)
-        ->and($ligne->fresh()->quantiteServie())->toBe('2 paquets (20 pièces)')
-        ->and(etatDesGants($this))->toBe('4 cartons · 18 paquets');
+        ->and($ligne->fresh()->quantiteServie())->toBe('2 paquets (20 pcs)')
+        ->and(etatDesGants($this))->toBe('4 ctn · 18 paquets');
 
-    $this->get(route('economat.requisitions.print', $demande))->assertOk()->assertSee('2 paquets (20 pièces)');
+    $this->get(route('economat.requisitions.print', $demande))->assertOk()->assertSee('2 paquets (20 pcs)');
     $this->get(route('economat.movements.index', ['article' => $this->gants->id]))->assertOk()
-        ->assertSee('Ouverture : 1 carton')->assertSee('4 cartons · 18 paquets');
+        ->assertSee('Ouverture : 1 ctn')->assertSee('4 ctn · 18 paquets');
 });
 
 test("un conditionnement inconnu de l'article est refusé à la demande", function () {
@@ -227,13 +227,13 @@ test('une livraison reçue en cartons entre en cartons fermés ; son annulation 
     expect((float) $ligneRecue->quantity_accepted)->toBe(1800.0)
         ->and((float) $ligneRecue->quantity_rejected)->toBe(200.0)
         ->and($ligneRecue->packaging_name)->toBe('carton')
-        ->and(etatDesGants($this))->toBe('9 cartons · 1 000 pièces');
+        ->and(etatDesGants($this))->toBe('9 ctn · 1 000 pcs');
 
-    $this->get(route('economat.receipts.show', $recu))->assertOk()->assertSee('9 cartons (1 800 pièces)');
-    $this->get(route('economat.receipts.print', $recu))->assertOk()->assertSee('9 cartons (1 800 pièces)');
+    $this->get(route('economat.receipts.show', $recu))->assertOk()->assertSee('9 ctn (1 800 pcs)');
+    $this->get(route('economat.receipts.print', $recu))->assertOk()->assertSee('9 ctn (1 800 pcs)');
 
     $this->post(route('economat.receipts.cancel', $recu))->assertSessionHas('success');
-    expect(etatDesGants($this))->toBe('1 000 pièces');
+    expect(etatDesGants($this))->toBe('1 000 pcs');
 });
 
 test('la réception rapide sur le bon accepte des cartons', function () {
@@ -247,7 +247,7 @@ test('la réception rapide sur le bon accepte des cartons', function () {
     ])->assertSessionHas('success');
 
     expect((float) $ligne->fresh()->quantity_received)->toBe(1000.0)
-        ->and(etatDesGants($this))->toBe('5 cartons · 1 000 pièces');
+        ->and(etatDesGants($this))->toBe('5 ctn · 1 000 pcs');
 });
 
 test('la réception directe en cartons compte le prix au carton', function () {
@@ -264,7 +264,7 @@ test('la réception directe en cartons compte le prix au carton', function () {
     $ligneBon = \App\Models\PurchaseOrderLine::sole();
     expect((float) $ligneBon->quantity_ordered)->toBe(400.0)
         ->and((int) $ligneBon->unit_price)->toBe(5000)   // 10 000 F le carton = 50 F la pièce
-        ->and(etatDesGants($this))->toBe('2 cartons · 1 000 pièces');
+        ->and(etatDesGants($this))->toBe('2 ctn · 1 000 pcs');
 });
 
 test('une sortie hors établissement en cartons sort des cartons fermés, et les rend à l’annulation', function () {
@@ -278,21 +278,21 @@ test('une sortie hors établissement en cartons sort des cartons fermés, et les
 
     $sortie = \App\Models\ExternalIssue::sole();
     expect((float) $sortie->lines->first()->quantity)->toBe(200.0)
-        ->and(etatDesGants($this))->toBe('4 cartons');
-    $this->get(route('economat.external_issues.show', $sortie))->assertOk()->assertSee('1 carton (200 pièces)');
+        ->and(etatDesGants($this))->toBe('4 ctn');
+    $this->get(route('economat.external_issues.show', $sortie))->assertOk()->assertSee('1 ctn (200 pcs)');
 
     $this->post(route('economat.external_issues.cancel', $sortie), ['cancellation_reason' => 'Prêt annulé'])->assertSessionHas('success');
-    expect(etatDesGants($this))->toBe('5 cartons');
+    expect(etatDesGants($this))->toBe('5 ctn');
 });
 
 test("l'inventaire se compte par niveau et cale les unités fermées à la clôture", function () {
-    $econome = agentConditionnement('econome');
-    $this->actingAs($econome);
+    $controleur = agentConditionnement('controller');
+    $this->actingAs($controleur);
     cartonsDeGants($this);
 
     $this->get(route('economat.count_sheets.print', ['service' => 'economat']))->assertOk()->assertSee('cartons fermés')->assertSee('pièces en vrac');
 
-    $inventaire = app(\App\Services\StockCountService::class)->open([], $econome);
+    $inventaire = app(\App\Services\StockCountService::class)->open([], $controleur);
     $ligne = $inventaire->lines()->sole();
 
     $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()->assertSee('Compter par conditionnement');
@@ -308,14 +308,16 @@ test("l'inventaire se compte par niveau et cale les unités fermées à la clôt
     $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()
         ->assertSee("vrac: '7'", false);
 
-    $this->post(route('economat.stock_counts.close', $inventaire))->assertRedirect();
+    $this->post(route('economat.stock_counts.submit', $inventaire))->assertSessionHas('success');
+    $this->actingAs(agentConditionnement('manager'))->post(route('economat.stock_counts.close', $inventaire))
+        ->assertSessionHas('success');
 
     // Une fois clôturée, la feuille relit aussi le détail compté.
     $this->get(route('economat.stock_counts.show', $inventaire))->assertOk()
-        ->assertSee('25 paquets · 2 cartons');
+        ->assertSee('25 paquets · 2 ctn');
 
     expect((float) $this->gants->fresh()->current_stock)->toBe(657.0)
-        ->and(etatDesGants($this))->toBe('2 cartons · 25 paquets · 7 pièces')
+        ->and(etatDesGants($this))->toBe('2 ctn · 25 paquets · 7 pcs')
         ->and(StockMovement::where('source_type', StockMovement::SOURCE_STOCK_COUNT)
             ->where('type', StockMovement::TYPE_PACKAGING)->exists())->toBeTrue();
 });

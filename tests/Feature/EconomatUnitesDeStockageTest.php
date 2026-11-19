@@ -39,39 +39,39 @@ test("la liste part des unités courantes, et l'économe la règle dans Paramèt
     // L'économe n'a que cet onglet : Paramètres s'ouvre dessus.
     $this->get(route('settings.index'))->assertOk()->assertSee('Unités de mesure & de stockage', false)->assertSee('Ajouter une unité');
 
-    $this->post(route('economat.units.store'), ['name' => 'bidon'])
+    $this->post(route('economat.units.store'), ['name' => 'Cuve', 'short_name' => 'cuve'])
         ->assertRedirect(route('settings.index', ['tab' => 'economat']));
-    expect(StockUnit::choix())->toContain('bidon');
+    expect(StockUnit::choix())->toContain('cuve');
 
     // « KG » est « kg », « PIÈCE » est « pièce ».
-    $this->post(route('economat.units.store'), ['name' => 'KG'])->assertSessionHasErrors('name');
-    $this->post(route('economat.units.store'), ['name' => 'PIÈCE'])->assertSessionHasErrors('name');
-    expect(StockUnit::where('name', 'KG')->exists())->toBeFalse();
+    $this->post(route('economat.units.store'), ['name' => 'Kilo', 'short_name' => 'KG'])->assertSessionHasErrors('short_name');
+    $this->post(route('economat.units.store'), ['name' => 'PIÈCE', 'short_name' => 'pce'])->assertSessionHasErrors('name');
+    expect(StockUnit::where('short_name', 'KG')->exists())->toBeFalse();
 });
 
 test("renommer une unité renomme celle des articles ; une unité employée se met hors service", function () {
     $this->actingAs(membreEconomat('econome', 'Économe'));
-    $casier = StockUnit::where('name', 'casier')->sole();
+    $casier = StockUnit::where('short_name', 'casier')->sole();
     $biere = StockItem::create(['name' => 'Bière 65 cl', 'unit' => 'casier']);
 
-    $this->put(route('economat.units.update', $casier), ['name' => 'casier 12', 'is_active' => 1])->assertSessionHasNoErrors();
+    $this->put(route('economat.units.update', $casier), ['name' => 'Casier de 12', 'short_name' => 'casier 12', 'is_active' => 1])->assertSessionHasNoErrors();
     expect($biere->fresh()->unit)->toBe('casier 12');
 
     $this->delete(route('economat.units.destroy', $casier))->assertSessionHasErrors('unite');
     expect(StockUnit::whereKey($casier->id)->exists())->toBeTrue();
 
     // Hors service : plus proposée, mais l'article qui l'emploie se modifie encore.
-    $this->put(route('economat.units.update', $casier), ['name' => 'casier 12', 'is_active' => 0]);
+    $this->put(route('economat.units.update', $casier), ['name' => 'Casier de 12', 'short_name' => 'casier 12', 'is_active' => 0]);
     expect(StockUnit::choix())->not->toContain('casier 12')
         ->and(StockUnit::choix('casier 12'))->toContain('casier 12');
 
-    $this->put(route('economat.items.update', $biere), ['name' => 'Bière 65 cl (casier)', 'unit' => 'casier 12'])
+    $this->actingAs(membreEconomat('controller', 'Contrôleur'))->put(route('economat.items.update', $biere), ['name' => 'Bière 65 cl (casier)', 'unit' => 'casier 12'])
         ->assertSessionHasNoErrors();
     expect($biere->fresh()->name)->toBe('Bière 65 cl (casier)');
 
     // Une unité que personne n'emploie se supprime.
-    $lot = StockUnit::where('name', 'lot')->sole();
-    $this->delete(route('economat.units.destroy', $lot))->assertSessionHasNoErrors();
+    $lot = StockUnit::where('short_name', 'lot')->sole();
+    $this->actingAs(membreEconomat('econome', 'Économe'))->delete(route('economat.units.destroy', $lot))->assertSessionHasNoErrors();
     expect(StockUnit::whereKey($lot->id)->exists())->toBeFalse();
 });
 
@@ -116,9 +116,9 @@ test("la direction tient aussi la liste ; le magasinier n'a que son profil", fun
     $this->get(route('settings.index', ['tab' => 'economat']))->assertOk()
         ->assertSee('Unités de mesure & de stockage', false)
         ->assertSee('Ajouter une unité');
-    $this->post(route('economat.units.store'), ['name' => 'bidon'])
+    $this->post(route('economat.units.store'), ['name' => 'Cuve', 'short_name' => 'cuve'])
         ->assertRedirect(route('settings.index', ['tab' => 'economat']));
-    expect(StockUnit::where('name', 'bidon')->exists())->toBeTrue();
+    expect(StockUnit::where('short_name', 'cuve')->exists())->toBeTrue();
 
     // Le magasinier ne règle rien : la tuile Paramètres le mène à son profil.
     $this->actingAs(membreEconomat('storekeeper', 'Magasinier'))

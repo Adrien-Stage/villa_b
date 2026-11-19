@@ -122,14 +122,14 @@ test('l’écran des à-nouveaux affiche le stock repris', function () {
         ->assertSee('321000 — 100 000 FCFA', false);
 });
 
-test('le service achats reprend le stock d’un article depuis l’écran ; l’économe ne le peut plus', function () {
+test('seul le contrôleur reprend le stock d’un article depuis l’écran', function () {
     $riz = articleSansHistorique();
 
     $this->actingAs(User::factory()->create(['role' => 'econome']))
         ->post(route('economat.items.opening', $riz), ['quantity' => 25, 'unit_cost' => 1200])
         ->assertSessionHas('access_denied_popup');
 
-    $this->actingAs(User::factory()->create(['role' => 'purchasing_manager']))
+    $this->actingAs(User::factory()->create(['role' => 'controller']))
         ->post(route('economat.items.opening', $riz), ['quantity' => 25, 'unit_cost' => 1200])
         ->assertSessionHas('success');
 

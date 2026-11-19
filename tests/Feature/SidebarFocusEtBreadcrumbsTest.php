@@ -81,8 +81,9 @@ test('Breadcrumbs::shouldShow masque le fil d\'Ariane sur le lanceur d\'applicat
 });
 
 test('Breadcrumbs::generate résout la hiérarchie et le nom du modèle pour le dernier élément', function () {
-    $item = StockItem::factory()->create([
+    $item = StockItem::create([
         'name' => 'Savon liquide 5L',
+        'unit' => 'pcs',
     ]);
 
     $request = Request::create("/economat/articles/{$item->id}", 'GET');

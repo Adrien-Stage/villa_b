@@ -35,7 +35,7 @@ function formulaireStaff(array $roles, array $extra = []): array
 }
 
 test('le cumul relevé sur un compte réel est refusé', function () {
-    $reponse = $this->post(route('users.store'), formulaireStaff(['econome', 'accountant', 'quality_auditor']));
+    $reponse = $this->post(route('users.store'), formulaireStaff(['econome', 'accountant', 'controller']));
 
     $reponse->assertSessionHasErrors('roles');
     $this->assertDatabaseMissing('users', ['name' => 'Nouvel employé']);

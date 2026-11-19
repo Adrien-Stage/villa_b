@@ -38,7 +38,7 @@ test('la liste porte une barre de recherche', function () {
 test('la recherche filtre par nom, sans tenir compte de la casse', function () {
     $this->get(route('economat.items.index', ['q' => 'pvc']))->assertOk()
         ->assertSee('Tuyau PVC 32')->assertSee('Coude PVC')->assertDontSee('Riz parfumé')
-        ->assertSee('2 article(s) pour « pvc »', false);
+        ->assertViewHas('items', fn ($items) => $items->total() === 2);
 });
 
 test('la recherche trouve aussi la référence et la catégorie', function () {
@@ -49,10 +49,11 @@ test('la recherche trouve aussi la référence et la catégorie', function () {
         ->assertSee('Riz parfumé')->assertDontSee('Tuyau PVC 32');
 });
 
-test('la recherche se combine avec le filtre « Sous le seuil » et le garde dans ses liens', function () {
+test('la recherche se combine avec le filtre « Sous le seuil » et conserve la saisie', function () {
     $this->get(route('economat.items.index', ['q' => 'pvc', 'filter' => 'alert']))->assertOk()
         ->assertSee('Coude PVC')->assertDontSee('Tuyau PVC 32')
-        ->assertSee(route('economat.items.index', ['q' => 'pvc']), false);
+        ->assertViewHas('filter', 'alert')
+        ->assertSee('name="q" value="pvc"', false);
 });
 
 test('une recherche sans résultat le dit', function () {

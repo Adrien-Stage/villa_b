@@ -1086,7 +1086,7 @@ class Navigation
                     'active' => request()->routeIs('accounting.index'),
                 ];
             }
-            if ($droits->allows($user, 'accounting.ledger.voir')) {
+            if (TenantModules::has('ledger') && $droits->allows($user, 'accounting.ledger.voir')) {
                 $tabs[] = [
                     'label'  => 'Grand livre',
                     'icon'   => 'book-open',

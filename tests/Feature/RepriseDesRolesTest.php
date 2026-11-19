@@ -120,10 +120,12 @@ test("un ancien chef de cuisine ne perd aucun geste de la salle ni de la caisse"
     foreach ([
         'restaurant.billing.paid', 'restaurant.billing.voir', 'restaurant.orders.creer', 'restaurant.orders.served',
         'restaurant.orders.status', 'restaurant.orders.reassign', 'restaurant.shifts.open', 'restaurant.breakfast.serve',
-        'restaurant.recipes.creer', 'restaurant.pantry.items.creer', 'restaurant.stock_counts.close',
+        'restaurant.recipes.creer', 'restaurant.pantry.items.creer',
     ] as $droit) {
         expect($droits->allows($chef, $droit))->toBeTrue("{$droit} perdu par l'ancien chef de cuisine");
     }
+
+    expect($droits->allows($chef, 'restaurant.stock_counts.close'))->toBeFalse();
 });
 
 test("le chef de cuisine seul tient la cuisine, plus la salle ni la caisse", function () {
