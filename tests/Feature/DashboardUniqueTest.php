@@ -53,7 +53,7 @@ test("le tableau de bord de l'économe porte ses propres indicateurs", function 
 
     $reponse->assertOk()
         ->assertSee('Articles sous seuil')
-        ->assertSee('Valeur du stock')
+        ->assertDontSee('Valeur du stock')
         ->assertSee('Demandes en attente')
         // La carte de repli ne doit plus apparaître : elle signalait un écran vide.
         ->assertDontSee('Bienvenue');

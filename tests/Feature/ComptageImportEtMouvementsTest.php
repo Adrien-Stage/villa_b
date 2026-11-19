@@ -80,8 +80,8 @@ test("l'ajustement garde le stock initial et le stock après comptage", function
         ->and($ajustement->valeur())->toBe(-300000)
         ->and($ajustement->reason)->toContain('Casse / perte');
 
-    // Un ajustement à la main — au service achats — garde aussi son stock initial.
-    $this->actingAs(membreMagasin('purchasing_manager'))
+    // Un ajustement à la main — par le contrôle de gestion — garde aussi son stock initial.
+    $this->actingAs(membreMagasin('controller'))
         ->post(route('economat.items.adjust', $this->eau), ['counted_quantity' => 32, 'reason' => 'Recomptage'])->assertSessionHasNoErrors();
     $manuel = StockMovement::where('stock_item_id', $this->eau->id)->where('type', StockMovement::TYPE_ADJUSTMENT)->sole();
     expect((float) $manuel->stock_before)->toBe(30.0)->and((float) $manuel->stock_after)->toBe(32.0);
@@ -107,9 +107,9 @@ test('le fichier de comptage porte les articles et leur stock théorique', funct
 });
 
 test("le fichier importé saisit les comptages ; avec la clôture, le stock est ajusté", function () {
-    $econome = membreMagasin('econome');
-    $inventaire = app(StockCountService::class)->open([], $econome);
-    $this->actingAs($econome);
+    $controleur = membreMagasin('controller');
+    $inventaire = app(StockCountService::class)->open([], $controleur);
+    $this->actingAs($controleur);
 
     // Par identifiant, par référence, par nom ; une ligne vide ne change rien.
     $this->post(route('economat.stock_counts.import', $inventaire), ['fichier' => fichierDeComptage([
@@ -131,11 +131,16 @@ test("le fichier importé saisit les comptages ; avec la clôture, le stock est 
         ->and(session('import_errors'))->toHaveCount(2)
         ->and($inventaire->fresh()->status)->toBe(StockCount::STATUS_DRAFT);
 
-    // Le riz compté à son tour, avec la clôture : le stock est ajusté.
+    // Le riz est compté à son tour, puis la feuille est soumise à la validation.
     $this->post(route('economat.stock_counts.import', $inventaire), [
         'fichier'  => fichierDeComptage([['', '', 'Riz parfumé', '', '', '50', '48', '', '']]),
-        'cloturer' => '1',
     ])->assertSessionHas('success');
+    $this->post(route('economat.stock_counts.submit', $inventaire))->assertSessionHas('success');
+    expect($inventaire->fresh()->status)->toBe(StockCount::STATUS_SUBMITTED);
+    expect((float) $this->biere->fresh()->current_stock)->toBe(20.0);
+
+    $this->actingAs(membreMagasin('manager'))->post(route('economat.stock_counts.close', $inventaire))
+        ->assertSessionHas('success');
 
     expect($inventaire->fresh()->status)->toBe(StockCount::STATUS_CLOSED)
         ->and((float) $this->biere->fresh()->current_stock)->toBe(18.0)
@@ -145,10 +150,10 @@ test("le fichier importé saisit les comptages ; avec la clôture, le stock est 
 });
 
 test("une ligne refusée laisse l'inventaire ouvert, même avec la clôture demandée", function () {
-    $econome = membreMagasin('econome');
-    $inventaire = app(StockCountService::class)->open([], $econome);
+    $controleur = membreMagasin('controller');
+    $inventaire = app(StockCountService::class)->open([], $controleur);
 
-    $this->actingAs($econome)->post(route('economat.stock_counts.import', $inventaire), [
+    $this->actingAs($controleur)->post(route('economat.stock_counts.import', $inventaire), [
         'fichier'  => fichierDeComptage([
             ['', '', 'Bière 65 cl', '', '', '', '19', '', ''],
             ['', '', 'Inconnu', '', '', '', '2', '', ''],
@@ -161,26 +166,38 @@ test("une ligne refusée laisse l'inventaire ouvert, même avec la clôture dema
         ->and(session('success'))->toContain("L'inventaire reste ouvert");
 });
 
-test("le comptage déjà fait s'importe dès l'ouverture, et ajuste le stock", function () {
-    $this->actingAs(membreMagasin('econome'))->post(route('economat.stock_counts.store'), [
+test("le comptage déjà fait s'importe dès l'ouverture, puis ajuste le stock après validation", function () {
+    $this->actingAs(membreMagasin('controller'))->post(route('economat.stock_counts.store'), [
         'count_date'        => '2026-10-09',
         'stock_category_id' => $this->boissons->id,
         'fichier'           => fichierDeComptage([['', 'BIE-65', '', '', '', '', '21', '', 'Oubli de saisie']]),
-        'cloturer'          => '1',
     ])->assertSessionHas('success');
 
-    expect(StockCount::sole()->status)->toBe(StockCount::STATUS_CLOSED)
+    $inventaire = StockCount::sole();
+    expect($inventaire->status)->toBe(StockCount::STATUS_DRAFT);
+    $this->post(route('economat.stock_counts.submit', $inventaire))->assertSessionHas('success');
+    $this->actingAs(membreMagasin('manager'))->post(route('economat.stock_counts.close', $inventaire))
+        ->assertSessionHas('success');
+
+    expect($inventaire->fresh()->status)->toBe(StockCount::STATUS_CLOSED)
         ->and((float) $this->biere->fresh()->current_stock)->toBe(21.0)
         ->and((float) $this->eau->fresh()->current_stock)->toBe(30.0);
 });
 
-test('le magasinier importe le comptage mais ne clôture pas', function () {
-    $inventaire = app(StockCountService::class)->open([], membreMagasin('econome'));
+test('le contrôleur importe le comptage sans le clôturer, et le magasinier ne saisit rien', function () {
+    $controleur = membreMagasin('controller');
+    $inventaire = app(StockCountService::class)->open([], $controleur);
 
-    $this->actingAs(membreMagasin('storekeeper'))->post(route('economat.stock_counts.import', $inventaire), [
+    $saisie = fn () => [
         'fichier'  => fichierDeComptage([['', '', 'Bière 65 cl', '', '', '', '19', '', '']]),
         'cloturer' => '1',
-    ])->assertSessionHas('success');
+    ];
+    $this->actingAs(membreMagasin('storekeeper'))->post(route('economat.stock_counts.import', $inventaire), $saisie())
+        ->assertSessionHas('access_denied_popup', true);
+    expect($inventaire->lines()->whereNotNull('counted_quantity')->exists())->toBeFalse();
+
+    $this->actingAs($controleur)->post(route('economat.stock_counts.import', $inventaire), $saisie())
+        ->assertSessionHas('success');
 
     expect($inventaire->fresh()->status)->toBe(StockCount::STATUS_DRAFT)
         ->and((float) $inventaire->fresh()->lines->firstWhere('stock_item_id', $this->biere->id)->counted_quantity)->toBe(19.0)
@@ -207,7 +224,7 @@ test("la rubrique Mouvements montre tous les articles, ou la fiche de stock d'un
         ->assertSee('Mouvements de stock')
         ->assertSee('Bière 65 cl')
         ->assertSee('Eau minérale 1,5 L')
-        ->assertSee('Stock avant');
+        ->assertSee('Stock restant');
 
     // La fiche de la bière à partir du 10 : 20 au début, +10, −4, ajustement −1, 25 en fin.
     $fiche = app(\App\Services\StockMovementJournal::class)->fiche($this->biere, CarbonImmutable::parse('2026-10-10'), CarbonImmutable::parse('2026-10-31'));

@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Role;
+use App\Models\StockItem;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Services\PermissionResolver;
 use App\Support\DutySegregation;
@@ -51,6 +53,21 @@ test('il consulte tout ce que consulte le contrôle de gestion', function () {
     }
 
     expect($manquants)->toBe([]);
+});
+
+test('le responsable financier peut comparer les tarifs fournisseurs dans les deux parcours d’achat', function () {
+    $article = StockItem::create(['name' => 'Farine', 'unit' => 'kg']);
+    $fournisseur = Supplier::create(['name' => 'Meunerie du Centre']);
+    $article->suppliers()->attach($fournisseur->id, ['purchase_price' => 250_000]);
+
+    $this->actingAs(financier());
+
+    foreach (['economat.orders.fournisseurs', 'economat.purchase_requests.fournisseurs'] as $route) {
+        $this->getJson(route($route, $article))->assertOk()
+            ->assertJsonPath('article.id', $article->id)
+            ->assertJsonPath('fournisseurs.0.id', $fournisseur->id)
+            ->assertJsonPath('fournisseurs.0.tarif', 250_000);
+    }
 });
 
 test("il fixe les prix de tous les services et valide les achats, sans tenir le magasin", function () {

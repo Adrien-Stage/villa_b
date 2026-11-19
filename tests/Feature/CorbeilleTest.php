@@ -43,11 +43,11 @@ function agentCorbeille(string $role): User
 }
 
 test("un fournisseur supprimé part à la corbeille avec ses liens, et la console le restaure tel qu'il était", function () {
-    $acheteur = agentCorbeille('purchasing_manager');
+    $controleur = agentCorbeille('controller');
     $fournisseur = Supplier::create(['name' => 'Grossiste Nord', 'phone' => '690000000', 'is_active' => true]);
     $riz = StockItem::create(['name' => 'Riz', 'unit' => 'kg', 'supplier_id' => $fournisseur->id, 'is_active' => true]);
 
-    $this->actingAs($acheteur)->delete(route('economat.suppliers.destroy', $fournisseur))->assertSessionHas('success');
+    $this->actingAs($controleur)->delete(route('economat.suppliers.destroy', $fournisseur))->assertSessionHas('success');
 
     expect(Supplier::find($fournisseur->id))->toBeNull()
         ->and($riz->fresh()->supplier_id)->toBeNull();
@@ -56,13 +56,13 @@ test("un fournisseur supprimé part à la corbeille avec ses liens, et la consol
     expect($entree->type)->toBe('Fournisseur')
         ->and($entree->module)->toBe('economat')
         ->and($entree->label)->toBe('Grossiste Nord')
-        ->and($entree->deleted_by_name)->toBe('Agent purchasing_manager')
+        ->and($entree->deleted_by_name)->toBe('Agent controller')
         ->and($entree->resume()['liens'])->toBe(1);
 
     // La console liste et restaure.
     $this->getJson('/api/corbeille', enteteCorbeille())->assertOk()
         ->assertJsonPath('entrees.0.libelle', 'Grossiste Nord')
-        ->assertJsonPath('entrees.0.supprime_par', 'Agent purchasing_manager')
+        ->assertJsonPath('entrees.0.supprime_par', 'Agent controller')
         ->assertJsonPath('filtres.types.suppliers', 'Fournisseur');
 
     $this->postJson("/api/corbeille/{$entree->id}/restaurer", ['auteur' => 'Tech Wetchah'], enteteCorbeille())

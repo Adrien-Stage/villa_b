@@ -105,6 +105,17 @@ test("le manager écrit sur l'hébergement, consulte ailleurs", function () {
         'economat.zones.creer',
         'economat.zones.modifier',
         'economat.zones.supprimer',
+        // Validation, rejet et annulation des inventaires (Lot 4).
+        'economat.stock_counts.cancel',
+        'economat.stock_counts.close',
+        'economat.stock_counts.reject',
+        'economat.stores.counts.cancel',
+        'economat.stores.counts.close',
+        'economat.stores.counts.reject',
+        'restaurant.stock_counts.cancel',
+        'restaurant.stock_counts.close',
+        'restaurant.stock_counts.reject',
+        'restaurant.stock_counts.supprimer',
     ];
 
     $ecrituresIndues = [];
@@ -155,11 +166,9 @@ test("le comptage de caisse est contresigné par la comptabilité, jamais par le
         ->and(PermissionCatalog::roles('accounting.cash_reviews.creer'))->toContain('accountant');
 });
 
-test("tout droit autrefois tenu par admin est tenu par manager", function () {
-    // La référence figée a été mise à jour en remplaçant admin par manager :
-    // si un droit avait été perdu au passage, elle ne correspondrait plus.
+test('chaque route de la matrice a au moins un rôle habilité', function () {
     $reference = json_decode(
-        file_get_contents(base_path('tests/Fixtures/route_roles_avant_phase1.json')),
+        file_get_contents(base_path('tests/Fixtures/route_roles.json')),
         true,
         flags: JSON_THROW_ON_ERROR
     );
@@ -171,7 +180,6 @@ test("tout droit autrefois tenu par admin est tenu par manager", function () {
         }
     }
 
-    // Aucune route ne doit se retrouver sans détenteur après le retrait.
     expect($orphelins)->toBe([]);
 });
 

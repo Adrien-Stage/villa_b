@@ -311,8 +311,8 @@ test('l annulation d un inventaire en cours annule la feuille sans modifier les 
 });
 
 test('les routes http d inventaire et le rapport PV fonctionnent et respectent les permissions', function () {
-    $controller = agentRole('controller');
-    $raf        = agentRole('manager');
+    $controller = User::factory()->create(['role' => 'controller']);
+    $raf        = User::factory()->create(['role' => 'manager']);
 
     $item = StockItem::create([
         'name' => 'Jus d Ananas Frais',

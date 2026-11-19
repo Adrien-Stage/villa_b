@@ -727,6 +727,11 @@ class PermissionCatalog
                 $roles[] = RoleCatalog::ADMIN;
             }
 
+            // L'audit qualité est fusionné avec le contrôle de gestion
+            if (self::pourAuditQualite($droit)) {
+                $roles[] = DutySegregation::CONTROLE_DE_GESTION;
+            }
+
             // Le responsable financier consulte tout ce que consulte le
             // contrôle de gestion : les chiffres de tous les services. Il
             // encadre le contrôleur sans en prendre le rôle, qui ne se cumule
@@ -739,11 +744,6 @@ class PermissionCatalog
             // ni écrire. Le terminal POS Réception reste strictement réservé à la réception.
             if (self::estLecture($droit) && !str_ends_with($droit, '.export') && !str_starts_with($droit, 'reception.pos.')) {
                 $roles[] = RoleCatalog::SUPPORT;
-            }
-
-            // L'audit qualité est fusionné avec le contrôle de gestion
-            if (self::pourAuditQualite($droit)) {
-                $roles[] = DutySegregation::CONTROLE_DE_GESTION;
             }
 
             $roles = array_values(array_unique($roles));

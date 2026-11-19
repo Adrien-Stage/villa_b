@@ -180,7 +180,7 @@ test('on retrouve une pièce par son numéro, si on peut l’ouvrir', function (
     $bon = PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => PurchaseOrder::STATUS_SENT, 'total_amount' => 450000]);
     $fragment = substr($bon->number, -4);
 
-    $this->actingAs(membreAvec('econome', 'Économe'))
+    $this->actingAs(membreAvec('purchasing_manager', 'Responsable des achats'))
         ->get(route('editions.index', ['q' => $fragment]))
         ->assertOk()
         ->assertSee($bon->number)

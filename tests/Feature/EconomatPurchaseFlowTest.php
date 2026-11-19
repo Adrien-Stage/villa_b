@@ -459,7 +459,7 @@ test('les routes d impression BC et BR respectent les standards', function () {
     ]);
 
     // 1. Impression Bon de Commande
-    $response = test()->get(route('economat.orders.print', $order));
+    $response = test()->actingAs(createStaffUser('purchasing_manager'))->get(route('economat.orders.print', $order));
     $response->assertOk()
         ->assertViewIs('economat.orders.print')
         ->assertSee($order->number)

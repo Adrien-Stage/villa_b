@@ -128,6 +128,8 @@
                                     @endif
                                 </p>
                             </div>
+                        @elseif($demande->isActive())
+                            <p class="text-xs font-semibold text-primary/70">Compte rendu précédent</p>
                         @endif
 
                         {{-- Section 1 : Diagnostic & Cause --}}

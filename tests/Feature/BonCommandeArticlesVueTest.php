@@ -19,7 +19,7 @@ beforeEach(function () {
 
 test('la carte Articles du bon de commande ne contient plus le champ reçu maintenant ni le bouton valider la réception', function () {
     $user = User::factory()->create(['is_active' => true]);
-    $user->roles()->sync(Role::where('slug', 'econome')->pluck('id'));
+    $user->roles()->sync(Role::where('slug', 'purchasing_manager')->pluck('id'));
 
     $supplier = Supplier::create(['name' => 'Graphik Pro', 'is_active' => true]);
     $item = StockItem::create([

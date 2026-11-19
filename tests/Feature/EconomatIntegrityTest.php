@@ -158,7 +158,7 @@ test('une feuille d’inventaire annulée ne peut plus régulariser le stock', f
 
     $service->cancel($feuille);
 
-    expect(fn () => $service->close($ecranPerime))->toThrow(RuntimeException::class, 'plus en cours');
+    expect(fn () => $service->close($ecranPerime))->toThrow(RuntimeException::class, 'dans un état validable');
     expect((float) $riz->fresh()->current_stock)->toBe(10.0);
 });
 

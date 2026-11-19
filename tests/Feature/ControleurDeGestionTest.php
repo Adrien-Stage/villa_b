@@ -76,19 +76,42 @@ test("chaque écran qu'il peut consulter s'ouvre sans erreur", function () {
     expect($enErreur)->toBe([]);
 });
 
-test("ses écritures sont strictement limitées au pilotage, aux demandes d'achat et au référentiel / ajustement (Lot 1)", function () {
+test("ses écritures sont strictement limitées au pilotage, aux actes de contrôle documentés", function () {
     $ecritures = collect(PermissionCatalog::all())
         ->filter(fn ($roles, $droit) => in_array('controller', $roles, true) && ! PermissionCatalog::estLecture($droit))
         ->keys()->sort()->values()->all();
 
-    // Lot 1 (Constat S7) : Le contrôleur de gestion est seul habilité à modifier/supprimer
-    // les articles et fournisseurs, et à ajuster le stock. Il tient également le budget
-    // et approuve les demandes d'achat. Il n'achète ni ne réceptionne.
+    // Les lots 1, 3, 4 et 6 ont défini ses actes de contrôle : référentiels,
+    // demandes, inventaires soumis à validation et pilotage financier.
     expect($ecritures)->toBe([
-        'economat.items.adjust', 'economat.items.modifier', 'economat.items.opening', 'economat.items.supprimer',
-        'economat.purchase_requests.approve', 'economat.purchase_requests.modifier', 'economat.purchase_requests.reject',
-        'economat.suppliers.modifier', 'economat.suppliers.supprimer',
-        'pilotage.budget.modifier', 'pilotage.seuils.modifier',
+        'economat.items.adjust',
+        'economat.items.modifier',
+        'economat.items.opening',
+        'economat.items.suppliers.link',
+        'economat.items.suppliers.unlink',
+        'economat.items.supprimer',
+        'economat.purchase_requests.approve',
+        'economat.purchase_requests.modifier',
+        'economat.purchase_requests.reject',
+        'economat.stock_counts.cancel',
+        'economat.stock_counts.creer',
+        'economat.stock_counts.import',
+        'economat.stock_counts.modifier',
+        'economat.stock_counts.submit',
+        'economat.stores.counts.cancel',
+        'economat.stores.counts.creer',
+        'economat.stores.counts.modifier',
+        'economat.stores.counts.submit',
+        'economat.suppliers.modifier',
+        'economat.suppliers.supprimer',
+        'pilotage.budget.modifier',
+        'pilotage.forecast.modifier',
+        'pilotage.seuils.modifier',
+        'restaurant.stock_counts.cancel',
+        'restaurant.stock_counts.creer',
+        'restaurant.stock_counts.modifier',
+        'restaurant.stock_counts.submit',
+        'restaurant.stock_counts.supprimer',
     ]);
 });
 
