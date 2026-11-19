@@ -77,8 +77,7 @@ test("le responsable des achats ouvre la fiche : informations, articles et prix,
         ->assertSee('Riz parfumé')->assertSee('22 000 F', false)->assertSee('Huile végétale')->assertSee('9 000 F', false)
         ->assertSee('Historique des livraisons')->assertSee('BL-7781')->assertSee('66 000 F', false)
         ->assertSee('Bons de commande en cours')
-        // Il tient le fournisseur : il voit ses coordonnées bancaires.
-        ->assertSee('CM21 10005 00001 1234567890 12');
+        ->assertDontSee('CM21 10005 00001 1234567890 12');
 
     $fiche = FicheFournisseur::pour($grossiste, lecteurFiche('purchasing_manager'));
     $riz = $fiche['catalogue']->firstWhere('item.name', 'Riz parfumé');
@@ -88,13 +87,16 @@ test("le responsable des achats ouvre la fiche : informations, articles et prix,
         ->and($fiche['chiffres'])->toMatchArray(['livraisons' => 1, 'montant_total' => 6600000, 'articles' => 2, 'bons_en_cours' => 1]);
 });
 
-test("le magasinier et le comptable lisent la fiche ; seul le comptable voit la banque ; la réception n'y a pas accès", function () {
+test("les coordonnées bancaires sont réservées à la comptabilité et au contrôle de gestion", function () {
     $grossiste = grossisteLivre();
 
     $this->actingAs(lecteurFiche('storekeeper'))->get(route('economat.suppliers.show', $grossiste))->assertOk()
         ->assertSee('Riz parfumé')->assertDontSee('CM21 10005');
 
     $this->actingAs(lecteurFiche('accountant'))->get(route('economat.suppliers.show', $grossiste))->assertOk()
+        ->assertSee('CM21 10005 00001 1234567890 12');
+
+    $this->actingAs(lecteurFiche('controller'))->get(route('economat.suppliers.show', $grossiste))->assertOk()
         ->assertSee('CM21 10005 00001 1234567890 12');
 
     $this->actingAs(lecteurFiche('reception'))->get(route('economat.suppliers.show', $grossiste))

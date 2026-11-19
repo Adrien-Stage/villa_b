@@ -275,10 +275,12 @@ test('chaque restaurant compte son garde-manger', function () {
         ]);
     }
 
-    $this->actingAs(equipierDe('restaurant_chief', [$this->kotibe]))
-        ->post(route('restaurant.stock_counts.store'))->assertSessionHasNoErrors();
-    $this->actingAs(equipierDe('restaurant_chief', [$this->origine], 'Chef Jardin'))
-        ->post(route('restaurant.stock_counts.store'))->assertSessionHasNoErrors();
+    $this->actingAs(directionGenerale('controller'));
+    foreach ([$this->kotibe, $this->origine] as $restaurant) {
+        $this->post(route('restaurant.courant'), ['restaurant' => $restaurant->id])
+            ->assertSessionHasNoErrors();
+        $this->post(route('restaurant.stock_counts.store'))->assertSessionHas('success');
+    }
 
     $inventaire = RestaurantStockCount::where('point_of_sale_id', $this->kotibe->id)->sole();
     expect($inventaire->lines()->with('item')->get()->pluck('item.name')->all())->toBe(['Riz KOT'])
@@ -604,8 +606,10 @@ test("un restaurant sans stock n'a ni garde-manger, ni inventaire, ni fiche de c
         'point_of_sale_id' => $this->kotibe->id, 'name' => 'Riz', 'unit' => 'kg', 'current_stock' => 1, 'is_active' => true,
     ]))->toThrow(ValidationException::class, "« Kotibe » n'a pas de stock");
 
-    $this->actingAs(equipierDe('restaurant_chief', [$this->kotibe]))
-        ->post(route('restaurant.stock_counts.store'))->assertSessionHasErrors('restaurant');
+    $this->actingAs(directionGenerale('controller'))
+        ->post(route('restaurant.courant'), ['restaurant' => $this->kotibe->id])
+        ->assertSessionHasNoErrors();
+    $this->post(route('restaurant.stock_counts.store'))->assertSessionHasErrors('restaurant');
 
     expect(RestaurantStockCount::count())->toBe(0)
         // Seul le Jardin tient un stock : une seule fiche de cuisine, la sienne.

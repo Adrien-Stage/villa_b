@@ -53,7 +53,12 @@ test('chaque service a sa fiche, dépôts compris', function () {
 
     $services = app(CountSheetService::class)->services();
 
-    expect(array_keys($services))->toBe(['economat', 'garde-manger', 'boutique', 'depot-' . $minibar->id]);
+    $restaurant = PointOfSale::where('code', 'RES')->sole();
+    $bar = $restaurant->serviceStores()->where('restaurant_service', PointOfSale::SERVICE_BAR)->sole();
+    $cuisine = $restaurant->serviceStores()->where('restaurant_service', PointOfSale::SERVICE_CUISINE)->sole();
+
+    expect($services)->toHaveCount(6)
+        ->toHaveKeys(['economat', 'garde-manger', 'boutique', 'depot-' . $minibar->id, 'depot-' . $bar->id, 'depot-' . $cuisine->id]);
 });
 
 test('la fiche d’un dépôt liste son stock', function () {
@@ -113,7 +118,9 @@ test('toutes les fiches s’impriment en une fois pour l’inventaire général'
         ->assertSee('Tomate fraîche')
         ->assertSee('Masque bamiléké')
         ->assertSee('Eau minérale')
-        ->assertSee('4 fiche(s)');
+        ->assertSee('Bar - Restaurant')
+        ->assertSee('Cuisine - Restaurant')
+        ->assertSee('6 fiche(s)');
 });
 
 test('un service inconnu est refusé', function () {

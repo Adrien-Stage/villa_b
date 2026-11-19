@@ -58,7 +58,7 @@ test("l'économe voit les articles et leurs stocks, sans le catalogue : ni créa
     expect(StockItem::where('name', 'Sel')->exists())->toBeFalse();
 });
 
-test("le service achats tient le catalogue : articles, catégories, ajustements", function () {
+test("le service achats tient le catalogue : articles et catégories ; le contrôleur ajuste le stock", function () {
     $acheteur = agentDuPartage('purchasing_manager');
 
     $this->actingAs($acheteur)->get(route('economat.items.index'))->assertOk()
@@ -70,7 +70,12 @@ test("le service achats tient le catalogue : articles, catégories, ajustements"
 
     $sel = StockItem::where('name', 'Sel fin')->sole();
     app(StockService::class)->recordOpening($sel, 10, 30000);
-    $this->actingAs($acheteur)->post(route('economat.items.adjust', $sel), ['counted_quantity' => 8, 'reason' => 'Inventaire'])
+    $ajustement = ['counted_quantity' => 8, 'reason' => 'Inventaire'];
+    $this->post(route('economat.items.adjust', $sel), $ajustement)
+        ->assertSessionHas('access_denied_popup', true);
+    expect((float) $sel->fresh()->current_stock)->toBe(10.0);
+
+    $this->actingAs(agentDuPartage('controller'))->post(route('economat.items.adjust', $sel), $ajustement)
         ->assertSessionHas('success');
 
     expect((float) $sel->fresh()->current_stock)->toBe(8.0);

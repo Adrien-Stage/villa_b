@@ -22,7 +22,8 @@ test('chaque nouveau rôle ouvre les écrans de sa fonction', function (string $
     $this->actingAs(User::factory()->create(['role' => $role]));
 
     foreach (array_merge(['dashboard'], $routes) as $route) {
-        $this->get(route($route))->assertOk();
+        $statut = $this->get(route($route))->status();
+        expect($statut)->toBe(200, "La route {$route} répond {$statut}.");
     }
 })->with([
     'chef de réception' => ['reception_chief', [
@@ -38,7 +39,7 @@ test('chaque nouveau rôle ouvre les écrans de sa fonction', function (string $
     ]],
     'magasinier' => ['storekeeper', [
         'economat.index', 'economat.items.index', 'economat.receipts.index',
-        'economat.requisitions.index', 'economat.stock_counts.index', 'economat.orders.index',
+        'economat.requisitions.index', 'economat.stock_counts.index',
     ]],
 ]);
 
@@ -50,6 +51,7 @@ test("l'administrateur consulte chaque service sans erreur", function () {
         'restaurant.billing.index', 'shop.orders.index', 'economat.index', 'accounting.index',
         'housekeeping.index',
     ] as $route) {
-        $this->get(route($route))->assertOk();
+        $statut = $this->get(route($route))->status();
+        expect($statut)->toBe(200, "La route {$route} répond {$statut}.");
     }
 });

@@ -84,8 +84,9 @@ test('le responsable des achats commande, ne réceptionne pas et ne décide pas 
     // L'économat réceptionne, gère le stock et demande ; il ne commande plus.
     $econome = $droits('econome');
     expect($econome)->toContain('economat.orders.receive', 'economat.receipts.creer', 'economat.purchase_requests.creer',
-        'economat.stock_counts.creer', 'economat.requisitions.approve', 'economat.suppliers.voir')
-        ->not->toContain('economat.orders.send', 'economat.orders.transmit', 'economat.suppliers.creer', 'economat.purchase_requests.convert');
+        'economat.stock_counts.voir', 'economat.requisitions.approve', 'economat.suppliers.voir')
+        ->not->toContain('economat.orders.send', 'economat.orders.transmit', 'economat.suppliers.creer', 'economat.purchase_requests.convert',
+            'economat.stock_counts.creer', 'economat.stock_counts.modifier', 'economat.stock_counts.close');
 
     // La vérification : le responsable des achats ; l'économe, qui demande, non.
     expect(PermissionCatalog::roles('economat.purchase_requests.approve'))->toContain('purchasing_manager')

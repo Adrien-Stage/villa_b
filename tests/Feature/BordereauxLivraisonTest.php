@@ -83,7 +83,7 @@ test("une livraison partielle porte sa date et ses bordereaux ; la suivante auss
     $seconde = GoodsReceipt::where('status', GoodsReceipt::STATUS_RECEIVED)->latest('id')->first();
 
     // Le suivi des livraisons du bon, sur la fiche du bon et sur le bon de réception.
-    $this->actingAs($econome)->get(route('economat.orders.show', $bon))->assertOk()
+    $this->actingAs(agentBordereaux('purchasing_manager'))->get(route('economat.orders.show', $bon))->assertOk()
         ->assertSee('Suivi des livraisons')->assertSee('Livraison 1')->assertSee('Livraison 2')
         ->assertSee('BL-1.pdf')->assertSee('Aucun bordereau joint')->assertSee('Livraison complète');
     $this->actingAs($econome)->get(route('economat.receipts.show', $seconde))->assertOk()

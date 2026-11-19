@@ -97,23 +97,11 @@ test('le contrôleur de gestion voit tout et n\'écrit que ses actes de contrôl
     ));
 
     // Sa valeur tient à ce qu'il ne participe pas aux opérations qu'il surveille.
-    // Lot 1 (S7) : Le budget, les seuils, l'approbation des DA, ainsi que la tenue exclusive
-    // du référentiel (modifier/supprimer articles & fournisseurs) et les ajustements de stock
-    // sont ses prérogatives de contrôle/gouvernance : il n'achète ni ne reçoit.
-    sort($ecritures);
-    expect($ecritures)->toBe([
-        'economat.items.adjust',
-        'economat.items.modifier',
-        'economat.items.opening',
-        'economat.items.supprimer',
-        'economat.purchase_requests.approve',
-        'economat.purchase_requests.modifier',
-        'economat.purchase_requests.reject',
-        'economat.suppliers.modifier',
-        'economat.suppliers.supprimer',
-        'pilotage.budget.modifier',
-        'pilotage.seuils.modifier',
-    ])
+    // Le catalogue détaillé est figé dans ControleurDeGestionTest.
+    expect($ecritures)->toContain('economat.items.adjust', 'economat.stock_counts.submit',
+        'restaurant.stock_counts.submit', 'pilotage.forecast.modifier')
+        ->not->toContain('economat.orders.creer', 'economat.receipts.creer', 'accounting.ledger.periods.lock',
+            'economat.stock_counts.close', 'restaurant.stock_counts.close')
         ->and(count($droits))->toBeGreaterThan(40);
 });
 

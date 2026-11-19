@@ -206,19 +206,22 @@ test("le bouton de bon de commande n'apparaît qu'à qui peut en créer", functi
     activerModules(['economat']);
     \App\Support\RoleCatalog::sync();
 
-    // Tout bon naît d'une demande approuvée : l'économe ne saisit plus de bon,
-    // le responsable des achats part des demandes à commander.
+    // Le contrôle de gestion consulte les bons, tandis que le service achats peut les créer.
     $this->actingAs(User::factory()->create(['role' => 'econome']))
         ->get(route('economat.orders.index'))
-        ->assertOk()
-        ->assertDontSee('Nouveau bon');
+        ->assertRedirect()->assertSessionHas('access_denied_popup', true);
+
+    $this->actingAs(User::factory()->create(['role' => 'controller']))
+        ->get(route('economat.orders.index'))
+        ->assertOk()->assertDontSee(route('economat.orders.create'), false);
+
     $acheteur = User::factory()->create(['is_active' => true]);
     $acheteur->roles()->sync(\App\Models\Role::where('slug', 'purchasing_manager')->pluck('id'));
     $this->actingAs($acheteur->fresh())
         ->get(route('economat.orders.index'))
         ->assertOk()
         ->assertSee('Demandes à commander')
-        ->assertDontSee('Nouveau bon');
+        ->assertSee(route('economat.orders.create'), false);
 
     // Le comptable adresse une demande interne à l'économat depuis sa section
     // Comptabilité ; il ne crée pas de bon fournisseur.

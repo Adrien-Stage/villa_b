@@ -108,7 +108,7 @@ test('une catégorie sans stock change de compte sans écriture', function () {
 });
 
 test('déplacer un article vers une autre catégorie reclasse sa valeur', function () {
-    $this->actingAs(economeCategories());
+    $this->actingAs(User::factory()->create(['role' => 'controller']));
     $entretien = StockCategory::create(['name' => 'Entretien', 'stock_account' => '331000']);
     $epicerie = StockCategory::create(['name' => 'Épicerie', 'stock_account' => '321000']);
     $sel = StockItem::create([

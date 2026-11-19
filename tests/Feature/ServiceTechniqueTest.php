@@ -96,6 +96,15 @@ test('la réception demande une intervention : la chambre est retirée de la ven
     $this->get(route('technique.index'))->assertSessionHas('access_denied_popup');
 });
 
+function ficheTechnique(string $diagnostic, string $travaux): array
+{
+    return [
+        'diagnostic' => $diagnostic,
+        'travaux_realises' => $travaux,
+        'resultat' => MaintenanceRequest::RESULTAT_RESOLU,
+    ];
+}
+
 test("affectée, commencée, avec ses pièces, puis terminée : la chambre repasse au ménage, le demandeur est prévenu, les pièces sont une charge de l'hébergement", function () {
     [$depot, $joint] = depotTechnique();
     demanderFuite($this);
@@ -118,11 +127,12 @@ test("affectée, commencée, avec ses pièces, puis terminée : la chambre repas
 
     Carbon::setTestNow('2026-10-19 10:30');
     // Le technicien soumet sa fiche d'intervention au responsable
-    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Joint changé, plus de fuite.'])->assertSessionHas('success');
+    $this->post(route('technique.demandes.submit', $demande), ficheTechnique('Joint de siphon usé.', 'Joint changé, plus de fuite.'))->assertSessionHas('success');
 
     $demande->refresh();
     expect($demande->status)->toBe(MaintenanceRequest::STATUS_SUBMITTED)
-        ->and($demande->resolution)->toBe('Joint changé, plus de fuite.')
+        ->and($demande->diagnostic)->toBe('Joint de siphon usé.')
+        ->and($demande->travaux_realises)->toBe('Joint changé, plus de fuite.')
         ->and($this->responsable->notifications()->get()->pluck('data.title'))->toContain("Fiche d'intervention à viser");
 
     // Le responsable technique vise et clôture
@@ -159,7 +169,7 @@ test('le demandeur rouvre une intervention dans les sept jours, pas au-delà', f
     demanderFuite($this);
     $demande = MaintenanceRequest::sole();
     $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
-    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Serré le raccord.']);
+    $this->post(route('technique.demandes.submit', $demande), ficheTechnique('Raccord desserré.', 'Serré le raccord.'));
     $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
 
     Carbon::setTestNow('2026-10-22 09:00');
@@ -172,9 +182,10 @@ test('le demandeur rouvre une intervention dans les sept jours, pas au-delà', f
 
     // Rouverte, la demande garde l'ancien compte rendu — sans le faire passer pour celui d'une intervention finie.
     $this->actingAs($this->plombier)->get(route('technique.demandes.show', $demande))->assertOk()
-        ->assertSee('Compte rendu précédent')->assertDontSee("Compte rendu de l'intervention (visé)");
+        ->assertSee('Compte rendu précédent')->assertSee('Serré le raccord.')
+        ->assertDontSee('Intervention visée et clôturée');
 
-    $this->actingAs($this->plombier)->post(route('technique.demandes.submit', $demande), ['resolution' => 'Raccord remplacé.']);
+    $this->actingAs($this->plombier)->post(route('technique.demandes.submit', $demande), ficheTechnique('Raccord à remplacer.', 'Raccord remplacé.'));
     $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
     Carbon::setTestNow('2026-11-02 09:00');
     $this->actingAs($this->receptionniste)->post(route('technique.demandes.reopen', $demande), ['motif' => 'Encore.'])
@@ -201,15 +212,16 @@ test("un compte rendu oublié est refusé, et l'erreur ne s'affiche qu'une fois"
     $demande = MaintenanceRequest::sole();
     $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
 
-    $this->from(route('technique.demandes.show', $demande))->post(route('technique.demandes.complete', $demande), ['resolution' => ''])
-        ->assertSessionHasErrors('resolution');
+    $this->from(route('technique.demandes.show', $demande))
+        ->post(route('technique.demandes.submit', $demande), ficheTechnique('Le raccord est desserré.', ''))
+        ->assertSessionHasErrors('travaux_realises');
     $html = $this->get(route('technique.demandes.show', $demande))->getContent();
 
     expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_ASSIGNED)
-        ->and(substr_count($html, 'Dites ce qui a été fait'))->toBe(1);
+        ->and(substr_count($html, 'Détaillez les travaux et réparations réalisés'))->toBe(1);
 });
 
-test('le housekeeping signale un problème : la gouvernante transmet au service technique et copie le responsable des étages', function () {
+test('le housekeeping signale un problème technique : la chambre passe en maintenance et l’encadrement est informé', function () {
     $responsableEtages = membreTechnique('Rachel Chef Étages', 'housekeeping_leader');
     $gouvernante = membreTechnique('Eva Gouvernante', 'housekeeping_supervisor');
     $valet = membreTechnique('Valentin Valet', 'housekeeping_staff');
@@ -219,18 +231,15 @@ test('le housekeeping signale un problème : la gouvernante transmet au service 
     $affectation = HousekeepingAssignment::create(['housekeeping_team_id' => $equipe->id, 'room_id' => $this->chambre->id,
         'status' => 'in_progress', 'assigned_at' => now(), 'started_at' => now()]);
 
-    // 1. Le valet signale un problème : alerte la gouvernante sans créer de DIT directement
-    $this->actingAs($valet)->post(route('housekeeping.issue', $this->chambre), ['issue_notes' => 'Prise électrique arrachée'])
-        ->assertSessionHas('success', 'Le problème a été signalé à la gouvernante.');
-    expect(MaintenanceRequest::count())->toBe(0)
-        ->and($gouvernante->notifications()->count())->toBe(1);
-
-    // 2. La gouvernante transmet au service technique
-    $this->actingAs($gouvernante)->post(route('housekeeping.transmettre_technique', $this->chambre), [
-        'notes' => 'Prise arrachée à remplacer urgemment',
-        'specialty' => 'cfo',
-        'priority' => 'urgent',
+    $this->actingAs($valet)->post(route('housekeeping.issue', $this->chambre), [
+        'issue_type'  => HousekeepingAssignment::ISSUE_TECHNIQUE,
+        'issue_notes' => 'Prise électrique arrachée',
+        'specialty'   => 'cfo',
+        'priority'    => 'urgent',
     ])->assertSessionHas('success');
+    expect($affectation->fresh()->status)->toBe('blocked')
+        ->and($this->chambre->fresh()->status)->toBe(RoomStatus::MAINTENANCE)
+        ->and($gouvernante->notifications()->count())->toBe(1);
 
     $demande = MaintenanceRequest::sole();
     expect($demande->source)->toBe(MaintenanceRequest::SOURCE_HOUSEKEEPING)
@@ -240,13 +249,14 @@ test('le housekeeping signale un problème : la gouvernante transmet au service 
         ->and($this->electricien->notifications()->count())->toBe(1)
         ->and($responsableEtages->notifications()->get()->pluck('data.title'))->toContain("Demande d'intervention urgente");
 
-    // 3. L'électricienne prend et soumet sa fiche
+    // L'électricienne prend la demande et soumet sa fiche.
     $this->actingAs($this->electricien)->post(route('technique.demandes.take', $demande));
-    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Prise refixée et testée conforme.']);
+    $this->post(route('technique.demandes.submit', $demande), ficheTechnique('Fixation de prise arrachée.', 'Prise refixée et testée conforme.'));
 
-    // 4. Le responsable technique vise : la chambre et le ménage reprennent
+    // Le responsable vise la fiche : le ménage peut être replanifié.
     $this->actingAs($this->responsable)->post(route('technique.demandes.approve', $demande));
-    expect(HousekeepingAssignment::sole()->status)->toBe('in_progress')
+    expect($affectation->fresh()->status)->toBe('cancelled')
+        ->and($this->chambre->fresh()->status)->toBe(RoomStatus::DIRTY)
         ->and($gouvernante->notifications()->get()->pluck('data.title'))->toContain('Intervention terminée');
 });
 
@@ -254,7 +264,7 @@ test('le responsable technique peut demander une reprise au technicien', functio
     demanderFuite($this);
     $demande = MaintenanceRequest::sole();
     $this->actingAs($this->plombier)->post(route('technique.demandes.take', $demande));
-    $this->post(route('technique.demandes.submit', $demande), ['resolution' => 'Vite fait.']);
+    $this->post(route('technique.demandes.submit', $demande), ficheTechnique('Raccord de nouveau desserré.', 'Raccord resserré.'));
 
     expect($demande->fresh()->status)->toBe(MaintenanceRequest::STATUS_SUBMITTED);
 

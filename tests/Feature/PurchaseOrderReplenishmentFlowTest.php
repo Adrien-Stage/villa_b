@@ -98,11 +98,11 @@ test('un fournisseur prealablement cree dans les parametres fournit plusieurs pr
         ->and($produitsFournisseur->pluck('id'))->toContain($bierre1->id, $jus1->id)
         ->and($produitsFournisseur->pluck('id'))->not->toContain($papier->id);
 
-    // Le bon saisi de toutes pièces n'est plus ouvert : tout bon naît d'une
-    // demande d'achat approuvée.
+    $url = route('economat.orders.create', ['supplier_id' => $fournisseur->id]);
+    test()->actingAs($econome)->get($url)->assertRedirect()->assertSessionHas('access_denied_popup', true);
+
     makeReplenishmentMembre('purchasing_manager');
-    test()->get(route('economat.orders.create', ['supplier_id' => $fournisseur->id]))
-        ->assertRedirect()->assertSessionHas('access_denied_popup', true);
+    test()->get($url)->assertOk()->assertViewHas('selectedSupplierId', $fournisseur->id);
 });
 
 test('un bon de commande est lie a strictement un seul fournisseur avec signature automatique Qwigley', function () {
@@ -166,7 +166,7 @@ test('un bon de commande est lie a strictement un seul fournisseur avec signatur
         ->and($order->total_amount)->toBe(10600000);
 });
 
-test('le bon saisi de toutes pièces est refusé : il engagerait une dépense sans approbation', function () {
+test('seul le responsable des achats peut saisir un bon direct', function () {
     $econome = makeReplenishmentEconomeUser();
 
     $item = StockItem::create([
@@ -185,10 +185,16 @@ test('le bon saisi de toutes pièces est refusé : il engagerait une dépense sa
     ];
 
     test()->post(route('economat.orders.store'), $saisie)->assertSessionHas('access_denied_popup', true);
-    makeReplenishmentMembre('purchasing_manager');
-    test()->post(route('economat.orders.store'), $saisie)->assertSessionHas('access_denied_popup', true);
+    expect(PurchaseOrder::count())->toBe(0);
 
-    expect(PurchaseOrder::count())->toBe(0)
+    $acheteur = makeReplenishmentMembre('purchasing_manager');
+    test()->post(route('economat.orders.store'), $saisie)->assertSessionHas('success');
+
+    $bon = PurchaseOrder::sole();
+    expect($bon->created_by)->toBe($acheteur->id)
+        ->and($bon->supplier_id)->toBe($fournisseur->id)
+        ->and($bon->status)->toBe(PurchaseOrder::STATUS_DRAFT)
+        ->and($bon->total_amount)->toBe(500_000)
         ->and(PurchaseRequest::count())->toBe(0);
 });
 
@@ -236,6 +242,7 @@ test('les bons de commandes sont filtrables par fournisseur statut date et reche
     ]);
 
     // 1. Consultation globale : les 2 bons sont visibles
+    makeReplenishmentMembre('purchasing_manager');
     $resGlobal = test()->get(route('economat.orders.index'));
     $resGlobal->assertOk();
     $resGlobal->assertSee('Bons de commande fournisseurs');
@@ -272,8 +279,8 @@ test('les bons de commandes sont filtrables par fournisseur statut date et reche
     $resSearch->assertDontSee('BC-2026-TEST02');
 });
 
-test('l economat peut imprimer ou exporter la liste des bons de commande sous forme de tableau selon une periode definie', function () {
-    $econome = makeReplenishmentEconomeUser();
+test('le service achats peut imprimer ou exporter la liste des bons de commande sous forme de tableau selon une periode definie', function () {
+    $acheteur = makeReplenishmentMembre('purchasing_manager');
 
     $f = Supplier::create(['name' => 'Fournisseur Fruits Frais', 'is_active' => true]);
     $item = StockItem::create(['name' => 'Ananas Victoria', 'unit' => 'kg', 'supplier_id' => $f->id]);
@@ -281,7 +288,7 @@ test('l economat peut imprimer ou exporter la liste des bons de commande sous fo
     $bc = PurchaseOrder::create([
         'number'       => 'BC-2026-EXP01',
         'supplier_id'  => $f->id,
-        'created_by'   => $econome->id,
+        'created_by'   => $acheteur->id,
         'status'       => 'draft',
         'total_amount' => 12500000, // 125 000 F
     ]);
@@ -306,7 +313,7 @@ test('l economat peut imprimer ou exporter la liste des bons de commande sous fo
 });
 
 test('un bon individuel peut etre consulte en detail et imprime au format officiel avec police Qwigley et signature', function () {
-    $econome = makeReplenishmentEconomeUser('Rodrigue Tchouassi');
+    $acheteur = makeReplenishmentMembre('purchasing_manager', 'Rodrigue Tchouassi');
 
     $fournisseur = Supplier::create([
         'name'           => 'Société Industrielle des Viandes',
@@ -332,7 +339,7 @@ test('un bon individuel peut etre consulte en detail et imprime au format offici
     $order = PurchaseOrder::create([
         'number'           => 'BC-2026-OF001',
         'supplier_id'      => $fournisseur->id,
-        'created_by'       => $econome->id,
+        'created_by'       => $acheteur->id,
         'issuer_signature' => 'Rodrigue Tchouassi',
         'status'           => 'draft',
         'total_amount'     => 8000000, // 80 000 F
@@ -372,19 +379,20 @@ test('un bon individuel peut etre consulte en detail et imprime au format offici
 });
 
 test('la réception rapide sur le bon refuse un formulaire vide, et fait entrer ce qui est saisi', function () {
-    makeReplenishmentEconomeUser();
+    $econome = makeReplenishmentEconomeUser();
     $fournisseur = Supplier::create(['name' => 'SOCOICAM SARL', 'is_active' => true]);
     $tuyau = StockItem::create(['name' => 'Tuyau PVC Ø200', 'unit' => 'barre', 'current_stock' => 0, 'is_active' => true]);
     $bon = PurchaseOrder::create(['supplier_id' => $fournisseur->id, 'status' => PurchaseOrder::STATUS_SENT]);
     $ligne = PurchaseOrderLine::create(['purchase_order_id' => $bon->id, 'stock_item_id' => $tuyau->id, 'quantity_ordered' => 7, 'unit_price' => 4700000]);
 
-    // La carte Articles présente le récapitulatif sans saisie directe de réception
+    // La carte Articles présente le récapitulatif sans saisie directe de réception.
+    makeReplenishmentMembre('purchasing_manager');
     test()->get(route('economat.orders.show', $bon))->assertOk()
         ->assertDontSee('Reçu maintenant')
         ->assertDontSee('Valider la réception');
 
-    // Rien de saisi : ce n'est pas une réception.
-    test()->post(route('economat.orders.receive', $bon), ['received' => [$ligne->id => '']])
+    // L'économe réceptionne. Rien de saisi : ce n'est pas une réception.
+    test()->actingAs($econome)->post(route('economat.orders.receive', $bon), ['received' => [$ligne->id => '']])
         ->assertSessionHas('error', 'Aucune quantité reçue : saisissez les quantités réellement livrées.');
     expect($bon->fresh()->status)->toBe(PurchaseOrder::STATUS_SENT)
         ->and((float) $tuyau->fresh()->current_stock)->toBe(0.0);

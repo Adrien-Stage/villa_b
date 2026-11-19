@@ -1,14 +1,9 @@
 <?php
 
 /**
- * Le catalogue doit accorder exactement ce que le code accordait avant la
- * phase 1 — ni plus, ni moins.
- *
- * Avant la bascule, chaque route nommait ses rôles dans un middleware
- * « role: ». Une fois ces middlewares remplacés par « permission », cette
- * référence disparaît du code : plus rien, dans la table de routage, ne dit
- * qui avait le droit d'entrer. tests/Fixtures/route_roles_avant_phase1.json
- * la fige donc, route par route.
+ * tests/Fixtures/route_roles.json fige les rôles autorisés, route par route.
+ * La référence vient des anciens middlewares « role: » et suit les décisions
+ * de droits validées depuis leur remplacement par le catalogue.
  *
  * Un élargissement involontaire est passé pendant la bascule : 54 routes
  * portaient DEUX middlewares « role: » — un groupe large, une garde interne
@@ -37,7 +32,7 @@ if (!function_exists('routeGardee')) {
 
 test('chaque route accorde exactement les rôles de la référence', function () {
     $reference = json_decode(
-        file_get_contents(base_path('tests/Fixtures/route_roles_avant_phase1.json')),
+        file_get_contents(base_path('tests/Fixtures/route_roles.json')),
         true,
         flags: JSON_THROW_ON_ERROR
     );
@@ -75,7 +70,7 @@ test('chaque route accorde exactement les rôles de la référence', function ()
 
 test('la référence couvre toutes les routes gardées', function () {
     $reference = json_decode(
-        file_get_contents(base_path('tests/Fixtures/route_roles_avant_phase1.json')),
+        file_get_contents(base_path('tests/Fixtures/route_roles.json')),
         true,
         flags: JSON_THROW_ON_ERROR
     );
@@ -89,7 +84,9 @@ test('la référence couvre toutes les routes gardées', function () {
         }
     }
 
-    // Une route gardée absente de la référence est une route dont personne ne
-    // sait ce qu'elle accordait : ajoutez-la sciemment.
-    expect(array_values(array_diff($gardees, array_keys($reference))))->toBe([]);
+    $routesDeReference = array_keys($reference);
+    sort($routesDeReference);
+    sort($gardees);
+
+    expect($gardees)->toBe($routesDeReference);
 });

@@ -15,7 +15,6 @@
  ],
  "accounting.cash_reviews.store": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.expenses": [
@@ -27,17 +26,14 @@
  ],
  "accounting.expenses.destroy": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.expenses.store": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.expenses.update": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.income_statement": [
@@ -92,7 +88,6 @@
  ],
  "accounting.ledger.analytic.mirror": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.auxiliary": [
@@ -125,7 +120,6 @@
  ],
  "accounting.ledger.entry.reverse": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.general": [
@@ -159,7 +153,6 @@
  ],
  "accounting.ledger.night_audit.run": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.opening": [
@@ -171,7 +164,6 @@
  ],
  "accounting.ledger.opening.store": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.periods": [
@@ -183,22 +175,18 @@
  ],
  "accounting.ledger.periods.lock": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.reconcile": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.reconcile.auto": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.reconcile.undo": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.suppliers": [
@@ -210,7 +198,6 @@
  ],
  "accounting.ledger.suppliers.create": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.suppliers.show": [
@@ -223,7 +210,6 @@
  ],
  "accounting.ledger.suppliers.store": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.ledger.withholding": [
@@ -235,7 +221,6 @@
  ],
  "accounting.ledger.years.open": [
   "accountant",
-  "admin",
   "finance_manager"
  ],
  "accounting.receivables": [
@@ -266,7 +251,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
@@ -292,11 +276,9 @@
   "support"
  ],
  "bookings.approve": [
-  "admin",
   "manager"
  ],
  "bookings.cancel": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -306,7 +288,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
@@ -319,13 +300,11 @@
   "support"
  ],
  "bookings.cash_register.close.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.cash_register.disbursements.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -347,37 +326,31 @@
   "support"
  ],
  "bookings.cash_register.open.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.checkIn": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.checkOut": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.checkin_code.send": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.confirm": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.create": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -390,7 +363,6 @@
   "support"
  ],
  "bookings.drafts.destroy": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -412,31 +384,26 @@
   "support"
  ],
  "bookings.drafts.save": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.edit": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.folio.add": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.folio.remove": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.handovers.create": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -462,7 +429,6 @@
   "support"
  ],
  "bookings.handovers.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -475,7 +441,6 @@
   "support"
  ],
  "bookings.handovers.take.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -485,19 +450,16 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "bookings.minibar.request": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "bookings.payment.add": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -507,13 +469,11 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "bookings.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -523,25 +483,21 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "bookings.update": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "customers.create": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "customers.edit": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -555,7 +511,6 @@
   "reception_chief"
  ],
  "customers.import": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -565,7 +520,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
@@ -575,19 +529,16 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "customers.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "customers.update": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -611,7 +562,6 @@
   "admin"
  ],
  "economat.categories.destroy": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.categories.index": [
@@ -620,19 +570,15 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "support"
  ],
  "economat.categories.store": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.categories.update": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.classeur.confirm": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.classeur.export": [
@@ -640,11 +586,9 @@
   "controller",
   "finance_manager",
   "manager",
-  "purchasing_manager",
-  "quality_auditor"
+  "purchasing_manager"
  ],
  "economat.classeur.import": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.classeur.index": [
@@ -653,7 +597,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "support"
  ],
  "economat.classeur.show": [
@@ -662,17 +605,14 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "support"
  ],
  "economat.control.index": [
-  "admin",
   "controller",
   "finance_manager",
   "support"
  ],
  "economat.control.print": [
-  "admin",
   "controller",
   "finance_manager",
   "support"
@@ -684,16 +624,13 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "support"
  ],
  "economat.control.suggestions.store": [
-  "admin",
   "econome",
   "purchasing_manager"
  ],
  "economat.control.variances.index": [
-  "admin",
   "controller",
   "finance_manager",
   "support"
@@ -705,7 +642,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -716,7 +652,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -727,7 +662,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -738,16 +672,13 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.external_issues.cancel": [
-  "admin",
   "econome"
  ],
  "economat.external_issues.create": [
-  "admin",
   "econome"
  ],
  "economat.external_issues.export": [
@@ -757,7 +688,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper"
  ],
  "economat.external_issues.index": [
@@ -767,7 +697,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -778,7 +707,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -789,12 +717,10 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.external_issues.store": [
-  "admin",
   "econome"
  ],
  "economat.index": [
@@ -804,28 +730,23 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.adjust": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.destroy": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.export": [
   "admin",
   "controller",
   "finance_manager",
   "manager",
-  "purchasing_manager",
-  "quality_auditor"
+  "purchasing_manager"
  ],
  "economat.items.import": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.items.index": [
@@ -835,13 +756,11 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.opening": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.show": [
   "admin",
@@ -850,33 +769,26 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.store": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.items.suppliers.link": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.suppliers.unlink": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.transformation.cut": [
-  "admin",
   "econome"
  ],
  "economat.items.transformation.open": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.items.transformation.packagings": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.items.transformation.show": [
@@ -886,16 +798,13 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.items.update": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.items.zone": [
-  "admin",
   "econome"
  ],
  "economat.movements.export": [
@@ -905,7 +814,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper"
  ],
  "economat.movements.index": [
@@ -915,73 +823,65 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.orders.cancel": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.orders.create": [
-  "admin"
+  "purchasing_manager"
  ],
  "economat.orders.export": [
   "admin",
   "controller",
-  "econome",
+  "finance_manager",
+  "manager",
+  "purchasing_manager"
+ ],
+ "economat.orders.fournisseurs": [
+  "admin",
+  "controller",
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor"
+  "support"
  ],
  "economat.orders.index": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.orders.print": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.orders.receive": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.orders.send": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.orders.show": [
   "admin",
   "controller",
-  "econome",
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
-  "storekeeper",
   "support"
  ],
  "economat.orders.store": [
-  "admin"
+  "purchasing_manager"
  ],
  "economat.orders.transmit": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.purchase_requests.approve": [
@@ -1008,6 +908,14 @@
   "econome",
   "manager",
   "purchasing_manager"
+ ],
+ "economat.purchase_requests.fournisseurs": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "purchasing_manager",
+  "support"
  ],
  "economat.purchase_requests.index": [
   "admin",
@@ -1053,7 +961,6 @@
   "purchasing_manager"
  ],
  "economat.receipts.attachments.destroy": [
-  "admin",
   "econome"
  ],
  "economat.receipts.attachments.show": [
@@ -1063,30 +970,24 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.receipts.attachments.store": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.receipts.cancel": [
-  "admin",
   "econome"
  ],
  "economat.receipts.create": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.receipts.direct.create": [
-  "admin",
   "econome"
  ],
  "economat.receipts.direct.store": [
-  "admin",
   "econome"
  ],
  "economat.receipts.export": [
@@ -1096,7 +997,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper"
  ],
  "economat.receipts.index": [
@@ -1106,7 +1006,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -1117,7 +1016,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -1128,21 +1026,17 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.receipts.store": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.requisitions.approve": [
-  "admin",
   "econome"
  ],
  "economat.requisitions.cancel": [
-  "admin",
   "econome",
   "housekeeping_leader",
   "housekeeping_staff",
@@ -1161,7 +1055,6 @@
  ],
  "economat.requisitions.create": [
   "accountant",
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -1180,12 +1073,10 @@
   "technician"
  ],
  "economat.requisitions.deliver": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.requisitions.endorse": [
-  "admin",
   "finance_manager",
   "housekeeping_leader",
   "manager",
@@ -1203,7 +1094,6 @@
   "housekeeping_leader",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_chief",
@@ -1223,7 +1113,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1249,7 +1138,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1265,7 +1153,6 @@
   "technician"
  ],
  "economat.requisitions.reject": [
-  "admin",
   "econome"
  ],
  "economat.requisitions.show": [
@@ -1279,7 +1166,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1296,7 +1182,6 @@
  ],
  "economat.requisitions.store": [
   "accountant",
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -1315,16 +1200,14 @@
   "technician"
  ],
  "economat.stock_counts.cancel": [
-  "admin",
-  "econome"
+  "controller",
+  "manager"
  ],
  "economat.stock_counts.close": [
-  "admin",
-  "econome"
+  "manager"
  ],
  "economat.stock_counts.create": [
-  "admin",
-  "econome"
+  "controller"
  ],
  "economat.stock_counts.export": [
   "admin",
@@ -1333,13 +1216,10 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper"
  ],
  "economat.stock_counts.import": [
-  "admin",
-  "econome",
-  "storekeeper"
+  "controller"
  ],
  "economat.stock_counts.index": [
   "admin",
@@ -1348,9 +1228,11 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
+ ],
+ "economat.stock_counts.reject": [
+  "manager"
  ],
  "economat.stock_counts.report": [
   "admin",
@@ -1359,7 +1241,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "support"
  ],
  "economat.stock_counts.show": [
@@ -1369,26 +1250,27 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.stock_counts.store": [
-  "admin",
-  "econome"
+  "controller"
+ ],
+ "economat.stock_counts.submit": [
+  "controller"
  ],
  "economat.stock_counts.update": [
-  "admin",
-  "econome",
-  "storekeeper"
+  "controller"
  ],
  "economat.stores.counts.cancel": [
-  "admin",
-  "econome"
+  "controller",
+  "manager"
  ],
  "economat.stores.counts.close": [
-  "admin",
-  "econome"
+  "manager"
+ ],
+ "economat.stores.counts.reject": [
+  "manager"
  ],
  "economat.stores.counts.show": [
   "admin",
@@ -1397,21 +1279,19 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.stores.counts.store": [
-  "admin",
-  "econome"
+  "controller"
+ ],
+ "economat.stores.counts.submit": [
+  "controller"
  ],
  "economat.stores.counts.update": [
-  "admin",
-  "econome",
-  "storekeeper"
+  "controller"
  ],
  "economat.stores.destroy": [
-  "admin",
   "econome"
  ],
  "economat.stores.index": [
@@ -1421,7 +1301,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -1432,21 +1311,17 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.stores.store": [
-  "admin",
   "econome"
  ],
  "economat.stores.update": [
-  "admin",
   "econome"
  ],
  "economat.suppliers.destroy": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.suppliers.index": [
   "accountant",
@@ -1456,7 +1331,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -1468,24 +1342,19 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.suppliers.store": [
-  "admin",
   "purchasing_manager"
  ],
  "economat.suppliers.update": [
-  "admin",
-  "purchasing_manager"
+  "controller"
  ],
  "economat.transfers.cancel": [
-  "admin",
   "econome"
  ],
  "economat.transfers.create": [
-  "admin",
   "econome",
   "storekeeper"
  ],
@@ -1496,7 +1365,6 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
@@ -1507,45 +1375,37 @@
   "finance_manager",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "storekeeper",
   "support"
  ],
  "economat.transfers.store": [
-  "admin",
   "econome",
   "storekeeper"
  ],
  "economat.units.destroy": [
-  "admin",
   "econome",
   "manager",
   "purchasing_manager"
  ],
  "economat.units.store": [
-  "admin",
   "econome",
   "manager",
   "purchasing_manager"
  ],
  "economat.units.update": [
-  "admin",
   "econome",
   "manager",
   "purchasing_manager"
  ],
  "economat.zones.destroy": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.zones.store": [
-  "admin",
   "econome",
   "manager"
  ],
  "economat.zones.update": [
-  "admin",
   "econome",
   "manager"
  ],
@@ -1561,7 +1421,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1587,7 +1446,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1614,7 +1472,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1641,7 +1498,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -1657,35 +1513,28 @@
   "technician"
  ],
  "groups.addRoom": [
-  "admin",
   "manager"
  ],
  "groups.cancel": [
-  "admin",
   "manager"
  ],
  "groups.checkInAll": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "groups.checkOutAll": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "groups.create": [
-  "admin",
   "manager"
  ],
  "groups.edit": [
-  "admin",
   "manager"
  ],
  "groups.folio.add": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -1695,27 +1544,25 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "groups.invoice": [
   "admin",
+  "controller",
+  "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "groups.payment.add": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
  ],
  "groups.removeRoom": [
-  "admin",
   "manager"
  ],
  "groups.show": [
@@ -1723,34 +1570,28 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "groups.store": [
-  "admin",
   "manager"
  ],
  "groups.update": [
-  "admin",
   "manager"
  ],
  "housekeeping.assignments.store": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.available": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.clean": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
@@ -1764,18 +1605,15 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
-  "quality_auditor",
   "support"
  ],
  "housekeeping.inspect": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.issue": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
@@ -1788,29 +1626,30 @@
   "housekeeping_leader",
   "housekeeping_supervisor",
   "manager",
-  "quality_auditor",
   "support"
  ],
  "housekeeping.minibar.articles.store": [
-  "admin",
   "housekeeping_leader",
   "manager"
  ],
  "housekeeping.minibar.articles.update": [
-  "admin",
   "finance_manager",
   "housekeeping_leader",
   "manager"
  ],
  "housekeeping.minibar.check": [
-  "admin",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager"
+ ],
+ "housekeeping.minibar.defective": [
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.minibar.depot": [
-  "admin",
   "housekeeping_leader",
   "manager"
  ],
@@ -1821,11 +1660,9 @@
   "housekeeping_leader",
   "housekeeping_supervisor",
   "manager",
-  "quality_auditor",
   "support"
  ],
  "housekeeping.minibar.restock": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_supervisor",
   "manager"
@@ -1838,43 +1675,47 @@
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager",
-  "quality_auditor",
   "support"
  ],
  "housekeeping.minibar.rooms.update": [
-  "admin",
   "housekeeping_leader",
   "manager"
  ],
  "housekeeping.minibar.standards.update": [
-  "admin",
   "housekeeping_leader",
   "manager"
  ],
  "housekeeping.ready": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.reject": [
-  "admin",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager"
+ ],
+ "housekeeping.resolve_issue": [
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.stayover": [
-  "admin",
   "housekeeping_leader",
   "housekeeping_staff",
   "housekeeping_supervisor",
   "manager"
  ],
  "housekeeping.teams.store": [
-  "admin",
   "housekeeping_leader",
+  "manager"
+ ],
+ "housekeeping.transmettre_technique": [
+  "housekeeping_leader",
+  "housekeeping_supervisor",
   "manager"
  ],
  "interventions.index": [
@@ -1889,7 +1730,6 @@
   "admin"
  ],
  "invoices.payments.store": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -1899,7 +1739,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
@@ -1954,9 +1793,27 @@
   "support"
  ],
  "pilotage.budget.update": [
-  "admin",
   "controller",
   "finance_manager"
+ ],
+ "pilotage.budget.valider": [
+  "finance_manager",
+  "manager"
+ ],
+ "pilotage.forecast.index": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "pilotage.forecast.update": [
+  "controller",
+  "finance_manager"
+ ],
+ "pilotage.forecast.valider": [
+  "finance_manager",
+  "manager"
  ],
  "pilotage.index": [
   "admin",
@@ -1966,12 +1823,10 @@
   "support"
  ],
  "pilotage.seuils.update": [
-  "admin",
   "controller",
   "finance_manager"
  ],
  "planning.affectations.destroy": [
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -1984,7 +1839,6 @@
   "tech_manager"
  ],
  "planning.affectations.store": [
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -2008,7 +1862,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -2024,7 +1877,6 @@
   "technician"
  ],
  "planning.publier": [
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -2037,7 +1889,6 @@
   "tech_manager"
  ],
  "planning.recopier": [
-  "admin",
   "econome",
   "finance_manager",
   "housekeeping_leader",
@@ -2161,7 +2012,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_barman",
   "restaurant_chief",
   "restaurant_cook",
@@ -2170,6 +2020,16 @@
   "support"
  ],
  "restaurant.bar.menu.index": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "restaurant_barman",
+  "restaurant_chief",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.bar.menu.print": [
   "admin",
   "controller",
   "finance_manager",
@@ -2200,14 +2060,12 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_manager",
   "support"
  ],
  "restaurant.billing.paid": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
@@ -2217,7 +2075,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_manager",
@@ -2229,14 +2086,12 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_manager",
   "support"
  ],
  "restaurant.billing.unpaid": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
@@ -2246,7 +2101,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2254,16 +2108,13 @@
   "support"
  ],
  "restaurant.breakfast.serve": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.buffets.close": [
-  "admin",
   "restaurant_manager"
  ],
  "restaurant.buffets.entries.store": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
@@ -2273,7 +2124,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff",
@@ -2285,14 +2135,12 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_manager",
   "restaurant_staff",
   "support"
  ],
  "restaurant.buffets.store": [
-  "admin",
   "restaurant_manager"
  ],
  "restaurant.cash_register.close": [
@@ -2303,12 +2151,10 @@
   "support"
  ],
  "restaurant.cash_register.close.store": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
  "restaurant.cash_register.disbursements.store": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
@@ -2329,7 +2175,6 @@
   "support"
  ],
  "restaurant.cash_register.open.store": [
-  "admin",
   "cashier",
   "restaurant_manager"
  ],
@@ -2338,7 +2183,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_manager",
   "support"
@@ -2348,7 +2192,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2356,17 +2199,14 @@
   "support"
  ],
  "restaurant.menus.categories.destroy": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.menus.categories.store": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.menus.categories.update": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
@@ -2375,14 +2215,12 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.menus.import": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
@@ -2391,7 +2229,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2399,29 +2236,24 @@
   "support"
  ],
  "restaurant.menus.items.destroy": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.menus.items.store": [
-  "admin",
   "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.menus.items.update": [
-  "admin",
   "finance_manager",
   "restaurant_chief",
   "restaurant_manager"
  ],
  "restaurant.orders.bar_ready": [
-  "admin",
   "restaurant_barman",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.orders.claim": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -2430,7 +2262,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2438,26 +2269,21 @@
   "support"
  ],
  "restaurant.orders.preparing": [
-  "admin",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.orders.ready": [
-  "admin",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.orders.reassign": [
-  "admin",
   "restaurant_manager"
  ],
  "restaurant.orders.send_to_kitchen": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.orders.served": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
@@ -2466,7 +2292,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2474,24 +2299,19 @@
   "support"
  ],
  "restaurant.orders.status": [
-  "admin",
   "restaurant_manager"
  ],
  "restaurant.orders.store": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.pantry.categories.destroy": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.categories.store": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.categories.update": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.export": [
@@ -2499,12 +2319,10 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.pantry.import": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.index": [
@@ -2512,34 +2330,27 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
   "support"
  ],
  "restaurant.pantry.items.destroy": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.items.receive": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.items.store": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.items.update": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.pantry.movements.store": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.recipes.destroy": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.recipes.export": [
@@ -2547,12 +2358,10 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "restaurant.recipes.import": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.recipes.index": [
@@ -2560,22 +2369,38 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.recipes.print": [
+  "admin",
+  "controller",
+  "finance_manager",
+  "manager",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
   "support"
  ],
  "restaurant.recipes.produce": [
-  "admin",
   "restaurant_chief"
  ],
- "restaurant.recipes.store": [
+ "restaurant.recipes.recueil": [
   "admin",
+  "controller",
+  "finance_manager",
+  "manager",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "support"
+ ],
+ "restaurant.recipes.store": [
   "restaurant_chief"
  ],
  "restaurant.recipes.update": [
-  "admin",
   "restaurant_chief"
  ],
  "restaurant.restaurants.index": [
@@ -2583,7 +2408,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_manager",
   "support"
  ],
@@ -2609,55 +2433,57 @@
   "manager"
  ],
  "restaurant.shifts.close": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
  "restaurant.shifts.open": [
-  "admin",
   "restaurant_manager",
   "restaurant_staff"
  ],
+ "restaurant.stock_counts.cancel": [
+  "controller",
+  "manager"
+ ],
  "restaurant.stock_counts.close": [
-  "admin",
-  "restaurant_chief"
+  "manager"
  ],
  "restaurant.stock_counts.destroy": [
-  "admin",
-  "restaurant_chief"
+  "controller",
+  "manager"
  ],
  "restaurant.stock_counts.index": [
   "admin",
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
   "support"
+ ],
+ "restaurant.stock_counts.reject": [
+  "manager"
  ],
  "restaurant.stock_counts.show": [
   "admin",
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
   "support"
  ],
  "restaurant.stock_counts.store": [
-  "admin",
-  "restaurant_chief"
+  "controller"
+ ],
+ "restaurant.stock_counts.submit": [
+  "controller"
  ],
  "restaurant.stock_counts.update": [
-  "admin",
-  "restaurant_chief"
+  "controller"
  ],
  "restaurant.waste.create": [
-  "admin",
   "restaurant_chief",
   "restaurant_cook"
  ],
@@ -2666,7 +2492,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2678,7 +2503,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2690,7 +2514,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "restaurant_chief",
   "restaurant_cook",
   "restaurant_manager",
@@ -2698,13 +2521,11 @@
   "support"
  ],
  "restaurant.waste.store": [
-  "admin",
   "restaurant_chief",
   "restaurant_cook"
  ],
  "rooms.cost_sheets.assumptions": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
@@ -2725,7 +2546,6 @@
  ],
  "rooms.cost_sheets.import": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
@@ -2739,19 +2559,16 @@
  ],
  "rooms.cost_sheets.items.destroy": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
  "rooms.cost_sheets.items.store": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
  "rooms.cost_sheets.items.update": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
@@ -2765,7 +2582,6 @@
  ],
  "rooms.cost_sheets.starter": [
   "accountant",
-  "admin",
   "finance_manager",
   "manager"
  ],
@@ -2779,7 +2595,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -2798,13 +2613,11 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "rooms.rates.destroy": [
-  "admin",
   "finance_manager",
   "manager",
   "reception_chief"
@@ -2814,25 +2627,21 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
  ],
  "rooms.rates.store": [
-  "admin",
   "finance_manager",
   "manager",
   "reception_chief"
  ],
  "rooms.rates.types.update": [
-  "admin",
   "finance_manager",
   "manager",
   "reception_chief"
  ],
  "rooms.rates.update": [
-  "admin",
   "finance_manager",
   "manager",
   "reception_chief"
@@ -2842,7 +2651,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "support"
@@ -2862,7 +2670,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief"
  ],
@@ -2887,7 +2694,6 @@
   "reception_chief"
  ],
  "rooms.updateStatus": [
-  "admin",
   "manager",
   "reception",
   "reception_chief"
@@ -2929,19 +2735,6 @@
   "restaurant_manager",
   "shop_manager"
  ],
- "settings.index": [
-  "admin",
-  "controller",
-  "econome",
-  "finance_manager",
-  "housekeeping_leader",
-  "manager",
-  "reception_chief",
-  "restaurant_chief",
-  "restaurant_manager",
-  "shop_manager",
-  "support"
- ],
  "settings.packages.destroy": [
   "admin",
   "finance_manager",
@@ -2951,8 +2744,7 @@
   "admin",
   "controller",
   "finance_manager",
-  "manager",
-  "quality_auditor"
+  "manager"
  ],
  "settings.packages.import": [
   "admin",
@@ -3038,8 +2830,7 @@
   "admin",
   "controller",
   "finance_manager",
-  "manager",
-  "quality_auditor"
+  "manager"
  ],
  "settings.services.import": [
   "admin",
@@ -3074,12 +2865,10 @@
   "support"
  ],
  "shop.cash_register.close.store": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
  "shop.cash_register.disbursements.store": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
@@ -3099,12 +2888,10 @@
   "support"
  ],
  "shop.cash_register.open.store": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
  "shop.orders.create": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
@@ -3113,7 +2900,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "shop_cashier",
@@ -3121,7 +2907,6 @@
   "support"
  ],
  "shop.orders.paid": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
@@ -3130,7 +2915,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "shop_cashier",
@@ -3138,7 +2922,6 @@
   "support"
  ],
  "shop.orders.refund": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
@@ -3147,7 +2930,6 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "shop_cashier",
@@ -3155,20 +2937,16 @@
   "support"
  ],
  "shop.orders.store": [
-  "admin",
   "shop_cashier",
   "shop_manager"
  ],
  "shop.products.create": [
-  "admin",
   "shop_manager"
  ],
  "shop.products.destroy": [
-  "admin",
   "shop_manager"
  ],
  "shop.products.edit": [
-  "admin",
   "finance_manager",
   "shop_manager"
  ],
@@ -3177,11 +2955,9 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "shop_manager"
  ],
  "shop.products.import": [
-  "admin",
   "shop_manager"
  ],
  "shop.products.index": [
@@ -3189,16 +2965,13 @@
   "controller",
   "finance_manager",
   "manager",
-  "quality_auditor",
   "shop_manager",
   "support"
  ],
  "shop.products.store": [
-  "admin",
   "shop_manager"
  ],
  "shop.products.update": [
-  "admin",
   "finance_manager",
   "shop_manager"
  ],
@@ -3206,6 +2979,11 @@
   "admin",
   "manager",
   "support"
+ ],
+ "technique.demandes.approve": [
+  "admin",
+  "manager",
+  "tech_manager"
  ],
  "technique.demandes.assign": [
   "admin",
@@ -3277,7 +3055,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -3294,6 +3071,32 @@
  ],
  "technique.demandes.parts": [
   "admin",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.print": [
+  "accountant",
+  "admin",
+  "cashier",
+  "controller",
+  "econome",
+  "finance_manager",
+  "housekeeping_leader",
+  "housekeeping_staff",
+  "housekeeping_supervisor",
+  "manager",
+  "purchasing_manager",
+  "reception",
+  "reception_chief",
+  "restaurant_barman",
+  "restaurant_chief",
+  "restaurant_cook",
+  "restaurant_manager",
+  "restaurant_staff",
+  "shop_cashier",
+  "shop_manager",
+  "storekeeper",
+  "support",
   "tech_manager",
   "technician"
  ],
@@ -3321,6 +3124,11 @@
   "tech_manager",
   "technician"
  ],
+ "technique.demandes.rework": [
+  "admin",
+  "manager",
+  "tech_manager"
+ ],
  "technique.demandes.show": [
   "accountant",
   "admin",
@@ -3333,7 +3141,6 @@
   "housekeeping_supervisor",
   "manager",
   "purchasing_manager",
-  "quality_auditor",
   "reception",
   "reception_chief",
   "restaurant_barman",
@@ -3374,6 +3181,11 @@
   "shop_cashier",
   "shop_manager",
   "storekeeper",
+  "tech_manager",
+  "technician"
+ ],
+ "technique.demandes.submit": [
+  "admin",
   "tech_manager",
   "technician"
  ],
@@ -3422,6 +3234,10 @@
   "finance_manager",
   "manager",
   "support"
+ ],
+ "users.resendWelcome": [
+  "admin",
+  "manager"
  ],
  "users.resetPassword": [
   "admin",
