@@ -9,7 +9,9 @@
     $editable = $count->isDraft() && $canCount;
 @endphp
 <div class="max-w-5xl mx-auto">
-    <a href="{{ route('economat.stores.show', $count->store) }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary mb-4">
+    <a
+        href="{{ route('economat.stores.show', $count->store) }}"
+        class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary mb-4">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> {{ $count->store->name }}
     </a>
 
@@ -30,7 +32,9 @@
     @include('economat.partials.flash')
 
     @if($count->isDraft())
-        <div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg flex gap-2" role="status">
+        <div
+            class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg flex gap-2"
+            role="status">
             <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
             <p>Comptage en cours : le dépôt ne reçoit plus de livraison. À la clôture, chaque ligne comptée cale le stock du dépôt ;
                ce qui manque devient la consommation du service. Une ligne laissée vide garde son stock théorique.</p>
@@ -48,13 +52,20 @@
                     <table class="min-w-full text-sm">
                         <thead class="bg-gray-50/70">
                             <tr>
-                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                                <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Théorique</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Compté</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Écart</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Observation</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Article</th>
+                                <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Unité</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Théorique</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Compté</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Écart</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Valeur</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                    text-primary/50">Observation</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-secondary/10">
@@ -67,13 +78,16 @@
                                     <td class="px-5 py-3 text-center font-mono font-bold text-xs text-primary/70">
                                         {{ $ligne->item?->shortUnit() }}
                                     </td>
-                                    <td class="px-5 py-3 text-right text-primary/70 whitespace-nowrap font-mono">{{ $qte($ligne->theoretical_quantity) }}</td>
+                                    <td class="px-5 py-3 text-right text-primary/70 whitespace-nowrap
+                                        font-mono">{{ $qte($ligne->theoretical_quantity) }}</td>
                                     <td class="px-5 py-3 text-right">
                                         @if($editable)
                                             <label class="sr-only" for="compte-{{ $ligne->id }}">Quantité comptée — {{ $ligne->item?->name }}</label>
                                             <input id="compte-{{ $ligne->id }}" type="number" step="0.001" min="0" name="lines[{{ $ligne->id }}][counted_quantity]"
                                                    value="{{ $ligne->counted_quantity !== null ? (float) $ligne->counted_quantity : '' }}"
-                                                   class="w-24 text-right px-2 py-1.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                                   class="w-24 text-right px-2 py-1.5 text-sm border
+                                                       border-secondary/30 rounded-lg bg-white text-primary
+                                                       outline-none focus:border-secondary">
                                         @else
                                             {{ $ligne->isCounted() ? $qte($ligne->counted_quantity) : '—' }}
                                         @endif
@@ -86,7 +100,9 @@
                                         @if($editable)
                                             <label class="sr-only" for="note-{{ $ligne->id }}">Observation — {{ $ligne->item?->name }}</label>
                                             <input id="note-{{ $ligne->id }}" type="text" maxlength="255" name="lines[{{ $ligne->id }}][notes]" value="{{ $ligne->notes }}"
-                                                   class="w-full min-w-32 px-2 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                                   class="w-full min-w-32 px-2 py-1.5 text-xs border
+                                                       border-secondary/30 rounded-lg bg-white text-primary
+                                                       outline-none focus:border-secondary">
                                         @else
                                             <span class="text-xs text-primary/60">{{ $ligne->notes }}</span>
                                         @endif
@@ -101,16 +117,24 @@
 
         @if($editable && $lines->isNotEmpty())
             <div class="flex justify-end gap-2 mb-4">
-                <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20">Enregistrer les comptages</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg
+                        hover:bg-accent/20">Enregistrer les comptages</button>
             </div>
         @endif
     </form>
 
     <div class="flex flex-wrap justify-end gap-2 mb-6">
         @if($canSubmit && ($count->isDraft() || $count->isRejected()))
-            <form method="POST" action="{{ route('economat.stores.counts.submit', $count) }}" onsubmit="return confirm('Soumettre cet inventaire de dépôt au RAF pour validation ? Les comptages seront verrouillés.')">
+            <form
+                method="POST"
+                action="{{ route('economat.stores.counts.submit', $count) }}"
+                onsubmit="return confirm('Soumettre cet inventaire de dépôt au RAF pour validation ? Les comptages seront verrouillés.')">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
                     <i data-lucide="send" class="w-4 h-4 inline mr-1"></i> Soumettre au RAF
                 </button>
             </form>
@@ -118,37 +142,60 @@
 
         @if($canClose && ($count->isSubmitted() || $count->isDraft()))
             @if($canReject && $count->isSubmitted())
-                <form method="POST" action="{{ route('economat.stores.counts.reject', $count) }}" onsubmit="const r = prompt('Motif du rejet :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+                <form
+                    method="POST"
+                    action="{{ route('economat.stores.counts.reject', $count) }}"
+                    onsubmit="const r = prompt('Motif du rejet :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
                     @csrf
                     <input type="hidden" name="reason" value="">
-                    <button type="submit" class="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50">
+                    <button
+                        type="submit"
+                        class="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg
+                            hover:bg-red-50">
                         <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i> Rejeter
                     </button>
                 </form>
             @endif
 
-            <form method="POST" action="{{ route('economat.stores.counts.close', $count) }}" onsubmit="return confirm('Valider cet inventaire ? Les écarts deviennent la consommation du service et sont régularisés.')">
+            <form
+                method="POST"
+                action="{{ route('economat.stores.counts.close', $count) }}"
+                onsubmit="return confirm('Valider cet inventaire ? Les écarts deviennent la consommation du service et sont régularisés.')">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
                     <i data-lucide="check-circle-2" class="w-4 h-4 inline mr-1"></i> Valider et régulariser
                 </button>
             </form>
         @endif
 
         @if($count->isClosed() && $canClose && $count->canBeCancelledByRaf())
-            <form method="POST" action="{{ route('economat.stores.counts.cancel', $count) }}" onsubmit="const r = prompt('Motif de l\'annulation avec contre-passation (délai 48h) :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
+            <form
+                method="POST"
+                action="{{ route('economat.stores.counts.cancel', $count) }}"
+                onsubmit="const r = prompt('Motif de l\'annulation avec contre-passation (délai 48h) :'); if (!r) return false; this.querySelector('input[name=reason]').value = r; return true;">
                 @csrf
                 <input type="hidden" name="reason" value="">
-                <button type="submit" class="px-4 py-2 bg-red-50 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-red-50 border border-red-300 text-red-700 text-sm font-medium rounded-lg
+                        hover:bg-red-100">
                     <i data-lucide="undo-2" class="w-4 h-4 inline mr-1"></i> Annuler validation (Contre-passation 48h)
                 </button>
             </form>
         @endif
 
         @if(!$count->isClosed() && !$count->isCancelled() && $canCancel)
-            <form method="POST" action="{{ route('economat.stores.counts.cancel', $count) }}" onsubmit="return confirm('Abandonner cet inventaire ? Le stock du dépôt ne change pas.')">
+            <form
+                method="POST"
+                action="{{ route('economat.stores.counts.cancel', $count) }}"
+                onsubmit="return confirm('Abandonner cet inventaire ? Le stock du dépôt ne change pas.')">
                 @csrf
-                <button type="submit" class="px-4 py-2 border border-secondary/30 text-primary/70 text-sm rounded-lg hover:bg-accent/20">Abandonner l'inventaire</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 border border-secondary/30 text-primary/70 text-sm rounded-lg
+                        hover:bg-accent/20">Abandonner l'inventaire</button>
             </form>
         @endif
     </div>

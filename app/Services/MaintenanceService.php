@@ -90,7 +90,8 @@ class MaintenanceService
      * @param  array{title: string, description?: ?string, specialty: string, priority: string,
      *               department: string, room_id?: ?int, location?: ?string, bloquer_chambre?: bool}  $donnees
      */
-    public function signaler(array $donnees, User $demandeur, string $source = MaintenanceRequest::SOURCE_MANUAL, ?HousekeepingAssignment $affectation = null): MaintenanceRequest
+    public function signaler(array $donnees, User $demandeur, string $source = MaintenanceRequest::SOURCE_MANUAL,
+        ?HousekeepingAssignment $affectation = null): MaintenanceRequest
     {
         $demande = DB::transaction(function () use ($donnees, $demandeur, $source, $affectation) {
             $room = !empty($donnees['room_id']) ? Room::query()->lockForUpdate()->find($donnees['room_id']) : null;
@@ -107,12 +108,14 @@ class MaintenanceService
                 'source'                     => $source,
                 'housekeeping_assignment_id' => $affectation?->id,
                 'requested_by'               => $demandeur->id,
-                'room_blocked'               => $room !== null && ($room->status === RoomStatus::MAINTENANCE || !empty($donnees['bloquer_chambre'])),
+                'room_blocked'               => $room !== null && ($room->status === RoomStatus::MAINTENANCE
+                    || !empty($donnees['bloquer_chambre'])),
             ]);
 
             // Rendre la chambre indisponible pendant l'intervention technique
             if ($room && !empty($donnees['bloquer_chambre']) && $room->status !== RoomStatus::MAINTENANCE) {
-                $room->updateStatus(RoomStatus::MAINTENANCE, "Intervention technique {$demande->reference}", $demandeur->id);
+                $room->updateStatus(RoomStatus::MAINTENANCE, "Intervention technique {$demande->reference}", $demandeur
+                    ->id);
                 $demande->update(['room_blocked' => true]);
             }
 
@@ -121,13 +124,16 @@ class MaintenanceService
             return $demande;
         });
 
-        $this->notifier->send($this->equipePour($demande)->reject(fn ($u) => $u->id === $demandeur->id), new Avis($demande, Avis::CREATED));
+        $this->notifier->send($this->equipePour($demande)->reject(fn ($u) => $u->id === $demandeur->id),
+            new Avis($demande, Avis::CREATED));
 
         return $demande;
     }
 
     /** Un agent ou la gouvernante signale un problème en chambre : la technique est saisie, le responsable des étages en reçoit copie. */
-    public function depuisHousekeeping(Room $room, string $probleme, HousekeepingAssignment $affectation, User $gouvernante, ?string $specialite = null, ?string $priorite = null, bool $bloquerChambre = false): MaintenanceRequest
+    public function depuisHousekeeping(Room $room, string $probleme, HousekeepingAssignment $affectation,
+        User $gouvernante, ?string $specialite = null, ?string $priorite = null,
+        bool $bloquerChambre = false): MaintenanceRequest
     {
         $demande = $this->signaler([
             'title'           => mb_substr(trim(preg_split('/\R/', $probleme)[0]), 0, 150),
@@ -151,7 +157,8 @@ class MaintenanceService
 
     // ── Affecter, prendre, commencer ─────────────────────────────────────────
 
-    public function affecter(MaintenanceRequest $demande, User $technicien, User $par, ?string $specialite = null, ?string $priorite = null): MaintenanceRequest
+    public function affecter(MaintenanceRequest $demande, User $technicien, User $par, ?string $specialite = null,
+        ?string $priorite = null): MaintenanceRequest
     {
         if (!$demande->isActive()) {
             throw new RuntimeException("La demande {$demande->reference} n'est plus à traiter.");
@@ -212,7 +219,8 @@ class MaintenanceService
         });
 
         // Alerte les responsables techniques (pour que le responsable absent voie ce qui a été pris en son absence)
-        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u->id === $technicien->id);
+        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u
+            ->id === $technicien->id);
         if ($responsables->isNotEmpty()) {
             $this->notifier->send($responsables, new Avis($demande, Avis::TAKEN, "Prise par {$technicien->name}"));
         }
@@ -226,7 +234,8 @@ class MaintenanceService
             throw new RuntimeException("La demande {$demande->reference} n'est pas prête à commencer.");
         }
 
-        $demande->update(['status' => MaintenanceRequest::STATUS_IN_PROGRESS, 'started_at' => $demande->started_at ?? now()]);
+        $demande->update(['status' => MaintenanceRequest::STATUS_IN_PROGRESS, 'started_at' => $demande->started_at
+            ?? now()]);
         $this->noter($demande, 'started', null, $par);
 
         return $demande;
@@ -237,7 +246,8 @@ class MaintenanceService
     /** Les dépôts du service technique, d'où sortent les pièces. */
     public static function depotsTechniques(): Collection
     {
-        $depots = ServiceStore::query()->active()->where('department', 'technique')->orderBy('sort_order')->orderBy('name')->get();
+        $depots = ServiceStore::query()->active()->where('department', 'technique')->orderBy('sort_order')
+            ->orderBy('name')->get();
         if ($depots->isEmpty()) {
             $depot = ServiceStore::firstOrCreate(
                 ['department' => 'technique', 'name' => 'Dépôt Maintenance & Technique'],
@@ -255,7 +265,8 @@ class MaintenanceService
      *
      * @param  array<int, float>  $pieces  [stock_item_id => quantité]
      */
-    public function employerPieces(MaintenanceRequest $demande, ServiceStore $depot, array $pieces, User $par, ?string $motif = null): Collection
+    public function employerPieces(MaintenanceRequest $demande, ServiceStore $depot, array $pieces, User $par,
+        ?string $motif = null): Collection
     {
         if (!$demande->isActive()) {
             throw new RuntimeException("La demande {$demande->reference} n'est plus en cours.");
@@ -286,7 +297,8 @@ class MaintenanceService
                 ));
             }
 
-            $resumePieces = $sorties->map(fn ($m) => rtrim(rtrim(number_format(abs((float) $m->quantity), 3, ',', ' '), '0'), ',')
+            $resumePieces = $sorties->map(fn ($m) => rtrim(rtrim(number_format(abs((float) $m->quantity), 3, ',', ' '),
+                '0'), ',')
                 . ' ' . $articles[$m->stock_item_id]->unit . ' ' . $articles[$m->stock_item_id]->name)->implode(', ');
 
             $estResp = $par->exerce(self::RESPONSABLES) || $par->isAdmin() || $par->exerce(['manager']);
@@ -304,9 +316,11 @@ class MaintenanceService
     // ── Soumettre fiche, viser, terminer, rouvrir, annuler ───────────────────
 
     /** Le technicien renseigne la fiche d'intervention complète et ses pièces, et la remonte au responsable pour visa. */
-    public function soumettreFiche(MaintenanceRequest $demande, array|string $fiche, User $technicien, ?ServiceStore $depot = null, ?array $pieces = null): MaintenanceRequest
+    public function soumettreFiche(MaintenanceRequest $demande, array|string $fiche, User $technicien,
+        ?ServiceStore $depot = null, ?array $pieces = null): MaintenanceRequest
     {
-        if (!in_array($demande->status, [MaintenanceRequest::STATUS_OPEN, MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_OPEN, MaintenanceRequest::STATUS_ASSIGNED,
+            MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
         }
 
@@ -341,7 +355,8 @@ class MaintenanceService
         }
         $compteRendu = implode("\n\n", $sections);
 
-        DB::transaction(function () use ($demande, $diagnostic, $travaux, $resultat, $resultatLibelle, $recommandations, $compteRendu, $technicien, $depot, $pieces) {
+        DB::transaction(function () use ($demande, $diagnostic, $travaux, $resultat, $resultatLibelle, $recommandations,
+            $compteRendu, $technicien, $depot, $pieces) {
             if ($depot && !empty($pieces)) {
                 $this->employerPieces($demande, $depot, $pieces, $technicien);
             }
@@ -358,11 +373,14 @@ class MaintenanceService
                 'fiche_soumise_at' => now(),
             ]);
 
-            $this->noter($demande, 'submitted', "Fiche d'intervention soumise par {$technicien->name} (Résultat : {$resultatLibelle})\n\n{$travaux}", $technicien);
+            $this->noter($demande, 'submitted',
+                "Fiche d'intervention soumise par {$technicien->name} (Résultat : {$resultatLibelle})\n\n{$travaux}",
+                $technicien);
         });
 
         // Alerte les responsables techniques pour visa
-        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u->id === $technicien->id);
+        $responsables = User::query()->active()->havingRole(self::RESPONSABLES)->get()->reject(fn ($u) => $u
+            ->id === $technicien->id);
         if ($responsables->isNotEmpty()) {
             $this->notifier->send($responsables, new Avis($demande->fresh(), Avis::SUBMITTED, $compteRendu));
         }
@@ -371,10 +389,12 @@ class MaintenanceService
     }
 
     /** Le responsable technique vise la fiche et clôture définitivement l'intervention. */
-    public function viserEtCloturer(MaintenanceRequest $demande, ?string $avisResponsable, User $responsable): MaintenanceRequest
+    public function viserEtCloturer(MaintenanceRequest $demande, ?string $avisResponsable,
+        User $responsable): MaintenanceRequest
     {
         if ($demande->status !== MaintenanceRequest::STATUS_SUBMITTED) {
-            throw new RuntimeException("Pour clôturer une intervention, il faut obligatoirement que la fiche d'intervention ait été soumise.");
+            throw new RuntimeException(
+                "Pour clôturer une intervention, il faut obligatoirement que la fiche d'intervention ait été soumise.");
         }
 
         if (!$demande->aFicheSoumise()) {
@@ -395,11 +415,13 @@ class MaintenanceService
         });
 
         $destinataires = collect([$demande->requester, $demande->technician])->filter()->unique('id');
-        $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $responsable->id), new Avis($demande->fresh(), Avis::COMPLETED, $demande->resolution));
+        $this->notifier->send($destinataires->reject(fn ($u) => $u->id === $responsable->id),
+            new Avis($demande->fresh(), Avis::COMPLETED, $demande->resolution));
 
         // Le housekeeping reprend la chambre qu'il avait laissée.
         if ($demande->source === MaintenanceRequest::SOURCE_HOUSEKEEPING) {
-            $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande->fresh(), Avis::COMPLETED, $demande->resolution), $responsable->id);
+            $this->notifier->toRoles(['housekeeping_leader', 'housekeeping_supervisor'], new Avis($demande->fresh(),
+                Avis::COMPLETED, $demande->resolution), $responsable->id);
         }
 
         return $demande->fresh();
@@ -420,7 +442,8 @@ class MaintenanceService
         });
 
         if ($demande->technician && $demande->technician->id !== $responsable->id) {
-            $this->notifier->send($demande->technician, new Avis($demande->fresh(), Avis::REOPENED, "Reprise demandée par le responsable : {$motif}"));
+            $this->notifier->send($demande->technician, new Avis($demande->fresh(), Avis::REOPENED,
+                "Reprise demandée par le responsable : {$motif}"));
         }
 
         return $demande->fresh();
@@ -428,7 +451,8 @@ class MaintenanceService
 
     public function terminer(MaintenanceRequest $demande, array|string $fiche, User $par): MaintenanceRequest
     {
-        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS, MaintenanceRequest::STATUS_SUBMITTED], true)) {
+        if (!in_array($demande->status, [MaintenanceRequest::STATUS_ASSIGNED, MaintenanceRequest::STATUS_IN_PROGRESS,
+            MaintenanceRequest::STATUS_SUBMITTED], true)) {
             throw new RuntimeException("La demande {$demande->reference} n'est pas en cours.");
         }
 
@@ -454,12 +478,14 @@ class MaintenanceService
     public function rouvrir(MaintenanceRequest $demande, string $motif, User $par): MaintenanceRequest
     {
         if (!$demande->peutEtreRouverte()) {
-            throw new RuntimeException("La demande {$demande->reference} ne se rouvre que dans les " . MaintenanceRequest::DELAI_REOUVERTURE . ' jours qui suivent sa fin.');
+            throw new RuntimeException("La demande {$demande->reference} ne se rouvre que dans les "
+                . MaintenanceRequest::DELAI_REOUVERTURE . ' jours qui suivent sa fin.');
         }
 
         DB::transaction(function () use ($demande, $motif, $par) {
             $demande->update([
-                'status'         => $demande->assigned_to ? MaintenanceRequest::STATUS_ASSIGNED : MaintenanceRequest::STATUS_OPEN,
+                'status'         => $demande
+                    ->assigned_to ? MaintenanceRequest::STATUS_ASSIGNED : MaintenanceRequest::STATUS_OPEN,
                 'completed_at'   => null,
                 'completed_by'   => null,
                 'reopened_count' => $demande->reopened_count + 1,
@@ -468,7 +494,8 @@ class MaintenanceService
 
             // La chambre redevient indisponible, si personne n'y loge.
             $room = $demande->room;
-            if ($demande->room_blocked && $room && !in_array($room->status, [RoomStatus::OCCUPIED, RoomStatus::MAINTENANCE], true)) {
+            if ($demande->room_blocked && $room && !in_array($room->status, [RoomStatus::OCCUPIED,
+                RoomStatus::MAINTENANCE], true)) {
                 $room->updateStatus(RoomStatus::MAINTENANCE, "Intervention {$demande->reference} rouverte", $par->id);
             }
         });
@@ -514,7 +541,8 @@ class MaintenanceService
     public function equipePour(MaintenanceRequest $demande): Collection
     {
         $techniciens = User::query()->active()->havingRole(self::TECHNICIENS)->with('technicianSpecialties')->get();
-        $specialistes = $techniciens->filter(fn (User $u) => $u->technicianSpecialties->contains('specialty', $demande->specialty));
+        $specialistes = $techniciens->filter(fn (User $u) => $u->technicianSpecialties->contains('specialty',
+            $demande->specialty));
 
         return User::query()->active()->havingRole(self::RESPONSABLES)->get()
             ->merge($demande->specialty !== 'autre' && $specialistes->isNotEmpty() ? $specialistes : $techniciens)

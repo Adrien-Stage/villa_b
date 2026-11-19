@@ -76,7 +76,8 @@
         <form method="GET" action="{{ route('rooms.cost_sheets.export') }}"
               x-data="{ selection: [], get toutes() { return this.selection.length === 0; } }">
 
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white border border-secondary/20 rounded-xl px-4 py-3">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white border border-secondary/20
+                rounded-xl px-4 py-3">
                 <div class="min-w-0">
                     <p class="text-sm font-semibold text-primary">Exporter vers Excel</p>
                     <p class="text-[11px] text-primary/60">Classeur complet : synthèse, coûts unitaires et une fiche par type de chambre.</p>
@@ -90,7 +91,9 @@
 
                 <div class="flex items-center gap-2 shrink-0">
                     <button type="button" onclick="document.getElementById('modal-import-cost-sheets').classList.remove('hidden')"
-                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors">
+                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary
+                                text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50
+                                transition-colors">
                         <i data-lucide="file-up" class="w-4 h-4 text-secondary"></i>
                         <span>Importer (CSV)</span>
                     </button>
@@ -101,12 +104,15 @@
                     {{-- Le CSV à plat n'est pas un doublon du classeur : c'est le
                          seul format que l'import sait relire. --}}
                     <button type="submit" name="format" value="csv"
-                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors">
+                            class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary
+                                text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50
+                                transition-colors">
                         <i data-lucide="file-text" class="w-4 h-4 text-secondary"></i>
                         <span>CSV (ré-importable)</span>
                     </button>
                     <button type="submit"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                                rounded-lg hover:bg-surface-dark transition-colors">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                         <span x-show="toutes">Exporter toutes les fiches</span>
                         <span x-show="!toutes" x-cloak>Exporter la sélection</span>
@@ -118,7 +124,11 @@
              entre eux, et des cartes côte à côte se comparent mal. Les lignes
              sont triées par marge croissante — ce qu'on cherche d'abord, c'est
              la chambre qui rapporte le moins. --}}
-        <x-table :rows="$rows" empty="Aucun type de chambre." empty-icon="calculator" caption="Fiches de coût par type de chambre">
+        <x-table
+            :rows="$rows"
+            empty="Aucun type de chambre."
+            empty-icon="calculator"
+            caption="Fiches de coût par type de chambre">
             <x-slot:head>
                 <x-table.col class="w-10"><span class="sr-only">Sélection</span></x-table.col>
                 <x-table.col>Type de chambre</x-table.col>
@@ -143,9 +153,15 @@
                                aria-label="Sélectionner la fiche {{ $type->name }}">
                     </x-table.cell>
                     <x-table.cell>
-                        <a href="{{ route('rooms.cost_sheets.show', $type) }}" class="font-medium text-primary hover:underline">{{ $type->name }}</a>
+                        <a
+                            href="{{ route('rooms.cost_sheets.show', $type) }}"
+                            class="font-medium text-primary hover:underline">{{ $type->name }}</a>
                         @unless($s['is_configured'])
-                            <span class="ml-2 inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"><i data-lucide="alert-circle" class="h-3 w-3" aria-hidden="true"></i> à remplir</span>
+                            <span class="ml-2 inline-flex items-center gap-1 rounded border border-amber-200
+                                bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"><i
+                                data-lucide="alert-circle"
+                                class="h-3 w-3"
+                                aria-hidden="true"></i> à remplir</span>
                         @endunless
                     </x-table.cell>
                     <x-table.cell align="right" nowrap class="tabular-nums text-primary/80">
@@ -156,8 +172,15 @@
                             <span class="text-[10px] text-primary/45" title="Prix moyen réellement pratiqué">réel</span>
                         @endif
                     </x-table.cell>
-                    <x-table.cell align="right" hide="lg" nowrap class="tabular-nums {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['variable_cost']) : '—' }}</x-table.cell>
-                    <x-table.cell align="right" nowrap class="font-semibold tabular-nums {{ $s['is_configured'] ? $teinte($pct) : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['contribution_margin']) : '—' }}</x-table.cell>
+                    <x-table.cell
+                        align="right"
+                        hide="lg"
+                        nowrap
+                        class="tabular-nums {{ $s['is_configured'] ? 'text-red-600' : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['variable_cost']) : '—' }}</x-table.cell>
+                    <x-table.cell
+                        align="right"
+                        nowrap
+                        class="font-semibold tabular-nums {{ $s['is_configured'] ? $teinte($pct) : 'text-primary/30' }}">{{ $s['is_configured'] ? $fcfa($s['contribution_margin']) : '—' }}</x-table.cell>
                     <x-table.cell align="right" nowrap>
                         @if($s['is_configured'])
                             <span class="font-bold {{ $teinte($pct) }}">{{ $pct }}%</span>

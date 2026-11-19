@@ -15,14 +15,17 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
 <a href="{{ route('accounting.ledger.auxiliary', ['compte' => $compte->code]) }}"
-   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary
+       transition-colors">
     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
     Retour aux tiers
 </a>
@@ -55,7 +58,8 @@
     @csrf
 
     <div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
-        <div class="px-5 py-3 border-b border-secondary/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="px-5 py-3 border-b border-secondary/15 flex flex-col sm:flex-row sm:items-center justify-between
+            gap-3">
             <div>
                 <h2 class="text-sm font-semibold text-primary">Mouvements du compte</h2>
                 <p class="text-xs text-primary/55">Cochez les lignes qui se compensent pour les lettrer.</p>
@@ -108,10 +112,13 @@
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap">{{ $l['date']->format('d/m/Y') }}</td>
                             <td class="px-3 py-2">
-                                <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-[10px] font-semibold">{{ $l['journal'] }}</span>
+                                <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-[10px]
+                                    font-semibold">{{ $l['journal'] }}</span>
                             </td>
                             <td class="px-3 py-2">
-                                <a href="{{ route('accounting.ledger.entry', $l['entry_id']) }}" class="hover:underline">{{ $l['label'] }}</a>
+                                <a
+                                    href="{{ route('accounting.ledger.entry', $l['entry_id']) }}"
+                                    class="hover:underline">{{ $l['label'] }}</a>
                                 @if($l['reference'])
                                     <span class="block text-[10px] text-primary/40 font-mono">{{ $l['reference'] }}</span>
                                 @endif
@@ -121,7 +128,8 @@
                             <td class="px-3 py-2 text-right font-medium whitespace-nowrap">{{ $fcfa(abs($l['balance'])) }}</td>
                             <td class="px-4 py-2 text-center">
                                 @if($l['lettre'])
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-green-100 text-green-700 text-[10px] font-semibold font-mono">
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-green-100 text-green-700
+                                        text-[10px] font-semibold font-mono">
                                         {{ $l['lettre'] }}
                                     </span>
                                 @else
@@ -152,7 +160,9 @@
                     @csrf
                     <input type="hidden" name="code" value="{{ $lettre }}">
                     <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/25 bg-white text-[11px] font-mono font-semibold text-primary/70 hover:border-red-300 hover:text-red-600 transition-colors">
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/25
+                                bg-white text-[11px] font-mono font-semibold text-primary/70 hover:border-red-300
+                                hover:text-red-600 transition-colors">
                         {{ $lettre }}
                         <i data-lucide="x" class="w-3 h-3"></i>
                     </button>

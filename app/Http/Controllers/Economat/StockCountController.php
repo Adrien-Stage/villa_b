@@ -95,8 +95,10 @@ class StockCountController extends Controller
             'total_counts'  => (clone $statsQuery)->count(),
             'closed_counts' => (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->count(),
             'total_losses'  => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('loss_value'),
-            'total_surplus' => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('surplus_value'),
-            'net_variance'  => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)->sum('variance_value'),
+            'total_surplus' => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)
+                ->sum('surplus_value'),
+            'net_variance'  => (int) (clone $statsQuery)->where('status', StockCount::STATUS_CLOSED)
+                ->sum('variance_value'),
         ];
 
         return view('economat.stock_counts.index', [
@@ -105,7 +107,8 @@ class StockCountController extends Controller
             'categories'  => $categories,
             'departments' => $departments,
             'stats'       => $stats,
-            'canManage'   => app(\App\Services\PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close'),
+            'canManage'   => app(\App\Services\PermissionResolver::class)->allows(Auth::user(),
+                'economat.stock_counts.close'),
         ]);
     }
 
@@ -164,7 +167,8 @@ class StockCountController extends Controller
      */
     public function fichier(Request $request, StockCountImportService $import)
     {
-        $inventaire = $request->filled('inventaire') ? StockCount::findOrFail((int) $request->query('inventaire')) : null;
+        $inventaire = $request->filled('inventaire') ? StockCount::findOrFail((int) $request
+            ->query('inventaire')) : null;
         $categorie = $inventaire ? null : ((int) $request->query('categorie') ?: null);
         $zone = $inventaire ? null : ((int) $request->query('zone') ?: null);
 
@@ -200,10 +204,12 @@ class StockCountController extends Controller
         $retour = redirect()->route('economat.stock_counts.show', $stockCount);
 
         if (!$stockCount->isDraft()) {
-            return $retour->with('error', "L'inventaire {$stockCount->reference} n'est plus en cours de comptage : rien n'a été importé.");
+            return $retour->with('error',
+                "L'inventaire {$stockCount->reference} n'est plus en cours de comptage : rien n'a été importé.");
         }
 
-        [$rows, $erreurLecture] = $this->parseSpreadsheet($fichier->getRealPath(), StockCountImportService::COLONNES_REQUISES);
+        [$rows, $erreurLecture] = $this->parseSpreadsheet($fichier->getRealPath(),
+            StockCountImportService::COLONNES_REQUISES);
         if ($erreurLecture) {
             return $retour->with('error', $erreurLecture);
         }
@@ -219,7 +225,8 @@ class StockCountController extends Controller
             return $retour->with('error', $e->getMessage());
         }
 
-        $message = count($saisies) . ' article(s) compté(s) importé(s) dans l\'inventaire ' . $stockCount->reference . '.';
+        $message = count($saisies) . ' article(s) compté(s) importé(s) dans l\'inventaire ' . $stockCount->reference
+            . '.';
 
         // Une ligne refusée laisse l'inventaire ouvert : on corrige, puis on clôture.
         $peutCloturer = app(PermissionResolver::class)->allows(Auth::user(), 'economat.stock_counts.close');
@@ -230,20 +237,23 @@ class StockCountController extends Controller
                 return $retour->with('error', $message . ' Clôture impossible : ' . $e->getMessage());
             }
 
-            return $retour->with('success', $message . ' Inventaire clôturé : le stock est ajusté sur les quantités comptées.');
+            return $retour->with('success',
+                $message . ' Inventaire clôturé : le stock est ajusté sur les quantités comptées.');
         }
 
         if ($cloturer && $erreurs !== []) {
             $message .= ' L\'inventaire reste ouvert : corrigez les lignes refusées, puis clôturez.';
         }
 
-        return $retour->with($saisies === [] ? 'error' : 'success', $saisies === [] ? 'Aucune quantité comptée n\'a été importée.' : $message)
+        return $retour->with($saisies === [] ? 'error' : 'success',
+            $saisies === [] ? 'Aucune quantité comptée n\'a été importée.' : $message)
             ->with('import_errors', $erreurs);
     }
 
     public function show(StockCount $stockCount): View
     {
-        $stockCount->load(['category', 'zone', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy', 'lines.item.category', 'lines.item.packagings']);
+        $stockCount->load(['category', 'zone', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy',
+            'cancelledBy', 'lines.item.category', 'lines.item.packagings']);
 
         $lines = $stockCount->lines->sortBy(fn (StockCountLine $l) => $l->item?->name ?? '');
         $droits = app(\App\Services\PermissionResolver::class);
@@ -256,7 +266,8 @@ class StockCountController extends Controller
             'canManage' => $droits->allows($user, 'economat.stock_counts.close'),
             'canSubmit' => $droits->allows($user, 'economat.stock_counts.submit'),
             'canCount'  => $droits->allows($user, 'economat.stock_counts.modifier') && $stockCount->canBeModified(),
-            'canCancel' => $droits->allows($user, 'economat.stock_counts.cancel') && (!$stockCount->isClosed() || ($droits->allows($user, 'economat.stock_counts.close') && $stockCount->canBeCancelledByRaf())),
+            'canCancel' => $droits->allows($user, 'economat.stock_counts.cancel') && (!$stockCount->isClosed()
+                || ($droits->allows($user, 'economat.stock_counts.close') && $stockCount->canBeCancelledByRaf())),
             'canReject' => $droits->allows($user, 'economat.stock_counts.reject'),
         ]);
     }

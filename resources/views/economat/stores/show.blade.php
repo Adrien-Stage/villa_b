@@ -4,7 +4,9 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <a href="{{ route('economat.stores.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary mb-4">
+    <a
+        href="{{ route('economat.stores.index') }}"
+        class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary mb-4">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Dépôts de service
     </a>
 
@@ -16,7 +18,8 @@
         <div class="flex items-start gap-4">
         @droit('economat.classeur.voir')
             <a href="{{ route('economat.classeur.index', ['depot' => $store->id]) }}"
-               class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50">
+               class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 bg-white text-primary text-sm
+                   font-medium rounded-lg hover:bg-gray-50">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4" aria-hidden="true"></i> Classeur Excel
             </a>
         @enddroit
@@ -31,13 +34,17 @@
 
     {{-- Un dépôt de l'économat se sert par transfert du magasin central ; les autres, par une demande de leur service. --}}
     @if($parTransfert)
-        <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between
+            gap-3">
             <div class="text-sm">
                 <p class="font-semibold text-primary">Approvisionnement</p>
                 <p class="text-xs text-primary/60">Ce dépôt appartient à l'économat : il se sert par un bon de transfert du magasin central, sans demande.</p>
             </div>
             @if($canTransfer)
-                <a href="{{ route('economat.transfers.create', $store) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
+                <a
+                    href="{{ route('economat.transfers.create', $store) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium
+                        rounded-lg hover:bg-surface-dark">
                     <i data-lucide="arrow-right-left" class="w-4 h-4" aria-hidden="true"></i> Approvisionner ce dépôt
                 </a>
             @endif
@@ -52,7 +59,9 @@
             <ul class="divide-y divide-secondary/10 text-sm">
                 @foreach($transfers as $transfert)
                     <li class="px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
-                        <a href="{{ route('economat.transfers.show', $transfert) }}" class="font-mono text-primary hover:underline">{{ $transfert->number }}</a>
+                        <a
+                            href="{{ route('economat.transfers.show', $transfert) }}"
+                            class="font-mono text-primary hover:underline">{{ $transfert->number }}</a>
                         <span class="text-xs text-primary/60">
                             {{ $transfert->transferred_at->format('d/m/Y') }} · {{ $transfert->lines_count }} article(s)
                             · {{ number_format($transfert->total_value / 100, 0, ',', ' ') }} FCFA
@@ -67,7 +76,8 @@
     @php
         $encours = $counts->firstWhere('status', \App\Models\ServiceStoreCount::STATUS_DRAFT);
     @endphp
-    <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between
+        gap-3">
         <div class="text-sm">
             <p class="font-semibold text-primary">Inventaire du dépôt</p>
             <p class="text-xs text-primary/60">
@@ -79,13 +89,19 @@
             </p>
         </div>
         @if($encours)
-            <a href="{{ route('economat.stores.counts.show', $encours) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600">
+            <a
+                href="{{ route('economat.stores.counts.show', $encours) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg
+                    hover:bg-amber-600">
                 <i data-lucide="clipboard-list" class="w-4 h-4"></i> Reprendre le comptage {{ $encours->reference }}
             </a>
         @elseif($canOpenCount && $stocks->isNotEmpty())
             <form method="POST" action="{{ route('economat.stores.counts.store', $store) }}">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark">
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium
+                        rounded-lg hover:bg-surface-dark">
                     <i data-lucide="clipboard-check" class="w-4 h-4"></i> Ouvrir l'inventaire
                 </button>
             </form>
@@ -100,7 +116,9 @@
             <ul class="divide-y divide-secondary/10 text-sm">
                 @foreach($counts->where('status', '!=', \App\Models\ServiceStoreCount::STATUS_DRAFT) as $inventaire)
                     <li class="px-5 py-2.5 flex items-center justify-between">
-                        <a href="{{ route('economat.stores.counts.show', $inventaire) }}" class="font-mono text-primary hover:underline">{{ $inventaire->reference }}</a>
+                        <a
+                            href="{{ route('economat.stores.counts.show', $inventaire) }}"
+                            class="font-mono text-primary hover:underline">{{ $inventaire->reference }}</a>
                         <span class="text-xs text-primary/60">{{ $inventaire->count_date->format('d/m/Y') }} · {{ $inventaire->statusLabel() }}</span>
                     </li>
                 @endforeach
@@ -119,12 +137,18 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50/70">
                         <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Catégorie</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock</th>
-                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Coût moyen</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Valeur</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Article</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Catégorie</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Stock</th>
+                            <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Unité</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Coût moyen</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Valeur</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
@@ -159,12 +183,18 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50/70">
                         <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Article</th>
-                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Quantité</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Motif</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Date</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Article</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Unité</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Type</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Quantité</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Motif</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">

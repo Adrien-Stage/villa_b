@@ -130,7 +130,8 @@ class PurchaseOrderService
             foreach ($order->lines as $line) {
                 // Reçu en cartons : la quantité se ramène à l'unité de l'article.
                 $conditionnement = trim((string) ($conditionnements[$line->id] ?? ''));
-                $conditionnement = $conditionnement === '' || $conditionnement === $line->item?->unit ? null : $conditionnement;
+                $conditionnement = $conditionnement === '' || $conditionnement === $line->item
+                    ?->unit ? null : $conditionnement;
                 $facteur = $conditionnement !== null ? $line->item->facteurDe($conditionnement) : 1.0;
 
                 $qty = round((float) ($received[$line->id] ?? 0) * $facteur, 3);

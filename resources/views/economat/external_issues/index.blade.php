@@ -26,7 +26,8 @@
             @enddroit
             @droit('economat.external_issues.creer')
                 <a href="{{ route('economat.external_issues.create') }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                       rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle sortie
                 </a>
             @enddroit
@@ -36,7 +37,10 @@
     @include('economat.partials.flash')
 
     {{-- Une date précise, ou une période : en GET, repris tels quels par l'export. --}}
-    <form method="GET" action="{{ route('economat.external_issues.index') }}" class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
+    <form
+        method="GET"
+        action="{{ route('economat.external_issues.index') }}"
+        class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
         <div class="flex flex-wrap items-end gap-3">
             <div class="min-w-[12rem] flex-1">
                 <label for="recherche" class="block text-[11px] font-medium text-primary/50">N°, nom, structure, téléphone</label>
@@ -77,10 +81,17 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark">Filtrer</button>
-            <a href="{{ route('economat.external_issues.index', ['date' => today()->toDateString()]) }}" class="text-xs text-primary/60 underline hover:text-primary pb-2">Aujourd'hui</a>
+            <button
+                type="submit"
+                class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                    hover:bg-surface-dark">Filtrer</button>
+            <a
+                href="{{ route('economat.external_issues.index', ['date' => today()->toDateString()]) }}"
+                class="text-xs text-primary/60 underline hover:text-primary pb-2">Aujourd'hui</a>
             @if($filtres)
-                <a href="{{ route('economat.external_issues.index') }}" class="text-xs text-primary/60 underline hover:text-primary pb-2">Réinitialiser</a>
+                <a
+                    href="{{ route('economat.external_issues.index') }}"
+                    class="text-xs text-primary/60 underline hover:text-primary pb-2">Réinitialiser</a>
             @endif
         </div>
     </form>
@@ -109,7 +120,11 @@
     </div>
 
     <div id="issues-table-container">
-    <x-table :rows="$sorties" :empty="$filtres ? 'Aucune sortie pour ces critères.' : 'Aucune sortie hors établissement enregistrée.'" empty-icon="log-out" caption="Sorties hors établissement">
+    <x-table
+        :rows="$sorties"
+        :empty="$filtres ? 'Aucune sortie pour ces critères.' : 'Aucune sortie hors établissement enregistrée.'"
+        empty-icon="log-out"
+        caption="Sorties hors établissement">
         <x-slot:head>
             <x-table.col>N° de bon</x-table.col>
             <x-table.col>Sortie le</x-table.col>
@@ -126,7 +141,9 @@
         @foreach($sorties as $s)
             <x-table.row :href="route('economat.external_issues.show', $s)" :muted="$s->isCancelled()">
                 <x-table.cell nowrap>
-                    <a href="{{ route('economat.external_issues.show', $s) }}" class="font-mono font-bold text-primary hover:underline">{{ $s->number }}</a>
+                    <a
+                        href="{{ route('economat.external_issues.show', $s) }}"
+                        class="font-mono font-bold text-primary hover:underline">{{ $s->number }}</a>
                 </x-table.cell>
                 <x-table.cell nowrap class="font-mono text-xs text-primary/60">{{ $s->issued_at->format('d/m/Y H:i') }}</x-table.cell>
                 <x-table.cell>
@@ -136,7 +153,10 @@
                 <x-table.cell hide="lg" class="text-xs text-primary/70">{{ $s->reasonLabel() }}</x-table.cell>
                 <x-table.cell align="right" hide="xl" class="font-mono text-primary/70">{{ $s->lines_count }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-mono font-semibold text-primary">{{ $fcfa((int) $s->total_value) }} F</x-table.cell>
-                <x-table.cell hide="xl" nowrap class="text-xs {{ $s->retourEnRetard() ? 'text-amber-800 font-semibold' : 'text-primary/60' }}">
+                <x-table.cell
+                    hide="xl"
+                    nowrap
+                    class="text-xs {{ $s->retourEnRetard() ? 'text-amber-800 font-semibold' : 'text-primary/60' }}">
                     {{ $s->expected_return_at?->format('d/m/Y') ?? '—' }}
                     @if($s->retourEnRetard()) · en retard @endif
                 </x-table.cell>

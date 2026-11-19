@@ -15,7 +15,9 @@
             <a class="font-medium text-primary underline" href="{{ route('restaurant.bar.menu.index') }}">Voir toutes les boissons</a>
         @else
             @droit('restaurant.menus.voir')
-                <a class="font-medium text-primary underline" href="{{ route('restaurant.menus.index', ['type' => 'drink']) }}">Ouvrir la carte du restaurant</a>
+                <a
+                    class="font-medium text-primary underline"
+                    href="{{ route('restaurant.menus.index', ['type' => 'drink']) }}">Ouvrir la carte du restaurant</a>
             @enddroit
         @endif
     </div>
@@ -30,7 +32,8 @@
                 $usesRecipe = in_array($format, ['cocktail', 'mocktail'], true);
                 $singleItem = $editingThis ? old('stock_item_id') : ($recipe?->ingredients[0]['stock_item_id'] ?? null);
             @endphp
-            <details @if($editingThis || $focused) open @endif class="rounded-xl border border-secondary/20 bg-white p-4 text-primary">
+            <details @if($editingThis || $focused) open @endif class="rounded-xl border border-secondary/20 bg-white
+                p-4 text-primary">
                 <summary class="cursor-pointer font-semibold">
                     {{ $drink->name }}
                     <span class="ml-2 text-sm font-normal text-primary/70">{{ number_format($drink->price / 100, 0, ',', ' ') }} FCFA · {{ $recipe ? \App\Models\RestaurantBarDrink::FORMATS[$recipe->format] : 'Suivi de stock à configurer' }} @unless($drink->is_active) · Hors carte @endunless</span>
@@ -39,7 +42,9 @@
                     <div class="mt-3 flex items-center justify-between border-b border-secondary/10 pb-2">
                         <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Fiche technique du cocktail / boisson</span>
                         <a href="{{ route('restaurant.bar.menu.print', $drink) }}" target="_blank"
-                           class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-secondary/25 hover:border-secondary/50 text-primary text-xs font-medium rounded-lg transition-colors shadow-sm">
+                           class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-secondary/25
+                               hover:border-secondary/50 text-primary text-xs font-medium rounded-lg transition-colors
+                               shadow-sm">
                             <i data-lucide="printer" class="w-3.5 h-3.5 text-secondary"></i>
                             <span>Imprimer la fiche bar</span>
                         </a>
@@ -85,16 +90,23 @@
                             @for($index = 0; $index < max(1, is_array($rows) ? count($rows) : 0); $index++)
                                 @include('restaurant.bar._ingredient', ['ingredient' => is_array($rows[$index] ?? null) ? $rows[$index] : [], 'index' => $index])
                             @endfor
-                            <template x-for="index in Math.max(0, rows - {{ max(1, is_array($rows) ? count($rows) : 0) }})" :key="index">
+                            <template
+                                x-for="index in Math.max(0, rows - {{ max(1, is_array($rows) ? count($rows) : 0) }})"
+                                :key="index">
                                 @include('restaurant.bar._ingredient', ['ingredient' => [], 'index' => null, 'startingRows' => max(1, is_array($rows) ? count($rows) : 0)])
                             </template>
-                            <button type="button" @click="rows++" x-show="rows < 30" class="text-sm font-semibold underline">Ajouter un ingrédient</button>
+                            <button
+                                type="button"
+                                @click="rows++"
+                                x-show="rows < 30"
+                                class="text-sm font-semibold underline">Ajouter un ingrédient</button>
                             <p class="text-xs text-primary/70">Pour une bouteille ouverte, saisissez le volume en mL. L’unité de stock convient, par exemple, à un fruit à la pièce ou à un sirop stocké en litres.</p>
                         </fieldset>
                         <label class="grid gap-1 text-sm">Instructions de préparation
                             <textarea name="instructions" rows="2" maxlength="2000" class="rounded-lg border-secondary/30">{{ $editingThis ? old('instructions') : $recipe?->instructions }}</textarea>
                         </label>
-                        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Enregistrer la fiche</button>
+                        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold
+                            text-white">Enregistrer la fiche</button>
                     </form>
                 @enddroit
             </details>

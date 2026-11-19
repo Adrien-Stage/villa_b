@@ -21,7 +21,8 @@
         <div>
             <label for="statut" class="block text-[11px] font-medium text-primary/50">Statut</label>
             <select name="statut" id="statut"
-                    class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none focus:border-primary">
+                    class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none
+                        focus:border-primary">
                 <option value="">Tous</option>
                 @foreach(\App\Models\StockRequisition::STATUSES as $cle => $libelle)
                     <option value="{{ $cle }}" @selected(request('statut') === $cle)>{{ $libelle }}</option>
@@ -33,7 +34,8 @@
             <div>
                 <label for="service" class="block text-[11px] font-medium text-primary/50">Service</label>
                 <select name="service" id="service"
-                        class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none focus:border-primary">
+                        class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none
+                            focus:border-primary">
                     <option value="">Tous</option>
                     @foreach(\App\Models\StockRequisition::DEPARTMENTS as $cle => $libelle)
                         <option value="{{ $cle }}" @selected(request('service') === $cle)>{{ $libelle }}</option>
@@ -45,18 +47,21 @@
         <div>
             <label for="du" class="block text-[11px] font-medium text-primary/50">Du</label>
             <input type="date" name="du" id="du" value="{{ request('du') }}"
-                   class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none focus:border-primary">
+                   class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none
+                       focus:border-primary">
         </div>
 
         <div>
             <label for="au" class="block text-[11px] font-medium text-primary/50">Au</label>
             <input type="date" name="au" id="au" value="{{ request('au') }}"
-                   class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none focus:border-primary">
+                   class="mt-1 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-sm outline-none
+                       focus:border-primary">
         </div>
 
         <div class="flex items-center gap-2">
             <button type="submit"
-                    class="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-surface-dark">
+                    class="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-white transition-colors
+                        hover:bg-surface-dark">
                 Filtrer
             </button>
             @if($filtres)

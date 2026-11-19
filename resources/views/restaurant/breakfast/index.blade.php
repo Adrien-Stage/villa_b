@@ -9,7 +9,8 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center
+                    font-bold">
                     <i data-lucide="coffee" class="w-5 h-5"></i>
                 </span>
                 <h1 class="font-heading text-2xl font-semibold text-primary">Service Petits-déjeuners</h1>
@@ -21,7 +22,8 @@
 
         <div class="flex items-center gap-3">
             {{-- Horaires de service --}}
-            <div class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium">
+            <div class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border
+                border-amber-200 text-xs font-medium">
                 <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
                 <span>Service : {{ $serviceHours['start'] }} – {{ $serviceHours['end'] }}</span>
             </div>
@@ -29,10 +31,12 @@
             {{-- Date sélecteur --}}
             <form method="GET" action="{{ route('restaurant.breakfast.index') }}" class="flex items-center gap-2">
                 <input type="date" name="date" value="{{ $date }}" onchange="this.form.submit()"
-                       class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-secondary/30 bg-white text-primary outline-none focus:border-primary shadow-xs">
+                       class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-secondary/30 bg-white
+                           text-primary outline-none focus:border-primary shadow-xs">
                 @if($date !== now()->toDateString())
                     <a href="{{ route('restaurant.breakfast.index') }}"
-                       class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-primary transition">
+                       class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-primary
+                           transition">
                         Aujourd'hui
                     </a>
                 @endif
@@ -104,7 +108,8 @@
     </div>
 
     {{-- Filtres & Recherche --}}
-    <div class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="bg-white rounded-xl border border-secondary/20 p-4 shadow-xs flex flex-col sm:flex-row items-center
+        justify-between gap-3">
         {{-- Onglets de filtrage rapide --}}
         <div class="flex items-center gap-1.5 w-full sm:w-auto">
             <a href="{{ route('restaurant.breakfast.index', ['date' => $date, 'status' => 'all', 'q' => $search]) }}"
@@ -175,12 +180,14 @@
                             </div>
 
                             @if($isConsumed)
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px]
+                                    font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                     Servi
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px]
+                                    font-semibold bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
                                     <i data-lucide="clock" class="w-3 h-3"></i>
                                     En attente
                                 </span>
@@ -223,7 +230,8 @@
 
                             {{-- Détail du pointage effectué si déjà consommé --}}
                             @if($isConsumed)
-                                <div class="text-[11px] text-emerald-800 bg-emerald-50/70 border border-emerald-200/60 rounded-lg p-2 flex items-start gap-1.5">
+                                <div class="text-[11px] text-emerald-800 bg-emerald-50/70 border border-emerald-200/60
+                                    rounded-lg p-2 flex items-start gap-1.5">
                                     <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 text-emerald-600 shrink-0"></i>
                                     <div>
                                         <p class="font-semibold">Servi : {{ $e->adults_consumed }} adulte(s), {{ $e->children_consumed }} enfant(s)</p>
@@ -242,14 +250,17 @@
                         @if(!$isConsumed)
                             <button type="button"
                                     @click="openServeModal(@js($e), @js($booking), @js($room), @js($customer))"
-                                    class="w-full py-2.5 bg-primary hover:bg-surface-dark text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                                    class="w-full py-2.5 bg-primary hover:bg-surface-dark text-white text-xs
+                                        font-semibold rounded-xl transition flex items-center justify-center gap-1.5
+                                        shadow-xs">
                                 <i data-lucide="check-circle" class="w-4 h-4"></i>
                                 <span>Pointer le service</span>
                             </button>
                         @else
                             <button type="button"
                                     @click="openServeModal(@js($e), @js($booking), @js($room), @js($customer))"
-                                    class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-primary/70 text-xs font-medium rounded-xl transition flex items-center justify-center gap-1.5">
+                                    class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-primary/70 text-xs
+                                        font-medium rounded-xl transition flex items-center justify-center gap-1.5">
                                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                                 <span>Re-pointer / Corriger</span>
                             </button>
@@ -266,21 +277,26 @@
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center
+             p-4">
         
         <div @click.away="showModal = false"
-             class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-secondary/20 animate-scale-up">
+             class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-secondary/20
+                 animate-scale-up">
             
             <header class="px-6 py-4 border-b border-secondary/15 flex items-center justify-between bg-slate-50">
                 <div class="flex items-center gap-2.5">
-                    <span class="w-8 h-8 rounded-lg bg-primary text-white font-bold text-xs flex items-center justify-center">
+                    <span class="w-8 h-8 rounded-lg bg-primary text-white font-bold text-xs flex items-center
+                        justify-center">
                         <span x-text="currentRoom ? currentRoom.number : '—'"></span>
                     </span>
                     <div>
                         <h3 class="font-heading font-semibold text-primary text-sm">
                             Pointage Petit-déjeuner — Ch. <span x-text="currentRoom ? currentRoom.number : ''"></span>
                         </h3>
-                        <p class="text-[11px] text-primary/50" x-text="currentCustomer ? currentCustomer.full_name : ''"></p>
+                        <p
+                            class="text-[11px] text-primary/50"
+                            x-text="currentCustomer ? currentCustomer.full_name : ''"></p>
                     </div>
                 </div>
                 <button type="button" @click="showModal = false" class="text-primary/40 hover:text-primary">
@@ -292,7 +308,8 @@
                 @csrf
 
                 {{-- Rappel des droits inclus --}}
-                <div class="p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl flex items-center justify-between text-xs">
+                <div class="p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl flex items-center justify-between
+                    text-xs">
                     <div class="flex items-center gap-2 text-amber-900">
                         <i data-lucide="coffee" class="w-4 h-4 text-amber-600"></i>
                         <span>Droits inclus pour cette chambre :</span>
@@ -310,10 +327,19 @@
                         <div class="flex items-center gap-1.5">
                             <input type="number" name="adults_served" x-model.number="adultsServed"
                                    min="0" max="10" required
-                                   class="w-full px-3 py-2 text-base font-bold text-center border border-secondary/30 rounded-xl outline-none focus:border-primary tabular-nums">
+                                   class="w-full px-3 py-2 text-base font-bold text-center border border-secondary/30
+                                       rounded-xl outline-none focus:border-primary tabular-nums">
                             <div class="flex flex-col gap-1">
-                                <button type="button" @click="adultsServed++" class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold leading-none">+</button>
-                                <button type="button" @click="if(adultsServed > 0) adultsServed--" class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold leading-none">−</button>
+                                <button
+                                    type="button"
+                                    @click="adultsServed++"
+                                    class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold
+                                        leading-none">+</button>
+                                <button
+                                    type="button"
+                                    @click="if(adultsServed > 0) adultsServed--"
+                                    class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold
+                                        leading-none">−</button>
                             </div>
                         </div>
                     </div>
@@ -323,10 +349,19 @@
                         <div class="flex items-center gap-1.5">
                             <input type="number" name="children_served" x-model.number="childrenServed"
                                    min="0" max="10" required
-                                   class="w-full px-3 py-2 text-base font-bold text-center border border-secondary/30 rounded-xl outline-none focus:border-primary tabular-nums">
+                                   class="w-full px-3 py-2 text-base font-bold text-center border border-secondary/30
+                                       rounded-xl outline-none focus:border-primary tabular-nums">
                             <div class="flex flex-col gap-1">
-                                <button type="button" @click="childrenServed++" class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold leading-none">+</button>
-                                <button type="button" @click="if(childrenServed > 0) childrenServed--" class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold leading-none">−</button>
+                                <button
+                                    type="button"
+                                    @click="childrenServed++"
+                                    class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold
+                                        leading-none">+</button>
+                                <button
+                                    type="button"
+                                    @click="if(childrenServed > 0) childrenServed--"
+                                    class="w-7 h-5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold
+                                        leading-none">−</button>
                             </div>
                         </div>
                     </div>
@@ -344,7 +379,9 @@
                     <div class="flex items-center justify-between font-semibold pt-2 border-t border-secondary/15"
                          :class="extraAmount > 0 ? 'text-amber-800' : 'text-primary/50'">
                         <span>Surplus / Extras :</span>
-                        <span class="tabular-nums" x-text="extraAmount > 0 ? (new Intl.NumberFormat('fr-FR').format(extraAmount) + ' FCFA (' + extraAdults + 'A, ' + extraChildren + 'E)') : 'Aucun surplus'"></span>
+                        <span
+                            class="tabular-nums"
+                            x-text="extraAmount > 0 ? (new Intl.NumberFormat('fr-FR').format(extraAmount) + ' FCFA (' + extraAdults + 'A, ' + extraChildren + 'E)') : 'Aucun surplus'"></span>
                     </div>
                 </div>
 
@@ -354,13 +391,23 @@
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition text-xs"
                                :class="settlementMethod === 'room_charge' ? 'border-primary bg-primary/5 font-semibold text-primary' : 'border-secondary/25 hover:bg-slate-50 text-primary/70'">
-                            <input type="radio" name="settlement_method" value="room_charge" x-model="settlementMethod" class="sr-only">
+                            <input
+                                type="radio"
+                                name="settlement_method"
+                                value="room_charge"
+                                x-model="settlementMethod"
+                                class="sr-only">
                             <i data-lucide="bed" class="w-4 h-4"></i>
                             <span>Débiter sur la chambre</span>
                         </label>
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition text-xs"
                                :class="settlementMethod === 'cash' ? 'border-primary bg-primary/5 font-semibold text-primary' : 'border-secondary/25 hover:bg-slate-50 text-primary/70'">
-                            <input type="radio" name="settlement_method" value="cash" x-model="settlementMethod" class="sr-only">
+                            <input
+                                type="radio"
+                                name="settlement_method"
+                                value="cash"
+                                x-model="settlementMethod"
+                                class="sr-only">
                             <i data-lucide="banknote" class="w-4 h-4"></i>
                             <span>Paiement restaurant</span>
                         </label>
@@ -371,7 +418,8 @@
                 <div>
                     <label class="block text-[11px] text-primary/60 mb-1">Notes staff (optionnel)</label>
                     <input type="text" name="notes" placeholder="Ex: Invité supplémentaire, table terrasse..."
-                           class="w-full px-3 py-1.5 text-xs rounded-lg border border-secondary/25 outline-none focus:border-primary">
+                           class="w-full px-3 py-1.5 text-xs rounded-lg border border-secondary/25 outline-none
+                               focus:border-primary">
                 </div>
 
                 {{-- Boutons d'action --}}
@@ -381,7 +429,8 @@
                         Annuler
                     </button>
                     <button type="submit"
-                            class="px-5 py-2.5 bg-primary hover:bg-surface-dark text-white text-xs font-semibold rounded-xl transition flex items-center gap-2 shadow-xs">
+                            class="px-5 py-2.5 bg-primary hover:bg-surface-dark text-white text-xs font-semibold
+                                rounded-xl transition flex items-center gap-2 shadow-xs">
                         <i data-lucide="check" class="w-4 h-4"></i>
                         <span x-text="extraAmount > 0 ? ('Valider le service (' + new Intl.NumberFormat('fr-FR').format(extraAmount) + ' FCFA)') : 'Valider le service'"></span>
                     </button>

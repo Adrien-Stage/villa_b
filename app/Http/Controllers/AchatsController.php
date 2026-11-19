@@ -40,7 +40,8 @@ class AchatsController extends Controller
             : collect();
 
         $aCommander = $voitDemandes
-            ? PurchaseRequest::query()->approved()->with(['requestedBy:id,name', 'reviewedBy:id,name'])->withCount('lines')
+            ? PurchaseRequest::query()->approved()->with(['requestedBy:id,name', 'reviewedBy:id,name'])
+                ->withCount('lines')
                 ->orderByRaw("case when priority = 'urgent' then 0 else 1 end")->oldest('reviewed_at')->get()
             : collect();
 
@@ -48,7 +49,8 @@ class AchatsController extends Controller
         // de réception directe ne s'envoie pas.
         $aEnvoyer = $voitBons
             ? PurchaseOrder::query()->where('status', PurchaseOrder::STATUS_DRAFT)
-                ->where(fn ($q) => $q->whereNull('transmission')->orWhere('transmission', '!=', PurchaseOrder::TRANSMISSION_REGULARISATION))
+                ->where(fn ($q) => $q->whereNull('transmission')->orWhere('transmission', '!=',
+                    PurchaseOrder::TRANSMISSION_REGULARISATION))
                 ->with('supplier:id,name')->withCount('lines')->oldest()->get()
             : collect();
 
@@ -56,7 +58,8 @@ class AchatsController extends Controller
             ? PurchaseOrder::query()->open()->with('supplier:id,name')
                 ->orderByRaw('expected_at is null')->orderBy('expected_at')->oldest('sent_at')->get()
             : collect();
-        $enRetard = $attendues->filter(fn (PurchaseOrder $o) => $o->expected_at !== null && $o->expected_at->lt($aujourdhui));
+        $enRetard = $attendues->filter(fn (PurchaseOrder $o) => $o->expected_at !== null && $o->expected_at
+            ->lt($aujourdhui));
 
         $alertes = $voitAlertes
             ? StockItem::query()->active()->belowThreshold()->with('supplier:id,name')->orderBy('current_stock')->get()
@@ -65,7 +68,8 @@ class AchatsController extends Controller
         $engage = $voitBons
             ? (int) PurchaseOrder::query()
                 ->whereNotIn('status', [PurchaseOrder::STATUS_DRAFT, PurchaseOrder::STATUS_CANCELLED])
-                ->where(fn ($q) => $q->whereNull('transmission')->orWhere('transmission', '!=', PurchaseOrder::TRANSMISSION_REGULARISATION))
+                ->where(fn ($q) => $q->whereNull('transmission')->orWhere('transmission', '!=',
+                    PurchaseOrder::TRANSMISSION_REGULARISATION))
                 ->whereBetween('sent_at', [$aujourdhui->startOfMonth(), $aujourdhui->endOfDay()])
                 ->sum('total_amount')
             : 0;
@@ -76,7 +80,8 @@ class AchatsController extends Controller
             'voitAlertes'   => $voitAlertes,
             'peutApprouver' => $droits->allows($user, 'economat.purchase_requests.approve'),
             'peutCommander' => $droits->allows($user, 'economat.purchase_requests.convert'),
-            'peutEnvoyer'   => $droits->allows($user, 'economat.orders.send') || $droits->allows($user, 'economat.orders.transmit'),
+            'peutEnvoyer'   => $droits->allows($user, 'economat.orders.send') || $droits->allows($user,
+                'economat.orders.transmit'),
             'peutProposer'  => $droits->allows($user, 'economat.control.suggestions.creer'),
             'aApprouver'    => $aApprouver,
             'aCommander'    => $aCommander,
@@ -85,7 +90,8 @@ class AchatsController extends Controller
             'enRetard'      => $enRetard,
             'alertes'       => $alertes,
             'engage'        => $engage,
-            'fournisseurs'  => $droits->allows($user, 'economat.suppliers.voir') ? Supplier::query()->active()->count() : null,
+            'fournisseurs'  => $droits->allows($user, 'economat.suppliers.voir') ? Supplier::query()->active()
+                ->count() : null,
             'lignes'        => self::LIGNES,
             'aujourdhui'    => $aujourdhui,
         ]);

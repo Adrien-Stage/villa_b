@@ -18,20 +18,30 @@
         <p class="mt-0.5 text-sm text-primary/50">Semaine {{ $periode }}</p>
     </div>
     <nav class="flex flex-wrap items-center gap-2" aria-label="Changer de semaine">
-        <a href="{{ $lien($lundi->subWeek()) }}" class="inline-flex items-center gap-1 rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+        <a
+            href="{{ $lien($lundi->subWeek()) }}"
+            class="inline-flex items-center gap-1 rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs
+                font-semibold text-primary hover:bg-accent/20">
             <i data-lucide="chevron-left" class="h-3.5 w-3.5" aria-hidden="true"></i> Semaine précédente
         </a>
         @unless($lundi->equalTo(\App\Services\PlanningService::lundi()))
-            <a href="{{ $lien(\App\Services\PlanningService::lundi()) }}" class="rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">Cette semaine</a>
+            <a
+                href="{{ $lien(\App\Services\PlanningService::lundi()) }}"
+                class="rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs font-semibold text-primary
+                    hover:bg-accent/20">Cette semaine</a>
         @endunless
-        <a href="{{ $lien($lundi->addWeek()) }}" class="inline-flex items-center gap-1 rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+        <a
+            href="{{ $lien($lundi->addWeek()) }}"
+            class="inline-flex items-center gap-1 rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs
+                font-semibold text-primary hover:bg-accent/20">
             Semaine suivante <i data-lucide="chevron-right" class="h-3.5 w-3.5" aria-hidden="true"></i>
         </a>
     </nav>
 </div>
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700" role="status">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700" role="status">{{ session('success') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
@@ -42,13 +52,19 @@
 @if($departement)
     {{-- Le dimanche, la semaine qui vient attend d'être programmée. --}}
     @if($rappel)
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+        <div
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300
+                bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            role="status">
             <p class="flex items-start gap-2">
                 <i data-lucide="bell-ring" class="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true"></i>
                 <span>Programmez la semaine du {{ $rappel->locale('fr')->isoFormat('D') }} au {{ $rappel->addDays(6)->locale('fr')->isoFormat('D MMMM') }} pour {{ $departement->name }}, puis envoyez-la à votre personnel.</span>
             </p>
             @unless($lundi->equalTo($rappel))
-                <a href="{{ $lien($rappel) }}" class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">Programmer la semaine suivante</a>
+                <a
+                    href="{{ $lien($rappel) }}"
+                    class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white
+                        hover:bg-amber-700">Programmer la semaine suivante</a>
             @endunless
         </div>
     @endif
@@ -60,7 +76,8 @@
                     <input type="hidden" name="semaine" value="{{ $lundi->toDateString() }}">
                     <label for="planning-departement" class="text-xs font-semibold text-primary/70">Service</label>
                     <select id="planning-departement" name="departement" onchange="this.form.submit()"
-                            class="rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs text-primary outline-none focus:border-secondary">
+                            class="rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs text-primary
+                                outline-none focus:border-secondary">
                         @foreach($departements as $d)
                             <option value="{{ $d->id }}" @selected($d->id === $departement->id)>{{ $d->name }}</option>
                         @endforeach
@@ -95,7 +112,10 @@
                         @csrf
                         <input type="hidden" name="department_id" value="{{ $departement->id }}">
                         <input type="hidden" name="semaine" value="{{ $lundi->toDateString() }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/25 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/25 bg-white px-3
+                                py-2 text-xs font-semibold text-primary hover:bg-accent/20">
                             <i data-lucide="copy" class="h-3.5 w-3.5" aria-hidden="true"></i> Recopier la semaine précédente
                         </button>
                     </form>
@@ -106,7 +126,10 @@
                         @csrf
                         <input type="hidden" name="department_id" value="{{ $departement->id }}">
                         <input type="hidden" name="semaine" value="{{ $lundi->toDateString() }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:opacity-95">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs
+                                font-semibold text-white hover:opacity-95">
                             <i data-lucide="send" class="h-3.5 w-3.5" aria-hidden="true"></i> Envoyer le planning
                         </button>
                     </form>
@@ -120,7 +143,9 @@
             Ce service fonctionne en <strong>horaire fixe</strong> ({{ $regimeDepartement->workingDaysLabel() }}) :
             les journées ouvrées se pré-remplissent automatiquement chaque semaine et restent modifiables au cas par cas.
             @droit('settings.regimes.modifier')
-                <a href="{{ route('settings.index', ['tab' => 'quarts']) }}" class="ml-1 font-semibold underline underline-offset-2">Paramétrer les régimes</a>
+                <a
+                    href="{{ route('settings.index', ['tab' => 'quarts']) }}"
+                    class="ml-1 font-semibold underline underline-offset-2">Paramétrer les régimes</a>
             @enddroit
         </p>
     @endif
@@ -133,7 +158,8 @@
         @else
             <ul class="mt-2 flex flex-wrap gap-1.5">
                 @foreach($enService as $a)
-                    <li class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-800">
+                    <li class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs
+                        font-medium text-green-800">
                         <span class="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true"></span>
                         {{ $a->user->name }} <span class="text-green-700/70">· {{ $a->shift->name }} jusqu'à {{ $a->fin()->format('H:i') }}</span>
                     </li>
@@ -143,7 +169,8 @@
     </section>
 
     @if($quarts->isEmpty())
-        <p class="rounded-xl border border-dashed border-secondary/30 bg-white px-4 py-10 text-center text-sm text-primary/50">
+        <p class="rounded-xl border border-dashed border-secondary/30 bg-white px-4 py-10 text-center text-sm
+            text-primary/50">
             Aucune plage horaire n'est définie pour le régime de ce service. La direction les règle dans Paramètres › Horaires &amp; quarts.
         </p>
     @else
@@ -153,9 +180,14 @@
                 <caption class="sr-only">Planning de {{ $departement->name }}, semaine {{ $periode }}</caption>
                 <thead>
                     <tr class="bg-[color-mix(in_oklab,var(--color-accent)_20%,white)]">
-                        <th scope="col" class="w-28 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/60">Quart</th>
+                        <th
+                            scope="col"
+                            class="w-28 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/60">Quart</th>
                         @foreach($jours as $jour)
-                            <th scope="col" class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wider {{ $jour->equalTo($aujourdhui) ? 'bg-primary text-white' : 'text-primary/60' }}">
+                            <th
+                                scope="col"
+                                class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wider {{ $jour->equalTo($aujourdhui) ? 'bg-primary text-white' : 'text-primary/60' }}">
                                 {{ $jour->locale('fr')->isoFormat('ddd D') }}
                                 @if($jour->equalTo($aujourdhui))<span class="sr-only">(aujourd'hui)</span>@endif
                             </th>
@@ -177,19 +209,26 @@
                                 <td class="border-l border-secondary/10 px-2 py-2 {{ $jour->equalTo($aujourdhui) ? 'bg-accent/10' : '' }}">
                                     <ul class="space-y-1">
                                         @foreach($cellule as $a)
-                                            <li class="flex items-start justify-between gap-1 rounded-md bg-primary/5 px-2 py-1 text-xs leading-tight text-primary">
+                                            <li class="flex items-start justify-between gap-1 rounded-md bg-primary/5
+                                                px-2 py-1 text-xs leading-tight text-primary">
                                                 {{-- Le nom passe à la ligne plutôt que d'être coupé : on doit lire qui travaille. --}}
                                                 <span class="min-w-0">
                                                     {{ $a->user->name }}
                                                     @if($a->source === 'auto')
-                                                        <span class="ml-1 inline-block rounded bg-accent/50 px-1 py-0.5 text-[10px] font-medium text-primary/70" title="Pré-rempli automatiquement selon l'horaire fixe">Auto</span>
+                                                        <span
+                                                            class="ml-1 inline-block rounded bg-accent/50 px-1 py-0.5
+                                                                text-[10px] font-medium text-primary/70"
+                                                            title="Pré-rempli automatiquement selon l'horaire fixe">Auto</span>
                                                     @endif
                                                 </span>
                                                 @if($peutPlanifier)
                                                     @droit('planning.affectations.supprimer')
-                                                        <form method="POST" action="{{ route('planning.affectations.destroy', $a) }}">
+                                                        <form
+                                                            method="POST"
+                                                            action="{{ route('planning.affectations.destroy', $a) }}">
                                                             @csrf @method('DELETE')
-                                                            <button type="submit" class="rounded p-0.5 text-primary/40 hover:bg-red-50 hover:text-red-700"
+                                                            <button type="submit" class="rounded p-0.5 text-primary/40
+                                                                hover:bg-red-50 hover:text-red-700"
                                                                     aria-label="Retirer {{ $a->user->name }} du quart {{ $quart->name }} du {{ $jour->locale('fr')->isoFormat('dddd D') }}">
                                                                 <i data-lucide="x" class="h-3 w-3" aria-hidden="true"></i>
                                                             </button>
@@ -205,22 +244,42 @@
                                             @if($disponibles->isNotEmpty())
                                                 <div x-data="{ ouvert: false }" class="mt-1">
                                                     <button type="button" @click="ouvert = ! ouvert; $nextTick(() => ouvert && $refs.choix.focus())" :aria-expanded="ouvert.toString()"
-                                                            class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-primary/50 hover:bg-accent/20 hover:text-primary">
+                                                            class="inline-flex items-center gap-1 rounded-md px-1.5
+                                                                py-0.5 text-[11px] font-semibold text-primary/50
+                                                                hover:bg-accent/20 hover:text-primary">
                                                         <i data-lucide="plus" class="h-3 w-3" aria-hidden="true"></i> Ajouter
                                                     </button>
-                                                    <form x-show="ouvert" x-cloak method="POST" action="{{ route('planning.affectations.store') }}" class="mt-1 space-y-1">
+                                                    <form
+                                                        x-show="ouvert"
+                                                        x-cloak
+                                                        method="POST"
+                                                        action="{{ route('planning.affectations.store') }}"
+                                                        class="mt-1 space-y-1">
                                                         @csrf
-                                                        <input type="hidden" name="department_id" value="{{ $departement->id }}">
-                                                        <input type="hidden" name="work_shift_id" value="{{ $quart->id }}">
-                                                        <input type="hidden" name="date" value="{{ $jour->toDateString() }}">
+                                                        <input
+                                                            type="hidden"
+                                                            name="department_id"
+                                                            value="{{ $departement->id }}">
+                                                        <input
+                                                            type="hidden"
+                                                            name="work_shift_id"
+                                                            value="{{ $quart->id }}">
+                                                        <input
+                                                            type="hidden"
+                                                            name="date"
+                                                            value="{{ $jour->toDateString() }}">
                                                         <select x-ref="choix" name="user_id" required aria-label="Personne à placer — {{ $quart->name }}, {{ $jour->locale('fr')->isoFormat('dddd D') }}"
-                                                                class="w-full rounded-md border border-secondary/30 bg-white px-1.5 py-1 text-xs">
+                                                                class="w-full rounded-md border border-secondary/30
+                                                                    bg-white px-1.5 py-1 text-xs">
                                                             <option value="">Choisir…</option>
                                                             @foreach($disponibles as $personne)
                                                                 <option value="{{ $personne->id }}">{{ $personne->name }}</option>
                                                             @endforeach
                                                         </select>
-                                                        <button type="submit" class="w-full rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-white">Placer</button>
+                                                        <button
+                                                            type="submit"
+                                                            class="w-full rounded-md bg-primary px-2 py-1 text-[11px]
+                                                                font-semibold text-white">Placer</button>
                                                     </form>
                                                 </div>
                                             @endif
@@ -236,7 +295,12 @@
 
         {{-- Le compte de chacun : personne n'est oublié, personne n'est surchargé. --}}
         <div class="mt-6">
-            <x-table :rows="$personnel" inline="never" empty="Aucun personnel actif dans ce service." empty-icon="users" caption="Quarts et heures de la semaine">
+            <x-table
+                :rows="$personnel"
+                inline="never"
+                empty="Aucun personnel actif dans ce service."
+                empty-icon="users"
+                caption="Quarts et heures de la semaine">
                 <x-slot:toolbar>
                     <h2 class="text-sm font-semibold text-primary">Quarts et heures de la semaine</h2>
                 </x-slot:toolbar>
@@ -251,11 +315,13 @@
                         <x-table.cell>
                             <span class="font-medium text-primary">{{ $personne->name }}</span>
                             @if($personne->regimeEstDeroge() && $personne->regimeEffectif())
-                                <span class="ml-2 rounded-full border border-secondary/30 bg-accent/25 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                <span class="ml-2 rounded-full border border-secondary/30 bg-accent/25 px-2 py-0.5
+                                    text-[10px] font-semibold text-primary">
                                     Exception : {{ $personne->regimeEffectif()->name }}
                                 </span>
                             @endif
-                            @unless($compte)<span class="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Non planifié cette semaine</span>@endunless
+                            @unless($compte)<span class="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[11px]
+                                font-semibold text-amber-800">Non planifié cette semaine</span>@endunless
                         </x-table.cell>
                         <x-table.cell align="right">{{ $compte['quarts'] ?? 0 }}</x-table.cell>
                         <x-table.cell align="right" nowrap>{{ $compte ? rtrim(rtrim(number_format($compte['heures'], 2, ',', ' '), '0'), ',') . ' h' : '—' }}</x-table.cell>

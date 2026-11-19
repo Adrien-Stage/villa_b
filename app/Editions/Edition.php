@@ -27,7 +27,8 @@ abstract class Edition
     public const PERSONNEL = 'Personnel';
 
     /** Ordre d'affichage des familles. */
-    public const FAMILLES = [self::FINANCES, self::HEBERGEMENT, self::HOUSEKEEPING, self::RESTAURATION, self::ACHATS, self::TECHNIQUE, self::PERSONNEL];
+    public const FAMILLES = [self::FINANCES, self::HEBERGEMENT, self::HOUSEKEEPING, self::RESTAURATION, self::ACHATS,
+        self::TECHNIQUE, self::PERSONNEL];
 
     /** Identifiant d'adresse : « journal-encaissements ». */
     abstract public function cle(): string;
@@ -113,7 +114,8 @@ abstract class Edition
                 Filtre::PERIODE => 'du ' . $valeur[0]->format('d/m/Y') . ' au ' . $valeur[1]->format('d/m/Y'),
                 Filtre::JOUR => $valeur->format('d/m/Y'),
                 Filtre::SEMAINE => 'du ' . $valeur->format('d/m/Y') . ' au ' . $valeur->addDays(6)->format('d/m/Y'),
-                default => $valeur === Filtre::TOUS ? $filtre->libelleTous : ($filtre->options($user)[$valeur] ?? $valeur),
+                default => $valeur === Filtre::TOUS ? $filtre->libelleTous : ($filtre->options($user)[$valeur]
+                    ?? $valeur),
             };
         }
 

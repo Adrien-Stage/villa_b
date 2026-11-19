@@ -14,8 +14,13 @@
     @if($monQuart || $suivis->isNotEmpty())
         <div class="mb-6 grid gap-4 {{ $monQuart && $suivis->isNotEmpty() ? 'lg:grid-cols-3' : '' }}">
             @if($monQuart)
-                <section class="rounded-2xl border border-secondary/15 bg-white p-4 shadow-sm" aria-labelledby="mon-quart">
-                    <h2 id="mon-quart" class="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary/60">
+                <section
+                    class="rounded-2xl border border-secondary/15 bg-white p-4 shadow-sm"
+                    aria-labelledby="mon-quart">
+                    <h2
+                        id="mon-quart"
+                        class="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider
+                            text-primary/60">
                         <i data-lucide="calendar-clock" class="h-3.5 w-3.5" aria-hidden="true"></i> Votre quart
                     </h2>
                     @if($monQuart->enCoursA($maintenant))
@@ -26,17 +31,27 @@
                             {{ $monQuart->shift->name }} ({{ $monQuart->shift->horaire() }})
                         </p>
                     @endif
-                    <a href="{{ route('planning.index') }}" class="mt-2 inline-block text-xs font-semibold text-primary underline-offset-2 hover:underline">Voir mes quarts</a>
+                    <a
+                        href="{{ route('planning.index') }}"
+                        class="mt-2 inline-block text-xs font-semibold text-primary underline-offset-2
+                            hover:underline">Voir mes quarts</a>
                 </section>
             @endif
 
             @if($suivis->isNotEmpty())
-                <section class="rounded-2xl border border-secondary/15 bg-white p-4 shadow-sm {{ $monQuart ? 'lg:col-span-2' : '' }}" aria-labelledby="en-service">
+                <section
+                    class="rounded-2xl border border-secondary/15 bg-white p-4 shadow-sm {{ $monQuart ? 'lg:col-span-2' : '' }}"
+                    aria-labelledby="en-service">
                     <div class="mb-2 flex items-center justify-between gap-2">
-                        <h2 id="en-service" class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary/60">
+                        <h2
+                            id="en-service"
+                            class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider
+                                text-primary/60">
                             <span class="h-2 w-2 rounded-full bg-green-500" aria-hidden="true"></span> En service maintenant
                         </h2>
-                        <a href="{{ route('planning.index') }}" class="text-xs font-semibold text-primary underline-offset-2 hover:underline">Planning</a>
+                        <a
+                            href="{{ route('planning.index') }}"
+                            class="text-xs font-semibold text-primary underline-offset-2 hover:underline">Planning</a>
                     </div>
                     @if($enServiceMaintenant->isEmpty())
                         <p class="text-sm text-primary/50">Personne n'est planifié en ce moment.</p>

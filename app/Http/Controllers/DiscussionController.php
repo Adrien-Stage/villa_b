@@ -237,7 +237,8 @@ class DiscussionController extends Controller
                 $user->id => ['last_read_at' => now(), 'is_admin' => true, 'archived_at' => null, 'deleted_at' => null],
             ];
             foreach ($participantIds as $pId) {
-                $syncData[$pId] = ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null, 'deleted_at' => null];
+                $syncData[$pId] = ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null,
+                    'deleted_at' => null];
             }
             $conversation->participants()->sync($syncData);
 
@@ -281,7 +282,8 @@ class DiscussionController extends Controller
 
         $conversation->participants()->sync([
             $user->id => ['last_read_at' => now(), 'is_admin' => true, 'archived_at' => null, 'deleted_at' => null],
-            $participant->id => ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null, 'deleted_at' => null],
+            $participant->id => ['last_read_at' => null, 'is_admin' => false, 'archived_at' => null,
+                'deleted_at' => null],
         ]);
 
         return redirect()->route('discussions.index', ['conversation' => $conversation->id]);
@@ -444,7 +446,8 @@ class DiscussionController extends Controller
 
         $body = trim($validated['body']);
         if ($body === '') {
-            return redirect()->route('discussions.index', ['conversation' => $validated['conversation_id']])->withErrors([
+            return redirect()->route('discussions.index', ['conversation' => $validated['conversation_id']])
+                ->withErrors([
                 'body' => 'Le message ne peut pas etre vide.',
             ]);
         }
@@ -563,7 +566,8 @@ class DiscussionController extends Controller
                             $q->orWhereExists(function ($sub) use ($userId) {
                                 $sub->selectRaw('1')
                                     ->from('discussion_message_deletions')
-                                    ->whereColumn('discussion_message_deletions.discussion_message_id', 'discussion_messages.id')
+                                    ->whereColumn('discussion_message_deletions.discussion_message_id',
+                                        'discussion_messages.id')
                                     ->where('discussion_message_deletions.user_id', $userId);
                             });
                         }
@@ -613,7 +617,8 @@ class DiscussionController extends Controller
         ]);
     }
 
-    public function archiveConversation(Request $request, DiscussionConversation $conversation): RedirectResponse|JsonResponse
+    public function archiveConversation(Request $request,
+        DiscussionConversation $conversation): RedirectResponse|JsonResponse
     {
         $userId = Auth::id();
         if (!$conversation->participants()->where('users.id', $userId)->exists()) {
@@ -641,7 +646,8 @@ class DiscussionController extends Controller
         return redirect()->route('discussions.index')->with('success', 'Conversation archivee.');
     }
 
-    public function destroyConversation(Request $request, DiscussionConversation $conversation): RedirectResponse|JsonResponse
+    public function destroyConversation(Request $request,
+        DiscussionConversation $conversation): RedirectResponse|JsonResponse
     {
         $userId = Auth::id();
         if (!$conversation->participants()->where('users.id', $userId)->exists()) {
@@ -757,7 +763,8 @@ class DiscussionController extends Controller
                     return true;
                 }
 
-                return $conversation->participants->contains(fn ($participant) => (int) $participant->id !== (int) $user->id);
+                return $conversation->participants->contains(fn ($participant) => (int) $participant->id !== (int) $user
+                    ->id);
             })
             ->values();
 
@@ -818,7 +825,8 @@ class DiscussionController extends Controller
             ->values();
     }
 
-    private function serializeConversationSummary(DiscussionConversation $conversation, int $currentUserId, int $unread): array
+    private function serializeConversationSummary(DiscussionConversation $conversation, int $currentUserId,
+        int $unread): array
     {
         $other = $conversation->participants->firstWhere('id', '!=', $currentUserId);
         $title = $conversation->title ?: ($other?->name ?? 'Discussion interne');

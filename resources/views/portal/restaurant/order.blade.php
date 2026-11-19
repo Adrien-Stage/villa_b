@@ -34,7 +34,8 @@
         <div class="rounded-2xl border border-secondary/15 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-semibold uppercase tracking-widest text-primary/45">Statut</p>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30 text-primary border border-secondary/15">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/30
+                    text-primary border border-secondary/15">
                     {{ strtoupper($order->status) }}
                 </span>
             </div>
@@ -62,7 +63,8 @@
         </div>
 
         <a href="{{ route('portal.restaurant.menu', ['tenant' => $tenant->slug]) }}"
-            class="inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-primary text-secondary px-5 py-3 text-sm font-semibold hover:bg-surface-dark">
+            class="inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-primary text-secondary px-5 py-3
+                text-sm font-semibold hover:bg-surface-dark">
             <i data-lucide="book-open" class="w-4 h-4"></i>
             Retour au menu
         </a>

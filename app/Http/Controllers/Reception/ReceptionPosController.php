@@ -135,7 +135,8 @@ class ReceptionPosController extends Controller
         $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$isRoomCharge && !$activeSession) {
-            return back()->withInput()->withErrors(['caisse' => 'Veuillez ouvrir votre caisse de réception avant d\'encaisser un paiement.']);
+            return back()->withInput()
+                ->withErrors(['caisse' => 'Veuillez ouvrir votre caisse de réception avant d\'encaisser un paiement.']);
         }
 
         // Gestion du résident ou client
@@ -153,11 +154,13 @@ class ReceptionPosController extends Controller
                 ->first();
 
             if (!$booking) {
-                return back()->withInput()->withErrors(['booking_id' => 'Le séjour sélectionné n\'est pas en cours (chambre non occupée).']);
+                return back()->withInput()
+                    ->withErrors(['booking_id' => 'Le séjour sélectionné n\'est pas en cours (chambre non occupée).']);
             }
 
             $customerId = $booking->customer_id;
-            $customerName = $booking->customer?->full_name ?: ($booking->customer?->first_name . ' ' . $booking->customer?->last_name);
+            $customerName = $booking->customer?->full_name ?: ($booking->customer?->first_name . ' ' . $booking
+                ->customer?->last_name);
             $customerPhone = $booking->customer?->phone;
             $roomNumber = $booking->room?->number;
         } elseif (!empty($validated['create_customer']) && !empty($customerName)) {

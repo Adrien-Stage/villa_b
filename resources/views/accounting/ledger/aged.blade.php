@@ -21,7 +21,8 @@
 
 @include('accounting.ledger.partials.nav')
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Depuis combien de temps ?</strong> La liste des créances dit qui doit ; la balance âgée dit
     depuis quand. Une facture de 90 jours et une facture d'hier ne se relancent pas de la même façon, et
     seule la seconde a des chances d'être encore recouvrable sans effort.
@@ -39,7 +40,9 @@
     <form method="GET" class="flex flex-col sm:flex-row gap-2 mb-4">
         <div class="flex-1">
             <label class="block text-xs font-medium text-primary/70 mb-1.5">Compte collectif</label>
-            <select name="compte" class="w-full sm:max-w-md rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+            <select
+                name="compte"
+                class="w-full sm:max-w-md rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
                 @foreach($collectifs as $c)
                     <option value="{{ $c->code }}" @selected($compte && $compte->code === $c->code)>
                         {{ $c->code }} — {{ $c->label }}
@@ -53,7 +56,10 @@
                    class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
         </div>
         <div class="flex items-end">
-            <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+            <button
+                type="submit"
+                class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                    transition-colors">
                 Afficher
             </button>
         </div>
@@ -97,7 +103,8 @@
                                     {{ $row['buckets'][$cle] ? $fcfa($row['buckets'][$cle]) : '—' }}
                                 </td>
                             @endforeach
-                            <td class="px-4 py-2 text-right font-semibold text-primary whitespace-nowrap">{{ $fcfa($row['total']) }}</td>
+                            <td class="px-4 py-2 text-right font-semibold text-primary
+                                whitespace-nowrap">{{ $fcfa($row['total']) }}</td>
                         </tr>
                     @empty
                         <tr>

@@ -11,12 +11,19 @@
         </div>
         <div class="flex flex-wrap gap-2">
             @droit('economat.receipts.direct.creer')
-                <a href="{{ route('economat.receipts.direct.create') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/10 transition-colors" title="Enregistrer une marchandise arrivée sans bon de commande">
+                <a
+                    href="{{ route('economat.receipts.direct.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm
+                        font-medium rounded-lg hover:bg-accent/10 transition-colors"
+                    title="Enregistrer une marchandise arrivée sans bon de commande">
                     <i data-lucide="package-plus" class="w-4 h-4"></i> Réception directe
                 </a>
             @enddroit
             @droit('economat.orders.creer')
-            <a href="{{ route('economat.orders.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <a
+                href="{{ route('economat.orders.create') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i> Bon de commande
                 </a>
             @enddroit
@@ -31,12 +38,16 @@
             <p class="text-[11px] uppercase tracking-wider text-primary/50">Articles actifs</p>
             <p class="text-2xl font-bold text-primary mt-1">{{ number_format($stats['items_total'], 0, ',', ' ') }}</p>
         </div>
-        <a href="{{ route('economat.items.index', ['filter' => 'alert']) }}" class="bg-white border rounded-xl p-4 transition-colors {{ $stats['below_min'] > 0 ? 'border-amber-300 hover:bg-amber-50' : 'border-secondary/20' }}">
+        <a
+            href="{{ route('economat.items.index', ['filter' => 'alert']) }}"
+            class="bg-white border rounded-xl p-4 transition-colors {{ $stats['below_min'] > 0 ? 'border-amber-300 hover:bg-amber-50' : 'border-secondary/20' }}">
             <p class="text-[11px] uppercase tracking-wider text-primary/50">Sous le seuil</p>
             <p class="text-2xl font-bold mt-1 {{ $stats['below_min'] > 0 ? 'text-amber-600' : 'text-primary' }}">{{ $stats['below_min'] }}</p>
             <p class="text-[10px] text-red-500 mt-0.5">{{ $stats['out_of_stock'] }} en rupture</p>
         </a>
-        <a href="{{ route('economat.requisitions.index') }}" class="bg-white border rounded-xl p-4 transition-colors {{ $stats['pending_reqs'] > 0 ? 'border-blue-300 hover:bg-blue-50' : 'border-secondary/20' }}">
+        <a
+            href="{{ route('economat.requisitions.index') }}"
+            class="bg-white border rounded-xl p-4 transition-colors {{ $stats['pending_reqs'] > 0 ? 'border-blue-300 hover:bg-blue-50' : 'border-secondary/20' }}">
             <p class="text-[11px] uppercase tracking-wider text-primary/50">Demandes en attente</p>
             <p class="text-2xl font-bold mt-1 {{ $stats['pending_reqs'] > 0 ? 'text-blue-600' : 'text-primary' }}">{{ $stats['pending_reqs'] }}</p>
         </a>
@@ -65,13 +76,19 @@
                     @foreach($alertsByZone as $zoneNom => $articlesDeLaZone)
                         {{-- Une seule zone : pas d'en-tête, la liste suffit. --}}
                         @if($alertsByZone->count() > 1)
-                            <p class="sticky top-0 z-10 flex items-center justify-between bg-gray-50/95 px-5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary/60 backdrop-blur-sm">
-                                <span class="inline-flex items-center gap-1.5"><i data-lucide="warehouse" class="w-3 h-3" aria-hidden="true"></i> {{ $zoneNom }}</span>
+                            <p class="sticky top-0 z-10 flex items-center justify-between bg-gray-50/95 px-5 py-1.5
+                                text-[11px] font-semibold uppercase tracking-wider text-primary/60 backdrop-blur-sm">
+                                <span class="inline-flex items-center gap-1.5"><i
+                                    data-lucide="warehouse"
+                                    class="w-3 h-3"
+                                    aria-hidden="true"></i> {{ $zoneNom }}</span>
                                 <span class="font-mono text-primary/40">{{ $articlesDeLaZone->count() }}</span>
                             </p>
                         @endif
                     @foreach($articlesDeLaZone as $item)
-                        <a href="{{ route('economat.items.show', $item) }}" class="flex items-center justify-between px-5 py-3 hover:bg-accent/10 transition-colors">
+                        <a
+                            href="{{ route('economat.items.show', $item) }}"
+                            class="flex items-center justify-between px-5 py-3 hover:bg-accent/10 transition-colors">
                             <div class="min-w-0">
                                 <p class="text-sm text-primary truncate">{{ $item->name }}</p>
                                 <p class="text-[11px] text-primary/40">{{ $item->category?->name ?? 'Sans catégorie' }}</p>
@@ -102,7 +119,9 @@
             @else
                 <div class="divide-y divide-secondary/10 max-h-96 overflow-y-auto">
                     @foreach($pendingRequisitions as $req)
-                        <a href="{{ route('economat.requisitions.show', $req) }}" class="flex items-center justify-between px-5 py-3 hover:bg-accent/10 transition-colors">
+                        <a
+                            href="{{ route('economat.requisitions.show', $req) }}"
+                            class="flex items-center justify-between px-5 py-3 hover:bg-accent/10 transition-colors">
                             <div class="min-w-0">
                                 <p class="text-sm text-primary">{{ $req->number }} <span class="text-primary/40">· {{ $req->departmentLabel() }}</span></p>
                                 <p class="text-[11px] text-primary/40 truncate">{{ $req->requestedBy?->name ?? '—' }} · {{ $req->lines->count() }} article(s)</p>

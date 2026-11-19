@@ -23,9 +23,13 @@
 
 @if($isOpen && !$estTitulaire && $titulaire)
     <div role="status"
-         class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-2.5 text-emerald-950 flex flex-wrap items-center justify-between gap-2.5">
+         class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-2.5 text-emerald-950 flex flex-wrap
+             items-center justify-between gap-2.5">
         <div class="flex items-start sm:items-center gap-2.5 min-w-0">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700" aria-hidden="true">
+            <span
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100
+                    text-emerald-700"
+                aria-hidden="true">
                 <i data-lucide="wallet" class="w-4 h-4"></i>
             </span>
             <div class="text-xs sm:text-sm min-w-0">
@@ -39,7 +43,8 @@
             </div>
         </div>
         <a href="{{ route('bookings.cash_register.index') }}"
-           class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors">
+           class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5
+               text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors">
             <i data-lucide="calculator" class="w-3.5 h-3.5" aria-hidden="true"></i>
             Voir la caisse
         </a>
@@ -49,7 +54,10 @@
          class="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/90 px-4 py-2.5 text-indigo-950">
         <div class="flex flex-wrap items-center justify-between gap-2.5">
             <div class="flex items-start sm:items-center gap-2.5 min-w-0">
-                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700" aria-hidden="true">
+                <span
+                    class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100
+                        text-indigo-700"
+                    aria-hidden="true">
                     <i data-lucide="users" class="w-4 h-4"></i>
                 </span>
                 <div class="text-xs sm:text-sm">
@@ -65,7 +73,8 @@
                 </div>
             </div>
             <a href="{{ route('bookings.cash_register.index') }}"
-               class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-800 hover:bg-indigo-100 transition-colors">
+               class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3
+                   py-1.5 text-xs font-semibold text-indigo-800 hover:bg-indigo-100 transition-colors">
                 <i data-lucide="list-checks" class="w-3.5 h-3.5" aria-hidden="true"></i>
                 État de caisse
             </a>
@@ -78,7 +87,8 @@
             <div class="mt-2 overflow-x-auto rounded-lg border border-indigo-200 bg-white">
                 <table class="w-full text-left text-xs">
                     <caption class="sr-only">Opérations effectuées par un tiers dans votre caisse</caption>
-                    <thead class="bg-indigo-50/70 text-[11px] uppercase tracking-wider text-indigo-900/70 border-b border-indigo-100">
+                    <thead class="bg-indigo-50/70 text-[11px] uppercase tracking-wider text-indigo-900/70 border-b
+                        border-indigo-100">
                         <tr>
                             <th scope="col" class="px-3 py-2">Heure</th>
                             <th scope="col" class="px-3 py-2">Collaborateur</th>

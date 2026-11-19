@@ -27,7 +27,8 @@ class ServiceStoreCountService
             $store = ServiceStore::query()->lockForUpdate()->findOrFail($store->id);
 
             if ($encours = self::inProgress($store)) {
-                throw new RuntimeException("L'inventaire {$encours->reference} du dépôt {$store->name} est déjà en cours.");
+                throw new RuntimeException(
+                    "L'inventaire {$encours->reference} du dépôt {$store->name} est déjà en cours.");
             }
 
             $inventaire = ServiceStoreCount::create([
@@ -188,7 +189,8 @@ class ServiceStoreCountService
                     'stock_account'    => $ligne->item->stockAccount(),
                     'source_type'      => ServiceStoreMovement::SOURCE_STOCK_COUNT,
                     'source_id'        => $inventaire->id,
-                    'reason'           => ($ecart < 0 ? 'Consommation' : 'Excédent') . " — inventaire {$inventaire->reference}",
+                    'reason'           => ($ecart < 0 ? 'Consommation' : 'Excédent')
+                        . " — inventaire {$inventaire->reference}",
                     'user_id'          => $user?->id ?? auth()->id(),
                     'occurred_at'      => now(),
                 ]);

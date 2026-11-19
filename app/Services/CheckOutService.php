@@ -146,7 +146,8 @@ class CheckOutService
 
         // Paiements déjà reçus
         $paidAmount = (int) $booking->payments()
-            ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', Invoice::where('kind', Invoice::KIND_SEJOUR)->select('id')))
+            ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', Invoice::where('kind',
+                Invoice::KIND_SEJOUR)->select('id')))
             ->where('status', 'completed')
             ->sum('amount');
 
@@ -198,7 +199,8 @@ class CheckOutService
 
         // Lignes du folio (extras). La ligne d'hébergement du folio est déjà
         // portée par la ligne ci-dessus : la reprendre ferait payer la chambre deux fois à l'écran.
-        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM])->get() as $item) {
+        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM])
+            ->get() as $item) {
             InvoiceItem::create([
                 'invoice_id'  => $invoice->id,
                 'description' => $item->description,
@@ -236,7 +238,8 @@ class CheckOutService
         $this->finalizeAmounts($booking);
     }
 
-    public function syncDurationToNow(Booking $booking, ?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): void
+    public function syncDurationToNow(Booking $booking, ?string $defaultCheckOutTime = null,
+        ?CarbonInterface $at = null): void
     {
         if ($booking->status !== BookingStatus::CHECKED_IN) {
             return;

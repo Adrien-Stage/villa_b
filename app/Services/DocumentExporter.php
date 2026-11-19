@@ -131,7 +131,8 @@ class DocumentExporter
             foreach ($colonnes as $index => $colonne) {
                 // Valeur brute : un montant doit rester un nombre dans un
                 // tableur, sinon aucune somme n'est possible.
-                $feuille->setCellValue([$index + 1, $ligne], $colonne->valeurBrute($document->valeur($donnee, $colonne)));
+                $feuille->setCellValue([$index + 1, $ligne], $colonne->valeurBrute($document->valeur($donnee,
+                    $colonne)));
             }
             $ligne++;
         }
@@ -140,7 +141,8 @@ class DocumentExporter
             $feuille->setCellValue([1, $ligne], 'Total (' . $document->lesLignes()->count() . ' ligne(s))');
             foreach ($colonnes as $index => $colonne) {
                 if (array_key_exists($colonne->cle, $document->lesTotaux())) {
-                    $feuille->setCellValue([$index + 1, $ligne], $colonne->valeurBrute($document->lesTotaux()[$colonne->cle]));
+                    $feuille->setCellValue([$index + 1, $ligne], $colonne->valeurBrute($document->lesTotaux()[$colonne
+                        ->cle]));
                 }
             }
             $feuille->getStyle([1, $ligne, $derniere, $ligne])->getFont()->setBold(true);

@@ -31,9 +31,14 @@
             @endif
         </span>
         @if(! $caisse)
-            <a href="{{ route('restaurant.cash_register.open') }}" class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white">Ouvrir ma caisse</a>
+            <a
+                href="{{ route('restaurant.cash_register.open') }}"
+                class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white">Ouvrir ma caisse</a>
         @elseif($caisse->status === 'open')
-            <a href="{{ route('restaurant.cash_register.close') }}" class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-800">Compter ma caisse</a>
+            <a
+                href="{{ route('restaurant.cash_register.close') }}"
+                class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold
+                    text-green-800">Compter ma caisse</a>
         @endif
     </div>
 @enddroit
@@ -88,7 +93,11 @@
 </div>
 
 <div id="billing-table-container">
-<x-table :rows="$orders" empty="Aucune commande. Elles apparaîtront ici pour encaissement." empty-icon="credit-card" caption="Notes à encaisser">
+<x-table
+    :rows="$orders"
+    empty="Aucune commande. Elles apparaîtront ici pour encaissement."
+    empty-icon="credit-card"
+    caption="Notes à encaisser">
     <x-slot:head>
         <x-table.col>Commande</x-table.col>
         <x-table.col>Table</x-table.col>
@@ -101,7 +110,9 @@
     @foreach($orders as $order)
         <x-table.row :href="route('restaurant.billing.show', $order)">
             <x-table.cell nowrap>
-                <a href="{{ route('restaurant.billing.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
+                <a
+                    href="{{ route('restaurant.billing.show', $order) }}"
+                    class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
                 <p class="mt-0.5 text-xs text-primary/45">{{ $order->items_count }} article{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}</p>
             </x-table.cell>
             <x-table.cell class="text-primary/70">
@@ -122,10 +133,15 @@
             </x-table.cell>
             <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($order->total_amount / 100, 0, ',', ' ') }} FCFA</x-table.cell>
             <x-table.actions :label="'Actions pour la note #'.$order->id">
-                <x-table.action :href="route('restaurant.billing.show', $order)" icon="{{ $order->payment_status === 'paid' ? 'eye' : 'wallet' }}">{{ $order->payment_status === 'paid' ? 'Ouvrir' : 'Encaisser' }}</x-table.action>
+                <x-table.action
+                    :href="route('restaurant.billing.show', $order)"
+                    icon="{{ $order->payment_status === 'paid' ? 'eye' : 'wallet' }}">{{ $order->payment_status === 'paid' ? 'Ouvrir' : 'Encaisser' }}</x-table.action>
                 @if($order->payment_status === 'paid')
                     @droit('restaurant.billing.receipt')
-                        <x-table.action :href="route('restaurant.billing.receipt', $order)" icon="printer" target="_blank">Reçu</x-table.action>
+                        <x-table.action
+                            :href="route('restaurant.billing.receipt', $order)"
+                            icon="printer"
+                            target="_blank">Reçu</x-table.action>
                     @enddroit
                 @endif
             </x-table.actions>

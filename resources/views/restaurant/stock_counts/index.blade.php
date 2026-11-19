@@ -17,7 +17,8 @@
         <form method="POST" action="{{ route('restaurant.stock_counts.store') }}" class="shrink-0">
             @csrf
             <button type="submit"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="clipboard-list" class="w-4 h-4"></i>
                 Ouvrir un inventaire
             </button>
@@ -43,7 +44,8 @@
 
 @if($openCount)
     <a href="{{ route('restaurant.stock_counts.show', $openCount) }}"
-        class="mb-6 block rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100/60 transition-colors">
+        class="mb-6 block rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100/60
+            transition-colors">
         <div class="flex items-center justify-between gap-3">
             <div class="flex items-start gap-3 min-w-0">
                 <i data-lucide="clipboard-list" class="w-4 h-4 text-amber-600 mt-0.5 shrink-0"></i>
@@ -61,7 +63,11 @@
     </a>
 @endif
 
-<x-table :rows="$counts" empty="Aucun inventaire réalisé." empty-icon="clipboard-list" caption="Inventaires du garde-manger">
+<x-table
+    :rows="$counts"
+    empty="Aucun inventaire réalisé."
+    empty-icon="clipboard-list"
+    caption="Inventaires du garde-manger">
     <x-slot:head>
         <x-table.col>Référence</x-table.col>
         <x-table.col>État</x-table.col>
@@ -74,7 +80,9 @@
     @foreach($counts as $count)
         <x-table.row :href="route('restaurant.stock_counts.show', $count)">
             <x-table.cell>
-                <a href="{{ route('restaurant.stock_counts.show', $count) }}" class="text-sm font-semibold text-primary hover:underline">{{ $count->reference }}</a>
+                <a
+                    href="{{ route('restaurant.stock_counts.show', $count) }}"
+                    class="text-sm font-semibold text-primary hover:underline">{{ $count->reference }}</a>
                 @if($vueEnsemble && $count->pointOfSale)
                     <p class="text-[11px] font-semibold text-primary/45">{{ $count->pointOfSale->name }}</p>
                 @endif
@@ -82,9 +90,11 @@
             </x-table.cell>
             <x-table.cell nowrap>
                 @if($count->isClosed())
-                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">Clôturé</span>
+                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5
+                        text-[11px] font-semibold text-gray-700">Clôturé</span>
                 @else
-                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">En cours</span>
+                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5
+                        text-[11px] font-semibold text-amber-700">En cours</span>
                 @endif
             </x-table.cell>
             <x-table.cell align="right" hide="lg" class="text-primary/60">{{ $count->lines_count }}</x-table.cell>
@@ -97,7 +107,9 @@
             </x-table.cell>
             <x-table.cell hide="xl" class="text-xs text-primary/60">{{ $count->closedBy?->name ?? '—' }}</x-table.cell>
             <x-table.actions :label="'Actions pour l\'inventaire '.$count->reference">
-                <x-table.action :href="route('restaurant.stock_counts.show', $count)" icon="{{ $count->isClosed() ? 'eye' : 'clipboard-pen' }}">{{ $count->isClosed() ? 'Ouvrir' : 'Saisir le comptage' }}</x-table.action>
+                <x-table.action
+                    :href="route('restaurant.stock_counts.show', $count)"
+                    icon="{{ $count->isClosed() ? 'eye' : 'clipboard-pen' }}">{{ $count->isClosed() ? 'Ouvrir' : 'Saisir le comptage' }}</x-table.action>
             </x-table.actions>
         </x-table.row>
     @endforeach

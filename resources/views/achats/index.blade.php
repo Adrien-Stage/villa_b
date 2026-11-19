@@ -21,16 +21,25 @@
         </div>
         <div class="flex flex-wrap gap-2">
             @droit('economat.orders.creer')
-                <a href="{{ route('economat.orders.create') }}" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark flex items-center gap-1.5 shadow-sm">
+                <a
+                    href="{{ route('economat.orders.create') }}"
+                    class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark flex
+                        items-center gap-1.5 shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     <span>Nouveau bon de commande</span>
                 </a>
             @enddroit
             @droit('economat.purchase_requests.creer')
-                <a href="{{ route('economat.purchase_requests.create') }}" class="px-4 py-2 border border-secondary/30 text-sm font-semibold rounded-lg text-primary hover:bg-accent/20">Nouvelle demande d'achat</a>
+                <a
+                    href="{{ route('economat.purchase_requests.create') }}"
+                    class="px-4 py-2 border border-secondary/30 text-sm font-semibold rounded-lg text-primary
+                        hover:bg-accent/20">Nouvelle demande d'achat</a>
             @enddroit
             @if($peutProposer)
-                <a href="{{ route('economat.control.suggestions.index') }}" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Réapprovisionner</a>
+                <a
+                    href="{{ route('economat.control.suggestions.index') }}"
+                    class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg
+                        hover:bg-surface-dark">Réapprovisionner</a>
             @endif
         </div>
     </div>
@@ -40,24 +49,32 @@
     {{-- Les compteurs du circuit, dans son ordre --}}
     <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
         @if($voitDemandes)
-            <a href="{{ route('economat.purchase_requests.index', ['status' => 'pending']) }}" class="{{ $carte }} hover:border-primary/40">
+            <a
+                href="{{ route('economat.purchase_requests.index', ['status' => 'pending']) }}"
+                class="{{ $carte }} hover:border-primary/40">
                 <p class="text-[10px] uppercase tracking-wider text-primary/45">À vérifier</p>
                 <p class="text-xl font-heading font-bold {{ $aApprouver->isNotEmpty() ? 'text-amber-700' : 'text-primary' }} mt-0.5">{{ $aApprouver->count() }}</p>
                 <p class="text-[10px] text-primary/40">demandes en attente</p>
             </a>
-            <a href="{{ route('economat.purchase_requests.index', ['status' => 'approved']) }}" class="{{ $carte }} hover:border-primary/40">
+            <a
+                href="{{ route('economat.purchase_requests.index', ['status' => 'approved']) }}"
+                class="{{ $carte }} hover:border-primary/40">
                 <p class="text-[10px] uppercase tracking-wider text-primary/45">À commander</p>
                 <p class="text-xl font-heading font-bold {{ $aCommander->isNotEmpty() ? 'text-blue-700' : 'text-primary' }} mt-0.5">{{ $aCommander->count() }}</p>
                 <p class="text-[10px] text-primary/40">demandes approuvées</p>
             </a>
         @endif
         @if($voitBons)
-            <a href="{{ route('economat.orders.index', ['statut' => 'draft']) }}" class="{{ $carte }} hover:border-primary/40">
+            <a
+                href="{{ route('economat.orders.index', ['statut' => 'draft']) }}"
+                class="{{ $carte }} hover:border-primary/40">
                 <p class="text-[10px] uppercase tracking-wider text-primary/45">À envoyer</p>
                 <p class="text-xl font-heading font-bold text-primary mt-0.5">{{ $aEnvoyer->count() }}</p>
                 <p class="text-[10px] text-primary/40">bons prêts</p>
             </a>
-            <a href="{{ route('economat.orders.index', ['statut' => 'sent']) }}" class="{{ $carte }} hover:border-primary/40">
+            <a
+                href="{{ route('economat.orders.index', ['statut' => 'sent']) }}"
+                class="{{ $carte }} hover:border-primary/40">
                 <p class="text-[10px] uppercase tracking-wider text-primary/45">Livraisons attendues</p>
                 <p class="text-xl font-heading font-bold text-primary mt-0.5">{{ $attendues->count() }}</p>
                 <p class="text-[10px] {{ $enRetard->isNotEmpty() ? 'text-red-600 font-medium' : 'text-primary/40' }}">{{ $enRetard->count() }} en retard</p>
@@ -86,10 +103,14 @@
                     <span class="text-[11px] text-primary/45">{{ $peutApprouver ? 'Votre vérification est attendue' : 'Chez le responsable des achats' }}</span>
                 </header>
                 @forelse($aApprouver->take($lignes) as $demande)
-                    <a href="{{ route('economat.purchase_requests.show', $demande) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10 last:border-0 hover:bg-gray-50/60">
+                    <a
+                        href="{{ route('economat.purchase_requests.show', $demande) }}"
+                        class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10
+                            last:border-0 hover:bg-gray-50/60">
                         <span class="min-w-0">
                             <span class="font-mono text-sm font-bold text-primary">{{ $demande->number }}</span>
-                            @if($demande->priority === 'urgent')<span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">Urgente</span>@endif
+                            @if($demande->priority === 'urgent')<span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5
+                                text-[10px] font-bold text-rose-700">Urgente</span>@endif
                             <span class="block text-xs text-primary/55 truncate">{{ $demande->departmentLabel() }} — {{ $demande->requestedBy?->name ?? '—' }}, {{ $demande->lines_count }} article(s)</span>
                         </span>
                         <span class="text-right shrink-0">
@@ -109,10 +130,14 @@
                     <span class="text-[11px] text-primary/45">{{ $peutCommander ? 'Générez les bons' : 'Chez le responsable des achats' }}</span>
                 </header>
                 @forelse($aCommander->take($lignes) as $demande)
-                    <a href="{{ route('economat.purchase_requests.show', $demande) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10 last:border-0 hover:bg-gray-50/60">
+                    <a
+                        href="{{ route('economat.purchase_requests.show', $demande) }}"
+                        class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10
+                            last:border-0 hover:bg-gray-50/60">
                         <span class="min-w-0">
                             <span class="font-mono text-sm font-bold text-primary">{{ $demande->number }}</span>
-                            @if($demande->priority === 'urgent')<span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">Urgente</span>@endif
+                            @if($demande->priority === 'urgent')<span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5
+                                text-[10px] font-bold text-rose-700">Urgente</span>@endif
                             <span class="block text-xs text-primary/55 truncate">Approuvée le {{ $demande->reviewed_at?->format('d/m/Y') }} par {{ $demande->reviewedBy?->name ?? '—' }}</span>
                         </span>
                         <span class="font-mono text-sm font-semibold text-primary shrink-0">{{ $fcfa($demande->total_estimated_amount) }}</span>
@@ -131,7 +156,10 @@
                     <span class="text-[11px] text-primary/45">{{ $peutEnvoyer ? 'Envoyez ou marquez transmis' : 'Chez le responsable des achats' }}</span>
                 </header>
                 @forelse($aEnvoyer->take($lignes) as $bon)
-                    <a href="{{ route('economat.orders.show', $bon) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10 last:border-0 hover:bg-gray-50/60">
+                    <a
+                        href="{{ route('economat.orders.show', $bon) }}"
+                        class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10
+                            last:border-0 hover:bg-gray-50/60">
                         <span class="min-w-0">
                             <span class="font-mono text-sm font-bold text-primary">{{ $bon->number }}</span>
                             <span class="block text-xs text-primary/55 truncate">{{ $bon->supplier?->name ?? '—' }}, {{ $bon->lines_count }} article(s)</span>
@@ -144,14 +172,19 @@
             </section>
 
             {{-- 4. Livraisons attendues --}}
-            <section class="bg-white border border-secondary/20 rounded-xl shadow-sm" aria-labelledby="titre-livraisons">
+            <section
+                class="bg-white border border-secondary/20 rounded-xl shadow-sm"
+                aria-labelledby="titre-livraisons">
                 <header class="px-4 py-3 border-b border-secondary/15 flex items-center justify-between">
                     <h2 id="titre-livraisons" class="text-sm font-semibold text-primary">Livraisons attendues</h2>
                     <span class="text-[11px] text-primary/45">Réception par l'économat</span>
                 </header>
                 @forelse($attendues->take($lignes) as $bon)
                     @php $retard = $enRetard->contains('id', $bon->id); @endphp
-                    <a href="{{ route('economat.orders.show', $bon) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10 last:border-0 hover:bg-gray-50/60">
+                    <a
+                        href="{{ route('economat.orders.show', $bon) }}"
+                        class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-secondary/10
+                            last:border-0 hover:bg-gray-50/60">
                         <span class="min-w-0">
                             <span class="font-mono text-sm font-bold text-primary">{{ $bon->number }}</span>
                             <span class="block text-xs text-primary/55 truncate">{{ $bon->supplier?->name ?? '—' }} — {{ $bon->statusLabel() }}</span>
@@ -168,11 +201,15 @@
 
         {{-- 5. Alertes de stock --}}
         @if($voitAlertes)
-            <section class="bg-white border border-secondary/20 rounded-xl shadow-sm lg:col-span-2" aria-labelledby="titre-alertes">
+            <section
+                class="bg-white border border-secondary/20 rounded-xl shadow-sm lg:col-span-2"
+                aria-labelledby="titre-alertes">
                 <header class="px-4 py-3 border-b border-secondary/15 flex items-center justify-between">
                     <h2 id="titre-alertes" class="text-sm font-semibold text-primary">Alertes de stock</h2>
                     @if($peutProposer && $alertes->isNotEmpty())
-                        <a href="{{ route('economat.control.suggestions.index') }}" class="text-xs font-semibold text-primary hover:underline">Proposer une demande d'achat →</a>
+                        <a
+                            href="{{ route('economat.control.suggestions.index') }}"
+                            class="text-xs font-semibold text-primary hover:underline">Proposer une demande d'achat →</a>
                     @endif
                 </header>
                 @if($alertes->isEmpty())
@@ -197,7 +234,8 @@
                                         <td class="px-4 py-2 text-primary/60">{{ $article->supplier?->name ?? 'Non défini' }}</td>
                                         <td class="px-4 py-2 text-right font-mono {{ (float) $article->current_stock <= 0 ? 'text-red-600 font-semibold' : 'text-primary' }}">{{ $qte($article->current_stock) }}</td>
                                         <td class="px-4 py-2 text-right font-mono text-primary/60">{{ $qte($article->min_stock) }}</td>
-                                        <td class="px-4 py-2 text-center font-mono font-bold text-xs text-primary/70">{{ $article->shortUnit() }}</td>
+                                        <td class="px-4 py-2 text-center font-mono font-bold text-xs
+                                            text-primary/70">{{ $article->shortUnit() }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

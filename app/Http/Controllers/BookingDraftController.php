@@ -131,7 +131,8 @@ class BookingDraftController extends Controller
         $customers = Customer::orderBy('last_name')->orderBy('first_name')->get();
         $partnerOrganizations = \App\Models\PartnerOrganization::validOn()->orderBy('name')->get();
 
-        return view('bookings.drafts.resume', compact('draft', 'customers', 'partnerOrganizations', 'cashRegisterContext'));
+        return view('bookings.drafts.resume', compact('draft', 'customers', 'partnerOrganizations',
+            'cashRegisterContext'));
     }
 
     // ── Reprise directe et injection du state à l'étape active ────────────────
@@ -258,7 +259,8 @@ class BookingDraftController extends Controller
 
             // 2. Occupation actuelle (en temps réel)
             $currBooking = $currentBookings->get($room->id);
-            $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED) || ($currBooking !== null);
+            $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED)
+                || ($currBooking !== null);
             $room->current_checkout_date = $currBooking?->check_out?->format('Y-m-d');
             $room->current_checkout_formatted = $currBooking?->check_out?->locale('fr')->isoFormat('D MMM YYYY');
             $room->current_checkout_time = $standardCheckOutTime;
@@ -272,7 +274,8 @@ class BookingDraftController extends Controller
             $hasCleaningConflict = false;
             if ($isArrivalToday && $isBeingCleaned && $cleaningAvailableAt) {
                 $requestedArrivalToday = today()->setTimeFromTimeString($checkInTime);
-                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday) || ($checkInTime < $cleaningReadyTime);
+                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday)
+                    || ($checkInTime < $cleaningReadyTime);
             }
 
             $hasRotationConflict = $hasSameDayDeparture && ($checkInTime < $sameDayReadyTime);
@@ -358,7 +361,8 @@ class BookingDraftController extends Controller
         $draftToken  = $draft->token;
 
         // Tarif de référence du séjour d'après la grille tarifaire (TarifSejour).
-        $tarifSejour = app(\App\Services\TarifSejour::class)->calculer($room->roomType, $checkIn, $checkOut, (int) $adultsCount, (int) $childrenCount);
+        $tarifSejour = app(\App\Services\TarifSejour::class)->calculer($room->roomType, $checkIn, $checkOut,
+            (int) $adultsCount, (int) $childrenCount);
         $pricePerNight = $tarifSejour['par_nuit'] / 100;
         $totalRoomAmount = $tarifSejour['total'] / 100;
 
@@ -442,7 +446,8 @@ class BookingDraftController extends Controller
             'notes' => $notes,
             'pricePerNight' => $pricePerNight,
             'totalRoomAmount' => $totalRoomAmount,
-            'resumeTarif' => $tarifSejour['ajuste'] ? app(\App\Services\TarifSejour::class)->resume($tarifSejour) : null,
+            'resumeTarif' => $tarifSejour['ajuste'] ? app(\App\Services\TarifSejour::class)
+                ->resume($tarifSejour) : null,
             'minDepositPercentage' => $minDepositPercentage,
             'maxDiscountPercentage' => $maxDiscountPercentage,
             'draftToken' => $draftToken,

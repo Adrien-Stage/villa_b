@@ -87,7 +87,8 @@ class RestaurantBanquetController extends Controller
         match ($vue) {
             'passes' => $requete->whereDate('event_date', '<', today())->orderByDesc('event_date'),
             'tous' => $requete->orderByDesc('event_date'),
-            default => $requete->whereDate('event_date', '>=', today())->where('status', '!=', RestaurantBanquet::ANNULE)->orderBy('event_date'),
+            default => $requete->whereDate('event_date', '>=', today())->where('status', '!=',
+                RestaurantBanquet::ANNULE)->orderBy('event_date'),
         };
 
         $restaurants = $this->contexte->accessibles($user);
@@ -166,7 +167,8 @@ class RestaurantBanquetController extends Controller
 
         $this->notifierEquipeRestaurant($banquet, BanquetNotification::EVENT_CREATED);
 
-        return redirect()->route('restaurant.banquets.show', $banquet)->with('success', "Devis {$banquet->reference} enregistré.");
+        return redirect()->route('restaurant.banquets.show', $banquet)->with('success',
+            "Devis {$banquet->reference} enregistré.");
     }
 
     public function show(RestaurantBanquet $banquet): View
@@ -178,7 +180,8 @@ class RestaurantBanquetController extends Controller
             'customer',
             'booking.room',
             'createdBy:id,name',
-            'payments' => fn ($q) => $q->with(['paidBy:id,name', 'cashRegisterSession.user:id,name'])->latest('paid_at'),
+            'payments' => fn ($q) => $q->with(['paidBy:id,name', 'cashRegisterSession.user:id,name'])
+                ->latest('paid_at'),
         ]);
         $restaurants = $this->contexte->accessibles($user);
 
@@ -239,7 +242,8 @@ class RestaurantBanquetController extends Controller
         );
 
         if ($previewTotal < $banquet->encaisse()) {
-            return back()->withInput()->withErrors(['covers' => 'Le nouveau total serait inférieur à ce qui est déjà encaissé.']);
+            return back()->withInput()
+                ->withErrors(['covers' => 'Le nouveau total serait inférieur à ce qui est déjà encaissé.']);
         }
 
         DB::transaction(function () use ($valide, $restaurant, $banquet) {
@@ -280,7 +284,8 @@ class RestaurantBanquetController extends Controller
     {
         $user = Auth::user();
         $valide = $request->validate([
-            'status' => ['required', Rule::in([RestaurantBanquet::CONFIRME, RestaurantBanquet::REALISE, RestaurantBanquet::ANNULE])],
+            'status' => ['required', Rule::in([RestaurantBanquet::CONFIRME, RestaurantBanquet::REALISE,
+                RestaurantBanquet::ANNULE])],
         ]);
 
         $cible = $valide['status'];
@@ -291,7 +296,8 @@ class RestaurantBanquetController extends Controller
         ];
 
         if (! in_array($banquet->status, $permis[$cible], true)) {
-            return back()->withErrors(['status' => "Un banquet « {$banquet->libelleStatut()} » ne peut pas passer à « ".RestaurantBanquet::STATUTS[$cible].' ».']);
+            return back()->withErrors(['status' => "Un banquet « {$banquet->libelleStatut()} » ne peut pas passer à « "
+                .RestaurantBanquet::STATUTS[$cible].' ».']);
         }
 
         // La réservation tient quand l'acompte demandé est encaissé.
@@ -313,7 +319,8 @@ class RestaurantBanquetController extends Controller
 
         $banquet->update($attributs);
 
-        AuditLog::record($user?->id, 'banquet_status', "Banquet {$banquet->reference} : {$banquet->libelleStatut()}", 'restaurant', [
+        AuditLog::record($user?->id, 'banquet_status', "Banquet {$banquet->reference} : {$banquet->libelleStatut()}",
+            'restaurant', [
             'banquet_id' => $banquet->id,
             'status' => $banquet->status,
         ]);
@@ -335,7 +342,8 @@ class RestaurantBanquetController extends Controller
             $this->notifierEquipeRestaurant($banquet, BanquetNotification::EVENT_CONFIRMED);
         }
 
-        return redirect()->route('restaurant.banquets.show', $banquet)->with('success', "Banquet {$banquet->libelleStatut()}.");
+        return redirect()->route('restaurant.banquets.show', $banquet)->with('success',
+            "Banquet {$banquet->libelleStatut()}.");
     }
 
     /** Acompte ou solde, encaissé au restaurant ou à la caisse Réception. */
@@ -357,7 +365,8 @@ class RestaurantBanquetController extends Controller
         $montant = (int) $valide['amount'] * 100;
 
         if ($montant > $banquet->resteDu()) {
-            return back()->withInput()->withErrors(['amount' => 'Le montant dépasse ce qui reste dû ('.number_format($banquet->resteDu() / 100, 0, ',', ' ').' FCFA).']);
+            return back()->withInput()->withErrors(['amount' => 'Le montant dépasse ce qui reste dû ('
+                .number_format($banquet->resteDu() / 100, 0, ',', ' ').' FCFA).']);
         }
 
         $session = $this->resoudreSessionOuverte($user);
@@ -366,7 +375,8 @@ class RestaurantBanquetController extends Controller
             return back()->withInput()->withErrors(['cash_register' => 'Ouvrez votre caisse avant d\'encaisser.']);
         }
 
-        if ($session->module === 'restaurant' && $session->point_of_sale_id && $session->point_of_sale_id !== $banquet->point_of_sale_id) {
+        if ($session->module === 'restaurant' && $session->point_of_sale_id && $session->point_of_sale_id !== $banquet
+            ->point_of_sale_id) {
             return back()->withInput()->withErrors(['cash_register' => 'Ce banquet est celui d\'un autre restaurant : il s\'encaisse à la caisse de ce restaurant.']);
         }
 
@@ -421,7 +431,8 @@ class RestaurantBanquetController extends Controller
             ]);
             $autoConfirmed = true;
 
-            AuditLog::record($user?->id, 'banquet_status', "Banquet {$banquet->reference} : Confirmé suite à l'encaissement de l'acompte", 'restaurant', [
+            AuditLog::record($user?->id, 'banquet_status',
+                "Banquet {$banquet->reference} : Confirmé suite à l'encaissement de l'acompte", 'restaurant', [
                 'banquet_id' => $banquet->id,
                 'status' => RestaurantBanquet::CONFIRME,
             ]);
@@ -495,7 +506,8 @@ class RestaurantBanquetController extends Controller
             'client_name' => [
                 Rule::requiredIf(fn () => ! $request->filled('customer_id')
                     && ! $request->filled('booking_id')
-                    && ! ($request->boolean('create_customer') && ($request->filled('quick_first_name') || $request->filled('quick_last_name')))),
+                    && ! ($request->boolean('create_customer') && ($request->filled('quick_first_name') || $request
+                        ->filled('quick_last_name')))),
                 'nullable',
                 'string',
                 'max:255',
@@ -504,7 +516,8 @@ class RestaurantBanquetController extends Controller
             'client_email' => ['nullable', 'email', 'max:255'],
             'event_date' => $dateRules,
             'start_time' => ['nullable', 'date_format:H:i', 'required_with:end_time'],
-            'end_time' => ['nullable', 'date_format:H:i', Rule::when($request->filled('start_time'), ['after:start_time'])],
+            'end_time' => ['nullable', 'date_format:H:i', Rule::when($request->filled('start_time'),
+                ['after:start_time'])],
             'space_id' => ['nullable', 'integer'],
             'covers' => ['required', 'integer', 'min:1', 'max:100000'],
             // Saisis en FCFA, stockés en centimes.
@@ -693,7 +706,8 @@ class RestaurantBanquetController extends Controller
                 $course = 'plat';
             }
 
-            $hasExplicitPrice = array_key_exists('unit_price', $row) && $row['unit_price'] !== null && $row['unit_price'] !== '';
+            $hasExplicitPrice = array_key_exists('unit_price', $row) && $row['unit_price'] !== null
+                && $row['unit_price'] !== '';
             $unitPriceCentimes = $hasExplicitPrice
                 ? max(0, (int) $row['unit_price']) * 100
                 : ($catalogItem ? max(0, (int) $catalogItem->price) : 0);
@@ -716,7 +730,8 @@ class RestaurantBanquetController extends Controller
     private function restaurantAccessible(int $id): PointOfSale
     {
         return $this->contexte->accessibles(Auth::user())->firstWhere('id', $id)
-            ?? throw ValidationException::withMessages(['point_of_sale_id' => 'Choisissez un restaurant où vous travaillez.']);
+            ?? throw ValidationException::withMessages(
+                ['point_of_sale_id' => 'Choisissez un restaurant où vous travaillez.']);
     }
 
     /**
@@ -734,7 +749,8 @@ class RestaurantBanquetController extends Controller
             ->first();
 
         if (! $salle) {
-            throw ValidationException::withMessages(['space_id' => "Cette salle n'appartient pas à {$restaurant->name}."]);
+            throw ValidationException::withMessages(
+                ['space_id' => "Cette salle n'appartient pas à {$restaurant->name}."]);
         }
 
         if ($salle->capacity !== null && (int) $valide['covers'] > (int) $salle->capacity) {
@@ -753,7 +769,8 @@ class RestaurantBanquetController extends Controller
         foreach ($autres as $autre) {
             // Deux banquets dans la même salle le même jour ne se tiennent
             // que s'ils ne se chevauchent pas.
-            $chevauche = ! ($valide['start_time'] ?? null) || ! ($valide['end_time'] ?? null) || ! $autre->start_time || ! $autre->end_time
+            $chevauche = ! ($valide['start_time'] ?? null) || ! ($valide['end_time'] ?? null) || ! $autre->start_time
+                || ! $autre->end_time
                 || ($valide['start_time'] < $autre->end_time && $autre->start_time < $valide['end_time']);
 
             if ($chevauche) {
@@ -826,7 +843,8 @@ class RestaurantBanquetController extends Controller
         $spaces = Space::query()
             ->active()
             ->with('pointOfSale:id,name')
-            ->where(fn (Builder $q) => $q->whereIn('point_of_sale_id', $filteredPosIds)->orWhereNull('point_of_sale_id'))
+            ->where(fn (Builder $q) => $q->whereIn('point_of_sale_id', $filteredPosIds)
+                ->orWhereNull('point_of_sale_id'))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -973,7 +991,8 @@ class RestaurantBanquetController extends Controller
         $prefixe = "BQT-{$annee}-";
         $n = RestaurantBanquet::query()->where('reference', 'like', $prefixe.'%')->count() + 1;
 
-        while (RestaurantBanquet::query()->where('reference', $prefixe.str_pad((string) $n, 3, '0', STR_PAD_LEFT))->exists()) {
+        while (RestaurantBanquet::query()->where('reference', $prefixe.str_pad((string) $n, 3, '0', STR_PAD_LEFT))
+            ->exists()) {
             $n++;
         }
 
@@ -987,7 +1006,8 @@ class RestaurantBanquetController extends Controller
         $prefixe = "BQT-PAY-{$annee}-";
         $n = RestaurantBanquetPayment::query()->where('reference', 'like', $prefixe.'%')->count() + 1;
 
-        while (RestaurantBanquetPayment::query()->where('reference', $prefixe.str_pad((string) $n, 4, '0', STR_PAD_LEFT))->exists()) {
+        while (RestaurantBanquetPayment::query()->where('reference', $prefixe.str_pad((string) $n, 4, '0',
+            STR_PAD_LEFT))->exists()) {
             $n++;
         }
 

@@ -16,7 +16,9 @@
 @endphp
 
 @if($livraisons->isNotEmpty())
-    <section class="bg-white border border-secondary/20 rounded-xl shadow-sm overflow-hidden" aria-labelledby="titre-suivi-livraisons">
+    <section
+        class="bg-white border border-secondary/20 rounded-xl shadow-sm overflow-hidden"
+        aria-labelledby="titre-suivi-livraisons">
         <header class="px-5 py-3 border-b border-secondary/15 bg-gray-50/70 flex items-center justify-between gap-3">
             <h2 id="titre-suivi-livraisons" class="text-sm font-semibold text-primary">Suivi des livraisons — {{ $order->number }}</h2>
             <span class="text-[11px] font-semibold {{ $solde ? 'text-emerald-700' : 'text-amber-700' }}">
@@ -29,9 +31,12 @@
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <div class="text-sm text-primary">
                             <span class="text-primary/45">Livraison {{ $rang + 1 }} ·</span>
-                            <a href="{{ route('economat.receipts.show', $livraison) }}" class="font-mono font-bold hover:underline">{{ $livraison->number }}</a>
+                            <a
+                                href="{{ route('economat.receipts.show', $livraison) }}"
+                                class="font-mono font-bold hover:underline">{{ $livraison->number }}</a>
                             @if($livraison->estEnAttente())
-                                <span class="ml-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">Attendue</span>
+                                <span class="ml-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5
+                                    text-[10px] font-bold text-amber-800">Attendue</span>
                             @elseif($livraison->deliveryLabel())
                                 <span class="ml-1 text-[11px] text-primary/55">{{ $livraison->deliveryLabel() }}</span>
                             @endif
@@ -49,11 +54,15 @@
                         @forelse($livraison->attachments as $bordereau)
                             @droit('economat.receipts.attachments.voir')
                                 <a href="{{ route('economat.receipts.attachments.show', [$livraison, $bordereau]) }}" target="_blank" rel="noopener"
-                                   class="inline-flex items-center gap-1 rounded border border-secondary/25 px-2 py-0.5 text-primary hover:bg-accent/20">
+                                   class="inline-flex items-center gap-1 rounded border border-secondary/25 px-2 py-0.5
+                                       text-primary hover:bg-accent/20">
                                     <i data-lucide="paperclip" class="h-3 w-3" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($bordereau->original_name, 32) }}
                                 </a>
                             @else
-                                <span class="inline-flex items-center gap-1 text-primary/55"><i data-lucide="paperclip" class="h-3 w-3" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($bordereau->original_name, 32) }}</span>
+                                <span class="inline-flex items-center gap-1 text-primary/55"><i
+                                    data-lucide="paperclip"
+                                    class="h-3 w-3"
+                                    aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($bordereau->original_name, 32) }}</span>
                             @enddroit
                         @empty
                             @unless($livraison->estEnAttente())

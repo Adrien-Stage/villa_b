@@ -32,7 +32,8 @@ class RegistreInterventionsTechniques extends Edition
         return [
             Filtre::periode('mois'),
             Filtre::choix('statut', 'Statut', fn () => MaintenanceRequest::STATUSES, 'Tous les statuts'),
-            Filtre::choix('specialite', 'Corps d\'état / Spécialité', fn () => MaintenanceRequest::SPECIALTIES, 'Toutes les spécialités'),
+            Filtre::choix('specialite', 'Corps d\'état / Spécialité', fn () => MaintenanceRequest::SPECIALTIES,
+                'Toutes les spécialités'),
         ];
     }
 

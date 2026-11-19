@@ -16,11 +16,13 @@ trait HandlesCsv
     /**
      * Émet un classeur Excel (.xlsx) stylisé aux couleurs et à l'identité de l'établissement.
      */
-    protected function streamXlsx(string $filename, string $sheetTitle, array $headers, array $rows, ?\App\Models\Tenant $tenant = null)
+    protected function streamXlsx(string $filename, string $sheetTitle, array $headers, array $rows,
+        ?\App\Models\Tenant $tenant = null)
     {
         $tenant ??= $this->tenantCourant();
 
-        return app(\App\Services\SpreadsheetService::class)->exportXlsx($filename, $sheetTitle, $headers, $rows, $tenant);
+        return app(\App\Services\SpreadsheetService::class)->exportXlsx($filename, $sheetTitle, $headers, $rows,
+            $tenant);
     }
 
     /**
@@ -91,7 +93,8 @@ trait HandlesCsv
      * Redirection standard après un import : message de synthèse et jusqu'à
      * 15 erreurs de lignes affichées via la clé de session « import_errors ».
      */
-    protected function csvImportRedirect(string $route, array $params, int $created, int $skipped, array $errors, string $successNoun): RedirectResponse
+    protected function csvImportRedirect(string $route, array $params, int $created, int $skipped, array $errors,
+        string $successNoun): RedirectResponse
     {
         $parts = ["{$created} {$successNoun}"];
         if ($skipped > 0) {

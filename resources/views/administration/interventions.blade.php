@@ -34,11 +34,17 @@
             <p class="mt-1">{{ implode(', ', $enCours->libellesPerimetres()) }} — {{ $enCours->motif }}</p>
             <form method="POST" action="{{ route('interventions.terminer', $enCours) }}" class="mt-3">
                 @csrf
-                <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700">Terminer l'intervention</button>
+                <button
+                    type="submit"
+                    class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold
+                        hover:bg-amber-700">Terminer l'intervention</button>
             </form>
         </div>
     @else
-        <form method="POST" action="{{ route('interventions.store') }}" class="mb-6 bg-white rounded-xl shadow-sm p-5 space-y-4">
+        <form
+            method="POST"
+            action="{{ route('interventions.store') }}"
+            class="mb-6 bg-white rounded-xl shadow-sm p-5 space-y-4">
             @csrf
             <h2 class="font-heading text-lg font-semibold text-primary">Ouvrir une intervention</h2>
             <div>
@@ -50,7 +56,10 @@
             <div class="grid gap-4 sm:grid-cols-[12rem_1fr]">
                 <div>
                     <label for="i-duree" class="block text-xs font-semibold text-primary/70 mb-1">Durée</label>
-                    <select id="i-duree" name="duree" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm">
+                    <select
+                        id="i-duree"
+                        name="duree"
+                        class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm">
                         @foreach($durees as $minutes)
                             <option value="{{ $minutes }}" @selected((int) old('duree', 30) === $minutes)>
                                 {{ $minutes < 60 ? $minutes . ' minutes' : ($minutes / 60) . ' heure' . ($minutes > 60 ? 's' : '') }}
@@ -62,7 +71,8 @@
                     <legend class="block text-xs font-semibold text-primary/70 mb-1">Services concernés</legend>
                     <div class="flex flex-wrap gap-2">
                         @foreach($perimetres as $cle => [$libelle])
-                            <label class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs text-primary">
+                            <label class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 px-2.5
+                                py-1.5 text-xs text-primary">
                                 <input type="checkbox" name="perimetres[]" value="{{ $cle }}" @checked(in_array($cle, old('perimetres', []), true)) class="rounded border-secondary/40">
                                 {{ $libelle }}
                             </label>
@@ -71,13 +81,18 @@
                 </fieldset>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold">Ouvrir l'intervention</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white text-xs
+                    font-semibold">Ouvrir l'intervention</button>
             </div>
         </form>
     @endif
 @enddroit
 
-<x-table :rows="$interventions" empty="Aucune intervention." empty-icon="siren" caption="Interventions de l'administrateur">
+<x-table
+    :rows="$interventions"
+    empty="Aucune intervention."
+    empty-icon="siren"
+    caption="Interventions de l'administrateur">
     <x-slot:head>
         <x-table.col>N°</x-table.col>
         <x-table.col>Administrateur</x-table.col>
@@ -96,7 +111,8 @@
             <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">
                 {{ $i->debut->format('d/m/Y H:i') }} →
                 @if($i->estEnCours())
-                    <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">en cours, jusqu'à {{ $i->fin_prevue->format('H:i') }}</span>
+                    <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold
+                        text-amber-800">en cours, jusqu'à {{ $i->fin_prevue->format('H:i') }}</span>
                 @else
                     {{ $i->fin_reelle?->format('H:i') }}
                     <span class="text-primary/45">({{ $i->cloture === 'expiree' ? 'durée écoulée' : 'terminée' }})</span>
@@ -104,11 +120,14 @@
             </x-table.cell>
             <x-table.cell nowrap>
                 @if($i->erp_a_transmettre)
-                    <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">En attente</span>
+                    <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold
+                        text-red-700">En attente</span>
                 @elseif($i->erp_tardive)
-                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">Transmise en retard</span>
+                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold
+                        text-amber-800">Transmise en retard</span>
                 @else
-                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">Transmise</span>
+                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold
+                        text-green-700">Transmise</span>
                 @endif
             </x-table.cell>
         </x-table.row>

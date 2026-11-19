@@ -31,7 +31,8 @@
                 {{ $booking->status->label() }}
             </span>
             @if($booking->source === 'website')
-            <span class="px-3 py-1 text-xs font-semibold rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 inline-flex items-center gap-1.5">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full border bg-indigo-50 text-indigo-700
+                border-indigo-200 inline-flex items-center gap-1.5">
                 <i data-lucide="globe" class="w-3.5 h-3.5"></i>
                 Réservation en ligne
             </span>
@@ -50,13 +51,15 @@
         @droit('bookings.checkIn')
         @if($booking->checkin_code)
             <button type="button" onclick="document.getElementById('modal-checkin-otp').classList.remove('hidden')"
-                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-green-700 transition-colors">
                 <i data-lucide="log-in" class="w-4 h-4"></i>
                 Check-in
             </button>
         @else
             <button type="button" onclick="document.getElementById('modal-checkin').classList.remove('hidden')"
-                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-green-700 transition-colors">
                 <i data-lucide="log-in" class="w-4 h-4"></i>
                 Check-in
             </button>
@@ -70,7 +73,8 @@
             @csrf
             <button type="submit"
                 onclick="return confirm('Confirmer le check-out ?')"
-                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
                 Check-out
             </button>
@@ -82,7 +86,8 @@
         @if($booking->status->value === 'completed' && $booking->invoice)
         @droit('invoices.voir')
         <a href="{{ route('invoices.show', $booking->invoice) }}"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             Voir la facture
         </a>
@@ -95,7 +100,8 @@
         <form method="POST" action="{{ route('bookings.confirm', $booking) }}" class="expect-popup">
             @csrf
             <button type="submit"
-                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-green-700 transition-colors">
                 <i data-lucide="check" class="w-4 h-4"></i>
                 Confirmer la réservation
             </button>
@@ -107,7 +113,8 @@
         <form method="POST" action="{{ route('bookings.approve', $booking) }}" class="expect-popup">
             @csrf
             <button type="submit"
-                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-green-700 transition-colors">
                 <i data-lucide="check" class="w-4 h-4"></i>
                 Valider la réservation offerte
             </button>
@@ -117,7 +124,8 @@
 
         @if($booking->status->value === 'cancelled')
         <a href="{{ route('bookings.cancellation_receipt', $booking) }}"
-            class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors shadow-sm">
+            class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs
+                font-semibold rounded-lg hover:bg-red-100 transition-colors shadow-sm">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             Attestation d'annulation
         </a>
@@ -127,7 +135,8 @@
         @droit('bookings.cancel')
         <button type="button"
             onclick="document.getElementById('modal-cancel-booking').classList.remove('hidden')"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium
+                rounded-lg hover:bg-red-50 transition-colors shadow-sm">
             <i data-lucide="x" class="w-4 h-4"></i>
             Annuler
         </button>
@@ -137,7 +146,8 @@
         @if($booking->isEditable())
         @droit('bookings.modifier')
         <a href="{{ route('bookings.edit', $booking) }}"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="pencil" class="w-4 h-4"></i>
             Modifier
         </a>
@@ -151,7 +161,8 @@
 
 {{-- Caisse fermée : aucune action possible --}}
 @unless($isCashRegisterOpen)
-<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center justify-between gap-3">
+<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center
+    justify-between gap-3">
     <div class="flex items-start gap-2">
         <i data-lucide="lock" class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600"></i>
         <div>
@@ -159,7 +170,8 @@
         </div>
     </div>
     <a href="{{ route('bookings.cash_register.open') }}"
-        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+            hover:bg-surface-dark transition-colors">
         <i data-lucide="unlock" class="w-4 h-4"></i>
         Ouvrir ma caisse
     </a>
@@ -168,7 +180,8 @@
 
 {{-- Messages --}}
 @if(session('success'))
-<div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+<div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center
+    gap-2">
     <i data-lucide="check-circle" class="w-4 h-4"></i>
     {{ session('success') }}
 </div>
@@ -216,7 +229,8 @@
 
         <div class="flex items-center gap-3">
             <a href="{{ route('bookings.cancellation_receipt', $booking) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-300 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-300 text-red-700 text-xs
+                   font-semibold rounded-lg hover:bg-red-50 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                 <span>Imprimer l'attestation</span>
             </a>
@@ -254,14 +268,16 @@
 @endif
 
 @if($booking->status->value === 'pending' && $booking->source === 'website')
-<div class="mb-5 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-800 text-sm rounded-lg flex items-start gap-2">
+<div class="mb-5 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-800 text-sm rounded-lg flex items-start
+    gap-2">
     <i data-lucide="globe" class="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-600"></i>
     <div>
         <span class="font-bold">Réservation reçue depuis le site :</span> demande à confirmer par la réception. Contrairement à une réservation offerte, elle est <span class="font-semibold">payante</span> — le solde s'encaisse normalement.
     </div>
 </div>
 @elseif($booking->status->value === 'pending')
-<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-start gap-2">
+<div class="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-start
+    gap-2">
     <i data-lucide="info" class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600"></i>
     <div>
         <span class="font-bold">Réservation offerte en attente de validation :</span> Cette réservation est en attente d'autorisation par un manager.
@@ -285,11 +301,14 @@
         $consumedBalance ??= $booking->getConsumedBalance($defaultCheckOutTime);
     @endphp
     @if($stayTimer)
-    <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg border p-5 text-white flex flex-wrap items-center justify-between gap-4"
+    <div class="mb-5 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl shadow-lg border p-5 text-white flex
+        flex-wrap items-center justify-between gap-4"
          :class="isOverstay ? 'border-red-300/70' : 'border-blue-300/25'"
          x-data="bookingTimer(@js($stayTimer))">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <div
+                class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"
+                aria-hidden="true">
                 <i data-lucide="clock" class="w-6 h-6 text-blue-100"></i>
             </div>
             <div>
@@ -297,7 +316,8 @@
                     <h2 class="font-heading font-semibold text-blue-50 text-sm">Minuteur de séjour en cours</h2>
                     <span x-show="isOverstay"
                           @unless($stayTimer['initialOverstay']) style="display: none;" @endunless
-                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-950/70 text-red-100 border border-red-300/60">
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold
+                              bg-red-950/70 text-red-100 border border-red-300/60">
                         <i data-lucide="alert-triangle" class="w-3 h-3" aria-hidden="true"></i>
                         Check-out dépassé
                     </span>
@@ -313,13 +333,19 @@
             </div>
         </div>
         <div class="text-right ml-auto">
-            <p class="text-xs text-blue-100 uppercase tracking-wider font-semibold mb-1" x-text="isOverstay ? 'Temps de dépassement' : 'Temps restant estimé'"></p>
+            <p
+                class="text-xs text-blue-100 uppercase tracking-wider font-semibold mb-1"
+                x-text="isOverstay ? 'Temps de dépassement' : 'Temps restant estimé'"></p>
             <div class="flex items-center justify-end gap-2">
                 <span x-show="isOverstay"
                       @unless($stayTimer['initialOverstay']) style="display: none;" @endunless
                       aria-hidden="true"
                       class="inline-flex h-2.5 w-2.5 rounded-full bg-red-400 ring-4 ring-red-400/30"></span>
-                <p aria-live="off" class="text-2xl font-bold font-mono" :class="isOverstay ? 'text-red-200' : 'text-white'" x-text="timeLeft"></p>
+                <p
+                    aria-live="off"
+                    class="text-2xl font-bold font-mono"
+                    :class="isOverstay ? 'text-red-200' : 'text-white'"
+                    x-text="timeLeft"></p>
             </div>
             <p class="text-[11px] text-blue-200 mt-1" x-show="isOverstay" @unless($stayTimer['initialOverstay']) style="display: none;" @endunless>
                 Départ initialement prévu le {{ $scheduledCheckOutAt->format('d/m/Y') }} à {{ $scheduledCheckOutAt->format('H\hi') }}
@@ -327,7 +353,8 @@
             <p class="text-[11px] text-blue-200 mt-1" x-show="!isOverstay" @if($stayTimer['initialOverstay']) style="display: none;" @endif>
                 Fin prévue le {{ $scheduledCheckOutAt->format('d/m/Y') }} à {{ $scheduledCheckOutAt->format('H\hi') }}
             </p>
-            <p class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-950/75 text-red-100 border border-red-300/60"
+            <p class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold
+                bg-red-950/75 text-red-100 border border-red-300/60"
                x-show="isOverstay && overstayNights > 0"
                @unless($overstayNights > 0) style="display: none;" @endunless>
                 <span x-text="overstaySummary">
@@ -532,7 +559,8 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Folio du séjour</h2>
                 @if($booking->status->value === 'checked_in' && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-folio').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter prestation
                 </button>
@@ -557,15 +585,18 @@
             {{-- En-tête folio --}}
             <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
-                <div class="col-span-5 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
+                <div class="col-span-5 text-xs font-semibold uppercase tracking-widest
+                    text-primary/40">Description</div>
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Qté</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">P.U.</div>
-                <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total</div>
+                <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                    text-right">Total</div>
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Actions</div>
             </div>
 
             @if(!$hasRoomFolioItem && $overstayNights > 0)
-            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b
+                border-secondary/10 items-center">
                 <div class="col-span-1">
                     <i data-lucide="hotel" class="w-4 h-4 text-primary/30" aria-hidden="true"></i>
                 </div>
@@ -618,11 +649,15 @@
             $roomRowComplimentary = $item->is_complimentary || $booking->is_complimentary;
             $roomRowUnitPrice = (int) $item->unit_price > 0 ? (int) $item->unit_price : $effectiveNightlyRate;
             @endphp
-            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b
+                border-secondary/10 items-center">
 
                 {{-- Icône type --}}
                 <div class="col-span-1">
-                    <i data-lucide="{{ $typeIcons[$item->type] ?? 'package' }}" class="w-4 h-4 text-primary/30" aria-hidden="true"></i>
+                    <i
+                        data-lucide="{{ $typeIcons[$item->type] ?? 'package' }}"
+                        class="w-4 h-4 text-primary/30"
+                        aria-hidden="true"></i>
                 </div>
 
                 {{-- Description --}}
@@ -727,7 +762,9 @@
                     <span>-{{ number_format($booking->discount_amount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
                 @endif
-                <div data-stay-target="folio-total-row" class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
+                <div
+                    data-stay-target="folio-total-row"
+                    class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
                     <span>{{ $booking->tax_amount > 0 ? 'Total TTC' : 'Total' }}</span>
                     <span data-stay-target="folio-total">{{ number_format($effectiveTotalAmount / 100, 0, ',', ' ') }} FCFA</span>
                 </div>
@@ -762,7 +799,8 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Paiements</h2>
                 @if($booking->status->value === 'checked_in' && $effectiveBalanceDue > 0 && $isCashRegisterOpen)
                 <button onclick="document.getElementById('modal-payment').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Encaisser
                 </button>
@@ -781,7 +819,8 @@
                     <div>
                         <p class="text-xs font-medium text-primary">
                             <span class="capitalize">{{ $payment->methodLabel() }}</span>
-                            <span class="ml-1.5 inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-primary/70">{{ $payment->originLabel() }}</span>
+                            <span class="ml-1.5 inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5
+                                text-[10px] font-medium text-primary/70">{{ $payment->originLabel() }}</span>
                         </p>
                         <p class="text-[10px] text-primary/40">
                             {{ $payment->paid_at?->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}
@@ -817,13 +856,18 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.folio.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form
+            method="POST"
+            action="{{ route('bookings.folio.add', $booking) }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Type *</label>
                 <select name="type" required x-model="type" @change="onTypeChange()"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="restaurant">Restaurant</option>
                     <option value="activity">Activité</option>
                     <option value="spa">Spa</option>
@@ -838,7 +882,8 @@
             {{-- Catalogue : plats du restaurant par service, prestations spa / activités / housekeeping… --}}
             <div x-show="hasCatalog" style="display: none;">
                 <div class="flex items-center justify-between mb-1.5">
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50">Catalogue</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest
+                        text-primary/50">Catalogue</label>
                     <span class="text-[11px] text-primary/40" x-show="selected" style="display: none;"
                         x-text="'Sélection : ' + selected"></span>
                 </div>
@@ -864,18 +909,25 @@
                     <div class="max-h-52 overflow-y-auto divide-y divide-secondary/10">
                         <template x-for="option in options" :key="option.label">
                             <button type="button" @click="pick(option)"
-                                class="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-accent/20 transition-colors"
+                                class="w-full flex items-center justify-between gap-3 px-3 py-2 text-left
+                                    hover:bg-accent/20 transition-colors"
                                 :class="selected === option.label ? 'bg-accent/30' : ''">
                                 <span class="min-w-0">
                                     <span class="block text-sm text-primary truncate" x-text="option.label"></span>
-                                    <span class="block text-[11px] text-primary/40" x-show="option.hint" x-text="option.hint"></span>
+                                    <span
+                                        class="block text-[11px] text-primary/40"
+                                        x-show="option.hint"
+                                        x-text="option.hint"></span>
                                 </span>
                                 <span class="shrink-0 text-sm font-semibold"
                                     :class="option.free ? 'text-green-700' : 'text-primary'"
                                     x-text="option.free ? 'Offert' : format(option.price) + ' FCFA'"></span>
                             </button>
                         </template>
-                        <div x-show="options.length === 0" style="display: none;" class="px-3 py-4 text-center text-xs text-primary/40">
+                        <div
+                            x-show="options.length === 0"
+                            style="display: none;"
+                            class="px-3 py-4 text-center text-xs text-primary/40">
                             Aucun élément ne correspond.
                         </div>
                     </div>
@@ -887,30 +939,40 @@
                 class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                 Aucune prestation au catalogue pour ce type.
                 <template x-if="type === 'restaurant'">
-                    <span>Ajoutez des plats dans <a href="{{ route('restaurant.menus.index') }}" class="underline font-medium">Restaurant › Menus</a>.</span>
+                    <span>Ajoutez des plats dans <a
+                        href="{{ route('restaurant.menus.index') }}"
+                        class="underline font-medium">Restaurant › Menus</a>.</span>
                 </template>
                 <template x-if="type !== 'restaurant'">
-                    <span>Ajoutez-en dans <a href="{{ route('settings.index', ['tab' => 'services']) }}" class="underline font-medium">Paramètres › Prestations</a>.</span>
+                    <span>Ajoutez-en dans <a
+                        href="{{ route('settings.index', ['tab' => 'services']) }}"
+                        class="underline font-medium">Paramètres › Prestations</a>.</span>
                 </template>
                 En attendant, la saisie reste libre.
             </p>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Description *</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Description *</label>
                 <input type="text" name="description" required x-model="description"
                     placeholder="Ex: Dîner gastronomique, Excursion lac Barombi..."
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary placeholder-primary/30">
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Quantité *</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Quantité *</label>
                     <input type="number" name="quantity" x-model="quantity" min="0.5" step="0.5" required
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prix unitaire (FCFA)</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Prix unitaire (FCFA)</label>
                     <input type="number" name="unit_price" x-model="unitPrice" min="0"
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
             </div>
             <div class="flex items-center justify-between bg-gray-50 border border-secondary/20 rounded-lg px-3 py-2">
@@ -936,16 +998,20 @@
                 </p>
             @endif
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Notes</label>
                 <input type="text" name="notes"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-folio').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Ajouter
                 </button>
             </div>
@@ -965,7 +1031,10 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('bookings.payment.add', $booking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form
+            method="POST"
+            action="{{ route('bookings.payment.add', $booking) }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @php $consumedBalance ??= $booking->getConsumedBalance($defaultCheckOutTime ?? null); @endphp
@@ -987,7 +1056,8 @@
                     value="{{ (int) ceil($consumedBalance / 100) }}"
                     min="1"
                     required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
 
             <div>
@@ -995,7 +1065,8 @@
                     Mode de paiement *
                 </label>
                 <select name="method" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="cash">Espèces</option>
                     <option value="orange_money">Orange Money</option>
                     <option value="mtn_momo">MTN MoMo</option>
@@ -1016,7 +1087,8 @@
                     Objet de l'encaissement
                 </label>
                 <select name="payment_context"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="sejour_nuitees" {{ $defaultPaymentContext === 'sejour_nuitees' ? 'selected' : '' }}>Séjour / Nuitées en cours</option>
                     <option value="check_in" {{ $defaultPaymentContext === 'check_in' ? 'selected' : '' }}>Check-in (règlement à l'arrivée)</option>
                     <option value="check_out" {{ $defaultPaymentContext === 'check_out' ? 'selected' : '' }}>Check-out (solde de départ)</option>
@@ -1024,20 +1096,24 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Notes</label>
                 <input type="text" name="notes"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
 
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-payment').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Encaisser
                 </button>
             </div>
@@ -1051,7 +1127,8 @@
 @droit('bookings.cancel')
 <div id="modal-cancel-booking" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
      style="background: rgba(15,2,1,0.6); backdrop-filter: blur(6px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[92vh] overflow-hidden border border-secondary/20">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[92vh] overflow-hidden
+        border border-secondary/20">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0 bg-red-50/50">
             <div>
                 <h3 class="font-heading font-semibold text-primary text-base">Annuler la réservation</h3>
@@ -1070,7 +1147,8 @@
                 {{-- Alerte sur la situation de la politique d'annulation --}}
                 @if($cancellationCalc)
                     @if($cancellationCalc['is_free_cancellation'])
-                        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 flex items-start gap-2.5">
+                        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 flex
+                            items-start gap-2.5">
                             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
                             <div>
                                 <span class="font-bold block">Annulation gratuite sans frais</span>
@@ -1081,7 +1159,8 @@
                             </div>
                         </div>
                     @else
-                        <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                        <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex
+                            items-start gap-2.5">
                             <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
                             <div>
                                 <span class="font-bold block">Annulation tardive avec pénalité</span>
@@ -1107,7 +1186,8 @@
                             <span class="text-red-700">Pénalité à retenir :</span>
                             <span class="text-red-700">{{ number_format($cancellationCalc['deposit_retained'] / 100, 0, ',', ' ') }} FCFA</span>
                         </div>
-                        <div class="flex justify-between font-bold text-emerald-800 text-sm pt-1 border-t border-secondary/10">
+                        <div class="flex justify-between font-bold text-emerald-800 text-sm pt-1 border-t
+                            border-secondary/10">
                             <span>Montant à restituer au client :</span>
                             <span>{{ number_format($cancellationCalc['refund_amount'] / 100, 0, ',', ' ') }} FCFA</span>
                         </div>
@@ -1120,7 +1200,8 @@
                         Motif de l'annulation *
                     </label>
                     <select name="reason_code" required
-                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary bg-white">
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-primary bg-white">
                         @foreach(\App\Models\BookingCancellation::REASONS as $code => $label)
                             <option value="{{ $code }}">{{ $label }}</option>
                         @endforeach
@@ -1144,7 +1225,8 @@
                             Remboursement des {{ number_format($cancellationCalc['refund_amount'] / 100, 0, ',', ' ') }} FCFA :
                         </label>
                         <select name="refund_method" required
-                            class="w-full px-3 py-2 text-xs border border-emerald-300 rounded-lg text-primary outline-none focus:border-primary bg-white">
+                            class="w-full px-3 py-2 text-xs border border-emerald-300 rounded-lg text-primary
+                                outline-none focus:border-primary bg-white">
                             @if($isCashRegisterOpen)
                                 <option value="cash">Rembourser immédiatement en espèces (Caisse réception)</option>
                             @endif
@@ -1175,20 +1257,23 @@
                         <div x-show="waived" x-cloak class="mt-2.5">
                             <label class="block text-[11px] font-semibold text-primary/70 mb-1">Motif de la dérogation *</label>
                             <input type="text" name="waive_reason" placeholder="Ex: Client VIP régulier, accord DG"
-                                class="w-full px-3 py-1.5 text-xs border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                                class="w-full px-3 py-1.5 text-xs border border-secondary/30 rounded-lg outline-none
+                                    focus:border-primary">
                         </div>
                     </div>
                 @endif
 
             </div>
 
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button" onclick="document.getElementById('modal-cancel-booking').classList.add('hidden')"
                     class="px-4 py-2 text-xs text-primary/60 hover:text-primary transition-colors font-medium">
                     Conserver la réservation
                 </button>
                 <button type="submit"
-                    class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm inline-flex items-center gap-1.5">
+                    class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700
+                        transition-colors shadow-sm inline-flex items-center gap-1.5">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     Confirmer l'annulation
                 </button>
@@ -1207,7 +1292,10 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 flex flex-col">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
             <h3 class="font-heading font-semibold text-primary text-sm">Check-in — pièce d'identité</h3>
-            <button type="button" onclick="document.getElementById('modal-checkin').classList.add('hidden')" class="text-primary/30 hover:text-primary transition-colors">
+            <button
+                type="button"
+                onclick="document.getElementById('modal-checkin').classList.add('hidden')"
+                class="text-primary/30 hover:text-primary transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
@@ -1218,7 +1306,10 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-primary/50 mb-1.5">Type</label>
-                        <select name="id_document_type" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <select
+                            name="id_document_type"
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                outline-none focus:border-secondary">
                             <option value="CNI">CNI</option>
                             <option value="Passeport">Passeport</option>
                         </select>
@@ -1227,13 +1318,20 @@
                         <label class="block text-xs font-semibold text-primary/50 mb-1.5">Numéro *</label>
                         <input type="text" name="id_document_number" required maxlength="50" autofocus
                             placeholder="Ex : 20261430524…"
-                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                outline-none focus:border-secondary placeholder-primary/30">
                     </div>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                <button type="button" onclick="document.getElementById('modal-checkin').classList.add('hidden')" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">Valider le check-in</button>
+                <button
+                    type="button"
+                    onclick="document.getElementById('modal-checkin').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700
+                        transition-colors">Valider le check-in</button>
             </div>
         </form>
     </div>
@@ -1289,7 +1387,10 @@
                     <div class="mb-5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
                         <div>
                             <label class="block text-[11px] font-semibold text-primary/50 mb-1">Type</label>
-                            <select id="checkin-id-type" class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                            <select
+                                id="checkin-id-type"
+                                class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                    outline-none focus:border-secondary">
                                 <option value="CNI">CNI</option>
                                 <option value="Passeport">Passeport</option>
                             </select>
@@ -1297,7 +1398,8 @@
                         <div class="col-span-2">
                             <label class="block text-[11px] font-semibold text-primary/50 mb-1">N° pièce d'identité *</label>
                             <input type="text" id="checkin-id-number" maxlength="50" placeholder="CNI / Passeport du client"
-                                class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                                class="w-full px-2 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                    outline-none focus:border-secondary placeholder-primary/30">
                         </div>
                     </div>
 
@@ -1318,7 +1420,8 @@
                                    @paste="handlePaste($event)"
                                    @focus="$event.target.select()"
                                    :disabled="verifying"
-                                   class="w-12 h-14 text-center text-2xl font-mono font-bold border-2 rounded-xl outline-none transition-all duration-200"
+                                   class="w-12 h-14 text-center text-2xl font-mono font-bold border-2 rounded-xl
+                                       outline-none transition-all duration-200"
                                    :class="errorState
                                        ? 'border-red-400 bg-red-50 text-red-600'
                                        : successState
@@ -1349,7 +1452,9 @@
                     </div>
 
                     {{-- Indicateur de tentatives --}}
-                    <div x-show="remaining !== null && remaining < 3 && !successState" class="flex items-center justify-center gap-1.5 mt-4">
+                    <div
+                        x-show="remaining !== null && remaining < 3 && !successState"
+                        class="flex items-center justify-center gap-1.5 mt-4">
                         <template x-for="i in 3">
                             <div class="w-2 h-2 rounded-full transition-colors duration-300"
                                  :class="i <= remaining ? 'bg-orange-400' : 'bg-red-300'"></div>
@@ -1384,7 +1489,8 @@
 @if(session('checkin_code'))
 <div id="modal-success-code" class="fixed inset-0 z-[60] flex items-center justify-center"
     style="background: rgba(15,2,1,0.7); backdrop-filter: blur(8px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-100 transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-100
+        transition-all">
         <div class="bg-green-600 p-6 text-center">
             <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
                 <i data-lucide="check" class="w-8 h-8 text-green-600"></i>
@@ -1404,8 +1510,11 @@
             $codeRecipientEmail = trim((string) $codeRecipient?->email) ?: null;
         @endphp
 
-        <div class="p-8 text-center" x-data="envoiCodeCheckin('{{ route('bookings.checkin_code.send', $booking) }}', '{{ csrf_token() }}')">
-            <h3 class="text-sm font-semibold text-primary/70 uppercase tracking-wider mb-2">Code de sécurité Check-in</h3>
+        <div
+            class="p-8 text-center"
+            x-data="envoiCodeCheckin('{{ route('bookings.checkin_code.send', $booking) }}', '{{ csrf_token() }}')">
+            <h3 class="text-sm font-semibold text-primary/70 uppercase tracking-wider
+                mb-2">Code de sécurité Check-in</h3>
             <p class="text-xs text-primary/50 mb-6">Veuillez communiquer ce code unique au client ou au mandataire. Ce code sera exigé lors de la remise des clés.</p>
 
             <div class="bg-gray-100 rounded-xl p-4 mb-6 inline-block shadow-inner border border-gray-200">
@@ -1432,7 +1541,9 @@
 
             @if($codeRecipientEmail)
                 <button type="button" @click="envoyer()" :disabled="envoi"
-                        class="w-full py-3 mb-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        class="w-full py-3 mb-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700
+                            transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center
+                            justify-center gap-2">
                     <i data-lucide="mail" class="w-4 h-4"></i>
                     <span x-text="envoi ? 'Envoi en cours…' : (dejaEnvoye ? 'Renvoyer le code par email' : 'Envoyer le code par email')"></span>
                 </button>
@@ -1443,7 +1554,10 @@
                    x-text="message"></p>
             @endif
 
-            <button onclick="document.getElementById('modal-success-code').remove()" class="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-md">
+            <button
+                onclick="document.getElementById('modal-success-code').remove()"
+                class="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-surface-dark transition-all
+                    shadow-md">
                 J'ai copié le code, fermer
             </button>
         </div>

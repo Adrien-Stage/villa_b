@@ -55,7 +55,8 @@ class BonsCommande extends Edition
             ->with(['supplier:id,name', 'createdBy:id,name'])
             ->withCount('lines')
             ->whereBetween('created_at', [$du->startOfDay(), $au->endOfDay()])
-            ->when($etat === 'valides', fn ($q) => $q->whereIn('status', [PurchaseOrder::STATUS_SENT, PurchaseOrder::STATUS_PARTIALLY_RECEIVED, PurchaseOrder::STATUS_RECEIVED]))
+            ->when($etat === 'valides', fn ($q) => $q->whereIn('status', [PurchaseOrder::STATUS_SENT,
+                PurchaseOrder::STATUS_PARTIALLY_RECEIVED, PurchaseOrder::STATUS_RECEIVED]))
             ->when($etat !== '' && $etat !== 'valides', fn ($q) => $q->where('status', $etat))
             ->when($valeurs['fournisseur'] !== '', fn ($q) => $q->where('supplier_id', (int) $valeurs['fournisseur']))
             ->orderBy('created_at')

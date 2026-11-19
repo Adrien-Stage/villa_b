@@ -52,7 +52,8 @@ class PlanningController extends Controller
         $affectations = $this->planning->semaine($departement, $lundi);
         $personnel = $this->planning->personnel($departement);
         $quarts = $this->planning->quartsDuDepartement($departement, $affectations, $personnel);
-        $semaine = ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $lundi->toDateString())->first();
+        $semaine = ShiftWeek::query()->where('department_id', $departement->id)->where('week_start',
+            $lundi->toDateString())->first();
         $peutPlanifier = $this->planning->peutPlanifier($user, $departement, $lundi);
         $prochainLundi = PlanningService::lundi()->addWeek();
 
@@ -76,7 +77,8 @@ class PlanningController extends Controller
             'rappel' => CarbonImmutable::today()->isSunday()
                 && $this->planning->personnelEnQuarts($departement)->isNotEmpty()
                 && $this->planning->departementsPlanifiables($user)->contains('id', $departement->id)
-                && ! ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $prochainLundi->toDateString())->whereNotNull('published_at')->exists()
+                && ! ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $prochainLundi
+                    ->toDateString())->whereNotNull('published_at')->exists()
                     ? $prochainLundi : null,
         ]);
     }
@@ -96,10 +98,12 @@ class PlanningController extends Controller
         $employe = User::findOrFail($valide['user_id']);
         $jour = CarbonImmutable::parse($valide['date']);
 
-        $this->planning->affecter(Auth::user(), $departement, $employe, WorkShift::findOrFail($valide['work_shift_id']), $jour);
+        $this->planning->affecter(Auth::user(), $departement, $employe, WorkShift::findOrFail($valide['work_shift_id']),
+            $jour);
 
         return $this->retour($departement, PlanningService::lundi($jour))
-            ->with('success', "{$employe->name} : quart ajouté le " . $jour->locale('fr')->isoFormat('dddd D MMMM') . '.');
+            ->with('success', "{$employe->name} : quart ajouté le " . $jour->locale('fr')->isoFormat('dddd D MMMM')
+                . '.');
     }
 
     public function destroy(ShiftAssignment $affectation): RedirectResponse
@@ -128,7 +132,8 @@ class PlanningController extends Controller
 
         $prevenus = $this->planning->publier(Auth::user(), $departement, $lundi);
 
-        AuditLog::record(Auth::id(), 'planning', "Planning de la semaine du {$lundi->format('d/m/Y')} envoyé — {$departement->name}", 'planning', [
+        AuditLog::record(Auth::id(), 'planning',
+            "Planning de la semaine du {$lundi->format('d/m/Y')} envoyé — {$departement->name}", 'planning', [
             'department_id' => $departement->id,
             'week_start' => $lundi->toDateString(),
             'notified' => $prevenus,

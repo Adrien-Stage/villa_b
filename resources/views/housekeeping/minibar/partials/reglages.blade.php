@@ -23,7 +23,9 @@
 {{-- Sans dépôt, rien ne garnit les mini-bars : l'ajout d'articles reste fermé
      tant que le dépôt n'est pas choisi. Le dépôt se crée à l'économat. --}}
 @if($depot === null)
-    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 flex items-start gap-3" role="status">
+    <div
+        class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 flex items-start gap-3"
+        role="status">
         <i data-lucide="warehouse" class="w-5 h-5 shrink-0 mt-0.5"></i>
         <div class="space-y-1">
             @if($depots->isEmpty())
@@ -56,7 +58,10 @@
                         <option value="{{ $d->id }}" @selected($depot?->id === $d->id)>{{ $d->name }}</option>
                     @endforeach
                 </select>
-                <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Enregistrer</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark
+                        transition-colors">Enregistrer</button>
             </form>
             @if($depots->isEmpty())
                 <p class="text-xs text-amber-700 mt-3">Aucun dépôt à choisir : demandez à l'économe de créer un dépôt « Mini-bar ».</p>
@@ -72,11 +77,14 @@
         <h2 class="font-heading font-semibold text-primary text-sm">Ajouter un article</h2>
         <p class="text-xs text-primary/50 mt-0.5 mb-4">Un article de l'économat, compté à l'unité, et son prix de vente au client.</p>
         @if($depot === null)
-            <p class="rounded-lg border border-dashed border-secondary/30 px-4 py-6 text-center text-sm text-primary/50">
+            <p class="rounded-lg border border-dashed border-secondary/30 px-4 py-6 text-center text-sm
+                text-primary/50">
                 Ajout fermé tant que le dépôt du mini-bar n'est pas choisi.
             </p>
         @else
-        <form data-reglages method="POST" action="{{ route('housekeeping.minibar.articles.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <form data-reglages method="POST"
+            action="{{ route('housekeeping.minibar.articles.store') }}"
+            class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             @csrf
             <label class="block sm:col-span-2">
                 <span class="block text-xs text-primary/60 mb-1">Article de l'économat</span>
@@ -89,10 +97,20 @@
             </label>
             <label class="block">
                 <span class="block text-xs text-primary/60 mb-1">Prix au client (FCFA)</span>
-                <input type="number" name="price" min="0" step="1" required value="{{ old('price') }}" class="{{ $champ }}">
+                <input
+                    type="number"
+                    name="price"
+                    min="0"
+                    step="1"
+                    required
+                    value="{{ old('price') }}"
+                    class="{{ $champ }}">
             </label>
             <div class="sm:col-span-4">
-                <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Ajouter au mini-bar</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark
+                        transition-colors">Ajouter au mini-bar</button>
             </div>
         </form>
         @endif
@@ -120,22 +138,45 @@
                         @method('PUT')
                         <div class="col-span-2">
                             <span class="block text-[11px] text-primary/45 mb-1">{{ $article->item?->name }} · {{ $article->item?->unit }}</span>
-                            <input type="text" name="name" required maxlength="120" value="{{ $article->name }}" class="{{ $champ }}" aria-label="Nom">
+                            <input
+                                type="text"
+                                name="name"
+                                required
+                                maxlength="120"
+                                value="{{ $article->name }}"
+                                class="{{ $champ }}"
+                                aria-label="Nom">
                         </div>
                         <label class="block">
                             <span class="block text-[11px] text-primary/45 mb-1">Prix (FCFA)</span>
-                            <input type="number" name="price" min="0" step="1" required value="{{ intdiv($article->price, 100) }}" class="{{ $champ }}">
+                            <input
+                                type="number"
+                                name="price"
+                                min="0"
+                                step="1"
+                                required
+                                value="{{ intdiv($article->price, 100) }}"
+                                class="{{ $champ }}">
                         </label>
                         <label class="block">
                             <span class="block text-[11px] text-primary/45 mb-1">Ordre</span>
-                            <input type="number" name="sort_order" min="0" step="1" value="{{ $article->sort_order }}" class="{{ $champ }}">
+                            <input
+                                type="number"
+                                name="sort_order"
+                                min="0"
+                                step="1"
+                                value="{{ $article->sort_order }}"
+                                class="{{ $champ }}">
                         </label>
                         <label class="flex items-center gap-2 text-xs text-primary pb-2">
                             <input type="hidden" name="is_active" value="0">
                             <input type="checkbox" name="is_active" value="1" @checked($article->is_active) class="rounded border-secondary/40 text-primary focus:ring-primary">
                             En service
                         </label>
-                        <button type="submit" class="px-3 py-2 rounded-lg text-xs font-semibold border border-secondary/30 text-primary hover:bg-accent/10 transition-colors">Enregistrer</button>
+                        <button
+                            type="submit"
+                            class="px-3 py-2 rounded-lg text-xs font-semibold border border-secondary/30 text-primary
+                                hover:bg-accent/10 transition-colors">Enregistrer</button>
                     </form>
                 @else
                     <div class="px-5 py-3 flex items-center justify-between text-sm">
@@ -158,21 +199,28 @@
         <div class="divide-y divide-secondary/10">
             @foreach($types as $type)
                 @php $quantites = $standards[$type->id] ?? collect(); @endphp
-                <form data-reglages method="POST" action="{{ route('housekeeping.minibar.standards.update', $type) }}" class="px-5 py-4 space-y-3">
+                <form data-reglages method="POST"
+                    action="{{ route('housekeeping.minibar.standards.update', $type) }}"
+                    class="px-5 py-4 space-y-3">
                     @csrf
                     @method('PUT')
                     <p class="text-sm font-semibold text-primary">{{ $type->name }}</p>
                     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                         @foreach($actifs as $article)
                             <label class="block">
-                                <span class="block text-[11px] text-primary/55 mb-1 truncate" title="{{ $article->name }}">{{ $article->name }}</span>
+                                <span
+                                    class="block text-[11px] text-primary/55 mb-1 truncate"
+                                    title="{{ $article->name }}">{{ $article->name }}</span>
                                 <input type="number" min="0" max="99" step="1" name="quantites[{{ $article->id }}]"
                                        value="{{ $quantites[$article->id] ?? 0 }}" class="{{ $champ }}" @readonly(!$peutDoter)>
                             </label>
                         @endforeach
                     </div>
                     @droit('housekeeping.minibar.standards.modifier')
-                        <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+                        <button
+                            type="submit"
+                            class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white
+                                hover:bg-surface-dark transition-colors">
                             Enregistrer pour les chambres {{ $type->name }}
                         </button>
                     @enddroit

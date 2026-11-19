@@ -34,7 +34,8 @@ final class ClasseurStock
     public const TYPE_RETOUR     = 'Retour';
     public const TYPE_AJUSTEMENT = 'Ajustement';
 
-    public const TYPES = [self::TYPE_INITIAL, self::TYPE_ENTREE, self::TYPE_SORTIE, self::TYPE_RETOUR, self::TYPE_AJUSTEMENT];
+    public const TYPES = [self::TYPE_INITIAL, self::TYPE_ENTREE, self::TYPE_SORTIE, self::TYPE_RETOUR,
+        self::TYPE_AJUSTEMENT];
 
     /** Ce que chaque type fait au stock, pour le Lisez-moi. */
     public const TYPES_EXPLIQUES = [
@@ -114,7 +115,8 @@ final class ClasseurStock
     public static function cle(?string $texte): string
     {
         $texte = mb_strtolower(trim((string) $texte));
-        $texte = strtr($texte, ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'à' => 'a', 'â' => 'a', 'î' => 'i', 'ï' => 'i',
+        $texte = strtr($texte, ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'à' => 'a', 'â' => 'a', 'î' => 'i',
+            'ï' => 'i',
             'ô' => 'o', 'ö' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ç' => 'c', '°' => '']);
 
         return trim(preg_replace('/[^a-z0-9]+/', ' ', $texte));

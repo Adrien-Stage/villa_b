@@ -56,9 +56,12 @@
                             <tr class="{{ $p->status !== 'completed' ? 'text-primary/40 line-through' : '' }}">
                                 <td class="px-5 py-2 tabular-nums text-primary/55 w-14">{{ $p->paid_at?->format('H:i') }}</td>
                                 <td class="py-2">
-                                    <span class="inline-flex items-center rounded bg-secondary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary/75 mr-1">{{ $p->originLabel() }}</span>
+                                    <span class="inline-flex items-center rounded bg-secondary/10 px-1.5 py-0.5
+                                        text-[10px] font-semibold text-primary/75 mr-1">{{ $p->originLabel() }}</span>
                                     @if($p->booking)
-                                        <a href="{{ route('bookings.show', $p->booking) }}" class="font-medium text-primary hover:underline">{{ $p->booking->booking_number }}</a>
+                                        <a
+                                            href="{{ route('bookings.show', $p->booking) }}"
+                                            class="font-medium text-primary hover:underline">{{ $p->booking->booking_number }}</a>
                                         <span class="text-xs text-primary/50">· ch. {{ $p->booking->room?->number }} · {{ $client($p->booking) }}</span>
                                     @else
                                         <span class="text-primary/70">{{ $p->customer?->full_name ?? 'Vente directe' }}</span>
@@ -76,9 +79,13 @@
                             <tr>
                                 <td class="px-5 py-2 tabular-nums text-primary/55 w-14">{{ $bp->paid_at?->format('H:i') }}</td>
                                 <td class="py-2">
-                                    <span class="inline-flex items-center rounded bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900 mr-1">Banquet — {{ $bp->libelleKind() }}</span>
+                                    <span class="inline-flex items-center rounded bg-amber-100/80 px-1.5 py-0.5
+                                        text-[10px] font-semibold text-amber-900
+                                        mr-1">Banquet — {{ $bp->libelleKind() }}</span>
                                     @if($bp->banquet)
-                                        <a href="{{ route('restaurant.banquets.show', $bp->banquet) }}" class="font-medium text-primary hover:underline">{{ $bp->banquet->reference }}</a>
+                                        <a
+                                            href="{{ route('restaurant.banquets.show', $bp->banquet) }}"
+                                            class="font-medium text-primary hover:underline">{{ $bp->banquet->reference }}</a>
                                         <span class="text-xs text-primary/60">· {{ $bp->banquet->title }} · {{ $bp->banquet->client_name }}</span>
                                     @else
                                         <span class="text-primary/70">{{ $bp->receiptReference() }}</span>
@@ -99,7 +106,8 @@
 
         @if($rapport['decaissements']->isNotEmpty())
             <div class="border-t border-secondary/15">
-                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Sorties de caisse</h3>
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                    text-primary/45">Sorties de caisse</h3>
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($rapport['decaissements'] as $d)
                         <li class="px-5 py-2 flex justify-between gap-3">
@@ -118,7 +126,8 @@
 
         @if($rapport['ventesPos']->isNotEmpty())
             <div class="border-t border-secondary/15">
-                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Ventes du POS réception</h3>
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                    text-primary/45">Ventes du POS réception</h3>
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($rapport['ventesPos'] as $v)
                         <li class="px-5 py-2 flex justify-between gap-3">
@@ -183,13 +192,16 @@
         @foreach($blocs as [$titre, $liste, $ligne])
             @if($liste->isNotEmpty())
                 <div class="border-b border-secondary/10 last:border-b-0">
-                    <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">{{ $titre }} ({{ $liste->count() }})</h3>
+                    <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                        text-primary/45">{{ $titre }} ({{ $liste->count() }})</h3>
                     <ul class="divide-y divide-secondary/10 text-sm">
                         @foreach($liste as $b)
                             @php [$heure, $sejour] = $ligne($b); @endphp
                             <li class="px-5 py-2">
                                 <span class="tabular-nums text-primary/55">{{ $heure }}</span>
-                                <a href="{{ route('bookings.show', $sejour) }}" class="font-medium text-primary hover:underline">{{ $sejour->booking_number }}</a>
+                                <a
+                                    href="{{ route('bookings.show', $sejour) }}"
+                                    class="font-medium text-primary hover:underline">{{ $sejour->booking_number }}</a>
                                 <span class="text-primary/60">· ch. {{ $sejour->room?->number ?? '—' }} · {{ $client($sejour) }}</span>
                             </li>
                         @endforeach
@@ -199,7 +211,8 @@
         @endforeach
         @if($act['annulations']->isNotEmpty())
             <div class="border-b border-secondary/10">
-                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Annulations ({{ $act['annulations']->count() }})</h3>
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                    text-primary/45">Annulations ({{ $act['annulations']->count() }})</h3>
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($act['annulations'] as $a)
                         <li class="px-5 py-2">
@@ -213,7 +226,8 @@
         @endif
         @if($act['prestations']->isNotEmpty())
             <div class="border-b border-secondary/10">
-                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Prestations ajoutées aux folios ({{ $act['prestations']->count() }})</h3>
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                    text-primary/45">Prestations ajoutées aux folios ({{ $act['prestations']->count() }})</h3>
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($act['prestations'] as $f)
                         <li class="px-5 py-2 flex justify-between gap-3">
@@ -226,7 +240,8 @@
         @endif
         @if($act['minibar']->isNotEmpty())
             <div>
-                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary/45">Relevés du mini-bar demandés ({{ $act['minibar']->count() }})</h3>
+                <h3 class="px-5 pt-3 text-[11px] font-semibold uppercase tracking-wider
+                    text-primary/45">Relevés du mini-bar demandés ({{ $act['minibar']->count() }})</h3>
                 <ul class="divide-y divide-secondary/10 text-sm">
                     @foreach($act['minibar'] as $b)
                         <li class="px-5 py-2"><span class="tabular-nums text-primary/55">{{ $b->minibar_check_requested_at?->format('H:i') }}</span> ch. {{ $b->room?->number }} · {{ $b->booking_number }}</li>

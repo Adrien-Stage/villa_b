@@ -6,7 +6,9 @@
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between gap-3 mb-6">
         <div>
-            <a href="{{ route('restaurant.waste.index') }}" class="inline-flex items-center gap-1.5 text-xs text-primary/60 hover:text-primary mb-1">
+            <a
+                href="{{ route('restaurant.waste.index') }}"
+                class="inline-flex items-center gap-1.5 text-xs text-primary/60 hover:text-primary mb-1">
                 <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Retour aux pertes & déchets
             </a>
             <h1 class="font-heading text-2xl font-semibold text-primary">Déclarer une perte ou un déchet</h1>
@@ -25,7 +27,10 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('restaurant.waste.store') }}" class="bg-white rounded-xl shadow-sm border border-secondary/15 p-6 space-y-5">
+    <form
+        method="POST"
+        action="{{ route('restaurant.waste.store') }}"
+        class="bg-white rounded-xl shadow-sm border border-secondary/15 p-6 space-y-5">
         @csrf
 
         {{-- Sélection de l'ingrédient --}}
@@ -60,8 +65,11 @@
                         value="{{ old('quantity') }}" required
                         placeholder="Ex: 2.5"
                         oninput="calculateValuation()"
-                        class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary pr-14">
-                    <span id="unit-badge" class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-primary/50 font-medium">
+                        class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary
+                            pr-14">
+                    <span
+                        id="unit-badge"
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-primary/50 font-medium">
                         unité
                     </span>
                 </div>
@@ -85,7 +93,11 @@
                 <label for="reason" class="block text-xs font-semibold text-primary mb-1.5">
                     Motif normalisé <span class="text-red-500">*</span>
                 </label>
-                <select name="reason" id="reason" required class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+                <select
+                    name="reason"
+                    id="reason"
+                    required
+                    class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
                     <option value="">-- Choisir un motif --</option>
                     @foreach($reasonLabels as $val => $lbl)
                         <option value="{{ $val }}" @selected(old('reason', 'spoilage') === $val)>{{ $lbl }}</option>
@@ -97,7 +109,11 @@
                 <label for="department" class="block text-xs font-semibold text-primary mb-1.5">
                     Atelier / Département <span class="text-red-500">*</span>
                 </label>
-                <select name="department" id="department" required class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
+                <select
+                    name="department"
+                    id="department"
+                    required
+                    class="w-full text-sm rounded-lg border-secondary/25 focus:border-primary focus:ring-primary">
                     @foreach($departmentLabels as $val => $lbl)
                         <option value="{{ $val }}" @selected(old('department', 'cuisine') === $val)>{{ $lbl }}</option>
                     @endforeach
@@ -139,10 +155,16 @@
 
         {{-- Actions --}}
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-secondary/15">
-            <a href="{{ route('restaurant.waste.index') }}" class="px-4 py-2 border border-secondary/25 text-primary text-xs font-semibold rounded-lg hover:bg-secondary/10">
+            <a
+                href="{{ route('restaurant.waste.index') }}"
+                class="px-4 py-2 border border-secondary/25 text-primary text-xs font-semibold rounded-lg
+                    hover:bg-secondary/10">
                 Annuler
             </a>
-            <button type="submit" class="px-5 py-2.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 shadow-sm transition-colors flex items-center gap-2">
+            <button
+                type="submit"
+                class="px-5 py-2.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 shadow-sm
+                    transition-colors flex items-center gap-2">
                 <i data-lucide="check" class="w-4 h-4"></i> Valider et déduire du stock
             </button>
         </div>

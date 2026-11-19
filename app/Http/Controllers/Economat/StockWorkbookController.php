@@ -47,7 +47,8 @@ class StockWorkbookController extends Controller
         $tenant = $this->tenantCourant();
         $classeur = $this->export->classeur($this->export->donnees($depot), $tenant);
 
-        $nom = 'classeur_stock_' . ($depot ? Str::slug($depot->name) : 'economat') . '_' . now()->format('Ymd_His') . '.xlsx';
+        $nom = 'classeur_stock_' . ($depot ? Str::slug($depot->name) : 'economat') . '_' . now()->format('Ymd_His')
+            . '.xlsx';
 
         return response()->streamDownload(function () use ($classeur) {
             $writer = new Xlsx($classeur);
@@ -74,10 +75,12 @@ class StockWorkbookController extends Controller
 
         $depot = $this->depot($request);
         $fichier = $request->file('fichier');
-        $chemin = $fichier->storeAs('classeurs-stock', Str::uuid() . '.' . strtolower($fichier->getClientOriginalExtension()));
+        $chemin = $fichier->storeAs('classeurs-stock', Str::uuid() . '.' . strtolower($fichier
+            ->getClientOriginalExtension()));
 
         try {
-            $analyse = $this->import->analyser($this->import->lire(\Illuminate\Support\Facades\Storage::path($chemin)), $depot);
+            $analyse = $this->import->analyser($this->import->lire(\Illuminate\Support\Facades\Storage::path($chemin)),
+                $depot);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Storage::delete($chemin);
             report($e);

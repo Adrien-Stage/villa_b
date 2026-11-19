@@ -34,7 +34,8 @@
         <!-- Bilan théorique -->
         <div>
             <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 mb-6">
-                <h2 class="text-lg font-heading font-semibold text-primary mb-4 border-b border-secondary/10 pb-2">Bilan Théorique</h2>
+                <h2 class="text-lg font-heading font-semibold text-primary mb-4 border-b border-secondary/10
+                    pb-2">Bilan Théorique</h2>
                 
                 <div class="space-y-3 pt-2">
                     <div class="flex justify-between items-center text-sm">
@@ -66,13 +67,26 @@
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div class="md:col-span-2">
-                            <input type="text" name="reason" required placeholder="Motif (ex: Achat fournitures)" class="w-full px-3 py-2 text-sm border border-red-200 rounded-lg bg-white">
+                            <input
+                                type="text"
+                                name="reason"
+                                required
+                                placeholder="Motif (ex: Achat fournitures)"
+                                class="w-full px-3 py-2 text-sm border border-red-200 rounded-lg bg-white">
                         </div>
                         <div class="md:col-span-1">
-                            <input type="number" name="amount" required placeholder="Montant" class="w-full px-3 py-2 text-sm border border-red-200 rounded-lg bg-white">
+                            <input
+                                type="number"
+                                name="amount"
+                                required
+                                placeholder="Montant"
+                                class="w-full px-3 py-2 text-sm border border-red-200 rounded-lg bg-white">
                         </div>
                     </div>
-                    <button type="submit" class="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg font-medium transition-colors">
+                    <button
+                        type="submit"
+                        class="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg font-medium
+                            transition-colors">
                         Ajouter la sortie
                     </button>
                 </form>
@@ -85,20 +99,30 @@
                 @csrf
                 
                 <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-6 sticky top-6">
-                    <h2 class="text-lg font-heading font-semibold text-primary mb-6 border-b border-secondary/10 pb-2">Comptage de la caisse</h2>
+                    <h2 class="text-lg font-heading font-semibold text-primary mb-6 border-b border-secondary/10
+                        pb-2">Comptage de la caisse</h2>
 
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Solde Réel compté (FCFA) *</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Solde Réel compté (FCFA) *</label>
                             <input type="number" name="actual_closing_amount" x-model.number="actual" required min="0" step="1"
-                                class="w-full px-4 py-4 text-2xl font-bold bg-accent/5 border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary transition-colors text-center"
+                                class="w-full px-4 py-4 text-2xl font-bold bg-accent/5 border border-secondary/30
+                                    rounded-lg text-primary outline-none focus:border-secondary transition-colors
+                                    text-center"
                                 placeholder="0">
                             <p class="text-xs text-primary/50 mt-2 text-center">Comptez physiquement l'argent du tiroir-caisse</p>
                         </div>
 
-                        <div class="bg-gray-50 rounded-lg p-4 text-center border" :class="gap === 0 ? 'border-green-200 bg-green-50' : (gap > 0 ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50')">
-                            <p class="text-xs tracking-wider uppercase font-semibold text-primary/50 mb-1">Écart constaté</p>
-                            <p class="text-xl font-bold" :class="gap === 0 ? 'text-green-600' : (gap > 0 ? 'text-yellow-600' : 'text-red-600')" x-text="(gap > 0 ? '+' : '') + formatPrice(gap)"></p>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 text-center border"
+                            :class="gap === 0 ? 'border-green-200 bg-green-50' : (gap > 0 ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50')">
+                            <p class="text-xs tracking-wider uppercase font-semibold text-primary/50
+                                mb-1">Écart constaté</p>
+                            <p
+                                class="text-xl font-bold"
+                                :class="gap === 0 ? 'text-green-600' : (gap > 0 ? 'text-yellow-600' : 'text-red-600')"
+                                x-text="(gap > 0 ? '+' : '') + formatPrice(gap)"></p>
                             
                             <p class="text-xs mt-2" x-show="gap === 0" style="display: none;">
                                 <i data-lucide="check-circle" class="w-3 h-3 inline text-green-600"></i> Caisse juste. Tout est parfait.
@@ -112,14 +136,18 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Observation (Optionnel)</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Observation (Optionnel)</label>
                             <textarea name="closing_notes" rows="2"
                                 class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary transition-colors resize-none placeholder-primary/30" 
                                 placeholder="Justification de l'écart ou remarque..."></textarea>
                         </div>
 
                         <div class="pt-4 border-t border-secondary/10">
-                            <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm flex justify-center items-center gap-2">
+                            <button
+                                type="submit"
+                                class="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-medium
+                                    transition-colors shadow-sm flex justify-center items-center gap-2">
                                 <i data-lucide="lock" class="w-5 h-5"></i>
                                 Valider et fermer la caisse
                             </button>

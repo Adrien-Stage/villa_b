@@ -43,7 +43,10 @@
     @include('bookings.handovers.partials.fiche', ['rapport' => $rapport])
 
     @droit('bookings.handovers.take.creer')
-    <form method="POST" action="{{ route('bookings.handovers.take.store', $passation) }}" class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <form
+        method="POST"
+        action="{{ route('bookings.handovers.take.store', $passation) }}"
+        class="bg-white rounded-xl shadow-sm p-5 space-y-4">
         @csrf
         <h2 class="font-heading font-semibold text-primary text-sm">Recompter le tiroir et ouvrir ma caisse</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -63,10 +66,18 @@
             </div>
         </div>
         <label class="flex items-start gap-2 text-sm text-primary">
-            <input type="checkbox" name="lu" value="1" required class="mt-0.5 rounded border-secondary/40 text-primary focus:ring-primary">
+            <input
+                type="checkbox"
+                name="lu"
+                value="1"
+                required
+                class="mt-0.5 rounded border-secondary/40 text-primary focus:ring-primary">
             <span>J'ai pris connaissance des consignes, des opérations du quart et de ce qui reste à faire.</span>
         </label>
-        <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+        <button
+            type="submit"
+            class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                transition-colors">
             Prendre le service
         </button>
     </form>

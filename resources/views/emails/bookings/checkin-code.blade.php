@@ -30,10 +30,17 @@
     <title>Votre code d'accès — {{ $nom }}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f7f5f2; font-family: 'Inter', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f5f2; padding: 40px 20px;">
+    <table
+        width="100%"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+        style="background-color: #f7f5f2; padding: 40px 20px;">
         <tr>
             <td align="center">
-                <table width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2dcd5; border-radius: 16px; overflow: hidden; border-collapse: collapse;">
+                <table
+                    width="100%"
+                    style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2dcd5; border-radius: 16px; overflow: hidden; border-collapse: collapse;">
 
                     {{-- En-tête aux couleurs de l'établissement. Le logo peut être
                          bloqué par la messagerie : le nom reste écrit en dessous,
@@ -69,7 +76,9 @@
                             </p>
 
                             {{-- Détails de la réservation --}}
-                            <table width="100%" style="background-color: #fcfbfa; border: 1px solid {{ $accent }}; border-radius: 8px; margin-bottom: 30px; border-collapse: separate; padding: 15px 20px;">
+                            <table
+                                width="100%"
+                                style="background-color: #fcfbfa; border: 1px solid {{ $accent }}; border-radius: 8px; margin-bottom: 30px; border-collapse: separate; padding: 15px 20px;">
                                 <tr>
                                     <td style="font-size: 13px; color: #7a7a7a; padding: 5px 0;">N° de réservation :</td>
                                     <td style="font-size: 13px; font-weight: bold; color: {{ $primaire }}; text-align: right; padding: 5px 0;">{{ $booking->booking_number }}</td>

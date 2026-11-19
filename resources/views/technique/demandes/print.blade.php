@@ -355,7 +355,9 @@
             </div>
             <div style="margin-bottom: 8px;">
                 <strong>Résultat de l'intervention :</strong>
-                <span class="status-pill" style="background: #e2e8f0; color: #0f172a; font-weight: bold; border: 1px solid #cbd5e1;">
+                <span
+                    class="status-pill"
+                    style="background: #e2e8f0; color: #0f172a; font-weight: bold; border: 1px solid #cbd5e1;">
                     {{ $demande->resultatLabel() }}
                 </span>
             </div>

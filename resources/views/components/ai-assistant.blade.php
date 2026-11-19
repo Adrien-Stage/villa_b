@@ -2,7 +2,10 @@
 <div id="ai-assistant-wrapper" class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end print:hidden no-print">
     
     <!-- Fenêtre de Chat (Masquée par défaut) -->
-    <div id="ai-chat-window" class="hidden mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-secondary/20 overflow-hidden flex-col origin-bottom-right transition-all duration-300 transform scale-95 opacity-0">
+    <div
+        id="ai-chat-window"
+        class="hidden mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-secondary/20 overflow-hidden
+            flex-col origin-bottom-right transition-all duration-300 transform scale-95 opacity-0">
         <!-- Header -->
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -27,7 +30,8 @@
                 <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-1">
                     <i data-lucide="sparkles" class="w-3 h-3 text-indigo-600"></i>
                 </div>
-                <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-sm shadow-sm text-xs text-gray-700 leading-relaxed">
+                <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-sm shadow-sm text-xs
+                    text-gray-700 leading-relaxed">
                     Bonjour {{ Auth::user()->name ?? '' }} ! 👋 <br>
                     Je suis <strong>Kuété</strong>, ton assistant virtuel. Que puis-je faire pour toi aujourd'hui ?
                 </div>
@@ -36,31 +40,49 @@
             <!-- Suggestions de questions dynamiques par rôle -->
             <div id="ai-chat-suggestions" class="flex flex-wrap gap-2 mt-1">
                 @pour('manager', 'reception')
-                    <button onclick="sendAiMessage('Combien d\'arrivées sont prévues aujourd\'hui ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Combien d\'arrivées sont prévues aujourd\'hui ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Arrivées du jour ?
                     </button>
-                    <button onclick="sendAiMessage('Combien de chambres sont disponibles actuellement ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Combien de chambres sont disponibles actuellement ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Chambres dispo ?
                     </button>
                 @endpour
 
                 @pour('housekeeping_leader', 'housekeeping_supervisor', 'housekeeping', 'housekeeping_staff')
-                    <button onclick="sendAiMessage('Combien de chambres sont sales en ce moment ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Combien de chambres sont sales en ce moment ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Chambres à nettoyer ?
                     </button>
-                    <button onclick="sendAiMessage('Y a-t-il des chambres en maintenance ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Y a-t-il des chambres en maintenance ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Chambres en maintenance ?
                     </button>
                 @endpour
 
                 @pour('restaurant_chief', 'restaurant_staff', 'cashier')
-                    <button onclick="sendAiMessage('Combien de commandes restaurant sont en cours ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Combien de commandes restaurant sont en cours ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Commandes en cours ?
                     </button>
                 @endpour
 
                 @pour('shop_manager', 'shop_cashier')
-                    <button onclick="sendAiMessage('Comment clore ma caisse ?')" class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <button
+                        onclick="sendAiMessage('Comment clore ma caisse ?')"
+                        class="px-3 py-1.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-600
+                            hover:bg-indigo-50 transition-colors">
                         Comment clore ma caisse ?
                     </button>
                 @endpour
@@ -71,7 +93,8 @@
                 <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-1">
                     <i data-lucide="sparkles" class="w-3 h-3 text-indigo-600"></i>
                 </div>
-                <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-sm shadow-sm text-xs text-gray-500 flex items-center gap-1.5">
+                <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-sm shadow-sm text-xs
+                    text-gray-500 flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
                     <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
                     <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
@@ -83,8 +106,19 @@
         <!-- Input Area -->
         <div class="p-3 bg-white border-t border-gray-100">
             <div class="relative flex items-center">
-                <input type="text" id="ai-chat-input" onkeypress="handleAiKeyPress(event)" placeholder="Posez votre question..." class="w-full bg-gray-50 border border-gray-200 text-sm rounded-full pl-4 pr-10 py-2.5 focus:outline-none focus:border-indigo-300 focus:ring-1 focus:ring-indigo-300 transition-all">
-                <button type="button" onclick="submitAiMessage()" class="absolute right-1 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <input
+                    type="text"
+                    id="ai-chat-input"
+                    onkeypress="handleAiKeyPress(event)"
+                    placeholder="Posez votre question..."
+                    class="w-full bg-gray-50 border border-gray-200 text-sm rounded-full pl-4 pr-10 py-2.5
+                        focus:outline-none focus:border-indigo-300 focus:ring-1 focus:ring-indigo-300 transition-all">
+                <button
+                    type="button"
+                    onclick="submitAiMessage()"
+                    class="absolute right-1 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white
+                        rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50
+                        disabled:cursor-not-allowed">
                     <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
                 </button>
             </div>
@@ -92,13 +126,19 @@
     </div>
 
     <!-- Bouton Flottant -->
-    <button onclick="toggleAiChat()" id="ai-chat-button" class="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300">
+    <button
+        onclick="toggleAiChat()"
+        id="ai-chat-button"
+        class="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-500
+            to-purple-600 rounded-full shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105
+            transition-all duration-300">
         <!-- Glow effect -->
         <div class="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
         <i data-lucide="sparkles" class="w-6 h-6 text-white absolute"></i>
         
         <!-- Tooltip -->
-        <span class="absolute right-full mr-4 bg-gray-900 text-white text-[10px] font-semibold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+        <span class="absolute right-full mr-4 bg-gray-900 text-white text-[10px] font-semibold px-2 py-1 rounded-md
+            opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
             Besoin d'aide ?
         </span>
     </button>

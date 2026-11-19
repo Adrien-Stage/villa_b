@@ -54,7 +54,8 @@ class SituationJournaliere extends Edition
         $lignes = $services->map(function (string $libelle, string $cle) use ($ventes, $encaissements) {
             $v = $ventes->where('service_cle', $cle);
             $e = $encaissements->where('service_cle', $cle);
-            $parFamille = fn (string $famille) => (int) $e->filter(fn ($l) => Registres::familleDeMode($l['mode_cle']) === $famille)->sum('montant');
+            $parFamille = fn (string $famille) => (int) $e
+                ->filter(fn ($l) => Registres::familleDeMode($l['mode_cle']) === $famille)->sum('montant');
 
             return [
                 'service' => $libelle,
@@ -95,9 +96,11 @@ class SituationJournaliere extends Edition
         $date = $jour->toDateString();
 
         $arrivees = Booking::query()->whereDate('check_in', $date)
-            ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN, BookingStatus::CHECKED_OUT, BookingStatus::COMPLETED])->count();
+            ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN, BookingStatus::CHECKED_OUT,
+                BookingStatus::COMPLETED])->count();
         $departs = Booking::query()->whereDate('check_out', $date)
-            ->whereIn('status', [BookingStatus::CHECKED_IN, BookingStatus::CHECKED_OUT, BookingStatus::COMPLETED])->count();
+            ->whereIn('status', [BookingStatus::CHECKED_IN, BookingStatus::CHECKED_OUT, BookingStatus::COMPLETED])
+                ->count();
 
         $sessions = CashRegisterSession::query()->whereDate('opened_at', $date)->get();
         $ouvertes = $sessions->whereNull('closed_at')->count();

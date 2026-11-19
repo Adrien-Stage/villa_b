@@ -17,7 +17,10 @@
 </div>
 
 {{-- Les filtres ; l'impression et les exports reprennent ceux affichés. --}}
-<form method="GET" action="{{ route('editions.show', $edition->cle()) }}" class="mb-5 rounded-xl border border-secondary/20 bg-white p-4 shadow-sm">
+<form
+    method="GET"
+    action="{{ route('editions.show', $edition->cle()) }}"
+    class="mb-5 rounded-xl border border-secondary/20 bg-white p-4 shadow-sm">
     @if($edition->filtres() !== [])
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             @foreach($edition->filtres() as $filtre)
@@ -34,7 +37,11 @@
                 @elseif($filtre->type === \App\Editions\Filtre::JOUR || $filtre->type === \App\Editions\Filtre::SEMAINE)
                     <label class="block">
                         <span class="text-xs font-semibold text-primary/70">{{ $filtre->libelle }}@if($filtre->type === \App\Editions\Filtre::SEMAINE) (un jour de la semaine)@endif</span>
-                        <input type="date" name="{{ $filtre->cle }}" value="{{ $valeur->toDateString() }}" class="mt-1 {{ $champ }}">
+                        <input
+                            type="date"
+                            name="{{ $filtre->cle }}"
+                            value="{{ $valeur->toDateString() }}"
+                            class="mt-1 {{ $champ }}">
                     </label>
                 @else
                     <label class="block">
@@ -53,18 +60,23 @@
 
     <div class="{{ $edition->filtres() !== [] ? 'mt-4 border-t border-secondary/10 pt-4' : '' }} flex flex-wrap items-center gap-2">
         @if($edition->filtres() !== [])
-            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-95">
+            <button
+                type="submit"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold
+                    text-white hover:opacity-95">
                 <i data-lucide="eye" class="h-3.5 w-3.5" aria-hidden="true"></i> Afficher
             </button>
         @endif
         <button type="submit" formaction="{{ route('editions.print', $edition->cle()) }}" formtarget="_blank"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-4 py-2
+                    text-xs font-semibold text-primary hover:bg-accent/20">
             <i data-lucide="printer" class="h-3.5 w-3.5" aria-hidden="true"></i> Imprimer
         </button>
         @droit('editions.export')
             @foreach(['pdf' => ['PDF', 'file-text'], 'excel' => ['Excel', 'sheet'], 'word' => ['Word', 'file-type']] as $format => [$libelle, $icone])
                 <button type="submit" name="format" value="{{ $format }}" formaction="{{ route('editions.export', $edition->cle()) }}"
-                        class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3
+                            py-2 text-xs font-semibold text-primary hover:bg-accent/20">
                     <i data-lucide="{{ $icone }}" class="h-3.5 w-3.5" aria-hidden="true"></i> {{ $libelle }}
                 </button>
             @endforeach
@@ -73,7 +85,12 @@
 </form>
 
 {{-- Aperçu à l'écran : le même document que celui qui s'imprime. --}}
-<x-table :rows="$lignes" inline="never" empty="Rien pour ces filtres." empty-icon="file-search" :caption="$document->titre">
+<x-table
+    :rows="$lignes"
+    inline="never"
+    empty="Rien pour ces filtres."
+    empty-icon="file-search"
+    :caption="$document->titre">
     <x-slot:toolbar>
         <div class="min-w-0">
             <p class="text-sm font-semibold text-primary">{{ $document->titre }}</p>
@@ -120,6 +137,7 @@
     <p class="mt-2 text-xs text-primary/55">L'écran montre les {{ $apercu }} premières lignes ; l'impression et les exports les contiennent toutes.</p>
 @endif
 @if($document->laNote())
-    <p class="mt-3 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-3 text-xs text-primary/70">{{ $document->laNote() }}</p>
+    <p class="mt-3 rounded-lg border border-secondary/20 bg-accent/10 px-4 py-3 text-xs
+        text-primary/70">{{ $document->laNote() }}</p>
 @endif
 @endsection

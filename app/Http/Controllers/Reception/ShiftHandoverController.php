@@ -76,13 +76,15 @@ class ShiftHandoverController extends Controller
         ]);
 
         try {
-            $passation = $this->passations->remettre(Auth::user(), (int) round($data['handed_amount'] * 100), $data['instructions'] ?? null);
+            $passation = $this->passations->remettre(Auth::user(), (int) round($data['handed_amount'] * 100),
+                $data['instructions'] ?? null);
         } catch (\DomainException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
         return redirect()->route('bookings.handovers.show', $passation)
-            ->with('success', 'Tiroir remis. La passation attend ' . ($passation->plannedUser?->name ?? 'le prochain réceptionniste') . ' : bonne fin de journée.');
+            ->with('success', 'Tiroir remis. La passation attend ' . ($passation->plannedUser
+                ?->name ?? 'le prochain réceptionniste') . ' : bonne fin de journée.');
     }
 
     /** Prise de service : lire la passation, recompter le tiroir. */
@@ -90,7 +92,8 @@ class ShiftHandoverController extends Controller
     {
         if (!$handover->isPending()) {
             return redirect()->route('bookings.handovers.show', $handover)
-                ->with('info', 'Cette passation a déjà été reprise par ' . ($handover->toUser?->name ?? 'un autre réceptionniste') . '.');
+                ->with('info', 'Cette passation a déjà été reprise par ' . ($handover->toUser
+                    ?->name ?? 'un autre réceptionniste') . '.');
         }
 
         $handover->load(['fromUser', 'plannedUser', 'plannedAssignment.shift', 'fromSession']);
@@ -114,7 +117,8 @@ class ShiftHandoverController extends Controller
         ]);
 
         try {
-            $session = $this->passations->reprendre($handover, Auth::user(), (int) round($data['received_amount'] * 100), $data['reception_notes'] ?? null);
+            $session = $this->passations->reprendre($handover, Auth::user(),
+                (int) round($data['received_amount'] * 100), $data['reception_notes'] ?? null);
         } catch (\DomainException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -123,8 +127,10 @@ class ShiftHandoverController extends Controller
         $ecart = (int) $handover->discrepancy_amount;
 
         return redirect()->route('bookings.cash_register.index')->with('success',
-            'Service repris : caisse ouverte avec ' . number_format($session->opening_amount / 100, 0, ',', ' ') . ' FCFA.'
-            . ($ecart !== 0 ? ' Écart de ' . number_format($ecart / 100, 0, ',', ' ') . ' FCFA à la remise, inscrit sur la passation.' : '')
+            'Service repris : caisse ouverte avec ' . number_format($session->opening_amount / 100, 0, ',', ' ')
+                . ' FCFA.'
+            . ($ecart !== 0 ? ' Écart de ' . number_format($ecart / 100, 0, ',', ' ')
+                . ' FCFA à la remise, inscrit sur la passation.' : '')
             . ' Bon service.');
     }
 }

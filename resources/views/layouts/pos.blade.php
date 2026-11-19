@@ -20,7 +20,9 @@
     @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --color-primary: {{ $currentTenant->settings['theme']['primary'] ?? '#391F0E' }};
@@ -42,7 +44,8 @@
             
             {{-- Gauche: Logo & Titre Mode POS --}}
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center border border-white/20">
+                <div class="w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 flex items-center
+                    justify-center border border-white/20">
                     @if($tenantLogo)
                         <img src="{{ $tenantLogo }}" alt="{{ $tenantName }}" class="w-full h-full object-cover">
                     @else
@@ -51,8 +54,10 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="font-heading font-bold text-sm sm:text-base leading-tight tracking-wide">{{ $tenantName }}</span>
-                        <span class="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest bg-white/20 text-white px-2 py-0.5 rounded-md">
+                        <span class="font-heading font-bold text-sm sm:text-base leading-tight
+                            tracking-wide">{{ $tenantName }}</span>
+                        <span class="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest
+                            bg-white/20 text-white px-2 py-0.5 rounded-md">
                             <i data-lucide="store" class="w-3 h-3"></i> Mode POS Réception
                         </span>
                     </div>
@@ -76,7 +81,8 @@
                 {{-- Bouton Quitter le mode POS (Retour au PMS sans fermer la session) --}}
                 <a href="{{ route('dashboard') }}"
                    title="Retourner au PMS standard tout en conservant la caisse active"
-                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-white/15 hover:bg-white/25 border border-white/20 transition-all shadow-xs">
+                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white
+                       bg-white/15 hover:bg-white/25 border border-white/20 transition-all shadow-xs">
                     <i data-lucide="arrow-left-circle" class="w-4 h-4 text-accent"></i>
                     <span class="hidden sm:inline">Quitter le mode POS</span>
                 </a>
@@ -102,7 +108,8 @@
          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
          role="dialog"
          aria-modal="true">
-        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all z-10">
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all
+            z-10">
             <div class="flex items-center gap-3 bg-yellow-50 px-6 py-4 border-b border-yellow-100">
                 <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i>
@@ -119,22 +126,26 @@
                     <p>• <strong>Clôturer la caisse</strong> : pour effectuer le comptage physique de fin de service.</p>
                 </div>
             </div>
-            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-gray-50 border-t border-secondary/10">
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 px-6 py-4 bg-gray-50 border-t
+                border-secondary/10">
                 <button type="button"
                         onclick="document.getElementById('caisse-logout-modal').classList.add('hidden')"
-                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-primary/70 hover:text-primary
+                            transition-colors">
                     Annuler
                 </button>
                 <form method="POST" action="{{ route('logout') }}" class="w-full sm:w-auto">
                     @csrf
                     <input type="hidden" name="force" value="1">
                     <button type="submit"
-                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors shadow-xs">
+                            class="w-full px-4 py-2 bg-white border border-secondary/30 text-primary text-xs
+                                font-semibold rounded-xl hover:bg-slate-50 transition-colors shadow-xs">
                         Déconnexion (Pause)
                     </button>
                 </form>
                 <a href="{{ route('bookings.cash_register.close') }}"
-                   class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-surface-dark transition-colors shadow-xs text-center">
+                   class="w-full sm:w-auto px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl
+                       hover:bg-surface-dark transition-colors shadow-xs text-center">
                     Fermer la caisse
                 </a>
             </div>

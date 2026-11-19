@@ -6,7 +6,9 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
         <div class="flex items-center gap-2 mb-1">
-            <a href="{{ route('economat.control.index') }}" class="text-xs text-primary/60 hover:text-primary flex items-center gap-1">
+            <a
+                href="{{ route('economat.control.index') }}"
+                class="text-xs text-primary/60 hover:text-primary flex items-center gap-1">
                 <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                 <span>Retour au Contrôle des stocks</span>
             </a>
@@ -22,7 +24,8 @@
 
     <div class="flex items-center gap-2 shrink-0">
         <a href="{{ route('economat.control.print', array_filter(['start_date' => $startDate, 'end_date' => $endDate, 'service' => $service])) }}" target="_blank"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
+            class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-xs
+                font-medium rounded-lg hover:bg-surface-light transition-colors shadow-sm">
             <i data-lucide="printer" class="w-4 h-4 text-primary/60"></i>
             <span>Imprimer le rapport</span>
         </a>
@@ -33,7 +36,10 @@
 
 {{-- Filtrage par période et service --}}
 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 shadow-sm">
-    <form method="GET" action="{{ route('economat.control.variances.index') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <form
+        method="GET"
+        action="{{ route('economat.control.variances.index') }}"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
             <i data-lucide="filter" class="w-4 h-4 text-primary/50"></i>
             <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Filtres :</span>
@@ -41,7 +47,11 @@
         <div class="flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-2">
                 <label for="service" class="text-xs text-primary/60">Service</label>
-                <select id="service" name="service" class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 bg-white focus:border-primary focus:ring-primary">
+                <select
+                    id="service"
+                    name="service"
+                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 bg-white
+                        focus:border-primary focus:ring-primary">
                     <option value="">Tous les services</option>
                     <option value="economat" @selected(($service ?? '') === 'economat')>Économat (Magasin central)</option>
                     <optgroup label="Départements">
@@ -62,19 +72,24 @@
             <div class="flex items-center gap-2">
                 <label for="start_date" class="text-xs text-primary/60">Du</label>
                 <input type="date" id="start_date" name="start_date" value="{{ $startDate }}"
-                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary focus:ring-primary">
+                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary
+                        focus:ring-primary">
             </div>
             <div class="flex items-center gap-2">
                 <label for="end_date" class="text-xs text-primary/60">Au</label>
                 <input type="date" id="end_date" name="end_date" value="{{ $endDate }}"
-                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary focus:ring-primary">
+                    class="rounded-lg border-secondary/30 text-xs text-primary py-1.5 px-2.5 focus:border-primary
+                        focus:ring-primary">
             </div>
             <button type="submit"
-                class="px-3.5 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                class="px-3.5 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-surface-dark
+                    transition-colors">
                 Filtrer
             </button>
             @if(request()->hasAny(['start_date', 'end_date', 'service']))
-                <a href="{{ route('economat.control.variances.index') }}" class="text-xs text-primary/50 hover:text-primary underline">
+                <a
+                    href="{{ route('economat.control.variances.index') }}"
+                    class="text-xs text-primary/50 hover:text-primary underline">
                     Réinitialiser
                 </a>
             @endif
@@ -89,7 +104,8 @@
         <p class="text-2xl font-bold font-mono text-red-700 mt-1">
             −{{ number_format($variances['total_loss_value'] / 100, 0, ',', ' ') }} <span class="text-xs font-sans font-normal text-red-600/70">FCFA</span>
         </p>
-        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs text-primary/60">
+        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs
+            text-primary/60">
             @if($service)
                 <span>Service : <strong>{{ $departments[$service] ?? (str_starts_with($service, 'depot-') ? 'Dépôt' : ucfirst($service)) }}</strong></span>
             @else
@@ -107,7 +123,8 @@
         <p class="text-2xl font-bold font-mono text-green-700 mt-1">
             +{{ number_format($variances['total_surplus_value'] / 100, 0, ',', ' ') }} <span class="text-xs font-sans font-normal text-green-600/70">FCFA</span>
         </p>
-        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs text-primary/60">
+        <div class="mt-2 pt-2 border-t border-secondary/15 flex flex-wrap justify-between gap-1 text-xs
+            text-primary/60">
             @if($service)
                 <span>Service : <strong>{{ $departments[$service] ?? (str_starts_with($service, 'depot-') ? 'Dépôt' : ucfirst($service)) }}</strong></span>
             @else
@@ -166,7 +183,8 @@
         <div class="overflow-x-auto">
             <table class="w-full text-xs">
                 <thead>
-                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase
+                        tracking-wider font-semibold">
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Article & Réf.</th>
                         <th class="py-2.5 px-3">Catégorie</th>
@@ -187,7 +205,9 @@
                         @endphp
                         <tr class="hover:bg-surface-light/40 transition-colors">
                             <td class="py-2.5 px-3">
-                                <a href="{{ route('economat.stock_counts.show', $line->stockCount) }}" class="font-mono font-bold text-primary hover:underline">
+                                <a
+                                    href="{{ route('economat.stock_counts.show', $line->stockCount) }}"
+                                    class="font-mono font-bold text-primary hover:underline">
                                     {{ $line->stockCount->reference }}
                                 </a>
                                 <div class="text-[10px] text-primary/40">{{ $line->stockCount->closed_at?->format('d/m/Y') }}</div>
@@ -219,7 +239,8 @@
                             </td>
                             <td class="py-2.5 px-3">
                                 @if($line->variance_reason)
-                                    <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary/15 text-primary">
+                                    <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium
+                                        bg-secondary/15 text-primary">
                                         {{ $line->variance_reason }}
                                     </span>
                                 @endif
@@ -263,7 +284,8 @@
         <div class="overflow-x-auto">
             <table class="w-full text-xs">
                 <thead>
-                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase
+                        tracking-wider font-semibold">
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Produit / Ingrédient</th>
                         <th class="py-2.5 px-3">Catégorie</th>
@@ -356,7 +378,8 @@
         <div class="overflow-x-auto">
             <table class="w-full text-xs">
                 <thead>
-                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase tracking-wider font-semibold">
+                    <tr class="bg-surface-light/60 border-b border-secondary/20 text-left text-primary/60 uppercase
+                        tracking-wider font-semibold">
                         <th class="py-2.5 px-3">Dépôt</th>
                         <th class="py-2.5 px-3">Inventaire</th>
                         <th class="py-2.5 px-3">Article</th>
@@ -381,7 +404,9 @@
                                 <span class="text-[10px] text-primary/40 block">{{ $sLine->inventory?->store?->departmentLabel() }}</span>
                             </td>
                             <td class="py-2.5 px-3">
-                                <a href="{{ route('economat.stores.counts.show', $sLine->inventory) }}" class="font-mono font-bold text-primary hover:underline">
+                                <a
+                                    href="{{ route('economat.stores.counts.show', $sLine->inventory) }}"
+                                    class="font-mono font-bold text-primary hover:underline">
                                     {{ $sLine->inventory?->reference }}
                                 </a>
                                 <div class="text-[10px] text-primary/40">{{ $sLine->inventory?->closed_at?->format('d/m/Y') }}</div>

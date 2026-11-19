@@ -65,7 +65,8 @@ class MaintenanceRequestNotification extends Notification
         return match ($this->etape) {
             self::CREATED   => $texte . ' (' . $d->specialtyLabel() . ', ' . mb_strtolower($d->priorityLabel()) . ')',
             self::TAKEN     => $texte . ($this->note ? ' — ' . $this->note : ' — Prise en charge directe'),
-            self::SUBMITTED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ' — Fiche soumise pour visa'),
+            self::SUBMITTED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0,
+                120) : ' — Fiche soumise pour visa'),
             self::COMPLETED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),
             self::REOPENED  => $texte . ($this->note ? ' — motif : ' . mb_substr($this->note, 0, 120) : ''),
             self::CANCELLED => $texte . ($this->note ? ' — ' . mb_substr($this->note, 0, 120) : ''),

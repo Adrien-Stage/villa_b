@@ -45,18 +45,28 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
             @droit('pilotage.budget.voir')
-                <a href="{{ route('pilotage.budget.index', ['annee' => $mois->year]) }}" class="px-3 py-1.5 border border-secondary/30 bg-white text-xs font-semibold rounded-lg text-primary hover:bg-accent/20">📋 Budget {{ $mois->year }}</a>
+                <a
+                    href="{{ route('pilotage.budget.index', ['annee' => $mois->year]) }}"
+                    class="px-3 py-1.5 border border-secondary/30 bg-white text-xs font-semibold rounded-lg
+                        text-primary hover:bg-accent/20">📋 Budget {{ $mois->year }}</a>
             @enddroit
             @droit('pilotage.forecast.voir')
-                <a href="{{ route('pilotage.forecast.index', ['annee' => $mois->year]) }}" class="px-3 py-1.5 border border-primary/40 bg-primary/5 text-xs font-semibold rounded-lg text-primary hover:bg-primary/10">📈 Prévisions {{ $mois->year }}</a>
+                <a
+                    href="{{ route('pilotage.forecast.index', ['annee' => $mois->year]) }}"
+                    class="px-3 py-1.5 border border-primary/40 bg-primary/5 text-xs font-semibold rounded-lg
+                        text-primary hover:bg-primary/10">📈 Prévisions {{ $mois->year }}</a>
             @enddroit
             <form method="GET" action="{{ route('pilotage.index') }}" class="flex items-end gap-2">
                 <label class="block">
                     <span class="sr-only">Mois</span>
                     <input type="month" name="mois" value="{{ $mois->format('Y-m') }}" max="{{ now()->format('Y-m') }}"
-                           class="rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs text-primary outline-none focus:border-primary">
+                           class="rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs text-primary
+                               outline-none focus:border-primary">
                 </label>
-                <button type="submit" class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">Afficher</button>
+                <button
+                    type="submit"
+                    class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark">Afficher</button>
             </form>
         </div>
     </div>
@@ -100,7 +110,11 @@
         <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div class="lg:col-span-2 bg-white border border-secondary/20 rounded-xl overflow-hidden">
                 <p class="px-4 pt-3 text-xs font-semibold text-primary">Revenu d’hébergement par canal de vente</p>
-                <x-table :rows="collect($h['canaux'])" empty="Aucun séjour sur la période." empty-icon="bed" caption="Revenu par canal de vente">
+                <x-table
+                    :rows="collect($h['canaux'])"
+                    empty="Aucun séjour sur la période."
+                    empty-icon="bed"
+                    caption="Revenu par canal de vente">
                     <x-slot:head>
                         <x-table.col>Canal</x-table.col>
                         <x-table.col align="right">Revenu</x-table.col>
@@ -180,7 +194,11 @@
         </div>
         <div class="mt-3 bg-white border border-secondary/20 rounded-xl overflow-hidden">
             <p class="px-4 pt-3 text-xs font-semibold text-primary">Encaissements par moyen de paiement</p>
-            <x-table :rows="collect($t['par_moyen'])" empty="Aucun encaissement sur la période." empty-icon="wallet" caption="Encaissements par moyen de paiement">
+            <x-table
+                :rows="collect($t['par_moyen'])"
+                empty="Aucun encaissement sur la période."
+                empty-icon="wallet"
+                caption="Encaissements par moyen de paiement">
                 <x-slot:head>
                     <x-table.col>Moyen</x-table.col>
                     <x-table.col align="right">Montant</x-table.col>
@@ -204,11 +222,13 @@
                     <p class="text-xs text-primary/60 mt-0.5">Confrontation des ventes d'exploitation, des encaissements en caisse et des écritures du grand livre.</p>
                 </div>
                 @if($rap['conforme'])
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100
+                        text-green-800">
                         ✓ Rapprochement conforme
                     </span>
                 @else
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100
+                        text-amber-800">
                         ⚠ Écart constaté
                     </span>
                 @endif
@@ -240,7 +260,11 @@
     @endif
         <div class="mt-3 bg-white border border-secondary/20 rounded-xl overflow-hidden">
             <p class="px-4 pt-3 text-xs font-semibold text-primary">Encaissements par moyen de paiement</p>
-            <x-table :rows="collect($t['par_moyen'])" empty="Aucun encaissement sur la période." empty-icon="wallet" caption="Encaissements par moyen de paiement">
+            <x-table
+                :rows="collect($t['par_moyen'])"
+                empty="Aucun encaissement sur la période."
+                empty-icon="wallet"
+                caption="Encaissements par moyen de paiement">
                 <x-slot:head>
                     <x-table.col>Moyen</x-table.col>
                     <x-table.col align="right">Montant</x-table.col>
@@ -257,10 +281,13 @@
 
     {{-- Budget du mois --}}
     <section aria-labelledby="titre-budget" class="bg-white border border-secondary/20 rounded-xl overflow-hidden">
-        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-secondary/15 bg-gray-50/60">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-secondary/15
+            bg-gray-50/60">
             <h2 id="titre-budget" class="text-sm font-semibold text-primary">Budget du mois, ramené aux jours écoulés</h2>
             @droit('pilotage.budget.voir')
-                <a href="{{ route('pilotage.budget.index', ['annee' => $mois->year]) }}" class="text-xs font-semibold text-primary underline">Budget {{ $mois->year }}</a>
+                <a
+                    href="{{ route('pilotage.budget.index', ['annee' => $mois->year]) }}"
+                    class="text-xs font-semibold text-primary underline">Budget {{ $mois->year }}</a>
             @enddroit
         </div>
         @if($tableau['budget'] === null)
@@ -306,23 +333,53 @@
         <h2 id="titre-seuils" class="text-sm font-semibold text-primary">Seuils des alertes de gestion</h2>
         <p class="text-xs text-primary/50 mt-0.5 mb-3">Chaque matin, les dérives du mois en cours sont signalées au contrôle de gestion, au responsable financier et à la direction — une fois par mois et par centre.</p>
         @if($peutRegler)
-            <form method="POST" action="{{ route('pilotage.seuils.update') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <form
+                method="POST"
+                action="{{ route('pilotage.seuils.update') }}"
+                class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="mois" value="{{ $mois->format('Y-m') }}">
                 <label class="block">
                     <span class="block text-xs text-primary/70 mb-1">Tolérance sur le budget (%)</span>
-                    <input type="number" name="tolerance_budget" min="0" max="100" required value="{{ $seuils['tolerance_budget'] }}" class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
+                    <input
+                        type="number"
+                        name="tolerance_budget"
+                        min="0"
+                        max="100"
+                        required
+                        value="{{ $seuils['tolerance_budget'] }}"
+                        class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none
+                            focus:border-primary">
                 </label>
                 <label class="block">
                     <span class="block text-xs text-primary/70 mb-1">Coût matière maximal (%)</span>
-                    <input type="number" name="seuil_cout_matiere" min="1" max="100" required value="{{ $seuils['seuil_cout_matiere'] }}" class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
+                    <input
+                        type="number"
+                        name="seuil_cout_matiere"
+                        min="1"
+                        max="100"
+                        required
+                        value="{{ $seuils['seuil_cout_matiere'] }}"
+                        class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none
+                            focus:border-primary">
                 </label>
                 <label class="block">
                     <span class="block text-xs text-primary/70 mb-1">Baisse de marge tolérée (points)</span>
-                    <input type="number" name="baisse_marge" min="1" max="100" required value="{{ $seuils['baisse_marge'] }}" class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
+                    <input
+                        type="number"
+                        name="baisse_marge"
+                        min="1"
+                        max="100"
+                        required
+                        value="{{ $seuils['baisse_marge'] }}"
+                        class="w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none
+                            focus:border-primary">
                 </label>
-                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Enregistrer les seuils</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg
+                        hover:bg-surface-dark">Enregistrer les seuils</button>
             </form>
         @else
             <p class="text-sm text-primary/70">Tolérance sur le budget : {{ $seuils['tolerance_budget'] }} % · coût matière maximal : {{ $seuils['seuil_cout_matiere'] }} % · baisse de marge tolérée : {{ $seuils['baisse_marge'] }} points.</p>

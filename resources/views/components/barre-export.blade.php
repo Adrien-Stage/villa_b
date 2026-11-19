@@ -22,7 +22,8 @@
         <a href="{{ route($route, array_merge($filtres, ['format' => $cle])) }}"
            @if($cle === \App\Services\DocumentExporter::FORMAT_IMPRESSION) target="_blank" rel="noopener" @endif
            title="{{ $libelle }}"
-           class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary/70 transition-colors hover:bg-accent/30 hover:text-primary">
+           class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary/70
+               transition-colors hover:bg-accent/30 hover:text-primary">
             <i data-lucide="{{ $icones[$cle] ?? 'download' }}" class="h-3.5 w-3.5"></i>
             <span class="hidden sm:inline">{{ $libelle }}</span>
         </a>

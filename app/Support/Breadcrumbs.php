@@ -135,9 +135,11 @@ class Breadcrumbs
     {
         $urls = [
             'economat'   => Route::has('economat.index') ? route('economat.index') : null,
-            'hotel'      => Route::has('rooms.index') ? route('rooms.index') : (Route::has('bookings.index') ? route('bookings.index') : null),
+            'hotel'      => Route::has('rooms.index') ? route('rooms.index') : (Route::has('bookings.index') ? route(
+                'bookings.index') : null),
             'restaurant' => Route::has('restaurant.orders.index') ? route('restaurant.orders.index') : null,
-            'achats'     => Route::has('achats.index') ? route('achats.index') : (Route::has('economat.purchase_requests.index') ? route('economat.purchase_requests.index') : null),
+            'achats'     => Route::has('achats.index') ? route('achats.index') : (
+                Route::has('economat.purchase_requests.index') ? route('economat.purchase_requests.index') : null),
             'accounting' => Route::has('accounting.index') ? route('accounting.index') : null,
             'technique'  => Route::has('technique.index') ? route('technique.index') : null,
             'pilotage'   => Route::has('pilotage.index') ? route('pilotage.index') : null,
@@ -208,7 +210,8 @@ class Breadcrumbs
 
         if ($matchedResource && $matchedLabel) {
             // Déterminer l'URL de la liste de cette ressource si elle existe
-            $indexRoute = Route::has($matchedResource . '.index') ? route($matchedResource . '.index') : (Route::has($matchedResource) ? route($matchedResource) : null);
+            $indexRoute = Route::has($matchedResource . '.index') ? route($matchedResource . '.index') : (
+                Route::has($matchedResource) ? route($matchedResource) : null);
 
             // Si le label correspond déjà au nom du groupe, on n'ajoute pas de redondance
             $isSameAsGroup = $group && mb_strtolower($group['title']) === mb_strtolower($matchedLabel);

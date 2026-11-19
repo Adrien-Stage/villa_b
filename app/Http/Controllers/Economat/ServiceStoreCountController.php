@@ -34,7 +34,8 @@ class ServiceStoreCountController extends Controller
 
     public function show(ServiceStoreCount $count): View
     {
-        $count->load('store', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy', 'lines.item.category');
+        $count->load('store', 'openedBy', 'submittedBy', 'closedBy', 'validatedBy', 'rejectedBy', 'cancelledBy',
+            'lines.item.category');
         $droits = app(PermissionResolver::class);
         $user = auth()->user();
 
@@ -45,7 +46,8 @@ class ServiceStoreCountController extends Controller
             'canSubmit' => $droits->allows($user, 'economat.stores.counts.submit'),
             'canClose'  => $droits->allows($user, 'economat.stores.counts.close'),
             'canReject' => $droits->allows($user, 'economat.stores.counts.reject'),
-            'canCancel' => $droits->allows($user, 'economat.stores.counts.cancel') && (!$count->isClosed() || ($droits->allows($user, 'economat.stores.counts.close') && $count->canBeCancelledByRaf())),
+            'canCancel' => $droits->allows($user, 'economat.stores.counts.cancel') && (!$count->isClosed() || ($droits
+                ->allows($user, 'economat.stores.counts.close') && $count->canBeCancelledByRaf())),
         ]);
     }
 
@@ -108,7 +110,8 @@ class ServiceStoreCountController extends Controller
 
         $consommation = number_format($count->consumptionValue() / 100, 0, ',', ' ');
 
-        return back()->with('success', "Inventaire {$count->reference} validé par le RAF. Consommation constatée : {$consommation} FCFA.");
+        return back()->with('success',
+            "Inventaire {$count->reference} validé par le RAF. Consommation constatée : {$consommation} FCFA.");
     }
 
     public function cancel(Request $request, ServiceStoreCount $count): RedirectResponse

@@ -29,7 +29,8 @@ class EtatStocks extends Edition
     public function filtres(): array
     {
         return [
-            Filtre::choix('categorie', 'Catégorie', fn () => StockCategory::query()->orderBy('name')->pluck('name', 'id')
+            Filtre::choix('categorie', 'Catégorie', fn () => StockCategory::query()->orderBy('name')->pluck('name',
+                'id')
                 ->mapWithKeys(fn ($n, $id) => [(string) $id => $n])->all(), 'Toutes les catégories'),
         ];
     }
@@ -50,7 +51,8 @@ class EtatStocks extends Edition
                 'seuil' => (float) $i->min_stock,
                 'cmup' => (int) $i->average_cost,
                 'valeur' => (int) round(max(0, (float) $i->current_stock) * (int) $i->average_cost),
-                'alerte' => (float) $i->current_stock <= (float) $i->min_stock && (float) $i->min_stock > 0 ? 'Sous le seuil' : '',
+                'alerte' => (float) $i->current_stock <= (float) $i->min_stock && (float) $i
+                    ->min_stock > 0 ? 'Sous le seuil' : '',
             ])
             ->values();
 

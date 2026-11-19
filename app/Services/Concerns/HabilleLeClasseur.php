@@ -193,7 +193,8 @@ trait HabilleLeClasseur
         }
     }
 
-    protected function bandeau(Worksheet $ws, string $plage, string $texte, string $fond, string $encre, float $taille, string $align, float $hauteur): void
+    protected function bandeau(Worksheet $ws, string $plage, string $texte, string $fond, string $encre, float $taille,
+        string $align, float $hauteur): void
     {
         $premiere = explode(':', $plage)[0];
         $ligne = (int) filter_var($premiere, FILTER_SANITIZE_NUMBER_INT);
@@ -211,11 +212,13 @@ trait HabilleLeClasseur
     /** Bandeau de section, à la couleur secondaire de l'établissement. */
     protected function section(Worksheet $ws, string $plage, string $texte): void
     {
-        $this->bandeau($ws, $plage, $texte, $this->c['section'], $this->c['section_encre'], 11, Alignment::HORIZONTAL_LEFT, 24);
+        $this->bandeau($ws, $plage, $texte, $this->c['section'], $this->c['section_encre'], 11,
+            Alignment::HORIZONTAL_LEFT, 24);
     }
 
     /** @param array<int,string> $colonnes */
-    protected function enteteTableau(Worksheet $ws, int $ligne, array $colonnes, float $hauteur = 24, bool $retour = false): void
+    protected function enteteTableau(Worksheet $ws, int $ligne, array $colonnes, float $hauteur = 24,
+        bool $retour = false): void
     {
         $ws->getRowDimension($ligne)->setRowHeight($hauteur);
 

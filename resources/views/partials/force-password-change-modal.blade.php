@@ -3,12 +3,20 @@
     $tenant = Auth::user()->tenant ?? \App\Models\Tenant::first();
     $tenantName = $tenant?->name ?? 'Établissement';
 @endphp
-<div id="force-password-change-modal" class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-md p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-password-title">
-    <div class="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-2xl border border-secondary/30 relative animate-in fade-in zoom-in duration-200">
+<div
+    id="force-password-change-modal"
+    class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-md p-4
+        sm:p-6"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-password-title">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-2xl border border-secondary/30 relative
+        animate-in fade-in zoom-in duration-200">
         
         <!-- Header -->
         <div class="text-center sm:text-left">
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-accent/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-accent/20 text-primary text-xs
+                font-semibold uppercase tracking-wider mb-3">
                 <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -21,7 +29,9 @@
         </div>
 
         @if($errors->has('password'))
-            <div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2" role="alert">
+            <div
+                class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2"
+                role="alert">
                 <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -41,10 +51,13 @@
                 <div class="relative mt-1.5">
                     <input id="modal-password" type="password" name="password" required minlength="8" autocomplete="new-password" autofocus
                            placeholder="Au moins 8 caractères"
-                           class="w-full rounded-xl border border-secondary/30 px-3.5 py-2.5 pr-10 text-sm text-primary placeholder:text-primary/30 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition">
+                           class="w-full rounded-xl border border-secondary/30 px-3.5 py-2.5 pr-10 text-sm text-primary
+                               placeholder:text-primary/30 outline-none focus:border-secondary focus:ring-2
+                               focus:ring-secondary/20 transition">
                     <button type="button"
                             onclick="togglePasswordVisibility('modal-password', this)"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary transition focus:outline-none cursor-pointer"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary
+                                transition focus:outline-none cursor-pointer"
                             title="Afficher ou masquer le mot de passe"
                             aria-label="Afficher ou masquer le mot de passe">
                         <svg class="h-4 w-4 icon-eye" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -66,10 +79,13 @@
                 <div class="relative mt-1.5">
                     <input id="modal-password-confirm" type="password" name="password_confirmation" required minlength="8" autocomplete="new-password"
                            placeholder="Retapez le mot de passe"
-                           class="w-full rounded-xl border border-secondary/30 px-3.5 py-2.5 pr-10 text-sm text-primary placeholder:text-primary/30 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition">
+                           class="w-full rounded-xl border border-secondary/30 px-3.5 py-2.5 pr-10 text-sm text-primary
+                               placeholder:text-primary/30 outline-none focus:border-secondary focus:ring-2
+                               focus:ring-secondary/20 transition">
                     <button type="button"
                             onclick="togglePasswordVisibility('modal-password-confirm', this)"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary transition focus:outline-none cursor-pointer"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary
+                                transition focus:outline-none cursor-pointer"
                             title="Afficher ou masquer le mot de passe"
                             aria-label="Afficher ou masquer le mot de passe">
                         <svg class="h-4 w-4 icon-eye" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -84,7 +100,10 @@
             </div>
 
             <div class="pt-2">
-                <button type="submit" class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-primary/95 focus:ring-2 focus:ring-primary/20 transition">
+                <button
+                    type="submit"
+                    class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md
+                        hover:bg-primary/95 focus:ring-2 focus:ring-primary/20 transition">
                     Enregistrer et continuer
                 </button>
             </div>

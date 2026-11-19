@@ -32,7 +32,8 @@ class FicheFournisseur
             'supplier' => $supplier,
             // Les coordonnées bancaires servent à payer : à qui tient le
             // fournisseur ou les comptes, pas à tout lecteur de la fiche.
-            'voitBanque' => $droits->allows($user, 'economat.suppliers.modifier') || $droits->allows($user, 'accounting.voir'),
+            'voitBanque' => $droits->allows($user, 'economat.suppliers.modifier') || $droits->allows($user,
+                'accounting.voir'),
             'voitBons' => $droits->allows($user, 'economat.orders.voir'),
             'voitReceptions' => $droits->allows($user, 'economat.receipts.voir'),
             'catalogue' => self::catalogue($supplier),
@@ -72,7 +73,8 @@ class FicheFournisseur
                 'prix' => $prix,
                 'date' => $item->pivot->priced_at ? \Illuminate\Support\Carbon::parse($item->pivot->priced_at) : null,
                 'habituel' => (int) $item->supplier_id === (int) $supplier->id,
-                'moinsCher' => $prix > 0 && $offre !== null && (int) $offre->offres > 1 && $prix <= (int) $offre->meilleur,
+                'moinsCher' => $prix > 0 && $offre !== null && (int) $offre->offres > 1 && $prix <= (int) $offre
+                    ->meilleur,
                 'autres' => max(0, (int) ($offre->offres ?? 0) - ($prix > 0 ? 1 : 0)),
             ];
         });
@@ -97,7 +99,8 @@ class FicheFournisseur
 
         return [
             'livraisons' => (clone $recues)->count(),
-            'montant_12_mois' => (int) (clone $recues)->where('received_at', '>=', now()->subYear()->startOfDay())->sum('total_amount'),
+            'montant_12_mois' => (int) (clone $recues)->where('received_at', '>=', now()->subYear()->startOfDay())
+                ->sum('total_amount'),
             'montant_total' => (int) (clone $recues)->sum('total_amount'),
             'derniere' => (clone $recues)->max('received_at'),
             'articles' => DB::table('stock_item_supplier')->where('supplier_id', $supplier->id)->count(),

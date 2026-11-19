@@ -52,7 +52,9 @@
      @if($onSelect) @article-choisi="{{ $onSelect }}" @endif
      {{ $attributes->merge(['class' => 'relative']) }}>
     <div class="relative">
-        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center {{ $size === 'sm' ? 'pl-2' : 'pl-3' }} text-primary/35" aria-hidden="true">
+        <span
+            class="pointer-events-none absolute inset-y-0 left-0 flex items-center {{ $size === 'sm' ? 'pl-2' : 'pl-3' }} text-primary/35"
+            aria-hidden="true">
             <svg class="{{ $size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
         </span>
         <input type="text" x-ref="saisie" x-model="saisie" autocomplete="off" spellcheck="false"

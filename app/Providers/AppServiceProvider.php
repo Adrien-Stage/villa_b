@@ -74,7 +74,8 @@ class AppServiceProvider extends ServiceProvider
             AuditLog::record(
                 null,
                 'failed_login',
-                'Tentative de connexion échouée pour l\'identifiant : ' . ($event->credentials['email'] ?? ($event->credentials['login'] ?? 'inconnu')),
+                'Tentative de connexion échouée pour l\'identifiant : ' . ($event->credentials['email'] ?? ($event
+                    ->credentials['login'] ?? 'inconnu')),
                 'auth',
                 ['credentials' => array_keys($event->credentials)]
             );

@@ -39,7 +39,8 @@ class Creances extends Edition
         }
         foreach ($creances['restaurant']['items'] as $c) {
             $lignes->push([
-                'origine' => 'Restaurant', 'piece' => 'Note #' . $c->id, 'client' => $c->customer_name ?: ($c->table_number ? 'Table ' . $c->table_number : '—'),
+                'origine' => 'Restaurant', 'piece' => 'Note #' . $c->id, 'client' => $c->customer_name ?: ($c
+                    ->table_number ? 'Table ' . $c->table_number : '—'),
                 'date' => $c->placed_at, 'statut' => 'Impayée', 'montant' => (int) $c->total_amount,
             ]);
         }

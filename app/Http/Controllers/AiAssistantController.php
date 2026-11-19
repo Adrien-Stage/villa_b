@@ -63,7 +63,8 @@ class AiAssistantController extends Controller
             ];
 
             try {
-                $response = Http::withToken($apiKey)->timeout(45)->post('https://api.mistral.ai/v1/chat/completions', $payload);
+                $response = Http::withToken($apiKey)->timeout(45)->post('https://api.mistral.ai/v1/chat/completions',
+                    $payload);
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Erreur de connexion: ' . $e->getMessage()], 500);
             }

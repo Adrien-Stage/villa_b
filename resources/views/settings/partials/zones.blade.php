@@ -41,7 +41,8 @@
                                 <template x-if="modeEdition">
                                     <input type="text" form="form-zone-{{ $zone->id }}" name="name" value="{{ $zone->name }}" required maxlength="60"
                                            aria-label="Nom de la zone"
-                                           class="w-56 rounded-md border border-secondary/30 px-2 py-1 text-xs text-primary outline-none focus:border-primary">
+                                           class="w-56 rounded-md border border-secondary/30 px-2 py-1 text-xs
+                                               text-primary outline-none focus:border-primary">
                                 </template>
                             </td>
 
@@ -56,7 +57,11 @@
                                 </template>
                                 <template x-if="modeEdition">
                                     <label class="inline-flex items-center gap-1.5 text-xs text-primary cursor-pointer">
-                                        <input type="hidden" form="form-zone-{{ $zone->id }}" name="is_active" value="0">
+                                        <input
+                                            type="hidden"
+                                            form="form-zone-{{ $zone->id }}"
+                                            name="is_active"
+                                            value="0">
                                         <input type="checkbox" form="form-zone-{{ $zone->id }}" name="is_active" value="1" @checked($zone->is_active) class="rounded border-secondary/30">
                                         <span>En service</span>
                                     </label>
@@ -65,7 +70,11 @@
 
                             <td class="px-4 py-3 text-right">
                                 @if($peutModifierZone)
-                                    <form id="form-zone-{{ $zone->id }}" method="POST" action="{{ route('economat.zones.update', $zone) }}" class="hidden">
+                                    <form
+                                        id="form-zone-{{ $zone->id }}"
+                                        method="POST"
+                                        action="{{ route('economat.zones.update', $zone) }}"
+                                        class="hidden">
                                         @csrf @method('PUT')
                                     </form>
                                 @endif
@@ -73,7 +82,9 @@
                                 @php $supprimable = $peutSupprimerZone && $zone->items_count === 0; @endphp
                                 @if($peutModifierZone || $supprimable)
                                     <template x-if="!modeEdition">
-                                        <x-menu-actions :label="'Actions pour la zone '.$zone->name" class="inline-block">
+                                        <x-menu-actions
+                                            :label="'Actions pour la zone '.$zone->name"
+                                            class="inline-block">
                                             @if($peutModifierZone)
                                                 <x-table.action icon="pencil" x-on:click="modeEdition = true">Modifier</x-table.action>
                                             @endif
@@ -87,10 +98,18 @@
                                 @if($peutModifierZone)
                                     <template x-if="modeEdition">
                                         <div class="flex items-center justify-end gap-1.5">
-                                            <button type="submit" form="form-zone-{{ $zone->id }}" class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-surface-dark">
+                                            <button
+                                                type="submit"
+                                                form="form-zone-{{ $zone->id }}"
+                                                class="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-white
+                                                    hover:bg-surface-dark">
                                                 Enregistrer
                                             </button>
-                                            <button type="button" @click="modeEdition = false" class="rounded border border-secondary/30 px-2 py-1 text-xs text-primary/70 hover:bg-gray-100">
+                                            <button
+                                                type="button"
+                                                @click="modeEdition = false"
+                                                class="rounded border border-secondary/30 px-2 py-1 text-xs
+                                                    text-primary/70 hover:bg-gray-100">
                                                 Annuler
                                             </button>
                                         </div>
@@ -109,7 +128,9 @@
     </div>
 
     @droit('economat.zones.creer')
-        <form data-reglages method="POST" action="{{ route('economat.zones.store') }}" class="mt-6 rounded-xl border border-secondary/20 bg-white p-5 shadow-xs">
+        <form data-reglages method="POST"
+            action="{{ route('economat.zones.store') }}"
+            class="mt-6 rounded-xl border border-secondary/20 bg-white p-5 shadow-xs">
             @csrf
             <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="warehouse" class="w-4 h-4 text-primary"></i> Ajouter une zone de rangement
@@ -118,9 +139,13 @@
                 <div class="grow min-w-56">
                     <label class="block text-xs font-medium text-primary/70 mb-1" for="ajout-zone-nom">Nom de la zone <span class="text-red-500">*</span></label>
                     <input id="ajout-zone-nom" type="text" name="name" required maxlength="60" placeholder="Ex: Chambre froide 1, Cave, Épicerie"
-                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary outline-none focus:border-primary">
+                           class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs text-primary
+                               outline-none focus:border-primary">
                 </div>
-                <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark shadow-sm">
+                <button
+                    type="submit"
+                    class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark
+                        shadow-sm">
                     Ajouter la zone
                 </button>
             </div>

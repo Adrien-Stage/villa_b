@@ -28,29 +28,40 @@
                    @click.away="showDropdown = false"
                    autocomplete="off"
                    {{ $required ? 'required' : '' }}
-                   class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                   class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary
+                       focus:border-transparent"
                    placeholder="{{ $placeholder }}">
         </div>
 
-        <div x-show="showDropdown && search.length > 0" class="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200" style="display: none;">
-            <ul class="max-h-60 overflow-auto rounded-md py-1 text-base leading-6 shadow-xs focus:outline-none sm:text-sm sm:leading-5">
+        <div
+            x-show="showDropdown && search.length > 0"
+            class="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200"
+            style="display: none;">
+            <ul class="max-h-60 overflow-auto rounded-md py-1 text-base leading-6 shadow-xs focus:outline-none
+                sm:text-sm sm:leading-5">
                 <template x-for="c in filteredCustomers" :key="c.id">
                     <li @click="selectCustomer(c)"
-                        class="cursor-pointer hover:bg-gray-100 select-none relative py-2 pl-3 pr-9 flex items-center gap-3">
+                        class="cursor-pointer hover:bg-gray-100 select-none relative py-2 pl-3 pr-9 flex items-center
+                            gap-3">
                         <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <span class="text-white text-xs font-semibold" x-text="c.first_name.charAt(0) + c.last_name.charAt(0)"></span>
+                            <span
+                                class="text-white text-xs font-semibold"
+                                x-text="c.first_name.charAt(0) + c.last_name.charAt(0)"></span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-800" x-text="c.first_name + ' ' + c.last_name"></p>
                             <p class="text-xs text-gray-500" x-text="c.phone || c.email || '—'"></p>
                         </div>
                         @if($showLoyalty)
-                            <span class="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-primary/60 capitalize" x-text="c.loyalty_level"></span>
+                            <span
+                                class="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-primary/60 capitalize"
+                                x-text="c.loyalty_level"></span>
                         @endif
                     </li>
                 </template>
                 <li x-show="filteredCustomers.length === 0"
-                    class="cursor-pointer hover:bg-gray-100 text-primary font-medium select-none relative py-2 px-3 flex justify-between items-center"
+                    class="cursor-pointer hover:bg-gray-100 text-primary font-medium select-none relative py-2 px-3
+                        flex justify-between items-center"
                     @click="startCreatingNew()">
                     <span>Client introuvable</span>
                     <span class="text-primary underline text-sm">
@@ -62,17 +73,30 @@
     </div>
 
     {{-- Customer selected display --}}
-    <div x-show="selectedCustomer && !isCreatingNew" class="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg" style="display: none;">
+    <div
+        x-show="selectedCustomer && !isCreatingNew"
+        class="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg"
+        style="display: none;">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <span class="text-white text-xs font-semibold" x-text="selectedCustomer ? (selectedCustomer.first_name.charAt(0) + selectedCustomer.last_name.charAt(0)) : ''"></span>
+                <span
+                    class="text-white text-xs font-semibold"
+                    x-text="selectedCustomer ? (selectedCustomer.first_name.charAt(0) + selectedCustomer.last_name.charAt(0)) : ''"></span>
             </div>
             <div>
-                <p class="text-sm font-medium text-primary" x-text="selectedCustomer ? (selectedCustomer.first_name + ' ' + selectedCustomer.last_name) : ''"></p>
-                <p class="text-xs text-primary/50" x-text="selectedCustomer ? (selectedCustomer.phone || selectedCustomer.email || '—') : ''"></p>
+                <p
+                    class="text-sm font-medium text-primary"
+                    x-text="selectedCustomer ? (selectedCustomer.first_name + ' ' + selectedCustomer.last_name) : ''"></p>
+                <p
+                    class="text-xs text-primary/50"
+                    x-text="selectedCustomer ? (selectedCustomer.phone || selectedCustomer.email || '—') : ''"></p>
             </div>
         </div>
-        <button type="button" @click="clearCustomer()" class="text-gray-400 hover:text-red-500 focus:outline-none" title="Changer de client">
+        <button
+            type="button"
+            @click="clearCustomer()"
+            class="text-gray-400 hover:text-red-500 focus:outline-none"
+            title="Changer de client">
             <i data-lucide="x-circle" class="w-5 h-5"></i>
         </button>
     </div>
@@ -85,24 +109,30 @@
 
     {{-- Create new customer inline --}}
     <div x-show="isCreatingNew" class="space-y-4" style="display: none;">
-        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4">
+        <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100
+            mb-4">
             <div class="flex items-center">
                 <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
                 <span class="font-medium">Créer un nouveau client</span>
             </div>
-            <button type="button" @click="cancelCreatingNew()" class="text-sm font-medium hover:underline focus:outline-none">Annuler</button>
+            <button
+                type="button"
+                @click="cancelCreatingNew()"
+                class="text-sm font-medium hover:underline focus:outline-none">Annuler</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-primary mb-2">Prénom <span class="text-red-500">*</span></label>
                 <input type="text" name="customer_first_name" x-model="customerFirstName" required
-                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary
+                           focus:border-transparent">
             </div>
             <div>
                 <label class="block text-sm font-medium text-primary mb-2">Nom <span class="text-red-500">*</span></label>
                 <input type="text" name="customer_last_name" x-model="customerLastName" required
-                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary
+                           focus:border-transparent">
             </div>
         </div>
 
@@ -110,12 +140,14 @@
             <div>
                 <label class="block text-sm font-medium text-primary mb-2">Email</label>
                 <input type="email" name="customer_email"
-                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary
+                           focus:border-transparent">
             </div>
             <div>
                 <label class="block text-sm font-medium text-primary mb-2">Téléphone</label>
                 <input type="text" name="customer_phone" x-model="customerPhone"
-                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary
+                           focus:border-transparent">
             </div>
         </div>
     </div>

@@ -41,7 +41,8 @@ class StockCountService
         }
 
         return DB::transaction(function () use ($data, $user, $department) {
-            $countDate = !empty($data['count_date']) ? Carbon::parse($data['count_date'])->toDateString() : now()->toDateString();
+            $countDate = !empty($data['count_date']) ? Carbon::parse($data['count_date'])->toDateString() : now()
+                ->toDateString();
             $categoryId = !empty($data['stock_category_id']) ? (int) $data['stock_category_id'] : null;
             // Une zone de rangement : la cave, une chambre froide… comptée à part.
             $zoneId = !empty($data['storage_zone_id']) ? (int) $data['storage_zone_id'] : null;
@@ -385,7 +386,8 @@ class StockCountService
                         $this->stockService->adjust(
                             item: $line->item,
                             countedQuantity: max(0, (float) $line->item->current_stock - $variance),
-                            reason: "Contre-passation annulation inventaire {$stockCount->reference} par RAF" . ($reason ? " ({$reason})" : ''),
+                            reason: "Contre-passation annulation inventaire {$stockCount->reference} par RAF"
+                                . ($reason ? " ({$reason})" : ''),
                             sourceType: StockMovement::SOURCE_STOCK_COUNT,
                             sourceId: $stockCount->id,
                         );

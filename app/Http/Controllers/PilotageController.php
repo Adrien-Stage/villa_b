@@ -88,7 +88,8 @@ class PilotageController extends Controller
                 ->withErrors(['budget' => $e->getMessage()]);
         }
 
-        return redirect()->route('pilotage.budget.index', ['annee' => $annee])->with('success', "Budget {$annee} enregistré.");
+        return redirect()->route('pilotage.budget.index', ['annee' => $annee])->with('success',
+            "Budget {$annee} enregistré.");
     }
 
     public function validateBudget(Request $request, int $annee): RedirectResponse
@@ -189,7 +190,8 @@ class PilotageController extends Controller
 
         AuditLog::record(Auth::id(), 'pilotage', "Seuils d'alerte de gestion : tolérance budget {$seuils['tolerance_budget']} %, coût matière {$seuils['seuil_cout_matiere']} %, baisse de marge {$seuils['baisse_marge']} points", 'pilotage');
 
-        return redirect()->route('pilotage.index', ['mois' => $request->input('mois')])->with('success', "Seuils d'alerte enregistrés.");
+        return redirect()->route('pilotage.index', ['mois' => $request->input('mois')])->with('success',
+            "Seuils d'alerte enregistrés.");
     }
 
     private function mois(?string $valeur): CarbonImmutable

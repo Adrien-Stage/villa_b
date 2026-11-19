@@ -1,5 +1,9 @@
 {{-- Tableau de demandes d'intervention. Paramètres : $demandes, $vide, $prendre (bouton « Prendre »). --}}
-<x-table :rows="$demandes" :empty="($vide ?? null) ?: 'Aucune demande.'" empty-icon="wrench" caption="Demandes d'intervention">
+<x-table
+    :rows="$demandes"
+    :empty="($vide ?? null) ?: 'Aucune demande.'"
+    empty-icon="wrench"
+    caption="Demandes d'intervention">
     <x-slot:head>
         <x-table.col>Demande</x-table.col>
         <x-table.col>Lieu</x-table.col>
@@ -12,7 +16,9 @@
     @foreach($demandes as $demande)
         <x-table.row>
             <x-table.cell>
-                <a href="{{ route('technique.demandes.show', $demande) }}" class="font-medium text-primary hover:underline">{{ $demande->title }}</a>
+                <a
+                    href="{{ route('technique.demandes.show', $demande) }}"
+                    class="font-medium text-primary hover:underline">{{ $demande->title }}</a>
                 <p class="text-[11px] text-primary/50">
                     {{ $demande->reference }} · {{ $demande->created_at->format('d/m H:i') }}
                     @if($demande->source === \App\Models\MaintenanceRequest::SOURCE_HOUSEKEEPING) · housekeeping @endif

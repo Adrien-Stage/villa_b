@@ -6,8 +6,12 @@
 @php
     $chambre = old('room_id', $choisie);
 @endphp
-<div class="max-w-2xl mx-auto" x-data="{ chambre: @js((string) ($chambre ?? '')), occupees: @js($rooms->filter(fn ($r) => $r->status === \App\Enums\RoomStatus::OCCUPIED)->pluck('id')->map(fn ($id) => (string) $id)->values()) }">
-    <a href="{{ route('technique.demandes.index') }}" class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
+<div
+    class="max-w-2xl mx-auto"
+    x-data="{ chambre: @js((string) ($chambre ?? '')), occupees: @js($rooms->filter(fn ($r) => $r->status === \App\Enums\RoomStatus::OCCUPIED)->pluck('id')->map(fn ($id) => (string) $id)->values()) }">
+    <a
+        href="{{ route('technique.demandes.index') }}"
+        class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
         <i data-lucide="arrow-left" class="w-3.5 h-3.5" aria-hidden="true"></i> Demandes d'intervention
     </a>
     <h1 class="mt-1 text-xl font-heading font-semibold text-primary">Demander une intervention</h1>
@@ -15,7 +19,10 @@
 
     @include('economat.partials.flash')
 
-    <form method="POST" action="{{ route('technique.demandes.store') }}" class="bg-white rounded-xl border border-secondary/20 p-5 space-y-4">
+    <form
+        method="POST"
+        action="{{ route('technique.demandes.store') }}"
+        class="bg-white rounded-xl border border-secondary/20 p-5 space-y-4">
         @csrf
 
         <label class="block">
@@ -28,7 +35,10 @@
         <div class="grid gap-4 sm:grid-cols-2">
             <label class="block">
                 <span class="text-sm font-medium text-primary">Chambre</span>
-                <select name="room_id" x-model="chambre" class="mt-1 w-full rounded-lg border border-secondary/30 text-sm px-3 py-2">
+                <select
+                    name="room_id"
+                    x-model="chambre"
+                    class="mt-1 w-full rounded-lg border border-secondary/30 text-sm px-3 py-2">
                     <option value="">Pas une chambre</option>
                     @foreach($rooms as $room)
                         <option value="{{ $room->id }}" @selected((string) $chambre === (string) $room->id)>Chambre {{ $room->number }}</option>
@@ -88,8 +98,13 @@
         </label>
 
         <div class="flex justify-end gap-2 pt-2">
-            <a href="{{ route('technique.demandes.index') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-primary/70 hover:text-primary">Annuler</a>
-            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+            <a
+                href="{{ route('technique.demandes.index') }}"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-primary/70 hover:text-primary">Annuler</a>
+            <button
+                type="submit"
+                class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-semibold rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="send" class="w-4 h-4" aria-hidden="true"></i> Envoyer au service technique
             </button>
         </div>

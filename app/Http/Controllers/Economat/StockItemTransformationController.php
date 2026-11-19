@@ -45,7 +45,8 @@ class StockItemTransformationController extends Controller
             'item'       => $item,
             'etat'       => $conditionnements->etatDe($item),
             // Une unité mise hors service depuis reste proposée là où elle sert.
-            'unites'     => collect(StockUnit::choix())->merge($item->packagings->pluck('name'))->unique()->values()->all(),
+            'unites'     => collect(StockUnit::choix())->merge($item->packagings->pluck('name'))->unique()->values()
+                ->all(),
             'historique' => $item->movements()->with('user')
                 ->where('source_type', StockMovement::SOURCE_PACKAGING)
                 ->latest('occurred_at')->latest('id')->take(10)->get(),
@@ -61,7 +62,8 @@ class StockItemTransformationController extends Controller
             'niveaux.*.fermes'     => ['nullable', 'integer', 'min:0', 'max:10000000'],
         ]);
 
-        $niveaux = array_values(array_filter($data['niveaux'] ?? [], fn ($n) => trim((string) ($n['nom'] ?? '')) !== ''));
+        $niveaux = array_values(array_filter($data['niveaux'] ?? [],
+            fn ($n) => trim((string) ($n['nom'] ?? '')) !== ''));
 
         try {
             $mouvement = $stock->definirConditionnements($item, $niveaux);
@@ -103,11 +105,13 @@ class StockItemTransformationController extends Controller
         }
 
         AuditLog::record(Auth::id(), 'decoupe', "Découpe {$decoupe->number} — "
-            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " de {$item->name} vers {$decoupe->restaurant->name}",
+            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit)
+                . " de {$item->name} vers {$decoupe->restaurant->name}",
             'economat', ['stock_cut_id' => $decoupe->id]);
 
         $this->prevenirLesAchats($item, 'découpe ' . $decoupe->number . ' — '
-            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit) . " vers {$decoupe->restaurant->name}",
+            . \App\Support\Conditionnement::libelle((float) $decoupe->quantity, $item->unit)
+                . " vers {$decoupe->restaurant->name}",
             route('economat.cuts.show', $decoupe, false));
 
         return redirect()->route('economat.cuts.show', $decoupe)
@@ -125,7 +129,8 @@ class StockItemTransformationController extends Controller
         ]);
 
         try {
-            $mouvement = $stock->ouvrirConditionnement($item, $data['niveau'], (int) $data['nombre'], $data['motif'] ?? null);
+            $mouvement = $stock->ouvrirConditionnement($item, $data['niveau'], (int) $data['nombre'],
+                $data['motif'] ?? null);
         } catch (\InvalidArgumentException|\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -134,7 +139,8 @@ class StockItemTransformationController extends Controller
             route('economat.items.transformation.show', $item, false));
 
         return redirect()->route('economat.items.transformation.show', $item)
-            ->with('success', ucfirst($mouvement->ouvertures() ?? 'Ouverture enregistrée') . '. Stock : ' . $item->fresh()->stockDecompose() . '.');
+            ->with('success', ucfirst($mouvement->ouvertures() ?? 'Ouverture enregistrée') . '. Stock : ' . $item
+                ->fresh()->stockDecompose() . '.');
     }
 
     /** Le service achats, qui tient le catalogue, apprend chaque transformation. */

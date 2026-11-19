@@ -39,7 +39,8 @@ class Arrivees extends Edition
             ->whereIn('status', [BookingStatus::PENDING, BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN])
             ->orderBy('check_in_time')
             ->get()
-            ->map(fn (Booking $b) => self::ligneDeSejour($b) + ['heure' => $b->check_in_time ? substr((string) $b->check_in_time, 0, 5) : '—']);
+            ->map(fn (Booking $b) => self::ligneDeSejour($b) + ['heure' => $b->check_in_time ? substr((string) $b
+                ->check_in_time, 0, 5) : '—']);
 
         return $this->base($valeurs, $user)
             ->colonnes([

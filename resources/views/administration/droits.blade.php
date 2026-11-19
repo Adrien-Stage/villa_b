@@ -101,7 +101,8 @@
 
 {{-- ==================== MATRICE ==================== --}}
 @if($onglet === 'matrice')
-    <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-white px-4 py-3 text-[11px] text-primary/70 shadow-sm">
+    <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-white px-4 py-3 text-[11px]
+        text-primary/70 shadow-sm">
         <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-3 rounded border-2 border-amber-400"></span> Écart de l'hôtel</span>
         <span class="inline-flex items-center gap-1.5"><span class="rounded bg-red-100 px-1 font-bold text-red-700">C</span> Refus posé par la console</span>
         <span class="inline-flex items-center gap-1.5"><span class="rounded bg-emerald-100 px-1 font-bold text-emerald-700">C</span> Autorisation posée par la console</span>
@@ -127,7 +128,8 @@
                     </optgroup>
                 @endforeach
             </select>
-            <label class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs text-primary/70">
+            <label class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs
+                text-primary/70">
                 <input type="checkbox" id="filtre-ecarts" class="rounded border-secondary/40"> Écarts seulement
             </label>
         </div>
@@ -152,12 +154,15 @@
                     <table class="w-full border-separate border-spacing-0 text-xs">
                         <thead>
                             <tr>
-                                <th class="sticky left-0 top-0 z-30 min-w-[15rem] border-b border-r border-secondary/20 bg-white px-3 py-2 text-left font-semibold text-primary/50">Droit</th>
+                                <th class="sticky left-0 top-0 z-30 min-w-[15rem] border-b border-r border-secondary/20
+                                    bg-white px-3 py-2 text-left font-semibold text-primary/50">Droit</th>
                                 @foreach($colonnes as $index => $role)
                                     @php $debut = $index === 0 || $groupeDe($colonnes[$index - 1]) !== $groupeDe($role); @endphp
                                     <th scope="col" data-colonne="{{ $role['slug'] }}" title="{{ $role['description'] }}"
                                         class="sticky top-0 z-20 min-w-[5.5rem] border-b border-secondary/20 bg-white px-2 py-1.5 text-center align-bottom font-semibold text-primary/70 {{ $debut ? 'border-l-2 border-l-secondary/40' : '' }}">
-                                        @if($debut)<span class="block text-left text-[9px] font-bold uppercase tracking-wider text-primary/40">{{ $services[$groupeDe($role)] ?? '' }}</span>@endif
+                                        @if($debut)<span class="block text-left text-[9px] font-bold uppercase
+                                            tracking-wider
+                                            text-primary/40">{{ $services[$groupeDe($role)] ?? '' }}</span>@endif
                                         <span class="block text-[10px] leading-tight">{{ $role['name'] }}</span>
                                         <span class="mt-0.5 block text-[9px] font-normal text-primary/40">{{ $role['level'] === null ? 'Transversal' : 'N' . $role['level'] }} · {{ $role['titulaires'] }} pers.</span>
                                     </th>
@@ -167,7 +172,10 @@
                         <tbody>
                             @foreach($droits as $droit => $detenteurs)
                                 <tr>
-                                    <th scope="row" class="sticky left-0 z-10 border-b border-r border-secondary/15 bg-white px-3 py-1.5 text-left text-[11px] font-normal text-primary/80">
+                                    <th
+                                        scope="row"
+                                        class="sticky left-0 z-10 border-b border-r border-secondary/15 bg-white px-3
+                                            py-1.5 text-left text-[11px] font-normal text-primary/80">
                                         <span class="block font-semibold text-primary">{{ \App\Support\PermissionLabels::complet($droit) }}</span>
                                         <span class="font-mono text-[10px] text-primary/40">{{ $droit }}</span>
                                         @if(!isset($ecritures[$droit]))<span class="ml-1 rounded bg-accent/40 px-1 text-[9px] text-primary/60">lecture</span>@endif
@@ -183,7 +191,9 @@
                                             $debut = $index === 0 || $groupeDe($colonnes[$index - 1]) !== $groupeDe($role);
                                             $nominativesIci = $nominativesParCase[$cle] ?? [];
                                         @endphp
-                                        <td data-colonne="{{ $role['slug'] }}" class="border-b border-secondary/10 px-2 py-1.5 text-center {{ $debut ? 'border-l-2 border-l-secondary/20' : '' }}">
+                                        <td
+                                            data-colonne="{{ $role['slug'] }}"
+                                            class="border-b border-secondary/10 px-2 py-1.5 text-center {{ $debut ? 'border-l-2 border-l-secondary/20' : '' }}">
                                             <div class="inline-flex items-center gap-1">
                                                 <input type="checkbox" aria-label="{{ $role['name'] }} — {{ $droit }}"
                                                        data-role="{{ $role['slug'] }}" data-droit="{{ $droit }}"
@@ -198,7 +208,9 @@
                                                           title="Posé par la console : {{ $ecartConsole['effect'] === 'deny' ? 'refus' : 'autorisation' }}{{ $ecartConsole['reason'] ? ' — ' . $ecartConsole['reason'] : '' }}">C</span>
                                                 @endif
                                                 @if($nominativesIci !== [])
-                                                    <span class="rounded bg-sky-100 px-1 text-[9px] font-bold text-sky-700" title="{{ implode(' ; ', $nominativesIci) }}">N{{ count($nominativesIci) }}</span>
+                                                    <span
+                                                        class="rounded bg-sky-100 px-1 text-[9px] font-bold text-sky-700"
+                                                        title="{{ implode(' ; ', $nominativesIci) }}">N{{ count($nominativesIci) }}</span>
                                                 @endif
                                             </div>
                                             @if(in_array($droit, $matrice['droits_bornes'], true) && ! $fige)
@@ -221,24 +233,39 @@
         @endforeach
 
         @if($peutRegler)
-            <div id="panneau-cumuls" class="mb-3 hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-900">
+            <div
+                id="panneau-cumuls"
+                class="mb-3 hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-900">
                 <p class="font-semibold">Ces réglages font cumuler des fonctions incompatibles.</p>
                 <ul id="liste-cumuls" class="mt-1.5 list-disc space-y-0.5 pl-5"></ul>
                 <label class="mt-2 inline-flex items-start gap-2 font-semibold">
-                    <input type="checkbox" name="derogation" value="1" id="derogation" class="mt-0.5 rounded border-red-300">
+                    <input
+                        type="checkbox"
+                        name="derogation"
+                        value="1"
+                        id="derogation"
+                        class="mt-0.5 rounded border-red-300">
                     J'accorde ces dérogations à la séparation des tâches, pour le motif indiqué ci-dessous.
                 </label>
             </div>
-            <div class="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-secondary/20 bg-white px-4 py-3 shadow-lg">
+            <div class="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 rounded-xl border
+                border-secondary/20 bg-white px-4 py-3 shadow-lg">
                 <div class="min-w-[16rem] flex-1">
                     <label for="motif" class="sr-only">Motif</label>
                     <input type="text" id="motif" name="motif" required maxlength="255" value="{{ old('motif') }}"
                            placeholder="Motif — consigné au journal et sur chaque droit modifié"
                            class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-xs">
-                    <p class="mt-1 text-[11px] text-primary/50"><span id="compteur">0</span> case(s) modifiée(s). <span id="exigence" class="hidden font-medium text-amber-700"></span></p>
+                    <p class="mt-1 text-[11px] text-primary/50"><span id="compteur">0</span> case(s) modifiée(s). <span
+                        id="exigence"
+                        class="hidden font-medium text-amber-700"></span></p>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                    <button type="submit" id="appliquer" disabled class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">Enregistrer</button>
+                    <button
+                        type="submit"
+                        id="appliquer"
+                        disabled
+                        class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                            disabled:opacity-40">Enregistrer</button>
                 </div>
             </div>
         @endif
@@ -249,12 +276,20 @@
 {{-- ==================== EXCEPTIONS ==================== --}}
 @if($onglet === 'exceptions')
     @if($peutExcepter)
-        <form method="POST" action="{{ route('droits.exceptions.store') }}" class="mb-5 grid gap-3 rounded-xl bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
+        <form
+            method="POST"
+            action="{{ route('droits.exceptions.store') }}"
+            class="mb-5 grid gap-3 rounded-xl bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
             @csrf
-            <h2 class="font-heading text-lg font-semibold text-primary sm:col-span-2 lg:col-span-6">Accorder ou refuser un droit à une personne</h2>
+            <h2 class="font-heading text-lg font-semibold text-primary sm:col-span-2
+                lg:col-span-6">Accorder ou refuser un droit à une personne</h2>
             <div class="lg:col-span-2">
                 <label for="e-personne" class="mb-1 block text-xs font-semibold text-primary/70">Personne</label>
-                <select id="e-personne" name="user_id" required class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
+                <select
+                    id="e-personne"
+                    name="user_id"
+                    required
+                    class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
                     <option value="">Choisir…</option>
                     @foreach($personnel as $p)
                         <option value="{{ $p->id }}" @selected(old('user_id') == $p->id)>{{ $p->name }} — {{ implode(', ', array_map(fn ($s) => $roles[$s]['name'] ?? $s, $p->rolesDetenus())) }}</option>
@@ -269,30 +304,46 @@
             </div>
             <div>
                 <label for="e-effet" class="mb-1 block text-xs font-semibold text-primary/70">Effet</label>
-                <select id="e-effet" name="effect" class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
+                <select
+                    id="e-effet"
+                    name="effect"
+                    class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
                     <option value="deny" @selected(old('effect') === 'deny')>Refus</option>
                     <option value="allow" @selected(old('effect') === 'allow')>Autorisation</option>
                 </select>
             </div>
             <div>
                 <label for="e-echeance" class="mb-1 block text-xs font-semibold text-primary/70">Jusqu'au <span class="font-normal">(facultatif)</span></label>
-                <input type="date" id="e-echeance" name="expires_at" value="{{ old('expires_at') }}" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+                <input
+                    type="date"
+                    id="e-echeance"
+                    name="expires_at"
+                    value="{{ old('expires_at') }}"
+                    class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
             </div>
             <div class="sm:col-span-2 lg:col-span-4">
                 <label for="e-motif" class="mb-1 block text-xs font-semibold text-primary/70">Motif</label>
-                <input id="e-motif" name="reason" required maxlength="255" value="{{ old('reason') }}" class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
+                <input
+                    id="e-motif"
+                    name="reason"
+                    required
+                    maxlength="255"
+                    value="{{ old('reason') }}"
+                    class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
             </div>
             <div class="flex items-end gap-3 sm:col-span-2">
                 <label class="inline-flex items-center gap-1.5 text-[11px] text-primary/70">
                     <input type="checkbox" name="derogation" value="1" class="rounded border-secondary/40"> Dérogation à la séparation des tâches
                 </label>
-                <button type="submit" class="ml-auto rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Enregistrer</button>
+                <button type="submit" class="ml-auto rounded-lg bg-primary px-4 py-2 text-xs font-semibold
+                    text-white">Enregistrer</button>
             </div>
         </form>
     @endif
 
     <div class="mb-5 overflow-hidden rounded-xl bg-white shadow-sm">
-        <h2 class="border-b border-secondary/15 px-4 py-3 text-sm font-semibold text-primary">Exceptions nominatives en vigueur</h2>
+        <h2 class="border-b border-secondary/15 px-4 py-3 text-sm font-semibold
+            text-primary">Exceptions nominatives en vigueur</h2>
         <table class="w-full text-left text-xs">
             <thead class="bg-accent/30 text-[11px] uppercase tracking-wider text-primary/50">
                 <tr><th class="px-4 py-2">Personne</th><th class="px-4 py-2">Droit</th><th class="px-4 py-2">Effet</th><th class="px-4 py-2">Posée par</th><th class="px-4 py-2">Motif</th><th class="px-4 py-2">Jusqu'au</th><th class="px-4 py-2"></th></tr>
@@ -345,7 +396,8 @@
         </ul>
     </div>
     <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-        <h2 class="border-b border-secondary/15 px-4 py-3 text-sm font-semibold text-primary">Exceptions arrivées à échéance</h2>
+        <h2 class="border-b border-secondary/15 px-4 py-3 text-sm font-semibold
+            text-primary">Exceptions arrivées à échéance</h2>
         <ul class="divide-y divide-secondary/10">
             @forelse($matrice['exceptions_echues'] as $e)
                 <li class="px-4 py-3 text-xs text-primary/80">

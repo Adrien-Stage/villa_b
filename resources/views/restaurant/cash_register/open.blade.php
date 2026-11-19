@@ -16,7 +16,8 @@
         </p>
 
         @if($errors->any())
-            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ $errors->first() }}</div>
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+                text-red-700">{{ $errors->first() }}</div>
         @endif
 
         <form action="{{ route('restaurant.cash_register.open.store') }}" method="POST" class="space-y-6">
@@ -24,7 +25,8 @@
 
             @if($caisses->count() > 1)
                 <fieldset>
-                    <legend class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-2">Caisse *</legend>
+                    <legend class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-2">Caisse *</legend>
                     <div class="grid gap-2 sm:grid-cols-2">
                         @foreach($caisses as $caisse)
                             @php $tenue = $tenues[$caisse->id] ?? null; @endphp
@@ -48,12 +50,17 @@
             @endif
 
             <div>
-                <label for="fond" class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Fond de caisse initial (FCFA) *</label>
+                <label for="fond" class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Fond de caisse initial (FCFA) *</label>
                 <input type="number" id="fond" name="opening_amount" required min="0" step="1" value="{{ old('opening_amount', 0) }}"
-                       class="w-full px-4 py-3 text-lg border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary transition-colors font-semibold">
+                       class="w-full px-4 py-3 text-lg border border-secondary/30 rounded-lg text-primary outline-none
+                           focus:border-secondary transition-colors font-semibold">
             </div>
 
-            <button type="submit" class="w-full bg-primary hover:bg-surface-dark text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm flex justify-center items-center gap-2">
+            <button
+                type="submit"
+                class="w-full bg-primary hover:bg-surface-dark text-white px-6 py-3 rounded-xl font-medium
+                    transition-colors shadow-sm flex justify-center items-center gap-2">
                 <i data-lucide="play" class="w-5 h-5"></i>
                 Ouvrir ma caisse
             </button>

@@ -95,7 +95,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&family=Inter:wght@300..700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&family=Inter:wght@300..700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --color-primary: {{ $theme['primary'] }};
@@ -1220,7 +1222,10 @@
 </head>
 <body class="login-body">
 
-<main id="main" class="login-page {{ $isStandby ? 'is-standby' : '' }}" data-standby="{{ $isStandby ? 'true' : 'false' }}">
+<main
+    id="main"
+    class="login-page {{ $isStandby ? 'is-standby' : '' }}"
+    data-standby="{{ $isStandby ? 'true' : 'false' }}">
 
     {{-- ===== PAGE DE VEILLE — Design plein écran avec porte interactive ===== --}}
     <section
@@ -1493,7 +1498,13 @@
 <dialog id="login-help-dialog" class="login-dialog" closedby="any" aria-labelledby="login-help-title">
     <header class="login-dialog-head">
         <h2 id="login-help-title">Contacter l’administrateur</h2>
-        <button type="button" id="login-help-close-icon" class="dialog-close" command="close" commandfor="login-help-dialog" aria-label="Fermer la fenêtre">
+        <button
+            type="button"
+            id="login-help-close-icon"
+            class="dialog-close"
+            command="close"
+            commandfor="login-help-dialog"
+            aria-label="Fermer la fenêtre">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                 <path d="M18 6 6 18"/>
                 <path d="m6 6 12 12"/>

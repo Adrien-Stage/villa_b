@@ -17,7 +17,8 @@
         </h1>
     </div>
     <button onclick="window.print()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors no-print">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors no-print">
         <i data-lucide="printer" class="w-4 h-4"></i>
         Imprimer
     </button>

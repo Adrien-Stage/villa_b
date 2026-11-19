@@ -4,7 +4,9 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <a href="{{ route('economat.items.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4">
+    <a
+        href="{{ route('economat.items.index') }}"
+        class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary mb-4">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour aux articles
     </a>
 
@@ -35,7 +37,10 @@
                     <p class="text-xs text-primary/60">{{ $decompose }}</p>
                 @endif
                 @droit('economat.items.transformation.voir')
-                    <a href="{{ route('economat.items.transformation.show', $item) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30 rounded-lg text-xs font-semibold text-primary hover:bg-gray-50">
+                    <a
+                        href="{{ route('economat.items.transformation.show', $item) }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30 rounded-lg
+                            text-xs font-semibold text-primary hover:bg-gray-50">
                         <i data-lucide="boxes" class="w-3.5 h-3.5"></i> Transformation
                     </a>
                 @enddroit
@@ -71,16 +76,26 @@
             <i data-lucide="warehouse" class="w-4 h-4 text-primary/50" aria-hidden="true"></i>
             <p class="text-sm text-primary/70">Zone de rangement : <strong class="text-primary">{{ $item->zone?->name ?? 'Sans zone' }}</strong></p>
             @droit('economat.items.zone')
-                <form method="POST" action="{{ route('economat.items.zone', $item) }}" class="ml-auto flex items-center gap-2">
+                <form
+                    method="POST"
+                    action="{{ route('economat.items.zone', $item) }}"
+                    class="ml-auto flex items-center gap-2">
                     @csrf @method('PUT')
                     <label for="fiche-zone" class="sr-only">Nouvelle zone de rangement</label>
-                    <select id="fiche-zone" name="storage_zone_id" class="px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                    <select
+                        id="fiche-zone"
+                        name="storage_zone_id"
+                        class="px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary">
                         <option value="">— Sans zone —</option>
                         @foreach($zones as $z)
                             <option value="{{ $z->id }}" @selected($item->storage_zone_id === $z->id)>{{ $z->name }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="px-3 py-1.5 border border-secondary/30 rounded-lg text-xs font-semibold text-primary hover:bg-gray-50">Déplacer</button>
+                    <button
+                        type="submit"
+                        class="px-3 py-1.5 border border-secondary/30 rounded-lg text-xs font-semibold text-primary
+                            hover:bg-gray-50">Déplacer</button>
                 </form>
             @enddroit
         </div>
@@ -92,11 +107,13 @@
 
     {{-- Fournisseurs référencés pour cet article --}}
     <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-6" x-data="{ openModal: false }">
-        <div class="px-5 py-3.5 border-b border-secondary/15 flex flex-wrap items-center justify-between gap-3 bg-gray-50/80">
+        <div class="px-5 py-3.5 border-b border-secondary/15 flex flex-wrap items-center justify-between gap-3
+            bg-gray-50/80">
             <div>
                 <h2 class="text-sm font-semibold text-primary flex items-center gap-2">
                     <i data-lucide="truck" class="w-4 h-4 text-primary/60"></i> Fournisseurs approvisionnant cet article
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">{{ $item->suppliers->count() }}</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10
+                        text-primary">{{ $item->suppliers->count() }}</span>
                 </h2>
                 <p class="text-xs text-primary/50 mt-0.5">
                     Prix par {{ $item->shortUnit() }}, du moins cher au plus cher. Une demande d'achat prend le prix du fournisseur choisi ;
@@ -104,7 +121,11 @@
                 </p>
             </div>
             @droit('economat.items.suppliers.link')
-                <button type="button" @click="openModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <button
+                    type="button"
+                    @click="openModal = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Associer un fournisseur
                 </button>
             @enddroit
@@ -119,7 +140,8 @@
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50 border-b border-secondary/10">
+                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50
+                        border-b border-secondary/10">
                         <tr>
                             <th class="px-5 py-3 text-left">Fournisseur</th>
                             <th class="px-4 py-3 text-left">Contact</th>
@@ -144,10 +166,14 @@
                                 <td class="px-5 py-3">
                                     <div class="font-semibold text-primary">{{ $sup->name }}</div>
                                     @if((int) $item->supplier_id === (int) $sup->id)
-                                        <span class="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 mt-0.5">Fournisseur principal</span>
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-emerald-700
+                                            font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200
+                                            mt-0.5">Fournisseur principal</span>
                                     @endif
                                     @if($item->suppliers->count() > 1 && $moinsCher === $sup->id)
-                                        <span class="inline-flex items-center gap-1 text-[10px] text-sky-700 font-semibold bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200 mt-0.5">Moins cher</span>
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-sky-700
+                                            font-semibold bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200
+                                            mt-0.5">Moins cher</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-xs text-primary/70">
@@ -193,17 +219,26 @@
         @endif
 
         {{-- Modal associer fournisseur --}}
-        <div x-show="openModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-xs">
+        <div
+            x-show="openModal"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-xs">
             <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 border border-secondary/20">
                 <div class="flex items-center justify-between pb-3 border-b border-secondary/15">
                     <h3 class="font-heading font-semibold text-primary">Prix d'un fournisseur</h3>
-                    <button type="button" @click="openModal = false" class="text-primary/40 hover:text-primary"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <button type="button" @click="openModal = false" class="text-primary/40 hover:text-primary"><i
+                        data-lucide="x"
+                        class="w-4 h-4"></i></button>
                 </div>
                 <form method="POST" action="{{ route('economat.items.suppliers.link', $item) }}" class="space-y-4 pt-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold uppercase text-primary/60 mb-1">Fournisseur *</label>
-                        <select name="supplier_id" required class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        <select
+                            name="supplier_id"
+                            required
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                                outline-none focus:border-primary">
                             <option value="">Choisir un fournisseur...</option>
                             @foreach($allSuppliers as $s)
                                 <option value="{{ $s->id }}">{{ $s->name }}</option>
@@ -212,11 +247,25 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase text-primary/60 mb-1">Prix d'achat (FCFA / {{ $item->shortUnit() }}) *</label>
-                        <input type="number" step="1" min="1" name="purchase_price" required placeholder="Ex: 5000" class="w-full px-3 py-2 text-sm font-mono border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                        <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            name="purchase_price"
+                            required
+                            placeholder="Ex: 5000"
+                            class="w-full px-3 py-2 text-sm font-mono border border-secondary/30 rounded-lg bg-white
+                                text-primary outline-none focus:border-primary">
                     </div>
                     <div class="flex items-center justify-end gap-2 pt-2 border-t border-secondary/15">
-                        <button type="button" @click="openModal = false" class="px-3 py-1.5 text-xs text-primary/60 hover:text-primary">Annuler</button>
-                        <button type="submit" class="px-4 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">Enregistrer</button>
+                        <button
+                            type="button"
+                            @click="openModal = false"
+                            class="px-3 py-1.5 text-xs text-primary/60 hover:text-primary">Annuler</button>
+                        <button
+                            type="submit"
+                            class="px-4 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                                hover:bg-surface-dark">Enregistrer</button>
                     </div>
                 </form>
             </div>
@@ -230,7 +279,10 @@
                 <i data-lucide="history" class="w-4 h-4 text-primary/50"></i> Historique des mouvements
             </h2>
             @droit('economat.movements.voir')
-                <a href="{{ route('economat.movements.index', ['article' => $item->id, 'du' => '', 'au' => '']) }}" class="text-xs font-semibold text-primary/70 underline hover:text-primary">Fiche de stock complète</a>
+                <a
+                    href="{{ route('economat.movements.index', ['article' => $item->id, 'du' => '', 'au' => '']) }}"
+                    class="text-xs font-semibold text-primary/70 underline
+                        hover:text-primary">Fiche de stock complète</a>
             @enddroit
         </div>
         @if($movements->isEmpty())
@@ -240,14 +292,22 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50/70">
                         <tr>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Date</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Type</th>
-                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-primary/50">Unité</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock restant</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Quantité</th>
-                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50">Stock Total</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Motif</th>
-                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Par</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Date</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Type</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Unité</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Stock restant</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Quantité</th>
+                            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Stock Total</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Motif</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Par</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-secondary/10">
@@ -271,7 +331,8 @@
                                         {{ $m->typeLabel() }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ $item->shortUnit() }}</td>
+                                <td class="px-3 py-2.5 text-center font-mono font-bold text-xs
+                                    text-primary/70">{{ $item->shortUnit() }}</td>
                                 <td class="px-5 py-2.5 text-right text-primary/60">{{ rtrim(rtrim(number_format($m->stockAvant(), 3, ',', ' '), '0'), ',') }}</td>
                                 <td class="px-5 py-2.5 text-right font-medium {{ $m->type === 'adjustment' ? 'text-primary/40' : ($m->quantity > 0 ? 'text-green-700' : 'text-red-700') }}">
                                     @if($m->type === 'adjustment')

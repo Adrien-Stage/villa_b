@@ -25,10 +25,12 @@
             @csrf
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Fond de caisse initial (FCFA) *</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Fond de caisse initial (FCFA) *</label>
                 <input type="number" name="opening_amount" required min="0" step="1"
                        value="0"
-                       class="w-full px-4 py-3 text-lg border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary transition-colors font-semibold"
+                       class="w-full px-4 py-3 text-lg border border-secondary/30 rounded-lg text-primary outline-none
+                           focus:border-secondary transition-colors font-semibold"
                        placeholder="Ex: 50000">
                 @error('opening_amount')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -36,7 +38,10 @@
             </div>
 
             <div class="pt-4">
-                <button type="submit" class="w-full bg-primary hover:bg-surface-dark text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm flex justify-center items-center gap-2">
+                <button
+                    type="submit"
+                    class="w-full bg-primary hover:bg-surface-dark text-white px-6 py-3 rounded-xl font-medium
+                        transition-colors shadow-sm flex justify-center items-center gap-2">
                     <i data-lucide="play" class="w-5 h-5"></i>
                     Ouvrir la caisse et démarrer le service
                 </button>

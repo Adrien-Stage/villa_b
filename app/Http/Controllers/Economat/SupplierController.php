@@ -141,7 +141,8 @@ class SupplierController extends Controller
         AuditLog::record(
             Auth::id(),
             'supplier_update',
-            "Mise à jour du fournisseur « {$supplier->name} »" . ($changements !== [] ? ' — catalogue : ' . implode(', ', $changements) : ''),
+            "Mise à jour du fournisseur « {$supplier->name} »" . ($changements !== [] ? ' — catalogue : '
+                . implode(', ', $changements) : ''),
             'economat',
             ['supplier_id' => $supplier->id, 'catalogue' => $catalogue]
         );
@@ -201,7 +202,8 @@ class SupplierController extends Controller
     private function validated(Request $request, ?Supplier $supplier = null): array
     {
         return $request->validate([
-            'name'                    => ['required', 'string', 'max:160', Rule::unique('suppliers', 'name')->ignore($supplier?->id)],
+            'name'                    => ['required', 'string', 'max:160', Rule::unique('suppliers', 'name')
+                ->ignore($supplier?->id)],
             'code'                    => ['nullable', 'string', 'max:30'],
             'category'                => ['nullable', 'string', Rule::in(array_keys(Supplier::CATEGORIES))],
             'tax_id'                  => ['nullable', 'string', 'max:60'],

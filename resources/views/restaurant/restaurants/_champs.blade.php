@@ -22,17 +22,20 @@
     <label class="block sm:col-span-2">
         <span class="text-xs text-primary/60">Nom</span>
         <input type="text" name="name" value="{{ $valeur('name', $r?->name) }}" required maxlength="100" placeholder="Ex. Le Kotibe"
-            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">
+            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none
+                focus:border-secondary">
     </label>
     <label class="block">
         <span class="text-xs text-primary/60">Code</span>
         <input type="text" name="code" value="{{ $valeur('code', $r?->code) }}" required maxlength="16" placeholder="KOT"
-            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm uppercase outline-none focus:border-secondary">
+            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm uppercase outline-none
+                focus:border-secondary">
     </label>
     <label class="block">
         <span class="text-xs text-primary/60">Préfixe des notes</span>
         <input type="text" name="series_prefix" value="{{ $valeur('series_prefix', $r?->series_prefix) }}" maxlength="8" placeholder="KOT-"
-            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">
+            class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none
+                focus:border-secondary">
     </label>
 </div>
 
@@ -42,7 +45,8 @@
     @php $servicesChoisis = $valeur('services', $r ? array_keys(array_filter($servicesRestaurant, fn ($l, $s) => $r->offre($s), ARRAY_FILTER_USE_BOTH)) : array_keys($servicesRestaurant)); @endphp
     <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
         @foreach($servicesRestaurant as $cle => $libelle)
-            <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-secondary/20 px-3 py-2 hover:bg-accent/10 has-[:checked]:border-secondary/50 has-[:checked]:bg-accent/15">
+            <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-secondary/20 px-3 py-2
+                hover:bg-accent/10 has-[:checked]:border-secondary/50 has-[:checked]:bg-accent/15">
                 <input type="checkbox" name="services[]" value="{{ $cle }}" @checked(in_array($cle, (array) $servicesChoisis, true)) class="mt-0.5 rounded border-secondary/30">
                 <span>
                     <span class="block text-sm font-semibold text-primary">{{ $libelle }}</span>

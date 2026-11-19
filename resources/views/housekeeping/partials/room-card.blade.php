@@ -43,7 +43,10 @@
             <p class="text-[11px] text-amber-950/80 mb-2">{{ $passage->issue_notes }}</p>
             <form method="POST" action="{{ route('housekeeping.resolve_issue', $room) }}">
                 @csrf
-                <button type="submit" class="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1 shadow-2xs">
+                <button
+                    type="submit"
+                    class="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold
+                        hover:bg-emerald-700 transition flex items-center justify-center gap-1 shadow-2xs">
                     <i data-lucide="check" class="w-3.5 h-3.5"></i> Problème résolu / Réapprovisionné
                 </button>
             </form>
@@ -52,20 +55,29 @@
 
     {{-- Accès direct au mini-bar pour la chambre --}}
     @if($room->aUnMiniBar())
-        <div class="mb-3 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/70 text-xs">
-            <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}" class="inline-flex items-center gap-1.5 font-medium text-amber-900 hover:text-amber-950 transition">
+        <div class="mb-3 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-50 border
+            border-amber-200/70 text-xs">
+            <a
+                href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                class="inline-flex items-center gap-1.5 font-medium text-amber-900 hover:text-amber-950 transition">
                 <i data-lucide="wine" class="w-3.5 h-3.5 text-amber-700"></i>
                 <span>Mini-bar</span>
                 @if($room->miniBarComplet())
-                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">Complet</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800
+                        font-semibold">Complet</span>
                 @elseif($room->miniBarVide())
-                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold">Vide</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-800
+                        font-semibold">Vide</span>
                 @else
                     @php $manquant = $room->minibarLines->sum(fn ($l) => $l->manquant()); @endphp
-                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">{{ $manquant > 0 ? "-{$manquant} article(s)" : 'À vérifier' }}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800
+                        font-semibold">{{ $manquant > 0 ? "-{$manquant} article(s)" : 'À vérifier' }}</span>
                 @endif
             </a>
-            <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}" class="inline-flex items-center gap-1 text-[11px] text-amber-800 hover:text-amber-950 font-semibold underline">
+            <a
+                href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
+                class="inline-flex items-center gap-1 text-[11px] text-amber-800 hover:text-amber-950 font-semibold
+                    underline">
                 <span>Gérer</span>
                 <i data-lucide="chevron-right" class="w-3 h-3"></i>
             </a>
@@ -77,14 +89,18 @@
             <div class="flex gap-2">
                 <form method="POST" action="{{ route('housekeeping.clean', $room) }}" class="flex-1">
                     @csrf
-                    <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-1.5">
+                    <button
+                        type="submit"
+                        class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold
+                            hover:bg-yellow-700 transition flex items-center justify-center gap-1.5">
                         <i data-lucide="play" class="w-4 h-4"></i> Commencer le nettoyage
                     </button>
                 </form>
                 <button type="button"
                         onclick="window.openHousekeepingIssueModal({{ $room->id }}, '{{ addslashes($room->number) }}', '{{ route('housekeeping.issue', $room) }}')"
                         @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
-                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs
+                            hover:bg-yellow-100 transition cursor-pointer"
                         title="Signaler un problème">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 </button>
@@ -95,13 +111,17 @@
                 @if(\App\Services\MinibarService::releveDuAuMenage($room))
                     {{-- Client parti sans relevé : le mini-bar se relève avant tout. --}}
                     <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
-                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700
+                           transition flex items-center justify-center gap-1.5">
                         <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
                     </a>
                 @else
                 <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
                     @csrf
-                    <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
+                    <button
+                        type="submit"
+                        class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold
+                            hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i> Marquer nettoyée
                     </button>
                 </form>
@@ -109,7 +129,8 @@
                 <button type="button"
                         onclick="window.openHousekeepingIssueModal({{ $room->id }}, '{{ addslashes($room->number) }}', '{{ route('housekeeping.issue', $room) }}')"
                         @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
-                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs
+                            hover:bg-yellow-100 transition cursor-pointer"
                         title="Signaler un problème">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 </button>
@@ -119,21 +140,29 @@
             @if($canValidate && $room->aUnMiniBar() && !$room->miniBarComplet())
                 {{-- Le prochain client trouve un mini-bar complet. --}}
                 <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
-                   class="w-full py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5">
+                   class="w-full py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700
+                       transition flex items-center justify-center gap-1.5">
                     <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger le mini-bar
                 </a>
             @elseif($canValidate)
                 <div class="flex gap-2">
                     <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                         @csrf
-                        <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
+                        <button
+                            type="submit"
+                            class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold
+                                hover:bg-purple-700 transition flex items-center justify-center gap-1.5">
                             <i data-lucide="check-circle" class="w-4 h-4"></i> Valider
                         </button>
                     </form>
                     <form method="POST" action="{{ route('housekeeping.reject', $room) }}" class="w-10">
                         @csrf
                         <input type="hidden" name="reason" value="Contrôle non conforme">
-                        <button type="submit" class="w-full h-full bg-white border border-purple-200 text-red-600 rounded-lg hover:bg-red-50 transition flex items-center justify-center" title="Refuser">
+                        <button
+                            type="submit"
+                            class="w-full h-full bg-white border border-purple-200 text-red-600 rounded-lg
+                                hover:bg-red-50 transition flex items-center justify-center"
+                            title="Refuser">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
                     </form>
@@ -146,7 +175,10 @@
             @if($canValidate)
                 <form method="POST" action="{{ route('housekeeping.available', $room) }}">
                     @csrf
-                    <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1.5">
+                    <button
+                        type="submit"
+                        class="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold
+                            hover:bg-emerald-700 transition flex items-center justify-center gap-1.5">
                         <i data-lucide="door-open" class="w-4 h-4"></i> Rendre disponible
                     </button>
                 </form>

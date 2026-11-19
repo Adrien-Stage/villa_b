@@ -30,7 +30,8 @@ class BonsTransfert extends Edition
     {
         return [
             Filtre::periode('mois'),
-            Filtre::choix('depot', 'Dépôt', fn () => ServiceStore::query()->where('department', 'economat')->orderBy('name')->pluck('name', 'id')->all(), 'Tous les dépôts'),
+            Filtre::choix('depot', 'Dépôt', fn () => ServiceStore::query()->where('department', 'economat')
+                ->orderBy('name')->pluck('name', 'id')->all(), 'Tous les dépôts'),
             Filtre::choix('statut', 'Statut', fn () => StockTransfer::STATUSES, 'Tous les statuts'),
         ];
     }

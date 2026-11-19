@@ -34,7 +34,8 @@
 
             @droit('economat.purchase_requests.convert')
                 <a href="{{ route('economat.purchase_requests.index', ['status' => 'approved']) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="file-check" class="w-4 h-4"></i>
                     <span>Demandes à commander</span>
                 </a>
@@ -42,7 +43,8 @@
 
             @droit('economat.orders.creer')
                 <a href="{{ route('economat.orders.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     <span>Nouveau bon</span>
                 </a>
@@ -91,13 +93,22 @@
 
     {{-- Filtres avancés --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-6 shadow-sm">
-        <form method="GET" action="{{ route('economat.orders.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+        <form
+            method="GET"
+            action="{{ route('economat.orders.index') }}"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
             {{-- Fournisseur --}}
             <div class="lg:col-span-3">
-                <label for="filter-fournisseur" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
+                <label
+                    for="filter-fournisseur"
+                    class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Fournisseur
                 </label>
-                <select name="fournisseur" id="filter-fournisseur" class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                <select
+                    name="fournisseur"
+                    id="filter-fournisseur"
+                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
                     <option value="">Tous les fournisseurs</option>
                     @foreach($suppliers as $supplier)
                         <option value="{{ $supplier->id }}" @selected(request('fournisseur') == $supplier->id || request('supplier_id') == $supplier->id)>
@@ -109,10 +120,16 @@
 
             {{-- Statut --}}
             <div class="lg:col-span-2">
-                <label for="filter-statut" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
+                <label
+                    for="filter-statut"
+                    class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Statut
                 </label>
-                <select name="statut" id="filter-statut" class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                <select
+                    name="statut"
+                    id="filter-statut"
+                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
                     <option value="">Tous les statuts</option>
                     @foreach(\App\Models\PurchaseOrder::STATUSES as $val => $lbl)
                         <option value="{{ $val }}" @selected(request('statut') == $val)>
@@ -124,25 +141,33 @@
 
             {{-- Date début --}}
             <div class="lg:col-span-2">
-                <label for="filter-du" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
+                <label
+                    for="filter-du"
+                    class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Du
                 </label>
                 <input type="date" name="du" id="filter-du" value="{{ request('du') }}"
-                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
             </div>
 
             {{-- Date fin --}}
             <div class="lg:col-span-2">
-                <label for="filter-au" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
+                <label
+                    for="filter-au"
+                    class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Au
                 </label>
                 <input type="date" name="au" id="filter-au" value="{{ request('au') }}"
-                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                    class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
             </div>
 
             {{-- Recherche texte --}}
             <div class="lg:col-span-2">
-                <label for="filter-recherche" class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
+                <label
+                    for="filter-recherche"
+                    class="block text-[11px] font-semibold text-primary/70 mb-1 uppercase tracking-wider">
                     Recherche
                 </label>
                 <x-live-search
@@ -155,11 +180,19 @@
 
             {{-- Boutons --}}
             <div class="lg:col-span-1 flex items-center gap-1.5">
-                <button type="submit" class="flex-1 py-2 px-3 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors flex items-center justify-center gap-1" title="Filtrer">
+                <button
+                    type="submit"
+                    class="flex-1 py-2 px-3 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors flex items-center justify-center gap-1"
+                    title="Filtrer">
                     <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                 </button>
                 @if(!empty($filtres))
-                    <a href="{{ route('economat.orders.index') }}" class="py-2 px-2.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors" title="Réinitialiser">
+                    <a
+                        href="{{ route('economat.orders.index') }}"
+                        class="py-2 px-2.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200
+                            transition-colors"
+                        title="Réinitialiser">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </a>
                 @endif
@@ -168,14 +201,18 @@
 
         {{-- Synthèse des filtres actifs --}}
         @if(!empty($filtres))
-            <div class="mt-3 pt-3 border-t border-secondary/15 flex flex-wrap items-center gap-2 text-xs text-primary/70">
+            <div class="mt-3 pt-3 border-t border-secondary/15 flex flex-wrap items-center gap-2 text-xs
+                text-primary/70">
                 <span class="font-medium text-primary/50 text-[11px] uppercase">Filtres appliqués :</span>
                 @foreach($filtres as $nom => $val)
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/15 text-primary text-[11px] font-medium">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/15 text-primary
+                        text-[11px] font-medium">
                         <strong>{{ $nom }} :</strong> {{ $val }}
                     </span>
                 @endforeach
-                <a href="{{ route('economat.orders.index') }}" class="text-[11px] text-primary/60 underline hover:text-primary ml-1">
+                <a
+                    href="{{ route('economat.orders.index') }}"
+                    class="text-[11px] text-primary/60 underline hover:text-primary ml-1">
                     Effacer tous les filtres
                 </a>
             </div>
@@ -184,7 +221,11 @@
 
     {{-- Tableau des Bons de Commande --}}
     <div id="orders-table-container">
-    <x-table :rows="$orders" :empty="! empty($filtres) ? 'Aucun bon de commande ne correspond aux filtres sélectionnés.' : 'Aucun bon de commande enregistré.'" empty-icon="clipboard-list" caption="Bons de commande">
+    <x-table
+        :rows="$orders"
+        :empty="! empty($filtres) ? 'Aucun bon de commande ne correspond aux filtres sélectionnés.' : 'Aucun bon de commande enregistré.'"
+        empty-icon="clipboard-list"
+        caption="Bons de commande">
         @if(! empty($filtres))
             <x-slot:emptyActions>
                 <a href="{{ route('economat.orders.index') }}" class="text-primary underline">Réinitialiser les filtres</a>
@@ -204,7 +245,9 @@
         @foreach($orders as $order)
             <x-table.row :href="route('economat.orders.show', $order)">
                 <x-table.cell nowrap>
-                    <a href="{{ route('economat.orders.show', $order) }}" class="flex items-center gap-1.5 font-mono font-bold text-primary hover:underline">
+                    <a
+                        href="{{ route('economat.orders.show', $order) }}"
+                        class="flex items-center gap-1.5 font-mono font-bold text-primary hover:underline">
                         <i data-lucide="file-text" class="h-3.5 w-3.5 text-primary/50" aria-hidden="true"></i><span>{{ $order->number }}</span>
                     </a>
                 </x-table.cell>
@@ -213,7 +256,10 @@
                     @if($order->supplier)
                         <div class="mt-0.5 flex items-center gap-2 text-[10px] text-primary/50">
                             @if($order->supplier->code)<span class="rounded bg-gray-100 px-1 font-mono">{{ $order->supplier->code }}</span>@endif
-                            @if($order->supplier->phone)<span><i data-lucide="phone" class="inline h-2.5 w-2.5 text-primary/40" aria-hidden="true"></i> {{ $order->supplier->phone }}</span>@endif
+                            @if($order->supplier->phone)<span><i
+                                data-lucide="phone"
+                                class="inline h-2.5 w-2.5 text-primary/40"
+                                aria-hidden="true"></i> {{ $order->supplier->phone }}</span>@endif
                         </div>
                     @endif
                 </x-table.cell>
@@ -228,7 +274,8 @@
                 </x-table.cell>
                 <x-table.cell hide="3xl" nowrap>
                     @if($order->issuer_signature)
-                        <span class="inline-flex items-center gap-1 rounded border border-blue-200/50 bg-blue-50/80 px-2 py-0.5 text-[11px] text-blue-900">
+                        <span class="inline-flex items-center gap-1 rounded border border-blue-200/50 bg-blue-50/80
+                            px-2 py-0.5 text-[11px] text-blue-900">
                             <i data-lucide="pen-tool" class="h-3 w-3 text-blue-700" aria-hidden="true"></i>
                             <strong class="font-signature text-sm leading-none">{{ $order->issuer_signature }}</strong>
                         </span>
@@ -238,8 +285,14 @@
                 </x-table.cell>
                 <x-table.actions :label="'Actions pour le bon '.$order->number">
                     <x-table.action :href="route('economat.orders.show', $order)" icon="eye">Détails</x-table.action>
-                    <x-table.action :href="route('economat.orders.print', [$order, 'prix' => 1])" icon="printer" target="_blank">Imprimer (avec prix)</x-table.action>
-                    <x-table.action :href="route('economat.orders.print', [$order, 'prix' => 0])" icon="printer" target="_blank">Imprimer (sans prix)</x-table.action>
+                    <x-table.action
+                        :href="route('economat.orders.print', [$order, 'prix' => 1])"
+                        icon="printer"
+                        target="_blank">Imprimer (avec prix)</x-table.action>
+                    <x-table.action
+                        :href="route('economat.orders.print', [$order, 'prix' => 0])"
+                        icon="printer"
+                        target="_blank">Imprimer (sans prix)</x-table.action>
                 </x-table.actions>
             </x-table.row>
         @endforeach

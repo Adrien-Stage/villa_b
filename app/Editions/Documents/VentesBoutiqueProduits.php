@@ -45,7 +45,8 @@ class VentesBoutiqueProduits extends Edition
             ->groupBy('p.name')
             ->orderByDesc('montant')
             ->get()
-            ->map(fn ($l) => ['produit' => $l->produit, 'quantite' => (float) $l->quantite, 'montant' => (int) $l->montant]);
+            ->map(fn ($l) => ['produit' => $l->produit, 'quantite' => (float) $l->quantite, 'montant' => (int) $l
+                ->montant]);
 
         return $this->base($valeurs, $user)
             ->colonnes([

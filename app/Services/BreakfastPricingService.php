@@ -151,7 +151,8 @@ class BreakfastPricingService
      *   summary_label: string
      * }
      */
-    public function calculateBreakfast(int $nights, int $adults, array $childrenAgeBracketIds = [], ?int $tenantId = null): array
+    public function calculateBreakfast(int $nights, int $adults, array $childrenAgeBracketIds = [],
+        ?int $tenantId = null): array
     {
         $nights = max(1, $nights);
         $adults = max(0, $adults);
@@ -415,10 +416,12 @@ class BreakfastPricingService
             if ($extraTotalCentimes > 0 && $settlementMethod === 'room_charge') {
                 $descDetails = [];
                 if ($extraAdults > 0) {
-                    $descDetails[] = "{$extraAdults} adulte(s) extra (" . number_format($extraAdultsTotal, 0, ',', ' ') . " FCFA)";
+                    $descDetails[] = "{$extraAdults} adulte(s) extra (" . number_format($extraAdultsTotal, 0, ',', ' ')
+                        . " FCFA)";
                 }
                 if ($extraChildren > 0) {
-                    $descDetails[] = "{$extraChildren} enfant(s) extra (" . number_format($extraChildrenTotal, 0, ',', ' ') . " FCFA)";
+                    $descDetails[] = "{$extraChildren} enfant(s) extra (" . number_format($extraChildrenTotal, 0, ',',
+                        ' ') . " FCFA)";
                 }
                 $descSuffix = !empty($descDetails) ? ' : ' . implode(', ', $descDetails) : '';
 
@@ -450,13 +453,15 @@ class BreakfastPricingService
                 'table_number'         => "Ch. {$room->number}",
                 'order_type'           => \App\Models\RestaurantCustomerOrder::ORDER_TYPE_BREAKFAST_INCLUDED,
                 'is_complimentary'     => ($extraTotalCentimes === 0),
-                'complimentary_reason' => ($extraTotalCentimes === 0 ? "Petit-déjeuner inclus séjour #{$booking->id}" : null),
+                'complimentary_reason' => (
+                    $extraTotalCentimes === 0 ? "Petit-déjeuner inclus séjour #{$booking->id}" : null),
                 'booking_id'           => $booking->id,
                 'folio_item_id'        => $folioItemId,
                 'customer_name'        => $booking->customer?->full_name ?? "Chambre {$room->number}",
                 'customer_phone'       => $booking->customer?->phone,
                 'status'               => \App\Models\RestaurantCustomerOrder::STATUS_SERVED,
-                'payment_status'       => ($extraTotalCentimes === 0 ? 'paid' : ($settlementMethod === 'room_charge' ? 'transferred_to_folio' : 'paid')),
+                'payment_status'       => ($extraTotalCentimes === 0 ? 'paid' : (
+                    $settlementMethod === 'room_charge' ? 'transferred_to_folio' : 'paid')),
                 'payment_method'       => ($extraTotalCentimes === 0 ? null : $settlementMethod),
                 'total_amount'         => $extraTotalCentimes,
                 'amount_paid'          => ($settlementMethod !== 'room_charge' ? $extraTotalCentimes : 0),
@@ -465,7 +470,8 @@ class BreakfastPricingService
                 'sent_to_kitchen_at'   => now(),
                 'ready_at'             => now(),
                 'served_at'            => now(),
-                'notes'                => "Pointage PDJ Ch. {$room->number} ({$adultsServed}A, {$childrenServed}E). " . ($notes ?? ''),
+                'notes'                => "Pointage PDJ Ch. {$room->number} ({$adultsServed}A, {$childrenServed}E). "
+                    . ($notes ?? ''),
             ]);
 
             // Recherche ou association des articles du menu correspondant aux petits-déjeuners

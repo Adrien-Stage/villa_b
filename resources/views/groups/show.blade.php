@@ -41,7 +41,8 @@
             @csrf
             <button type="submit"
                 onclick="return confirm('Effectuer le check-in pour toutes les chambres ?')"
-                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-green-700 transition-colors">
                 <i data-lucide="log-in" class="w-4 h-4"></i>
                 Check-in groupe
             </button>
@@ -50,7 +51,8 @@
 
         @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.modifier') && !in_array($groupBooking->status, ['completed', 'cancelled']))
         <a href="{{ route('groups.edit', $groupBooking) }}"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="pencil" class="w-4 h-4"></i>
             Modifier
         </a>
@@ -61,7 +63,8 @@
             @csrf
             <button type="submit"
                 onclick="return confirm('Effectuer le check-out pour toutes les chambres ?')"
-                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
                 Check-out groupe
             </button>
@@ -70,7 +73,8 @@
 
         @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'groups.invoice') && $groupBooking->status === 'checkout')
         <a href="{{ route('groups.invoice', $groupBooking) }}"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             Facture groupe
         </a>
@@ -83,7 +87,8 @@
 
 {{-- Messages --}}
 @if(session('success'))
-<div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+<div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center
+    gap-2">
     <i data-lucide="check-circle" class="w-4 h-4"></i>
     {{ session('success') }}
 </div>
@@ -159,7 +164,8 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Résumé financier</h2>
                 @if(in_array($groupBooking->status, ['confirmed', 'in_house']) && $totals['balance_due'] > 0)
                 <button onclick="document.getElementById('modal-group-payment').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
                     Encaisser
                 </button>
@@ -214,7 +220,8 @@
                 </h2>
                 @if(in_array($groupBooking->status, ['pending', 'confirmed']) && $roomTypes->isNotEmpty())
                 <button onclick="document.getElementById('modal-add-room').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter une chambre
                 </button>
@@ -251,7 +258,8 @@
             $roomEffectiveTotal = $booking->effectiveTotalAmount($checkOutTime ?? null);
             $roomEffectiveBalance = $booking->effectiveBalanceDue($checkOutTime ?? null);
             @endphp
-            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b border-secondary/10 hover:bg-accent/10 transition-colors items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3.5 border-b
+                border-secondary/10 hover:bg-accent/10 transition-colors items-center">
                 <div class="col-span-2">
                     <p class="text-sm font-semibold text-primary">{{ $booking->room->number }}</p>
                     <p class="text-xs text-primary/40">{{ $booking->room->roomType->name }}</p>
@@ -288,7 +296,8 @@
                             {{ $booking->status->label() }}
                         </span>
                         @if($roomOverstayNights > 0)
-                        <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border border-red-200 bg-red-50 text-red-700">
+                        <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full border border-red-200 bg-red-50
+                            text-red-700">
                             Dépassement
                         </span>
                         @endif
@@ -322,7 +331,8 @@
                 <h2 class="font-heading font-semibold text-primary text-sm">Prestations du groupe</h2>
                 @if($groupBooking->status === 'in_house')
                 <button onclick="document.getElementById('modal-group-folio').classList.remove('hidden')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg
+                        hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Ajouter
                 </button>
@@ -351,10 +361,12 @@
             @else
             <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2 bg-accent/20 border-b border-secondary/10">
                 <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40">Type</div>
-                <div class="col-span-5 text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
+                <div class="col-span-5 text-xs font-semibold uppercase tracking-widest
+                    text-primary/40">Description</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">Chambres</div>
                 <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40">P.U.</div>
-                <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total groupe</div>
+                <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                    text-right">Total groupe</div>
             </div>
 
             @php
@@ -376,7 +388,8 @@
             $totalAmount = $items->sum('total_price');
             $roomCount = $items->count();
             @endphp
-            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-secondary/10 items-center">
+            <div class="block space-y-1 md:space-y-0 md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b
+                border-secondary/10 items-center">
                 <div class="col-span-1">
                     <i data-lucide="{{ $typeIcons[$firstItem->type] ?? 'package' }}" class="w-4 h-4 text-primary/30"></i>
                 </div>
@@ -408,7 +421,8 @@
 {{-- Modal : Ajouter chambre au groupe --}}
 <div id="modal-add-room" class="hidden fixed inset-0 z-50 flex items-center justify-center"
     style="background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh] flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh] flex flex-col
+        max-h-[90vh]">
         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0 shrink-0">
             <h3 class="font-heading font-semibold text-primary">Ajouter une chambre</h3>
             <button onclick="document.getElementById('modal-add-room').classList.add('hidden')"
@@ -416,7 +430,10 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('groups.addRoom', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form
+            method="POST"
+            action="{{ route('groups.addRoom', $groupBooking) }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
 
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
@@ -436,7 +453,8 @@
                     Chambre *
                 </label>
                 <select name="room_id" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="">Sélectionner une chambre...</option>
                     @foreach($roomTypes as $type)
                     @php $rooms = $availableRooms[$type->id] ?? collect(); @endphp
@@ -469,7 +487,8 @@
                 >
                     <input type="hidden" name="new_customer" x-bind:disabled="!isCreatingNew" value="1">
                     
-                    <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100 mb-4 mt-2">
+                    <div class="flex justify-between items-center bg-blue-50 text-blue-800 p-3 rounded-lg border
+                        border-blue-100 mb-4 mt-2">
                         <div class="flex items-center">
                             <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
                             <span class="font-medium text-sm">Nouveau client</span>
@@ -479,48 +498,62 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prénom *</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Prénom *</label>
                             <input type="text" name="first_name" x-model="customerFirstName" x-bind:required="isCreatingNew" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nom *</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Nom *</label>
                             <input type="text" name="last_name" x-model="customerName" x-bind:required="isCreatingNew" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Email</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Email</label>
                             <input type="email" name="email" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Téléphone</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Téléphone</label>
                             <input type="text" name="phone" x-model="customerPhone" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Nationalité</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Nationalité</label>
                             <input type="text" name="nationality" placeholder="Ex: Camerounaise" maxlength="100" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Code pays</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Code pays</label>
                             <input type="text" name="country" placeholder="Ex: CM" maxlength="5" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type document</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Type document</label>
                             <select name="id_document_type" x-bind:disabled="!isCreatingNew"
-                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                        outline-none focus:border-secondary">
                                 <option value="">Sélectionner...</option>
                                 <option value="CNI">CNI</option>
                                 <option value="Passeport">Passeport</option>
@@ -529,9 +562,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Numéro du document</label>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                                mb-1.5">Numéro du document</label>
                             <input type="text" name="id_document_number" placeholder="Ex: 20261430524..." maxlength="50" x-bind:disabled="!isCreatingNew"
-                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                       outline-none focus:border-secondary">
                         </div>
                     </div>
                 </x-customer-search>
@@ -540,34 +575,42 @@
             {{-- Personnes --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Adultes *</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Adultes *</label>
                     <input type="number" name="adults_count" value="1" min="1" required
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Enfants</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Enfants</label>
                     <input type="number" name="children_count" value="0" min="0"
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Notes</label>
                 <input type="text" name="notes"
                     placeholder="Besoins spécifiques pour cette chambre..."
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary placeholder-primary/30">
             </div>
 
             </div>
 
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-add-room').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Ajouter la chambre
                 </button>
             </div>
@@ -593,13 +636,18 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ route('groups.folio.add', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form
+            method="POST"
+            action="{{ route('groups.folio.add', $groupBooking) }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Type *</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Type *</label>
                 <select name="type" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="restaurant">Restaurant</option>
                     <option value="activity">Activité</option>
                     <option value="spa">Spa</option>
@@ -610,22 +658,28 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Description *</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Description *</label>
                 <input type="text" name="description" required
                     placeholder="Ex: Visite musée Bandjoun, Dîner de gala..."
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary placeholder-primary/30">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Quantité *</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Quantité *</label>
                     <input type="number" name="quantity" value="1" min="0.5" step="0.5" required
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Prix unitaire (FCFA)</label>
+                    <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                        mb-1.5">Prix unitaire (FCFA)</label>
                     <input type="number" name="unit_price" value="0" min="0"
-                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                            focus:border-secondary">
                 </div>
             </div>
 
@@ -635,7 +689,8 @@
                     Mode de facturation *
                 </label>
                 <div class="space-y-2">
-                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer
+                        hover:bg-accent/10 transition-colors">
                         <input type="radio" name="split_mode" value="per_room" checked class="mt-0.5">
                         <div>
                             <p class="text-xs font-medium text-primary">Par chambre</p>
@@ -645,7 +700,8 @@
                             </p>
                         </div>
                     </label>
-                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer
+                        hover:bg-accent/10 transition-colors">
                         <input type="radio" name="split_mode" value="per_person" class="mt-0.5">
                         <div>
                             <p class="text-xs font-medium text-primary">Par personne</p>
@@ -655,7 +711,8 @@
                             </p>
                         </div>
                     </label>
-                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer
+                        hover:bg-accent/10 transition-colors">
                         <input type="radio" name="split_mode" value="global" class="mt-0.5">
                         <div>
                             <p class="text-xs font-medium text-primary">Montant global réparti</p>
@@ -677,20 +734,24 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Notes</label>
                 <input type="text" name="notes"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
 
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-group-folio').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Appliquer à toutes les chambres
                 </button>
             </div>
@@ -712,7 +773,10 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form method="POST" action="{{ route('groups.payment.add', $groupBooking) }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form
+            method="POST"
+            action="{{ route('groups.payment.add', $groupBooking) }}"
+            class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
             @php $consumedBalance = $groupBooking->getConsumedBalance($checkOutTime ?? null); @endphp
@@ -731,7 +795,8 @@
                 <input type="number" name="amount"
                     value="{{ (int) ceil($consumedBalance / 100) }}"
                     min="1" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
 
             <div>
@@ -739,7 +804,8 @@
                     Mode de paiement *
                 </label>
                 <select name="method" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
                     <option value="cash">Espèces</option>
                     <option value="orange_money">Orange Money</option>
                     <option value="mtn_momo">MTN MoMo</option>
@@ -754,7 +820,8 @@
                     Répartition entre les chambres
                 </label>
                 <div class="space-y-2">
-                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer
+                        hover:bg-accent/10 transition-colors">
                         <input type="radio" name="distribution" value="proportional" checked class="mt-0.5">
                         <div>
                             <p class="text-xs font-medium text-primary">Proportionnelle</p>
@@ -763,7 +830,8 @@
                             </p>
                         </div>
                     </label>
-                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                    <label class="flex items-start gap-3 p-3 border border-secondary/20 rounded-lg cursor-pointer
+                        hover:bg-accent/10 transition-colors">
                         <input type="radio" name="distribution" value="equal" class="mt-0.5">
                         <div>
                             <p class="text-xs font-medium text-primary">Égale</p>
@@ -776,20 +844,24 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50 mb-1.5">Notes</label>
+                <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
+                    mb-1.5">Notes</label>
                 <input type="text" name="notes"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary">
             </div>
 
             </div>
-            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50
+                rounded-b-2xl">
                 <button type="button"
                     onclick="document.getElementById('modal-group-payment').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </button>
                 <button type="submit"
-                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors">
                     Encaisser
                 </button>
             </div>

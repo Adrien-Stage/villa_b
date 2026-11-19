@@ -93,7 +93,8 @@ class RestaurantRecipeWorkbook
 
         $ongletsPrep = [];
         foreach ($preparations as $index => $preparation) {
-            $ongletsPrep[$preparation->id] = $this->feuillePreparation($classeur, $preparation, $tenant, $index + 1, $portions);
+            $ongletsPrep[$preparation->id] = $this->feuillePreparation($classeur, $preparation, $tenant, $index + 1,
+                $portions);
         }
 
         $reperes = [];
@@ -120,7 +121,8 @@ class RestaurantRecipeWorkbook
      * @param  array<int,float>  $portions
      * @return string  nom de l'onglet
      */
-    private function feuillePreparation(Spreadsheet $classeur, RestaurantRecipe $recette, ?Tenant $tenant, int $rang, array $portions): string
+    private function feuillePreparation(Spreadsheet $classeur, RestaurantRecipe $recette, ?Tenant $tenant, int $rang,
+        array $portions): string
     {
         $ws = $classeur->createSheet();
         $ws->setTitle($this->nomOnglet($classeur, '🥣 Prep - ' . $recette->name));
@@ -137,7 +139,8 @@ class RestaurantRecipeWorkbook
 
         $this->bandeau(
             $ws, 'A1:I1',
-            $this->titreSigne($tenant, 'FICHE TECHNIQUE DE PRODUCTION (BASE / SOUS-RECETTE) — ' . mb_strtoupper($recette->name)),
+            $this->titreSigne($tenant, 'FICHE TECHNIQUE DE PRODUCTION (BASE / SOUS-RECETTE) — ' . mb_strtoupper($recette
+                ->name)),
             $this->c['titre'], $this->c['titre_encre'], 16, Alignment::HORIZONTAL_CENTER, 38
         );
         $this->ligneMarque($ws, 'A2', $tenant);
@@ -146,9 +149,12 @@ class RestaurantRecipeWorkbook
         $this->section($ws, 'A3:C3', '1. INFORMATIONS GÉNÉRALES & RENDEMENT');
 
         $this->ligneEntete($ws, self::LIGNE_NOM, 'Désignation de la préparation', $recette->name, null, null);
-        $this->ligneEntete($ws, self::LIGNE_CODE, 'Code Article / Référence', $this->codePreparation($recette, $rang), null, null);
-        $this->ligneEntete($ws, self::LIGNE_RENDEMENT, 'Rendement total brut produit', $rendement, $this->formatQuantite($rendement), $this->uniteLongue($unite, $rendement), true);
-        $this->ligneEntete($ws, self::LIGNE_PORTION, 'Portion de référence', $portion, $this->formatQuantite($portion), $unite . ' / portion — ' . $origine);
+        $this->ligneEntete($ws, self::LIGNE_CODE, 'Code Article / Référence', $this->codePreparation($recette, $rang),
+            null, null);
+        $this->ligneEntete($ws, self::LIGNE_RENDEMENT, 'Rendement total brut produit', $rendement,
+            $this->formatQuantite($rendement), $this->uniteLongue($unite, $rendement), true);
+        $this->ligneEntete($ws, self::LIGNE_PORTION, 'Portion de référence', $portion, $this->formatQuantite($portion),
+            $unite . ' / portion — ' . $origine);
         $this->ligneEntete(
             $ws, self::LIGNE_PORTIONS, 'Nombre de portions obtenues',
             '=IFERROR(B' . self::LIGNE_RENDEMENT . '/B' . self::LIGNE_PORTION . ',0)',
@@ -235,7 +241,8 @@ class RestaurantRecipeWorkbook
      * @param  array<int,string>  $ongletsPrep
      * @return array<string,mixed>  adresses utiles au tableau de bord
      */
-    private function feuillePlat(Spreadsheet $classeur, RestaurantRecipe $recette, ?Tenant $tenant, array $ongletsPrep): array
+    private function feuillePlat(Spreadsheet $classeur, RestaurantRecipe $recette, ?Tenant $tenant,
+        array $ongletsPrep): array
     {
         $ws = $classeur->createSheet();
         $ws->setTitle($this->nomOnglet($classeur, '🍽️ Plat - ' . $recette->name));
@@ -256,12 +263,18 @@ class RestaurantRecipeWorkbook
         // 1. Identification
         $this->section($ws, 'A3:C3', '1. IDENTIFICATION DU PLAT & SERVICE');
 
-        $this->ligneEntete($ws, self::LIGNE_PLAT_NOM, 'Nom commercial du plat', $plat?->name ?: $recette->name, null, null);
-        $this->ligneEntete($ws, self::LIGNE_PLAT_CATEGORIE, 'Catégorie Menu', $plat?->category?->name ?: 'Non classé', null, null);
-        $this->ligneEntete($ws, self::LIGNE_PLAT_PORTIONS, 'Nombre de portions / Rendement', $portions, $this->formatQuantite($portions), 'Couverts / Assiette');
-        $this->ligneEntete($ws, self::LIGNE_PLAT_PRIX, 'Prix de Vente Conseillé (TTC)', $prix, self::FMT_FCFA, 'FCFA / portion', true);
-        $this->ligneEntete($ws, self::LIGNE_PLAT_TVA, 'Taux de TVA / Taxes applicables', $this->tauxTva(), self::FMT_TAUX, $this->mentionTva());
-        $this->ligneEntete($ws, self::LIGNE_PLAT_CIBLE, 'Coût matière cible (Food Cost %)', self::CIBLE_FOOD_COST, self::FMT_TAUX, 'Objectif professionnel : entre 25 % et 35 %');
+        $this->ligneEntete($ws, self::LIGNE_PLAT_NOM, 'Nom commercial du plat', $plat?->name ?: $recette->name, null,
+            null);
+        $this->ligneEntete($ws, self::LIGNE_PLAT_CATEGORIE, 'Catégorie Menu', $plat?->category?->name ?: 'Non classé',
+            null, null);
+        $this->ligneEntete($ws, self::LIGNE_PLAT_PORTIONS, 'Nombre de portions / Rendement', $portions,
+            $this->formatQuantite($portions), 'Couverts / Assiette');
+        $this->ligneEntete($ws, self::LIGNE_PLAT_PRIX, 'Prix de Vente Conseillé (TTC)', $prix, self::FMT_FCFA,
+            'FCFA / portion', true);
+        $this->ligneEntete($ws, self::LIGNE_PLAT_TVA, 'Taux de TVA / Taxes applicables', $this->tauxTva(),
+            self::FMT_TAUX, $this->mentionTva());
+        $this->ligneEntete($ws, self::LIGNE_PLAT_CIBLE, 'Coût matière cible (Food Cost %)', self::CIBLE_FOOD_COST,
+            self::FMT_TAUX, 'Objectif professionnel : entre 25 % et 35 %');
 
         // 2. Composition de la portion
         $this->section($ws, 'A11:I11', '2. COMPOSITION DE LA PORTION & CALCUL DU COÛT MATIÈRE (FOOD COST)');
@@ -275,24 +288,33 @@ class RestaurantRecipeWorkbook
         $derniere = $ligne - 1;
 
         $ligneTotal = $ligne;
-        $this->ligneTotalComposition($ws, $ligneTotal, 'TOTAL COÛT DE REVIENT MATIÈRE (FOOD COST)', $premiere, $derniere, '', false);
+        $this->ligneTotalComposition($ws, $ligneTotal, 'TOTAL COÛT DE REVIENT MATIÈRE (FOOD COST)', $premiere,
+            $derniere, '', false);
 
         // 3. Synthèse
         $ligneSection3 = $ligneTotal + 2;
-        $this->section($ws, "A{$ligneSection3}:I{$ligneSection3}", '3. SYNTHÈSE DE GESTION, RATIOS & RENTABILITÉ DU PLAT');
+        $this->section($ws, "A{$ligneSection3}:I{$ligneSection3}",
+            '3. SYNTHÈSE DE GESTION, RATIOS & RENTABILITÉ DU PLAT');
 
         $fc    = "H{$ligneTotal}";
         $pv    = '$B$' . self::LIGNE_PLAT_PRIX;
         $cible = '$B$' . self::LIGNE_PLAT_CIBLE;
 
         $syntheses = [
-            ['COÛT DE REVIENT MATIÈRE (FOOD COST)', "={$fc}", self::FMT_FCFA, 'Somme des coûts ingrédients', 'Coût direct des ingrédients par portion', true],
-            ['PRIX DE VENTE CONSEILLÉ (TTC)', "={$pv}", self::FMT_FCFA, 'Prix de vente affiché au menu', 'Prix payé par le client au restaurant', false],
-            ['MARGE BRUTE RESTAURANT (PAR COUVERT)', "={$pv}-{$fc}", self::FMT_FCFA, 'Prix de vente TTC - Food Cost', 'Contribution brute à la couverture des frais et bénéfice', true],
-            ['RATIO FOOD COST RÉEL (%)', "=IFERROR({$fc}/{$pv},0)", self::FMT_TAUX, 'Food Cost / Prix de Vente', 'Objectif professionnel : entre 25 % et 35 %', false],
-            ['TAUX DE MARGE BRUTE (%)', "=IFERROR(({$pv}-{$fc})/{$pv},0)", self::FMT_TAUX, 'Marge Brute / Prix de Vente', 'Part du prix restant après coût matière', false],
-            ['COEFFICIENT MULTIPLICATEUR (PRIX/COÛT)', "=IFERROR({$pv}/{$fc},0)", '0.00', 'Prix de Vente / Food Cost', 'Norme hôtellerie/restauration : 3.0 à 4.5', false],
-            ['PRIX DE VENTE THÉORIQUE (RATIO CIBLE)', "=IFERROR({$fc}/{$cible},0)", self::FMT_FCFA, 'Food Cost / Ratio cible', 'Prix recommandé selon la norme cible', false],
+            ['COÛT DE REVIENT MATIÈRE (FOOD COST)', "={$fc}", self::FMT_FCFA, 'Somme des coûts ingrédients',
+                'Coût direct des ingrédients par portion', true],
+            ['PRIX DE VENTE CONSEILLÉ (TTC)', "={$pv}", self::FMT_FCFA, 'Prix de vente affiché au menu',
+                'Prix payé par le client au restaurant', false],
+            ['MARGE BRUTE RESTAURANT (PAR COUVERT)', "={$pv}-{$fc}", self::FMT_FCFA, 'Prix de vente TTC - Food Cost',
+                'Contribution brute à la couverture des frais et bénéfice', true],
+            ['RATIO FOOD COST RÉEL (%)', "=IFERROR({$fc}/{$pv},0)", self::FMT_TAUX, 'Food Cost / Prix de Vente',
+                'Objectif professionnel : entre 25 % et 35 %', false],
+            ['TAUX DE MARGE BRUTE (%)', "=IFERROR(({$pv}-{$fc})/{$pv},0)", self::FMT_TAUX,
+                'Marge Brute / Prix de Vente', 'Part du prix restant après coût matière', false],
+            ['COEFFICIENT MULTIPLICATEUR (PRIX/COÛT)', "=IFERROR({$pv}/{$fc},0)", '0.00', 'Prix de Vente / Food Cost',
+                'Norme hôtellerie/restauration : 3.0 à 4.5', false],
+            ['PRIX DE VENTE THÉORIQUE (RATIO CIBLE)', "=IFERROR({$fc}/{$cible},0)", self::FMT_FCFA,
+                'Food Cost / Ratio cible', 'Prix recommandé selon la norme cible', false],
         ];
 
         $ligne = $ligneSection3 + 1;
@@ -302,7 +324,8 @@ class RestaurantRecipeWorkbook
         }
 
         // 4. Dressage
-        $this->modeOperatoire($ws, $ligne + 1, $recette, 'INSTRUCTIONS DE DRESSAGE & BONNES PRATIQUES EN CUISINE', true);
+        $this->modeOperatoire($ws, $ligne + 1, $recette, 'INSTRUCTIONS DE DRESSAGE & BONNES PRATIQUES EN CUISINE',
+            true);
 
         $ws->setSelectedCell('A1');
 
@@ -331,7 +354,8 @@ class RestaurantRecipeWorkbook
      * @param  array<int,string>  $ongletsPrep
      * @return int  première ligne libre après le tableau
      */
-    private function composition(Worksheet $ws, RestaurantRecipe $recette, int $premiere, float $diviseur, bool $parPortion, array $ongletsPrep): int
+    private function composition(Worksheet $ws, RestaurantRecipe $recette, int $premiere, float $diviseur,
+        bool $parPortion, array $ongletsPrep): int
     {
         $lignes = $recette->lines;
 
@@ -341,11 +365,14 @@ class RestaurantRecipeWorkbook
             $ws->getRowDimension($premiere)->setRowHeight(20);
             $ws->mergeCells("A{$premiere}:G{$premiere}");
             $ws->setCellValue("A{$premiere}", 'Aucun ingrédient saisi pour cette fiche');
-            $this->style($ws, "A{$premiere}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'], 'vertical' => true]);
+            $this->style($ws, "A{$premiere}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'],
+                'vertical' => true]);
             $ws->setCellValue("H{$premiere}", 0);
-            $this->style($ws, "H{$premiere}", ['taille' => 10, 'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "H{$premiere}", ['taille' => 10, 'format' => self::FMT_FCFA,
+                'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
             $ws->setCellValue("I{$premiere}", 'À compléter depuis la plateforme');
-            $this->style($ws, "I{$premiere}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'], 'vertical' => true]);
+            $this->style($ws, "I{$premiere}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'],
+                'vertical' => true]);
             $this->bordures($ws, "A{$premiere}:I{$premiere}");
 
             return $premiere + 1;
@@ -370,7 +397,8 @@ class RestaurantRecipeWorkbook
      *
      * @param  array<int,string>  $ongletsPrep
      */
-    private function ligneComposant(Worksheet $ws, int $ligne, RestaurantRecipeLine $composant, float $diviseur, bool $parPortion, array $ongletsPrep): void
+    private function ligneComposant(Worksheet $ws, int $ligne, RestaurantRecipeLine $composant, float $diviseur,
+        bool $parPortion, array $ongletsPrep): void
     {
         $article = $composant->item;
         $diviseur = $diviseur > 0 ? $diviseur : 1.0;
@@ -385,7 +413,8 @@ class RestaurantRecipeWorkbook
 
         $ws->getRowDimension($ligne)->setRowHeight(20);
 
-        $ws->setCellValue("A{$ligne}", $parPortion ? $this->composantLabel($article) : ($this->codes[$article?->id] ?? '—'));
+        $ws->setCellValue("A{$ligne}", $parPortion ? $this->composantLabel($article) : ($this->codes[$article?->id]
+            ?? '—'));
         $ws->setCellValue("B{$ligne}", $article?->name ?? 'Ingrédient supprimé');
         $ws->setCellValue("C{$ligne}", round($brute, 4));
         $ws->setCellValue("D{$ligne}", $article?->unit ?? '');
@@ -395,20 +424,28 @@ class RestaurantRecipeWorkbook
         $ws->setCellValue("H{$ligne}", "=C{$ligne}*G{$ligne}");
         $ws->setCellValue("I{$ligne}", $this->commentaireComposant($composant, $article, $ongletsPrep));
 
-        $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT,
+            'vertical' => true]);
         $format = $this->formatQuantite($brute, $brute * (1 - $perte / 100));
-        $this->style($ws, "C{$ligne}", ['taille' => 10, 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+        $this->style($ws, "C{$ligne}", ['taille' => 10, 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT,
+            'vertical' => true]);
         $this->style($ws, "D{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-        $this->style($ws, "E{$ligne}", ['taille' => 10, 'format' => self::FMT_TAUX, 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-        $this->style($ws, "F{$ligne}", ['taille' => 10, 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-        $this->style($ws, "G{$ligne}", ['taille' => 10, 'format' => self::FMT_FCFA_FIN, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-        $this->style($ws, "H{$ligne}", ['taille' => 10, 'gras' => true, 'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-        $this->style($ws, "I{$ligne}", ['taille' => 9, 'couleur' => $this->c['gris'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "E{$ligne}", ['taille' => 10, 'format' => self::FMT_TAUX,
+            'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
+        $this->style($ws, "F{$ligne}", ['taille' => 10, 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT,
+            'vertical' => true]);
+        $this->style($ws, "G{$ligne}", ['taille' => 10, 'format' => self::FMT_FCFA_FIN,
+            'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+        $this->style($ws, "H{$ligne}", ['taille' => 10, 'gras' => true, 'format' => self::FMT_FCFA,
+            'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+        $this->style($ws, "I{$ligne}", ['taille' => 9, 'couleur' => $this->c['gris'],
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->bordures($ws, "A{$ligne}:I{$ligne}");
     }
 
     /** Ligne de total du tableau de composition. */
-    private function ligneTotalComposition(Worksheet $ws, int $ligne, string $libelle, int $premiere, int $derniere, string $unite, bool $quantites, string $format = '#,##0'): void
+    private function ligneTotalComposition(Worksheet $ws, int $ligne, string $libelle, int $premiere, int $derniere,
+        string $unite, bool $quantites, string $format = '#,##0'): void
     {
         $ws->getRowDimension($ligne)->setRowHeight(22);
 
@@ -422,15 +459,20 @@ class RestaurantRecipeWorkbook
             $ws->setCellValue("D{$ligne}", $unite);
             $ws->setCellValue("F{$ligne}", "=SUM(F{$premiere}:F{$derniere})");
 
-            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
-            $this->style($ws, "C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-            $this->style($ws, "D{$ligne}:E{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-            $this->style($ws, "F{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+            $this->style($ws, "C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "D{$ligne}:E{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
+            $this->style($ws, "F{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'format' => $format, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
             $this->style($ws, "G{$ligne}", ['fond' => $this->c['total']]);
         } else {
             $ws->mergeCells("A{$ligne}:G{$ligne}");
             $ws->setCellValue("A{$ligne}", $libelle);
-            $this->style($ws, "A{$ligne}:G{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "A{$ligne}:G{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
         }
 
         $ws->setCellValue("H{$ligne}", "=SUM(H{$premiere}:H{$derniere})");
@@ -445,11 +487,13 @@ class RestaurantRecipeWorkbook
     }
 
     /** Ligne d'en-tête de fiche : libellé, valeur, unité de lecture. */
-    private function ligneEntete(Worksheet $ws, int $ligne, string $libelle, mixed $valeur, ?string $format, ?string $unite, bool $gras = false): void
+    private function ligneEntete(Worksheet $ws, int $ligne, string $libelle, mixed $valeur, ?string $format,
+        ?string $unite, bool $gras = false): void
     {
         $ws->getRowDimension($ligne)->setRowHeight(20);
         $ws->setCellValue("A{$ligne}", $libelle);
-        $this->style($ws, "A{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'vertical' => true]);
+        $this->style($ws, "A{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+            'vertical' => true]);
 
         if ($format === null) {
             $ws->setCellValueExplicit("B{$ligne}", (string) $valeur, DataType::TYPE_STRING);
@@ -466,12 +510,14 @@ class RestaurantRecipeWorkbook
         }
 
         $ws->setCellValue("C{$ligne}", $unite ?? '');
-        $this->style($ws, "C{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'], 'vertical' => true]);
+        $this->style($ws, "C{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'],
+            'vertical' => true]);
         $this->bordures($ws, "A{$ligne}:C{$ligne}");
     }
 
     /** Ligne de la synthèse d'un plat : indicateur, valeur, mode de calcul, lecture. */
-    private function ligneSynthese(Worksheet $ws, int $ligne, string $libelle, string $formule, string $format, string $calcul, string $lecture, bool $cle): void
+    private function ligneSynthese(Worksheet $ws, int $ligne, string $libelle, string $formule, string $format,
+        string $calcul, string $lecture, bool $cle): void
     {
         $fond = $cle ? $this->c['cle'] : $this->c['blanc'];
 
@@ -484,20 +530,24 @@ class RestaurantRecipeWorkbook
         $ws->setCellValue("E{$ligne}", $calcul);
         $ws->setCellValue("F{$ligne}", $lecture);
 
-        $this->style($ws, "A{$ligne}:C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $fond, 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "A{$ligne}:C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $fond,
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->style($ws, "D{$ligne}", [
             'taille' => $cle ? 12 : 10, 'gras' => true,
             'couleur' => $cle ? $this->c['section'] : $this->c['encre'],
             'fond' => $fond, 'format' => $format,
             'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true,
         ]);
-        $this->style($ws, "E{$ligne}", ['taille' => 9, 'fond' => $fond, 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-        $this->style($ws, "F{$ligne}:I{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "E{$ligne}", ['taille' => 9, 'fond' => $fond, 'align' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => true]);
+        $this->style($ws, "F{$ligne}:I{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'],
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->bordures($ws, "A{$ligne}:I{$ligne}");
     }
 
     /** Ligne de ratio d'une préparation : indicateur, valeur, lecture. */
-    private function ligneRatio(Worksheet $ws, int $ligne, string $libelle, string $formule, string $format, string $lecture, bool $cle): void
+    private function ligneRatio(Worksheet $ws, int $ligne, string $libelle, string $formule, string $format,
+        string $lecture, bool $cle): void
     {
         $fond = $cle ? $this->c['cle'] : $this->c['blanc'];
 
@@ -509,14 +559,16 @@ class RestaurantRecipeWorkbook
         $ws->setCellValue("D{$ligne}", $formule);
         $ws->setCellValue("E{$ligne}", $lecture);
 
-        $this->style($ws, "A{$ligne}:C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $fond, 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "A{$ligne}:C{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $fond,
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->style($ws, "D{$ligne}", [
             'taille' => $cle ? 12 : 10, 'gras' => true,
             'couleur' => $cle ? $this->c['section'] : $this->c['encre'],
             'fond' => $fond, 'format' => $format,
             'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true,
         ]);
-        $this->style($ws, "E{$ligne}:I{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "E{$ligne}:I{$ligne}", ['taille' => 9, 'italique' => true, 'couleur' => $this->c['gris'],
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->bordures($ws, "A{$ligne}:I{$ligne}");
     }
 
@@ -526,7 +578,8 @@ class RestaurantRecipeWorkbook
      * rappel permanent qu'il reste à la remplir. Sur une préparation, elle
      * n'apparaît que si le chef a effectivement noté quelque chose.
      */
-    private function modeOperatoire(Worksheet $ws, int $ligne, RestaurantRecipe $recette, string $titre, bool $toujours): void
+    private function modeOperatoire(Worksheet $ws, int $ligne, RestaurantRecipe $recette, string $titre,
+        bool $toujours): void
     {
         $etapes = collect(preg_split('/\r\n|\r|\n/', (string) $recette->notes))
             ->map(fn (string $etape) => trim($etape))
@@ -537,14 +590,17 @@ class RestaurantRecipeWorkbook
             return;
         }
 
-        $this->bandeau($ws, "A{$ligne}:I{$ligne}", '4. ' . $titre, $this->c['titre'], $this->c['titre_encre'], 11, Alignment::HORIZONTAL_LEFT, 24);
+        $this->bandeau($ws, "A{$ligne}:I{$ligne}", '4. ' . $titre, $this->c['titre'], $this->c['titre_encre'], 11,
+            Alignment::HORIZONTAL_LEFT, 24);
         $ligne++;
 
         if ($etapes->isEmpty()) {
             $ws->getRowDimension($ligne)->setRowHeight(20);
             $ws->mergeCells("A{$ligne}:I{$ligne}");
-            $ws->setCellValue("A{$ligne}", 'Aucune instruction saisie — complétez les notes de la fiche depuis la plateforme.');
-            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'], 'vertical' => true]);
+            $ws->setCellValue("A{$ligne}",
+                'Aucune instruction saisie — complétez les notes de la fiche depuis la plateforme.');
+            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'],
+                'vertical' => true]);
             $this->bordures($ws, "A{$ligne}:I{$ligne}");
 
             return;
@@ -558,8 +614,10 @@ class RestaurantRecipeWorkbook
             $ws->setCellValue("A{$ligne}", 'Étape ' . ($index + 1));
             $ws->setCellValue("C{$ligne}", $etape);
 
-            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
-            $this->style($ws, "C{$ligne}:I{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true, 'retour' => true]);
+            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['total'],
+                'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+            $this->style($ws, "C{$ligne}:I{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT,
+                'vertical' => true, 'retour' => true]);
             $this->bordures($ws, "A{$ligne}:I{$ligne}");
 
             $ligne++;
@@ -583,7 +641,8 @@ class RestaurantRecipeWorkbook
             $this->titreSigne($tenant, 'ANALYSE DU FOOD COST & MARGES DU MENU'),
             $this->c['titre'], $this->c['titre_encre'], 16, Alignment::HORIZONTAL_CENTER, 42
         );
-        $this->ligneMarque($ws, 'A2', $tenant, 'Suivi de la rentabilité des plats de la carte, food cost unitaire et coefficients multiplicateurs.');
+        $this->ligneMarque($ws, 'A2', $tenant,
+            'Suivi de la rentabilité des plats de la carte, food cost unitaire et coefficients multiplicateurs.');
         $this->logo($ws, $tenant);
 
         $this->enteteTableau($ws, 4, [
@@ -607,12 +666,19 @@ class RestaurantRecipeWorkbook
             $ws->setCellValue("G{$ligne}", "={$onglet}!{$repere['ratio']}");
             $ws->setCellValue("H{$ligne}", "={$onglet}!{$repere['coeff']}");
 
-            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
-            $this->style($ws, "C{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'], 'format' => $this->formatQuantite((float) $repere['couverts']), 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-            $this->style($ws, "D{$ligne}:E{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'], 'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-            $this->style($ws, "F{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'], 'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-            $this->style($ws, "G{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'], 'format' => self::FMT_TAUX, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-            $this->style($ws, "H{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'], 'format' => '0.00', 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "A{$ligne}:B{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'],
+                'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+            $this->style($ws, "C{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'], 'format' => $this
+                ->formatQuantite((float) $repere['couverts']), 'align' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => true]);
+            $this->style($ws, "D{$ligne}:E{$ligne}", ['taille' => 11, 'fond' => $this->c['blanc'],
+                'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "F{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'],
+                'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "G{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'],
+                'format' => self::FMT_TAUX, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "H{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['blanc'],
+                'format' => '0.00', 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
             $this->bordures($ws, "A{$ligne}:H{$ligne}");
 
             $ligne++;
@@ -621,8 +687,10 @@ class RestaurantRecipeWorkbook
         if ($reperes === []) {
             $ws->getRowDimension($ligne)->setRowHeight(20);
             $ws->mergeCells("A{$ligne}:H{$ligne}");
-            $ws->setCellValue("A{$ligne}", 'Aucune fiche de plat à ce jour — les préparations de base figurent dans leurs propres onglets.');
-            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'], 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
+            $ws->setCellValue("A{$ligne}",
+                'Aucune fiche de plat à ce jour — les préparations de base figurent dans leurs propres onglets.');
+            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'],
+                'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
             $this->bordures($ws, "A{$ligne}:H{$ligne}");
 
             $ws->freezePane('A5');
@@ -639,7 +707,8 @@ class RestaurantRecipeWorkbook
         $ws->setCellValue("B{$ligne}", 'Moyenne globale de la carte');
 
         $couverts = array_map(fn (array $repere) => (float) $repere['couverts'], $reperes);
-        $formats = ['C' => $this->formatQuantite(...$couverts), 'D' => self::FMT_FCFA, 'E' => self::FMT_FCFA, 'F' => self::FMT_FCFA, 'G' => self::FMT_TAUX, 'H' => '0.00'];
+        $formats = ['C' => $this->formatQuantite(...$couverts), 'D' => self::FMT_FCFA, 'E' => self::FMT_FCFA,
+            'F' => self::FMT_FCFA, 'G' => self::FMT_TAUX, 'H' => '0.00'];
         foreach ($formats as $col => $format) {
             $ws->setCellValue("{$col}{$ligne}", "=IFERROR(AVERAGE({$col}{$premiere}:{$col}{$derniere}),0)");
             $this->style($ws, "{$col}{$ligne}", [
@@ -649,8 +718,10 @@ class RestaurantRecipeWorkbook
             ]);
         }
 
-        $this->style($ws, "A{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['moyenne'], 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-        $this->style($ws, "B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['moyenne'], 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
+        $this->style($ws, "A{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['moyenne'],
+            'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
+        $this->style($ws, "B{$ligne}", ['taille' => 10, 'gras' => true, 'fond' => $this->c['moyenne'],
+            'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
         $this->bordures($ws, "A{$ligne}:H{$ligne}");
         $ws->getStyle("A{$ligne}:H{$ligne}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_DOUBLE);
 
@@ -675,7 +746,8 @@ class RestaurantRecipeWorkbook
             $this->titreSigne($tenant, "MERCURIALE CENTRALE — PRIX D'ACHAT & UNITÉS MATIÈRES PREMIÈRES"),
             $this->c['titre'], $this->c['titre_encre'], 16, Alignment::HORIZONTAL_CENTER, 40
         );
-        $this->ligneMarque($ws, 'A2', $tenant, "Coûts moyens pondérés du garde-manger, effectivement appliqués dans les fiches techniques.");
+        $this->ligneMarque($ws, 'A2', $tenant,
+            "Coûts moyens pondérés du garde-manger, effectivement appliqués dans les fiches techniques.");
 
         $this->enteteTableau($ws, 4, [
             'Code Ingrédient', 'Désignation Ingrédient', 'Catégorie',
@@ -697,10 +769,14 @@ class RestaurantRecipeWorkbook
             $ws->setCellValue("E{$ligne}", "=F{$ligne}*" . $this->nombreFormule($conversion));
             $ws->setCellValue("F{$ligne}", round((float) $article->average_cost / 100, 4));
 
-            $this->style($ws, "A{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
-            $this->style($ws, "B{$ligne}:D{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT, 'vertical' => true]);
-            $this->style($ws, "E{$ligne}", ['taille' => 10, 'gras' => true, 'format' => self::FMT_FCFA, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
-            $this->style($ws, "F{$ligne}", ['taille' => 10, 'format' => self::FMT_FCFA_FIN, 'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "A{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => true]);
+            $this->style($ws, "B{$ligne}:D{$ligne}", ['taille' => 10, 'align' => Alignment::HORIZONTAL_LEFT,
+                'vertical' => true]);
+            $this->style($ws, "E{$ligne}", ['taille' => 10, 'gras' => true, 'format' => self::FMT_FCFA,
+                'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
+            $this->style($ws, "F{$ligne}", ['taille' => 10, 'format' => self::FMT_FCFA_FIN,
+                'align' => Alignment::HORIZONTAL_RIGHT, 'vertical' => true]);
             $this->bordures($ws, "A{$ligne}:F{$ligne}");
 
             $ligne++;
@@ -710,7 +786,8 @@ class RestaurantRecipeWorkbook
             $ws->getRowDimension($ligne)->setRowHeight(20);
             $ws->mergeCells("A{$ligne}:F{$ligne}");
             $ws->setCellValue("A{$ligne}", 'Aucun ingrédient au garde-manger à ce jour');
-            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'], 'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
+            $this->style($ws, "A{$ligne}", ['taille' => 10, 'italique' => true, 'couleur' => $this->c['gris'],
+                'align' => Alignment::HORIZONTAL_CENTER, 'vertical' => true]);
             $this->bordures($ws, "A{$ligne}:F{$ligne}");
         }
 
@@ -739,8 +816,10 @@ class RestaurantRecipeWorkbook
             ->merge($utilises)
             ->unique('id')
             ->sortBy([
-                fn (RestaurantPantryItem $a, RestaurantPantryItem $b) => $this->cleDeTri($a->category?->name) <=> $this->cleDeTri($b->category?->name),
-                fn (RestaurantPantryItem $a, RestaurantPantryItem $b) => $this->cleDeTri($a->name) <=> $this->cleDeTri($b->name),
+                fn (RestaurantPantryItem $a, RestaurantPantryItem $b) => $this->cleDeTri($a->category?->name) <=> $this
+                    ->cleDeTri($b->category?->name),
+                fn (RestaurantPantryItem $a, RestaurantPantryItem $b) => $this->cleDeTri($a->name) <=> $this
+                    ->cleDeTri($b->name),
             ])
             ->values();
     }
@@ -823,7 +902,8 @@ class RestaurantRecipeWorkbook
      *
      * @param  array<int,string>  $ongletsPrep
      */
-    private function commentaireComposant(RestaurantRecipeLine $composant, ?RestaurantPantryItem $article, array $ongletsPrep): string
+    private function commentaireComposant(RestaurantRecipeLine $composant, ?RestaurantPantryItem $article,
+        array $ongletsPrep): string
     {
         $morceaux = array_filter([trim((string) $composant->notes)]);
 

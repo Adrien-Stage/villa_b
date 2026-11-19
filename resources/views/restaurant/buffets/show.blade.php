@@ -22,9 +22,15 @@
     </div>
     @if($buffet->estOuvert())
         @droit('restaurant.buffets.close')
-            <form method="POST" action="{{ route('restaurant.buffets.close', $buffet) }}" onsubmit="return confirm('Clore ce buffet ? Il n\'enregistrera plus d\'entrées.')">
+            <form
+                method="POST"
+                action="{{ route('restaurant.buffets.close', $buffet) }}"
+                onsubmit="return confirm('Clore ce buffet ? Il n\'enregistrera plus d\'entrées.')">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-secondary/25 bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-accent/20">
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 rounded-lg border border-secondary/25 bg-white px-4 py-2
+                        text-xs font-semibold text-primary hover:bg-accent/20">
                     <i data-lucide="lock" class="w-3.5 h-3.5"></i> Clore le buffet
                 </button>
             </form>
@@ -33,7 +39,8 @@
 </div>
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -77,16 +84,22 @@
                 <label class="block">
                     <span class="text-xs text-primary/60">Adultes</span>
                     <input type="number" name="adults" min="0" max="500" x-model.number="adultes" required
-                        class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">
+                        class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none
+                            focus:border-secondary">
                 </label>
                 <label class="block">
                     <span class="text-xs text-primary/60">Enfants</span>
                     <input type="number" name="children" min="0" max="500" x-model.number="enfants"
-                        class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">
+                        class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none
+                            focus:border-secondary">
                 </label>
                 <label class="block">
                     <span class="text-xs text-primary/60">Paiement</span>
-                    <select name="payment_method" x-model="mode" class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-secondary">
+                    <select
+                        name="payment_method"
+                        x-model="mode"
+                        class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm
+                            outline-none focus:border-secondary">
                         @foreach($paymentMethods as $methode)
                             <option value="{{ $methode }}">{{ $libellesModes[$methode] ?? $methode }}</option>
                         @endforeach
@@ -94,7 +107,10 @@
                 </label>
                 <label class="block" x-show="mode === 'room_charge'" x-cloak>
                     <span class="text-xs text-primary/60">Résident</span>
-                    <select name="booking_id" class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-secondary">
+                    <select
+                        name="booking_id"
+                        class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm
+                            outline-none focus:border-secondary">
                         <option value="">Choisir…</option>
                         @foreach($residents as $sejour)
                             <option value="{{ $sejour->id }}" @selected((int) old('booking_id') === $sejour->id)>
@@ -105,9 +121,14 @@
                 </label>
                 <div class="flex flex-col justify-end">
                     <p class="mb-1 text-right text-xs text-primary/60">
-                        À payer : <strong class="text-primary" x-text="((adultes || 0) * {{ (int) $buffet->adult_price }} + (enfants || 0) * {{ (int) $buffet->child_price }}) / 100 + ' FCFA'"></strong>
+                        À payer : <strong
+                            class="text-primary"
+                            x-text="((adultes || 0) * {{ (int) $buffet->adult_price }} + (enfants || 0) * {{ (int) $buffet->child_price }}) / 100 + ' FCFA'"></strong>
                     </p>
-                    <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-95">Enregistrer</button>
+                    <button
+                        type="submit"
+                        class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                            hover:opacity-95">Enregistrer</button>
                 </div>
             </div>
         </form>

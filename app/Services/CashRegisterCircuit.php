@@ -94,11 +94,13 @@ class CashRegisterCircuit
      *
      * @throws \DomainException motif du refus, à montrer tel quel
      */
-    public function ouvrir(User $user, string $module, int $fondCentimes, ?PointOfSale $pointDeVente = null): CashRegisterSession
+    public function ouvrir(User $user, string $module, int $fondCentimes,
+        ?PointOfSale $pointDeVente = null): CashRegisterSession
     {
         if ($enCours = $this->enCours($user, $module)) {
             throw new \DomainException($enCours->isPendingReview()
-                ? 'Votre dernier comptage attend le contrôle de '.CashClosurePolicy::witnessLabel().' : vous ouvrirez une nouvelle caisse ensuite.'
+                ? 'Votre dernier comptage attend le contrôle de '.CashClosurePolicy::witnessLabel()
+                    .' : vous ouvrirez une nouvelle caisse ensuite.'
                 : 'Vous avez déjà une caisse '.self::libelle($module).' ouverte.');
         }
 
@@ -123,7 +125,8 @@ class CashRegisterCircuit
      * jamais reçu de la requête : c'est lui qui met l'écart en évidence. La
      * caisse cesse d'encaisser et attend la contresignature de la comptabilité.
      */
-    public function compter(CashRegisterSession $session, int $compteCentimes, ?string $notes = null): CashRegisterSession
+    public function compter(CashRegisterSession $session, int $compteCentimes,
+        ?string $notes = null): CashRegisterSession
     {
         $theorique = $session->theoreticalBalance();
         $aContresigner = CashClosurePolicy::requiresWitness($session->module);
@@ -140,7 +143,8 @@ class CashRegisterCircuit
         return $session;
     }
 
-    public function decaisser(CashRegisterSession $session, User $user, int $montantCentimes, string $motif): CashRegisterDisbursement
+    public function decaisser(CashRegisterSession $session, User $user, int $montantCentimes,
+        string $motif): CashRegisterDisbursement
     {
         return CashRegisterDisbursement::create([
             'cash_register_session_id' => $session->id,

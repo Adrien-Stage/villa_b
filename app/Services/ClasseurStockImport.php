@@ -88,7 +88,8 @@ class ClasseurStockImport
 
         foreach ([
             'articles'     => [C::ONGLET_ARTICLES, C::ARTICLES, ['reference', 'designation']],
-            'mouvements'   => [C::ONGLET_MOUVEMENTS, array_diff_key(C::MOUVEMENTS, array_flip(C::MOUVEMENTS_CALCULS)), ['reference', 'type', 'quantite']],
+            'mouvements'   => [C::ONGLET_MOUVEMENTS, array_diff_key(C::MOUVEMENTS, array_flip(C::MOUVEMENTS_CALCULS)),
+                ['reference', 'type', 'quantite']],
             'fournisseurs' => [C::ONGLET_FOURNISSEURS, C::FOURNISSEURS, ['nom']],
             'categories'   => [C::ONGLET_CATEGORIES, C::CATEGORIES, ['nom']],
         ] as $cle => [$nom, $colonnes, $requises]) {
@@ -120,7 +121,8 @@ class ClasseurStockImport
 
         $carte = null;
         $ligneEntete = null;
-        $derniereColonne = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($ws->getHighestDataColumn());
+        $derniereColonne = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($ws
+            ->getHighestDataColumn());
 
         for ($n = 1; $n <= 10 && $carte === null; $n++) {
             $trouvees = [];
@@ -193,7 +195,8 @@ class ClasseurStockImport
         $a = new AnalyseClasseur($depot);
 
         foreach ($lu['manquants'] as $onglet) {
-            $a->erreur($onglet, null, "Onglet « {$onglet} » introuvable : ce fichier n'a pas la forme du classeur de l'économat.");
+            $a->erreur($onglet, null,
+                "Onglet « {$onglet} » introuvable : ce fichier n'a pas la forme du classeur de l'économat.");
         }
 
         $this->verifierMagasin($a, $lu, $depot);
@@ -219,7 +222,8 @@ class ClasseurStockImport
         $message = "Ce classeur est celui de « {$fichier} », l'import vise « {$attendu} ».";
 
         $numerote
-            ? $a->erreur(C::ONGLET_LISEZ_MOI, null, $message . ' Ses mouvements numérotés appartiennent à l\'autre magasin.')
+            ? $a->erreur(C::ONGLET_LISEZ_MOI, null,
+                $message . ' Ses mouvements numérotés appartiennent à l\'autre magasin.')
             : $a->avertissement(C::ONGLET_LISEZ_MOI, null, $message);
     }
 
@@ -249,7 +253,8 @@ class ClasseurStockImport
                 continue;
             }
             if (mb_strlen($nom) > 160) {
-                $a->erreur(C::ONGLET_FOURNISSEURS, $ligne['_ligne'], 'Nom de fournisseur trop long (160 caractères au plus).');
+                $a->erreur(C::ONGLET_FOURNISSEURS, $ligne['_ligne'],
+                    'Nom de fournisseur trop long (160 caractères au plus).');
                 continue;
             }
             $a->fournisseur($nom, array_filter([
@@ -279,7 +284,8 @@ class ClasseurStockImport
             $designation = $this->texte($ligne['designation'] ?? null, 255);
 
             if ($reference === null) {
-                $a->erreur(C::ONGLET_ARTICLES, $n, 'Référence obligatoire : c\'est elle qui relie l\'article à ses mouvements.');
+                $a->erreur(C::ONGLET_ARTICLES, $n,
+                    'Référence obligatoire : c\'est elle qui relie l\'article à ses mouvements.');
                 continue;
             }
             if (mb_strlen($reference) > 60) {
@@ -298,13 +304,16 @@ class ClasseurStockImport
             if ($id !== null) {
                 $article = $parId->get($id);
                 if ($article === null) {
-                    $a->erreur(C::ONGLET_ARTICLES, $n, "N° {$id} inconnu : cet article n'existe pas dans l'application. Videz le N° pour le créer.");
+                    $a->erreur(C::ONGLET_ARTICLES, $n,
+                        "N° {$id} inconnu : cet article n'existe pas dans l'application. Videz le N° pour le créer.");
                     continue;
                 }
             }
             $article ??= $parReference->get($cleRef);
-            if ($article === null && $designation !== null && ($homonymes = $parNom->get(mb_strtolower($designation)))) {
-                $libre = $homonymes->first(fn ($i) => trim((string) $i->reference) === '' || $i->reference === sprintf('ART-%05d', $i->id));
+            if ($article === null && $designation !== null && ($homonymes = $parNom
+                ->get(mb_strtolower($designation)))) {
+                $libre = $homonymes->first(fn ($i) => trim((string) $i->reference) === '' || $i
+                    ->reference === sprintf('ART-%05d', $i->id));
                 if ($libre === null) {
                     $a->avertissement(C::ONGLET_ARTICLES, $n, "« {$designation} » existe déjà sous la référence « {$homonymes->first()->reference} » : un second article sera créé.");
                 } else {
@@ -326,16 +335,20 @@ class ClasseurStockImport
             if ($unite === null) {
                 $a->erreur(C::ONGLET_ARTICLES, $n, $uniteSaisie === ''
                     ? 'Unité obligatoire pour un nouvel article.'
-                    : "Unité « {$uniteSaisie} » inconnue. Unités possibles : " . $unites->values()->implode(', ') . '.');
+                    : "Unité « {$uniteSaisie} » inconnue. Unités possibles : " . $unites->values()->implode(', ')
+                        . '.');
                 continue;
             }
-            if ($article && $unite !== $article->unit && ((float) $article->current_stock != 0 || isset($avecMouvements[$article->id]))) {
-                $a->erreur(C::ONGLET_ARTICLES, $n, "« {$article->name} » a déjà du stock en {$article->unit} : son unité ne change pas.");
+            if ($article && $unite !== $article->unit && ((float) $article->current_stock != 0
+                || isset($avecMouvements[$article->id]))) {
+                $a->erreur(C::ONGLET_ARTICLES, $n,
+                    "« {$article->name} » a déjà du stock en {$article->unit} : son unité ne change pas.");
                 continue;
             }
 
             $stockMin = $ligne['stock_min'] ?? null;
-            if ($stockMin !== null && $stockMin !== '' && ($this->nombre($stockMin) === null || $this->nombre($stockMin) < 0)) {
+            if ($stockMin !== null && $stockMin !== '' && ($this->nombre($stockMin) === null || $this
+                ->nombre($stockMin) < 0)) {
                 $a->erreur(C::ONGLET_ARTICLES, $n, 'Stock minimum : un nombre positif est attendu.');
                 continue;
             }
@@ -365,7 +378,8 @@ class ClasseurStockImport
     {
         // Ce que le magasin contient déjà, article par article.
         $stocks = $depot
-            ? ServiceStoreStock::query()->where('service_store_id', $depot->id)->pluck('current_stock', 'stock_item_id')->map(fn ($q) => (float) $q)
+            ? ServiceStoreStock::query()->where('service_store_id', $depot->id)->pluck('current_stock', 'stock_item_id')
+                ->map(fn ($q) => (float) $q)
             : StockItem::query()->pluck('current_stock', 'id')->map(fn ($q) => (float) $q);
 
         $dejaVecus = $depot
@@ -379,12 +393,14 @@ class ClasseurStockImport
 
         // Rien avant le dernier inventaire clôturé : il a fixé le stock.
         $dernierInventaire = $depot
-            ? ServiceStoreCount::query()->where('service_store_id', $depot->id)->where('status', ServiceStoreCount::STATUS_CLOSED)->max('closed_at')
+            ? ServiceStoreCount::query()->where('service_store_id', $depot->id)->where('status',
+                ServiceStoreCount::STATUS_CLOSED)->max('closed_at')
             : StockCount::query()->where('status', StockCount::STATUS_CLOSED)->max('closed_at');
         $dernierInventaire = $dernierInventaire ? CarbonImmutable::parse($dernierInventaire)->startOfDay() : null;
 
         $table = $depot ? ServiceStoreMovement::query()->where('service_store_id', $depot->id) : StockMovement::query();
-        $connus = (clone $table)->whereKey(collect($lignes)->map(fn ($l) => $this->entier($l['id'] ?? null))->filter()->all())
+        $connus = (clone $table)->whereKey(collect($lignes)->map(fn ($l) => $this->entier($l['id'] ?? null))->filter()
+            ->all())
             ->get()->keyBy('id');
 
         $aujourdhui = CarbonImmutable::today();
@@ -397,7 +413,8 @@ class ClasseurStockImport
             if (($id = $this->entier($ligne['id'] ?? null)) !== null) {
                 $connu = $connus->get($id);
                 if ($connu === null) {
-                    $a->erreur(C::ONGLET_MOUVEMENTS, $n, "N° {$id} inconnu dans ce magasin. Videz le N° s'il s'agit d'un nouveau mouvement.");
+                    $a->erreur(C::ONGLET_MOUVEMENTS, $n,
+                        "N° {$id} inconnu dans ce magasin. Videz le N° s'il s'agit d'un nouveau mouvement.");
                     continue;
                 }
                 $quantite = $this->nombre($ligne['quantite'] ?? null);
@@ -416,7 +433,8 @@ class ClasseurStockImport
             $destination = $this->texte($ligne['destination'] ?? null, 255);
 
             $erreurs = [];
-            $article = $reference !== null ? $a->articles[mb_strtolower($reference)] ?? $a->articleConnu($reference) : null;
+            $article = $reference !== null ? $a->articles[mb_strtolower($reference)] ?? $a
+                ->articleConnu($reference) : null;
             if ($reference === null) {
                 $erreurs[] = 'référence manquante';
             } elseif ($article === null) {
@@ -430,7 +448,8 @@ class ClasseurStockImport
             } elseif ($date->greaterThan($aujourdhui)) {
                 $erreurs[] = 'date à venir';
             } elseif ($dernierInventaire && $date->lessThan($dernierInventaire)) {
-                $erreurs[] = 'date antérieure au dernier inventaire du magasin (' . $dernierInventaire->format('d/m/Y') . ')';
+                $erreurs[] = 'date antérieure au dernier inventaire du magasin (' . $dernierInventaire->format('d/m/Y')
+                    . ')';
             }
             if ($quantite === null) {
                 $erreurs[] = 'quantité manquante ou illisible';
@@ -472,8 +491,10 @@ class ClasseurStockImport
             ];
 
             // Empreinte : la même ligne, réimportée, se reconnaît.
-            $base = hash('sha256', json_encode([$depot?->id, $mouvement['date'], mb_strtolower($mouvement['reference']), $type,
-                $mouvement['quantite'], $mouvement['cout'], $mouvement['document'], $destination, $mouvement['motif']]));
+            $base = hash('sha256', json_encode([$depot?->id, $mouvement['date'], mb_strtolower($mouvement['reference']),
+                $type,
+                $mouvement['quantite'], $mouvement['cout'], $mouvement['document'], $destination,
+                    $mouvement['motif']]));
             $occurrences[$base] = ($occurrences[$base] ?? 0) + 1;
             $mouvement['cle'] = substr(hash('sha256', $base . '#' . $occurrences[$base]), 0, 64);
 
@@ -518,7 +539,8 @@ class ClasseurStockImport
             if ($apres < -0.0005) {
                 $a->erreur(C::ONGLET_MOUVEMENTS, $m['ligne'], sprintf(
                     'Stock insuffisant : %s %s de « %s » le %s, %s demandé(s).',
-                    $this->format($stock), $m['unite'], $m['designation'], Carbon::parse($m['date'])->format('d/m/Y'), $this->format(abs($m['quantite']))
+                    $this->format($stock), $m['unite'], $m['designation'], Carbon::parse($m['date'])->format('d/m/Y'),
+                        $this->format(abs($m['quantite']))
                 ));
                 continue;
             }
@@ -547,7 +569,10 @@ class ClasseurStockImport
             $a->avertissement(C::ONGLET_MOUVEMENTS, null, "{$sansCout} arrivée(s) (stock initial ou entrée) sans coût unitaire : la marchandise entrera à 0 FCFA et ne se valorisera pas. Complétez les coûts avant d'importer si vous les connaissez.");
         }
         if ($clos !== []) {
-            $a->avertissement(C::ONGLET_MOUVEMENTS, null, count($clos) . ' mouvement(s) datés d\'une journée déjà clôturée en comptabilité (lignes ' . $this->plageDeLignes($clos) . ') : ils seront enregistrés à la date du jour, leur date d\'origine dans le motif.');
+            $a->avertissement(C::ONGLET_MOUVEMENTS, null,
+                count($clos) . ' mouvement(s) datés d\'une journée déjà clôturée en comptabilité (lignes ' . $this
+                ->plageDeLignes($clos)
+                . ') : ils seront enregistrés à la date du jour, leur date d\'origine dans le motif.');
         }
     }
 
@@ -626,7 +651,8 @@ class ClasseurStockImport
     {
         $tous = Supplier::query()->get()->keyBy(fn ($f) => mb_strtolower(trim($f->name)))->all();
         foreach ($aCreer as $nom => $details) {
-            $tous[mb_strtolower($nom)] ??= Supplier::create([...$details, 'name' => $nom, 'is_active' => true, 'tenant_id' => $tenantId]);
+            $tous[mb_strtolower($nom)] ??= Supplier::create([...$details, 'name' => $nom, 'is_active' => true,
+                'tenant_id' => $tenantId]);
         }
 
         return $tous;
@@ -646,7 +672,8 @@ class ClasseurStockImport
                     'name'              => $v['name'],
                     'unit'              => $v['unit'],
                     'stock_category_id' => $v['categorie'] ? $categories[mb_strtolower($v['categorie'])]->id : null,
-                    'supplier_id'       => $v['fournisseur'] ? $fournisseurs[mb_strtolower($v['fournisseur'])]->id : null,
+                    'supplier_id'       => $v['fournisseur'] ? $fournisseurs[mb_strtolower($v['fournisseur'])]
+                        ->id : null,
                     'description'       => $v['description'],
                     'min_stock'         => $v['min_stock'] ?? 0,
                     'current_stock'     => 0,
@@ -665,7 +692,8 @@ class ClasseurStockImport
                 'reference'   => isset($change['reference']) ? $v['reference'] : null,
                 'name'        => isset($change['name']) ? $v['name'] : null,
                 'unit'        => isset($change['unit']) ? $v['unit'] : null,
-                'supplier_id' => isset($change['fournisseur']) ? $fournisseurs[mb_strtolower($v['fournisseur'])]->id : null,
+                'supplier_id' => isset($change['fournisseur']) ? $fournisseurs[mb_strtolower($v['fournisseur'])]
+                    ->id : null,
                 'description' => isset($change['description']) ? $v['description'] : null,
                 'min_stock'   => isset($change['min_stock']) ? $v['min_stock'] : null,
                 'is_active'   => isset($change['is_active']) ? $v['is_active'] : null,
@@ -693,11 +721,16 @@ class ClasseurStockImport
         $cout = (int) (($m['cout'] ?? 0) * 100);
 
         $mouvement = match ($m['type']) {
-            C::TYPE_INITIAL    => $this->stock->recordIn($article, $m['quantite'], $cout, StockMovement::SOURCE_OPENING, null, $motif),
-            C::TYPE_ENTREE     => $this->stock->recordIn($article, $m['quantite'], $cout, StockMovement::SOURCE_IMPORT, $import->id, $motif),
-            C::TYPE_RETOUR     => $this->stock->recordIn($article, $m['quantite'], (int) $article->fresh()->average_cost, StockMovement::SOURCE_IMPORT, $import->id, $motif),
-            C::TYPE_SORTIE     => $this->stock->recordOut($article, $m['quantite'], StockMovement::SOURCE_EXTERNAL_ISSUE, null, $motif),
-            C::TYPE_AJUSTEMENT => $this->stock->adjust($article, round((float) $article->fresh()->current_stock + $m['quantite'], 3), $motif, StockMovement::SOURCE_IMPORT, $import->id),
+            C::TYPE_INITIAL    => $this->stock->recordIn($article, $m['quantite'], $cout, StockMovement::SOURCE_OPENING,
+                null, $motif),
+            C::TYPE_ENTREE     => $this->stock->recordIn($article, $m['quantite'], $cout, StockMovement::SOURCE_IMPORT,
+                $import->id, $motif),
+            C::TYPE_RETOUR     => $this->stock->recordIn($article, $m['quantite'], (int) $article->fresh()
+                ->average_cost, StockMovement::SOURCE_IMPORT, $import->id, $motif),
+            C::TYPE_SORTIE     => $this->stock->recordOut($article, $m['quantite'],
+                StockMovement::SOURCE_EXTERNAL_ISSUE, null, $motif),
+            C::TYPE_AJUSTEMENT => $this->stock->adjust($article, round((float) $article->fresh()
+                ->current_stock + $m['quantite'], 3), $motif, StockMovement::SOURCE_IMPORT, $import->id),
         };
 
         $mouvement?->update($this->traces($import, $m, true));
@@ -727,10 +760,13 @@ class ClasseurStockImport
         }
 
         $mouvement = match ($m['type']) {
-            C::TYPE_RETOUR => $this->depots->receive($depot, $article, $m['quantite'], $this->coutAuDepot($depot, $article),
+            C::TYPE_RETOUR => $this->depots->receive($depot, $article, $m['quantite'], $this->coutAuDepot($depot,
+                $article),
                 ServiceStoreMovement::SOURCE_RETOUR, $import->id, $motif),
-            C::TYPE_SORTIE => $this->depots->issue($depot, $article, $m['quantite'], ServiceStoreMovement::SOURCE_BENEFICIAIRE, $import->id, $motif),
-            C::TYPE_AJUSTEMENT => $this->depots->ajuster($depot, $article, $m['quantite'], ServiceStoreMovement::SOURCE_IMPORT, $import->id, $motif),
+            C::TYPE_SORTIE => $this->depots->issue($depot, $article, $m['quantite'],
+                ServiceStoreMovement::SOURCE_BENEFICIAIRE, $import->id, $motif),
+            C::TYPE_AJUSTEMENT => $this->depots->ajuster($depot, $article, $m['quantite'],
+                ServiceStoreMovement::SOURCE_IMPORT, $import->id, $motif),
         };
 
         $mouvement->update($traces);
@@ -738,7 +774,8 @@ class ClasseurStockImport
 
     private function coutAuDepot(ServiceStore $depot, StockItem $article): int
     {
-        return (int) (ServiceStoreStock::query()->where('service_store_id', $depot->id)->where('stock_item_id', $article->id)->value('average_cost')
+        return (int) (ServiceStoreStock::query()->where('service_store_id', $depot->id)->where('stock_item_id',
+            $article->id)->value('average_cost')
             ?? $article->average_cost);
     }
 
@@ -781,7 +818,8 @@ class ClasseurStockImport
             $libelle,
             $m['document'] ? 'doc. ' . $m['document'] : null,
             $m['motif'],
-            $m['date_effective'] !== $m['date'] ? 'daté du ' . Carbon::parse($m['date'])->format('d/m/Y') . ' dans le fichier' : null,
+            $m['date_effective'] !== $m['date'] ? 'daté du ' . Carbon::parse($m['date'])->format('d/m/Y')
+                . ' dans le fichier' : null,
         ]);
 
         return mb_substr(implode(' — ', $morceaux), 0, 255);
@@ -880,6 +918,7 @@ class ClasseurStockImport
     {
         sort($lignes);
 
-        return count($lignes) <= 6 ? implode(', ', $lignes) : reset($lignes) . ' à ' . end($lignes) . ' (' . count($lignes) . ' lignes)';
+        return count($lignes) <= 6 ? implode(', ', $lignes) : reset($lignes) . ' à ' . end($lignes) . ' ('
+            . count($lignes) . ' lignes)';
     }
 }

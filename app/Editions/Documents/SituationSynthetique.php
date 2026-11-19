@@ -46,7 +46,8 @@ class SituationSynthetique extends Edition
 
         $lignes = collect();
         $section = fn (string $titre) => $lignes->push(['rubrique' => mb_strtoupper($titre), 'valeur' => '']);
-        $ligne = fn (string $rubrique, string $valeur) => $lignes->push(['rubrique' => '   ' . $rubrique, 'valeur' => $valeur]);
+        $ligne = fn (string $rubrique, string $valeur) => $lignes->push(['rubrique' => '   ' . $rubrique,
+            'valeur' => $valeur]);
 
         $section('Ventes');
         foreach (Registres::parService($ventes) as $service => $montant) {
@@ -55,7 +56,8 @@ class SituationSynthetique extends Edition
         $ligne('Total des ventes', $fcfa((int) $ventes->sum('montant')));
 
         $section('Encaissements');
-        foreach ($encaissements->groupBy('mode')->map(fn ($l) => (int) $l->sum('montant'))->sortDesc() as $mode => $montant) {
+        foreach ($encaissements->groupBy('mode')->map(fn ($l) => (int) $l->sum('montant'))
+            ->sortDesc() as $mode => $montant) {
             $ligne($mode, $fcfa($montant));
         }
         $ligne('Total encaissé', $fcfa((int) $encaissements->sum('montant')));
@@ -69,8 +71,10 @@ class SituationSynthetique extends Edition
         $ligne('Chambres disponibles × jours', number_format($h['capacite'], 0, ',', ' '));
         $ligne('Nuitées occupées', number_format($h['nuitees'], 0, ',', ' '));
         $ligne("Taux d'occupation", $h['capacite'] > 0 ? round($h['nuitees'] * 100 / $h['capacite'], 1) . ' %' : '—');
-        $ligne('Prix moyen par nuitée payante (ADR)', $h['nuitees_payantes'] > 0 ? $fcfa(intdiv($h['revenu_chambres'], $h['nuitees_payantes'])) : '—');
-        $ligne('Revenu par chambre disponible (RevPAR)', $h['capacite'] > 0 ? $fcfa(intdiv($h['revenu_chambres'], $h['capacite'])) : '—');
+        $ligne('Prix moyen par nuitée payante (ADR)', $h['nuitees_payantes'] > 0 ? $fcfa(intdiv($h['revenu_chambres'],
+            $h['nuitees_payantes'])) : '—');
+        $ligne('Revenu par chambre disponible (RevPAR)', $h['capacite'] > 0 ? $fcfa(intdiv($h['revenu_chambres'],
+            $h['capacite'])) : '—');
         $ligne('Nuitées offertes (valeur)', $h['gratuites'] . ' (' . $fcfa($h['valeur_gratuites']) . ')');
 
         return $this->base($valeurs, $user)

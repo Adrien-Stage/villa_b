@@ -15,7 +15,8 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -29,7 +30,8 @@
     {{-- Les taux viennent du document béninois cité au plan. Les appliquer
          sans confirmation expose à un redressement : le dire coûte moins cher
          que de le découvrir au contrôle. --}}
-    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900 leading-relaxed">
+    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900
+        leading-relaxed">
         <strong>Taux de retenue non confirmés.</strong> Les taux proposés ci-dessous
         (5 %, 10 %, 15 %) sont des valeurs par défaut issues d'un document de référence
         <em>béninois</em>. Ils attendent la validation du cabinet pour le Cameroun.
@@ -40,7 +42,8 @@
     </div>
 @endunless
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>La retenue n'est pas une remise.</strong> Ce que vous retenez n'est pas gagné :
     c'est une somme prélevée pour le compte de l'État, à reverser. Le fournisseur reste
     créancier du montant total — il touche seulement le net.
@@ -62,7 +65,9 @@
                 @if($bons->isNotEmpty())
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Bon de commande d'origine <span class="text-primary/40">(facultatif)</span></label>
-                        <select name="purchase_order_id" class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+                        <select
+                            name="purchase_order_id"
+                            class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
                             <option value="">Aucun — facture directe</option>
                             @foreach($bons as $b)
                                 <option value="{{ $b->id }}" @selected(old('purchase_order_id', $bon?->id) == $b->id)>
@@ -77,7 +82,10 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Fournisseur</label>
-                        <select name="supplier_id" required class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+                        <select
+                            name="supplier_id"
+                            required
+                            class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
                             <option value="">Choisir…</option>
                             @foreach($fournisseurs as $f)
                                 <option value="{{ $f->id }}" @selected(old('supplier_id', $bon?->supplier_id) == $f->id)>{{ $f->name }}</option>
@@ -119,7 +127,10 @@
 
                 <div>
                     <label class="block text-xs font-medium text-primary/70 mb-1.5">Nature de la charge</label>
-                    <select name="charge_account" required class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
+                    <select
+                        name="charge_account"
+                        required
+                        class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
                         @foreach(\App\Models\SupplierInvoice::CHARGE_ACCOUNTS as $code => $libelle)
                             <option value="{{ $code }}" @selected(old('charge_account', '601000') === $code)>
                                 {{ $code }} — {{ $libelle }}
@@ -195,7 +206,8 @@
                 </dl>
 
                 <div class="mt-4 pt-4 border-t border-secondary/15">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40 mb-2">Écriture générée</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40
+                        mb-2">Écriture générée</p>
                     <div class="space-y-1 text-[11px] font-mono text-primary/60">
                         <div class="flex justify-between"><span>D 6xx</span><span x-text="format(ht)"></span></div>
                         <div class="flex justify-between" x-show="tva > 0" x-cloak><span>D 445100</span><span x-text="format(tva)"></span></div>
@@ -205,12 +217,14 @@
                 </div>
 
                 <button type="submit"
-                        class="w-full mt-5 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                        class="w-full mt-5 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary
+                            text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
                     Enregistrer et comptabiliser
                 </button>
                 <a href="{{ route('accounting.ledger.suppliers') }}"
-                   class="block text-center mt-2 text-xs text-primary/50 hover:text-primary transition-colors">Annuler</a>
+                   class="block text-center mt-2 text-xs text-primary/50 hover:text-primary
+                       transition-colors">Annuler</a>
             </div>
         </div>
     </div>

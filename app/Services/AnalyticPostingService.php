@@ -128,7 +128,8 @@ class AnalyticPostingService
      * devient faux. On ne le modifie pas — on l'extourne et on en produit un
      * neuf, ce qui laisse la trace des deux au journal.
      */
-    public function remirror(CarbonInterface $from, CarbonInterface $to, string $reason = 'Reflet analytique recalculé'): ?JournalEntry
+    public function remirror(CarbonInterface $from, CarbonInterface $to,
+        string $reason = 'Reflet analytique recalculé'): ?JournalEntry
     {
         return DB::transaction(function () use ($from, $to, $reason) {
             $existant = $this->existingMirror($from, $to);

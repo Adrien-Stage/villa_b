@@ -21,7 +21,8 @@
         </div>
 
         <a href="{{ route('restaurant.orders.index') }}"
-           class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/25 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+           class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/25 text-primary text-xs
+               font-semibold rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="receipt" class="w-4 h-4 text-secondary"></i>
             Mes commandes
         </a>
@@ -48,7 +49,8 @@
                 <input id="recherche-plat" type="search" x-model="recherche"
                        placeholder="Ex. poulet DG"
                        autocomplete="off"
-                       class="w-full px-4 py-3 text-sm rounded-xl border border-secondary/25 bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary transition-colors">
+                       class="w-full px-4 py-3 text-sm rounded-xl border border-secondary/25 bg-white text-primary
+                           placeholder-primary/30 outline-none focus:border-secondary transition-colors">
                 <button type="button" x-show="recherche" @click="recherche = ''"
                         class="absolute right-3 top-1/2 -translate-y-1/2 text-primary/30 hover:text-primary">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -66,7 +68,8 @@
                 @foreach($categories as $categorie)
                     <button type="button" @click="categorie = '{{ $categorie->id }}'"
                             :class="categorie === '{{ $categorie->id }}' ? 'bg-accent/40 border-secondary text-primary' : 'bg-white border-secondary/25 text-primary/60'"
-                            class="flex-shrink-0 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors">
+                            class="flex-shrink-0 px-4 py-1.5 rounded-full border text-xs font-semibold
+                                transition-colors">
                         {{ $categorie->name }}
                     </button>
                 @endforeach
@@ -84,13 +87,15 @@
                          Le retour à deux colonnes en « lg » n'est pas une erreur :
                          c'est là que le panier s'installe à droite et ampute la
                          carte de 360 px. --}}
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3
+                        sm:gap-4">
                         @foreach($items as $item)
                             <div x-show="estVisible({{ $item->id }})"
                                  data-plat="{{ $item->id }}"
                                  data-nom="{{ mb_strtolower($item->name) }}"
                                  data-categorie="{{ $item->restaurant_menu_category_id ?? 'sans' }}"
-                                 class="flex flex-col rounded-2xl border border-secondary/15 bg-white overflow-hidden hover:border-secondary/40 transition-colors">
+                                 class="flex flex-col rounded-2xl border border-secondary/15 bg-white overflow-hidden
+                                     hover:border-secondary/40 transition-colors">
 
                                 <div class="relative aspect-[4/3] bg-gradient-to-br from-accent/70 to-secondary/60">
                                     @if($item->image_path)
@@ -106,15 +111,19 @@
                                     {{-- Ce qui est déjà au panier se voit sur la vignette :
                                          au coup d'œil, le serveur sait ce qu'il a saisi. --}}
                                     <span x-show="quantite({{ $item->id }}) > 0"
-                                          class="absolute top-2 right-2 h-6 min-w-6 px-1.5 inline-flex items-center justify-center rounded-full bg-primary text-white text-[11px] font-bold shadow"
+                                          class="absolute top-2 right-2 h-6 min-w-6 px-1.5 inline-flex items-center
+                                              justify-center rounded-full bg-primary text-white text-[11px] font-bold
+                                              shadow"
                                           x-text="quantite({{ $item->id }})"></span>
                                 </div>
 
                                 <div class="flex flex-1 flex-col p-3">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-secondary truncate">
+                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-secondary
+                                        truncate">
                                         {{ $item->category?->name ?? 'Autres' }}
                                     </p>
-                                    <p class="mt-0.5 text-sm font-semibold text-primary leading-snug line-clamp-2">{{ $item->name }}</p>
+                                    <p class="mt-0.5 text-sm font-semibold text-primary leading-snug
+                                        line-clamp-2">{{ $item->name }}</p>
                                     <p class="mt-1 text-[11px] text-primary/45 truncate">{{ $item->mealServicesLabel() }}</p>
 
                                     <div class="mt-auto pt-3 flex items-center justify-between gap-2">
@@ -125,7 +134,8 @@
                                         <button type="button"
                                                 @click="ajouter({{ $item->id }}, @js($item->name), {{ $item->price }})"
                                                 aria-label="Ajouter {{ $item->name }}"
-                                                class="h-10 w-10 inline-flex items-center justify-center rounded-xl bg-primary text-white hover:opacity-90 active:scale-95 transition">
+                                                class="h-10 w-10 inline-flex items-center justify-center rounded-xl
+                                                    bg-primary text-white hover:opacity-90 active:scale-95 transition">
                                             <i data-lucide="plus" class="w-4 h-4"></i>
                                         </button>
                                     </div>
@@ -155,17 +165,26 @@
                     <p class="font-heading text-base font-semibold text-primary">Commande en cours</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/40 text-primary text-xs font-semibold">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/40 text-primary
+                        text-xs font-semibold">
                         <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                         <span x-text="nbArticles"></span>
                     </span>
-                    <button type="button" @click="panierOuvert = false" class="lg:hidden h-8 w-8 inline-flex items-center justify-center rounded-lg text-primary/50 hover:bg-accent/20">
+                    <button
+                        type="button"
+                        @click="panierOuvert = false"
+                        class="lg:hidden h-8 w-8 inline-flex items-center justify-center rounded-lg text-primary/50
+                            hover:bg-accent/20">
                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('restaurant.orders.store') }}" class="flex flex-col min-h-0 flex-1" @submit="preparerEnvoi($event)">
+            <form
+                method="POST"
+                action="{{ route('restaurant.orders.store') }}"
+                class="flex flex-col min-h-0 flex-1"
+                @submit="preparerEnvoi($event)">
                 @csrf
                 <input type="hidden" name="items_json" x-ref="itemsJson">
 
@@ -184,20 +203,28 @@
                         <div class="flex items-start gap-3 pb-3 border-b border-secondary/10 last:border-0">
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-primary leading-snug" x-text="ligne.nom"></p>
-                                <p class="text-xs text-primary/45 mt-0.5" x-text="formatFcfa(ligne.prix) + ' × ' + ligne.qte"></p>
+                                <p
+                                    class="text-xs text-primary/45 mt-0.5"
+                                    x-text="formatFcfa(ligne.prix) + ' × ' + ligne.qte"></p>
                             </div>
                             <div class="flex items-center gap-1.5 flex-shrink-0">
                                 <button type="button" @click="retirer(ligne.id)" aria-label="Retirer un"
-                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/25 text-primary/70 hover:bg-accent/20 active:scale-95 transition">
+                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg border
+                                            border-secondary/25 text-primary/70 hover:bg-accent/20 active:scale-95
+                                            transition">
                                     <i data-lucide="minus" class="w-3.5 h-3.5"></i>
                                 </button>
                                 <span class="w-6 text-center text-sm font-semibold text-primary" x-text="ligne.qte"></span>
                                 <button type="button" @click="ajouter(ligne.id, ligne.nom, ligne.prix)" aria-label="Ajouter un"
-                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-secondary/25 text-primary/70 hover:bg-accent/20 active:scale-95 transition">
+                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg border
+                                            border-secondary/25 text-primary/70 hover:bg-accent/20 active:scale-95
+                                            transition">
                                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
-                            <p class="w-20 text-right text-sm font-semibold text-primary flex-shrink-0" x-text="formatFcfa(ligne.prix * ligne.qte)"></p>
+                            <p
+                                class="w-20 text-right text-sm font-semibold text-primary flex-shrink-0"
+                                x-text="formatFcfa(ligne.prix * ligne.qte)"></p>
                         </div>
                     </template>
 
@@ -208,28 +235,36 @@
                             <input id="table_number" name="table_number" type="text" inputmode="numeric" maxlength="10" required
                                    x-model="table"
                                    placeholder="12"
-                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none
+                                       focus:border-secondary">
                         </div>
                         <div>
                             <label for="covers" class="block text-xs font-semibold text-primary/60 mb-1.5">Couverts</label>
                             <input id="covers" name="covers" type="number" inputmode="numeric" min="1" max="500"
                                    placeholder="Nombre de personnes à table"
-                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none
+                                       focus:border-secondary">
                         </div>
 
                         {{-- Nom, téléphone et note : repliés par défaut, ils
                              n'encombrent pas le geste courant. --}}
                         <button type="button" @click="detailsOuverts = !detailsOuverts"
-                                class="w-full flex items-center justify-between text-xs font-semibold text-primary/60 hover:text-primary">
+                                class="w-full flex items-center justify-between text-xs font-semibold text-primary/60
+                                    hover:text-primary">
                             <span>Client et note (facultatif)</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 transition-transform" :class="detailsOuverts && 'rotate-180'"></i>
+                            <i
+                                data-lucide="chevron-down"
+                                class="w-4 h-4 transition-transform"
+                                :class="detailsOuverts && 'rotate-180'"></i>
                         </button>
 
                         <div x-show="detailsOuverts" x-transition class="space-y-3">
                             <input name="customer_name" type="text" maxlength="120" placeholder="Nom du client"
-                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none
+                                       focus:border-secondary">
                             <input name="customer_phone" type="tel" maxlength="30" placeholder="Téléphone"
-                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none
+                                       focus:border-secondary">
                             <textarea name="notes" rows="2" maxlength="2000" placeholder="Sans piment, cuisson à point…"
                                       class="w-full px-3 py-2.5 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary"></textarea>
                         </div>
@@ -245,11 +280,15 @@
 
                     <div class="flex items-center gap-2">
                         <button type="button" @click="vider()" :disabled="lignes.length === 0"
-                                class="flex-1 px-4 py-3 text-sm font-semibold rounded-xl border border-secondary/25 text-primary/70 hover:bg-accent/20 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                                class="flex-1 px-4 py-3 text-sm font-semibold rounded-xl border border-secondary/25
+                                    text-primary/70 hover:bg-accent/20 disabled:opacity-40 disabled:cursor-not-allowed
+                                    transition">
                             Annuler
                         </button>
                         <button type="submit" :disabled="lignes.length === 0 || !table.trim() || envoiEnCours"
-                                class="flex-[1.4] px-4 py-3 text-sm font-semibold rounded-xl bg-primary text-white hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2">
+                                class="flex-[1.4] px-4 py-3 text-sm font-semibold rounded-xl bg-primary text-white
+                                    hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition
+                                    inline-flex items-center justify-center gap-2">
                             <i data-lucide="send" class="w-4 h-4"></i>
                             <span x-text="envoiEnCours ? 'Envoi…' : 'Envoyer en cuisine'"></span>
                         </button>
@@ -262,7 +301,8 @@
     {{-- Barre d'accès au panier, téléphone uniquement. --}}
     <button type="button" @click="panierOuvert = true"
             x-show="!panierOuvert"
-            class="lg:hidden fixed inset-x-4 bottom-4 z-30 flex items-center justify-between gap-3 px-5 py-3.5 rounded-2xl bg-primary text-white shadow-xl">
+            class="lg:hidden fixed inset-x-4 bottom-4 z-30 flex items-center justify-between gap-3 px-5 py-3.5
+                rounded-2xl bg-primary text-white shadow-xl">
         <span class="inline-flex items-center gap-2 text-sm font-semibold">
             <i data-lucide="shopping-cart" class="w-4 h-4"></i>
             <span x-text="nbArticles + (nbArticles > 1 ? ' articles' : ' article')"></span>

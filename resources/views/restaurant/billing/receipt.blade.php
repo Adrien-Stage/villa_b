@@ -32,19 +32,28 @@
     <div class="max-w-3xl mx-auto px-4">
         <div class="no-print flex items-center justify-between gap-2 mb-6">
             <div>
-                <a href="{{ route('restaurant.billing.show', $order) }}" class="inline-flex items-center gap-1 hover:text-primary transition-colors text-primary/50 text-sm font-medium mb-2 w-fit">
+                <a
+                    href="{{ route('restaurant.billing.show', $order) }}"
+                    class="inline-flex items-center gap-1 hover:text-primary transition-colors text-primary/50 text-sm
+                        font-medium mb-2 w-fit">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     Retour à la facturation
                 </a>
                 <h1 class="font-heading text-2xl font-semibold text-primary">Impression du ticket</h1>
             </div>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+            <button
+                type="button"
+                onclick="window.print()"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold
+                    rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 Lancer l'impression
             </button>
         </div>
 
-        <div class="rounded-xl border border-secondary/15 bg-white shadow-sm overflow-hidden window-print" id="invoice-print">
+        <div
+            class="rounded-xl border border-secondary/15 bg-white shadow-sm overflow-hidden window-print"
+            id="invoice-print">
             {{-- En-tête facture --}}
             <div class="px-8 py-6 border-b border-secondary/10">
                 @php
@@ -56,7 +65,8 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-full overflow-hidden border border-secondary/20 flex-shrink-0">
+                            <div class="w-12 h-12 rounded-full overflow-hidden border border-secondary/20
+                                flex-shrink-0">
                                 <img src="{{ $restTenantLogo }}"
                                     alt="Logo"
                                     class="w-full h-full object-cover">
@@ -75,7 +85,8 @@
             </div>
 
             {{-- Infos commande --}}
-            <div class="px-5 sm:px-8 py-5 border-b border-secondary/10 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-6">
+            <div class="px-5 sm:px-8 py-5 border-b border-secondary/10 grid grid-cols-1 sm:grid-cols-2
+                print:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-widest text-primary/40 mb-2">Informations</p>
                     <p class="text-sm font-medium text-primary">Table {{ $order->table_number }}</p>
@@ -107,10 +118,14 @@
             {{-- Lignes de facturation --}}
             <div class="px-8 py-4">
                 <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
-                    <div class="col-span-6 text-xs font-semibold uppercase tracking-widest text-primary/40">Plat / Boisson</div>
-                    <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">Qté</div>
-                    <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">P.U. HT</div>
-                    <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total</div>
+                    <div class="col-span-6 text-xs font-semibold uppercase tracking-widest
+                        text-primary/40">Plat / Boisson</div>
+                    <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
+                        text-center">Qté</div>
+                    <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                        text-right">P.U. HT</div>
+                    <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40
+                        text-right">Total</div>
                 </div>
 
                 @foreach($order->items as $line)

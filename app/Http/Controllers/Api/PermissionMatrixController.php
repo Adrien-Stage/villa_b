@@ -98,7 +98,8 @@ class PermissionMatrixController extends Controller
                 ], 422);
             }
 
-            $sansMotif = array_filter($cumuls, static fn (array $c): bool => trim((string) ($c['reason'] ?? '')) === '');
+            $sansMotif = array_filter($cumuls, static fn (array $c): bool => trim((string) ($c['reason']
+                ?? '')) === '');
             if ($sansMotif !== []) {
                 return response()->json([
                     'message' => 'Chaque dérogation à la séparation des tâches doit être motivée.',

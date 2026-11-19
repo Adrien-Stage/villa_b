@@ -11,7 +11,10 @@
     </p>
 </div>
 
-<form method="GET" action="{{ route('audit.index') }}" class="bg-white rounded-xl shadow-sm p-4 mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+<form
+    method="GET"
+    action="{{ route('audit.index') }}"
+    class="bg-white rounded-xl shadow-sm p-4 mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
     <div>
         <label for="j-user" class="block text-[11px] font-semibold text-primary/60 mb-1">Utilisateur</label>
         <select id="j-user" name="user_id" class="w-full rounded-lg border border-secondary/30 px-2.5 py-2 text-xs">
@@ -41,11 +44,21 @@
     </div>
     <div>
         <label for="j-du" class="block text-[11px] font-semibold text-primary/60 mb-1">Du</label>
-        <input type="date" id="j-du" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+        <input
+            type="date"
+            id="j-du"
+            name="date_from"
+            value="{{ request('date_from') }}"
+            class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
     </div>
     <div>
         <label for="j-au" class="block text-[11px] font-semibold text-primary/60 mb-1">Au</label>
-        <input type="date" id="j-au" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
+        <input
+            type="date"
+            id="j-au"
+            name="date_to"
+            value="{{ request('date_to') }}"
+            class="w-full rounded-lg border border-secondary/30 px-2.5 py-1.5 text-xs">
     </div>
     <div>
         <label for="j-q" class="block text-[11px] font-semibold text-primary/60 mb-1">Recherche</label>
@@ -62,8 +75,12 @@
             Opérations de l'administrateur seulement
         </label>
         <div class="ml-auto flex gap-2">
-            <a href="{{ route('audit.index') }}" class="px-3 py-1.5 rounded-lg border border-secondary/30 text-xs text-primary/70 hover:text-primary">Réinitialiser</a>
-            <button type="submit" class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold">Filtrer</button>
+            <a
+                href="{{ route('audit.index') }}"
+                class="px-3 py-1.5 rounded-lg border border-secondary/30 text-xs text-primary/70
+                    hover:text-primary">Réinitialiser</a>
+            <button type="submit" class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs
+                font-semibold">Filtrer</button>
         </div>
     </div>
 </form>
@@ -86,14 +103,17 @@
             <x-table.cell nowrap class="text-xs text-primary/60">{{ $ligne->created_at?->format('d/m/Y H:i:s') }}</x-table.cell>
             <x-table.cell hide="lg">{{ $ligne->user?->name ?? 'Système' }}</x-table.cell>
             <x-table.cell hide="xl" nowrap>
-                <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] text-primary/70">{{ $ligne->event_type }}</span>
+                <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px]
+                    text-primary/70">{{ $ligne->event_type }}</span>
                 @if($ligne->module)<span class="ml-1 text-[10px] text-primary/45">{{ $ligne->module }}</span>@endif
             </x-table.cell>
             <x-table.cell class="text-primary/80">
                 @if($parAdministrateur)
-                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Administrateur</span>
+                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold
+                        text-amber-900">Administrateur</span>
                 @elseif($enIntervention)
-                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">Intervention</span>
+                    <span class="mr-1 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold
+                        text-amber-900">Intervention</span>
                 @endif
                 {{ $parAdministrateur ? \Illuminate\Support\Str::after($ligne->action, '[Administrateur] ') : $ligne->action }}
             </x-table.cell>

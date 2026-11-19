@@ -22,7 +22,9 @@
 <div class="max-w-6xl mx-auto">
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-            <a href="{{ route('economat.classeur.index') }}" class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
+            <a
+                href="{{ route('economat.classeur.index') }}"
+                class="text-xs text-primary/60 hover:text-primary inline-flex items-center gap-1">
                 <i data-lucide="arrow-left" class="w-3.5 h-3.5" aria-hidden="true"></i> Classeur Excel
             </a>
             <h1 class="mt-1 text-xl font-heading font-semibold text-primary">Import {{ $import->reference }}</h1>
@@ -40,13 +42,16 @@
     @include('economat.partials.flash')
 
     @unless($import->isDraft())
-        <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg flex flex-wrap items-center justify-between gap-3">
+        <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg flex flex-wrap
+            items-center justify-between gap-3">
             <span class="flex items-center gap-2">
                 <i data-lucide="check-circle" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
                 Importé le {{ $import->applied_at?->format('d/m/Y à H:i') }} par {{ $import->applier?->name ?? '—' }}.
             </span>
             @droit('economat.classeur.export')
-                <a href="{{ route('economat.classeur.export', array_filter(['depot' => $import->service_store_id])) }}" class="inline-flex items-center gap-1.5 font-medium underline">
+                <a
+                    href="{{ route('economat.classeur.export', array_filter(['depot' => $import->service_store_id])) }}"
+                    class="inline-flex items-center gap-1.5 font-medium underline">
                     <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Télécharger le classeur à jour
                 </a>
             @enddroit
@@ -61,7 +66,8 @@
             <p class="text-xs text-primary/60">{{ $resume['articles_modifies'] ?? 0 }} modifié(s) · {{ $resume['articles_inchanges'] ?? 0 }} inchangé(s)</p>
         </div>
         <div class="bg-white rounded-xl border border-secondary/20 p-4">
-            <p class="text-[11px] uppercase tracking-wider text-primary/50 font-semibold">Mouvements {{ $import->isDraft() ? 'à enregistrer' : 'enregistrés' }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-primary/50
+                font-semibold">Mouvements {{ $import->isDraft() ? 'à enregistrer' : 'enregistrés' }}</p>
             <p class="mt-1 text-lg font-semibold text-primary">{{ $resume['mouvements'] ?? 0 }}</p>
             <p class="text-xs text-primary/60">
                 {{ collect($resume['par_type'] ?? [])->filter()->map(fn ($nombre, $type) => $nombre . ' ' . mb_strtolower($type))->implode(' · ') ?: 'aucun' }}
@@ -94,7 +100,9 @@
     @endif
 
     @if($avertissements !== [])
-        <section class="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4" aria-labelledby="titre-avertissements">
+        <section
+            class="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4"
+            aria-labelledby="titre-avertissements">
             <h2 id="titre-avertissements" class="font-heading font-semibold text-amber-900 flex items-center gap-2">
                 <i data-lucide="triangle-alert" class="w-4 h-4" aria-hidden="true"></i> {{ $import->isDraft() ? "À savoir avant d'importer" : "Signalé à l'import" }}
             </h2>
@@ -112,13 +120,17 @@
                 <form method="POST" action="{{ route('economat.classeur.confirm', $import) }}"
                       onsubmit="return confirm('Enregistrer cet import ? Les articles et les {{ $resume['mouvements'] ?? 0 }} mouvement(s) seront écrits au stock.')">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold
+                            rounded-lg hover:bg-surface-dark transition-colors">
                         <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Confirmer l'import
                     </button>
                 </form>
             @endif
             <a href="{{ route('economat.classeur.index', array_filter(['depot' => $import->service_store_id])) }}"
-               class="inline-flex items-center gap-2 px-4 py-2.5 border border-secondary/30 bg-white text-primary text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+               class="inline-flex items-center gap-2 px-4 py-2.5 border border-secondary/30 bg-white text-primary
+                   text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-lucide="file-up" class="w-4 h-4" aria-hidden="true"></i> Déposer un fichier corrigé
             </a>
         </div>
@@ -144,8 +156,12 @@
     @if($articles->isNotEmpty())
         {{-- Repliée quand elle est longue : l'essentiel est dans le résumé. --}}
         <details class="mb-6 group" @if($articles->count() <= 25) open @endif>
-            <summary class="cursor-pointer list-none flex items-center gap-2 mb-2 font-heading font-semibold text-primary">
-                <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-open:rotate-90" aria-hidden="true"></i>
+            <summary class="cursor-pointer list-none flex items-center gap-2 mb-2 font-heading font-semibold
+                text-primary">
+                <i
+                    data-lucide="chevron-right"
+                    class="w-4 h-4 transition-transform group-open:rotate-90"
+                    aria-hidden="true"></i>
                 Articles {{ $import->isDraft() ? 'créés ou modifiés à l\'import' : 'créés ou modifiés' }} ({{ $articles->count() }})
             </summary>
             <x-table :rows="$articles" caption="Articles de l'import">
@@ -162,7 +178,9 @@
                         <x-table.cell hide="sm" class="text-xs text-primary/70">{{ $a['unit'] }}</x-table.cell>
                         <x-table.cell class="text-xs text-primary/70">
                             @if($a['action'] === 'creer')
-                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold border border-green-200 bg-green-50 text-green-700">Nouvel article</span>
+                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]
+                                    font-semibold border border-green-200 bg-green-50
+                                    text-green-700">Nouvel article</span>
                             @else
                                 @foreach($a['changements'] as [$libelle, $avant, $apres])
                                     <span class="block">{{ $libelle }} : <span class="line-through text-primary/40">{{ $avant }}</span> → {{ $apres }}</span>
@@ -177,8 +195,12 @@
 
     @if($mouvements !== [])
         <details class="group" @if(count($mouvements) <= 25) open @endif>
-            <summary class="cursor-pointer list-none flex items-center gap-2 mb-2 font-heading font-semibold text-primary">
-                <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-open:rotate-90" aria-hidden="true"></i>
+            <summary class="cursor-pointer list-none flex items-center gap-2 mb-2 font-heading font-semibold
+                text-primary">
+                <i
+                    data-lucide="chevron-right"
+                    class="w-4 h-4 transition-transform group-open:rotate-90"
+                    aria-hidden="true"></i>
                 Mouvements {{ $import->isDraft() ? 'à enregistrer' : 'enregistrés' }}, dans l'ordre ({{ count($mouvements) }})
             </summary>
             <x-table :rows="$mouvements" caption="Mouvements de l'import">

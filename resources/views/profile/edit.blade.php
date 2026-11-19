@@ -39,9 +39,11 @@
             <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-primary">{{ $permission['label'] }}</p>
                 @if($permission['allowed'])
-                    <span class="px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border border-green-200">Autorise</span>
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border
+                        border-green-200">Autorise</span>
                 @else
-                    <span class="px-2 py-0.5 text-xs rounded-full bg-red-50 text-red-700 border border-red-200">Restreint</span>
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-red-50 text-red-700 border
+                        border-red-200">Restreint</span>
                 @endif
             </div>
         </div>
@@ -60,7 +62,8 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Nom complet</label>
                 <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @error('name')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -69,7 +72,8 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Email</label>
                 <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @error('email')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -78,7 +82,8 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Telephone</label>
                 <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @error('phone')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -88,16 +93,21 @@
                 <div>
                     <label class="block text-xs text-primary/60 mb-1">Role actuel</label>
                     <input type="text" value="{{ str_replace('_', ' ', $user->role ?? 'staff') }}" readonly
-                        class="w-full px-3 py-2 text-sm border border-secondary/20 rounded-lg bg-accent/20 text-primary/60">
+                        class="w-full px-3 py-2 text-sm border border-secondary/20 rounded-lg bg-accent/20
+                            text-primary/60">
                 </div>
                 <div>
                     <label class="block text-xs text-primary/60 mb-1">Etat du compte</label>
                     <input type="text" value="{{ $user->is_active ? 'Actif' : 'Inactif' }}" readonly
-                        class="w-full px-3 py-2 text-sm border border-secondary/20 rounded-lg bg-accent/20 text-primary/60">
+                        class="w-full px-3 py-2 text-sm border border-secondary/20 rounded-lg bg-accent/20
+                            text-primary/60">
                 </div>
             </div>
 
-            <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+            <button
+                type="submit"
+                class="w-full py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                    transition-colors">
                 Enregistrer les modifications
             </button>
         </form>
@@ -114,7 +124,8 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Mot de passe actuel</label>
                 <input type="password" name="current_password"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @if($errors->updatePassword->has('current_password'))
                     <p class="mt-1 text-xs text-red-600">{{ $errors->updatePassword->first('current_password') }}</p>
                 @endif
@@ -123,7 +134,8 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Nouveau mot de passe</label>
                 <input type="password" name="password"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @if($errors->updatePassword->has('password'))
                     <p class="mt-1 text-xs text-red-600">{{ $errors->updatePassword->first('password') }}</p>
                 @endif
@@ -132,13 +144,17 @@
             <div>
                 <label class="block text-xs text-primary/60 mb-1">Confirmation nouveau mot de passe</label>
                 <input type="password" name="password_confirmation"
-                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
                 @if($errors->updatePassword->has('password_confirmation'))
                     <p class="mt-1 text-xs text-red-600">{{ $errors->updatePassword->first('password_confirmation') }}</p>
                 @endif
             </div>
 
-            <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+            <button
+                type="submit"
+                class="w-full py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                    transition-colors">
                 Mettre a jour le mot de passe
             </button>
         </form>

@@ -43,7 +43,8 @@
                 <button type="button"
                         id="access-denied-action-btn"
                         onclick="redirectToLogin()"
-                        class="w-full sm:w-auto px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-colors text-center shadow-xs">
+                        class="w-full sm:w-auto px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl
+                            hover:bg-surface-dark transition-colors text-center shadow-xs">
                     Se connecter
                 </button>
             </div>

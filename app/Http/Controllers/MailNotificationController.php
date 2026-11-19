@@ -70,7 +70,8 @@ class MailNotificationController extends Controller
         $targetEmail = $validated['email'] ?? $order->supplier?->email;
         if (! $targetEmail) {
             if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'Aucune adresse e-mail disponible pour ce fournisseur.'], 422);
+                return response()->json(['success' => false,
+                    'message' => 'Aucune adresse e-mail disponible pour ce fournisseur.'], 422);
             }
             return back()->with('error', 'Aucune adresse e-mail disponible pour ce fournisseur.');
         }

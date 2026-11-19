@@ -45,7 +45,9 @@
                 @forelse($balance as $ligne)
                     <tr class="hover:bg-accent/10">
                         <td class="px-4 py-2 font-mono text-primary whitespace-nowrap">
-                            <a href="{{ route('accounting.ledger.general', ['compte' => $ligne['code']]) }}" class="hover:underline">
+                            <a
+                                href="{{ route('accounting.ledger.general', ['compte' => $ligne['code']]) }}"
+                                class="hover:underline">
                                 {{ $ligne['code'] }}
                             </a>
                         </td>

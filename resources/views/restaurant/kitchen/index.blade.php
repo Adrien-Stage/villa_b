@@ -26,7 +26,8 @@
             Les bons transmis par la salle. Préparez, puis signalez le plat prêt — le serveur est prévenu automatiquement.
         </p>
     </div>
-    <label class="shrink-0 inline-flex items-center gap-2 text-xs text-primary/60 bg-white border border-secondary/20 rounded-lg px-3 py-2">
+    <label class="shrink-0 inline-flex items-center gap-2 text-xs text-primary/60 bg-white border border-secondary/20
+        rounded-lg px-3 py-2">
         <input type="checkbox" x-model="auto" class="rounded border-secondary/30 text-primary">
         Actualisation auto (20s)
     </label>
@@ -75,7 +76,8 @@
                                 </span>
                                 <span class="text-[11px] text-primary/40">#{{ $order->id }}</span>
                                 @if($vueEnsemble && $order->pointOfSale)
-                                    <span class="text-[10px] font-semibold rounded bg-primary/5 px-1.5 py-0.5 text-primary/60">{{ $order->pointOfSale->name }}</span>
+                                    <span class="text-[10px] font-semibold rounded bg-primary/5 px-1.5 py-0.5
+                                        text-primary/60">{{ $order->pointOfSale->name }}</span>
                                 @endif
                             </div>
                             @if($elapsed !== null)
@@ -95,7 +97,8 @@
                         </ul>
 
                         @if($order->notes)
-                            <p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">
+                            <p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1
+                                mb-2">
                                 <i data-lucide="message-square" class="w-3 h-3 inline"></i> {{ $order->notes }}
                             </p>
                         @endif
@@ -112,14 +115,20 @@
                             @if($statusKey === 'confirmed')
                                 <form method="POST" action="{{ route('restaurant.orders.preparing', $order) }}">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700">
+                                    <button
+                                        type="submit"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600
+                                            text-white text-xs font-semibold hover:bg-blue-700">
                                         <i data-lucide="flame" class="w-3.5 h-3.5"></i> Prendre en préparation
                                     </button>
                                 </form>
                             @elseif($statusKey === 'preparing')
                                 <form method="POST" action="{{ route('restaurant.orders.ready', $order) }}">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700">
+                                    <button
+                                        type="submit"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600
+                                            text-white text-xs font-semibold hover:bg-green-700">
                                         <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Marquer prêt
                                     </button>
                                 </form>

@@ -19,10 +19,14 @@
         @module('economat')
             <div class="flex flex-wrap gap-3">
                 @droit('economat.requisitions.creer')
-                    <a class="text-sm font-medium text-primary underline" href="{{ route('economat.requisitions.create', ['depot' => $store->id]) }}">Demander un approvisionnement</a>
+                    <a
+                        class="text-sm font-medium text-primary underline"
+                        href="{{ route('economat.requisitions.create', ['depot' => $store->id]) }}">Demander un approvisionnement</a>
                 @enddroit
                 @droit('economat.stores.voir')
-                    <a class="text-sm font-medium text-primary underline" href="{{ route('economat.stores.show', $store) }}">Historique et inventaires du dépôt</a>
+                    <a
+                        class="text-sm font-medium text-primary underline"
+                        href="{{ route('economat.stores.show', $store) }}">Historique et inventaires du dépôt</a>
                 @enddroit
             </div>
         @endmodule
@@ -34,7 +38,10 @@
             @if($openable->isEmpty())
                 <p class="text-sm text-primary/70">Aucune bouteille fermée disponible. Faites approvisionner le dépôt Bar depuis l’économat.</p>
             @else
-                <form method="POST" action="{{ route('restaurant.bar.open_bottle') }}" class="flex flex-wrap items-end gap-3">
+                <form
+                    method="POST"
+                    action="{{ route('restaurant.bar.open_bottle') }}"
+                    class="flex flex-wrap items-end gap-3">
                     @csrf
                     <input type="hidden" name="opening_key" value="{{ \Illuminate\Support\Str::uuid() }}">
                     <label class="grid gap-1 text-sm text-primary">
@@ -48,9 +55,18 @@
                     </label>
                     <label class="grid gap-1 text-sm text-primary">
                         Contenance indiquée (mL)
-                        <input type="number" name="capacity_ml" min="1" max="100000" placeholder="750" value="{{ old('capacity_ml') }}" required class="w-40 rounded-lg border-secondary/30">
+                        <input
+                            type="number"
+                            name="capacity_ml"
+                            min="1"
+                            max="100000"
+                            placeholder="750"
+                            value="{{ old('capacity_ml') }}"
+                            required
+                            class="w-40 rounded-lg border-secondary/30">
                     </label>
-                    <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Ouvrir la bouteille</button>
+                    <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold
+                        text-white">Ouvrir la bouteille</button>
                 </form>
             @endif
         </section>
@@ -99,7 +115,9 @@
             <tbody class="divide-y divide-secondary/10">
                 @forelse($bottles as $bottle)
                     <tr>
-                        <td class="p-3 font-medium"><a class="underline" href="{{ route('restaurant.bar.bottles.show', $bottle) }}">Bouteille nº {{ $bottle->id }} · {{ $bottle->item->name }}</a></td>
+                        <td class="p-3 font-medium"><a
+                            class="underline"
+                            href="{{ route('restaurant.bar.bottles.show', $bottle) }}">Bouteille nº {{ $bottle->id }} · {{ $bottle->item->name }}</a></td>
                         <td class="p-3">{{ $bottle->created_at->format('d/m/Y H:i') }}</td>
                         <td class="p-3">{{ $bottle->remaining_ml }} / {{ $bottle->capacity_ml }} mL</td>
                         <td class="p-3">{{ intdiv($bottle->remaining_ml, \App\Models\RestaurantBarDrink::GLASS_ML) }}</td>

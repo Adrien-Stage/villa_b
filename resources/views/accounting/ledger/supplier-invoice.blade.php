@@ -15,7 +15,8 @@
 @include('accounting.ledger.partials.nav')
 
 <a href="{{ route('accounting.ledger.suppliers') }}"
-   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary
+       transition-colors">
     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
     Retour aux factures
 </a>

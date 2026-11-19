@@ -109,14 +109,17 @@
                 <div class="border-t border-gray-200 pt-6">
                     <p class="text-secondary text-sm mb-2">Statut paiement</p>
                     @if ($order->payment_status === 'paid')
-                        <span class="bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium inline-block">Payée</span>
+                        <span class="bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium
+                            inline-block">Payée</span>
                         @if ($order->paid_at)
                             <p class="text-secondary text-sm mt-2">{{ $order->paid_at->locale('fr')->format('d F Y H:i') }}</p>
                         @endif
                     @elseif ($order->payment_status === 'unpaid')
-                        <span class="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm font-medium inline-block">En attente</span>
+                        <span class="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm font-medium
+                            inline-block">En attente</span>
                     @else
-                        <span class="bg-red-50 text-red-700 px-4 py-2 rounded-full text-sm font-medium inline-block">Remboursée</span>
+                        <span class="bg-red-50 text-red-700 px-4 py-2 rounded-full text-sm font-medium
+                            inline-block">Remboursée</span>
                     @endif
                 </div>
 
@@ -143,7 +146,10 @@
                         <form action="{{ route('shop.orders.paid', $order) }}" method="POST">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <button
+                                type="submit"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg
+                                    font-medium transition-colors">
                                 <i data-lucide="check" class="w-4 h-4 inline mr-2"></i> Marquer payée
                             </button>
                         </form>
@@ -152,17 +158,26 @@
 
                     @if ($order->payment_status === 'paid')
                       @droit('shop.orders.refund')
-                        <form action="{{ route('shop.orders.refund', $order) }}" method="POST" onsubmit="return confirm('Confirmer le remboursement ?');">
+                        <form
+                            action="{{ route('shop.orders.refund', $order) }}"
+                            method="POST"
+                            onsubmit="return confirm('Confirmer le remboursement ?');">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <button
+                                type="submit"
+                                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium
+                                    transition-colors">
                                 <i data-lucide="undo" class="w-4 h-4 inline mr-2"></i> Rembourser
                             </button>
                         </form>
                       @enddroit
                     @endif
 
-                    <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button
+                        onclick="window.print()"
+                        class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium
+                            transition-colors">
                         <i data-lucide="printer" class="w-4 h-4 inline mr-2"></i> Imprimer
                     </button>
                 </div>
@@ -229,9 +244,12 @@
     <div class="px-8 py-4">
         <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
             <div class="col-span-6 text-xs font-semibold uppercase tracking-widest text-primary/40">Article</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">Qté</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $order->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Total</div>
+            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-center">Qté</div>
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">{{ $order->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
+            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">Total</div>
         </div>
 
         @foreach ($order->items as $item)

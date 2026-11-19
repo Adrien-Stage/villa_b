@@ -65,7 +65,8 @@ class AuxiliaryController extends Controller
         $detail = $this->auxiliary->ledger($compte->code, $type, $id);
         $nom    = $this->auxiliary->label($compte->code, $type, $id);
 
-        return view('accounting.ledger.auxiliary-detail', compact('collectifs', 'compte', 'detail', 'nom', 'type', 'id'));
+        return view('accounting.ledger.auxiliary-detail', compact('collectifs', 'compte', 'detail', 'nom', 'type',
+            'id'));
     }
 
     /** Balance âgée : les impayés ventilés par ancienneté. */
@@ -133,7 +134,8 @@ class AuxiliaryController extends Controller
         $lettres = $this->reconciliation->autoReconcile($validated['compte']);
 
         if ($lettres === 0) {
-            return back()->with('error', 'Aucun rapprochement évident trouvé. Les règlements partiels se lettrent à la main.');
+            return back()->with('error',
+                'Aucun rapprochement évident trouvé. Les règlements partiels se lettrent à la main.');
         }
 
         return back()->with('success', "{$lettres} lettrage(s) automatique(s) enregistré(s).");

@@ -15,13 +15,16 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Un compte, plusieurs tiers.</strong> Le plan SYSCOHADA ne prévoit pas un compte par client :
     tous passent par le collectif 411000, et c'est l'auxiliaire porté sur la ligne qui dit lequel.
     <span class="block mt-1">
@@ -54,7 +57,8 @@
 
         <div class="flex gap-2">
             <a href="{{ route('accounting.ledger.auxiliary', ['compte' => $compte?->code, 'tout' => $ouverts ? 1 : null]) }}"
-               class="px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs font-semibold text-primary/70 hover:bg-accent/20 transition-colors whitespace-nowrap">
+               class="px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs font-semibold text-primary/70
+                   hover:bg-accent/20 transition-colors whitespace-nowrap">
                 {{ $ouverts ? 'Voir tout' : 'Postes ouverts' }}
             </a>
 
@@ -64,7 +68,8 @@
                     @csrf
                     <input type="hidden" name="compte" value="{{ $compte->code }}">
                     <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-3 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors whitespace-nowrap">
+                            class="inline-flex items-center gap-1.5 px-3 py-2.5 bg-primary text-white text-xs
+                                font-semibold rounded-lg hover:bg-surface-dark transition-colors whitespace-nowrap">
                         <i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i>
                         Lettrage auto
                     </button>
